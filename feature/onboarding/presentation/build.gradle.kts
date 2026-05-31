@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.ruleup.feature.onboarding.presentation"
 }
+
+dependencies {
+    implementation(project(":core:designsystem"))
+}

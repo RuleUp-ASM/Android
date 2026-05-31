@@ -1,9 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("ruleup.android.application")
     id("ruleup.android.compose")
     id("ruleup.android.test")
     id("ruleup.android.hilt")
 }
+
+val kakaoNativeAppKey: String =
+    Properties()
+        .apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }.getProperty("KAKAO_NATIVE_APP_KEY")
+        ?.trim()
+        .orEmpty()
 
 android {
     namespace = "com.ruleup.android"
@@ -16,7 +27,13 @@ android {
                 .toInt()
         versionName = libs.versions.versionName.get()
 
+        manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -32,4 +49,6 @@ android {
 
 dependencies {
     implementation(project(":core:network"))
+    implementation(libs.kakao.user)
+    implementation(project(":feature:onboarding:data"))
 }

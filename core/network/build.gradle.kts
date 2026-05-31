@@ -13,7 +13,7 @@ val localProperties =
     }
 
 android {
-    namespace = "com.rullup.network"
+    namespace = "com.ruleup.network"
 
     buildFeatures {
         buildConfig = true

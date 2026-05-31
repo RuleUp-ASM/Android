@@ -34,6 +34,9 @@ appcompat = "1.7.1"
 material = "1.14.0"
 jetbrainsKotlinJvm = "2.3.21"
 
+# kakao
+kakao = "2.23.2"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -80,32 +83,35 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
+# kakao
+kakao-user = { module = "com.kakao.sdk:v2-user", version.ref = "kakao" }
+
 [bundles]
 compose = [
-    "androidx-compose-ui",
-    "androidx-compose-ui-graphics",
-    "androidx-compose-ui-tooling-preview",
-    "androidx-compose-material3",
+  "androidx-compose-ui",
+  "androidx-compose-ui-graphics",
+  "androidx-compose-ui-tooling-preview",
+  "androidx-compose-material3",
 ]
 gradle-plugins = [
-    "android-gradlePlugin",
-    "kotlin-gradlePlugin",
-    "ksp-gradlePlugin",
-    "compose-gradlePlugin",
-    "hilt-gradlePlugin",
-    "kotlin-serialization-gradlePlugin",
+  "android-gradlePlugin",
+  "kotlin-gradlePlugin",
+  "ksp-gradlePlugin",
+  "compose-gradlePlugin",
+  "hilt-gradlePlugin",
+  "kotlin-serialization-gradlePlugin",
 ]
 presentation = [
-    "androidx-navigation3-runtime",
-    "androidx-navigation3-ui",
-    "androidx-lifecycle-viewmodel-compose",
-    "androidx-hilt-lifecycle-viewmodel-compose",
+  "androidx-navigation3-runtime",
+  "androidx-navigation3-ui",
+  "androidx-lifecycle-viewmodel-compose",
+  "androidx-hilt-lifecycle-viewmodel-compose",
 ]
 data = [
-    "retrofit",
-    "retrofit-converter-kotlinx-serialization",
-    "okhttp-logging-interceptor",
-    "kotlinx-serialization-json",
+  "retrofit",
+  "retrofit-converter-kotlinx-serialization",
+  "okhttp-logging-interceptor",
+  "kotlinx-serialization-json",
 ]
 
 [plugins]

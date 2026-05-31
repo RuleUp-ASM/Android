@@ -20,11 +20,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = uri("https://devrepo.kakao.com/nexus/content/groups/public/") }
     }
 }
 
 rootProject.name = "Android"
 include(":app")
 include(":feature:onboarding:presentation")
+include(":feature:onboarding:domain")
 include(":feature:onboarding:data")
 include(":core:network")
+include(":core:designsystem")
