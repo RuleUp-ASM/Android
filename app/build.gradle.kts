@@ -2,6 +2,7 @@ plugins {
     id("ruleup.android.application")
     id("ruleup.android.compose")
     id("ruleup.android.test")
+    id("ruleup.android.hilt")
 }
 
 android {
@@ -27,4 +28,8 @@ android {
             )
         }
     }
+}
+
+dependencies {
+    implementation(project(":core:network"))
 }

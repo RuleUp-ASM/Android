@@ -41,6 +41,10 @@ gradlePlugin {
             id = "ruleup.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"
         }
+        register("androidDomain") {
+            id = "ruleup.android.domain"
+            implementationClass = "AndroidDomainConventionPlugin"
+        }
         register("androidTest") {
             id = "ruleup.android.test"
             implementationClass = "AndroidTestConventionPlugin"

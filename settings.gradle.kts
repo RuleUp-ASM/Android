@@ -25,3 +25,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Android"
 include(":app")
+include(":feature:onboarding:presentation")
+include(":feature:onboarding:data")
+include(":core:network")
