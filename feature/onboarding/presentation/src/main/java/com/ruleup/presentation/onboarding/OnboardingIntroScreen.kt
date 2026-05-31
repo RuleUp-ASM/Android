@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,7 +26,7 @@ import com.ruleup.core.designsystem.component.BottomBar
 import com.ruleup.core.designsystem.component.PageDots
 import com.ruleup.core.designsystem.component.PhoneStatusBar
 import com.ruleup.core.designsystem.component.PrimaryGradientButton
-import com.ruleup.core.designsystem.theme.RuleUpColors
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 /** 온보딩 한 페이지에 들어가는 내용. 02~04 화면이 이 모델만 바꿔 재사용한다. */
 data class OnboardingPage(
@@ -78,7 +77,7 @@ fun OnboardingIntroScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(RuleUpColors.Surface),
+            .background(RuleUpTheme.colors.surface),
     ) {
         PhoneStatusBar()
 
@@ -87,13 +86,13 @@ fun OnboardingIntroScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = RuleUpTheme.spacing.xxl),
             contentAlignment = Alignment.CenterEnd,
         ) {
             if (page.showSkip) {
                 Text(
                     "건너뛰기",
-                    color = RuleUpColors.TextSecondary,
+                    color = RuleUpTheme.colors.textSecondary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                 )
@@ -105,8 +104,8 @@ fun OnboardingIntroScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(RuleUpColors.Background)
-                .padding(horizontal = 24.dp),
+                .background(RuleUpTheme.colors.background)
+                .padding(horizontal = RuleUpTheme.spacing.xxl),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -121,19 +120,16 @@ fun OnboardingIntroScreen(
             }
             Text(
                 page.title,
-                modifier = Modifier.padding(top = 24.dp),
-                color = RuleUpColors.TextPrimary,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 32.sp,
+                modifier = Modifier.padding(top = RuleUpTheme.spacing.xxl),
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.headlineLarge,
                 textAlign = TextAlign.Center,
             )
             Text(
                 page.description,
-                modifier = Modifier.padding(top = 24.dp),
-                color = RuleUpColors.TextSecondary,
-                fontSize = 14.sp,
-                lineHeight = 22.sp,
+                modifier = Modifier.padding(top = RuleUpTheme.spacing.xxl),
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.body,
                 textAlign = TextAlign.Center,
             )
         }
@@ -142,7 +138,7 @@ fun OnboardingIntroScreen(
         BottomBar {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.lg),
             ) {
                 PageDots(total = onboardingPages.size, current = pageIndex)
                 PrimaryGradientButton(text = page.buttonText, onClick = onNext)
@@ -154,11 +150,19 @@ fun OnboardingIntroScreen(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun OnboardingIntroScreenPreview() {
-    OnboardingIntroScreen(page = onboardingPages[0], pageIndex = 0)
+    RuleUpTheme { OnboardingIntroScreen(page = onboardingPages[0], pageIndex = 0) }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun OnboardingIntroScreenLastPreview() {
-    OnboardingIntroScreen(page = onboardingPages[2], pageIndex = 2)
+    RuleUpTheme { OnboardingIntroScreen(page = onboardingPages[2], pageIndex = 2) }
+}
+
+@Preview(widthDp = 360, heightDp = 800)
+@Composable
+private fun OnboardingIntroScreenDarkPreview() {
+    RuleUpTheme(darkTheme = true) {
+        OnboardingIntroScreen(page = onboardingPages[0], pageIndex = 0)
+    }
 }

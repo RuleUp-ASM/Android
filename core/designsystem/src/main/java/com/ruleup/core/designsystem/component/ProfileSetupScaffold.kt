@@ -23,8 +23,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 /** 프로필 설정 온보딩 상단 내비게이션: 뒤로(‹) · N단계 진행 dot · 건너뛰기. */
 @Composable
@@ -39,7 +39,7 @@ fun ProfileSetupTopBar(
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .background(RuleUpColors.Surface)
+            .background(RuleUpTheme.colors.surface)
             .padding(horizontal = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -50,13 +50,13 @@ fun ProfileSetupTopBar(
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
-            Text("‹", color = RuleUpColors.TextPrimary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+            Text("‹", color = RuleUpTheme.colors.textPrimary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
         }
         StepDots(currentStep = currentStep, totalSteps = totalSteps)
         Text(
             "건너뛰기",
             modifier = Modifier.clickable(onClick = onSkip),
-            color = RuleUpColors.TextSecondary,
+            color = RuleUpTheme.colors.textSecondary,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
         )
@@ -84,14 +84,14 @@ private fun StepDots(currentStep: Int, totalSteps: Int) {
                     Modifier
                         .size(6.dp)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(RuleUpColors.Indigo.copy(alpha = 0.4f)),
+                        .background(RuleUpTheme.colors.brand.copy(alpha = 0.4f)),
                 )
 
                 else -> Box(
                     Modifier
                         .size(6.dp)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(RuleUpColors.BorderLight),
+                        .background(RuleUpTheme.colors.borderStrong),
                 )
             }
         }
@@ -114,7 +114,7 @@ fun ProfileSetupScaffold(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(RuleUpColors.Surface),
+            .background(RuleUpTheme.colors.surface),
     ) {
         PhoneStatusBar()
         ProfileSetupTopBar(currentStep = step, onBack = onBack, onSkip = onSkip)
@@ -122,7 +122,7 @@ fun ProfileSetupScaffold(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(RuleUpColors.Background)
+                .background(RuleUpTheme.colors.background)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.ProfileSetupScaffold
 import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 private data class Interest(val emoji: String, val label: String)
 
@@ -53,27 +54,27 @@ fun InterestScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(RuleUpColors.IndigoTint)
-                .padding(horizontal = 16.dp),
+                .clip(RuleUpTheme.shapes.medium)
+                .background(RuleUpTheme.colors.brandSoft)
+                .padding(horizontal = RuleUpTheme.spacing.lg),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("✨", fontSize = 14.sp)
                 Text(
                     "최소 3개 이상 선택해주세요",
-                    color = RuleUpColors.Indigo700,
+                    color = RuleUpTheme.colors.brandStrong,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                 )
             }
             Text(
                 "${selected.size} / 10",
-                color = RuleUpColors.Indigo,
+                color = RuleUpTheme.colors.brand,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -82,8 +83,8 @@ fun InterestScreen(
         // 관심 분야 칩
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
+            verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         ) {
             interests.forEach { interest ->
                 InterestChip(interest = interest, selected = interest.label in selected)
@@ -94,7 +95,7 @@ fun InterestScreen(
             background = RuleUpColors.PurpleTint,
             emoji = "🤖",
             text = "선택한 분야는 언제든 마이페이지에서 수정할 수 있어요",
-            textColor = RuleUpColors.TextSlate,
+            textColor = RuleUpTheme.colors.textSlate,
         )
     }
 }
@@ -103,25 +104,25 @@ fun InterestScreen(
 private fun InterestChip(interest: Interest, selected: Boolean) {
     val base = Modifier
         .height(42.dp)
-        .clip(RoundedCornerShape(21.dp))
+        .clip(RuleUpTheme.shapes.chip)
     val styled = if (selected) {
         base.background(RuleUpGradients.Button)
     } else {
         base
-            .background(RuleUpColors.Surface)
-            .border(1.dp, RuleUpColors.Border, RoundedCornerShape(21.dp))
+            .background(RuleUpTheme.colors.surface)
+            .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.chip)
     }
     Row(
-        modifier = styled.padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = styled.padding(horizontal = RuleUpTheme.spacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(interest.emoji, fontSize = 16.sp)
         Text(
             interest.label,
-            color = if (selected) Color.White else RuleUpColors.TextPrimary,
+            color = if (selected) Color.White else RuleUpTheme.colors.textPrimary,
             fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            fontWeight = FontWeight.Medium,
         )
     }
 }
@@ -129,5 +130,5 @@ private fun InterestChip(interest: Interest, selected: Boolean) {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun InterestScreenPreview() {
-    InterestScreen()
+    RuleUpTheme { InterestScreen() }
 }

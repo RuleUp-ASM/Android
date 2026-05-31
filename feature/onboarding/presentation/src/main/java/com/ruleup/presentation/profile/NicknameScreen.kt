@@ -24,8 +24,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.ProfileSetupScaffold
-import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 /** 02 · 닉네임 (2/4). */
 @Composable
@@ -47,7 +47,7 @@ fun NicknameScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(160.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RuleUpTheme.shapes.cardLarge)
                 .background(
                     Brush.linearGradient(listOf(Color(0xFFEEF2FF), Color(0xFFF5F3FF))),
                 ),
@@ -67,58 +67,58 @@ fun NicknameScreen(
             Text(
                 nickname,
                 modifier = Modifier.padding(top = 10.dp),
-                color = RuleUpColors.TextPrimary,
-                fontSize = 17.sp,
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.title,
                 fontWeight = FontWeight.Bold,
             )
         }
 
         // 닉네임 입력
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("닉네임", color = RuleUpColors.TextSlate, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                Text("${nickname.length} / $maxLength", color = RuleUpColors.TextMuted, fontSize = 11.sp)
+                Text("닉네임", color = RuleUpTheme.colors.textSlate, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("${nickname.length} / $maxLength", color = RuleUpTheme.colors.textMuted, fontSize = 11.sp)
             }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(RuleUpColors.Surface)
-                    .border(2.dp, RuleUpColors.Indigo, RoundedCornerShape(14.dp))
+                    .clip(RuleUpTheme.shapes.large)
+                    .background(RuleUpTheme.colors.surface)
+                    .border(2.dp, RuleUpTheme.colors.brand, RuleUpTheme.shapes.large)
                     .padding(horizontal = 18.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(nickname, color = RuleUpColors.TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(nickname, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
                     Box(
                         Modifier
-                            .padding(start = 8.dp)
+                            .padding(start = RuleUpTheme.spacing.sm)
                             .width(2.dp)
                             .height(20.dp)
-                            .background(RuleUpColors.Indigo),
+                            .background(RuleUpTheme.colors.brand),
                     )
                 }
                 Box(
                     modifier = Modifier
                         .size(24.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(RuleUpColors.Success),
+                        .background(RuleUpTheme.colors.success),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("✓", color = RuleUpColors.Success, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Text("사용 가능한 닉네임이에요", color = RuleUpColors.SuccessText, fontSize = 11.sp)
+                Text("✓", color = RuleUpTheme.colors.success, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("사용 가능한 닉네임이에요", color = RuleUpTheme.colors.onSuccess, fontSize = 11.sp)
             }
         }
 
@@ -126,17 +126,15 @@ fun NicknameScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(RuleUpColors.IndigoTint)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .clip(RuleUpTheme.shapes.medium)
+                .background(RuleUpTheme.colors.brandSoft)
+                .padding(RuleUpTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         ) {
             Text(
                 "닉네임 규칙",
-                color = RuleUpColors.Indigo700,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.66.sp,
+                color = RuleUpTheme.colors.brandStrong,
+                style = RuleUpTheme.typography.overline,
             )
             RuleRow(ok = true, "2 ~ 12자 사이")
             RuleRow(ok = true, "한글, 영문, 숫자 사용 가능")
@@ -148,21 +146,21 @@ fun NicknameScreen(
 @Composable
 private fun RuleRow(ok: Boolean, text: String) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             if (ok) "✓" else "✗",
-            color = if (ok) RuleUpColors.Success else RuleUpColors.Danger,
+            color = if (ok) RuleUpTheme.colors.success else RuleUpTheme.colors.danger,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
         )
-        Text(text, color = RuleUpColors.TextSlate, fontSize = 11.sp)
+        Text(text, color = RuleUpTheme.colors.textSlate, fontSize = 11.sp)
     }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NicknameScreenPreview() {
-    NicknameScreen()
+    RuleUpTheme { NicknameScreen() }
 }

@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.PhoneStatusBar
 import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 private data class SocialProvider(
     val mark: String,
@@ -39,13 +39,18 @@ private data class SocialProvider(
     val border: Color? = null,
 )
 
-private val providers = listOf(
+/**
+ * 소셜 로그인 버튼 목록. 카카오/네이버/Apple 은 브랜드 고정색이라 상수지만,
+ * Google 버튼은 surface/text/border 를 쓰므로 테마에 따라 라이트·다크로 바뀐다.
+ */
+@Composable
+private fun socialProviders(): List<SocialProvider> = listOf(
     SocialProvider("💬", "카카오로 시작하기", RuleUpColors.Kakao, RuleUpColors.KakaoText),
     SocialProvider("N", "네이버로 시작하기", RuleUpColors.Naver, Color.White, markBold = true),
     SocialProvider("🍎", "Apple로 시작하기", RuleUpColors.Apple, Color.White),
     SocialProvider(
-        "G", "Google로 시작하기", RuleUpColors.Surface, RuleUpColors.TextPrimary,
-        markBold = true, border = RuleUpColors.Border,
+        "G", "Google로 시작하기", RuleUpTheme.colors.surface, RuleUpTheme.colors.textPrimary,
+        markBold = true, border = RuleUpTheme.colors.border,
     ),
 )
 
@@ -58,17 +63,17 @@ fun LoginScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(RuleUpColors.Surface),
+            .background(RuleUpTheme.colors.surface),
     ) {
         PhoneStatusBar()
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .background(RuleUpColors.Background)
-                .padding(horizontal = 24.dp, vertical = 40.dp),
+                .background(RuleUpTheme.colors.background)
+                .padding(horizontal = RuleUpTheme.spacing.xxl, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xl),
         ) {
             Box(
                 modifier = Modifier
@@ -81,18 +86,18 @@ fun LoginScreen(
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
             ) {
                 Text(
                     "RuleUp에 오신 것을 환영해요",
-                    color = RuleUpColors.TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
+                    color = RuleUpTheme.colors.textPrimary,
+                    style = RuleUpTheme.typography.headline,
                 )
                 Text(
                     "1초 만에 시작할 수 있어요",
-                    color = RuleUpColors.TextSecondary,
-                    fontSize = 13.sp,
+                    color = RuleUpTheme.colors.textSecondary,
+                    style = RuleUpTheme.typography.label,
+                    fontWeight = FontWeight.Normal,
                 )
             }
 
@@ -102,7 +107,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                providers.forEach { provider ->
+                socialProviders().forEach { provider ->
                     SocialButton(provider, onClick = { onProviderClick(provider.label) })
                 }
             }
@@ -111,9 +116,8 @@ fun LoginScreen(
 
             Text(
                 "시작과 동시에 서비스 이용약관 및 개인정보 처리방침에 동의하게 됩니다",
-                color = RuleUpColors.TextMuted,
-                fontSize = 11.sp,
-                lineHeight = 16.sp,
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
                 textAlign = TextAlign.Center,
             )
         }
@@ -125,9 +129,9 @@ private fun SocialButton(provider: SocialProvider, onClick: () -> Unit) {
     val base = Modifier
         .fillMaxWidth()
         .height(52.dp)
-        .clip(RoundedCornerShape(12.dp))
+        .clip(RuleUpTheme.shapes.medium)
     val withBorder = if (provider.border != null) {
-        base.border(1.dp, provider.border, RoundedCornerShape(12.dp))
+        base.border(1.dp, provider.border, RuleUpTheme.shapes.medium)
     } else {
         base
     }
@@ -135,7 +139,7 @@ private fun SocialButton(provider: SocialProvider, onClick: () -> Unit) {
         modifier = withBorder
             .background(provider.background)
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = RuleUpTheme.spacing.lg),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -158,5 +162,11 @@ private fun SocialButton(provider: SocialProvider, onClick: () -> Unit) {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun LoginScreenPreview() {
-    LoginScreen()
+    RuleUpTheme { LoginScreen() }
+}
+
+@Preview(widthDp = 360, heightDp = 800)
+@Composable
+private fun LoginScreenDarkPreview() {
+    RuleUpTheme(darkTheme = true) { LoginScreen() }
 }

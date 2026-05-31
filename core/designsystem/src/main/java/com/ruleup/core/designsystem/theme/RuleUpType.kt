@@ -28,7 +28,7 @@ data class RuleUpTypography(
 )
 
 val defaultRuleUpTypography = RuleUpTypography(
-    display = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 36.sp, lineHeight = 44.sp),
+    display = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 48.sp),
     headlineLarge = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 32.sp),
     headline = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 30.sp),
     title = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 24.sp),

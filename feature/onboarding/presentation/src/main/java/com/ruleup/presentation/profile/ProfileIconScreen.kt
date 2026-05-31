@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.ProfileSetupScaffold
 import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 private val initialPalette = listOf(
     Brush.linearGradient(listOf(RuleUpColors.Indigo, RuleUpColors.Purple)),
@@ -66,7 +67,7 @@ fun ProfileIconScreen(
                         .size(40.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(Color.White)
-                        .border(2.dp, RuleUpColors.Indigo, RoundedCornerShape(20.dp)),
+                        .border(2.dp, RuleUpTheme.colors.brand, RoundedCornerShape(20.dp)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text("📷", fontSize = 18.sp)
@@ -103,12 +104,10 @@ fun ProfileIconScreen(
         ) {
             Text(
                 "기본 아이콘",
-                color = RuleUpColors.TextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.66.sp,
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.overline,
             )
-            Text("이니셜로 만들어드려요", color = RuleUpColors.TextMuted, fontSize = 10.sp)
+            Text("이니셜로 만들어드려요", color = RuleUpTheme.colors.textMuted, fontSize = 10.sp)
         }
 
         // 이니셜 팔레트
@@ -125,7 +124,7 @@ fun ProfileIconScreen(
                         .background(brush)
                         .then(
                             if (selected) {
-                                Modifier.border(3.dp, RuleUpColors.Indigo, RoundedCornerShape(27.dp))
+                                Modifier.border(3.dp, RuleUpTheme.colors.brand, RoundedCornerShape(27.dp))
                             } else {
                                 Modifier
                             },
@@ -138,10 +137,10 @@ fun ProfileIconScreen(
         }
 
         InfoBox(
-            background = RuleUpColors.IndigoTint,
+            background = RuleUpTheme.colors.brandSoft,
             emoji = "💡",
             text = "권장 1024×1024 · 최대 10MB · JPG/PNG",
-            textColor = RuleUpColors.Indigo700,
+            textColor = RuleUpTheme.colors.brandStrong,
         )
     }
 }
@@ -157,9 +156,9 @@ private fun SourceCard(
     Column(
         modifier = modifier
             .height(96.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(RuleUpColors.Surface)
-            .border(1.dp, RuleUpColors.Border, RoundedCornerShape(16.dp)),
+            .clip(RuleUpTheme.shapes.card)
+            .background(RuleUpTheme.colors.surface)
+            .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -174,17 +173,17 @@ private fun SourceCard(
         }
         Text(
             title,
-            modifier = Modifier.padding(top = 8.dp),
-            color = RuleUpColors.TextPrimary,
+            modifier = Modifier.padding(top = RuleUpTheme.spacing.sm),
+            color = RuleUpTheme.colors.textPrimary,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
         )
-        Text(caption, color = RuleUpColors.TextSecondary, fontSize = 10.sp)
+        Text(caption, color = RuleUpTheme.colors.textSecondary, fontSize = 10.sp)
     }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun ProfileIconScreenPreview() {
-    ProfileIconScreen()
+    RuleUpTheme { ProfileIconScreen() }
 }

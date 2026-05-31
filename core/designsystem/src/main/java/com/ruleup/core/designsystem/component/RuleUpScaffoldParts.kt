@@ -21,26 +21,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 /** 상단 모의 상태바(9:41 · 5G · 100%). 프로토타입 화면 상단에 쓰인다. */
 @Composable
 fun PhoneStatusBar(
     modifier: Modifier = Modifier,
-    contentColor: Color = RuleUpColors.TextPrimary,
+    contentColor: Color = RuleUpTheme.colors.textPrimary,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(44.dp)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = RuleUpTheme.spacing.xxl),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text("9:41", color = contentColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("●●●●", color = contentColor, fontSize = 10.sp)
@@ -57,11 +57,11 @@ fun PageDots(
     current: Int,
     modifier: Modifier = Modifier,
     activeBrush: Brush = RuleUpGradients.Indicator,
-    inactiveColor: Color = RuleUpColors.BorderLight,
+    inactiveColor: Color = RuleUpTheme.colors.borderStrong,
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         repeat(total) { index ->
@@ -85,7 +85,7 @@ fun PageDots(
     }
 }
 
-/** 화면 하단 고정 CTA 영역(흰 배경). */
+/** 화면 하단 고정 CTA 영역. */
 @Composable
 fun BottomBar(
     modifier: Modifier = Modifier,
@@ -95,7 +95,7 @@ fun BottomBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(RuleUpColors.Surface)
+            .background(RuleUpTheme.colors.surface)
             .padding(padding),
         contentAlignment = Alignment.Center,
     ) {

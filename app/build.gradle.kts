@@ -49,6 +49,8 @@ android {
 
 dependencies {
     implementation(project(":core:network"))
+    implementation(project(":core:designsystem"))
     implementation(libs.kakao.user)
     implementation(project(":feature:onboarding:data"))
+    implementation(project(":feature:onboarding:presentation"))
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.ProfileSetupScaffold
 import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 private data class Permission(
     val emoji: String,
@@ -35,10 +36,12 @@ private data class Permission(
     val enabled: Boolean,
 )
 
-private val permissions = listOf(
-    Permission("📍", RuleUpColors.IndigoTint, "위치", true, "GPS 인증 챌린지에 사용해요", true),
-    Permission("📷", RuleUpColors.GreenTint, "카메라", true, "인증 사진 촬영에 사용해요", true),
-    Permission("🔔", RuleUpColors.AmberTint, "알림", false, "챌린지 시작과 결과를 알려드려요", true),
+/** 권한 목록. 아이콘 틴트는 시맨틱 컨테이너 토큰을 써 라이트/다크에 모두 대응한다. */
+@Composable
+private fun permissionItems(): List<Permission> = listOf(
+    Permission("📍", RuleUpTheme.colors.brandSoft, "위치", true, "GPS 인증 챌린지에 사용해요", true),
+    Permission("📷", RuleUpTheme.colors.successContainer, "카메라", true, "인증 사진 촬영에 사용해요", true),
+    Permission("🔔", RuleUpTheme.colors.warningContainer, "알림", false, "챌린지 시작과 결과를 알려드려요", true),
     Permission("🖼️", RuleUpColors.PurpleTint, "사진", false, "프로필/갤러리 인증에 사용해요", false),
 )
 
@@ -53,12 +56,13 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
         )
 
         // 권한 카드 묶음
+        val permissions = permissionItems()
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpColors.Surface)
-                .border(1.dp, RuleUpColors.Border, RoundedCornerShape(16.dp)),
+                .clip(RuleUpTheme.shapes.card)
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         ) {
             permissions.forEachIndexed { index, permission ->
                 PermissionRow(permission)
@@ -67,17 +71,17 @@ fun PermissionScreen(modifier: Modifier = Modifier) {
                         Modifier
                             .fillMaxWidth()
                             .height(1.dp)
-                            .background(RuleUpColors.Border),
+                            .background(RuleUpTheme.colors.border),
                     )
                 }
             }
         }
 
         InfoBox(
-            background = RuleUpColors.GreenTint,
+            background = RuleUpTheme.colors.successContainer,
             emoji = "🛡",
             text = "수집된 데이터는 인증/추천에만 쓰이고 7일 후 자동 삭제돼요",
-            textColor = RuleUpColors.SuccessText,
+            textColor = RuleUpTheme.colors.onSuccess,
         )
     }
 }
@@ -94,7 +98,7 @@ private fun PermissionRow(permission: Permission) {
     ) {
         Row(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -108,15 +112,15 @@ private fun PermissionRow(permission: Permission) {
             }
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(permission.name, color = RuleUpColors.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(permission.name, color = RuleUpTheme.colors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     RequirementBadge(required = permission.required)
                 }
                 Text(
                     permission.description,
-                    color = RuleUpColors.TextSecondary,
+                    color = RuleUpTheme.colors.textSecondary,
                     fontSize = 11.sp,
                     lineHeight = 15.sp,
                 )
@@ -128,14 +132,14 @@ private fun PermissionRow(permission: Permission) {
 
 @Composable
 private fun RequirementBadge(required: Boolean) {
-    val background = if (required) RuleUpColors.Danger else Color(0xFFF1F5F9)
-    val textColor = if (required) Color.White else RuleUpColors.TextSecondary
+    val background = if (required) RuleUpTheme.colors.danger else RuleUpTheme.colors.surfaceVariant
+    val textColor = if (required) Color.White else RuleUpTheme.colors.textSecondary
     Box(
         modifier = Modifier
             .height(18.dp)
             .clip(RoundedCornerShape(9.dp))
             .background(background)
-            .padding(horizontal = 6.dp),
+            .padding(horizontal = RuleUpTheme.spacing.xs),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -155,7 +159,7 @@ private fun Toggle(on: Boolean) {
         .height(26.dp)
         .clip(RoundedCornerShape(13.dp))
     Box(
-        modifier = if (on) track.background(RuleUpGradients.Button) else track.background(RuleUpColors.BorderLight),
+        modifier = if (on) track.background(RuleUpGradients.Button) else track.background(RuleUpTheme.colors.borderStrong),
         contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
     ) {
         Box(
@@ -171,5 +175,11 @@ private fun Toggle(on: Boolean) {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun PermissionScreenPreview() {
-    PermissionScreen()
+    RuleUpTheme { PermissionScreen() }
+}
+
+@Preview(widthDp = 360, heightDp = 800)
+@Composable
+private fun PermissionScreenDarkPreview() {
+    RuleUpTheme(darkTheme = true) { PermissionScreen() }
 }

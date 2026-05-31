@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.PhoneStatusBar
 import com.ruleup.core.designsystem.theme.RuleUpGradients
+import com.ruleup.core.designsystem.theme.RuleUpTheme
 
 /** 01 · 스플래시 화면. */
 @Composable
@@ -52,9 +53,9 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             Column(
                 modifier = Modifier.padding(top = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
             ) {
-                Text("RuleUp", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                Text("RuleUp", color = Color.White, style = RuleUpTheme.typography.display)
                 Text(
                     "함께 약속, 함께 성장",
                     color = Color.White.copy(alpha = 0.85f),
@@ -64,7 +65,7 @@ fun SplashScreen(modifier: Modifier = Modifier) {
             }
             Row(
                 modifier = Modifier.padding(top = 44.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
             ) {
                 LoadingDot(Color.White.copy(alpha = 0.35f))
                 LoadingDot(Color.White.copy(alpha = 0.65f))
@@ -87,5 +88,5 @@ private fun LoadingDot(color: Color) {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun SplashScreenPreview() {
-    SplashScreen()
+    RuleUpTheme { SplashScreen() }
 }
