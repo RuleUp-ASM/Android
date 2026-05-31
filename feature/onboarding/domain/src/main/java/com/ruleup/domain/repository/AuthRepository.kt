@@ -1,12 +1,12 @@
 package com.ruleup.domain.repository
 
+import com.ruleup.core.model.InterestCategory
+import com.ruleup.core.model.Tokens
 import com.ruleup.domain.model.Agreements
 import com.ruleup.domain.model.AuthSession
-import com.ruleup.domain.model.InterestCategory
 import com.ruleup.domain.model.NicknameAvailability
 import com.ruleup.domain.model.OAuthProvider
 import com.ruleup.domain.model.OAuthResult
-import com.ruleup.domain.model.Tokens
 
 interface AuthRepository {
 

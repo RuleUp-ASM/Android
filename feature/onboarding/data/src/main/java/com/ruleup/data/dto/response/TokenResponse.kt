@@ -1,6 +1,6 @@
 package com.ruleup.data.dto.response
 
-import com.ruleup.domain.model.Tokens
+import com.ruleup.core.model.Tokens
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

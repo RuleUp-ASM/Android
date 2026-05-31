@@ -9,13 +9,13 @@ import com.ruleup.data.dto.request.SignupRequest
 import com.ruleup.data.dto.response.toAuthSession
 import com.ruleup.data.dto.response.toDomain
 import com.ruleup.data.dto.response.toOAuthResult
+import com.ruleup.core.model.InterestCategory
+import com.ruleup.core.model.Tokens
 import com.ruleup.domain.model.Agreements
 import com.ruleup.domain.model.AuthSession
-import com.ruleup.domain.model.InterestCategory
 import com.ruleup.domain.model.NicknameAvailability
 import com.ruleup.domain.model.OAuthProvider
 import com.ruleup.domain.model.OAuthResult
-import com.ruleup.domain.model.Tokens
 import com.ruleup.domain.repository.AuthRepository
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError

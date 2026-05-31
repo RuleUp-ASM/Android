@@ -8,5 +8,8 @@ android {
 
 dependencies {
     implementation(project(":core:network"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:model"))
     implementation(project(":feature:onboarding:domain"))
+    implementation(libs.kakao.user)
 }

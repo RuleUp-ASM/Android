@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.ruleup.feature.onboarding.domain"
 }
+
+dependencies {
+    api(project(":core:model"))
+}

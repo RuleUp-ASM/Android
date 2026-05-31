@@ -1,6 +1,6 @@
 package com.ruleup.domain.repository
 
-import com.ruleup.domain.model.InterestCategory
+import com.ruleup.core.model.InterestCategory
 import com.ruleup.domain.model.Profile
 
 interface ProfileRepository {

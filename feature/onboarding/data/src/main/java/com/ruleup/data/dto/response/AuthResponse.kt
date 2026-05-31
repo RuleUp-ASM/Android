@@ -1,11 +1,11 @@
 package com.ruleup.data.dto.response
 
+import com.ruleup.core.model.InterestCategory
+import com.ruleup.core.model.Tokens
+import com.ruleup.core.model.User
 import com.ruleup.domain.model.AuthSession
-import com.ruleup.domain.model.InterestCategory
 import com.ruleup.domain.model.OAuthProfile
 import com.ruleup.domain.model.OAuthResult
-import com.ruleup.domain.model.Tokens
-import com.ruleup.domain.model.User
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

@@ -37,6 +37,10 @@ jetbrainsKotlinJvm = "2.3.21"
 # kakao
 kakao = "2.23.2"
 
+# datastore
+datastore = "1.2.1"
+coroutines = "1.11.0"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -86,6 +90,10 @@ material = { group = "com.google.android.material", name = "material", version.r
 
 # kakao
 kakao-user = { module = "com.kakao.sdk:v2-user", version.ref = "kakao" }
+
+# datastore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 
 [bundles]
 compose = [

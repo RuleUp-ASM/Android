@@ -3,7 +3,7 @@ package com.ruleup.data.repository
 import com.ruleup.data.api.ProfileApi
 import com.ruleup.data.dto.request.UpdateProfileRequest
 import com.ruleup.data.dto.response.toDomain
-import com.ruleup.domain.model.InterestCategory
+import com.ruleup.core.model.InterestCategory
 import com.ruleup.domain.model.Profile
 import com.ruleup.domain.repository.ProfileRepository
 import com.ruleup.network.dto.getOrThrow
