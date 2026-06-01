@@ -6,6 +6,7 @@ import com.ruleup.domain.model.OAuthProvider
 import com.ruleup.domain.model.OAuthResult
 import com.ruleup.domain.model.SignupForm
 import com.ruleup.domain.repository.AuthRepository
+import com.ruleup.domain.repository.ProfileRepository
 import com.ruleup.domain.repository.SessionRepository
 import javax.inject.Inject
 
@@ -15,6 +16,7 @@ class AuthUseCase
         private val authRepository: AuthRepository,
         private val oAuthProvider: OAuthAuthorizer,
         private val sessionRepository: SessionRepository,
+        private val profileRepository: ProfileRepository,
     ) {
         suspend fun login(provider: OAuthProvider): OAuthResult {
             val auth = oAuthProvider.authorize(provider)
@@ -34,12 +36,16 @@ class AuthUseCase
         }
 
         suspend fun signUp(form: SignupForm): AuthSession {
+            val imageUrl =
+                form.localImageUri
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { profileRepository.uploadProfileImage(it) }
             val session =
                 authRepository.signup(
                     signupToken = form.signupToken,
                     nickname = form.nickname,
                     interestCategories = form.interestCategories,
-                    profileImageUrl = form.profileImageUrl,
+                    profileImageUrl = imageUrl,
                     agreements = form.agreements,
                 )
 

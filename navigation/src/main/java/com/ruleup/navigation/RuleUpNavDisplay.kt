@@ -51,8 +51,18 @@ fun RuleUpNavDisplay(
         entryProvider =
             entryProvider {
                 onboardingEntries(
-                    onFinishIntro = { backStack.apply { clear(); add(LoginKey) } },
-                    onNavigateHome = { backStack.apply { clear(); add(HomeKey) } },
+                    onFinishIntro = {
+                        backStack.apply {
+                            clear()
+                            add(LoginKey)
+                        }
+                    },
+                    onNavigateHome = {
+                        backStack.apply {
+                            clear()
+                            add(HomeKey)
+                        }
+                    },
                     onNavigateSignup = { token -> backStack.add(SignupKey(token)) },
                 )
                 // TODO: home feature 생기면 homeEntries(...) 한 줄 추가

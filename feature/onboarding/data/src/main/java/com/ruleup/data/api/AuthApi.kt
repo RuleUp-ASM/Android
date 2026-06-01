@@ -16,7 +16,6 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface AuthApi {
-
     @POST("auth/oauth/{provider}")
     suspend fun oauthLogin(
         @Path("provider") provider: String,

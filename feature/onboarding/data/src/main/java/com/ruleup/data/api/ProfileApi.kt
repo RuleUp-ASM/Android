@@ -14,7 +14,6 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 
 interface ProfileApi {
-
     @GET("profile/me")
     suspend fun getMyProfile(): BaseResponse<ProfileResponse>
 

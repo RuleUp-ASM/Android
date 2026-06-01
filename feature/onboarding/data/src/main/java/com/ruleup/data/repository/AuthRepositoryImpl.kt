@@ -1,5 +1,7 @@
 package com.ruleup.data.repository
 
+import com.ruleup.core.model.InterestCategory
+import com.ruleup.core.model.Tokens
 import com.ruleup.data.api.AuthApi
 import com.ruleup.data.dto.request.AgreementsDto
 import com.ruleup.data.dto.request.AuthRequest
@@ -9,8 +11,6 @@ import com.ruleup.data.dto.request.SignupRequest
 import com.ruleup.data.dto.response.toAuthSession
 import com.ruleup.data.dto.response.toDomain
 import com.ruleup.data.dto.response.toOAuthResult
-import com.ruleup.core.model.InterestCategory
-import com.ruleup.core.model.Tokens
 import com.ruleup.domain.model.Agreements
 import com.ruleup.domain.model.AuthSession
 import com.ruleup.domain.model.NicknameAvailability
@@ -19,7 +19,7 @@ import com.ruleup.domain.model.OAuthResult
 import com.ruleup.domain.repository.AuthRepository
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
-import jakarta.inject.Inject
+import javax.inject.Inject
 
 class AuthRepositoryImpl
     @Inject

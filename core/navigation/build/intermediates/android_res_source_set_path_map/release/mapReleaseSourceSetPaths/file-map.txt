@@ -1,0 +1,9 @@
+com.ruleup.core.navigation-pngs-0 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/build/generated/res/pngs/release
+com.ruleup.core.navigation-updated_navigation_xml-1 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/build/generated/updated_navigation_xml/release
+com.ruleup.core.navigation-mergeReleaseResources-2 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
+com.ruleup.core.navigation-mergeReleaseResources-3 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
+com.ruleup.core.navigation-release-4 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/build/intermediates/merged_res/release/mergeReleaseResources
+com.ruleup.core.navigation-release-5 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/build/intermediates/packaged_res/release/packageReleaseResources
+com.ruleup.core.navigation-main-6 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/src/main/res
+com.ruleup.core.navigation-release-7 /Users/adamatia123/AndroidStudioProjects/Android/core/navigation/src/release/res
+gradleHome-0 /Users/adamatia123/.gradle

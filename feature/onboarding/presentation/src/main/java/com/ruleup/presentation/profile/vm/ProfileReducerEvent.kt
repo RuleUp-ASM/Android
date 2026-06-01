@@ -5,12 +5,16 @@ import com.ruleup.core.ui.mvi.ReducerEvent
 import com.ruleup.domain.model.Agreements
 
 sealed interface ProfileReducerEvent : ReducerEvent {
+    data class SetSignupToken(
+        val token: String,
+    ) : ProfileReducerEvent
+
     data class NicknameEntered(
         val nickname: String,
     ) : ProfileReducerEvent
 
     data class InterestsSelected(
-        val interests: List<InterestCategory>,
+        val interest: InterestCategory,
     ) : ProfileReducerEvent
 
     data class ProfileImageSelected(
@@ -22,4 +26,10 @@ sealed interface ProfileReducerEvent : ReducerEvent {
     ) : ProfileReducerEvent
 
     data object Submitting : ProfileReducerEvent
+
+    data object SubmitFailed : ProfileReducerEvent
+
+    data class StepChanged(
+        val step: Int,
+    ) : ProfileReducerEvent
 }

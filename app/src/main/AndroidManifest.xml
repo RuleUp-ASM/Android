@@ -4,6 +4,7 @@
     <package android:name="com.kakao.talk" />
 </queries>
     <application
+
         android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

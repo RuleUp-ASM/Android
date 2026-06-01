@@ -1,22 +1,27 @@
 package com.ruleup.data.repository
 
+import android.content.Context
+import androidx.core.net.toUri
 import com.ruleup.data.api.ProfileApi
 import com.ruleup.data.dto.request.UpdateProfileRequest
 import com.ruleup.data.dto.response.toDomain
 import com.ruleup.core.model.InterestCategory
+import com.ruleup.data.util.resolveImage
 import com.ruleup.domain.model.Profile
 import com.ruleup.domain.repository.ProfileRepository
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError
-import jakarta.inject.Inject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import javax.inject.Inject
 
 class ProfileRepositoryImpl
     @Inject
     constructor(
+        @ApplicationContext private val context: Context,
         private val profileApi: ProfileApi,
     ) : ProfileRepository {
         override suspend fun getMyProfile(): Profile = profileApi.getMyProfile().getOrThrow().toDomain()
@@ -38,9 +43,10 @@ class ProfileRepositoryImpl
                 .toDomain()
 
         override suspend fun uploadProfileImage(
-            image: ByteArray,
-            fileName: String,
+            imageUri: String
         ): String {
+            val (image, fileName) = context.resolveImage(imageUri.toUri())
+
             val body = image.toRequestBody("image/*".toMediaTypeOrNull())
             val part = MultipartBody.Part.createFormData("image", fileName, body)
             return profileApi

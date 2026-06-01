@@ -2,6 +2,7 @@ package com.ruleup.domain.auth.usecase;
 
 import com.ruleup.domain.auth.repository.OAuthAuthorizer;
 import com.ruleup.domain.repository.AuthRepository;
+import com.ruleup.domain.repository.ProfileRepository;
 import com.ruleup.domain.repository.SessionRepository;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
@@ -33,27 +34,33 @@ public final class AuthUseCase_Factory implements Factory<AuthUseCase> {
 
   private final Provider<SessionRepository> sessionRepositoryProvider;
 
+  private final Provider<ProfileRepository> profileRepositoryProvider;
+
   private AuthUseCase_Factory(Provider<AuthRepository> authRepositoryProvider,
       Provider<OAuthAuthorizer> oAuthProvider,
-      Provider<SessionRepository> sessionRepositoryProvider) {
+      Provider<SessionRepository> sessionRepositoryProvider,
+      Provider<ProfileRepository> profileRepositoryProvider) {
     this.authRepositoryProvider = authRepositoryProvider;
     this.oAuthProvider = oAuthProvider;
     this.sessionRepositoryProvider = sessionRepositoryProvider;
+    this.profileRepositoryProvider = profileRepositoryProvider;
   }
 
   @Override
   public AuthUseCase get() {
-    return newInstance(authRepositoryProvider.get(), oAuthProvider.get(), sessionRepositoryProvider.get());
+    return newInstance(authRepositoryProvider.get(), oAuthProvider.get(), sessionRepositoryProvider.get(), profileRepositoryProvider.get());
   }
 
   public static AuthUseCase_Factory create(Provider<AuthRepository> authRepositoryProvider,
       Provider<OAuthAuthorizer> oAuthProvider,
-      Provider<SessionRepository> sessionRepositoryProvider) {
-    return new AuthUseCase_Factory(authRepositoryProvider, oAuthProvider, sessionRepositoryProvider);
+      Provider<SessionRepository> sessionRepositoryProvider,
+      Provider<ProfileRepository> profileRepositoryProvider) {
+    return new AuthUseCase_Factory(authRepositoryProvider, oAuthProvider, sessionRepositoryProvider, profileRepositoryProvider);
   }
 
   public static AuthUseCase newInstance(AuthRepository authRepository,
-      OAuthAuthorizer oAuthProvider, SessionRepository sessionRepository) {
-    return new AuthUseCase(authRepository, oAuthProvider, sessionRepository);
+      OAuthAuthorizer oAuthProvider, SessionRepository sessionRepository,
+      ProfileRepository profileRepository) {
+    return new AuthUseCase(authRepository, oAuthProvider, sessionRepository, profileRepository);
   }
 }

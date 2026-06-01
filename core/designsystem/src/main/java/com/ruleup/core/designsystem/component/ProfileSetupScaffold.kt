@@ -116,7 +116,6 @@ fun ProfileSetupScaffold(
             .fillMaxSize()
             .background(RuleUpTheme.colors.surface),
     ) {
-        PhoneStatusBar()
         ProfileSetupTopBar(currentStep = step, onBack = onBack, onSkip = onSkip)
         Column(
             modifier = Modifier

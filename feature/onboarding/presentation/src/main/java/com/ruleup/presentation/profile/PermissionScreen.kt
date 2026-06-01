@@ -47,8 +47,18 @@ private fun permissionItems(): List<Permission> = listOf(
 
 /** 04 · 권한 허용 (4/4). */
 @Composable
-fun PermissionScreen(modifier: Modifier = Modifier) {
-    ProfileSetupScaffold(step = 3, buttonText = "RuleUp 시작하기", modifier = modifier) {
+fun PermissionContent(
+    modifier: Modifier = Modifier,
+    onNext: () -> Unit = {},
+    onBack: () -> Unit = {},
+) {
+    ProfileSetupScaffold(
+        step = 3,
+        buttonText = "RuleUp 시작하기",
+        modifier = modifier,
+        onNext = onNext,
+        onBack = onBack,
+    ) {
         SectionHeader(
             title = "몇 가지 권한이 필요해요",
             subtitle = "RuleUp을 잘 쓰기 위한 권한이에요. 거부해도 일부 기능만 제한돼요",
@@ -175,11 +185,11 @@ private fun Toggle(on: Boolean) {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun PermissionScreenPreview() {
-    RuleUpTheme { PermissionScreen() }
+    RuleUpTheme { PermissionContent() }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun PermissionScreenDarkPreview() {
-    RuleUpTheme(darkTheme = true) { PermissionScreen() }
+    RuleUpTheme(darkTheme = true) { PermissionContent() }
 }

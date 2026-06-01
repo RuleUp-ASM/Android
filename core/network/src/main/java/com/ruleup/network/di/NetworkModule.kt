@@ -1,6 +1,10 @@
 package com.ruleup.network.di
 
 import com.ruleup.network.BuildConfig
+import com.ruleup.network.auth.AuthInterceptor
+import com.ruleup.network.auth.TokenAuthenticator
+import com.ruleup.network.auth.TokenProvider
+import com.ruleup.network.auth.TokenRefresher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -33,8 +37,29 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient =
-        OkHttpClient.Builder().addInterceptor(loggingInterceptor).build()
+    fun provideAuthInterceptor(tokenProvider: TokenProvider): AuthInterceptor = AuthInterceptor(tokenProvider)
+
+    @Provides
+    @Singleton
+    fun provideTokenAuthenticator(
+        tokenProvider: TokenProvider,
+        tokenRefresher: TokenRefresher,
+    ): TokenAuthenticator = TokenAuthenticator(tokenProvider, tokenRefresher)
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        loggingInterceptor: HttpLoggingInterceptor,
+        tokenAuthenticator: TokenAuthenticator,
+    ): OkHttpClient =
+        OkHttpClient
+            .Builder()
+            .addInterceptor(authInterceptor) // 토큰 부착 먼저 → 로깅이 헤더까지 보도록
+            .addInterceptor(loggingInterceptor)
+            .authenticator(tokenAuthenticator) // 401 → refresh → 재시도
+            .build()
+
 
     @Provides
     @Singleton

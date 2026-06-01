@@ -1,15 +1,10 @@
 package com.ruleup.presentation.nav
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.core.navigation.LoginKey
@@ -18,7 +13,7 @@ import com.ruleup.core.navigation.SignupKey
 import com.ruleup.presentation.login.screen.LoginScreen
 import com.ruleup.presentation.onboarding.OnboardingIntroScreen
 import com.ruleup.presentation.onboarding.onboardingPages
-import com.ruleup.presentation.profile.NicknameScreen
+import com.ruleup.presentation.profile.ProfileSetupScreen
 
 /**
  * 온보딩 feature 가 소유하는 NavEntry 들. `:navigation` 의 [androidx.navigation3.runtime.entryProvider]
@@ -26,7 +21,7 @@ import com.ruleup.presentation.profile.NicknameScreen
  *
  * @param onFinishIntro 인트로 완료 → 로그인 (백스택 교체)
  * @param onNavigateHome 로그인 완료 후 홈으로 (cross-feature — 콜백)
- * @param onNavigateSignup 신규 사용자 가입 화면으로 (intra-feature)
+ * @param onNavigateSignup 신규 사용자 가입(프로필 설정) 흐름으로 (intra-feature)
  */
 fun EntryProviderScope<NavKey>.onboardingEntries(
     onFinishIntro: () -> Unit,
@@ -40,7 +35,10 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             onNavigateSignup = onNavigateSignup,
         )
     }
-    entry<SignupKey> { key -> NicknameScreen(signupToken = key.signupToken) }
+    // 프로필 설정 4단계는 하나의 목적지에서 step 상태로 전환된다(ViewModel 공유). 완료 시 홈으로.
+    entry<SignupKey> { key ->
+        ProfileSetupScreen(signupToken = key.signupToken, onFinish = onNavigateHome)
+    }
 }
 
 /**
@@ -62,12 +60,4 @@ private fun OnboardingIntroPager(onFinish: () -> Unit) {
             }
         },
     )
-}
-
-// TODO: 실제 SignupScreen 으로 교체
-@Composable
-private fun SignupScreen(signupToken: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Signup\ntoken=$signupToken")
-    }
 }
