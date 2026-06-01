@@ -1,7 +1,6 @@
 # Gradle
 .gradle
-/build
-build-logic/**/build/
+build/
 
 # IntelliJ / Android Studio
 *.iml
