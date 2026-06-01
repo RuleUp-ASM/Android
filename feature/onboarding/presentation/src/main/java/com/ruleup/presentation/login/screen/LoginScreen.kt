@@ -70,7 +70,6 @@ private fun socialProviders(): List<SocialProvider> =
         ),
     )
 
-/** 05 · 로그인 화면. (NavEntry 진입점 — VM·effect 를 엮고 네비게이션은 콜백으로 위임) */
 @Composable
 fun LoginScreen(
     onNavigateHome: () -> Unit,

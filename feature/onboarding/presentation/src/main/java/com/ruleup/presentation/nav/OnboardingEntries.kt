@@ -18,6 +18,7 @@ import com.ruleup.core.navigation.SignupKey
 import com.ruleup.presentation.login.screen.LoginScreen
 import com.ruleup.presentation.onboarding.OnboardingIntroScreen
 import com.ruleup.presentation.onboarding.onboardingPages
+import com.ruleup.presentation.profile.NicknameScreen
 
 /**
  * 온보딩 feature 가 소유하는 NavEntry 들. `:navigation` 의 [androidx.navigation3.runtime.entryProvider]
@@ -39,7 +40,7 @@ fun EntryProviderScope<NavKey>.onboardingEntries(
             onNavigateSignup = onNavigateSignup,
         )
     }
-    entry<SignupKey> { key -> SignupScreen(signupToken = key.signupToken) }
+    entry<SignupKey> { key -> NicknameScreen(signupToken = key.signupToken) }
 }
 
 /**
