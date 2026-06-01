@@ -1,6 +1,5 @@
 package com.ruleup.domain.auth.usecase
 
-import android.app.Activity
 import com.ruleup.domain.auth.repository.OAuthAuthorizer
 import com.ruleup.domain.model.AuthSession
 import com.ruleup.domain.model.OAuthProvider
@@ -17,11 +16,8 @@ class AuthUseCase
         private val oAuthProvider: OAuthAuthorizer,
         private val sessionRepository: SessionRepository,
     ) {
-        suspend fun login(
-            activity: Activity,
-            provider: OAuthProvider,
-        ): OAuthResult {
-            val auth = oAuthProvider.authorize(activity, provider)
+        suspend fun login(provider: OAuthProvider): OAuthResult {
+            val auth = oAuthProvider.authorize(provider)
             val result =
                 authRepository.oauthLogin(
                     provider = provider,

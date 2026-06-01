@@ -10,4 +10,5 @@ enum class OAuthProvider(
     NAVER("naver"),
     GOOGLE("google"),
     APPLE("apple"),
+    NONE("none")
 }

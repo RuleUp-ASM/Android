@@ -1,8 +1,8 @@
 package com.ruleup.data.repository
 
-import android.app.Activity
 import com.kakao.sdk.auth.AuthCodeClient
 import com.kakao.sdk.user.UserApiClient
+import com.ruleup.data.activity.ActivityProvider
 import com.ruleup.data.util.PkceUtil
 import com.ruleup.domain.auth.model.OAuthAuthorization
 import com.ruleup.domain.auth.repository.OAuthAuthorizer
@@ -15,12 +15,15 @@ import kotlin.coroutines.resumeWithException
 
 class KakaoOAuthAuthorizer
     @Inject
-    constructor() : OAuthAuthorizer {
-        override suspend fun authorize(
-            activity: Activity,
-            provider: OAuthProvider,
-        ): OAuthAuthorization {
+    constructor(
+        private val activityProvider: ActivityProvider,
+    ) : OAuthAuthorizer {
+        override suspend fun authorize(provider: OAuthProvider): OAuthAuthorization {
             require(provider == OAuthProvider.KAKAO) { "지원하지 않는 provider: $provider" }
+
+            val activity =
+                activityProvider.current
+                    ?: error("현재 Activity 가 없어 카카오 로그인을 시작할 수 없습니다.")
 
             val verifier = PkceUtil.generateCodeVerifier()
             val code =

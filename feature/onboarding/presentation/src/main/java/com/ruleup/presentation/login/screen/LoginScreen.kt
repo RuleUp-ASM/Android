@@ -14,8 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,10 +30,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.core.designsystem.component.PhoneStatusBar
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ruleup.core.designsystem.theme.RuleUpColors
 import com.ruleup.core.designsystem.theme.RuleUpGradients
 import com.ruleup.core.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.model.OAuthProvider
+import com.ruleup.presentation.login.vm.LoginEffect
+import com.ruleup.presentation.login.vm.LoginIntent
+import com.ruleup.presentation.login.vm.LoginViewModel
 
 private data class SocialProvider(
     val mark: String,
@@ -37,6 +46,7 @@ private data class SocialProvider(
     val contentColor: Color,
     val markBold: Boolean = false,
     val border: Color? = null,
+    val provider: OAuthProvider,
 )
 
 /**
@@ -46,9 +56,9 @@ private data class SocialProvider(
 @Composable
 private fun socialProviders(): List<SocialProvider> =
     listOf(
-        SocialProvider("💬", "카카오로 시작하기", RuleUpColors.Kakao, RuleUpColors.KakaoText),
-        SocialProvider("N", "네이버로 시작하기", RuleUpColors.Naver, Color.White, markBold = true),
-        SocialProvider("🍎", "Apple로 시작하기", RuleUpColors.Apple, Color.White),
+        SocialProvider("💬", "카카오로 시작하기", RuleUpColors.Kakao, RuleUpColors.KakaoText, provider = OAuthProvider.KAKAO),
+        SocialProvider("N", "네이버로 시작하기", RuleUpColors.Naver, Color.White, markBold = true, provider = OAuthProvider.NAVER),
+        SocialProvider("🍎", "Apple로 시작하기", RuleUpColors.Apple, Color.White, provider = OAuthProvider.APPLE),
         SocialProvider(
             "G",
             "Google로 시작하기",
@@ -56,14 +66,41 @@ private fun socialProviders(): List<SocialProvider> =
             RuleUpTheme.colors.textPrimary,
             markBold = true,
             border = RuleUpTheme.colors.border,
+            provider = OAuthProvider.GOOGLE,
         ),
     )
 
-/** 05 · 로그인 화면. */
+/** 05 · 로그인 화면. (NavEntry 진입점 — VM·effect 를 엮고 네비게이션은 콜백으로 위임) */
 @Composable
 fun LoginScreen(
+    onNavigateHome: () -> Unit,
+    onNavigateSignup: (signupToken: String) -> Unit,
+    viewModel: LoginViewModel = hiltViewModel(),
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                LoginEffect.NavigateToHome -> onNavigateHome()
+                is LoginEffect.NavigateToSignup -> onNavigateSignup(effect.signupToken)
+                is LoginEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+            }
+        }
+    }
+
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+        LoginContent(
+            modifier = Modifier.padding(paddingValues),
+            onIntent = viewModel::onIntent,
+        )
+    }
+}
+
+@Composable
+fun LoginContent(
     modifier: Modifier = Modifier,
-    onProviderClick: (String) -> Unit = {},
+    onIntent: (LoginIntent) -> Unit,
 ) {
     Column(
         modifier =
@@ -71,7 +108,6 @@ fun LoginScreen(
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.surface),
     ) {
-        PhoneStatusBar()
         Column(
             modifier =
                 Modifier
@@ -116,7 +152,7 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 socialProviders().forEach { provider ->
-                    SocialButton(provider, onClick = { onProviderClick(provider.label) })
+                    SocialButton(provider, onClick = { onIntent(LoginIntent.Login(provider.provider)) })
                 }
             }
 
@@ -176,11 +212,11 @@ private fun SocialButton(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun LoginScreenPreview() {
-    RuleUpTheme { LoginScreen() }
+    RuleUpTheme { LoginContent(onIntent = {}) }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun LoginScreenDarkPreview() {
-    RuleUpTheme(darkTheme = true) { LoginScreen() }
+    RuleUpTheme(darkTheme = true) { LoginContent(onIntent = {}) }
 }

@@ -26,6 +26,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Android"
 include(":app")
+include(":navigation")
 include(":feature:onboarding:presentation")
 include(":feature:onboarding:domain")
 include(":feature:onboarding:data")
@@ -33,3 +34,5 @@ include(":core:network")
 include(":core:designsystem")
 include(":core:datastore")
 include(":core:model")
+include(":core:ui")
+include(":core:navigation")
