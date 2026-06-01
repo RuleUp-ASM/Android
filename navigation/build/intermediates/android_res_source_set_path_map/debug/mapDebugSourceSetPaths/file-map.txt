@@ -1,9 +1,0 @@
-com.ruleup.navigation-pngs-0 /Users/adamatia123/AndroidStudioProjects/Android/navigation/build/generated/res/pngs/debug
-com.ruleup.navigation-updated_navigation_xml-1 /Users/adamatia123/AndroidStudioProjects/Android/navigation/build/generated/updated_navigation_xml/debug
-com.ruleup.navigation-mergeDebugResources-2 /Users/adamatia123/AndroidStudioProjects/Android/navigation/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
-com.ruleup.navigation-mergeDebugResources-3 /Users/adamatia123/AndroidStudioProjects/Android/navigation/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
-com.ruleup.navigation-debug-4 /Users/adamatia123/AndroidStudioProjects/Android/navigation/build/intermediates/merged_res/debug/mergeDebugResources
-com.ruleup.navigation-debug-5 /Users/adamatia123/AndroidStudioProjects/Android/navigation/build/intermediates/packaged_res/debug/packageDebugResources
-com.ruleup.navigation-debug-6 /Users/adamatia123/AndroidStudioProjects/Android/navigation/src/debug/res
-com.ruleup.navigation-main-7 /Users/adamatia123/AndroidStudioProjects/Android/navigation/src/main/res
-gradleHome-0 /Users/adamatia123/.gradle

@@ -1,9 +1,0 @@
-com.ruleup.feature.onboarding.domain-pngs-0 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/build/generated/res/pngs/release
-com.ruleup.feature.onboarding.domain-updated_navigation_xml-1 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/build/generated/updated_navigation_xml/release
-com.ruleup.feature.onboarding.domain-mergeReleaseResources-2 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/build/intermediates/incremental/release/mergeReleaseResources/merged.dir
-com.ruleup.feature.onboarding.domain-mergeReleaseResources-3 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/build/intermediates/incremental/release/mergeReleaseResources/stripped.dir
-com.ruleup.feature.onboarding.domain-release-4 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/build/intermediates/merged_res/release/mergeReleaseResources
-com.ruleup.feature.onboarding.domain-release-5 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/build/intermediates/packaged_res/release/packageReleaseResources
-com.ruleup.feature.onboarding.domain-main-6 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/src/main/res
-com.ruleup.feature.onboarding.domain-release-7 /Users/adamatia123/AndroidStudioProjects/Android/feature/onboarding/domain/src/release/res
-gradleHome-0 /Users/adamatia123/.gradle
