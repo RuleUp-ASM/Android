@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
 /**
@@ -27,14 +28,29 @@ data class RuleUpTypography(
     val overline: TextStyle,
 )
 
-val defaultRuleUpTypography = RuleUpTypography(
-    display = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 40.sp, lineHeight = 48.sp),
-    headlineLarge = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 32.sp),
-    headline = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Bold, fontSize = 22.sp, lineHeight = 30.sp),
-    title = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 24.sp),
-    bodyLarge = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
-    body = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Normal, fontSize = 14.sp, lineHeight = 22.sp),
-    label = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 18.sp),
-    caption = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.Normal, fontSize = 11.sp, lineHeight = 16.sp),
-    overline = TextStyle(fontFamily = RuleUpFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.66.sp),
-)
+val defaultRuleUpTypography =
+    RuleUpTypography(
+        display = ruleUpTextStyle(FontWeight.Bold, fontSize = 40, lineHeight = 48),
+        headlineLarge = ruleUpTextStyle(FontWeight.Bold, fontSize = 24, lineHeight = 32),
+        headline = ruleUpTextStyle(FontWeight.Bold, fontSize = 22, lineHeight = 30),
+        title = ruleUpTextStyle(FontWeight.SemiBold, fontSize = 17, lineHeight = 24),
+        bodyLarge = ruleUpTextStyle(FontWeight.Normal, fontSize = 16, lineHeight = 24),
+        body = ruleUpTextStyle(FontWeight.Normal, fontSize = 14, lineHeight = 22),
+        label = ruleUpTextStyle(FontWeight.Medium, fontSize = 13, lineHeight = 18),
+        caption = ruleUpTextStyle(FontWeight.Normal, fontSize = 11, lineHeight = 16),
+        overline = ruleUpTextStyle(FontWeight.SemiBold, fontSize = 11, lineHeight = 16, letterSpacing = 0.66),
+    )
+
+private fun ruleUpTextStyle(
+    fontWeight: FontWeight,
+    fontSize: Int,
+    lineHeight: Int,
+    letterSpacing: Double? = null,
+): TextStyle =
+    TextStyle(
+        fontFamily = RuleUpFontFamily,
+        fontWeight = fontWeight,
+        fontSize = fontSize.sp,
+        lineHeight = lineHeight.sp,
+        letterSpacing = letterSpacing?.sp ?: TextUnit.Unspecified,
+    )

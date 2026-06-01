@@ -38,12 +38,13 @@ private data class Permission(
 
 /** 권한 목록. 아이콘 틴트는 시맨틱 컨테이너 토큰을 써 라이트/다크에 모두 대응한다. */
 @Composable
-private fun permissionItems(): List<Permission> = listOf(
-    Permission("📍", RuleUpTheme.colors.brandSoft, "위치", true, "GPS 인증 챌린지에 사용해요", true),
-    Permission("📷", RuleUpTheme.colors.successContainer, "카메라", true, "인증 사진 촬영에 사용해요", true),
-    Permission("🔔", RuleUpTheme.colors.warningContainer, "알림", false, "챌린지 시작과 결과를 알려드려요", true),
-    Permission("🖼️", RuleUpColors.PurpleTint, "사진", false, "프로필/갤러리 인증에 사용해요", false),
-)
+private fun permissionItems(): List<Permission> =
+    listOf(
+        Permission("📍", RuleUpTheme.colors.brandSoft, "위치", true, "GPS 인증 챌린지에 사용해요", true),
+        Permission("📷", RuleUpTheme.colors.successContainer, "카메라", true, "인증 사진 촬영에 사용해요", true),
+        Permission("🔔", RuleUpTheme.colors.warningContainer, "알림", false, "챌린지 시작과 결과를 알려드려요", true),
+        Permission("🖼️", RuleUpColors.PurpleTint, "사진", false, "프로필/갤러리 인증에 사용해요", false),
+    )
 
 /** 04 · 권한 허용 (4/4). */
 @Composable
@@ -68,11 +69,12 @@ fun PermissionContent(
         // 권한 카드 묶음
         val permissions = permissionItems()
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RuleUpTheme.shapes.card)
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RuleUpTheme.shapes.card)
+                    .background(RuleUpTheme.colors.surface)
+                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         ) {
             permissions.forEachIndexed { index, permission ->
                 PermissionRow(permission)
@@ -99,10 +101,11 @@ fun PermissionContent(
 @Composable
 private fun PermissionRow(permission: Permission) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(76.dp)
-            .padding(horizontal = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(76.dp)
+                .padding(horizontal = 14.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -112,10 +115,11 @@ private fun PermissionRow(permission: Permission) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(permission.iconTint),
+                modifier =
+                    Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(permission.iconTint),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(permission.emoji, fontSize = 20.sp)
@@ -125,7 +129,12 @@ private fun PermissionRow(permission: Permission) {
                     horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(permission.name, color = RuleUpTheme.colors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        permission.name,
+                        color = RuleUpTheme.colors.textPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
                     RequirementBadge(required = permission.required)
                 }
                 Text(
@@ -145,11 +154,12 @@ private fun RequirementBadge(required: Boolean) {
     val background = if (required) RuleUpTheme.colors.danger else RuleUpTheme.colors.surfaceVariant
     val textColor = if (required) Color.White else RuleUpTheme.colors.textSecondary
     Box(
-        modifier = Modifier
-            .height(18.dp)
-            .clip(RoundedCornerShape(9.dp))
-            .background(background)
-            .padding(horizontal = RuleUpTheme.spacing.xs),
+        modifier =
+            Modifier
+                .height(18.dp)
+                .clip(RoundedCornerShape(9.dp))
+                .background(background)
+                .padding(horizontal = RuleUpTheme.spacing.xs),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -164,12 +174,18 @@ private fun RequirementBadge(required: Boolean) {
 
 @Composable
 private fun Toggle(on: Boolean) {
-    val track = Modifier
-        .width(44.dp)
-        .height(26.dp)
-        .clip(RoundedCornerShape(13.dp))
+    val track =
+        Modifier
+            .width(44.dp)
+            .height(26.dp)
+            .clip(RoundedCornerShape(13.dp))
     Box(
-        modifier = if (on) track.background(RuleUpGradients.Button) else track.background(RuleUpTheme.colors.borderStrong),
+        modifier =
+            if (on) {
+                track.background(RuleUpGradients.Button)
+            } else {
+                track.background(RuleUpTheme.colors.borderStrong)
+            },
         contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart,
     ) {
         Box(

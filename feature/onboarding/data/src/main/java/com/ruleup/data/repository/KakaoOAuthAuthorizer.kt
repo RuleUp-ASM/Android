@@ -37,9 +37,17 @@ class KakaoOAuthAuthorizer
                     }
 
                     if (UserApiClient.instance.isKakaoTalkLoginAvailable(activity)) {
-                        AuthCodeClient.instance.authorizeWithKakaoTalk(activity, codeVerifier = verifier, callback = callback)
+                        AuthCodeClient.instance.authorizeWithKakaoTalk(
+                            activity,
+                            codeVerifier = verifier,
+                            callback = callback,
+                        )
                     } else {
-                        AuthCodeClient.instance.authorizeWithKakaoAccount(activity, codeVerifier = verifier, callback = callback)
+                        AuthCodeClient.instance.authorizeWithKakaoAccount(
+                            activity,
+                            codeVerifier = verifier,
+                            callback = callback,
+                        )
                     }
                 }
 

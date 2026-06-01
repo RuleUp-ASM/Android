@@ -2,10 +2,10 @@ package com.ruleup.data.repository
 
 import android.content.Context
 import androidx.core.net.toUri
+import com.ruleup.core.model.InterestCategory
 import com.ruleup.data.api.ProfileApi
 import com.ruleup.data.dto.request.UpdateProfileRequest
 import com.ruleup.data.dto.response.toDomain
-import com.ruleup.core.model.InterestCategory
 import com.ruleup.data.util.resolveImage
 import com.ruleup.domain.model.Profile
 import com.ruleup.domain.repository.ProfileRepository
@@ -42,9 +42,7 @@ class ProfileRepositoryImpl
                 ).getOrThrow()
                 .toDomain()
 
-        override suspend fun uploadProfileImage(
-            imageUri: String
-        ): String {
+        override suspend fun uploadProfileImage(imageUri: String): String {
             val (image, fileName) = context.resolveImage(imageUri.toUri())
 
             val body = image.toRequestBody("image/*".toMediaTypeOrNull())

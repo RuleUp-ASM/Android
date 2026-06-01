@@ -26,12 +26,13 @@ fun PrimaryGradientButton(
     onClick: () -> Unit = {},
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(RuleUpGradients.Button)
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(height.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(RuleUpGradients.Button)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)

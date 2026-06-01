@@ -54,11 +54,12 @@ fun InfoBox(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RuleUpTheme.shapes.medium)
-            .background(background)
-            .padding(14.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RuleUpTheme.shapes.medium)
+                .background(background)
+                .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

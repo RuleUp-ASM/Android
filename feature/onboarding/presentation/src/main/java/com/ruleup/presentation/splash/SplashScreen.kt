@@ -28,24 +28,27 @@ import com.ruleup.core.designsystem.theme.RuleUpTheme
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(RuleUpGradients.Splash),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(RuleUpGradients.Splash),
     ) {
         PhoneStatusBar(contentColor = Color.White)
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize(),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(RoundedCornerShape(32.dp))
-                    .background(Color.White.copy(alpha = 0.15f))
-                    .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(32.dp)),
+                modifier =
+                    Modifier
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(32.dp))
+                        .background(Color.White.copy(alpha = 0.15f))
+                        .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(32.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Text("R", color = Color.White, fontSize = 64.sp, fontWeight = FontWeight.Bold)

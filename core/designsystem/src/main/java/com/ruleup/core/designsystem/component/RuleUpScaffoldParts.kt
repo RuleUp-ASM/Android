@@ -31,10 +31,11 @@ fun PhoneStatusBar(
     contentColor: Color = RuleUpTheme.colors.textPrimary,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(44.dp)
-            .padding(horizontal = RuleUpTheme.spacing.xxl),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .padding(horizontal = RuleUpTheme.spacing.xxl),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -93,10 +94,11 @@ fun BottomBar(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(RuleUpTheme.colors.surface)
-            .padding(padding),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(RuleUpTheme.colors.surface)
+                .padding(padding),
         contentAlignment = Alignment.Center,
     ) {
         content()

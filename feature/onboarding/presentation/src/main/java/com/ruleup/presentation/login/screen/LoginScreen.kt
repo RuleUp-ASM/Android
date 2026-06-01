@@ -20,7 +20,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,7 +59,14 @@ private data class SocialProvider(
 private fun socialProviders(): List<SocialProvider> =
     listOf(
         SocialProvider("💬", "카카오로 시작하기", RuleUpColors.Kakao, RuleUpColors.KakaoText, provider = OAuthProvider.KAKAO),
-        SocialProvider("N", "네이버로 시작하기", RuleUpColors.Naver, Color.White, markBold = true, provider = OAuthProvider.NAVER),
+        SocialProvider(
+            "N",
+            "네이버로 시작하기",
+            RuleUpColors.Naver,
+            Color.White,
+            markBold = true,
+            provider = OAuthProvider.NAVER,
+        ),
         SocialProvider("🍎", "Apple로 시작하기", RuleUpColors.Apple, Color.White, provider = OAuthProvider.APPLE),
         SocialProvider(
             "G",
@@ -74,21 +83,27 @@ private fun socialProviders(): List<SocialProvider> =
 fun LoginScreen(
     onNavigateHome: () -> Unit,
     onNavigateSignup: (signupToken: String) -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel(),
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val currentOnNavigateHome by rememberUpdatedState(onNavigateHome)
+    val currentOnNavigateSignup by rememberUpdatedState(onNavigateSignup)
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                LoginEffect.NavigateToHome -> onNavigateHome()
-                is LoginEffect.NavigateToSignup -> onNavigateSignup(effect.signupToken)
+                LoginEffect.NavigateToHome -> currentOnNavigateHome()
+                is LoginEffect.NavigateToSignup -> currentOnNavigateSignup(effect.signupToken)
                 is LoginEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
             }
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { paddingValues ->
         LoginContent(
             modifier = Modifier.padding(paddingValues),
             onIntent = viewModel::onIntent,
@@ -98,8 +113,8 @@ fun LoginScreen(
 
 @Composable
 fun LoginContent(
-    modifier: Modifier = Modifier,
     onIntent: (LoginIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =

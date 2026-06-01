@@ -36,7 +36,7 @@ fun InterestContent(
     selected: List<InterestCategory> = listOf(InterestCategory.EXERCISE),
     onNext: () -> Unit = {},
     onBack: () -> Unit = {},
-    onClicked: (InterestCategory) -> Unit = {},
+    onClick: (InterestCategory) -> Unit = {},
 ) {
     ProfileSetupScaffold(
         step = 2,
@@ -57,7 +57,7 @@ fun InterestContent(
             verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         ) {
             InterestCategory.entries.forEach { interest ->
-                InterestChip(interest = interest, selected = interest in selected, onClicked = { onClicked(it) })
+                InterestChip(interest = interest, selected = interest in selected, onClick = { onClick(it) })
             }
         }
 
@@ -74,7 +74,7 @@ fun InterestContent(
 private fun InterestChip(
     interest: InterestCategory,
     selected: Boolean,
-    onClicked: (InterestCategory) -> Unit,
+    onClick: (InterestCategory) -> Unit,
 ) {
     val base =
         Modifier
@@ -91,7 +91,7 @@ private fun InterestChip(
     Row(
         modifier =
             styled.padding(horizontal = RuleUpTheme.spacing.lg).clickable {
-                onClicked(interest)
+                onClick(interest)
             },
         horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         verticalAlignment = Alignment.CenterVertically,

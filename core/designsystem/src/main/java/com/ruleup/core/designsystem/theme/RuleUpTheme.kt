@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:compose:compositionlocal-allowlist")
+
 package com.ruleup.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -6,9 +8,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
-private val LocalRuleUpColors = staticCompositionLocalOf<RuleUpColorScheme> {
-    error("RuleUpColorScheme is not provided. Wrap your content in RuleUpTheme { }.")
-}
+private val LocalRuleUpColors =
+    staticCompositionLocalOf<RuleUpColorScheme> {
+        error("RuleUpColorScheme is not provided. Wrap your content in RuleUpTheme { }.")
+    }
 private val LocalRuleUpTypography = staticCompositionLocalOf { defaultRuleUpTypography }
 private val LocalRuleUpShapes = staticCompositionLocalOf { defaultRuleUpShapes }
 private val LocalRuleUpSpacing = staticCompositionLocalOf { defaultRuleUpSpacing }
@@ -40,11 +43,15 @@ fun RuleUpTheme(
 /** MaterialTheme 스타일의 토큰 접근자. 예: `RuleUpTheme.colors.brand`. */
 object RuleUpTheme {
     val colors: RuleUpColorScheme
-        @Composable @ReadOnlyComposable get() = LocalRuleUpColors.current
+        @Composable @ReadOnlyComposable
+        get() = LocalRuleUpColors.current
     val typography: RuleUpTypography
-        @Composable @ReadOnlyComposable get() = LocalRuleUpTypography.current
+        @Composable @ReadOnlyComposable
+        get() = LocalRuleUpTypography.current
     val shapes: RuleUpShapes
-        @Composable @ReadOnlyComposable get() = LocalRuleUpShapes.current
+        @Composable @ReadOnlyComposable
+        get() = LocalRuleUpShapes.current
     val spacing: RuleUpSpacing
-        @Composable @ReadOnlyComposable get() = LocalRuleUpSpacing.current
+        @Composable @ReadOnlyComposable
+        get() = LocalRuleUpSpacing.current
 }

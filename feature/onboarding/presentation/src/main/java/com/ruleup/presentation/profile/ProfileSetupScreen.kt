@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,11 +34,13 @@ import com.ruleup.presentation.util.createImageUri
 fun ProfileSetupScreen(
     signupToken: String,
     onFinish: () -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val currentOnFinish by rememberUpdatedState(onFinish)
     var cameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val camera =
@@ -58,7 +61,7 @@ fun ProfileSetupScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                ProfileEffect.NavigateToHome -> onFinish()
+                ProfileEffect.NavigateToHome -> currentOnFinish()
                 is ProfileEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
             }
         }
@@ -68,11 +71,14 @@ fun ProfileSetupScreen(
         viewModel.onIntent(ProfileIntent.PrevStep)
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
         ProfileSetupContent(
-            modifier = Modifier.padding(padding),
             onIntent = viewModel::onIntent,
             uiState = state,
+            modifier = Modifier.padding(padding),
             onPickGallery = {
                 gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             },
@@ -87,9 +93,9 @@ fun ProfileSetupScreen(
 
 @Composable
 fun ProfileSetupContent(
-    modifier: Modifier = Modifier,
     onIntent: (ProfileIntent) -> Unit,
     uiState: ProfileState,
+    modifier: Modifier = Modifier,
     onPickGallery: () -> Unit = {},
     onCameraClick: () -> Unit = {},
 ) {
@@ -97,11 +103,11 @@ fun ProfileSetupContent(
         0 -> {
             ProfileIconContent(
                 modifier = modifier,
+                imageUri = uiState.profileImageUrl,
                 onNext = { onIntent(ProfileIntent.NextStep) },
                 onBack = { onIntent(ProfileIntent.PrevStep) },
                 onGalleryClick = onPickGallery,
                 onCameraClick = onCameraClick,
-                imageUri = uiState.profileImageUrl,
             )
         }
 
@@ -111,17 +117,17 @@ fun ProfileSetupContent(
                 nickname = uiState.nickname,
                 onNext = { onIntent(ProfileIntent.NextStep) },
                 onBack = { onIntent(ProfileIntent.PrevStep) },
-                onNickNameChanged = { onIntent(ProfileIntent.SetNickName(it)) },
+                onNickNameChange = { onIntent(ProfileIntent.SetNickName(it)) },
             )
         }
 
         2 -> {
             InterestContent(
                 modifier = modifier,
+                selected = uiState.interests,
                 onNext = { onIntent(ProfileIntent.NextStep) },
                 onBack = { onIntent(ProfileIntent.PrevStep) },
-                selected = uiState.interests,
-                onClicked = { onIntent(ProfileIntent.SetProfileInterest(it)) },
+                onClick = { onIntent(ProfileIntent.SetProfileInterest(it)) },
             )
         }
 

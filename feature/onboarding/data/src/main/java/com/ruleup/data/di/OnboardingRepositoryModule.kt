@@ -15,7 +15,6 @@ import jakarta.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class OnboardingRepositoryModule {
-
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository

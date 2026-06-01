@@ -9,7 +9,6 @@ import com.ruleup.domain.model.OAuthProvider
 import com.ruleup.domain.model.OAuthResult
 
 interface AuthRepository {
-
     /**
      * OAuth authorization_code 를 검증한다.
      * 기존 사용자면 [OAuthResult.ExistingUser], 신규면 [OAuthResult.NewUser] 를 반환한다.

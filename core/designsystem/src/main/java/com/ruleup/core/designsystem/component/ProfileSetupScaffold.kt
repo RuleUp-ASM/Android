@@ -36,18 +36,20 @@ fun ProfileSetupTopBar(
     onSkip: () -> Unit = {},
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(RuleUpTheme.colors.surface)
-            .padding(horizontal = 20.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .background(RuleUpTheme.colors.surface)
+                .padding(horizontal = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(24.dp)
-                .clickable(onClick = onBack),
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
             Text("‹", color = RuleUpTheme.colors.textPrimary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
@@ -65,34 +67,43 @@ fun ProfileSetupTopBar(
 
 /** 지나온 단계는 옅은 indigo, 현재 단계는 그라데이션 바, 남은 단계는 회색. */
 @Composable
-private fun StepDots(currentStep: Int, totalSteps: Int) {
+private fun StepDots(
+    currentStep: Int,
+    totalSteps: Int,
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         repeat(totalSteps) { index ->
             when {
-                index == currentStep -> Box(
-                    Modifier
-                        .height(6.dp)
-                        .width(24.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(RuleUpGradients.Indicator),
-                )
+                index == currentStep -> {
+                    Box(
+                        Modifier
+                            .height(6.dp)
+                            .width(24.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(RuleUpGradients.Indicator),
+                    )
+                }
 
-                index < currentStep -> Box(
-                    Modifier
-                        .size(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(RuleUpTheme.colors.brand.copy(alpha = 0.4f)),
-                )
+                index < currentStep -> {
+                    Box(
+                        Modifier
+                            .size(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(RuleUpTheme.colors.brand.copy(alpha = 0.4f)),
+                    )
+                }
 
-                else -> Box(
-                    Modifier
-                        .size(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(RuleUpTheme.colors.borderStrong),
-                )
+                else -> {
+                    Box(
+                        Modifier
+                            .size(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(RuleUpTheme.colors.borderStrong),
+                    )
+                }
             }
         }
     }
@@ -112,18 +123,20 @@ fun ProfileSetupScaffold(
     content: @Composable () -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(RuleUpTheme.colors.surface),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(RuleUpTheme.colors.surface),
     ) {
         ProfileSetupTopBar(currentStep = step, onBack = onBack, onSkip = onSkip)
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .background(RuleUpTheme.colors.background)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(RuleUpTheme.colors.background)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             content()

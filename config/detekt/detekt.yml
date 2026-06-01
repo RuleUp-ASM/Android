@@ -21,6 +21,9 @@ complexity:
 
 style:
   active: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
   MagicNumber:
     active: true
     ignoreAnnotated: ['Composable', 'Preview']

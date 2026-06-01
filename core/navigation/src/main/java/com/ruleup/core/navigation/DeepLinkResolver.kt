@@ -14,15 +14,20 @@ object DeepLinkResolver {
     fun resolve(uri: Uri?): List<NavKey> {
         if (uri == null) return listOf(OnboardingIntroKey) // 평소 진입 (추후 Splash 에서 세션/시청여부로 분기)
         return when (uri.pathSegments.firstOrNull()) {
-            "signup" ->
+            "signup" -> {
                 uri
                     .getQueryParameter("token")
                     ?.let { listOf(LoginKey, SignupKey(it)) }
                     ?: listOf(LoginKey)
+            }
 
-            "login" -> listOf(LoginKey)
+            "login" -> {
+                listOf(LoginKey)
+            }
 
-            else -> listOf(LoginKey)
+            else -> {
+                listOf(LoginKey)
+            }
         }
     }
 }

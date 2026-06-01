@@ -10,5 +10,5 @@ data class AuthRequest(
     @SerialName("code_verifier")
     val codeVerifier: String,
     @SerialName("redirect_uri")
-    val redirectUri: String
+    val redirectUri: String,
 )

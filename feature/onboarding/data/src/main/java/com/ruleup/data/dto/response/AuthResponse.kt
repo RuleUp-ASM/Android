@@ -37,7 +37,6 @@ data class AuthResponse(
     val oauthProfile: OAuthProfileDto? = null,
 )
 
-
 @Serializable
 data class UserDto(
     @SerialName("id")
@@ -63,8 +62,7 @@ data class OAuthProfileDto(
 )
 
 /** 알 수 없는 카테고리 코드는 조용히 버린다. */
-internal fun List<String>?.toInterestCategories(): List<InterestCategory> =
-    this.orEmpty().mapNotNull(InterestCategory::fromValue)
+internal fun List<String>?.toInterestCategories(): List<InterestCategory> = this.orEmpty().mapNotNull(InterestCategory::fromValue)
 
 internal fun UserDto.toDomain(): User =
     User(
@@ -93,15 +91,17 @@ internal fun AuthResponse.toOAuthResult(): OAuthResult {
         )
     } else {
         OAuthResult.ExistingUser(
-            session = AuthSession(
-                tokens = Tokens(
-                    accessToken = accessToken.requireField("access_token"),
-                    refreshToken = refreshToken.requireField("refresh_token"),
-                    tokenType = tokenType ?: DEFAULT_TOKEN_TYPE,
-                    expiresInSeconds = expiresIn.requireField("expires_in"),
+            session =
+                AuthSession(
+                    tokens =
+                        Tokens(
+                            accessToken = accessToken.requireField("access_token"),
+                            refreshToken = refreshToken.requireField("refresh_token"),
+                            tokenType = tokenType ?: DEFAULT_TOKEN_TYPE,
+                            expiresInSeconds = expiresIn.requireField("expires_in"),
+                        ),
+                    user = user.requireField("user").toDomain(),
                 ),
-                user = user.requireField("user").toDomain(),
-            ),
         )
     }
 }
