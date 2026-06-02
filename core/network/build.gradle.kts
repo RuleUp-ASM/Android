@@ -23,5 +23,6 @@ android {
         buildConfigField("String", "BASE_URL", "\"${localProperties.getProperty("BASE_URL")}\"")
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"${localProperties.getProperty("GOOGLE_CLIENT_ID")}\"")
         buildConfigField("String", "GOOGLE_REDIRECT_URI", "\"${localProperties.getProperty("GOOGLE_REDIRECT_URI")}\"")
+        buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"${localProperties.getProperty("KAKAO_NATIVE_APP_KEY")}\"")
     }
 }

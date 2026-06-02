@@ -2,7 +2,6 @@ package com.ruleup.data.auth.oauth
 
 import com.kakao.sdk.auth.AuthCodeClient
 import com.kakao.sdk.user.UserApiClient
-import com.ruleup.data.auth.oauth.PkceUtil
 import com.ruleup.data.common.activity.ActivityProvider
 import com.ruleup.domain.auth.model.OAuthAuthorization
 import com.ruleup.domain.auth.model.OAuthProvider
@@ -51,6 +50,12 @@ class KakaoOAuthAuthorizer
                     }
                 }
 
-            return OAuthAuthorization(code, verifier, BuildConfig.BASE_URL)
+            // 카카오 SDK 는 코드를 `kakao{앱키}://oauth` redirect 로 발급한다.
+            // 백엔드 토큰 교환의 redirect_uri 도 이 값과 동일해야 한다(KOE303 방지).
+            return OAuthAuthorization(
+                code = code,
+                codeVerifier = verifier,
+                redirectUri = "kakao${BuildConfig.KAKAO_NATIVE_APP_KEY}://oauth",
+            )
         }
     }

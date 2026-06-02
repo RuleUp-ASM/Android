@@ -56,4 +56,5 @@ dependencies {
     implementation(project(":feature:onboarding:data"))
     implementation(project(":navigation"))
     implementation(libs.kakao.user)
+    implementation(libs.androidx.core.splashscreen)
 }

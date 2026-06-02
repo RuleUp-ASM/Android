@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.Android" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- 콜드스타트 시스템 스플래시. core-splashscreen 의 Theme.SplashScreen 상속. -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.Android</item>
+    </style>
 </resources>
