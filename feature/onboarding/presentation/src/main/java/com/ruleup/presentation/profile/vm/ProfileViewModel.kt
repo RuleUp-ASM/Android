@@ -1,6 +1,5 @@
 package com.ruleup.presentation.profile.vm
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.core.ui.mvi.MviViewModel
 import com.ruleup.domain.auth.model.Agreements
@@ -36,14 +35,10 @@ class ProfileViewModel
                 }
 
                 ProfileIntent.NextStep -> {
-                    if (currentState.step == 1 && !NickNameUtil.isValid(currentState.nickname)) {
-                        emitEffect(ProfileEffect.ShowError("닉네임은 한글 영문 숫자 2 ~ 12자만 가능해요"))
-                        return
-                    }
-                    if (currentState.step >= ProfileState.LAST_STEP) {
-                        submit()
-                    } else {
-                        dispatch(ProfileReducerEvent.StepChanged(currentState.step + 1))
+                    when {
+                        currentState.step == 1 -> checkNickName(currentState.nickname)
+                        currentState.step >= ProfileState.LAST_STEP -> submit()
+                        else -> dispatch(ProfileReducerEvent.StepChanged(currentState.step + 1))
                     }
                 }
 
@@ -98,6 +93,26 @@ class ProfileViewModel
                     state.copy(isSubmitting = false)
                 }
             }
+
+        private fun checkNickName(name: String) {
+            if (!NickNameUtil.isValid(name)) {
+                emitEffect(ProfileEffect.ShowError("닉네임은 한글 영문 숫자 2 ~ 12자만 가능해요"))
+                return
+            }
+            viewModelScope.launch {
+                runCatching {
+                    authUseCase.checkNicknameAvailability(name)
+                }.onSuccess { valid ->
+                    if (valid) {
+                        dispatch(ProfileReducerEvent.StepChanged(currentState.step + 1))
+                    } else {
+                        emitEffect(ProfileEffect.ShowError("닉네임이 중복됬어요"))
+                    }
+                }.onFailure {
+                    emitEffect(ProfileEffect.ShowError("닉네임 체크 실패"))
+                }
+            }
+        }
 
         private fun submit() {
             val state = currentState

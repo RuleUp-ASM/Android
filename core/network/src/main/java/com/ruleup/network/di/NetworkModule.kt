@@ -26,6 +26,7 @@ object NetworkModule {
         Json {
             ignoreUnknownKeys = true
             coerceInputValues = true
+            encodeDefaults = true // 기본값 필드(agreements.marketing=false 등)도 직렬화해 스펙과 일치
         }
 
     @Provides

@@ -53,4 +53,6 @@ class AuthUseCase
 
             return session
         }
+
+        suspend fun checkNicknameAvailability(nickname: String): Boolean = authRepository.checkNicknameAvailability(nickname).available
     }

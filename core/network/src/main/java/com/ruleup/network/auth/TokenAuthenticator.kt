@@ -22,11 +22,10 @@ class TokenAuthenticator(
         route: Route?,
         response: Response,
     ): Request? {
-        // refresh 호출 자체가 401 이거나, 갱신 후에도 계속 401 이면 포기한다.
-        val isRefreshCall =
-            response.request.url.encodedPath
-                .endsWith(REFRESH_PATH)
-        if (isRefreshCall || responseCount(response) >= MAX_RETRY) return null
+        // 공개 엔드포인트(로그인/가입/리프레시 등)의 401 은 갱신 대상이 아니다.
+        // 갱신 후에도 계속 401 이면 무한 루프 방지로 포기한다.
+        if (AuthInterceptor.isPublicEndpoint(response.request.url.encodedPath)) return null
+        if (responseCount(response) >= MAX_RETRY) return null
 
         val failedToken =
             response.request
@@ -55,6 +54,5 @@ class TokenAuthenticator(
 
     companion object {
         private const val MAX_RETRY = 2
-        private const val REFRESH_PATH = "auth/refresh"
     }
 }
