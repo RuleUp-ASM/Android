@@ -20,14 +20,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.ruleup.core.designsystem.component.ProfileSetupScaffold
 import com.ruleup.core.designsystem.theme.RuleUpGradients
 import com.ruleup.core.designsystem.theme.RuleUpTheme
 import com.ruleup.presentation.profile.util.NickNameUtil
+import com.ruleup.presentation.profile.util.NicknameValidation
 
 /** 02 · 닉네임 (2/4). */
 @Composable
@@ -35,6 +38,7 @@ fun NicknameContent(
     modifier: Modifier = Modifier,
     nickname: String = "준혁이의 도전",
     maxLength: Int = 12,
+    imageUri: String? = null,
     onNext: () -> Unit = {},
     onBack: () -> Unit = {},
     onNickNameChange: (String) -> Unit = {},
@@ -51,15 +55,18 @@ fun NicknameContent(
             subtitle = "친구들에게 보여질 이름이에요",
             titleSize = 24,
         )
-        NicknamePreviewCard(nickname = nickname)
+        NicknamePreviewCard(nickname = nickname, imageUri = imageUri)
         NicknameField(nickname = nickname, maxLength = maxLength, onNickNameChange = onNickNameChange)
         NicknameRules(nickname = nickname)
     }
 }
 
-/** 그라데이션 카드 위에 현재 닉네임을 미리 보여준다. */
+/** 그라데이션 카드 위에 현재 닉네임을 미리 보여준다. 앞 단계에서 사진을 골랐다면 그 사진을 아바타로 쓴다. */
 @Composable
-private fun NicknamePreviewCard(nickname: String) {
+private fun NicknamePreviewCard(
+    nickname: String,
+    imageUri: String?,
+) {
     Column(
         modifier =
             Modifier
@@ -80,7 +87,16 @@ private fun NicknamePreviewCard(nickname: String) {
                     .background(RuleUpGradients.Brand)
                     .border(3.dp, Color.White, RoundedCornerShape(32.dp)),
             contentAlignment = Alignment.Center,
-        ) {}
+        ) {
+            if (!imageUri.isNullOrEmpty()) {
+                AsyncImage(
+                    model = imageUri,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize().clip(RoundedCornerShape(32.dp)),
+                )
+            }
+        }
         Text(
             nickname,
             modifier = Modifier.padding(top = 10.dp),
@@ -98,7 +114,8 @@ private fun NicknameField(
     maxLength: Int,
     onNickNameChange: (String) -> Unit,
 ) {
-    val valid = NickNameUtil.isValid(nickname)
+    val validation = NickNameUtil.validate(nickname)
+    val valid = validation.isValid
     Column(verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -142,7 +159,7 @@ private fun NicknameField(
             }
         }
         if (nickname.isNotEmpty()) {
-            NicknameStatusMessage(valid = valid)
+            NicknameStatusMessage(validation = validation)
         }
     }
 }
@@ -167,9 +184,10 @@ private fun StatusBadge(valid: Boolean) {
     }
 }
 
-/** 입력 필드 아래의 유효성 메시지. */
+/** 입력 필드 아래의 유효성 메시지. 실패 사유(문자/길이)에 맞는 문구를 보여준다. */
 @Composable
-private fun NicknameStatusMessage(valid: Boolean) {
+private fun NicknameStatusMessage(validation: NicknameValidation) {
+    val valid = validation.isValid
     Row(
         horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
@@ -181,7 +199,7 @@ private fun NicknameStatusMessage(valid: Boolean) {
             fontWeight = FontWeight.Bold,
         )
         Text(
-            if (valid) "사용 가능한 닉네임이에요" else "한글·영문·숫자 2~12자만 가능해요",
+            NickNameUtil.message(validation),
             color = if (valid) RuleUpTheme.colors.onSuccess else RuleUpTheme.colors.danger,
             fontSize = 11.sp,
         )

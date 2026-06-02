@@ -2,7 +2,6 @@ package com.ruleup.presentation.profile.vm
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.core.ui.mvi.MviViewModel
-import com.ruleup.domain.auth.model.Agreements
 import com.ruleup.domain.auth.model.SignupForm
 import com.ruleup.domain.auth.usecase.AuthUseCase
 import com.ruleup.presentation.profile.util.NickNameUtil
@@ -32,6 +31,10 @@ class ProfileViewModel
 
                 is ProfileIntent.SetProfileInterest -> {
                     dispatch(ProfileReducerEvent.InterestsSelected(intent.interestCategory))
+                }
+
+                is ProfileIntent.SetAgreements -> {
+                    dispatch(ProfileReducerEvent.AgreementsUpdated(intent.agreements))
                 }
 
                 ProfileIntent.NextStep -> {
@@ -95,8 +98,9 @@ class ProfileViewModel
             }
 
         private fun checkNickName(name: String) {
-            if (!NickNameUtil.isValid(name)) {
-                emitEffect(ProfileEffect.ShowError("닉네임은 한글 영문 숫자 2 ~ 12자만 가능해요"))
+            val validation = NickNameUtil.validate(name)
+            if (!validation.isValid) {
+                emitEffect(ProfileEffect.ShowError(NickNameUtil.message(validation)))
                 return
             }
             viewModelScope.launch {
@@ -106,7 +110,7 @@ class ProfileViewModel
                     if (valid) {
                         dispatch(ProfileReducerEvent.StepChanged(currentState.step + 1))
                     } else {
-                        emitEffect(ProfileEffect.ShowError("닉네임이 중복됬어요"))
+                        emitEffect(ProfileEffect.ShowError("닉네임이 중복됐어요"))
                     }
                 }.onFailure {
                     emitEffect(ProfileEffect.ShowError("닉네임 체크 실패"))
@@ -124,6 +128,12 @@ class ProfileViewModel
                     return
                 }
 
+            // 필수 약관(이용약관·개인정보) 미동의 시 제출을 막는다.
+            if (!state.agreements.terms || !state.agreements.privacy) {
+                emitEffect(ProfileEffect.ShowError("필수 약관에 동의해주세요"))
+                return
+            }
+
             viewModelScope.launch {
                 dispatch(ProfileReducerEvent.Submitting)
 
@@ -134,7 +144,7 @@ class ProfileViewModel
                             nickname = state.nickname,
                             interestCategories = state.interests,
                             localImageUri = state.profileImageUrl,
-                            agreements = state.agreements ?: Agreements(terms = true, privacy = true),
+                            agreements = state.agreements,
                         ),
                     )
                 }.onSuccess {

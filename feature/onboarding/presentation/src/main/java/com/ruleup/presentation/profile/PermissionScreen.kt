@@ -55,7 +55,7 @@ fun PermissionContent(
 ) {
     ProfileSetupScaffold(
         step = 3,
-        buttonText = "RuleUp 시작하기",
+        buttonText = "다음",
         modifier = modifier,
         onNext = onNext,
         onBack = onBack,

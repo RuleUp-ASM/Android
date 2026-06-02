@@ -115,6 +115,7 @@ fun ProfileSetupContent(
             NicknameContent(
                 modifier = modifier,
                 nickname = uiState.nickname,
+                imageUri = uiState.profileImageUrl,
                 onNext = { onIntent(ProfileIntent.NextStep) },
                 onBack = { onIntent(ProfileIntent.PrevStep) },
                 onNickNameChange = { onIntent(ProfileIntent.SetNickName(it)) },
@@ -131,9 +132,19 @@ fun ProfileSetupContent(
             )
         }
 
-        else -> {
+        3 -> {
             PermissionContent(
                 modifier = modifier,
+                onNext = { onIntent(ProfileIntent.NextStep) },
+                onBack = { onIntent(ProfileIntent.PrevStep) },
+            )
+        }
+
+        else -> {
+            AgreementsContent(
+                modifier = modifier,
+                agreements = uiState.agreements,
+                onAgreementsChange = { onIntent(ProfileIntent.SetAgreements(it)) },
                 onNext = { onIntent(ProfileIntent.NextStep) },
                 onBack = { onIntent(ProfileIntent.PrevStep) },
             )

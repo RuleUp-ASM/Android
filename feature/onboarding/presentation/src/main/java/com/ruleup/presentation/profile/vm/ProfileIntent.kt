@@ -2,7 +2,7 @@ package com.ruleup.presentation.profile.vm
 
 import com.ruleup.core.model.InterestCategory
 import com.ruleup.core.ui.mvi.MviIntent
-import java.security.Permissions
+import com.ruleup.domain.auth.model.Agreements
 
 sealed interface ProfileIntent : MviIntent {
     data class SetSignupToken(
@@ -21,8 +21,8 @@ sealed interface ProfileIntent : MviIntent {
         val interestCategory: InterestCategory,
     ) : ProfileIntent
 
-    data class SetPermission(
-        val permissions: Permissions,
+    data class SetAgreements(
+        val agreements: Agreements,
     ) : ProfileIntent
 
     /** "다음" — 다음 단계로. 마지막 단계에서는 제출/홈 이동을 트리거한다. */

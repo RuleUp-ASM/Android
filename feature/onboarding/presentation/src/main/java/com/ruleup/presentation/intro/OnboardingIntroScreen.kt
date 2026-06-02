@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -101,8 +102,16 @@ fun OnboardingIntroScreen(
             )
         }
 
-        // 하단: 인디케이터 + 버튼
-        BottomBar {
+        // 하단: 인디케이터 + 버튼 (버튼이 화면 맨 아래에 붙지 않도록 하단 여백을 넉넉히 준다)
+        BottomBar(
+            padding =
+                PaddingValues(
+                    start = RuleUpTheme.spacing.xl,
+                    end = RuleUpTheme.spacing.xl,
+                    top = RuleUpTheme.spacing.xl,
+                    bottom = RuleUpTheme.spacing.xxxl,
+                ),
+        ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.lg),
