@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.core.designsystem.component.ProfileSetupScaffold
 import com.ruleup.core.designsystem.theme.RuleUpGradients
 import com.ruleup.core.designsystem.theme.RuleUpTheme
-import com.ruleup.presentation.util.NickNameUtil
+import com.ruleup.presentation.profile.util.NickNameUtil
 
 /** 02 · 닉네임 (2/4). */
 @Composable

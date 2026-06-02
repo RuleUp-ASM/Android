@@ -3,10 +3,10 @@ package com.ruleup.presentation.profile.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.core.ui.mvi.MviViewModel
+import com.ruleup.domain.auth.model.Agreements
+import com.ruleup.domain.auth.model.SignupForm
 import com.ruleup.domain.auth.usecase.AuthUseCase
-import com.ruleup.domain.model.Agreements
-import com.ruleup.domain.model.SignupForm
-import com.ruleup.presentation.util.NickNameUtil
+import com.ruleup.presentation.profile.util.NickNameUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

@@ -10,9 +10,9 @@ import androidx.navigation3.runtime.NavKey
 import com.ruleup.core.navigation.LoginKey
 import com.ruleup.core.navigation.OnboardingIntroKey
 import com.ruleup.core.navigation.SignupKey
-import com.ruleup.presentation.login.screen.LoginScreen
-import com.ruleup.presentation.onboarding.OnboardingIntroScreen
-import com.ruleup.presentation.onboarding.onboardingPages
+import com.ruleup.presentation.auth.login.screen.LoginScreen
+import com.ruleup.presentation.intro.OnboardingIntroScreen
+import com.ruleup.presentation.intro.onboardingPages
 import com.ruleup.presentation.profile.ProfileSetupScreen
 
 /**

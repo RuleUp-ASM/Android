@@ -20,11 +20,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.presentation.profile.util.createImageUri
 import com.ruleup.presentation.profile.vm.ProfileEffect
 import com.ruleup.presentation.profile.vm.ProfileIntent
 import com.ruleup.presentation.profile.vm.ProfileState
 import com.ruleup.presentation.profile.vm.ProfileViewModel
-import com.ruleup.presentation.util.createImageUri
 
 /**
  * @param signupToken 가입 토큰

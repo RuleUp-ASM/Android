@@ -2,7 +2,7 @@ package com.ruleup.presentation.profile.vm
 
 import com.ruleup.core.model.InterestCategory
 import com.ruleup.core.ui.mvi.ReducerEvent
-import com.ruleup.domain.model.Agreements
+import com.ruleup.domain.auth.model.Agreements
 
 sealed interface ProfileReducerEvent : ReducerEvent {
     data class SetSignupToken(

@@ -1,13 +1,13 @@
 package com.ruleup.domain.auth.usecase
 
+import com.ruleup.domain.auth.model.AuthSession
+import com.ruleup.domain.auth.model.OAuthProvider
+import com.ruleup.domain.auth.model.OAuthResult
+import com.ruleup.domain.auth.model.SignupForm
+import com.ruleup.domain.auth.repository.AuthRepository
 import com.ruleup.domain.auth.repository.OAuthAuthorizer
-import com.ruleup.domain.model.AuthSession
-import com.ruleup.domain.model.OAuthProvider
-import com.ruleup.domain.model.OAuthResult
-import com.ruleup.domain.model.SignupForm
-import com.ruleup.domain.repository.AuthRepository
-import com.ruleup.domain.repository.ProfileRepository
-import com.ruleup.domain.repository.SessionRepository
+import com.ruleup.domain.auth.repository.SessionRepository
+import com.ruleup.domain.profile.repository.ProfileRepository
 import javax.inject.Inject
 
 class AuthUseCase

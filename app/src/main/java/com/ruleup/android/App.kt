@@ -2,7 +2,7 @@ package com.ruleup.android
 
 import android.app.Application
 import com.kakao.sdk.common.KakaoSdk
-import com.ruleup.data.activity.ActivityProvider
+import com.ruleup.data.common.activity.ActivityProvider
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors

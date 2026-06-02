@@ -12,4 +12,5 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":feature:onboarding:domain"))
     implementation(libs.kakao.user)
+    implementation(libs.app.auth)
 }

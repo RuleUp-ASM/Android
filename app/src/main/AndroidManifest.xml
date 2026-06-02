@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-<queries>
-    <package android:name="com.kakao.talk" />
-</queries>
+
+    <queries>
+        <package android:name="com.kakao.talk" />
+    </queries>
     <application
 
         android:name=".App"
@@ -26,9 +27,13 @@
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="ruleup.app" />
+
+                <data
+                    android:host="ruleup.app"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
         <activity
@@ -36,12 +41,17 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
                     android:host="oauth"
                     android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" />
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.ruleup.data.auth.oauth.GoogleAuthActivity"
+            android:exported="false" />
     </application>
 </manifest>

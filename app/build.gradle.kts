@@ -7,14 +7,16 @@ plugins {
     id("ruleup.android.hilt")
 }
 
-val kakaoNativeAppKey: String =
-    Properties()
-        .apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) f.inputStream().use { load(it) }
-        }.getProperty("KAKAO_NATIVE_APP_KEY")
-        ?.trim()
-        .orEmpty()
+val localProperties =
+    Properties().apply {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+
+val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
+
+val googleRedirectUri: String = localProperties.getProperty("GOOGLE_REDIRECT_URI")?.trim().orEmpty()
+val googleRedirectScheme: String = googleRedirectUri.substringBefore(":")
 
 android {
     namespace = "com.ruleup.android"
@@ -28,6 +30,7 @@ android {
         versionName = libs.versions.versionName.get()
 
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
+        manifestPlaceholders["appAuthRedirectScheme"] = googleRedirectScheme
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
