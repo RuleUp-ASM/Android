@@ -23,5 +23,5 @@ build/
 .externalNativeBuild
 .cxx
 
-# Firebase
+# firebase
 google-services.json
