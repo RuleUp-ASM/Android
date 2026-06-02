@@ -5,6 +5,7 @@ plugins {
     id("ruleup.android.compose")
     id("ruleup.android.test")
     id("ruleup.android.hilt")
+    alias(libs.plugins.google.services)
 }
 
 val localProperties =
@@ -57,4 +58,6 @@ dependencies {
     implementation(project(":navigation"))
     implementation(libs.kakao.user)
     implementation(libs.androidx.core.splashscreen)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 }
