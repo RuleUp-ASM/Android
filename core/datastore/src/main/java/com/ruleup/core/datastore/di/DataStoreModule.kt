@@ -32,8 +32,8 @@ internal object DataStoreProvidesModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal abstract class DataStoreBindsModule {
+internal interface DataStoreBindsModule {
     @Binds
     @Singleton
-    abstract fun bindAuthTokenDataStore(impl: AuthTokenDataStoreImpl): AuthTokenDataStore
+    fun bindAuthTokenDataStore(impl: AuthTokenDataStoreImpl): AuthTokenDataStore
 }

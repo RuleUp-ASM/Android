@@ -14,17 +14,17 @@ import dagger.multibindings.IntoMap
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class OAuthModule {
+interface OAuthModule {
     @Binds
-    abstract fun bindOAuthAuthorizer(impl: OAuthAuthorizerDispatcher): OAuthAuthorizer
+    fun bindOAuthAuthorizer(impl: OAuthAuthorizerDispatcher): OAuthAuthorizer
 
     @Binds
     @IntoMap
     @OAuthProviderKey(OAuthProvider.KAKAO)
-    abstract fun bindKakao(impl: KakaoOAuthAuthorizer): OAuthAuthorizer
+    fun bindKakao(impl: KakaoOAuthAuthorizer): OAuthAuthorizer
 
     @Binds
     @IntoMap
     @OAuthProviderKey(OAuthProvider.GOOGLE)
-    abstract fun bindGoogle(impl: GoogleOAuthAuthorizer): OAuthAuthorizer
+    fun bindGoogle(impl: GoogleOAuthAuthorizer): OAuthAuthorizer
 }

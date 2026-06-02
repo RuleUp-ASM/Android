@@ -14,16 +14,16 @@ import jakarta.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class OnboardingRepositoryModule {
+interface OnboardingRepositoryModule {
     @Binds
     @Singleton
-    abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
+    fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
     @Binds
     @Singleton
-    abstract fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
+    fun bindProfileRepository(impl: ProfileRepositoryImpl): ProfileRepository
 
     @Binds
     @Singleton
-    abstract fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository
+    fun bindSessionRepository(impl: SessionRepositoryImpl): SessionRepository
 }

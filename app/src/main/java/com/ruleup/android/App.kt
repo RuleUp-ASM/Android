@@ -15,8 +15,6 @@ class App : Application() {
         super.onCreate()
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
 
-        // OAuth SDK 가 필요로 하는 "현재 Activity" 추적 시작.
-        // Application 에는 직접 @Inject 가 불가하므로 EntryPoint 로 싱글톤을 꺼낸다.
         val activityProvider =
             EntryPointAccessors
                 .fromApplication(this, AppEntryPoint::class.java)
@@ -26,7 +24,7 @@ class App : Application() {
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
-    interface AppEntryPoint {
+    fun interface AppEntryPoint {
         fun activityProvider(): ActivityProvider
     }
 }

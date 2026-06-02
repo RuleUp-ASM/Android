@@ -13,12 +13,12 @@ import javax.inject.Singleton
 /** 네트워크 레이어가 요구하는 토큰 부착/갱신 구현을 바인딩한다. */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class AuthTokenModule {
+interface AuthTokenModule {
     @Binds
     @Singleton
-    abstract fun bindTokenProvider(impl: TokenProviderImpl): TokenProvider
+    fun bindTokenProvider(impl: TokenProviderImpl): TokenProvider
 
     @Binds
     @Singleton
-    abstract fun bindTokenRefresher(impl: TokenRefresherImpl): TokenRefresher
+    fun bindTokenRefresher(impl: TokenRefresherImpl): TokenRefresher
 }

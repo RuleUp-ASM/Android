@@ -47,12 +47,12 @@ fun ProfileSetupScreen(
         rememberLauncherForActivityResult(
             ActivityResultContracts.TakePicture(),
         ) { success ->
-            if (success) viewModel.onIntent(ProfileIntent.SetProfileIcon(cameraUri?.toString() ?: ""))
+            if (success) viewModel.onIntent(ProfileIntent.SetProfileIcon(cameraUri?.toString().orEmpty()))
         }
     val gallery =
         rememberLauncherForActivityResult(
             ActivityResultContracts.PickVisualMedia(),
-        ) { uri -> viewModel.onIntent(ProfileIntent.SetProfileIcon(uri?.toString() ?: "")) }
+        ) { uri -> viewModel.onIntent(ProfileIntent.SetProfileIcon(uri?.toString().orEmpty())) }
 
     LaunchedEffect(signupToken) {
         viewModel.onIntent(ProfileIntent.SetSignupToken(signupToken))

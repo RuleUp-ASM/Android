@@ -55,6 +55,7 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:designsystem"))
     implementation(project(":feature:onboarding:data"))
+    implementation(project(":feature:onboarding:domain"))
     implementation(project(":navigation"))
     implementation(libs.kakao.user)
     implementation(libs.androidx.core.splashscreen)
