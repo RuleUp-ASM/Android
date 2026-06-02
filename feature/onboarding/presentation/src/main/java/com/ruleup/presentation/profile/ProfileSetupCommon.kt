@@ -2,10 +2,13 @@ package com.ruleup.presentation.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -66,4 +69,42 @@ fun InfoBox(
         Text(emoji, fontSize = 16.sp)
         Text(text, color = textColor, style = RuleUpTheme.typography.caption)
     }
+}
+
+/** 필수/선택 배지. 권한·약관 등 프로필 설정 단계들이 공유한다. */
+@Composable
+fun RequirementBadge(
+    required: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val background = if (required) RuleUpTheme.colors.danger else RuleUpTheme.colors.surfaceVariant
+    val textColor = if (required) Color.White else RuleUpTheme.colors.textSecondary
+    Box(
+        modifier =
+            modifier
+                .height(18.dp)
+                .clip(RoundedCornerShape(9.dp))
+                .background(background)
+                .padding(horizontal = RuleUpTheme.spacing.xs),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            if (required) "필수" else "선택",
+            color = textColor,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.36.sp,
+        )
+    }
+}
+
+/** 카드 내부 항목 사이의 가로 구분선. */
+@Composable
+fun RowDivider(modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(RuleUpTheme.colors.border),
+    )
 }

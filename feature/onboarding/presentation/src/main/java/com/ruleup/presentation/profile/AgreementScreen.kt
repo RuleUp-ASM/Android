@@ -69,6 +69,12 @@ fun AgreementsContent(
         }
 
         // 개별 약관
+        val items =
+            listOf(
+                AgreementItem("서비스 이용약관", required = true, checked = agreements.terms) { agreements.copy(terms = it) },
+                AgreementItem("개인정보 처리방침", required = true, checked = agreements.privacy) { agreements.copy(privacy = it) },
+                AgreementItem("마케팅 정보 수신", required = false, checked = agreements.marketing) { agreements.copy(marketing = it) },
+            )
         Column(
             modifier =
                 Modifier
@@ -77,26 +83,15 @@ fun AgreementsContent(
                     .background(RuleUpTheme.colors.surface)
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         ) {
-            AgreementRow(
-                checked = agreements.terms,
-                label = "서비스 이용약관",
-                required = true,
-                modifier = Modifier.clickable { onAgreementsChange(agreements.copy(terms = !agreements.terms)) },
-            )
-            RowDivider()
-            AgreementRow(
-                checked = agreements.privacy,
-                label = "개인정보 처리방침",
-                required = true,
-                modifier = Modifier.clickable { onAgreementsChange(agreements.copy(privacy = !agreements.privacy)) },
-            )
-            RowDivider()
-            AgreementRow(
-                checked = agreements.marketing,
-                label = "마케팅 정보 수신",
-                required = false,
-                modifier = Modifier.clickable { onAgreementsChange(agreements.copy(marketing = !agreements.marketing)) },
-            )
+            items.forEachIndexed { index, item ->
+                AgreementRow(
+                    checked = item.checked,
+                    label = item.label,
+                    required = item.required,
+                    modifier = Modifier.clickable { onAgreementsChange(item.toggle(!item.checked)) },
+                )
+                if (index != items.lastIndex) RowDivider()
+            }
         }
 
         InfoBox(
@@ -162,38 +157,13 @@ private fun CheckCircle(checked: Boolean) {
     }
 }
 
-@Composable
-private fun RequirementBadge(required: Boolean) {
-    val background = if (required) RuleUpTheme.colors.danger else RuleUpTheme.colors.surfaceVariant
-    val textColor = if (required) Color.White else RuleUpTheme.colors.textSecondary
-    Box(
-        modifier =
-            Modifier
-                .height(18.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(background)
-                .padding(horizontal = RuleUpTheme.spacing.xs),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            if (required) "필수" else "선택",
-            color = textColor,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.36.sp,
-        )
-    }
-}
-
-@Composable
-private fun RowDivider() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(RuleUpTheme.colors.border),
-    )
-}
+/** 개별 약관 한 줄을 그리기 위한 데이터. [toggle] 은 체크 상태를 바꾼 새 [Agreements] 를 만든다. */
+private class AgreementItem(
+    val label: String,
+    val required: Boolean,
+    val checked: Boolean,
+    val toggle: (Boolean) -> Agreements,
+)
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable

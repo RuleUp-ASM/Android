@@ -32,7 +32,7 @@ internal object DataStoreProvidesModule {
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal interface DataStoreBindsModule {
+internal fun interface DataStoreBindsModule {
     @Binds
     @Singleton
     fun bindAuthTokenDataStore(impl: AuthTokenDataStoreImpl): AuthTokenDataStore

@@ -79,12 +79,7 @@ fun PermissionContent(
             permissions.forEachIndexed { index, permission ->
                 PermissionRow(permission)
                 if (index != permissions.lastIndex) {
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .background(RuleUpTheme.colors.border),
-                    )
+                    RowDivider()
                 }
             }
         }
@@ -146,29 +141,6 @@ private fun PermissionRow(permission: Permission) {
             }
         }
         Toggle(on = permission.enabled)
-    }
-}
-
-@Composable
-private fun RequirementBadge(required: Boolean) {
-    val background = if (required) RuleUpTheme.colors.danger else RuleUpTheme.colors.surfaceVariant
-    val textColor = if (required) Color.White else RuleUpTheme.colors.textSecondary
-    Box(
-        modifier =
-            Modifier
-                .height(18.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(background)
-                .padding(horizontal = RuleUpTheme.spacing.xs),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            if (required) "필수" else "선택",
-            color = textColor,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.36.sp,
-        )
     }
 }
 

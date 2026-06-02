@@ -31,7 +31,7 @@ import com.ruleup.core.designsystem.theme.RuleUpTheme
 fun ProfileSetupTopBar(
     currentStep: Int,
     modifier: Modifier = Modifier,
-    totalSteps: Int = 4,
+    totalSteps: Int = 5,
     onBack: () -> Unit = {},
     onSkip: () -> Unit = {},
 ) {
@@ -117,7 +117,6 @@ fun ProfileSetupScaffold(
     step: Int,
     buttonText: String,
     modifier: Modifier = Modifier,
-    totalSteps: Int = 5,
     onBack: () -> Unit = {},
     onSkip: () -> Unit = {},
     onNext: () -> Unit = {},
@@ -129,7 +128,7 @@ fun ProfileSetupScaffold(
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.surface),
     ) {
-        ProfileSetupTopBar(currentStep = step, totalSteps = totalSteps, onBack = onBack, onSkip = onSkip)
+        ProfileSetupTopBar(currentStep = step, onBack = onBack, onSkip = onSkip)
         Column(
             modifier =
                 Modifier
