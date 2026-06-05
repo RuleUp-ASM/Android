@@ -13,9 +13,9 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.ruleup.domain.IntroPromisePage
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.NavSignal
+import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 @Composable

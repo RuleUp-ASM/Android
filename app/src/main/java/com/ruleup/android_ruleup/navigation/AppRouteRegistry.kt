@@ -2,24 +2,24 @@ package com.ruleup.android_ruleup.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ruleup.domain.IntroPromisePage
-import com.ruleup.domain.IntroTrustPage
-import com.ruleup.domain.IntroVerifyPage
-import com.ruleup.domain.LoginPage
-import com.ruleup.domain.ProfileAgreementPage
-import com.ruleup.domain.ProfileIconPage
-import com.ruleup.domain.ProfileInterestPage
-import com.ruleup.domain.ProfileNicknamePage
-import com.ruleup.domain.ProfilePermissionPage
-import com.ruleup.presentation.intro.component.IntroContent
-import com.ruleup.presentation.intro.screen.LoginScreen
-import com.ruleup.presentation.intro.screen.onboardingPages
-import com.ruleup.presentation.intro.viewmodel.LoginViewModel
-import com.ruleup.presentation.profile.ProfileAgreementScreen
-import com.ruleup.presentation.profile.ProfileIconScreen
-import com.ruleup.presentation.profile.ProfileInterestScreen
-import com.ruleup.presentation.profile.ProfileNicknameScreen
-import com.ruleup.presentation.profile.ProfilePermissionScreen
+import com.ruleup.onboarding.domain.IntroPromisePage
+import com.ruleup.onboarding.domain.IntroTrustPage
+import com.ruleup.onboarding.domain.IntroVerifyPage
+import com.ruleup.onboarding.domain.LoginPage
+import com.ruleup.onboarding.domain.ProfileAgreementPage
+import com.ruleup.onboarding.domain.ProfileIconPage
+import com.ruleup.onboarding.domain.ProfileInterestPage
+import com.ruleup.onboarding.domain.ProfileNicknamePage
+import com.ruleup.onboarding.domain.ProfilePermissionPage
+import com.ruleup.onboarding.presentation.intro.component.IntroContent
+import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
+import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
+import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
+import com.ruleup.onboarding.presentation.profile.ProfileAgreementScreen
+import com.ruleup.onboarding.presentation.profile.ProfileIconScreen
+import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
+import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
+import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.

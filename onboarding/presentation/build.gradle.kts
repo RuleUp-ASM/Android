@@ -26,7 +26,7 @@ val googleRedirectUri: String =
 val appAuthRedirectScheme: String = googleRedirectUri.substringBefore(":")
 
 android {
-    namespace = "com.ruleup.presentation"
+    namespace = "com.ruleup.onboarding.presentation"
     compileSdk {
         version =
             release(37) {
