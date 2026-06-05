@@ -1,0 +1,9 @@
+root = true
+
+[*.{kt,kts}]
+# Android 앱 패키지명(com.ruleup.android_ruleup)에 underscore 가 포함되므로 package-name 규칙 비활성화.
+ktlint_standard_package-name = disabled
+# Compose 함수는 PascalCase 가 관례이므로 @Composable 은 function-naming 검사에서 제외한다.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+# 앱 차원에서 의도적으로 쓰는 CompositionLocal 들은 compose-rules allowlist 에 등록한다.
+compose_allowed_composition_locals = LocalNavigationHelper,LocalMessageHelper

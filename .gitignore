@@ -1,0 +1,27 @@
+# Gradle
+.gradle
+build/
+
+# IntelliJ / Android Studio
+*.iml
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+
+# Local config
+/local.properties
+/.claude
+
+# OS
+.DS_Store
+
+# Android
+/captures
+.externalNativeBuild
+.cxx
+
+# firebase
+google-services.json
