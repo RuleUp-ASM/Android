@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ruleup.data"
+    namespace = "com.ruleup.onboarding.data"
     compileSdk {
         version =
             release(37) {

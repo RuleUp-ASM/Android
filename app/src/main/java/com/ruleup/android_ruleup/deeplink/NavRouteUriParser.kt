@@ -5,8 +5,8 @@ import android.util.Log
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
-import com.ruleup.domain.IntroPromisePage
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.onboarding.domain.IntroPromisePage
 
 private const val TAG = "[DeepLink]"
 

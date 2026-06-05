@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
-import com.ruleup.domain.IntroPromisePage
 import com.ruleup.domain.message.MessageEffect
+import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpTheme

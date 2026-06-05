@@ -4,7 +4,7 @@
     <application>
         <!-- OAuth SDK 호스팅 Activity -->
         <activity
-            android:name="com.ruleup.presentation.oauth.OAuthActivity"
+            android:name="com.ruleup.onboarding.presentation.oauth.OAuthActivity"
             android:exported="false" />
 
         <!-- 카카오 로그인 redirect 핸들러 -->
