@@ -29,6 +29,8 @@ class TokenRepositoryImpl
 
         override suspend fun getAccessToken(): String? = prefs.getString(KEY_ACCESS, null)
 
+        override suspend fun getRefreshToken(): String? = prefs.getString(KEY_REFRESH, null)
+
         override suspend fun clear() {
             prefs.edit { clear() }
             _isLoggedIn.value = false

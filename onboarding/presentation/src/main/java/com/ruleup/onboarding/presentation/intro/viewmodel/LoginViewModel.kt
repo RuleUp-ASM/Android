@@ -7,6 +7,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.message.IconType
 import com.ruleup.entity.onboarding.LoginResult
 import com.ruleup.entity.onboarding.OAuthAuthorization
+import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.ProfileIconPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -68,7 +69,9 @@ class LoginViewModel
                 }.onSuccess { result ->
                     dispatch(LoginReducerEvent.LoginFinished)
                     when (result) {
-                        is LoginResult.GoMain -> {}
+                        is LoginResult.GoMain -> {
+                            navigationHelper.navigateTo(HomePage)
+                        }
 
                         is LoginResult.GoSignup -> {
                             navigationHelper.navigateByRoute(ProfileIconPage.routeWithToken(result.signupToken))

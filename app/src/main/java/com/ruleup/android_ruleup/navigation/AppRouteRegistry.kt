@@ -2,6 +2,7 @@ package com.ruleup.android_ruleup.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.onboarding.domain.IntroTrustPage
 import com.ruleup.onboarding.domain.IntroVerifyPage
@@ -11,6 +12,7 @@ import com.ruleup.onboarding.domain.ProfileIconPage
 import com.ruleup.onboarding.domain.ProfileInterestPage
 import com.ruleup.onboarding.domain.ProfileNicknamePage
 import com.ruleup.onboarding.domain.ProfilePermissionPage
+import com.ruleup.onboarding.presentation.home.HomeScreen
 import com.ruleup.onboarding.presentation.intro.component.IntroContent
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
 import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
@@ -54,7 +56,15 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = LoginPage.PATH,
+            // 로그아웃 후 재진입 시 홈 등 이전 스택이 남지 않도록 루트로 시작한다.
+            isRoot = true,
             render = { LoginScreen(viewModel = hiltViewModel<LoginViewModel>()) },
+        ),
+        // 홈. 온보딩(로그인/가입) 완료 후의 루트 화면 — 뒤로가기로 가입 플로우에 돌아가지 않는다.
+        AppRoute(
+            path = HomePage.PATH,
+            isRoot = true,
+            render = { HomeScreen() },
         ),
         // 프로필 설정(신규 가입) 5개 페이지. 모두 Activity 스코프의 단일 ProfileViewModel 을
         // 공유하므로 입력값이 페이지 이동에도 누적된다. signupToken 은 첫 페이지(아이콘)에 args 로 전달.

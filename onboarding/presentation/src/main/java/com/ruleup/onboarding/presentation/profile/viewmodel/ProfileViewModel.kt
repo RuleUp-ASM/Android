@@ -6,6 +6,7 @@ import com.ruleup.domain.auth.model.SignupForm
 import com.ruleup.domain.auth.usecase.CheckNicknameUseCase
 import com.ruleup.domain.auth.usecase.SignupUseCase
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.ProfileInterestPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -154,7 +155,7 @@ class ProfileViewModel
                         ),
                     )
                 }.onSuccess {
-                    emitEffect(ProfileEffect.NavigateToHome)
+                    navigationHelper.navigateTo(HomePage)
                 }.onFailure {
                     dispatch(ProfileReducerEvent.SubmitFailed)
                     emitEffect(ProfileEffect.ShowError(it.message ?: "가입 실패"))

@@ -13,6 +13,11 @@ data class AppRoute(
     val path: String,
     val isBottomTab: Boolean = false,
     /**
+     * 루트 화면 여부. true 면 이동 시 기존 백스택을 모두 비우고 단일 키로 시작한다
+     * (예: 가입 완료 → 홈, 로그아웃 → 로그인).
+     */
+    val isRoot: Boolean = false,
+    /**
      * deep-link 진입 시 구성할 시작 백스택. 일반 페이지는 자기 자신만 푸시되고,
      * 부모 페이지가 있는 경우(Favorite, FullScreen 등) 부모 키들을 함께 반환한다.
      */
