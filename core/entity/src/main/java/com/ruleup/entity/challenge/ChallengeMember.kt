@@ -6,8 +6,10 @@ enum class MemberStatus(
 ) {
     // 운영자 승인 대기
     PENDING("PENDING"),
+
     // 참여 확정
     ACTIVE("ACTIVE"),
+
     // 거절/탈퇴
     REMOVED("REMOVED"),
     ;
