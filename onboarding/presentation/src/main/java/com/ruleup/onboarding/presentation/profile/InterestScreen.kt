@@ -21,9 +21,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.entity.user.InterestCategory
+import com.ruleup.onboarding.domain.ProfilePermissionPage
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
+import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
+import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
+import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpColors
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
@@ -32,18 +36,17 @@ import com.ruleup.ui.theme.RuleUpTheme
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InterestContent(
+    onIntent: (ProfileIntent) -> Unit,
     modifier: Modifier = Modifier,
     selected: List<InterestCategory> = listOf(InterestCategory.EXERCISE),
-    onNext: () -> Unit = {},
-    onBack: () -> Unit = {},
-    onClick: (InterestCategory) -> Unit = {},
 ) {
+    val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
         step = 2,
         buttonText = "다음",
         modifier = modifier,
-        onNext = onNext,
-        onBack = onBack,
+        onNext = { nav.navigateTo(ProfilePermissionPage) },
+        onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
             title = "어떤 챌린지에 관심 있나요?",
@@ -57,7 +60,11 @@ fun InterestContent(
             verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm),
         ) {
             InterestCategory.entries.forEach { interest ->
-                InterestChip(interest = interest, selected = interest in selected, onClick = { onClick(it) })
+                InterestChip(
+                    interest = interest,
+                    selected = interest in selected,
+                    onClick = { onIntent(ProfileIntent.SetProfileInterest(it)) },
+                )
             }
         }
 
@@ -109,5 +116,5 @@ private fun InterestChip(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun InterestScreenPreview() {
-    RuleUpTheme { InterestContent() }
+    ProfileFlowPreview { InterestContent(onIntent = {}) }
 }

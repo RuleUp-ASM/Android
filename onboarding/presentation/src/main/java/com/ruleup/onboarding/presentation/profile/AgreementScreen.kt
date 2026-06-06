@@ -24,28 +24,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.entity.user.Agreement
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
+import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.RequirementBadge
 import com.ruleup.onboarding.presentation.profile.component.RowDivider
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
+import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
+import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
 /** 05 · 약관 동의 (5/5). 필수 약관(이용약관·개인정보)에 모두 동의해야 가입을 진행할 수 있다. */
 @Composable
 fun AgreementsContent(
+    onIntent: (ProfileIntent) -> Unit,
     modifier: Modifier = Modifier,
     agreements: Agreement = Agreement(terms = false, privacy = false, marketing = false),
-    onAgreementsChange: (Agreement) -> Unit = {},
-    onNext: () -> Unit = {},
-    onBack: () -> Unit = {},
 ) {
+    val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
         step = 4,
         buttonText = "RuleUp 시작하기",
         modifier = modifier,
-        onNext = onNext,
-        onBack = onBack,
+        onNext = { onIntent(ProfileIntent.Submit) },
+        onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
             title = "약관에 동의해주세요",
@@ -62,8 +64,17 @@ fun AgreementsContent(
                     .fillMaxWidth()
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpTheme.colors.brandSoft)
-                    .clickable { onAgreementsChange(Agreement(terms = !allChecked, privacy = !allChecked, marketing = !allChecked)) }
-                    .padding(horizontal = 14.dp),
+                    .clickable {
+                        onIntent(
+                            ProfileIntent.SetAgreements(
+                                Agreement(
+                                    terms = !allChecked,
+                                    privacy = !allChecked,
+                                    marketing = !allChecked,
+                                ),
+                            ),
+                        )
+                    }.padding(horizontal = 14.dp),
         ) {
             AgreementRow(
                 checked = allChecked,
@@ -75,9 +86,21 @@ fun AgreementsContent(
         // 개별 약관
         val items =
             listOf(
-                AgreementItem("서비스 이용약관", required = true, checked = agreements.terms) { agreements.copy(terms = it) },
-                AgreementItem("개인정보 처리방침", required = true, checked = agreements.privacy) { agreements.copy(privacy = it) },
-                AgreementItem("마케팅 정보 수신", required = false, checked = agreements.marketing) { agreements.copy(marketing = it) },
+                AgreementItem(
+                    "서비스 이용약관",
+                    required = true,
+                    checked = agreements.terms,
+                ) { agreements.copy(terms = it) },
+                AgreementItem(
+                    "개인정보 처리방침",
+                    required = true,
+                    checked = agreements.privacy,
+                ) { agreements.copy(privacy = it) },
+                AgreementItem(
+                    "마케팅 정보 수신",
+                    required = false,
+                    checked = agreements.marketing,
+                ) { agreements.copy(marketing = it) },
             )
         Column(
             modifier =
@@ -92,7 +115,10 @@ fun AgreementsContent(
                     checked = item.checked,
                     label = item.label,
                     required = item.required,
-                    modifier = Modifier.clickable { onAgreementsChange(item.toggle(!item.checked)) },
+                    modifier =
+                        Modifier.clickable {
+                            onIntent(ProfileIntent.SetAgreements(item.toggle(!item.checked)))
+                        },
                 )
                 if (index != items.lastIndex) RowDivider()
             }
@@ -172,13 +198,13 @@ private class AgreementItem(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun AgreementScreenPreview() {
-    RuleUpTheme {
-        AgreementsContent(agreements = Agreement(terms = true, privacy = true, marketing = false))
+    ProfileFlowPreview {
+        AgreementsContent(onIntent = {})
     }
 }
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun AgreementScreenDarkPreview() {
-    RuleUpTheme(darkTheme = true) { AgreementsContent() }
+    ProfileFlowPreview(darkTheme = true) { AgreementsContent(onIntent = {}) }
 }
