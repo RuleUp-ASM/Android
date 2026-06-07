@@ -2,6 +2,10 @@ package com.ruleup.android_ruleup.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ruleup.challenge.domain.ChallengeConfirmPage
+import com.ruleup.challenge.domain.ChallengeCreatePage
+import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
+import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.onboarding.domain.IntroTrustPage
@@ -65,6 +69,21 @@ val appRoutes: List<AppRoute> =
             path = HomePage.PATH,
             isRoot = true,
             render = { HomeScreen() },
+        ),
+        // 챌린지 생성 2개 페이지. Activity 스코프의 단일 CreateChallengeViewModel 을 공유한다.
+        AppRoute(
+            path = ChallengeCreatePage.PATH,
+            render = { ChallengeCreateScreen() },
+        ),
+        AppRoute(
+            path = ChallengeConfirmPage.PATH,
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(ChallengeCreatePage.PATH),
+                    GenericNavKey(ChallengeConfirmPage.PATH),
+                )
+            },
+            render = { ChallengeConfirmScreen() },
         ),
         // 프로필 설정(신규 가입) 5개 페이지. 모두 Activity 스코프의 단일 ProfileViewModel 을
         // 공유하므로 입력값이 페이지 이동에도 누적된다. signupToken 은 첫 페이지(아이콘)에 args 로 전달.
