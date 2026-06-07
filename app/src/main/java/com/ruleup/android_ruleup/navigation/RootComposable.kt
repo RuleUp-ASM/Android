@@ -22,7 +22,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.ruleup.domain.message.MessageEffect
-import com.ruleup.onboarding.domain.IntroPromisePage
+import com.ruleup.onboarding.domain.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpTheme
@@ -31,7 +31,7 @@ import kotlinx.coroutines.flow.Flow
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
-    startStack: List<NavKey> = listOf(GenericNavKey(IntroPromisePage.PATH)),
+    startStack: List<NavKey> = listOf(GenericNavKey(SplashPage.PATH)),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {

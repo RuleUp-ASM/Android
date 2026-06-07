@@ -7,6 +7,7 @@ import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.onboarding.domain.IntroPromisePage
+import com.ruleup.onboarding.domain.SplashPage
 
 private const val TAG = "[DeepLink]"
 
@@ -32,7 +33,8 @@ fun Uri.toNavRoute(): NavRoute {
  *   syntheticStack 을 그대로 사용한다.
  */
 fun resolveStartStack(uri: Uri?): List<NavKey> {
-    if (uri == null) return listOf(GenericNavKey(IntroPromisePage.PATH))
+    // 일반 실행(딥링크 없음)은 스플래시에서 시작해 자동 로그인 여부로 홈/인트로를 분기한다.
+    if (uri == null) return listOf(GenericNavKey(SplashPage.PATH))
     val route = uri.toNavRoute()
     val appRoute = appRouteByPath[route.path]
     if (appRoute == null) {

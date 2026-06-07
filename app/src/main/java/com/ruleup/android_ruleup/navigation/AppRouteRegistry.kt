@@ -16,6 +16,7 @@ import com.ruleup.onboarding.domain.ProfileIconPage
 import com.ruleup.onboarding.domain.ProfileInterestPage
 import com.ruleup.onboarding.domain.ProfileNicknamePage
 import com.ruleup.onboarding.domain.ProfilePermissionPage
+import com.ruleup.onboarding.domain.SplashPage
 import com.ruleup.onboarding.presentation.home.HomeScreen
 import com.ruleup.onboarding.presentation.intro.component.IntroContent
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
@@ -26,6 +27,7 @@ import com.ruleup.onboarding.presentation.profile.ProfileIconScreen
 import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
 import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
 import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
+import com.ruleup.onboarding.presentation.splash.SplashScreen
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -33,8 +35,16 @@ import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
  */
 val appRoutes: List<AppRoute> =
     listOf(
+        // 스플래시. 앱의 시작 화면 — 자동 로그인 판별 후 홈/인트로로 분기한다(루트).
+        AppRoute(
+            path = SplashPage.PATH,
+            isRoot = true,
+            render = { SplashScreen() },
+        ),
+        // 온보딩 인트로 시작 페이지. 자동 로그인 실패 시 진입하는 로그아웃 상태의 루트.
         AppRoute(
             path = IntroPromisePage.PATH,
+            isRoot = true,
             render = { IntroContent(page = onboardingPages[0], pageIndex = 0) },
         ),
         AppRoute(
