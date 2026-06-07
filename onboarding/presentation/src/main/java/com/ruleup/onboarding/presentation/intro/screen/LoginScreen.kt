@@ -28,7 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.ruleup.entity.onboarding.OAuthProvider
+import com.ruleup.onboarding.domain.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel

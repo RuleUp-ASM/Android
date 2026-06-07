@@ -1,4 +1,4 @@
-package com.ruleup.domain.auth.model
+package com.ruleup.onboarding.domain.auth.model
 
 import com.ruleup.entity.user.Agreement
 import com.ruleup.entity.user.InterestCategory

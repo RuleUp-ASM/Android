@@ -1,4 +1,4 @@
-package com.ruleup.entity.onboarding
+package com.ruleup.onboarding.domain.entity
 
 enum class OAuthProvider(
     val provider: String,

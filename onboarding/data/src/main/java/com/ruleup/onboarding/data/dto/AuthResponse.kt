@@ -1,12 +1,12 @@
 package com.ruleup.onboarding.data.dto
 
-import com.ruleup.entity.onboarding.OAuthProfile
-import com.ruleup.entity.onboarding.OAuthResult
 import com.ruleup.entity.user.AuthSession
 import com.ruleup.entity.user.Token
 import com.ruleup.entity.user.User
 import com.ruleup.entity.user.toInterestCategories
 import com.ruleup.network.dto.requireField
+import com.ruleup.onboarding.domain.entity.OAuthProfile
+import com.ruleup.onboarding.domain.entity.OAuthResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.presentation.intro.viewmodel
 
-import com.ruleup.entity.onboarding.OAuthAuthorization
-import com.ruleup.entity.onboarding.OAuthProvider
+import com.ruleup.onboarding.domain.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.entity.OAuthProvider
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface LoginIntent : MviIntent {

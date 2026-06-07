@@ -1,9 +1,11 @@
 package com.ruleup.onboarding.presentation.home.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.domain.auth.usecase.LogoutUseCase
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.AppEntryRoutes
+import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.onboarding.domain.LoginPage
+import com.ruleup.onboarding.domain.auth.usecase.LogoutUseCase
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,7 +21,9 @@ class HomeViewModel
     ) : MviViewModel<HomeIntent, HomeState, HomeReducerEvent, NoEffect>(HomeState.initial) {
         override fun onIntent(intent: HomeIntent) {
             when (intent) {
-                HomeIntent.CreateChallenge -> Unit // TODO: 챌린지 생성 화면이 정의되면 연결한다.
+                HomeIntent.CreateChallenge -> {
+                    navigationHelper.navigateByRoute(NavRoute(AppEntryRoutes.CHALLENGE_CREATE))
+                }
 
                 HomeIntent.Logout -> {
                     logout()

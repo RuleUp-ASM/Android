@@ -1,14 +1,14 @@
-package com.ruleup.domain.challenge
+package com.ruleup.challenge.domain
 
-import com.ruleup.entity.challenge.Challenge
-import com.ruleup.entity.challenge.ChallengeDetail
-import com.ruleup.entity.challenge.ChallengeForm
-import com.ruleup.entity.challenge.ChallengeMembers
-import com.ruleup.entity.challenge.ChallengeRecommendation
-import com.ruleup.entity.challenge.ChallengeUpdate
-import com.ruleup.entity.challenge.MemberAction
-import com.ruleup.entity.challenge.MemberStatus
-import com.ruleup.entity.challenge.MemberStatusFilter
+import com.ruleup.challenge.domain.entity.Challenge
+import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeForm
+import com.ruleup.challenge.domain.entity.ChallengeMembers
+import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.MemberAction
+import com.ruleup.challenge.domain.entity.MemberStatus
+import com.ruleup.challenge.domain.entity.MemberStatusFilter
 
 interface ChallengeRepository {
     /**

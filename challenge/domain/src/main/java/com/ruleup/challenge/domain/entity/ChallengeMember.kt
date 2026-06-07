@@ -1,4 +1,4 @@
-package com.ruleup.entity.challenge
+package com.ruleup.challenge.domain.entity
 
 /** 멤버 상태 (명세 memberStatus). */
 enum class MemberStatus(

@@ -1,9 +1,9 @@
 package com.ruleup.onboarding.data.di
 
-import com.ruleup.domain.auth.usecase.AuthRepository
-import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.onboarding.data.repository.AuthRepositoryImpl
 import com.ruleup.onboarding.data.repository.ProfileRepositoryImpl
+import com.ruleup.onboarding.domain.auth.usecase.AuthRepository
+import com.ruleup.onboarding.domain.profile.ProfileRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

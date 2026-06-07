@@ -1,4 +1,4 @@
-package com.ruleup.entity.onboarding
+package com.ruleup.onboarding.domain.entity
 
 import com.ruleup.entity.user.AuthSession
 

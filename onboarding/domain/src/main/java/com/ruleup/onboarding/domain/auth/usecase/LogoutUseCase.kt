@@ -1,4 +1,4 @@
-package com.ruleup.domain.auth.usecase
+package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.token.TokenRepository
 import javax.inject.Inject

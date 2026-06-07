@@ -1,11 +1,11 @@
-package com.ruleup.domain.auth.usecase
+package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.entity.onboarding.OAuthAuthorization
-import com.ruleup.entity.onboarding.OAuthResult
 import com.ruleup.entity.user.Agreement
 import com.ruleup.entity.user.AuthSession
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.entity.user.Token
+import com.ruleup.onboarding.domain.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.entity.OAuthResult
 
 interface AuthRepository {
     /** 소셜 로그인. 기존/신규 분기를 반환한다(명세 4.1/4.2). */

@@ -26,8 +26,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.ruleup.domain.auth.NickNameUtil
-import com.ruleup.domain.auth.NicknameValidation
+import com.ruleup.onboarding.domain.auth.NickNameUtil
+import com.ruleup.onboarding.domain.auth.NicknameValidation
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent

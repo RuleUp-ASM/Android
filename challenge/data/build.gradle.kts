@@ -27,6 +27,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":challenge:domain"))
     implementation(project(":core:network"))
     implementation(project(":core:domain"))
     implementation(project(":core:entity"))

@@ -2,7 +2,6 @@ package com.ruleup.onboarding.data.repository
 
 import android.content.Context
 import android.net.Uri
-import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.entity.user.CategoryCatalog
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.entity.user.NicknameCheck
@@ -14,6 +13,7 @@ import com.ruleup.onboarding.data.api.ProfileApi
 import com.ruleup.onboarding.data.dto.NicknameCheckRequest
 import com.ruleup.onboarding.data.dto.UpdateProfileRequest
 import com.ruleup.onboarding.data.dto.toDomain
+import com.ruleup.onboarding.domain.profile.ProfileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody

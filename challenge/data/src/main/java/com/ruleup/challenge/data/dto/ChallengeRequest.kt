@@ -1,7 +1,7 @@
 package com.ruleup.challenge.data.dto
 
-import com.ruleup.entity.challenge.ChallengeForm
-import com.ruleup.entity.challenge.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.ChallengeForm
+import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

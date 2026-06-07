@@ -1,4 +1,4 @@
-package com.ruleup.entity.challenge
+package com.ruleup.challenge.domain.entity
 
 import com.ruleup.entity.user.InterestCategory
 

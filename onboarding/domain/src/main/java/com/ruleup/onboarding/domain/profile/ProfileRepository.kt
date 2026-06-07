@@ -1,4 +1,4 @@
-package com.ruleup.domain.profile
+package com.ruleup.onboarding.domain.profile
 
 import com.ruleup.entity.user.CategoryCatalog
 import com.ruleup.entity.user.InterestCategory

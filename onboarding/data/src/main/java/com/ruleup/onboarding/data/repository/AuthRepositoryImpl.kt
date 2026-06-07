@@ -1,8 +1,5 @@
 package com.ruleup.onboarding.data.repository
 
-import com.ruleup.domain.auth.usecase.AuthRepository
-import com.ruleup.entity.onboarding.OAuthAuthorization
-import com.ruleup.entity.onboarding.OAuthResult
 import com.ruleup.entity.user.Agreement
 import com.ruleup.entity.user.AuthSession
 import com.ruleup.entity.user.InterestCategory
@@ -19,6 +16,9 @@ import com.ruleup.onboarding.data.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.dto.toAuthSession
 import com.ruleup.onboarding.data.dto.toOAuthResult
 import com.ruleup.onboarding.data.dto.toToken
+import com.ruleup.onboarding.domain.auth.usecase.AuthRepository
+import com.ruleup.onboarding.domain.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.entity.OAuthResult
 import javax.inject.Inject
 
 class AuthRepositoryImpl

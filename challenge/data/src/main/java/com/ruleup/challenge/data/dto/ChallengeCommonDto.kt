@@ -1,8 +1,8 @@
 package com.ruleup.challenge.data.dto
 
-import com.ruleup.entity.challenge.Penalty
-import com.ruleup.entity.challenge.Reward
-import com.ruleup.entity.challenge.SnsShare
+import com.ruleup.challenge.domain.entity.Penalty
+import com.ruleup.challenge.domain.entity.Reward
+import com.ruleup.challenge.domain.entity.SnsShare
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

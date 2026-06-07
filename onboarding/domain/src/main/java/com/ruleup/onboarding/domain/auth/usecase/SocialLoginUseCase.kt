@@ -1,9 +1,9 @@
-package com.ruleup.domain.auth.usecase
+package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.token.TokenRepository
-import com.ruleup.entity.onboarding.LoginResult
-import com.ruleup.entity.onboarding.OAuthAuthorization
-import com.ruleup.entity.onboarding.OAuthResult
+import com.ruleup.onboarding.domain.entity.LoginResult
+import com.ruleup.onboarding.domain.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.entity.OAuthResult
 import javax.inject.Inject
 
 class SocialLoginUseCase

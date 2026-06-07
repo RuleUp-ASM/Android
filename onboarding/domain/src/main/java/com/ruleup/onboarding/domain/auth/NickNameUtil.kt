@@ -1,4 +1,4 @@
-package com.ruleup.domain.auth
+package com.ruleup.onboarding.domain.auth
 
 object NickNameUtil {
     const val MIN_LENGTH = 2
