@@ -50,6 +50,7 @@ import com.ruleup.challenge.domain.entity.RepeatDay
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.presentation.create.component.ChallengeFlowPreview
 import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
+import com.ruleup.challenge.presentation.create.component.DurationPickerSheet
 import com.ruleup.challenge.presentation.create.component.GradientSwitch
 import com.ruleup.challenge.presentation.create.component.InfoNote
 import com.ruleup.challenge.presentation.create.component.SectionLabel
@@ -700,30 +701,11 @@ private fun FrequencyAndPeriodSection(
 
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 RepeatDay.entries.forEach { day ->
-                    val selected = day in state.repeatDays
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(19.dp))
-                                .let { base ->
-                                    if (selected) {
-                                        base.background(RuleUpGradients.Button)
-                                    } else {
-                                        base
-                                            .background(RuleUpTheme.colors.surface)
-                                            .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(19.dp))
-                                    }
-                                }.clickable { onIntent(CreateChallengeIntent.ToggleRepeatDay(day)) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            day.label,
-                            color = if (selected) Color.White else RuleUpTheme.colors.textMuted,
-                            fontSize = 13.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                        )
-                    }
+                    RepeatDayChip(
+                        day = day,
+                        selected = day in state.repeatDays,
+                        onClick = { onIntent(CreateChallengeIntent.ToggleRepeatDay(day)) },
+                    )
                 }
             }
 
@@ -783,6 +765,37 @@ private fun FrequencyAndPeriodSection(
     }
 }
 
+@Composable
+private fun RepeatDayChip(
+    day: RepeatDay,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(19.dp))
+                .then(
+                    if (selected) {
+                        Modifier.background(RuleUpGradients.Button)
+                    } else {
+                        Modifier
+                            .background(RuleUpTheme.colors.surface)
+                            .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(19.dp))
+                    },
+                ).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            day.label,
+            color = if (selected) Color.White else RuleUpTheme.colors.textMuted,
+            fontSize = 13.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+        )
+    }
+}
+
 /** 인증 방식별 표기 메타데이터. */
 private data class VerificationMeta(
     val method: VerificationMethod,
@@ -834,79 +847,99 @@ private fun VerificationSection(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionLabel(text = "인증 방식")
         verificationMetas.forEach { meta ->
-            val isSelected = meta.method in selected
+            VerificationRow(
+                meta = meta,
+                isSelected = meta.method in selected,
+                onClick = { onIntent(CreateChallengeIntent.ToggleVerificationMethod(meta.method)) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun VerificationRow(
+    meta: VerificationMeta,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RuleUpTheme.shapes.large)
+                .background(RuleUpTheme.colors.surface)
+                .then(
+                    if (isSelected) {
+                        Modifier.border(2.dp, meta.accent, RuleUpTheme.shapes.large)
+                    } else {
+                        Modifier.border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
+                    },
+                ).clickable(onClick = onClick)
+                .padding(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(RuleUpTheme.shapes.small)
+                    .background(meta.tileBackground),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(meta.emoji, fontSize = 18.sp)
+        }
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
             Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RuleUpTheme.shapes.large)
-                        .background(RuleUpTheme.colors.surface)
-                        .let { base ->
-                            if (isSelected) {
-                                base.border(2.dp, meta.accent, RuleUpTheme.shapes.large)
-                            } else {
-                                base.border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                            }
-                        }.clickable { onIntent(CreateChallengeIntent.ToggleVerificationMethod(meta.method)) }
-                        .padding(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(40.dp)
-                            .clip(RuleUpTheme.shapes.small)
-                            .background(meta.tileBackground),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(meta.emoji, fontSize = 18.sp)
-                }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(3.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            meta.method.label,
-                            color = RuleUpTheme.colors.textPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        if (meta.recommended) {
-                            SmallBadge(
-                                text = "추천",
-                                background = RuleUpTheme.colors.brand,
-                                textColor = Color.White,
-                            )
-                        }
-                    }
-                    Text(meta.description, color = RuleUpTheme.colors.textSecondary, fontSize = 10.sp)
-                }
-                Box(
-                    modifier =
-                        Modifier
-                            .size(22.dp)
-                            .clip(RoundedCornerShape(6.dp))
-                            .let { base ->
-                                if (isSelected) {
-                                    base.background(meta.accent)
-                                } else {
-                                    base
-                                        .background(RuleUpTheme.colors.surface)
-                                        .border(1.5.dp, RuleUpTheme.colors.borderStrong, RoundedCornerShape(6.dp))
-                                }
-                            },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (isSelected) {
-                        Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
+                Text(
+                    meta.method.label,
+                    color = RuleUpTheme.colors.textPrimary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                if (meta.recommended) {
+                    SmallBadge(
+                        text = "추천",
+                        background = RuleUpTheme.colors.brand,
+                        textColor = Color.White,
+                    )
                 }
             }
+            Text(meta.description, color = RuleUpTheme.colors.textSecondary, fontSize = 10.sp)
+        }
+        VerificationCheckbox(isSelected = isSelected, accent = meta.accent)
+    }
+}
+
+@Composable
+private fun VerificationCheckbox(
+    isSelected: Boolean,
+    accent: Color,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(22.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .then(
+                    if (isSelected) {
+                        Modifier.background(accent)
+                    } else {
+                        Modifier
+                            .background(RuleUpTheme.colors.surface)
+                            .border(1.5.dp, RuleUpTheme.colors.borderStrong, RoundedCornerShape(6.dp))
+                    },
+                ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (isSelected) {
+            Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -927,22 +960,28 @@ private fun PenaltySection(
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large),
         ) {
             PenaltyRow(
-                emoji = "🌡",
-                tileBackground = Color(0xFFFFF1F2),
-                title = "매너 온도 차감",
-                required = true,
-                subtitle = "실패 1회당 −${state.mannerDeduction}℃",
+                spec =
+                    PenaltyRowSpec(
+                        emoji = "🌡",
+                        tileBackground = Color(0xFFFFF1F2),
+                        title = "매너 온도 차감",
+                        subtitle = "실패 1회당 −${state.mannerDeduction}℃",
+                        required = true,
+                    ),
                 checked = true,
                 // 필수 패널티라 끌 수 없다.
                 enabled = false,
             )
             PenaltyDivider()
             PenaltyRow(
-                emoji = "📣",
-                tileBackground = RuleUpTheme.colors.brandSoft,
-                title = "SNS 공유",
-                required = false,
-                subtitle = "실패 시 친구에게 자동 공유",
+                spec =
+                    PenaltyRowSpec(
+                        emoji = "📣",
+                        tileBackground = RuleUpTheme.colors.brandSoft,
+                        title = "SNS 공유",
+                        subtitle = "실패 시 친구에게 자동 공유",
+                        required = false,
+                    ),
                 checked = state.snsShareEnabled,
                 onCheckedChange = { onIntent(CreateChallengeIntent.SetSnsShareEnabled(it)) },
             )
@@ -951,11 +990,14 @@ private fun PenaltySection(
             }
             PenaltyDivider()
             PenaltyRow(
-                emoji = "👥",
-                tileBackground = RuleUpPalette.Violet100,
-                title = "그룹 내 공유",
-                required = true,
-                subtitle = "그룹 멤버에게 결과 알림",
+                spec =
+                    PenaltyRowSpec(
+                        emoji = "👥",
+                        tileBackground = RuleUpPalette.Violet100,
+                        title = "그룹 내 공유",
+                        subtitle = "그룹 멤버에게 결과 알림",
+                        required = true,
+                    ),
                 checked = state.groupShare,
                 onCheckedChange = { onIntent(CreateChallengeIntent.SetGroupShare(it)) },
             )
@@ -974,13 +1016,18 @@ private fun PenaltyDivider() {
     )
 }
 
+/** [PenaltyRow] 의 정적 표시 정보. 상호작용 상태(checked/enabled/onCheckedChange)와 분리한다. */
+private data class PenaltyRowSpec(
+    val emoji: String,
+    val tileBackground: Color,
+    val title: String,
+    val subtitle: String,
+    val required: Boolean,
+)
+
 @Composable
 private fun PenaltyRow(
-    emoji: String,
-    tileBackground: Color,
-    title: String,
-    required: Boolean,
-    subtitle: String,
+    spec: PenaltyRowSpec,
     checked: Boolean,
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit = {},
@@ -1003,10 +1050,10 @@ private fun PenaltyRow(
                     Modifier
                         .size(36.dp)
                         .clip(RoundedCornerShape(18.dp))
-                        .background(tileBackground),
+                        .background(spec.tileBackground),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(emoji, fontSize = 18.sp)
+                Text(spec.emoji, fontSize = 18.sp)
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(
@@ -1014,12 +1061,12 @@ private fun PenaltyRow(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        title,
+                        spec.title,
                         color = RuleUpTheme.colors.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                     )
-                    if (required) {
+                    if (spec.required) {
                         SmallBadge(
                             text = "필수",
                             background = RuleUpTheme.colors.textMuted,
@@ -1033,7 +1080,7 @@ private fun PenaltyRow(
                         )
                     }
                 }
-                Text(subtitle, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp)
+                Text(spec.subtitle, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp)
             }
         }
         GradientSwitch(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)

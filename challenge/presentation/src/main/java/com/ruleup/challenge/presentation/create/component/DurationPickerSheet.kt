@@ -1,4 +1,4 @@
-package com.ruleup.challenge.presentation.create
+package com.ruleup.challenge.presentation.create.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.challenge.presentation.create.CalendarCell
+import com.ruleup.challenge.presentation.create.ChallengeDates
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 import java.util.Calendar
@@ -317,31 +319,40 @@ private fun DayCell(
                         .background(RuleUpTheme.colors.brandSoft),
             )
         }
-        if (isEdge) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(RuleUpGradients.Button),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("${cell.day}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            }
-        } else {
-            Text(
-                "${cell.day}",
-                color =
-                    when {
-                        !cell.inMonth -> RuleUpTheme.colors.textMuted
-                        cell.dayOfWeek == Calendar.SUNDAY -> RuleUpTheme.colors.danger
-                        cell.dayOfWeek == Calendar.SATURDAY -> RuleUpTheme.colors.brand
-                        else -> RuleUpTheme.colors.textPrimary
-                    },
-                fontSize = 13.sp,
-                fontWeight = if (cell.inMonth) FontWeight.Medium else FontWeight.Normal,
-            )
+        DayNumber(cell = cell, isEdge = isEdge)
+    }
+}
+
+/** 캘린더 한 칸의 날짜 숫자. 시작/종료일(edge)은 그라데이션 원 안에 흰 글씨로, 그 외는 요일별 색으로 칠한다. */
+@Composable
+private fun DayNumber(
+    cell: CalendarCell,
+    isEdge: Boolean,
+) {
+    if (isEdge) {
+        Box(
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(RuleUpGradients.Button),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("${cell.day}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
+    } else {
+        Text(
+            "${cell.day}",
+            color =
+                when {
+                    !cell.inMonth -> RuleUpTheme.colors.textMuted
+                    cell.dayOfWeek == Calendar.SUNDAY -> RuleUpTheme.colors.danger
+                    cell.dayOfWeek == Calendar.SATURDAY -> RuleUpTheme.colors.brand
+                    else -> RuleUpTheme.colors.textPrimary
+                },
+            fontSize = 13.sp,
+            fontWeight = if (cell.inMonth) FontWeight.Medium else FontWeight.Normal,
+        )
     }
 }
 
