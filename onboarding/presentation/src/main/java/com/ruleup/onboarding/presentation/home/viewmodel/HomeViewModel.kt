@@ -2,7 +2,7 @@ package com.ruleup.onboarding.presentation.home.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.domain.navigation.AppEntryRoutes
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.onboarding.domain.LoginPage
 import com.ruleup.onboarding.domain.auth.usecase.LogoutUseCase
@@ -22,7 +22,7 @@ class HomeViewModel
         override fun onIntent(intent: HomeIntent) {
             when (intent) {
                 HomeIntent.CreateChallenge -> {
-                    navigationHelper.navigateByRoute(NavRoute(AppEntryRoutes.CHALLENGE_CREATE))
+                    navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_CREATE))
                 }
 
                 HomeIntent.Logout -> {

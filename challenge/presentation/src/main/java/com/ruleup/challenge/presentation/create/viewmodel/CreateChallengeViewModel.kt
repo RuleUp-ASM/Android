@@ -11,7 +11,7 @@ import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RecommendChallengeUseCase
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.domain.navigation.AppEntryRoutes
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -281,7 +281,7 @@ class CreateChallengeViewModel
                 runCatching { createChallengeUseCase(form) }
                     .onSuccess {
                         // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
-                        navigationHelper.navigateByRoute(NavRoute(AppEntryRoutes.HOME))
+                        navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                     }.onFailure {
                         dispatch(CreateChallengeReducerEvent.CreateFailed)
                         emitEffect(CreateChallengeEffect.ShowError(it.message ?: "챌린지 생성에 실패했어요"))
