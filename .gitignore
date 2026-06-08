@@ -10,6 +10,8 @@ build/
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/misc.xml
 
 # Local config
 /local.properties
