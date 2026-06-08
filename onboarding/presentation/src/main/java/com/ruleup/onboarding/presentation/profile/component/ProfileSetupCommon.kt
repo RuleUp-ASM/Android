@@ -1,5 +1,9 @@
 package com.ruleup.onboarding.presentation.profile.component
 
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,7 +23,40 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityOptionsCompat
+import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.NavigationHelperImpl
 import com.ruleup.ui.theme.RuleUpTheme
+
+/** 프리뷰에는 Activity 가 없으므로 런처 등록만 받아 주는 빈 레지스트리를 제공한다. */
+private val previewActivityResultRegistryOwner =
+    object : ActivityResultRegistryOwner {
+        override val activityResultRegistry =
+            object : ActivityResultRegistry() {
+                override fun <I, O> onLaunch(
+                    requestCode: Int,
+                    contract: ActivityResultContract<I, O>,
+                    input: I,
+                    options: ActivityOptionsCompat?,
+                ) = Unit
+            }
+    }
+
+/** 프로필 설정 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 와 런처 레지스트리를 더미로 제공한다. */
+@Composable
+internal fun ProfileFlowPreview(
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    RuleUpTheme(darkTheme = darkTheme) {
+        CompositionLocalProvider(
+            LocalNavigationHelper provides NavigationHelperImpl(),
+            LocalActivityResultRegistryOwner provides previewActivityResultRegistryOwner,
+        ) {
+            content()
+        }
+    }
+}
 
 /** 프로필 설정 화면 상단 제목 + 보조 설명. */
 @Composable

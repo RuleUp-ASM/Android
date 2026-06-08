@@ -26,30 +26,32 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.ruleup.domain.auth.NickNameUtil
-import com.ruleup.domain.auth.NicknameValidation
+import com.ruleup.onboarding.domain.auth.NickNameUtil
+import com.ruleup.onboarding.domain.auth.NicknameValidation
+import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
+import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
+import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
-/** 02 · 닉네임 (2/4). */
+/** 02 · 닉네임 (2/4). "다음" 은 ViewModel 의 닉네임 검사를 거쳐 통과 시 ViewModel 이 이동시킨다. */
 @Composable
 fun NicknameContent(
+    onIntent: (ProfileIntent) -> Unit,
     modifier: Modifier = Modifier,
     nickname: String = "준혁이의 도전",
     maxLength: Int = 12,
     imageUri: String? = null,
-    onNext: () -> Unit = {},
-    onBack: () -> Unit = {},
-    onNickNameChange: (String) -> Unit = {},
 ) {
+    val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
         step = 1,
         buttonText = "다음",
         modifier = modifier,
-        onNext = onNext,
-        onBack = onBack,
+        onNext = { onIntent(ProfileIntent.CheckNickname) },
+        onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
             title = "어떻게 불러드릴까요?",
@@ -57,7 +59,11 @@ fun NicknameContent(
             titleSize = 24,
         )
         NicknamePreviewCard(nickname = nickname, imageUri = imageUri)
-        NicknameField(nickname = nickname, maxLength = maxLength, onNickNameChange = onNickNameChange)
+        NicknameField(
+            nickname = nickname,
+            maxLength = maxLength,
+            onNickNameChange = { onIntent(ProfileIntent.SetNickName(it)) },
+        )
         NicknameRules(nickname = nickname)
     }
 }
@@ -254,5 +260,5 @@ private fun RuleRow(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NicknameScreenPreview() {
-    RuleUpTheme { NicknameContent() }
+    ProfileFlowPreview { NicknameContent(onIntent = {}) }
 }

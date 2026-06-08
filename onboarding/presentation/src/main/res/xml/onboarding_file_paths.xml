@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 프로필 아이콘 카메라 촬영 결과를 임시 저장하는 캐시 경로 (ProfileIconScreen) -->
+<paths>
+    <cache-path
+        name="camera"
+        path="camera/" />
+</paths>

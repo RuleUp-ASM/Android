@@ -2,6 +2,11 @@ package com.ruleup.android_ruleup.navigation
 
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ruleup.challenge.domain.ChallengeConfirmPage
+import com.ruleup.challenge.domain.ChallengeCreatePage
+import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
+import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
+import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.onboarding.domain.IntroTrustPage
 import com.ruleup.onboarding.domain.IntroVerifyPage
@@ -11,6 +16,8 @@ import com.ruleup.onboarding.domain.ProfileIconPage
 import com.ruleup.onboarding.domain.ProfileInterestPage
 import com.ruleup.onboarding.domain.ProfileNicknamePage
 import com.ruleup.onboarding.domain.ProfilePermissionPage
+import com.ruleup.onboarding.domain.SplashPage
+import com.ruleup.onboarding.presentation.home.HomeScreen
 import com.ruleup.onboarding.presentation.intro.component.IntroContent
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
 import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
@@ -20,6 +27,7 @@ import com.ruleup.onboarding.presentation.profile.ProfileIconScreen
 import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
 import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
 import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
+import com.ruleup.onboarding.presentation.splash.SplashScreen
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -27,8 +35,16 @@ import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
  */
 val appRoutes: List<AppRoute> =
     listOf(
+        // 스플래시. 앱의 시작 화면 — 자동 로그인 판별 후 홈/인트로로 분기한다(루트).
+        AppRoute(
+            path = SplashPage.PATH,
+            isRoot = true,
+            render = { SplashScreen() },
+        ),
+        // 온보딩 인트로 시작 페이지. 자동 로그인 실패 시 진입하는 로그아웃 상태의 루트.
         AppRoute(
             path = IntroPromisePage.PATH,
+            isRoot = true,
             render = { IntroContent(page = onboardingPages[0], pageIndex = 0) },
         ),
         AppRoute(
@@ -54,7 +70,30 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = LoginPage.PATH,
+            // 로그아웃 후 재진입 시 홈 등 이전 스택이 남지 않도록 루트로 시작한다.
+            isRoot = true,
             render = { LoginScreen(viewModel = hiltViewModel<LoginViewModel>()) },
+        ),
+        // 홈. 온보딩(로그인/가입) 완료 후의 루트 화면 — 뒤로가기로 가입 플로우에 돌아가지 않는다.
+        AppRoute(
+            path = HomePage.PATH,
+            isRoot = true,
+            render = { HomeScreen() },
+        ),
+        // 챌린지 생성 2개 페이지. Activity 스코프의 단일 CreateChallengeViewModel 을 공유한다.
+        AppRoute(
+            path = ChallengeCreatePage.PATH,
+            render = { ChallengeCreateScreen() },
+        ),
+        AppRoute(
+            path = ChallengeConfirmPage.PATH,
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(ChallengeCreatePage.PATH),
+                    GenericNavKey(ChallengeConfirmPage.PATH),
+                )
+            },
+            render = { ChallengeConfirmScreen() },
         ),
         // 프로필 설정(신규 가입) 5개 페이지. 모두 Activity 스코프의 단일 ProfileViewModel 을
         // 공유하므로 입력값이 페이지 이동에도 누적된다. signupToken 은 첫 페이지(아이콘)에 args 로 전달.

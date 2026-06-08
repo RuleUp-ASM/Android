@@ -90,6 +90,9 @@ dependencies {
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:presentation"))
+    implementation(project(":challenge:domain"))
+    implementation(project(":challenge:data"))
+    implementation(project(":challenge:presentation"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -109,6 +112,7 @@ dependencies {
     implementation(libs.kakao.user)
 
     testImplementation(libs.junit)
+    testImplementation(libs.konsist)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

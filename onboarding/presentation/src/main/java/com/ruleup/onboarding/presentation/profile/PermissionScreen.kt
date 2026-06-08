@@ -8,24 +8,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.ruleup.onboarding.domain.ProfileAgreementPage
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
+import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.ui.component.ProfileSetupScaffold
+import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpTheme
 
 /** 04 · 권한 안내 (4/5). 알림 등 권한 허용을 안내하는 단계. */
 @Composable
-fun PermissionContent(
-    modifier: Modifier = Modifier,
-    onNext: () -> Unit = {},
-    onBack: () -> Unit = {},
-) {
+fun PermissionContent(modifier: Modifier = Modifier) {
+    val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
         step = 3,
         buttonText = "다음",
         modifier = modifier,
-        onNext = onNext,
-        onBack = onBack,
+        onNext = { nav.navigateTo(ProfileAgreementPage) },
+        onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
             title = "권한을 허용해주세요",
@@ -57,5 +57,5 @@ fun PermissionContent(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun PermissionScreenPreview() {
-    RuleUpTheme { PermissionContent() }
+    ProfileFlowPreview { PermissionContent() }
 }

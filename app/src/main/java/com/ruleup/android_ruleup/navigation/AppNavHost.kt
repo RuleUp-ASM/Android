@@ -67,18 +67,26 @@ private const val EMPTY_BACKSTACK = -1
 
 /**
  * NavRoute 한 건을 받아 백스택에 push.
- * Search 으로의 이동은 기존 시맨틱(스택 정리 후 단일 Search 유지)을 그대로 유지한다.
+ * [AppRoute.isRoot] 페이지는 기존 스택을 모두 비우고 단일 키로 시작한다(가입 완료 → 홈 등).
  * 미등록 path 는 무시 + 경고 로그.
  */
 fun handleNavRoute(
     route: NavRoute,
     backStack: NavBackStack<NavKey>,
 ) {
-    if (appRouteByPath[route.path] == null) {
+    val appRoute = appRouteByPath[route.path]
+    if (appRoute == null) {
         Log.w(TAG, "Unhandled NavRoute: ${route.path}")
         return
     }
     val navKey = GenericNavKey.of(route)
+
+    if (appRoute.isRoot) {
+        backStack.clear()
+        backStack.add(navKey)
+        Log.d(TAG, "navigateTo(root): $navKey")
+        return
+    }
 
     if (backStack.lastOrNull() != navKey) {
         backStack.add(navKey)

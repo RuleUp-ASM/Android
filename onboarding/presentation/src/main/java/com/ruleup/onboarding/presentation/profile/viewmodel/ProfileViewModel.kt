@@ -1,12 +1,13 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.domain.auth.NickNameUtil
-import com.ruleup.domain.auth.model.SignupForm
-import com.ruleup.domain.auth.usecase.CheckNicknameUseCase
-import com.ruleup.domain.auth.usecase.SignupUseCase
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.ProfileInterestPage
+import com.ruleup.onboarding.domain.auth.NickNameUtil
+import com.ruleup.onboarding.domain.auth.model.SignupForm
+import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
+import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -154,7 +155,7 @@ class ProfileViewModel
                         ),
                     )
                 }.onSuccess {
-                    emitEffect(ProfileEffect.NavigateToHome)
+                    navigationHelper.navigateTo(HomePage)
                 }.onFailure {
                     dispatch(ProfileReducerEvent.SubmitFailed)
                     emitEffect(ProfileEffect.ShowError(it.message ?: "가입 실패"))

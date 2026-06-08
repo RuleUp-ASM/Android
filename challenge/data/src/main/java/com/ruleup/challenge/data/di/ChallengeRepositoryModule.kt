@@ -1,7 +1,7 @@
 package com.ruleup.challenge.data.di
 
 import com.ruleup.challenge.data.repository.ChallengeRepositoryImpl
-import com.ruleup.domain.challenge.ChallengeRepository
+import com.ruleup.challenge.domain.ChallengeRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

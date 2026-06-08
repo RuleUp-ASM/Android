@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.domain
 
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
 
@@ -8,7 +9,7 @@ import com.ruleup.domain.navigation.Page
  * 단계 순서: 아이콘 → 닉네임 → 관심사 → 권한 → 약관동의.
  */
 object ProfileIconPage : Page {
-    const val PATH = "profile/icon"
+    const val PATH = AppRoutes.PROFILE_ICON
 
     /** 프로필 설정 진입 시 함께 전달되는 가입 토큰 인자 키. */
     const val ARG_SIGNUP_TOKEN = "signupToken"
@@ -20,25 +21,25 @@ object ProfileIconPage : Page {
 }
 
 object ProfileNicknamePage : Page {
-    const val PATH = "profile/nickname"
+    const val PATH = AppRoutes.PROFILE_NICKNAME
 
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }
 
 object ProfileInterestPage : Page {
-    const val PATH = "profile/interest"
+    const val PATH = AppRoutes.PROFILE_INTEREST
 
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }
 
 object ProfilePermissionPage : Page {
-    const val PATH = "profile/permission"
+    const val PATH = AppRoutes.PROFILE_PERMISSION
 
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }
 
 object ProfileAgreementPage : Page {
-    const val PATH = "profile/agreement"
+    const val PATH = AppRoutes.PROFILE_AGREEMENT
 
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }

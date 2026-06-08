@@ -2,6 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
+        <!-- 카메라 촬영 이미지를 카메라 앱과 공유하기 위한 FileProvider (ProfileIconScreen) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/onboarding_file_paths" />
+        </provider>
+
         <!-- OAuth SDK 호스팅 Activity -->
         <activity
             android:name="com.ruleup.onboarding.presentation.oauth.OAuthActivity"
