@@ -1,18 +1,17 @@
 package com.ruleup.onboarding.presentation.profile
 
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileEffect
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileViewModel
+import com.ruleup.ui.helper.LocalMessageHelper
 
 /**
  * 프로필 설정 플로우의 페이지별 화면. 5개 화면이 Activity 스코프의 단일 [ProfileViewModel] 을
@@ -50,12 +49,12 @@ fun ProfileIconScreen(
 fun ProfileNicknameScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedProfileViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             if (effect is ProfileEffect.ShowError) {
-                Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                messageHelper.showToast(effect.message)
             }
         }
     }
@@ -92,12 +91,12 @@ fun ProfilePermissionScreen(modifier: Modifier = Modifier) {
 fun ProfileAgreementScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedProfileViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             if (effect is ProfileEffect.ShowError) {
-                Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                messageHelper.showToast(effect.message)
             }
         }
     }

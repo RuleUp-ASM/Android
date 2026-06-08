@@ -1,17 +1,16 @@
 package com.ruleup.challenge.presentation.create
 
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeEffect
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeViewModel
+import com.ruleup.ui.helper.LocalMessageHelper
 
 /**
  * 챌린지 생성 플로우의 페이지별 화면. 입력(01)·AI 추천 확인(02)이 Activity 스코프의 단일
@@ -26,11 +25,11 @@ private fun sharedCreateChallengeViewModel(): CreateChallengeViewModel {
 /** ViewModel 의 단발성 에러를 토스트로 보여준다. */
 @Composable
 private fun CollectErrorEffect(viewModel: CreateChallengeViewModel) {
-    val context = LocalContext.current
+    val messageHelper = LocalMessageHelper.current
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             if (effect is CreateChallengeEffect.ShowError) {
-                Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                messageHelper.showToast(effect.message)
             }
         }
     }
