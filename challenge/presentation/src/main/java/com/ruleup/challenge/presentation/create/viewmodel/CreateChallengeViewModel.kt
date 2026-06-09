@@ -14,9 +14,11 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * 챌린지 생성 플로우 공유 ViewModel.
@@ -24,9 +26,10 @@ import javax.inject.Inject
  * 입력(01)·AI 추천 확인(02) 두 페이지가 같은 인스턴스를 공유해 입력값을 누적한다.
  * 추천(명세 3.1)과 생성(명세 3.2) 비동기 분기를 담당하고, 성공 시 직접 페이지를 이동시킨다.
  */
-@HiltViewModel
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class)
 class CreateChallengeViewModel
-    @Inject
     constructor(
         private val recommendChallengeUseCase: RecommendChallengeUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,

@@ -17,14 +17,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashIntent
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashViewModel
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
-fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
+fun SplashScreen(viewModel: SplashViewModel = metroViewModel()) {
     LaunchedEffect(Unit) {
         viewModel.onIntent(SplashIntent.Check)
     }

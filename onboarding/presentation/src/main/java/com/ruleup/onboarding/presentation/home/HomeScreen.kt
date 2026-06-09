@@ -21,18 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.onboarding.presentation.home.viewmodel.HomeIntent
 import com.ruleup.onboarding.presentation.home.viewmodel.HomeViewModel
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.theme.RuleUpTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /** 홈. 온보딩 완료 후 진입하는 루트 화면. */
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = metroViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 

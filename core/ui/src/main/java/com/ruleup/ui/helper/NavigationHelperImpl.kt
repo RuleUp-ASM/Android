@@ -6,10 +6,17 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.NavSignal
 import com.ruleup.domain.navigation.Page
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
 class NavigationHelperImpl : NavigationHelper {
     private val _navigationFlow = Channel<NavSignal>(capacity = Channel.BUFFERED)
     override val navigationFlow: Flow<NavSignal> = _navigationFlow.receiveAsFlow()

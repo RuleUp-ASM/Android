@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.token.TokenRepository
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * 로그아웃 유스케이스.

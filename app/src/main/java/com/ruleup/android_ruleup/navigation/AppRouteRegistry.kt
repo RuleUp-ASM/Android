@@ -1,7 +1,5 @@
 package com.ruleup.android_ruleup.navigation
 
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.ChallengeCreatePage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
@@ -28,6 +26,7 @@ import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
 import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
 import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -72,7 +71,7 @@ val appRoutes: List<AppRoute> =
             path = LoginPage.PATH,
             // 로그아웃 후 재진입 시 홈 등 이전 스택이 남지 않도록 루트로 시작한다.
             isRoot = true,
-            render = { LoginScreen(viewModel = hiltViewModel<LoginViewModel>()) },
+            render = { LoginScreen(viewModel = metroViewModel<LoginViewModel>()) },
         ),
         // 홈. 온보딩(로그인/가입) 완료 후의 루트 화면 — 뒤로가기로 가입 플로우에 돌아가지 않는다.
         AppRoute(

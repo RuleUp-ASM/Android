@@ -6,11 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeEffect
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * 챌린지 생성 플로우의 페이지별 화면. 입력(01)·AI 추천 확인(02)이 Activity 스코프의 단일
@@ -19,7 +19,7 @@ import com.ruleup.ui.helper.LocalMessageHelper
 @Composable
 private fun sharedCreateChallengeViewModel(): CreateChallengeViewModel {
     val activity = LocalActivity.current as ComponentActivity
-    return hiltViewModel(viewModelStoreOwner = activity)
+    return metroViewModel(viewModelStoreOwner = activity)
 }
 
 /** ViewModel 의 단발성 에러를 토스트로 보여준다. */

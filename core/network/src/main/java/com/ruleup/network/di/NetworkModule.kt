@@ -2,10 +2,10 @@ package com.ruleup.network.di
 
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.network.BuildConfig
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
@@ -15,13 +15,11 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
-object NetworkModule {
+@ContributesTo(AppScope::class)
+interface NetworkModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideJson(): Json =
         Json {
             ignoreUnknownKeys = true
@@ -30,7 +28,7 @@ object NetworkModule {
         }
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideOkHttpClient(tokenRepository: TokenRepository): OkHttpClient {
         val logging =
             HttpLoggingInterceptor().apply {
@@ -60,7 +58,7 @@ object NetworkModule {
     }
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
         json: Json,

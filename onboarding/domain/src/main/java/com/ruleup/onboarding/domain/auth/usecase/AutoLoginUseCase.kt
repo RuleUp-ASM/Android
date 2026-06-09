@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.token.TokenRepository
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * 자동 로그인 유스케이스.
@@ -25,4 +25,3 @@ class AutoLoginUseCase
                 .isSuccess
         }
     }
-

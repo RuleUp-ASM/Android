@@ -19,56 +19,60 @@ import com.ruleup.onboarding.data.dto.toToken
 import com.ruleup.onboarding.domain.auth.usecase.AuthRepository
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
-class AuthRepositoryImpl
-    @Inject
-    constructor(
-        private val api: AuthApi,
-    ) : AuthRepository {
-        override suspend fun exchangeToken(authorization: OAuthAuthorization): OAuthResult =
-            api
-                .socialLogin(
-                    provider = authorization.provider.provider,
-                    request =
-                        SocialLoginAuthRequest(
-                            code = authorization.code,
-                            codeVerifier = authorization.codeVerifier,
-                            redirectUri = authorization.redirectUri,
-                        ),
-                ).getOrThrow()
-                .toOAuthResult()
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
+class AuthRepositoryImpl(
+    private val api: AuthApi,
+) : AuthRepository {
+    override suspend fun exchangeToken(authorization: OAuthAuthorization): OAuthResult =
+        api
+            .socialLogin(
+                provider = authorization.provider.provider,
+                request =
+                    SocialLoginAuthRequest(
+                        code = authorization.code,
+                        codeVerifier = authorization.codeVerifier,
+                        redirectUri = authorization.redirectUri,
+                    ),
+            ).getOrThrow()
+            .toOAuthResult()
 
-        override suspend fun signup(
-            signupToken: String,
-            nickname: String,
-            interestCategories: List<InterestCategory>,
-            profileImageUrl: String?,
-            agreements: Agreement,
-        ): AuthSession =
-            api
-                .signup(
-                    request =
-                        SignUpRequest(
-                            signupToken = signupToken,
-                            nickname = nickname,
-                            interestCategories = interestCategories.map { it.value },
-                            profileImageUrl = profileImageUrl,
-                            clientProperties = agreements.toClientProperties(),
-                        ),
-                ).getOrThrow()
-                .toAuthSession()
+    override suspend fun signup(
+        signupToken: String,
+        nickname: String,
+        interestCategories: List<InterestCategory>,
+        profileImageUrl: String?,
+        agreements: Agreement,
+    ): AuthSession =
+        api
+            .signup(
+                request =
+                    SignUpRequest(
+                        signupToken = signupToken,
+                        nickname = nickname,
+                        interestCategories = interestCategories.map { it.value },
+                        profileImageUrl = profileImageUrl,
+                        clientProperties = agreements.toClientProperties(),
+                    ),
+            ).getOrThrow()
+            .toAuthSession()
 
-        override suspend fun refreshToken(refreshToken: String): Token =
-            api
-                .refreshToken(TokenRefreshRequest(refreshToken = refreshToken))
-                .getOrThrow()
-                .toToken()
+    override suspend fun refreshToken(refreshToken: String): Token =
+        api
+            .refreshToken(TokenRefreshRequest(refreshToken = refreshToken))
+            .getOrThrow()
+            .toToken()
 
-        override suspend fun logout(refreshToken: String) {
-            api.logout(LogoutRequest(refreshToken = refreshToken)).throwOnError()
-        }
+    override suspend fun logout(refreshToken: String) {
+        api.logout(LogoutRequest(refreshToken = refreshToken)).throwOnError()
     }
+}
 
 private fun Agreement.toClientProperties(): ClientPropertiesDto =
     ClientPropertiesDto(

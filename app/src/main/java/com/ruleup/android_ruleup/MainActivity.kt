@@ -14,20 +14,13 @@ import com.ruleup.android_ruleup.deeplink.resolveNewIntentRoute
 import com.ruleup.android_ruleup.deeplink.resolveStartStack
 import com.ruleup.android_ruleup.navigation.RootComposable
 import com.ruleup.android_ruleup.ui.theme.AndroidRuleUpTheme
-import com.ruleup.domain.helper.MessageHelper
-import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 
-@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject
-    lateinit var navigationHelper: NavigationHelper
-
-    @Inject
-    lateinit var messageHelper: MessageHelper
+    // App 에서 생성된 전역 그래프. 필드 주입(@AndroidEntryPoint) 대신 그래프 accessor 로 의존성을 꺼낸다.
+    private val graph by lazy { (application as App).appGraph }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val startStack = resolveStartStack(intent?.data)
@@ -35,8 +28,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CompositionLocalProvider(
-                LocalNavigationHelper provides navigationHelper,
-                LocalMessageHelper provides messageHelper,
+                LocalNavigationHelper provides graph.navigationHelper,
+                LocalMessageHelper provides graph.messageHelper,
+                LocalMetroViewModelFactory provides graph.metroViewModelFactory,
             ) {
                 RootComposable(startStack = startStack)
             }
@@ -49,7 +43,7 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         intent.data
             ?.let { resolveNewIntentRoute(it) }
-            ?.let { navigationHelper.navigateByRoute(it) }
+            ?.let { graph.navigationHelper.navigateByRoute(it) }
     }
 }
 
