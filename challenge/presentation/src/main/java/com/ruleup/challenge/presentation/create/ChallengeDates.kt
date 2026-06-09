@@ -38,6 +38,20 @@ internal object ChallengeDates {
         durationDays: Int,
     ): String = plusDays(startIso, durationDays - 1)
 
+    /**
+     * [startIso]~[endIso] 사이의 일수(시작일 제외). 드래그로 잡은 범위의 기간 계산에 쓴다.
+     * endDate(s, n) 의 역연산이며, DST 로 인한 23/25시간 일자를 반올림으로 보정한다.
+     */
+    fun daysBetween(
+        startIso: String,
+        endIso: String,
+    ): Int {
+        val start = parse(startIso) ?: return 0
+        val end = parse(endIso) ?: return 0
+        val dayMillis = 24.0 * 60 * 60 * 1000
+        return Math.round((end.timeInMillis - start.timeInMillis) / dayMillis).toInt()
+    }
+
     /** "06.01 월" 형태의 짧은 표기. */
     fun formatMonthDay(iso: String): String {
         val calendar = parse(iso) ?: return iso
