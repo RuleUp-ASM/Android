@@ -8,6 +8,7 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.11.0-rc01"
 activityCompose = "1.13.0"
 kotlin = "2.3.21"
+metro = "1.1.1"
 composeBom = "2026.05.01"
 
 # version
@@ -144,6 +145,7 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
 
 # firebase
 google-services = { id = "com.google.gms.google-services", version.ref = "googleservice" }
