@@ -11,8 +11,6 @@ object NickNameUtil {
 
     fun isValidName(name: String): Boolean = NICKNAME_REGEX.matches(name)
 
-    fun isValid(name: String): Boolean = inRange(name) && isValidName(name)
-
     /**
      * 입력값을 검증해 실패 "사유"까지 구분해 돌려준다.
      * 문자 종류를 길이보다 먼저 보므로, 특수문자가 섞이면 길이 안내가 아니라 문자 안내가 나간다.

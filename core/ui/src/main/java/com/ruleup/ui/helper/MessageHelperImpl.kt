@@ -6,10 +6,17 @@ import androidx.compose.runtime.compositionLocalOf
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.message.IconType
 import com.ruleup.domain.message.MessageEffect
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
 class MessageHelperImpl(
     val context: Context,
 ) : MessageHelper {

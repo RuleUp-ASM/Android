@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.onboarding.domain.HomePage
@@ -9,9 +10,12 @@ import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.ui.mvi.MviViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * 프로필 설정 플로우 공유 ViewModel.
@@ -20,9 +24,10 @@ import javax.inject.Inject
  * 페이지 간 단순 전진/후진은 화면이 [NavigationHelper] 로 직접 처리하고,
  * 비동기 분기(닉네임 중복검사, 가입 제출)만 본 ViewModel 이 담당한다.
  */
-@HiltViewModel
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class ProfileViewModel
-    @Inject
     constructor(
         private val signupUseCase: SignupUseCase,
         private val checkNicknameUseCase: CheckNicknameUseCase,

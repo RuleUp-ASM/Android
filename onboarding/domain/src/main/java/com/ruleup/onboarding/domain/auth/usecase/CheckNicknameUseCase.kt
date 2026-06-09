@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.onboarding.domain.profile.ProfileRepository
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * 닉네임 사용 가능 여부 확인 (명세 4.6).

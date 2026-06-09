@@ -3,6 +3,8 @@ package com.ruleup.challenge.presentation.create.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +27,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,7 +113,12 @@ internal fun DurationPickerSheet(
                 month = displayedMonth,
                 startIso = selectedStart,
                 endIso = ChallengeDates.endDate(selectedStart, selectedDuration),
-                onSelect = { selectedStart = it },
+                // 탭: 시작일만 변경(기간 유지) / 드래그: 시작~종료 범위 직접 선택(기간 자동 계산)
+                onStartSelect = { selectedStart = it },
+                onRangeSelect = { start, end ->
+                    selectedStart = start
+                    selectedDuration = ChallengeDates.daysBetween(start, end) + 1
+                },
             )
             PeriodSummary(startIso = selectedStart, durationDays = selectedDuration)
             SheetButtons(
@@ -257,29 +270,73 @@ private fun WeekdayHeader() {
     }
 }
 
+/**
+ * 6주 캘린더 그리드. 탭하면 [onStartSelect](시작일만 변경), 한 날짜에서 다른 날짜로 드래그하면
+ * [onRangeSelect](시작~종료 범위 선택)을 호출한다. 드래그 히트테스트를 위해 각 셀의 window 좌표
+ * Rect 를 [onGloballyPositioned] 로 기록하고, 제스처 지점이 포함된 셀의 날짜를 찾는다.
+ */
 @Composable
 private fun CalendarGrid(
     year: Int,
     month: Int,
     startIso: String,
     endIso: String,
-    onSelect: (String) -> Unit,
+    onStartSelect: (String) -> Unit,
+    onRangeSelect: (startIso: String, endIso: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val cells = ChallengeDates.monthCells(year, month)
+    // 셀 index → window 좌표 Rect. 제스처 콜백에서만 읽으므로 snapshot 상태가 아닌 일반 맵으로 둔다.
+    val cellBounds = remember(cells) { mutableMapOf<Int, Rect>() }
+    var gridOrigin by remember { mutableStateOf(Offset.Zero) }
+    var dragAnchorIso by remember { mutableStateOf<String?>(null) }
+
+    fun isoAt(windowOffset: Offset): String? =
+        cellBounds.entries
+            .firstOrNull { it.value.contains(windowOffset) }
+            ?.let { cells.getOrNull(it.key)?.iso }
+
     Column(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp)
+                .onGloballyPositioned { gridOrigin = it.positionInWindow() }
+                .pointerInput(cells) {
+                    detectTapGestures { offset -> isoAt(gridOrigin + offset)?.let(onStartSelect) }
+                }.pointerInput(cells) {
+                    detectDragGestures(
+                        onDragStart = { offset ->
+                            val iso = isoAt(gridOrigin + offset)
+                            dragAnchorIso = iso
+                            if (iso != null) onRangeSelect(iso, iso)
+                        },
+                        onDrag = { change, _ ->
+                            val anchor = dragAnchorIso
+                            val iso = isoAt(gridOrigin + change.position)
+                            if (anchor != null && iso != null) {
+                                // ISO(yyyy-MM-dd) 는 사전순 = 날짜순이라 그대로 비교해 시작/종료를 가린다.
+                                if (iso <= anchor) onRangeSelect(iso, anchor) else onRangeSelect(anchor, iso)
+                            }
+                        },
+                        onDragEnd = { dragAnchorIso = null },
+                        onDragCancel = { dragAnchorIso = null },
+                    )
+                },
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        cells.chunked(7).forEach { week ->
+        cells.chunked(7).forEachIndexed { weekIndex, week ->
             Row(modifier = Modifier.fillMaxWidth()) {
-                week.forEach { cell ->
+                week.forEachIndexed { dayIndex, cell ->
+                    val index = weekIndex * 7 + dayIndex
                     DayCell(
                         cell = cell,
                         startIso = startIso,
                         endIso = endIso,
-                        modifier = Modifier.weight(1f),
-                        onSelect = onSelect,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .onGloballyPositioned { cellBounds[index] = it.boundsInWindow() },
                     )
                 }
             }
@@ -293,13 +350,12 @@ private fun DayCell(
     cell: CalendarCell,
     startIso: String,
     endIso: String,
-    onSelect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val inRange = cell.iso >= startIso && cell.iso <= endIso
     val isEdge = cell.iso == startIso || cell.iso == endIso
     Box(
-        modifier = modifier.height(42.dp).clickable { onSelect(cell.iso) },
+        modifier = modifier.height(42.dp),
         contentAlignment = Alignment.Center,
     ) {
         if (inRange) {

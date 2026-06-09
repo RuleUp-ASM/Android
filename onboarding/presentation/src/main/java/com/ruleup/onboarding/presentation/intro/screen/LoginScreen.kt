@@ -27,7 +27,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ruleup.onboarding.domain.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
@@ -36,9 +35,10 @@ import com.ruleup.onboarding.presentation.oauth.OAuthContract
 import com.ruleup.ui.theme.RuleUpColors
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
-fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
+fun LoginScreen(viewModel: LoginViewModel = metroViewModel()) {
     val launcher =
         rememberLauncherForActivityResult(OAuthContract()) { result ->
             result

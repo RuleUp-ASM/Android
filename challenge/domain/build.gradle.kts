@@ -1,6 +1,7 @@
 plugins {
     id("java-library")
     alias(libs.plugins.jetbrains.kotlin.jvm)
+    alias(libs.plugins.metro)
 }
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -16,6 +17,4 @@ dependencies {
     // Page/NavRoute, InterestCategory(공유 커널)가 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
     api(project(":core:domain"))
     api(project(":core:entity"))
-
-    implementation(libs.javax.inject)
 }

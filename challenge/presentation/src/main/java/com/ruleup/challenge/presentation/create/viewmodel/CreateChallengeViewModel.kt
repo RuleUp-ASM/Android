@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.entity.Anonymity
@@ -10,13 +11,17 @@ import com.ruleup.challenge.domain.entity.Reward
 import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RecommendChallengeUseCase
+import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * 챌린지 생성 플로우 공유 ViewModel.
@@ -24,12 +29,14 @@ import javax.inject.Inject
  * 입력(01)·AI 추천 확인(02) 두 페이지가 같은 인스턴스를 공유해 입력값을 누적한다.
  * 추천(명세 3.1)과 생성(명세 3.2) 비동기 분기를 담당하고, 성공 시 직접 페이지를 이동시킨다.
  */
-@HiltViewModel
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class CreateChallengeViewModel
-    @Inject
     constructor(
         private val recommendChallengeUseCase: RecommendChallengeUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,
+        private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<CreateChallengeIntent, CreateChallengeState, CreateChallengeReducerEvent, CreateChallengeEffect>(
             CreateChallengeState.initial,
@@ -249,7 +256,7 @@ class CreateChallengeViewModel
                 ChallengeForm(
                     title = state.title.trim(),
                     description = state.description.trim().ifBlank { null },
-                    // TODO: 챌린지 이미지 업로드 API 연동 시 coverImageUri 를 업로드해 URL 로 전달한다.
+                    // 로컬 커버 이미지는 생성 직전 업로드(3.9)해 URL 로 치환한다. 아래 launch 참고.
                     imageUrl = null,
                     category = category,
                     participationType = state.participationType,
@@ -276,16 +283,20 @@ class CreateChallengeViewModel
                     anonymity = Anonymity.REAL,
                 )
 
+            val coverImageUri = state.coverImageUri?.takeIf { it.isNotBlank() }
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.Creating)
-                runCatching { createChallengeUseCase(form) }
-                    .onSuccess {
-                        // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
-                        navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
-                    }.onFailure {
-                        dispatch(CreateChallengeReducerEvent.CreateFailed)
-                        emitEffect(CreateChallengeEffect.ShowError(it.message ?: "챌린지 생성에 실패했어요"))
-                    }
+                runCatching {
+                    // 커버 이미지가 있으면 먼저 업로드(3.9)해 URL 을 확보한 뒤 생성한다.
+                    val imageUrl = coverImageUri?.let { uploadChallengeImageUseCase(it) }
+                    createChallengeUseCase(form.copy(imageUrl = imageUrl))
+                }.onSuccess {
+                    // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
+                    navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
+                }.onFailure {
+                    dispatch(CreateChallengeReducerEvent.CreateFailed)
+                    emitEffect(CreateChallengeEffect.ShowError(it.message ?: "챌린지 생성에 실패했어요"))
+                }
             }
         }
 

@@ -4,8 +4,7 @@ import kotlin.apply
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.metro)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -87,6 +86,8 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:ui"))
     implementation(project(":core:datastore"))
+    // Metro 그래프(app)가 NetworkModule(@ContributesTo)·Retrofit 바인딩을 집계하려면 직접 의존이 필요하다.
+    implementation(project(":core:network"))
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:presentation"))
@@ -105,9 +106,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
-    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.metrox.viewmodel)
+    implementation(libs.metrox.viewmodel.compose)
 
     implementation(libs.kakao.user)
 

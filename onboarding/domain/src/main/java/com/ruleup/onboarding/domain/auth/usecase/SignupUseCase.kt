@@ -4,7 +4,7 @@ import com.ruleup.domain.token.TokenRepository
 import com.ruleup.entity.user.User
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.profile.ProfileRepository
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * 신규 가입 완료 유스케이스.

@@ -4,7 +4,7 @@ import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.entity.LoginResult
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class SocialLoginUseCase
     @Inject

@@ -6,12 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileEffect
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * 프로필 설정 플로우의 페이지별 화면. 5개 화면이 Activity 스코프의 단일 [ProfileViewModel] 을
@@ -21,7 +21,7 @@ import com.ruleup.ui.helper.LocalMessageHelper
 @Composable
 private fun sharedProfileViewModel(): ProfileViewModel {
     val activity = LocalActivity.current as ComponentActivity
-    return hiltViewModel(viewModelStoreOwner = activity)
+    return metroViewModel(viewModelStoreOwner = activity)
 }
 
 /** 01 · 프로필 아이콘. signupToken 은 진입 시 args 로 전달받아 ViewModel 에 저장한다. */

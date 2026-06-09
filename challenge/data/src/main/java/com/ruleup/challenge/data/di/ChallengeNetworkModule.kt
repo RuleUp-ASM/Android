@@ -1,17 +1,15 @@
 package com.ruleup.challenge.data.di
 
 import com.ruleup.challenge.data.api.ChallengeApi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import retrofit2.Retrofit
-import javax.inject.Singleton
 
-@Module
-@InstallIn(SingletonComponent::class)
-object ChallengeNetworkModule {
+@ContributesTo(AppScope::class)
+interface ChallengeNetworkModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideChallengeApiService(retrofit: Retrofit): ChallengeApi = retrofit.create(ChallengeApi::class.java)
 }

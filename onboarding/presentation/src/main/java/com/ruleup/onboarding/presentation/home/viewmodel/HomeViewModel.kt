@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.presentation.home.viewmodel
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -8,13 +9,17 @@ import com.ruleup.onboarding.domain.LoginPage
 import com.ruleup.onboarding.domain.auth.usecase.LogoutUseCase
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
+@Inject
+@ViewModelKey
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class HomeViewModel
-    @Inject
     constructor(
         private val logoutUseCase: LogoutUseCase,
         private val navigationHelper: NavigationHelper,

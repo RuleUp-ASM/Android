@@ -2,7 +2,7 @@ package com.ruleup.challenge.domain.usecase
 
 import com.ruleup.challenge.domain.ChallengeRepository
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * 챌린지 LLM 기본값 추천 유스케이스 (명세 3.1).
