@@ -1,6 +1,7 @@
 package com.ruleup.challenge.data.api
 
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
+import com.ruleup.challenge.data.dto.ChallengeImageResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
@@ -11,11 +12,14 @@ import com.ruleup.challenge.data.dto.RecommendationResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeRequest
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -71,4 +75,11 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
         @Query("status") status: String? = null,
     ): BaseResponse<ChallengeMembersResponse>
+
+    // 3.9 챌린지 대표 이미지 업로드 (생성/수정 전 호출, challengeId 불필요)
+    @Multipart
+    @POST("v1/challenges/image")
+    suspend fun uploadImage(
+        @Part image: MultipartBody.Part,
+    ): BaseResponse<ChallengeImageResponse>
 }

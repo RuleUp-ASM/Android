@@ -22,6 +22,12 @@ interface ChallengeRepository {
     /** 확정값으로 챌린지를 생성한다(명세 3.2). */
     suspend fun create(form: ChallengeForm): Challenge
 
+    /**
+     * 챌린지 대표 이미지를 업로드하고 서버 URL 을 반환한다(명세 3.9).
+     * 생성/수정 전에 호출해, 반환된 URL 을 [ChallengeForm.imageUrl] 로 전달한다.
+     */
+    suspend fun uploadImage(imageUri: String): String
+
     /** 챌린지 상세 + 참여 자격 조회(명세 3.3). */
     suspend fun getChallenge(challengeId: String): ChallengeDetail
 

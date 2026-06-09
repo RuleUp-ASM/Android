@@ -1,5 +1,7 @@
 package com.ruleup.challenge.data.repository
 
+import android.content.Context
+import androidx.core.net.toUri
 import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.MemberDecisionRequest
 import com.ruleup.challenge.data.dto.RecommendationRequest
@@ -16,17 +18,24 @@ import com.ruleup.challenge.domain.entity.MemberAction
 import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.MemberStatusFilter
 import com.ruleup.network.dto.getOrThrow
+import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @Inject
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
 class ChallengeRepositoryImpl(
     private val api: ChallengeApi,
+    private val context: Context,
 ) : ChallengeRepository {
     override suspend fun recommend(
         title: String,
@@ -46,6 +55,27 @@ class ChallengeRepositoryImpl(
             .create(form.toRequest())
             .getOrThrow()
             .toDomain()
+
+    override suspend fun uploadImage(imageUri: String): String {
+        val uri = imageUri.toUri()
+        val resolver = context.contentResolver
+        val bytes =
+            withContext(Dispatchers.IO) {
+                resolver.openInputStream(uri)?.use { it.readBytes() }
+            } ?: throw IllegalArgumentException("이미지를 읽을 수 없습니다: $imageUri")
+        val mimeType = resolver.getType(uri) ?: "image/*"
+        val part =
+            MultipartBody.Part.createFormData(
+                name = "image",
+                filename = "challenge_image",
+                body = bytes.toRequestBody(mimeType.toMediaTypeOrNull()),
+            )
+        return api
+            .uploadImage(part)
+            .getOrThrow()
+            .imageUrl
+            .requireField("imageUrl")
+    }
 
     override suspend fun getChallenge(challengeId: String): ChallengeDetail =
         api

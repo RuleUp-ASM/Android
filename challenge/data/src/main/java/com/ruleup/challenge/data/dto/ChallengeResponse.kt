@@ -272,3 +272,10 @@ internal fun ChallengeMembersResponse.toDomain(): ChallengeMembers =
         participantCount = participantCount ?: 0,
         members = members?.map { it.toDomain() }.orEmpty(),
     )
+
+// ---------- 3.9 챌린지 대표 이미지 업로드 ----------
+@Serializable
+data class ChallengeImageResponse(
+    @SerialName("imageUrl")
+    val imageUrl: String? = null,
+)
