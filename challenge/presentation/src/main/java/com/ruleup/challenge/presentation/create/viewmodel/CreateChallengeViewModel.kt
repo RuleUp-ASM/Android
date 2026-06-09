@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.entity.Anonymity
@@ -18,6 +19,7 @@ import com.ruleup.ui.mvi.MviViewModel
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.launch
 
@@ -29,7 +31,7 @@ import kotlinx.coroutines.launch
  */
 @Inject
 @ViewModelKey
-@ContributesIntoMap(AppScope::class)
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class CreateChallengeViewModel
     constructor(
         private val recommendChallengeUseCase: RecommendChallengeUseCase,

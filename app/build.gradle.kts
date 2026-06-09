@@ -86,6 +86,8 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:ui"))
     implementation(project(":core:datastore"))
+    // Metro 그래프(app)가 NetworkModule(@ContributesTo)·Retrofit 바인딩을 집계하려면 직접 의존이 필요하다.
+    implementation(project(":core:network"))
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:presentation"))

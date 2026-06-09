@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.presentation.splash.viewmodel
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.onboarding.domain.HomePage
@@ -10,6 +11,7 @@ import com.ruleup.ui.mvi.NoEffect
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.launch
 
@@ -20,7 +22,7 @@ import kotlinx.coroutines.launch
  */
 @Inject
 @ViewModelKey
-@ContributesIntoMap(AppScope::class)
+@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 class SplashViewModel
     constructor(
         private val autoLoginUseCase: AutoLoginUseCase,
