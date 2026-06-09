@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.data.repository
 
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import com.ruleup.entity.user.CategoryCatalog
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.entity.user.NicknameCheck
@@ -15,6 +15,8 @@ import com.ruleup.onboarding.data.dto.UpdateProfileRequest
 import com.ruleup.onboarding.data.dto.toDomain
 import com.ruleup.onboarding.domain.profile.ProfileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -52,11 +54,12 @@ class ProfileRepositoryImpl
                 .toDomain()
 
         override suspend fun uploadProfileImage(imageUri: String): String {
-            val uri = Uri.parse(imageUri)
+            val uri = imageUri.toUri()
             val resolver = context.contentResolver
             val bytes =
-                resolver.openInputStream(uri)?.use { it.readBytes() }
-                    ?: throw IllegalArgumentException("이미지를 읽을 수 없습니다: $imageUri")
+                withContext(Dispatchers.IO) {
+                    resolver.openInputStream(uri)?.use { it.readBytes() }
+                } ?: throw IllegalArgumentException("이미지를 읽을 수 없습니다: $imageUri")
             val mimeType = resolver.getType(uri) ?: "image/*"
             val part =
                 MultipartBody.Part.createFormData(
