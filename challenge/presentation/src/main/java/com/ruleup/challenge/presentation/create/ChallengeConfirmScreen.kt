@@ -77,7 +77,7 @@ fun ChallengeConfirmContent(
         CreateChallengeTopBar(
             title = "AI 추천 확인",
             onBack = { nav.navigateToBack() },
-            trailingText = "수정",
+            trailingText = "취소",
             onTrailingClick = { nav.navigateToBack() },
         )
 
@@ -333,13 +333,6 @@ private fun CoverPhotoSection(
                 onIntent(CreateChallengeIntent.SetCoverImage(null))
             }
         }
-
-        InfoNote(
-            emoji = "💡",
-            text = "카드 헤더에 사용돼요 · 권장 16:9",
-            background = RuleUpTheme.colors.brandSoft,
-            textColor = RuleUpTheme.colors.brandStrong,
-        )
     }
 }
 
