@@ -83,6 +83,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":shared"))
     implementation(project(":core:domain"))
     implementation(project(":core:ui"))
     implementation(project(":core:datastore"))
