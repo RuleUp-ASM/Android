@@ -29,6 +29,8 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.coroutines.core)
+            // KMP 로거: Android Logcat / iOS os_log 로 Ktor HTTP 로그 출력
+            implementation(libs.kermit)
         }
         androidMain.dependencies {
             // OkHttp 엔진(자동 선택) + Android Context 기반 이미지 리더
