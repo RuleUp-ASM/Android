@@ -15,6 +15,7 @@ build/
 /.idea/assetWizardSettings.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/misc.xml
+/.idea/artifacts
 
 # Local config
 /local.properties
