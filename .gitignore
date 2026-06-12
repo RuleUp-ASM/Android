@@ -2,6 +2,9 @@
 .gradle
 build/
 
+# Kotlin (KMP 변환 메타데이터 캐시 등 빌드 산출물)
+.kotlin/
+
 # IntelliJ / Android Studio
 *.iml
 /.idea/caches
@@ -12,6 +15,7 @@ build/
 /.idea/assetWizardSettings.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/misc.xml
+/.idea/artifacts
 
 # Local config
 /local.properties
@@ -27,3 +31,8 @@ build/
 
 # firebase
 google-services.json
+
+# iOS app derived data / 검증 산출물
+/iosApp/build/
+/iosApp/*.png
+xcuserdata/

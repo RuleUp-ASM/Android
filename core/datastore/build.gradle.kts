@@ -1,37 +1,34 @@
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.metro)
 }
 
-android {
-    namespace = "com.ruleup.datastore"
-    compileSdk {
-        version =
-            release(37) {
-                minorApiLevel = 0
-            }
-    }
-
-    defaultConfig {
+kotlin {
+    android {
+        namespace = "com.ruleup.datastore"
+        compileSdk = 37
         minSdk = 24
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+        }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
+    iosArm64()
+    iosSimulatorArm64()
 
-dependencies {
-    implementation(project(":core:domain"))
-    implementation(project(":core:entity"))
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-    implementation(libs.retrofit)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":core:domain"))
+            implementation(project(":core:entity"))
+            // KMP 공통 DataStore API (DataStore<Preferences>, edit, key 등)
+            // TokenRepositoryImpl 생성자에 DataStore<Preferences> 가 노출되어 app 의 Metro 그래프가
+            // 타입을 인지해야 하므로 api 로 전파한다.
+            api(libs.androidx.datastore.preferences.core)
+            implementation(libs.kotlinx.coroutines.core)
+        }
+        androidMain.dependencies {
+            // Context 기반 파일 팩토리(preferencesDataStoreFile)는 Android 전용
+            implementation(libs.androidx.datastore.preferences)
+        }
+    }
 }

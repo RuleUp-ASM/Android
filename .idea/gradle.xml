@@ -24,6 +24,7 @@
             <option value="$PROJECT_DIR$/onboarding/data" />
             <option value="$PROJECT_DIR$/onboarding/domain" />
             <option value="$PROJECT_DIR$/onboarding/presentation" />
+            <option value="$PROJECT_DIR$/shared" />
           </set>
         </option>
       </GradleProjectSettings>
