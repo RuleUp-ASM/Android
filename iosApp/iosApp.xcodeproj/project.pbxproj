@@ -11,6 +11,7 @@
 		1111111111111111111111B2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1111111111111111111111A8 /* ContentView.swift */; };
 		1111111111111111111111D2 /* Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1111111111111111111111D1 /* Shared.framework */; };
 		1111111111111111111111D3 /* Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1111111111111111111111D1 /* Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		1111111111111111111111F2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1111111111111111111111F1 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +20,7 @@
 		1111111111111111111111A8 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		1111111111111111111111A9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1111111111111111111111D1 /* Shared.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Shared.framework; path = "../shared/build/xcode/Shared.framework"; sourceTree = SOURCE_ROOT; };
+		1111111111111111111111F1 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,6 +52,7 @@
 		1111111111111111111111A2 = {
 			isa = PBXGroup;
 			children = (
+				1111111111111111111111F1 /* GoogleService-Info.plist */,
 				1111111111111111111111A4 /* iosApp */,
 				1111111111111111111111A3 /* Products */,
 			);
@@ -152,6 +155,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1111111111111111111111F2 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

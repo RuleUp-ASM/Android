@@ -8,6 +8,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Firebase(google-services) 플러그인은 google-services.json 이 있어야 동작한다.
+// 파일이 없으면 processGoogleServices 가 빌드를 깨므로, 콘솔에서 받은 json 을 app/ 에 둘 때만 자동 적용된다.
+if (project.file("google-services.json").exists()) {
+    apply(plugin = libs.plugins.google.services.get().pluginId)
+}
+
 val localProperties =
     Properties().apply {
         val f = rootProject.file("local.properties")
@@ -87,6 +93,8 @@ dependencies {
     implementation(project(":core:datastore"))
     // Metro 그래프(app)가 NetworkModule(@ContributesTo)·Retrofit 바인딩을 집계하려면 직접 의존이 필요하다.
     implementation(project(":core:network"))
+    // AnalyticsLogger(@ContributesBinding) 바인딩을 그래프가 집계하려면 직접 의존이 필요하다.
+    implementation(project(":core:analytics"))
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:presentation"))

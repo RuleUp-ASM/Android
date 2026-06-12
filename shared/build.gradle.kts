@@ -61,6 +61,9 @@ kotlin {
             baseName = "Shared"
             // Compose/Skiko 의 시스템 프레임워크 의존성을 모두 번들하도록 동적 프레임워크로 빌드한다.
             isStatic = false
+            // AnalyticsBridge/AnalyticsBridgeRegistry 를 Swift(Firebase 브리지)가 구현·주입하려면
+            // core:analytics 의 public API 를 프레임워크 헤더로 노출해야 한다.
+            export(project(":core:analytics"))
             binaryOption("bundleId", "com.ruleup.shared")
         }
     }
@@ -83,6 +86,8 @@ kotlin {
             implementation(project(":core:ui"))
             implementation(project(":core:network"))
             implementation(project(":core:datastore"))
+            // iOS 프레임워크 export 대상이므로 api 로 노출한다(아래 framework.export 참고).
+            api(project(":core:analytics"))
             implementation(project(":onboarding:domain"))
             implementation(project(":onboarding:data"))
             implementation(project(":onboarding:presentation"))
