@@ -1,3 +1,6 @@
+import java.util.Properties
+import kotlin.apply
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
@@ -6,6 +9,43 @@ plugins {
     alias(libs.plugins.metro)
     alias(libs.plugins.kotlin.serialization)
 }
+
+val localProperties =
+    Properties().apply {
+        val f = rootProject.file("local.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+val baseUrl: String =
+    localProperties.getProperty("BASE_URL")?.trim().orEmpty()
+
+// local.properties 의 BASE_URL 을 commonMain 의 AppConfig 상수로 생성한다.
+// iOS(MainViewController)·Android(App) 가 모두 이 값을 사용해 BASE_URL 을 local.properties 한곳에서 관리한다.
+val generatedConfigDir = layout.buildDirectory.dir("generated/appConfig/kotlin")
+
+val generateAppConfig =
+    tasks.register("generateAppConfig") {
+        val outputDir = generatedConfigDir
+        val url = baseUrl
+        inputs.property("baseUrl", url)
+        outputs.dir(outputDir)
+        doLast {
+            val pkgDir =
+                outputDir
+                    .get()
+                    .asFile
+                    .resolve("com/ruleup/shared")
+            pkgDir.mkdirs()
+            pkgDir.resolve("AppConfig.kt").writeText(
+                """
+                package com.ruleup.shared
+
+                object AppConfig {
+                    const val BASE_URL: String = "$url"
+                }
+                """.trimIndent() + "\n",
+            )
+        }
+    }
 
 kotlin {
     android {
@@ -19,7 +59,8 @@ kotlin {
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {
             baseName = "Shared"
-            isStatic = true
+            // Compose/Skiko 의 시스템 프레임워크 의존성을 모두 번들하도록 동적 프레임워크로 빌드한다.
+            isStatic = false
             binaryOption("bundleId", "com.ruleup.shared")
         }
     }
@@ -31,6 +72,10 @@ kotlin {
     }
 
     sourceSets {
+        commonMain {
+            // generateAppConfig 가 만든 AppConfig.kt 를 commonMain 에 등록한다.
+            kotlin.srcDir(generatedConfigDir)
+        }
         commonMain.dependencies {
             // Metro AppGraph 가 집계할 모든 기여 모듈(데이터/도메인/프레젠테이션/코어)
             implementation(project(":core:domain"))
@@ -64,4 +109,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
         }
     }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+    dependsOn(generateAppConfig)
 }

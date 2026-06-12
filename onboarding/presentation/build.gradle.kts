@@ -21,6 +21,11 @@ val googleClientId: String =
     localProperties.getProperty("GOOGLE_CLIENT_ID")?.trim().orEmpty()
 val googleRedirectUri: String =
     localProperties.getProperty("GOOGLE_REDIRECT_URI")?.trim().orEmpty()
+// iOS 웹 OAuth(ASWebAuthenticationSession)용. Kakao 는 네이티브 SDK 대신 웹 인가를 쓰므로 REST 키가 필요하다.
+val kakaoRestApiKey: String =
+    localProperties.getProperty("KAKAO_REST_API_KEY")?.trim().orEmpty()
+val kakaoRedirectUri: String =
+    localProperties.getProperty("KAKAO_REDIRECT_URI")?.trim().orEmpty()
 
 // KMP Android 라이브러리 플러그인은 buildConfig 생성을 지원하지 않으므로,
 // local.properties 의 OAuth 시크릿을 androidMain 소스셋의 Kotlin object 로 생성해 대체한다.
@@ -32,6 +37,14 @@ val generateOAuthSecrets =
         val kakao = kakaoNativeAppKey
         val clientId = googleClientId
         val redirect = googleRedirectUri
+        val kakaoRest = kakaoRestApiKey
+        val kakaoRedirect = kakaoRedirectUri
+        // local.properties 값을 입력으로 선언해야 값이 바뀔 때 재생성된다(미선언 시 up-to-date 로 스킵됨).
+        inputs.property("kakao", kakao)
+        inputs.property("clientId", clientId)
+        inputs.property("redirect", redirect)
+        inputs.property("kakaoRest", kakaoRest)
+        inputs.property("kakaoRedirect", kakaoRedirect)
         outputs.dir(outputDir)
         doLast {
             val pkgDir =
@@ -48,6 +61,8 @@ val generateOAuthSecrets =
                     const val KAKAO_NATIVE_APP_KEY: String = "$kakao"
                     const val GOOGLE_CLIENT_ID: String = "$clientId"
                     const val GOOGLE_REDIRECT_URI: String = "$redirect"
+                    const val KAKAO_REST_API_KEY: String = "$kakaoRest"
+                    const val KAKAO_REDIRECT_URI: String = "$kakaoRedirect"
                 }
                 """.trimIndent() + "\n",
             )
@@ -78,8 +93,8 @@ kotlin {
     }
 
     sourceSets {
-        androidMain {
-            // generateOAuthSecrets 가 만든 OAuthSecrets.kt 를 androidMain 컴파일 소스에 등록한다.
+        commonMain {
+            // generateOAuthSecrets 가 만든 OAuthSecrets.kt 를 commonMain 에 등록한다(android·iOS actual 모두 참조).
             kotlin.srcDir(generatedSecretsDir)
         }
         commonMain.dependencies {

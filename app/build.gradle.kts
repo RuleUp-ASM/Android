@@ -17,8 +17,7 @@ val localProperties =
 val kakaoNativeAppKey: String =
     localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
 
-val baseUrl: String =
-    localProperties.getProperty("BASE_URL")?.trim().orEmpty()
+// BASE_URL 은 :shared 의 AppConfig(local.properties 생성)로 단일 관리하므로 app BuildConfig 에선 제거.
 
 // AppAuth(RedirectUriReceiverActivity) 가 사용하는 리다이렉트 scheme. GOOGLE_REDIRECT_URI 의 scheme 부분.
 val appAuthRedirectScheme: String =
@@ -52,7 +51,6 @@ android {
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
         manifestPlaceholders["appAuthRedirectScheme"] = appAuthRedirectScheme
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
-        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
     buildTypes {
