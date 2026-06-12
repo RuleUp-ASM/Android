@@ -1,5 +1,6 @@
 package com.ruleup.shared.di
 
+import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
@@ -13,4 +14,5 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 interface AppGraph : ViewModelGraph {
     val navigationHelper: NavigationHelper
     val messageHelper: MessageHelper
+    val analyticsLogger: AnalyticsLogger
 }

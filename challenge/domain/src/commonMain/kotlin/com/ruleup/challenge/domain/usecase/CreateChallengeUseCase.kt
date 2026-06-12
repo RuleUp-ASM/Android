@@ -1,5 +1,7 @@
 package com.ruleup.challenge.domain.usecase
 
+import com.ruleup.analytics.AnalyticsEvent
+import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.challenge.domain.ChallengeRepository
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeForm
@@ -15,6 +17,17 @@ class CreateChallengeUseCase
     @Inject
     constructor(
         private val challengeRepository: ChallengeRepository,
+        private val analyticsLogger: AnalyticsLogger,
     ) {
-        suspend operator fun invoke(form: ChallengeForm): Challenge = challengeRepository.create(form)
+        suspend operator fun invoke(form: ChallengeForm): Challenge {
+            val challenge = challengeRepository.create(form)
+            // 생성 성공(예외 미발생) 시에만 비즈니스 이벤트를 기록한다.
+            analyticsLogger.log(
+                AnalyticsEvent.ChallengeCreated(
+                    challengeId = challenge.challengeId,
+                    durationDays = challenge.durationDays,
+                ),
+            )
+            return challenge
+        }
     }

@@ -5,6 +5,13 @@ plugins {
 }
 
 kotlin {
+    // domain 모듈(jvm 타깃 보유)이 commonMain 에서 의존하므로 jvm 타깃을 맞춰준다.
+    // jvm 에는 Firebase/스텁 바인딩이 없지만(그래프 미구성), 인터페이스·이벤트는 그대로 컴파일된다.
+    jvm {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+        }
+    }
     android {
         namespace = "com.ruleup.analytics"
         compileSdk = 37

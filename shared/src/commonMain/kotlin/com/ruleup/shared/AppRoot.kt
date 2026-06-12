@@ -24,6 +24,7 @@ fun AppRoot(
         LocalNavigationHelper provides graph.navigationHelper,
         LocalMessageHelper provides graph.messageHelper,
         LocalMetroViewModelFactory provides graph.metroViewModelFactory,
+        LocalAnalyticsLogger provides graph.analyticsLogger,
     ) {
         RootComposable(startStack = startStack)
     }
