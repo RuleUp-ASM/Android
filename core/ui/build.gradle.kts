@@ -30,6 +30,8 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
+            // Figma SVG 아이콘/일러스트를 composeResources 로 번들해 전 화면에서 공유한다.
+            api(compose.components.resources)
 
             implementation(libs.metrox.viewmodel)
             implementation(libs.metrox.viewmodel.compose)
@@ -39,4 +41,11 @@ kotlin {
             implementation(libs.androidx.core.ktx)
         }
     }
+}
+
+// 생성되는 Res 클래스를 public 으로 노출해 feature 모듈에서 com.ruleup.ui.resources.Res 로 참조한다.
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.ruleup.ui.resources"
+    generateResClass = always
 }
