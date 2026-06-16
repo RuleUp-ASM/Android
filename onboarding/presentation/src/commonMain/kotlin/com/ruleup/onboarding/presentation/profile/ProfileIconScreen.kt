@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.presentation.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,9 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -33,10 +34,18 @@ import com.ruleup.onboarding.presentation.profile.component.rememberProfileImage
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.resources.Res
+import com.ruleup.ui.resources.ic_camera
+import com.ruleup.ui.resources.ic_edit
+import com.ruleup.ui.resources.ic_gallery
+import com.ruleup.ui.resources.ic_person
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** 01 · 프로필 아이콘 (1/4). 갤러리/카메라 런처를 직접 띄우고 결과를 [ProfileIntent.SetProfileIcon] 으로 보낸다. */
+/** 01 · 프로필 아이콘 (1/5). 갤러리/카메라 런처를 직접 띄우고 결과를 [ProfileIntent.SetProfileIcon] 으로 보낸다. */
 @Composable
 fun ProfileIconContent(
     onIntent: (ProfileIntent) -> Unit,
@@ -71,24 +80,38 @@ fun ProfileIconContent(
                 contentAlignment = Alignment.Center,
             ) {
                 if (imageUri.isNullOrEmpty()) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .align(Alignment.BottomEnd)
-                                .offset(x = (-6).dp, y = (-6).dp)
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Color.White)
-                                .border(2.dp, RuleUpTheme.colors.brand, RoundedCornerShape(20.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                    }
+                    Image(
+                        painter = painterResource(Res.drawable.ic_person),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(Color.White),
+                        modifier = Modifier.size(61.dp),
+                    )
                 } else {
                     AsyncImage(
                         model = imageUri,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.matchParentSize().clip(RoundedCornerShape(70.dp)),
+                    )
+                }
+
+                // 사진 변경 뱃지(카메라) — 항상 노출
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomEnd)
+                            .offset(x = (-4).dp, y = (-4).dp)
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color.White)
+                            .border(2.dp, RuleUpTheme.colors.brand, RoundedCornerShape(20.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(Res.drawable.ic_edit),
+                        contentDescription = null,
+                        colorFilter = ColorFilter.tint(RuleUpTheme.colors.brand),
+                        modifier = Modifier.size(17.dp),
                     )
                 }
             }
@@ -102,7 +125,7 @@ fun ProfileIconContent(
             SourceCard(
                 modifier = Modifier.weight(1f),
                 iconBackground = RuleUpGradients.Brand,
-                emoji = "📷",
+                icon = Res.drawable.ic_camera,
                 title = "카메라로 촬영",
                 caption = "바로 찍어 올리기",
                 onClick = { imagePicker.launchCamera() },
@@ -110,7 +133,7 @@ fun ProfileIconContent(
             SourceCard(
                 modifier = Modifier.weight(1f),
                 iconBackground = RuleUpGradients.Warm,
-                emoji = "🖼️",
+                icon = Res.drawable.ic_gallery,
                 title = "갤러리에서 선택",
                 caption = "앨범에서 고르기",
                 onClick = { imagePicker.launchGallery() },
@@ -122,7 +145,7 @@ fun ProfileIconContent(
 @Composable
 private fun SourceCard(
     iconBackground: Brush,
-    emoji: String,
+    icon: DrawableResource,
     title: String,
     caption: String,
     modifier: Modifier = Modifier,
@@ -147,7 +170,12 @@ private fun SourceCard(
                     .background(iconBackground),
             contentAlignment = Alignment.Center,
         ) {
-            Text(emoji, fontSize = 20.sp)
+            Image(
+                painter = painterResource(icon),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(Color.White),
+                modifier = Modifier.size(19.dp),
+            )
         }
         Text(
             title,
