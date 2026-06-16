@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="entity">
-    <output-path>$PROJECT_DIR$/core/entity/build/libs</output-path>
-    <root id="archive" name="entity.jar">
-      <element id="module-output" name="Android-RuleUp.core.entity.androidMain" />
-    </root>
-  </artifact>
-</component>

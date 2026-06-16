@@ -19,6 +19,6 @@ kotlin {
             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
         }
     }
-    // 추후 iOS 붙일 때:
-    // iosX64(); iosArm64(); iosSimulatorArm64()
+    iosArm64()
+    iosSimulatorArm64()
 }

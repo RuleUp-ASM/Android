@@ -8,6 +8,12 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// Firebase(google-services) 플러그인은 google-services.json 이 있어야 동작한다.
+// 파일이 없으면 processGoogleServices 가 빌드를 깨므로, 콘솔에서 받은 json 을 app/ 에 둘 때만 자동 적용된다.
+if (project.file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 val localProperties =
     Properties().apply {
         val f = rootProject.file("local.properties")
@@ -17,8 +23,7 @@ val localProperties =
 val kakaoNativeAppKey: String =
     localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
 
-val baseUrl: String =
-    localProperties.getProperty("BASE_URL")?.trim().orEmpty()
+// BASE_URL 은 :shared 의 AppConfig(local.properties 생성)로 단일 관리하므로 app BuildConfig 에선 제거.
 
 // AppAuth(RedirectUriReceiverActivity) 가 사용하는 리다이렉트 scheme. GOOGLE_REDIRECT_URI 의 scheme 부분.
 val appAuthRedirectScheme: String =
@@ -52,7 +57,6 @@ android {
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
         manifestPlaceholders["appAuthRedirectScheme"] = appAuthRedirectScheme
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
-        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
     buildTypes {
@@ -83,17 +87,12 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":core:domain"))
-    implementation(project(":core:ui"))
-    implementation(project(":core:datastore"))
-    // Metro 그래프(app)가 NetworkModule(@ContributesTo)·Retrofit 바인딩을 집계하려면 직접 의존이 필요하다.
-    implementation(project(":core:network"))
-    implementation(project(":onboarding:domain"))
-    implementation(project(":onboarding:data"))
-    implementation(project(":onboarding:presentation"))
-    implementation(project(":challenge:domain"))
-    implementation(project(":challenge:data"))
-    implementation(project(":challenge:presentation"))
+    implementation(project(":shared"))
+    // Metro 그래프 생성(createGraphFactory)이 :shared 로 이동(createAppGraph)하면서 바인딩 집계도 :shared 에서
+    // 일어난다. 따라서 :app 은 더 이상 집계용으로 전 모듈을 의존할 필요가 없고, 자신이 직접 쓰는 모듈만 둔다.
+    // (런타임 클래스는 :shared 의 전이 의존으로 그대로 APK 에 패키징됨.)
+    implementation(project(":core:domain")) // 딥링크 파서의 NavRoute
+    implementation(project(":onboarding:domain")) // 딥링크 시작 라우트(SplashPage/IntroPromisePage)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

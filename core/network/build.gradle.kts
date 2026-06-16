@@ -1,57 +1,45 @@
-import java.util.Properties
-
 plugins {
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.metro)
     alias(libs.plugins.kotlin.serialization)
 }
 
-val localProperties =
-    Properties().apply {
-        val f = rootProject.file("local.properties")
-        if (f.exists()) f.inputStream().use { load(it) }
-    }
-
-val baseUrl: String =
-    localProperties.getProperty("BASE_URL")?.trim().orEmpty()
-
-android {
-    namespace = "com.ruleup.network"
-    compileSdk {
-        version =
-            release(37) {
-                minorApiLevel = 0
-            }
-    }
-
-    defaultConfig {
+kotlin {
+    android {
+        namespace = "com.ruleup.network"
+        compileSdk = 37
         minSdk = 24
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-
-        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+        }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        buildConfig = true
-    }
-}
+    iosArm64()
+    iosSimulatorArm64()
 
-dependencies {
-    implementation(project(":core:domain"))
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.okhttp.logging.interceptor)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":core:domain"))
+            // HttpClient·Json·Ktorfit 이 NetworkModule 의 @Provides 시그니처로 노출되어 app 의 Metro 그래프와
+            // data 모듈이 타입을 인지해야 하므로 api 로 전파한다.
+            api(libs.ktor.client.core)
+            api(libs.kotlinx.serialization.json)
+            api(libs.ktorfit.lib.light)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.kotlinx.coroutines.core)
+            // KMP 로거: Android Logcat / iOS os_log 로 Ktor HTTP 로그 출력
+            implementation(libs.kermit)
+        }
+        androidMain.dependencies {
+            // OkHttp 엔진(자동 선택) + Android Context 기반 이미지 리더
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.core.ktx)
+        }
+        iosMain.dependencies {
+            // Darwin 엔진(HttpClient {} 가 자동 선택)
+            implementation(libs.ktor.client.darwin)
+        }
+    }
 }

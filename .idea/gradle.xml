@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/challenge/domain" />
             <option value="$PROJECT_DIR$/challenge/presentation" />
             <option value="$PROJECT_DIR$/core" />
+            <option value="$PROJECT_DIR$/core/analytics" />
             <option value="$PROJECT_DIR$/core/datastore" />
             <option value="$PROJECT_DIR$/core/domain" />
             <option value="$PROJECT_DIR$/core/entity" />
@@ -24,6 +25,7 @@
             <option value="$PROJECT_DIR$/onboarding/data" />
             <option value="$PROJECT_DIR$/onboarding/domain" />
             <option value="$PROJECT_DIR$/onboarding/presentation" />
+            <option value="$PROJECT_DIR$/shared" />
           </set>
         </option>
       </GradleProjectSettings>
