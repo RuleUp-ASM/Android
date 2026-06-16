@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.presentation.create.component.ChallengeFlowPreview
@@ -39,6 +38,7 @@ import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpPalette
 import com.ruleup.ui.theme.RuleUpTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** 예시 챌린지 칩. 탭하면 제목으로 채워진다. */
 private data class ExampleChallenge(

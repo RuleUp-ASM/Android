@@ -16,7 +16,7 @@ import androidx.core.content.FileProvider
 import java.io.File
 
 @Composable
-actual fun rememberChallengeImagePicker(onImagePicked: (String) -> Unit): ChallengeImagePicker {
+actual fun rememberChallengeImagePicker(onImagePick: (String) -> Unit): ChallengeImagePicker {
     // 프리뷰(@Preview)에는 Activity/ActivityResultRegistry 가 없어 런처 등록이 불가하므로 no-op 을 돌려준다.
     if (LocalInspectionMode.current) return NoOpChallengeImagePicker
 
@@ -24,7 +24,7 @@ actual fun rememberChallengeImagePicker(onImagePicked: (String) -> Unit): Challe
 
     val gallery =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) onImagePicked(uri.toString())
+            if (uri != null) onImagePick(uri.toString())
         }
 
     // 촬영 결과가 저장될 URI. 카메라 앱이 떠 있는 동안 프로세스가 재생성될 수 있어 saveable 로 보존한다.
@@ -32,7 +32,7 @@ actual fun rememberChallengeImagePicker(onImagePicked: (String) -> Unit): Challe
     val camera =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             val uri = cameraImageUri
-            if (success && uri != null) onImagePicked(uri)
+            if (success && uri != null) onImagePick(uri)
         }
 
     return object : ChallengeImagePicker {

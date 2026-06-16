@@ -19,7 +19,7 @@ interface ChallengeImagePicker {
 
 /**
  * 현재 플랫폼의 [ChallengeImagePicker] 를 생성한다.
- * @param onImagePicked 선택/촬영 성공 시 이미지 URI 문자열을 받는 콜백.
+ * @param onImagePick 선택/촬영 성공 시 이미지 URI 문자열을 받는 콜백.
  */
 @Composable
-expect fun rememberChallengeImagePicker(onImagePicked: (String) -> Unit): ChallengeImagePicker
+expect fun rememberChallengeImagePicker(onImagePick: (String) -> Unit): ChallengeImagePicker

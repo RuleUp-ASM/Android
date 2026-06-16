@@ -50,3 +50,17 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().con
         dependsOn("kspKotlin${name.removePrefix("compileKotlin")}")
     }
 }
+
+// KSP(Ktorfit) 생성 코드는 소스셋에 등록돼 있어 ktlint 가 린트·입력 스냅샷 대상으로 삼는다.
+// 생성물은 린트에서 제외하고, ktlint 태스크를 ksp 태스크에 의존시켜
+// "uses this output without declaring dependency" 태스크 검증 실패를 없앤다.
+extensions.configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+    filter {
+        exclude { it.file.path.contains("/generated/") }
+    }
+}
+tasks
+    .matching { it.name.startsWith("runKtlintCheckOver") || it.name.startsWith("runKtlintFormatOver") }
+    .configureEach {
+        dependsOn(tasks.matching { it.name.startsWith("ksp") })
+    }
