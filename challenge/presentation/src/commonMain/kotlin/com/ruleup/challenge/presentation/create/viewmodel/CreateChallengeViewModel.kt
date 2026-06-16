@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.ChallengeForm
+import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.Penalty
 import com.ruleup.challenge.domain.entity.Reward
+import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RecommendChallengeUseCase
@@ -75,8 +77,18 @@ class CreateChallengeViewModel
                     dispatch(CreateChallengeReducerEvent.PeriodChanged(intent.startDate, intent.durationDays))
                 }
 
-                is CreateChallengeIntent.ToggleVerificationMethod -> {
-                    dispatch(CreateChallengeReducerEvent.VerificationToggled(intent.method))
+                is CreateChallengeIntent.SelectMethod -> {
+                    dispatch(CreateChallengeReducerEvent.MethodSelected(intent.method))
+                }
+
+                is CreateChallengeIntent.EditParam -> {
+                    dispatch(CreateChallengeReducerEvent.ParamEdited(intent.key, intent.value))
+                }
+
+                is CreateChallengeIntent.PermissionsResult -> {
+                    // 화면이 OS 다이얼로그로 받은 허용 토큰을 누적하고 생성을 재시도한다.
+                    dispatch(CreateChallengeReducerEvent.PermissionsGranted(intent.granted))
+                    create()
                 }
 
                 is CreateChallengeIntent.SetSnsShareEnabled -> {
@@ -123,6 +135,8 @@ class CreateChallengeViewModel
                     state.copy(
                         isRecommending = false,
                         hasRecommendation = true,
+                        matched = reco.matched,
+                        templateId = reco.templateId,
                         title = reco.title.take(CreateChallengeState.TITLE_MAX),
                         description = reco.description ?: state.description,
                         coverImageUri = null,
@@ -136,7 +150,13 @@ class CreateChallengeViewModel
                         repeatDays = reco.repeatDays,
                         startDate = reco.startDate,
                         durationDays = reco.durationDays,
-                        verificationMethods = reco.verificationMethods,
+                        options = reco.options,
+                        selectedMethod = reco.recommendedMethod,
+                        params = reco.params,
+                        rationale = reco.rationale,
+                        // 새 추천을 받으면 권한 누적/요청 이력은 초기화한다.
+                        grantedPermissions = emptySet(),
+                        permissionRequested = false,
                         mannerDeduction = reco.penalty.mannerDeduction,
                         mannerGain = reco.reward.mannerGain,
                         snsShareEnabled = reco.penalty.snsShare.enabled,
@@ -177,12 +197,28 @@ class CreateChallengeViewModel
                     state.copy(startDate = event.startDate, durationDays = event.durationDays)
                 }
 
-                is CreateChallengeReducerEvent.VerificationToggled -> {
-                    if (event.method in state.verificationMethods) {
-                        state.copy(verificationMethods = state.verificationMethods - event.method)
-                    } else {
-                        state.copy(verificationMethods = state.verificationMethods + event.method)
-                    }
+                is CreateChallengeReducerEvent.MethodSelected -> {
+                    // 인증 방식을 바꾸면 이전 권한 요청 이력은 의미가 없어지므로 초기화.
+                    state.copy(
+                        selectedMethod = event.method,
+                        permissionRequested = false,
+                    )
+                }
+
+                is CreateChallengeReducerEvent.ParamEdited -> {
+                    state.copy(
+                        params =
+                            state.params.map {
+                                if (it.key == event.key) it.copy(value = event.value) else it
+                            },
+                    )
+                }
+
+                is CreateChallengeReducerEvent.PermissionsGranted -> {
+                    state.copy(
+                        grantedPermissions = state.grantedPermissions + event.tokens,
+                        permissionRequested = true,
+                    )
                 }
 
                 is CreateChallengeReducerEvent.SnsShareChanged -> {
@@ -246,9 +282,20 @@ class CreateChallengeViewModel
                 emitEffect(CreateChallengeEffect.ShowError("반복 요일을 1개 이상 선택해주세요"))
                 return
             }
-            if (state.verificationMethods.isEmpty()) {
-                emitEffect(CreateChallengeEffect.ShowError("인증 방식을 1개 이상 선택해주세요"))
-                return
+
+            // AUTO 인증이면 필요한 권한을 먼저 확보한다. 부족하면 OS 권한 요청 후 재시도(PermissionsResult).
+            if (state.selectedMethod == SelectedMethod.AUTO) {
+                val missing = state.selectedOption?.requiredPermissions.orEmpty() - state.grantedPermissions
+                if (missing.isNotEmpty()) {
+                    if (state.permissionRequested) {
+                        emitEffect(
+                            CreateChallengeEffect.ShowError("자동 인증에 필요한 권한이 거부됐어요. 권한을 허용하거나 수동 인증을 선택해주세요"),
+                        )
+                    } else {
+                        emitEffect(CreateChallengeEffect.RequestPermissions(missing.toList()))
+                    }
+                    return
+                }
             }
 
             val isGroup = state.participationType == ParticipationType.GROUP
@@ -264,7 +311,10 @@ class CreateChallengeViewModel
                     repeatDays = state.repeatDays,
                     durationDays = state.durationDays,
                     startDate = state.startDate,
-                    verificationMethods = state.verificationMethods,
+                    templateId = state.templateId,
+                    selectedMethod = state.selectedMethod,
+                    params = state.params.associate { it.key to it.value },
+                    grantedPermissions = state.grantedPermissions.toList(),
                     penalty =
                         Penalty(
                             mannerDeduction = state.mannerDeduction,
@@ -293,9 +343,23 @@ class CreateChallengeViewModel
                 }.onSuccess {
                     // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
                     navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
-                }.onFailure {
+                }.onFailure { error ->
                     dispatch(CreateChallengeReducerEvent.CreateFailed)
-                    emitEffect(CreateChallengeEffect.ShowError(it.message ?: "챌린지 생성에 실패했어요"))
+                    when (error) {
+                        // 사전 권한 확보를 거쳐도 서버가 부족하다고 바운스하면(거부 등) 1회만 재요청, 이후엔 안내.
+                        is ChallengePermissionRequiredException -> {
+                            val tokens = state.selectedOption?.requiredPermissions.orEmpty() - state.grantedPermissions
+                            if (!state.permissionRequested && tokens.isNotEmpty()) {
+                                emitEffect(CreateChallengeEffect.RequestPermissions(tokens.toList()))
+                            } else {
+                                emitEffect(
+                                    CreateChallengeEffect.ShowError("자동 인증 권한이 필요해요. 권한을 허용하거나 수동 인증을 선택해주세요"),
+                                )
+                            }
+                        }
+
+                        else -> emitEffect(CreateChallengeEffect.ShowError(error.message ?: "챌린지 생성에 실패했어요"))
+                    }
                 }
             }
         }

@@ -2,8 +2,17 @@ package com.ruleup.challenge.data.dto
 
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.ParamValue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+
+/** 도메인 목표값 맵 → 전송용 JsonObject (값은 Number|String). */
+private fun Map<String, ParamValue>.toJsonObject(): JsonObject =
+    buildJsonObject {
+        forEach { (key, value) -> put(key, value.toJson()) }
+    }
 
 // ---------- 3.1 LLM 기본값 추천 ----------
 @Serializable
@@ -36,8 +45,14 @@ data class CreateChallengeRequest(
     // endDate 는 서버가 파생하므로 전송하지 않는다
     @SerialName("startDate")
     val startDate: String? = null,
-    @SerialName("verificationMethods")
-    val verificationMethods: List<String>? = null,
+    @SerialName("templateId")
+    val templateId: Int? = null,
+    @SerialName("selectedMethod")
+    val selectedMethod: String? = null,
+    @SerialName("params")
+    val params: JsonObject? = null,
+    @SerialName("grantedPermissions")
+    val grantedPermissions: List<String>? = null,
     @SerialName("penalty")
     val penalty: PenaltyDto? = null,
     @SerialName("reward")
@@ -57,7 +72,10 @@ internal fun ChallengeForm.toRequest(): CreateChallengeRequest =
         repeatDays = repeatDays.map { it.value },
         durationDays = durationDays,
         startDate = startDate,
-        verificationMethods = verificationMethods.map { it.value },
+        templateId = templateId,
+        selectedMethod = selectedMethod.value,
+        params = params.toJsonObject(),
+        grantedPermissions = grantedPermissions,
         penalty = penalty.toDto(),
         reward = reward.toDto(),
         anonymity = anonymity.value,
@@ -78,8 +96,8 @@ data class UpdateChallengeRequest(
     val durationDays: Int? = null,
     @SerialName("startDate")
     val startDate: String? = null,
-    @SerialName("verificationMethods")
-    val verificationMethods: List<String>? = null,
+    @SerialName("params")
+    val params: JsonObject? = null,
     @SerialName("penalty")
     val penalty: PenaltyDto? = null,
     @SerialName("reward")
@@ -96,7 +114,7 @@ internal fun ChallengeUpdate.toRequest(): UpdateChallengeRequest =
         repeatDays = repeatDays?.map { it.value },
         durationDays = durationDays,
         startDate = startDate,
-        verificationMethods = verificationMethods?.map { it.value },
+        params = params?.toJsonObject(),
         penalty = penalty?.toDto(),
         reward = reward?.toDto(),
         minMannerTemperature = minMannerTemperature,

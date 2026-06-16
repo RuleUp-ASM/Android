@@ -28,6 +28,10 @@
 	<string>프로필/챌린지 이미지를 선택하기 위해 사진 접근이 필요합니다.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>프로필/챌린지 이미지를 촬영하기 위해 카메라 접근이 필요합니다.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>위치 기반 자동 인증(루틴)을 위해 위치 접근이 필요합니다.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>활동량 기반 자동 인증(루틴)을 위해 동작 및 피트니스 접근이 필요합니다.</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

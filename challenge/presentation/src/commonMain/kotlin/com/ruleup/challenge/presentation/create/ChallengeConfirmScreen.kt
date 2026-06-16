@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -33,27 +34,34 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.ruleup.challenge.domain.entity.ParamKind
+import com.ruleup.challenge.domain.entity.ParamSpec
+import com.ruleup.challenge.domain.entity.ParamValue
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.SignalSource
+import com.ruleup.challenge.domain.entity.VerificationOption
+import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.domain.entity.WearableRequirement
 import com.ruleup.challenge.presentation.create.component.ChallengeFlowPreview
 import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
 import com.ruleup.challenge.presentation.create.component.DurationPickerSheet
 import com.ruleup.challenge.presentation.create.component.GradientSwitch
 import com.ruleup.challenge.presentation.create.component.InfoNote
-import com.ruleup.challenge.presentation.create.component.rememberChallengeImagePicker
 import com.ruleup.challenge.presentation.create.component.SectionLabel
 import com.ruleup.challenge.presentation.create.component.SmallBadge
+import com.ruleup.challenge.presentation.create.component.rememberChallengeImagePicker
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpPalette
 import com.ruleup.ui.theme.RuleUpTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** 02 · AI 추천 확인. 추천값을 항목별로 보여주고 자유롭게 수정한 뒤 확정한다. */
 @Composable
@@ -98,7 +106,13 @@ fun ChallengeConfirmContent(
                     onPeriodClick = { showDurationSheet = true },
                 )
             }
-            item { VerificationSection(selected = state.verificationMethods, onIntent = onIntent) }
+            item { MethodSelector(state = state, onIntent = onIntent) }
+            state.selectedOption?.let { option ->
+                item { VerificationSnapshotCard(option = option, rationale = state.rationale) }
+            }
+            if (state.params.isNotEmpty()) {
+                item { ParamsEditor(params = state.params, onIntent = onIntent) }
+            }
             item { PenaltySection(state = state, onIntent = onIntent) }
             item {
                 InfoNote(
@@ -761,153 +775,276 @@ private fun RepeatDayChip(
     }
 }
 
-/** 인증 방식별 표기 메타데이터. */
-private data class VerificationMeta(
-    val method: VerificationMethod,
-    val emoji: String,
-    val description: String,
-    val tileBackground: Color,
-    val accent: Color,
-    val recommended: Boolean = false,
-)
-
-private val verificationMetas =
-    listOf(
-        VerificationMeta(
-            method = VerificationMethod.GPS,
-            emoji = "📍",
-            description = "지정 장소 30분+ 자동 인증",
-            tileBackground = RuleUpPalette.Indigo50,
-            accent = RuleUpPalette.Indigo500,
-            recommended = true,
-        ),
-        VerificationMeta(
-            method = VerificationMethod.PHOTO,
-            emoji = "📸",
-            description = "AI가 인증 사진 자동 검증",
-            tileBackground = RuleUpPalette.GreenTint,
-            accent = RuleUpPalette.Green500,
-        ),
-        VerificationMeta(
-            method = VerificationMethod.SCREEN_TIME,
-            emoji = "⏱️",
-            description = "앱 사용 시간으로 인증",
-            tileBackground = RuleUpPalette.Violet100,
-            accent = RuleUpPalette.Indigo500,
-        ),
-        VerificationMeta(
-            method = VerificationMethod.SELF_CHECK,
-            emoji = "✅",
-            description = "본인이 정직하게 체크",
-            tileBackground = RuleUpPalette.AmberTint,
-            accent = RuleUpPalette.Indigo500,
-        ),
-    )
-
+/** AUTO/MANUAL 인증 방식 선택. AUTO 옵션이 없는 루틴이면 자동 인증 카드는 비활성. */
 @Composable
-private fun VerificationSection(
-    selected: List<VerificationMethod>,
+private fun MethodSelector(
+    state: CreateChallengeState,
     onIntent: (CreateChallengeIntent) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionLabel(text = "인증 방식")
-        verificationMetas.forEach { meta ->
-            VerificationRow(
-                meta = meta,
-                isSelected = meta.method in selected,
-                onClick = { onIntent(CreateChallengeIntent.ToggleVerificationMethod(meta.method)) },
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MethodCard(
+                modifier = Modifier.weight(1f),
+                emoji = "⚡",
+                title = "자동 인증",
+                caption = "센서·권한으로 자동 확인",
+                selected = state.selectedMethod == SelectedMethod.AUTO,
+                enabled = state.hasAutoOption,
+                onClick = { onIntent(CreateChallengeIntent.SelectMethod(SelectedMethod.AUTO)) },
+            )
+            MethodCard(
+                modifier = Modifier.weight(1f),
+                emoji = "✍️",
+                title = "수동 인증",
+                caption = "직접 체크",
+                selected = state.selectedMethod == SelectedMethod.MANUAL,
+                enabled = true,
+                onClick = { onIntent(CreateChallengeIntent.SelectMethod(SelectedMethod.MANUAL)) },
+            )
+        }
+        if (!state.hasAutoOption) {
+            InfoNote(
+                emoji = "ℹ️",
+                text = "이 루틴은 자동 인증을 지원하지 않아요",
+                background = RuleUpTheme.colors.surfaceVariant,
+                textColor = RuleUpTheme.colors.textSecondary,
             )
         }
     }
 }
 
 @Composable
-private fun VerificationRow(
-    meta: VerificationMeta,
-    isSelected: Boolean,
-    onClick: () -> Unit,
+private fun MethodCard(
+    emoji: String,
+    title: String,
+    caption: String,
+    selected: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
 ) {
-    Row(
+    Column(
         modifier =
-            Modifier
-                .fillMaxWidth()
+            modifier
+                .height(96.dp)
                 .clip(RuleUpTheme.shapes.large)
-                .background(RuleUpTheme.colors.surface)
+                .background(if (enabled) RuleUpTheme.colors.surface else RuleUpTheme.colors.surfaceVariant)
                 .then(
-                    if (isSelected) {
-                        Modifier.border(2.dp, meta.accent, RuleUpTheme.shapes.large)
+                    if (selected) {
+                        Modifier.border(3.dp, RuleUpTheme.colors.brand, RuleUpTheme.shapes.large)
                     } else {
                         Modifier.border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
                     },
-                ).clickable(onClick = onClick)
+                ).clickable(enabled = enabled, onClick = onClick)
                 .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(
+        Text(emoji, fontSize = 24.sp)
+        Text(
+            title,
+            color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(caption, color = RuleUpTheme.colors.textSecondary, fontSize = 9.sp)
+    }
+}
+
+private fun VerificationType.label(): String =
+    when (this) {
+        VerificationType.PHONE -> "휴대폰 센서"
+        VerificationType.HEALTH_CONNECT -> "건강 데이터"
+        VerificationType.EXTERNAL -> "외부 서비스"
+        VerificationType.MANUAL -> "직접 체크"
+    }
+
+private fun SignalSource.label(): String =
+    when (this) {
+        SignalSource.GPS -> "위치(GPS)"
+        SignalSource.GEOFENCE -> "지오펜스"
+        SignalSource.PHOTO -> "사진"
+        SignalSource.GROUP_CHECK -> "그룹 체크"
+        SignalSource.UNKNOWN -> "기타"
+    }
+
+private fun WearableRequirement.label(): String =
+    when (this) {
+        WearableRequirement.NONE -> "불필요"
+        WearableRequirement.OPTIONAL -> "선택"
+        WearableRequirement.REQUIRED -> "필수"
+    }
+
+/** 선택된 인증 옵션의 상세(스냅샷) 안내 카드. */
+@Composable
+private fun VerificationSnapshotCard(
+    option: VerificationOption,
+    rationale: String?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
             modifier =
                 Modifier
-                    .size(40.dp)
-                    .clip(RuleUpTheme.shapes.small)
-                    .background(meta.tileBackground),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(meta.emoji, fontSize = 18.sp)
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
+                    .fillMaxWidth()
+                    .clip(RuleUpTheme.shapes.large)
+                    .background(RuleUpTheme.colors.surface)
+                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    meta.method.label,
+                    "인증 상세",
                     color = RuleUpTheme.colors.textPrimary,
                     fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Bold,
                 )
-                if (meta.recommended) {
-                    SmallBadge(
-                        text = "추천",
-                        background = RuleUpTheme.colors.brand,
-                        textColor = Color.White,
-                    )
+                if (option.recommended) {
+                    SmallBadge(text = "추천", background = RuleUpTheme.colors.brand, textColor = Color.White)
                 }
             }
-            Text(meta.description, color = RuleUpTheme.colors.textSecondary, fontSize = 10.sp)
+            SnapshotRow(label = "인증 수단", value = option.verificationType.label())
+            option.signalSource?.let { SnapshotRow(label = "신호원", value = it.label()) }
+            option.externalService?.let { SnapshotRow(label = "외부 서비스", value = it) }
+            SnapshotRow(label = "웨어러블", value = option.wearableRequirement.label())
+            if (option.requiredPermissions.isNotEmpty()) {
+                SnapshotRow(label = "필요 권한", value = option.requiredPermissions.joinToString(", "))
+            }
         }
-        VerificationCheckbox(isSelected = isSelected, accent = meta.accent)
+        rationale?.takeIf { it.isNotBlank() }?.let {
+            InfoNote(
+                emoji = "💡",
+                text = it,
+                background = RuleUpPalette.Violet100,
+                textColor = RuleUpTheme.colors.textSlate,
+            )
+        }
     }
 }
 
 @Composable
-private fun VerificationCheckbox(
-    isSelected: Boolean,
-    accent: Color,
+private fun SnapshotRow(
+    label: String,
+    value: String,
 ) {
-    Box(
-        modifier =
-            Modifier
-                .size(22.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .then(
-                    if (isSelected) {
-                        Modifier.background(accent)
-                    } else {
-                        Modifier
-                            .background(RuleUpTheme.colors.surface)
-                            .border(1.5.dp, RuleUpTheme.colors.borderStrong, RoundedCornerShape(6.dp))
-                    },
-                ),
-        contentAlignment = Alignment.Center,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (isSelected) {
-            Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp)
+        Text(
+            value,
+            color = RuleUpTheme.colors.textPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+private fun ParamValue.display(): String =
+    when (this) {
+        is ParamValue.Num -> if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
+        is ParamValue.Text -> value
+    }
+
+/** 목표값 편집기. NUMBER 는 숫자 입력(min/max·단위), TIME 은 HH:mm 텍스트. */
+@Composable
+private fun ParamsEditor(
+    params: List<ParamSpec>,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionLabel(text = "목표값")
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RuleUpTheme.shapes.large)
+                    .background(RuleUpTheme.colors.surface)
+                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            params.forEachIndexed { index, spec ->
+                if (index > 0) PenaltyDivider()
+                ParamRow(spec = spec, onIntent = onIntent)
+            }
         }
     }
 }
+
+@Composable
+private fun ParamRow(
+    spec: ParamSpec,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                spec.key,
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            val min = spec.min
+            val max = spec.max
+            val rangeHint =
+                when {
+                    spec.kind == ParamKind.TIME -> "HH:mm"
+                    min != null && max != null -> "${min.toInt()}~${max.toInt()}"
+                    else -> null
+                }
+            rangeHint?.let { Text(it, color = RuleUpTheme.colors.textMuted, fontSize = 10.sp) }
+        }
+        Row(
+            modifier =
+                Modifier
+                    .width(120.dp)
+                    .height(40.dp)
+                    .clip(RuleUpTheme.shapes.small)
+                    .background(RuleUpTheme.colors.background)
+                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.small)
+                    .padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicTextField(
+                value = spec.value.display(),
+                onValueChange = { input -> onIntent(CreateChallengeIntent.EditParam(spec.key, spec.parse(input))) },
+                singleLine = true,
+                textStyle =
+                    TextStyle(
+                        color = RuleUpTheme.colors.textPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                cursorBrush = SolidColor(RuleUpTheme.colors.brand),
+                modifier = Modifier.weight(1f),
+            )
+            spec.unit?.let { Text(it, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp) }
+        }
+    }
+}
+
+/** 입력 문자열을 spec 의 kind 에 맞는 ParamValue 로 변환(NUMBER 는 min/max clamp). */
+private fun ParamSpec.parse(input: String): ParamValue =
+    when (kind) {
+        ParamKind.NUMBER -> {
+            val number = input.filter { it.isDigit() || it == '.' }.toDoubleOrNull() ?: 0.0
+            val clamped = number.coerceIn(min ?: number, max ?: number)
+            ParamValue.Num(clamped)
+        }
+        ParamKind.TIME -> ParamValue.Text(input)
+    }
 
 @Composable
 private fun PenaltySection(
@@ -1216,10 +1353,45 @@ private fun ChallengeConfirmPreview() {
                     title = "매일 아침 6시 기상",
                     description = "아침형 인간이 되어 하루를 길게 쓰는 습관을 만들어요",
                     hasRecommendation = true,
+                    matched = true,
                     participationType = ParticipationType.GROUP,
                     repeatDays = listOf(RepeatDay.MON, RepeatDay.TUE, RepeatDay.WED, RepeatDay.THU, RepeatDay.FRI),
                     startDate = "2026-06-01",
-                    verificationMethods = listOf(VerificationMethod.GPS, VerificationMethod.PHOTO),
+                    selectedMethod = SelectedMethod.AUTO,
+                    options =
+                        listOf(
+                            VerificationOption(
+                                method = SelectedMethod.AUTO,
+                                recommended = true,
+                                verificationType = VerificationType.PHONE,
+                                signalSource = SignalSource.GPS,
+                                wearableRequirement = WearableRequirement.OPTIONAL,
+                                externalService = null,
+                                requiredPermissions = listOf("LOCATION"),
+                            ),
+                            VerificationOption(
+                                method = SelectedMethod.MANUAL,
+                                recommended = false,
+                                verificationType = VerificationType.MANUAL,
+                                signalSource = null,
+                                wearableRequirement = WearableRequirement.NONE,
+                                externalService = null,
+                                requiredPermissions = emptyList(),
+                            ),
+                        ),
+                    params =
+                        listOf(
+                            ParamSpec(
+                                key = "distance_km",
+                                kind = ParamKind.NUMBER,
+                                value = ParamValue.Num(5.0),
+                                defaultValue = ParamValue.Num(3.0),
+                                unit = "km",
+                                min = 1.0,
+                                max = 42.0,
+                            ),
+                        ),
+                    rationale = "지정 장소에서 30분 이상 머무르면 자동으로 인증돼요",
                     snsShareEnabled = true,
                     snsPhone = "010-1234-5678",
                 ),

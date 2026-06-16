@@ -1,8 +1,10 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
+import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.VerificationOption
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.ui.mvi.UiState
 
@@ -17,6 +19,9 @@ data class CreateChallengeState(
     val isRecommending: Boolean,
     // 02 · 추천 확인 (추천 수신 후 편집 가능)
     val hasRecommendation: Boolean,
+    // 루틴 템플릿 매칭 성공 여부 / 매칭된 템플릿 id
+    val matched: Boolean,
+    val templateId: Int?,
     val coverImageUri: String?,
     val category: InterestCategory?,
     val participationType: ParticipationType,
@@ -26,7 +31,14 @@ data class CreateChallengeState(
     // ISO yyyy-MM-dd
     val startDate: String,
     val durationDays: Int,
-    val verificationMethods: List<VerificationMethod>,
+    // 인증 (루틴 매칭 기반)
+    val options: List<VerificationOption>,
+    val selectedMethod: SelectedMethod,
+    val params: List<ParamSpec>,
+    // AUTO 권한: 누적 허용 토큰 + 한 번 요청했는지(무한 재요청 방지)
+    val grantedPermissions: Set<String>,
+    val permissionRequested: Boolean,
+    val rationale: String?,
     // 패널티/보상
     val mannerDeduction: Double,
     val mannerGain: Double,
@@ -35,6 +47,14 @@ data class CreateChallengeState(
     val groupShare: Boolean,
     val isCreating: Boolean,
 ) : UiState {
+    /** 현재 선택된 인증 방식의 옵션(없으면 null). */
+    val selectedOption: VerificationOption?
+        get() = options.firstOrNull { it.method == selectedMethod }
+
+    /** AUTO 옵션 존재 여부 (없으면 자동 인증 비활성). */
+    val hasAutoOption: Boolean
+        get() = options.any { it.method == SelectedMethod.AUTO }
+
     companion object {
         const val TITLE_MAX = 30
         const val DESCRIPTION_MAX = 200
@@ -47,6 +67,8 @@ data class CreateChallengeState(
                 description = "",
                 isRecommending = false,
                 hasRecommendation = false,
+                matched = false,
+                templateId = null,
                 coverImageUri = null,
                 category = null,
                 participationType = ParticipationType.SOLO,
@@ -54,7 +76,12 @@ data class CreateChallengeState(
                 repeatDays = emptyList(),
                 startDate = "",
                 durationDays = 14,
-                verificationMethods = emptyList(),
+                options = emptyList(),
+                selectedMethod = SelectedMethod.MANUAL,
+                params = emptyList(),
+                grantedPermissions = emptySet(),
+                permissionRequested = false,
+                rationale = null,
                 mannerDeduction = 2.4,
                 mannerGain = 0.5,
                 snsShareEnabled = false,

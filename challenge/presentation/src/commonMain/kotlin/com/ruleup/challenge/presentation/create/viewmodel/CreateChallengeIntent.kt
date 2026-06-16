@@ -1,8 +1,9 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
+import com.ruleup.challenge.domain.entity.ParamValue
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface CreateChallengeIntent : MviIntent {
@@ -40,8 +41,20 @@ sealed interface CreateChallengeIntent : MviIntent {
         val durationDays: Int,
     ) : CreateChallengeIntent
 
-    data class ToggleVerificationMethod(
-        val method: VerificationMethod,
+    /** AUTO/MANUAL 인증 방식 선택. */
+    data class SelectMethod(
+        val method: SelectedMethod,
+    ) : CreateChallengeIntent
+
+    /** 목표값 편집. */
+    data class EditParam(
+        val key: String,
+        val value: ParamValue,
+    ) : CreateChallengeIntent
+
+    /** 권한 요청 결과(화면이 OS 다이얼로그를 띄운 뒤 허용된 토큰을 돌려준다). */
+    data class PermissionsResult(
+        val granted: Set<String>,
     ) : CreateChallengeIntent
 
     data class SetSnsShareEnabled(

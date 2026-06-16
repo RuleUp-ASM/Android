@@ -9,12 +9,14 @@ import com.ruleup.challenge.domain.ChallengeRepository
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeForm
+import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.MemberAction
 import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.MemberStatusFilter
+import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError
@@ -49,10 +51,19 @@ class ChallengeRepositoryImpl(
             .toDomain()
 
     override suspend fun create(form: ChallengeForm): Challenge =
-        api
-            .create(form.toRequest())
-            .getOrThrow()
-            .toDomain()
+        try {
+            api
+                .create(form.toRequest())
+                .getOrThrow()
+                .toDomain()
+        } catch (e: ApiException) {
+            // AUTO 권한 부족 바운스는 프레젠테이션이 권한 요청·재시도할 수 있도록 도메인 예외로 변환한다.
+            // TODO(server-contract): 400 바디가 부족 권한 목록을 주면 파싱해 requiredPermissions 로 전달.
+            if (e.code == "ROUTINE_PERMISSION_REQUIRED") {
+                throw ChallengePermissionRequiredException()
+            }
+            throw e
+        }
 
     override suspend fun uploadImage(imageUri: String): String {
         val image = imageReader.read(imageUri)

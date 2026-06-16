@@ -12,22 +12,35 @@ import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.ParticipationType
+import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.toRepeatDays
-import com.ruleup.challenge.domain.entity.toVerificationMethods
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 // ---------- 3.1 LLM 기본값 추천 ----------
 @Serializable
 data class RecommendationResponse(
+    @SerialName("matched")
+    val matched: Boolean? = null,
+    @SerialName("templateId")
+    val templateId: Int? = null,
     @SerialName("title")
     val title: String? = null,
     @SerialName("description")
     val description: String? = null,
     @SerialName("category")
     val category: String? = null,
+    @SerialName("recommendedMethod")
+    val recommendedMethod: String? = null,
+    @SerialName("options")
+    val options: List<VerificationOptionDto>? = null,
+    @SerialName("params")
+    val params: List<ParamSpecDto>? = null,
+    @SerialName("rationale")
+    val rationale: String? = null,
     @SerialName("participationType")
     val participationType: String? = null,
     @SerialName("minMannerTemperature")
@@ -40,8 +53,6 @@ data class RecommendationResponse(
     val startDate: String? = null,
     @SerialName("endDate")
     val endDate: String? = null,
-    @SerialName("verificationMethods")
-    val verificationMethods: List<String>? = null,
     @SerialName("penalty")
     val penalty: PenaltyDto? = null,
     @SerialName("reward")
@@ -50,16 +61,21 @@ data class RecommendationResponse(
 
 internal fun RecommendationResponse.toDomain(): ChallengeRecommendation =
     ChallengeRecommendation(
+        matched = matched ?: false,
+        templateId = templateId,
         title = title.requireField("title"),
         description = description,
         category = InterestCategory.fromValue(category.orEmpty()),
+        recommendedMethod = SelectedMethod.fromValue(recommendedMethod) ?: SelectedMethod.MANUAL,
+        options = options.orEmpty().map { it.toDomain() },
+        params = params.orEmpty().map { it.toDomain() },
+        rationale = rationale,
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         minMannerTemperature = minMannerTemperature,
         repeatDays = repeatDays.toRepeatDays(),
         durationDays = durationDays ?: 0,
         startDate = startDate.requireField("startDate"),
         endDate = endDate.requireField("endDate"),
-        verificationMethods = verificationMethods.toVerificationMethods(),
         penalty = penalty.requireField("penalty").toDomain(),
         reward = reward.requireField("reward").toDomain(),
     )
@@ -91,8 +107,12 @@ data class ChallengeResponse(
     val startDate: String? = null,
     @SerialName("endDate")
     val endDate: String? = null,
-    @SerialName("verificationMethods")
-    val verificationMethods: List<String>? = null,
+    @SerialName("templateId")
+    val templateId: Int? = null,
+    @SerialName("verification")
+    val verification: VerificationConfigDto? = null,
+    @SerialName("params")
+    val params: JsonObject? = null,
     @SerialName("penalty")
     val penalty: PenaltyDto? = null,
     @SerialName("reward")
@@ -113,7 +133,9 @@ internal fun ChallengeResponse.toDomain(): Challenge =
         durationDays = durationDays ?: 0,
         startDate = startDate.requireField("startDate"),
         endDate = endDate.requireField("endDate"),
-        verificationMethods = verificationMethods.toVerificationMethods(),
+        templateId = templateId,
+        verification = verification?.toDomain(),
+        params = params.toParamValueMap(),
         penalty = penalty.requireField("penalty").toDomain(),
         reward = reward.requireField("reward").toDomain(),
     )
@@ -171,8 +193,12 @@ data class ChallengeDetailResponse(
     val startDate: String? = null,
     @SerialName("endDate")
     val endDate: String? = null,
-    @SerialName("verificationMethods")
-    val verificationMethods: List<String>? = null,
+    @SerialName("templateId")
+    val templateId: Int? = null,
+    @SerialName("verification")
+    val verification: VerificationConfigDto? = null,
+    @SerialName("params")
+    val params: JsonObject? = null,
     @SerialName("penalty")
     val penalty: PenaltyDto? = null,
     @SerialName("reward")
@@ -200,7 +226,9 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         durationDays = durationDays ?: 0,
         startDate = startDate.requireField("startDate"),
         endDate = endDate.requireField("endDate"),
-        verificationMethods = verificationMethods.toVerificationMethods(),
+        templateId = templateId,
+        verification = verification?.toDomain(),
+        params = params.toParamValueMap(),
         penalty = penalty.requireField("penalty").toDomain(),
         reward = reward.requireField("reward").toDomain(),
         stats =

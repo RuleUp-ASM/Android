@@ -15,22 +15,6 @@ enum class ParticipationType(
     }
 }
 
-/** 인증 방식 (명세 verificationMethods, 다중 선택). */
-enum class VerificationMethod(
-    val value: String,
-    val label: String,
-) {
-    GPS("GPS", "GPS"),
-    PHOTO("PHOTO", "사진"),
-    SCREEN_TIME("SCREEN_TIME", "스크린타임"),
-    SELF_CHECK("SELF_CHECK", "자체 체크"),
-    ;
-
-    companion object {
-        fun fromValue(value: String?): VerificationMethod? = entries.find { it.value == value }
-    }
-}
-
 /** 반복 요일 (명세 repeatDays). */
 enum class RepeatDay(
     val value: String,
@@ -77,8 +61,6 @@ enum class Anonymity(
     }
 }
 
-fun List<String>?.toVerificationMethods(): List<VerificationMethod> = this.orEmpty().mapNotNull(VerificationMethod::fromValue)
-
 fun List<String>?.toRepeatDays(): List<RepeatDay> = this.orEmpty().mapNotNull(RepeatDay::fromValue)
 
 /** SNS 공유 패널티 설정 (명세 penalty.snsShare). */
@@ -105,11 +87,23 @@ data class Reward(
  * LLM 기본값 추천 결과 (명세 3.1). 구속력 없는 초안이며 사용자가 자유롭게 수정한다.
  */
 data class ChallengeRecommendation(
+    // 템플릿 매칭 성공 여부. false 면 수동(MANUAL) 추천만 내려온다.
+    val matched: Boolean,
+    // 매칭된 루틴 템플릿 id (직접 입력/무매칭이면 null)
+    val templateId: Int?,
     // 정제된 제목
     val title: String,
     val description: String?,
     // 제목 기반 자동 분류 (인식 불가 시 null)
     val category: InterestCategory?,
+    // 기본 인증 방식 (options 중 recommended)
+    val recommendedMethod: SelectedMethod,
+    // 선택 가능한 인증 옵션 (AUTO/MANUAL)
+    val options: List<VerificationOption>,
+    // 수정 가능한 목표값
+    val params: List<ParamSpec>,
+    // 자동 인증 동작 한 줄 설명
+    val rationale: String?,
     val participationType: ParticipationType,
     // 그룹만, 참여 기준 매너 온도
     val minMannerTemperature: Double?,
@@ -119,7 +113,6 @@ data class ChallengeRecommendation(
     val startDate: String,
     // ISO date
     val endDate: String,
-    val verificationMethods: List<VerificationMethod>,
     val penalty: Penalty,
     val reward: Reward,
 )
@@ -144,7 +137,12 @@ data class Challenge(
     val startDate: String,
     // ISO date, 서버 파생 (startDate + durationDays)
     val endDate: String,
-    val verificationMethods: List<VerificationMethod>,
+    // 매칭된 루틴 (직접 입력이면 null)
+    val templateId: Int?,
+    // 인증 스냅샷 (생성 시점 고정)
+    val verification: VerificationConfig?,
+    // 목표값 (예: {"distance_km": 5})
+    val params: Map<String, ParamValue>,
     val penalty: Penalty,
     val reward: Reward,
 )
@@ -165,8 +163,14 @@ data class ChallengeForm(
     val repeatDays: List<RepeatDay>,
     val durationDays: Int,
     val startDate: String,
-    // 최소 1개 이상
-    val verificationMethods: List<VerificationMethod>,
+    // 매칭된 루틴 (직접 입력이면 null)
+    val templateId: Int?,
+    // 선택한 인증 방식
+    val selectedMethod: SelectedMethod,
+    // 목표값 (예: {"distance_km": 5})
+    val params: Map<String, ParamValue>,
+    // AUTO 선택 시 단말 보유 권한 토큰
+    val grantedPermissions: List<String>,
     val penalty: Penalty,
     val reward: Reward,
     val anonymity: Anonymity,
@@ -182,7 +186,8 @@ data class ChallengeUpdate(
     val repeatDays: List<RepeatDay>? = null,
     val durationDays: Int? = null,
     val startDate: String? = null,
-    val verificationMethods: List<VerificationMethod>? = null,
+    // 시작 전 목표값 조정 (같은 루틴, 값만)
+    val params: Map<String, ParamValue>? = null,
     val penalty: Penalty? = null,
     val reward: Reward? = null,
     val minMannerTemperature: Double? = null,

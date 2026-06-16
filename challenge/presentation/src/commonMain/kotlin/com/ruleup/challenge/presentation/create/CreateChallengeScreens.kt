@@ -5,7 +5,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeEffect
+import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -18,14 +20,22 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 private fun sharedCreateChallengeViewModel(): CreateChallengeViewModel =
     metroViewModel(viewModelStoreOwner = rememberActivityViewModelStoreOwner())
 
-/** ViewModel 의 단발성 에러를 토스트로 보여준다. */
+/**
+ * ViewModel 의 단발성 효과 처리: 에러 토스트 + AUTO 권한 요청.
+ * 권한 요청은 OS 다이얼로그가 끝날 때까지 suspend 되며, 허용 결과를 [CreateChallengeIntent.PermissionsResult] 로 되돌린다.
+ */
 @Composable
-private fun CollectErrorEffect(viewModel: CreateChallengeViewModel) {
+private fun CollectEffects(viewModel: CreateChallengeViewModel) {
     val messageHelper = LocalMessageHelper.current
+    val permissionRequester = rememberPermissionRequester()
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
-            if (effect is CreateChallengeEffect.ShowError) {
-                messageHelper.showToast(effect.message)
+            when (effect) {
+                is CreateChallengeEffect.ShowError -> messageHelper.showToast(effect.message)
+                is CreateChallengeEffect.RequestPermissions -> {
+                    val granted = permissionRequester.request(effect.tokens)
+                    viewModel.onIntent(CreateChallengeIntent.PermissionsResult(granted))
+                }
             }
         }
     }
@@ -37,7 +47,7 @@ fun ChallengeCreateScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedCreateChallengeViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    CollectErrorEffect(viewModel)
+    CollectEffects(viewModel)
 
     ChallengeInputContent(
         modifier = modifier,
@@ -54,7 +64,7 @@ fun ChallengeConfirmScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedCreateChallengeViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    CollectErrorEffect(viewModel)
+    CollectEffects(viewModel)
 
     ChallengeConfirmContent(
         modifier = modifier,

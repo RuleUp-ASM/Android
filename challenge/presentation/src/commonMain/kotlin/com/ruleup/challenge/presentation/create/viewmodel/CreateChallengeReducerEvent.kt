@@ -1,9 +1,10 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ParamValue
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.ui.mvi.ReducerEvent
 
 sealed interface CreateChallengeReducerEvent : ReducerEvent {
@@ -44,8 +45,17 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
         val durationDays: Int,
     ) : CreateChallengeReducerEvent
 
-    data class VerificationToggled(
-        val method: VerificationMethod,
+    data class MethodSelected(
+        val method: SelectedMethod,
+    ) : CreateChallengeReducerEvent
+
+    data class ParamEdited(
+        val key: String,
+        val value: ParamValue,
+    ) : CreateChallengeReducerEvent
+
+    data class PermissionsGranted(
+        val tokens: Set<String>,
     ) : CreateChallengeReducerEvent
 
     data class SnsShareChanged(
