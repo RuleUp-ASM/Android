@@ -94,6 +94,9 @@ kotlin {
             implementation(project(":challenge:domain"))
             implementation(project(":challenge:data"))
             implementation(project(":challenge:presentation"))
+            implementation(project(":verification:domain"))
+            implementation(project(":verification:data"))
+            implementation(project(":verification:presentation"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -112,6 +115,8 @@ kotlin {
             // NavDisplay + ViewModelStore 엔트리 데코레이터(Android 전용 렌더링)
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+            // AndroidAppGraph 가 노출하는 WorkerFactory 타입(WorkManager 통합)
+            implementation(libs.androidx.work.runtime)
         }
     }
 }

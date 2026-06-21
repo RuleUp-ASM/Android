@@ -1,0 +1,26 @@
+package com.ruleup.verification.domain.entity
+
+/**
+ * sync 최소 간격 위반 (명세 §3.3, HTTP 429 SYNC_TOO_FREQUENT).
+ * 백오프 후 재시도하며 전송분은 synced 미표시로 유지한다(중복은 BE 멱등이 방어).
+ */
+class SyncTooFrequentException(
+    val retryAfterSec: Int? = null,
+) : Exception("sync 요청이 너무 잦습니다.")
+
+/**
+ * 잘못된 신호 페이로드 (명세 §3.3, HTTP 400 INVALID_SIGNAL_PAYLOAD).
+ * 해당 배치는 폐기(synced 처리)해 무한 재전송을 막는다.
+ */
+class InvalidSignalPayloadException : Exception("신호 페이로드가 유효하지 않습니다.")
+
+/**
+ * 수동 인증 당일 중복 제출 (명세 §3.4, HTTP 409 ALREADY_VERIFIED).
+ * 오류가 아니라 "이미 인증됨"으로 안내한다(명세 §6.5).
+ */
+class AlreadyVerifiedException : Exception("오늘은 이미 인증했습니다.")
+
+/**
+ * PHOTO 제출 시 imageUrl 누락 (명세 §3.4, HTTP 400 IMAGE_REQUIRED).
+ */
+class ImageRequiredException : Exception("사진 인증에는 이미지가 필요합니다.")

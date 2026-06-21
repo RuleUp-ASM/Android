@@ -26,6 +26,14 @@ import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
 import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
 import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
+import com.ruleup.verification.domain.VerificationDetailPage
+import com.ruleup.verification.domain.VerificationLocationPage
+import com.ruleup.verification.domain.VerificationManualPage
+import com.ruleup.verification.domain.VerificationProgressPage
+import com.ruleup.verification.presentation.detail.VerificationDetailScreen
+import com.ruleup.verification.presentation.location.VerificationLocationScreen
+import com.ruleup.verification.presentation.manual.VerificationManualScreen
+import com.ruleup.verification.presentation.progress.VerificationProgressScreen
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
@@ -88,6 +96,32 @@ val appRoutes: List<AppRoute> =
                 )
             },
             render = { ChallengeConfirmScreen() },
+        ),
+        AppRoute(
+            path = VerificationProgressPage.PATH,
+            render = { VerificationProgressScreen() },
+        ),
+        AppRoute(
+            path = VerificationDetailPage.PATH,
+            render = { args ->
+                VerificationDetailScreen(challengeId = args[VerificationDetailPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = VerificationManualPage.PATH,
+            render = { args ->
+                VerificationManualScreen(challengeId = args[VerificationManualPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = VerificationLocationPage.PATH,
+            render = { args ->
+                VerificationLocationScreen(
+                    challengeMemberId = args[VerificationLocationPage.ARG_MEMBER_ID].orEmpty(),
+                    defaultRadiusM = args[VerificationLocationPage.ARG_RADIUS]?.toFloatOrNull() ?: 100f,
+                    dwellMinutes = args[VerificationLocationPage.ARG_DWELL]?.toIntOrNull() ?: 60,
+                )
+            },
         ),
         AppRoute(
             path = ProfileIconPage.PATH,

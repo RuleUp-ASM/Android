@@ -23,6 +23,10 @@ val localProperties =
 val kakaoNativeAppKey: String =
     localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
 
+// Google Maps API 키(지도 Location Binding). 비어 있으면 빌드는 되나 런타임 지도 타일이 안 뜬다.
+val mapsApiKey: String =
+    localProperties.getProperty("MAPS_API_KEY")?.trim().orEmpty()
+
 // BASE_URL 은 :shared 의 AppConfig(local.properties 생성)로 단일 관리하므로 app BuildConfig 에선 제거.
 
 // AppAuth(RedirectUriReceiverActivity) 가 사용하는 리다이렉트 scheme. GOOGLE_REDIRECT_URI 의 scheme 부분.
@@ -56,6 +60,7 @@ android {
 
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
         manifestPlaceholders["appAuthRedirectScheme"] = appAuthRedirectScheme
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
     }
 
@@ -93,6 +98,8 @@ dependencies {
     // (런타임 클래스는 :shared 의 전이 의존으로 그대로 APK 에 패키징됨.)
     implementation(project(":core:domain")) // 딥링크 파서의 NavRoute
     implementation(project(":onboarding:domain")) // 딥링크 시작 라우트(SplashPage/IntroPromisePage)
+    implementation(project(":verification:domain")) // SyncScheduler 타입(WorkManager 부팅 예약)
+    implementation(libs.androidx.work.runtime) // WorkManager Configuration.Provider + WorkerFactory
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

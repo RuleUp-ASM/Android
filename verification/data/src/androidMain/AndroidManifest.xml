@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 자동인증 신호 수집(명세 §4). 앱 매니페스트로 머지된다. -->
+    <!-- GPS presence(Geofence) + 보조 측위 -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- 지오펜스가 앱 종료 중에도 발화하려면 백그라운드 위치(Android 11+ 2단계 허용) -->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- FG 위치 서비스(동기화 고지) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- 재부팅 후 지오펜스 재등록(명세 §2.3 휘발 대응) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 13+ FG 서비스/동기화 고지 알림 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 스크린타임/WAKE: 특수 권한(런타임 아님, Settings 딥링크로 허용). lint ProtectedPermissions 억제. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <application>
+        <!-- 지오펜스 전이 수신(내부 PendingIntent 전용) -->
+        <receiver
+            android:name=".signal.GeofenceBroadcastReceiver"
+            android:exported="false" />
+
+        <!-- 재부팅 후 지오펜스 재등록 -->
+        <receiver
+            android:name=".signal.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

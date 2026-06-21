@@ -1,7 +1,9 @@
 package com.ruleup.shared.di
 
 import android.content.Context
+import androidx.work.WorkerFactory
 import com.ruleup.network.di.BaseUrl
+import com.ruleup.verification.domain.port.SyncScheduler
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
@@ -13,6 +15,12 @@ import dev.zacsweers.metro.Provides
  */
 @DependencyGraph(AppScope::class)
 interface AndroidAppGraph : AppGraph {
+    /** WorkManager Configuration 에 등록할 Metro 주입 WorkerFactory(자동인증 sync). */
+    val verificationWorkerFactory: WorkerFactory
+
+    /** 앱 시작 시 30분 주기 sync 예약을 보장하기 위한 스케줄러. */
+    val syncScheduler: SyncScheduler
+
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(

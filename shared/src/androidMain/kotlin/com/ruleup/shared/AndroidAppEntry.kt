@@ -1,8 +1,10 @@
 package com.ruleup.shared
 
 import android.content.Context
+import androidx.work.WorkerFactory
 import com.ruleup.shared.di.AndroidAppGraph
 import com.ruleup.shared.di.AppGraph
+import com.ruleup.verification.domain.port.SyncScheduler
 import dev.zacsweers.metro.createGraphFactory
 
 /**
@@ -15,3 +17,11 @@ fun createAppGraph(
     context: Context,
     baseUrl: String,
 ): AppGraph = createGraphFactory<AndroidAppGraph.Factory>().create(context, baseUrl)
+
+/**
+ * WorkManager 통합 접근자. [AndroidAppGraph] 캐스팅을 :shared 안에서 수행해, :app 이 그래프의 전체
+ * Metro 기여 supertype 을 컴파일 클래스패스에 두지 않아도 되게 한다(:app 은 얇은 셸 유지).
+ */
+fun workerFactoryOf(graph: AppGraph): WorkerFactory = (graph as AndroidAppGraph).verificationWorkerFactory
+
+fun syncSchedulerOf(graph: AppGraph): SyncScheduler = (graph as AndroidAppGraph).syncScheduler
