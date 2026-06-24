@@ -72,5 +72,24 @@ fun VerificationManualScreen(
         ) {
             Text("사진으로 인증 (준비 중)")
         }
+
+        // 예비 수동 폴백(명세 §9.2): 자동 챌린지인데 오늘 자동이 안 될 때(권한 먹통·신호 부재).
+        // 주1회 한도, 제출 즉시 잠정 성공 후 이의 윈도우(24h) 무이의면 확정.
+        Text("자동 인증이 오늘 안 될 때만 사용하세요. 주 1회 한정이에요.")
+        OutlinedButton(
+            onClick = {
+                viewModel.onIntent(
+                    VerificationManualIntent.Submit(
+                        challengeId = challengeId,
+                        method = ManualMethod.SELF_CHECK,
+                        asFallback = true,
+                    ),
+                )
+            },
+            enabled = !state.isSubmitting,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("오늘은 수동으로 증명하기")
+        }
     }
 }

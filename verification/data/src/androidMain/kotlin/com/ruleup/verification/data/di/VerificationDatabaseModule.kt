@@ -3,8 +3,11 @@ package com.ruleup.verification.data.di
 import android.content.Context
 import com.ruleup.verification.data.db.GeofenceTargetDao
 import com.ruleup.verification.data.db.GeofenceTransitionDao
+import com.ruleup.verification.data.db.HealthReadingDao
+import com.ruleup.verification.data.db.HealthTargetDao
 import com.ruleup.verification.data.db.LocationSampleDao
 import com.ruleup.verification.data.db.ProgressCacheDao
+import com.ruleup.verification.data.db.SleepSegmentDao
 import com.ruleup.verification.data.db.UsageCursorDao
 import com.ruleup.verification.data.db.UsageEventDao
 import com.ruleup.verification.data.db.UsageTargetDao
@@ -45,4 +48,13 @@ interface VerificationDatabaseModule {
 
     @Provides
     fun provideUsageCursorDao(database: VerificationDatabase): UsageCursorDao = database.usageCursorDao()
+
+    @Provides
+    fun provideHealthReadingDao(database: VerificationDatabase): HealthReadingDao = database.healthReadingDao()
+
+    @Provides
+    fun provideSleepSegmentDao(database: VerificationDatabase): SleepSegmentDao = database.sleepSegmentDao()
+
+    @Provides
+    fun provideHealthTargetDao(database: VerificationDatabase): HealthTargetDao = database.healthTargetDao()
 }

@@ -16,10 +16,33 @@ enum class ManualMethod(
     }
 }
 
-/** 수동 인증 제출 결과 (명세 3.4 response). */
+/**
+ * 인증 경로 (명세 §9.2). 새 enum 대신 verifiedVia + disputeClosesAt 로 폴백을 경량 표현한다
+ * (VerificationStatus 5종 유지). [MANUAL_FALLBACK] 은 잠정 성공 — 이의 윈도우 후 확정.
+ */
+enum class VerifiedVia(
+    val value: String,
+) {
+    AUTO("AUTO"),
+    MANUAL("MANUAL"),
+    MANUAL_FALLBACK("MANUAL_FALLBACK"),
+    ;
+
+    companion object {
+        fun fromValue(value: String?): VerifiedVia? = entries.find { it.value == value }
+    }
+}
+
+/**
+ * 수동 인증 제출 결과 (명세 3.4·§9.2 response).
+ * [verifiedVia]=MANUAL_FALLBACK 이면 [disputeClosesAt] 까지 잠정 성공(침묵=동의로 확정).
+ */
 data class ManualSubmitResult(
     val targetDate: String,
     val status: TodayStatus,
     val method: ManualMethod,
     val progressRate: Double,
+    val verifiedVia: VerifiedVia,
+    // 예비 폴백 이의 윈도우 종료(ISO). 정규 수동(MANUAL)이면 null.
+    val disputeClosesAt: String?,
 )

@@ -46,6 +46,8 @@ kotlin {
             implementation(libs.androidx.room.runtime)
             // 백그라운드 sync 오케스트레이션(WorkManager PeriodicWork + WorkerFactory)
             implementation(libs.androidx.work.runtime)
+            // 움직임·수면 온디바이스 읽기(Health Connect, 명세 §8) + 신뢰 메타데이터
+            implementation(libs.androidx.health.connect.client)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -62,9 +64,12 @@ kotlin {
     }
 }
 
-// Room 어노테이션 프로세서(KSP)를 androidMain 컴파일에 건다. (ktorfit 과 동일 kspAndroidMain 구성)
+// Room 어노테이션 프로세서(KSP)를 androidMain 소스셋에 건다.
+// ⚠️ KMP/KSP 에서 androidMain 의 declarable processor 구성명은 'kspAndroid'(타깃명) 다.
+// 'kspAndroidMain' 에 걸면 kspAndroidMainProcessorClasspath 로 흘러가지 않아 Room 이 침묵하고
+// _Impl 미생성 → 런타임 "VerificationDatabase_Impl does not exist" 크래시(컴파일은 통과).
 dependencies {
-    add("kspAndroidMain", libs.androidx.room.compiler)
+    add("kspAndroid", libs.androidx.room.compiler)
 }
 
 ksp {

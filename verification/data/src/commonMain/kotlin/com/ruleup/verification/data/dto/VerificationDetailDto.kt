@@ -10,6 +10,7 @@ import com.ruleup.verification.domain.entity.OverallStatus
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.TodayVerification
 import com.ruleup.verification.domain.entity.VerificationDetail
+import com.ruleup.verification.domain.entity.VerifiedVia
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -22,6 +23,14 @@ data class EvidenceDto(
     val usageMinutes: Int? = null,
     @SerialName("firstUnlockAt")
     val firstUnlockAt: String? = null,
+    @SerialName("distanceKm")
+    val distanceKm: Double? = null,
+    @SerialName("steps")
+    val steps: Int? = null,
+    @SerialName("sleepHours")
+    val sleepHours: Double? = null,
+    @SerialName("healthOrigin")
+    val healthOrigin: String? = null,
 )
 
 @Serializable
@@ -36,6 +45,12 @@ data class TodayDto(
     val failureReason: String? = null,
     @SerialName("evidence")
     val evidence: EvidenceDto? = null,
+    @SerialName("verifiedVia")
+    val verifiedVia: String? = null,
+    @SerialName("disputeClosesAt")
+    val disputeClosesAt: String? = null,
+    @SerialName("windowClosesAt")
+    val windowClosesAt: String? = null,
 )
 
 @Serializable
@@ -50,6 +65,20 @@ data class MethodDetailDto(
     val goalMinutes: Int? = null,
     @SerialName("mode")
     val mode: String? = null,
+    @SerialName("metric")
+    val metric: String? = null,
+    @SerialName("value")
+    val value: Double? = null,
+    @SerialName("goal")
+    val goal: Double? = null,
+    @SerialName("dataOrigin")
+    val dataOrigin: String? = null,
+    @SerialName("recordingMethod")
+    val recordingMethod: String? = null,
+    @SerialName("bedtime")
+    val bedtime: String? = null,
+    @SerialName("sleepHours")
+    val sleepHours: Double? = null,
 )
 
 @Serializable
@@ -120,8 +149,15 @@ private fun TodayDto?.toDomain(): TodayVerification =
                     dwellMinutes = it.dwellMinutes,
                     usageMinutes = it.usageMinutes,
                     firstUnlockAt = it.firstUnlockAt,
+                    distanceKm = it.distanceKm,
+                    steps = it.steps,
+                    sleepHours = it.sleepHours,
+                    healthOrigin = it.healthOrigin,
                 )
             },
+        verifiedVia = VerifiedVia.fromValue(this?.verifiedVia),
+        disputeClosesAt = this?.disputeClosesAt,
+        windowClosesAt = this?.windowClosesAt,
     )
 
 private fun MethodDto.toDomain(): MethodEvaluation =
@@ -136,6 +172,13 @@ private fun MethodDto.toDomain(): MethodEvaluation =
                     usageMinutes = it.usageMinutes,
                     goalMinutes = it.goalMinutes,
                     mode = it.mode,
+                    metric = it.metric,
+                    value = it.value,
+                    goal = it.goal,
+                    dataOrigin = it.dataOrigin,
+                    recordingMethod = it.recordingMethod,
+                    bedtime = it.bedtime,
+                    sleepHours = it.sleepHours,
                 )
             },
         // Android 은 스크린타임 지원이라 기본 true(iOS 대비 응답값 우선).

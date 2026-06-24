@@ -91,6 +91,8 @@ interface NetworkModule {
         Ktorfit
             .Builder()
             .httpClient(httpClient)
-            .baseUrl(baseUrl)
+            // Ktorfit 은 baseUrl 이 trailing slash 로 끝나길 강제한다. local.properties 의 BASE_URL 에
+            // 슬래시를 빠뜨려도 앱이 시작부터 죽지 않도록, 비어있지 않으면 보정한다(빈 값은 그대로 fail-fast).
+            .baseUrl(if (baseUrl.isNotBlank() && !baseUrl.endsWith("/")) "$baseUrl/" else baseUrl)
             .build()
 }

@@ -14,6 +14,7 @@ import com.ruleup.verification.domain.entity.VerificationDetail
 import com.ruleup.verification.domain.entity.VerificationSignal
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.port.SignalCollector
 import com.ruleup.verification.domain.port.SignalRepository
 import com.ruleup.verification.domain.port.VerificationRepository
@@ -141,7 +142,15 @@ class RunSyncUseCaseTest {
             method: ManualMethod,
             targetDate: String?,
             imageUrl: String?,
+            asFallback: Boolean,
         ): ManualSubmitResult = error("unused")
+
+        override suspend fun searchPlaces(
+            query: String,
+            lat: Double?,
+            lng: Double?,
+            radiusM: Int?,
+        ): List<Place> = error("unused")
     }
 
     private class FakeAnalyticsLogger : AnalyticsLogger {

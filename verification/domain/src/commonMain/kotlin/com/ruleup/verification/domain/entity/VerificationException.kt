@@ -24,3 +24,9 @@ class AlreadyVerifiedException : Exception("오늘은 이미 인증했습니다.
  * PHOTO 제출 시 imageUrl 누락 (명세 §3.4, HTTP 400 IMAGE_REQUIRED).
  */
 class ImageRequiredException : Exception("사진 인증에는 이미지가 필요합니다.")
+
+/**
+ * 예비 수동 폴백 주1회 한도 초과 (명세 §9.2, HTTP 409 FALLBACK_LIMIT_EXCEEDED).
+ * 이미 이번 주 폴백을 썼으면 그냥 NO_SIGNAL_RECEIVED 실패로 떨어진다 — 화면은 한도 안내.
+ */
+class FallbackLimitExceededException : Exception("이번 주 수동 인증 횟수를 모두 사용했어요.")

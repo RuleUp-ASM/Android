@@ -66,9 +66,47 @@ data class LocationPointDto(
     val at: String,
 )
 
+/** HEALTH readings 의 신뢰 메타데이터(명세 §6.2·§8.2). 필수 동봉 — 없으면 BE 거부. */
+@Serializable
+data class HealthOriginDto(
+    @SerialName("dataOrigin")
+    val dataOrigin: String,
+    @SerialName("recordingMethod")
+    val recordingMethod: String,
+    @SerialName("deviceType")
+    val deviceType: String,
+)
+
+/** Health Connect 읽은 값 1건(명세 §6.2). 집계·게이트는 BE. */
+@Serializable
+data class HealthReadingDto(
+    @SerialName("metric")
+    val metric: String,
+    @SerialName("value")
+    val value: Double,
+    @SerialName("unit")
+    val unit: String,
+    @SerialName("exerciseType")
+    val exerciseType: String? = null,
+    @SerialName("origin")
+    val origin: HealthOriginDto,
+)
+
+/** 수면 세그먼트 1건(명세 §6.2). */
+@Serializable
+data class SleepSegmentDto(
+    @SerialName("startAt")
+    val startAt: String,
+    @SerialName("endAt")
+    val endAt: String,
+    @SerialName("status")
+    val status: String,
+)
+
 /**
  * 신호 1건 (명세 §3.2). [type] 디스크리미네이터 + 타입별 옵셔널 필드.
- * GEOFENCE_TRANSITION → [events], SCREEN_TIME → [appEvents]/[screenEvents], LOCATION → [points].
+ * GEOFENCE_TRANSITION → [events], SCREEN_TIME → [appEvents]/[screenEvents], LOCATION → [points],
+ * HEALTH → [date]/[readings], SLEEP → [segments].
  */
 @Serializable
 data class SignalDto(
@@ -82,6 +120,12 @@ data class SignalDto(
     val screenEvents: List<ScreenEventDto>? = null,
     @SerialName("points")
     val points: List<LocationPointDto>? = null,
+    @SerialName("date")
+    val date: String? = null,
+    @SerialName("readings")
+    val readings: List<HealthReadingDto>? = null,
+    @SerialName("segments")
+    val segments: List<SleepSegmentDto>? = null,
 )
 
 @Serializable
@@ -142,6 +186,40 @@ private fun VerificationSignal.toDto(): SignalDto =
                             accuracy = it.accuracy.toDouble(),
                             isMock = it.isMock,
                             at = it.at.toIso(),
+                        )
+                    },
+            )
+
+        is VerificationSignal.Health ->
+            SignalDto(
+                type = "HEALTH",
+                date = date,
+                readings =
+                    readings.map {
+                        HealthReadingDto(
+                            metric = it.metric.name,
+                            value = it.value,
+                            unit = it.unit,
+                            exerciseType = it.exerciseType,
+                            origin =
+                                HealthOriginDto(
+                                    dataOrigin = it.origin.dataOrigin,
+                                    recordingMethod = it.origin.recordingMethod.name,
+                                    deviceType = it.origin.deviceType.name,
+                                ),
+                        )
+                    },
+            )
+
+        is VerificationSignal.Sleep ->
+            SignalDto(
+                type = "SLEEP",
+                segments =
+                    segments.map {
+                        SleepSegmentDto(
+                            startAt = it.startAt.toIso(),
+                            endAt = it.endAt.toIso(),
+                            status = it.status,
                         )
                     },
             )

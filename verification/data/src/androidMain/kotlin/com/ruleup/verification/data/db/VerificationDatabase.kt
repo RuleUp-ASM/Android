@@ -18,8 +18,12 @@ import androidx.room.RoomDatabase
         UsageEventEntity::class,
         UsageTargetEntity::class,
         UsageCursorEntity::class,
+        HealthReadingEntity::class,
+        SleepSegmentEntity::class,
+        HealthTargetEntity::class,
+        HealthSettingsEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class VerificationDatabase : RoomDatabase() {
@@ -36,6 +40,12 @@ abstract class VerificationDatabase : RoomDatabase() {
     abstract fun usageTargetDao(): UsageTargetDao
 
     abstract fun usageCursorDao(): UsageCursorDao
+
+    abstract fun healthReadingDao(): HealthReadingDao
+
+    abstract fun sleepSegmentDao(): SleepSegmentDao
+
+    abstract fun healthTargetDao(): HealthTargetDao
 }
 
 /**

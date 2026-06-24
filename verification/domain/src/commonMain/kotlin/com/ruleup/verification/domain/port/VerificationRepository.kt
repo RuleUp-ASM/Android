@@ -2,6 +2,7 @@ package com.ruleup.verification.domain.port
 
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.SignalBatch
@@ -27,11 +28,23 @@ interface VerificationRepository {
         logDays: Int = 7,
     ): VerificationDetail
 
-    /** 수동 인증 제출(명세 3.4). PHOTO 는 [imageUrl] 필수. */
+    /** 수동 인증 제출(명세 3.4·§9). PHOTO 는 [imageUrl] 필수. [asFallback]=true 면 예비 폴백(§9.2). */
     suspend fun submitManual(
         challengeId: String,
         method: ManualMethod,
         targetDate: String? = null,
         imageUrl: String? = null,
+        asFallback: Boolean = false,
     ): ManualSubmitResult
+
+    /**
+     * 장소 검색(명세 §5.2·§11.7, Naver Local 프록시). 셋업·수정 시 앵커 채우기용.
+     * MANUAL=키워드만, NEARBY_BRAND=키워드+중심좌표+반경. 평가 시엔 호출하지 않는다.
+     */
+    suspend fun searchPlaces(
+        query: String,
+        lat: Double? = null,
+        lng: Double? = null,
+        radiusM: Int? = null,
+    ): List<Place>
 }

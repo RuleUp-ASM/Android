@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
+import com.ruleup.verification.domain.usecase.SearchPlacesUseCase
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -22,6 +23,7 @@ import kotlinx.coroutines.launch
 class VerificationLocationViewModel
     constructor(
         private val bindLocationUseCase: BindLocationUseCase,
+        private val searchPlacesUseCase: SearchPlacesUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
             VerificationLocationState.initial,
@@ -29,6 +31,17 @@ class VerificationLocationViewModel
         override fun onIntent(intent: VerificationLocationIntent) {
             when (intent) {
                 is VerificationLocationIntent.Confirm -> bind(intent)
+                is VerificationLocationIntent.Search -> search(intent)
+                is VerificationLocationIntent.SelectPlace ->
+                    dispatch(
+                        VerificationLocationReducerEvent.PlaceSelected(
+                            SelectedPlace(
+                                lat = intent.place.lat,
+                                lng = intent.place.lng,
+                                label = intent.place.name,
+                            ),
+                        ),
+                    )
             }
         }
 
@@ -39,6 +52,9 @@ class VerificationLocationViewModel
             when (event) {
                 VerificationLocationReducerEvent.Binding -> state.copy(isBinding = true)
                 VerificationLocationReducerEvent.Finished -> state.copy(isBinding = false)
+                VerificationLocationReducerEvent.Searching -> state.copy(isSearching = true)
+                is VerificationLocationReducerEvent.SearchLoaded -> state.copy(isSearching = false, places = event.places)
+                is VerificationLocationReducerEvent.PlaceSelected -> state.copy(selected = event.selected)
             }
 
         private fun bind(intent: VerificationLocationIntent.Confirm) {
@@ -60,6 +76,27 @@ class VerificationLocationViewModel
                 }.onFailure { error ->
                     dispatch(VerificationLocationReducerEvent.Finished)
                     emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "장소 등록에 실패했어요"))
+                }
+            }
+        }
+
+        private fun search(intent: VerificationLocationIntent.Search) {
+            if (currentState.isSearching || intent.query.isBlank()) return
+            viewModelScope.launch {
+                dispatch(VerificationLocationReducerEvent.Searching)
+                runCatching {
+                    searchPlacesUseCase(
+                        query = intent.query,
+                        lat = intent.lat,
+                        lng = intent.lng,
+                        radiusM = intent.radiusM,
+                    )
+                }.onSuccess { places ->
+                    dispatch(VerificationLocationReducerEvent.SearchLoaded(places))
+                    if (places.isEmpty()) emitEffect(VerificationLocationEffect.ShowMessage("검색 결과가 없어요"))
+                }.onFailure { error ->
+                    dispatch(VerificationLocationReducerEvent.SearchLoaded(emptyList()))
+                    emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "장소 검색에 실패했어요"))
                 }
             }
         }

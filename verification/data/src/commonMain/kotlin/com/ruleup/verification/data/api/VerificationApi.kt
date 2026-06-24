@@ -3,6 +3,7 @@ package com.ruleup.verification.data.api
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
+import com.ruleup.verification.data.dto.PlaceSearchResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SyncRequest
 import com.ruleup.verification.data.dto.SyncResponse
@@ -39,4 +40,13 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
         @Body request: ManualSubmitRequest,
     ): BaseResponse<ManualSubmitResponse>
+
+    // 11.7 장소 검색(Naver Local 프록시) — 셋업·수정 시 앵커 채우기용
+    @GET("v1/places/search")
+    suspend fun searchPlaces(
+        @Query("q") query: String,
+        @Query("lat") lat: Double? = null,
+        @Query("lng") lng: Double? = null,
+        @Query("radiusM") radiusM: Int? = null,
+    ): BaseResponse<PlaceSearchResponse>
 }

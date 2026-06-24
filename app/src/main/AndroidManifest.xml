@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Health Connect(connect-client minSdk 26) vs 앱 minSdk 24 충돌 무시.
+         HEALTH/SLEEP 경로는 런타임 SDK_INT>=26 + getSdkStatus 로 가드(명세 §8). -->
+    <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -45,7 +49,26 @@
                     android:scheme="ruleup"
                     android:host="app" />
             </intent-filter>
+
+            <!-- Health Connect 권한 사용 이유(개인정보 처리방침) 안내 — Android 13 이하.
+                 HC 가 권한 부여 화면에서 본 액션으로 앱을 호출한다(명세 §8 셋업). -->
+            <intent-filter>
+                <action android:name="androidx.health.connect.action.SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+
+        <!-- Android 14+(API 34): Health Connect 권한 사용 이유 진입점. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- WorkManager 기본 이니셜라이저 제거 → App(Configuration.Provider)로 on-demand 초기화.
              Metro 주입 WorkerFactory 를 쓰기 위함(명세 §3). -->

@@ -7,10 +7,12 @@ import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.toDomain
 import com.ruleup.verification.data.dto.toRequest
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
+import com.ruleup.verification.domain.entity.FallbackLimitExceededException
 import com.ruleup.verification.domain.entity.ImageRequiredException
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.SignalBatch
@@ -64,6 +66,7 @@ class VerificationRepositoryImpl(
         method: ManualMethod,
         targetDate: String?,
         imageUrl: String?,
+        asFallback: Boolean,
     ): ManualSubmitResult =
         try {
             api
@@ -74,22 +77,36 @@ class VerificationRepositoryImpl(
                             method = method.value,
                             targetDate = targetDate,
                             imageUrl = imageUrl,
+                            asFallback = asFallback,
                         ),
                 ).getOrThrow()
                 .toDomain()
         } catch (e: ApiException) {
-            // 409 중복/400 이미지누락은 화면이 안내·분기할 수 있도록 도메인 예외로 변환한다(명세 §3.4·§6.5).
+            // 409 중복/한도초과·400 이미지누락은 화면이 안내·분기할 수 있도록 도메인 예외로 변환(명세 §3.4·§6.5·§9.2).
             when (e.code) {
                 CODE_ALREADY_VERIFIED -> throw AlreadyVerifiedException()
                 CODE_IMAGE_REQUIRED -> throw ImageRequiredException()
+                CODE_FALLBACK_LIMIT_EXCEEDED -> throw FallbackLimitExceededException()
                 else -> throw e
             }
         }
+
+    override suspend fun searchPlaces(
+        query: String,
+        lat: Double?,
+        lng: Double?,
+        radiusM: Int?,
+    ): List<Place> =
+        api
+            .searchPlaces(query, lat, lng, radiusM)
+            .getOrThrow()
+            .toDomain()
 
     companion object {
         private const val CODE_SYNC_TOO_FREQUENT = "SYNC_TOO_FREQUENT"
         private const val CODE_INVALID_SIGNAL_PAYLOAD = "INVALID_SIGNAL_PAYLOAD"
         private const val CODE_ALREADY_VERIFIED = "ALREADY_VERIFIED"
         private const val CODE_IMAGE_REQUIRED = "IMAGE_REQUIRED"
+        private const val CODE_FALLBACK_LIMIT_EXCEEDED = "FALLBACK_LIMIT_EXCEEDED"
     }
 }

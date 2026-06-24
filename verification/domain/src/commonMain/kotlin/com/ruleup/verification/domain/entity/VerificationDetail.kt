@@ -24,6 +24,11 @@ data class TodayVerification(
     val verifiedAt: String?,
     val failureReason: FailureReason?,
     val evidence: Evidence?,
+    // 인증 경로(명세 §9.2). MANUAL_FALLBACK 이면 [disputeClosesAt] 까지 잠정 성공.
+    val verifiedVia: VerifiedVia?,
+    val disputeClosesAt: String?,
+    // 제약형·시간창 "언제 확정"(명세 3.3 windowClosesAt).
+    val windowClosesAt: String?,
 )
 
 /** 근거 요약 (명세 3.3 evidence). 방식에 따라 일부만 채워진다. */
@@ -31,6 +36,13 @@ data class Evidence(
     val dwellMinutes: Int?,
     val usageMinutes: Int?,
     val firstUnlockAt: String?,
+    // 움직임(명세 §8) 근거.
+    val distanceKm: Double?,
+    val steps: Int?,
+    // 수면(명세 §6.2) 근거.
+    val sleepHours: Double?,
+    // 신뢰 게이트 입력 기록 앱(명세 §8.2).
+    val healthOrigin: String?,
 )
 
 /**
@@ -45,7 +57,7 @@ data class MethodEvaluation(
     val supported: Boolean,
 )
 
-/** 방식별 상세 (GPS·SCREEN_TIME 이질 필드를 한 타입에 옵셔널로 담는다, 명세 3.3 detail). */
+/** 방식별 상세 (GPS·SCREEN_TIME·HEALTH·SLEEP 이질 필드를 한 타입에 옵셔널로 담는다, 명세 3.3 detail). */
 data class MethodDetail(
     // GPS
     val insideGeofence: Boolean?,
@@ -55,6 +67,15 @@ data class MethodDetail(
     val goalMinutes: Int?,
     // MIN / MAX
     val mode: String?,
+    // HEALTH(명세 §8) — metric/value/goal + 신뢰 메타데이터.
+    val metric: String?,
+    val value: Double?,
+    val goal: Double?,
+    val dataOrigin: String?,
+    val recordingMethod: String?,
+    // SLEEP(명세 §6.2).
+    val bedtime: String?,
+    val sleepHours: Double?,
 )
 
 /** 최근 일자별 로그 (명세 3.3 dailyLogs[]). */

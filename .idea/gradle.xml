@@ -19,6 +19,7 @@
             <option value="$PROJECT_DIR$/core/datastore" />
             <option value="$PROJECT_DIR$/core/domain" />
             <option value="$PROJECT_DIR$/core/entity" />
+            <option value="$PROJECT_DIR$/core/map" />
             <option value="$PROJECT_DIR$/core/network" />
             <option value="$PROJECT_DIR$/core/ui" />
             <option value="$PROJECT_DIR$/onboarding" />
@@ -26,6 +27,10 @@
             <option value="$PROJECT_DIR$/onboarding/domain" />
             <option value="$PROJECT_DIR$/onboarding/presentation" />
             <option value="$PROJECT_DIR$/shared" />
+            <option value="$PROJECT_DIR$/verification" />
+            <option value="$PROJECT_DIR$/verification/data" />
+            <option value="$PROJECT_DIR$/verification/domain" />
+            <option value="$PROJECT_DIR$/verification/presentation" />
           </set>
         </option>
       </GradleProjectSettings>

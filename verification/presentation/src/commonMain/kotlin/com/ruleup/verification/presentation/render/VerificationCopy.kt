@@ -45,15 +45,23 @@ fun failureReasonCopy(reason: FailureReason): String =
     when (reason) {
         FailureReason.OUT_OF_GEOFENCE -> "등록 장소에서 인증되지 않았어요"
         FailureReason.INSUFFICIENT_DWELL -> "체류 시간이 부족해요"
+        FailureReason.ENTERED_AVOID_ZONE -> "회피해야 할 장소에 머물렀어요"
         FailureReason.INSUFFICIENT_DISTANCE -> "이동 거리가 부족해요"
+        FailureReason.INSUFFICIENT_STEPS -> "걸음 수가 부족해요"
+        FailureReason.UNTRUSTED_HEALTH_SOURCE -> "신뢰할 수 없는 건강 데이터 출처예요"
         FailureReason.INSUFFICIENT_USAGE -> "사용 시간이 부족해요"
         FailureReason.USAGE_EXCEEDED -> "사용 시간을 초과했어요"
         FailureReason.WOKE_UP_LATE -> "기상 시각을 초과했어요"
+        FailureReason.PHONE_USED_IN_BLOCK_WINDOW -> "금지 시간대에 폰을 사용했어요"
+        FailureReason.SLEPT_LATE -> "취침 시각을 초과했어요"
+        FailureReason.INSUFFICIENT_SLEEP -> "수면 시간이 부족해요"
+        FailureReason.PERIOD_QUOTA_MISSED -> "이번 주기 목표 횟수를 못 채웠어요"
         FailureReason.NO_SIGNAL_RECEIVED -> "신호가 수신되지 않았어요 — 권한을 확인해주세요"
         FailureReason.PERMISSION_MISSING -> "권한이 없어 인증할 수 없어요"
         FailureReason.GEOFENCE_NOT_CONFIGURED -> "장소가 설정되지 않았어요"
         FailureReason.METHOD_NOT_SUPPORTED_ON_PLATFORM -> "이 기기에서는 지원되지 않는 인증 방식이에요"
         FailureReason.MANUAL_NOT_SUBMITTED -> "오늘 인증을 제출하지 않았어요"
+        FailureReason.FALLBACK_LIMIT_EXCEEDED -> "이번 주 수동 인증을 모두 사용했어요"
         FailureReason.UNKNOWN -> "인증에 실패했어요"
     }
 
