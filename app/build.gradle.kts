@@ -90,17 +90,29 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":shared"))
-    // Hilt 컴포넌트가 :shared 의 전이 의존(전 모듈)을 집계한다. :app 은 직접 쓰는 모듈만 둔다.
-    implementation(project(":core:domain")) // 딥링크 파서의 NavRoute, NavigationHelper/MessageHelper
-    implementation(project(":core:network")) // @BaseUrl 한정자(AppModule)
-    implementation(project(":core:analytics")) // AnalyticsLogger 주입
-    implementation(project(":onboarding:domain")) // 딥링크 시작 라우트
-    implementation(project(":verification:domain")) // SyncScheduler(App 주입)
+    // :app 이 컴포지션 루트(AppRoot/내비게이션) + 전 feature·core 모듈 집계점.
+    // Hilt 컴포넌트가 모든 모듈의 @Module/@HiltViewModel 바인딩을 한곳에서 모은다.
+    implementation(project(":core:domain"))
+    implementation(project(":core:entity"))
+    implementation(project(":core:ui"))
+    implementation(project(":core:network"))
+    implementation(project(":core:datastore"))
+    implementation(project(":core:analytics"))
+    implementation(project(":onboarding:domain"))
+    implementation(project(":onboarding:data"))
+    implementation(project(":onboarding:presentation"))
+    implementation(project(":challenge:domain"))
+    implementation(project(":challenge:data"))
+    implementation(project(":challenge:presentation"))
+    implementation(project(":verification:domain"))
+    implementation(project(":verification:data"))
+    implementation(project(":verification:presentation"))
 
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -110,6 +122,9 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.work)

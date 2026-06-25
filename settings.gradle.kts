@@ -25,7 +25,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Android-RuleUp"
 include(":app")
-include(":shared")
 include(":onboarding:data")
 include(":onboarding:domain")
 include(":onboarding:presentation")
