@@ -1,45 +1,45 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kotlin.multiplatform.library)
-    alias(libs.plugins.metro)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
 }
 
-kotlin {
-    android {
-        namespace = "com.ruleup.network"
-        compileSdk = 37
-        minSdk = 24
-        compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-        }
-    }
-    iosArm64()
-    iosSimulatorArm64()
+android {
+    namespace = "com.ruleup.network"
+    compileSdk = 37
 
-    sourceSets {
-        commonMain.dependencies {
-            implementation(project(":core:domain"))
-            // HttpClient·Json·Ktorfit 이 NetworkModule 의 @Provides 시그니처로 노출되어 app 의 Metro 그래프와
-            // data 모듈이 타입을 인지해야 하므로 api 로 전파한다.
-            api(libs.ktor.client.core)
-            api(libs.kotlinx.serialization.json)
-            api(libs.ktorfit.lib.light)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.client.logging)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.kotlinx.coroutines.core)
-            // KMP 로거: Android Logcat / iOS os_log 로 Ktor HTTP 로그 출력
-            implementation(libs.kermit)
-        }
-        androidMain.dependencies {
-            // OkHttp 엔진(자동 선택) + Android Context 기반 이미지 리더
-            implementation(libs.ktor.client.okhttp)
-            implementation(libs.androidx.core.ktx)
-        }
-        iosMain.dependencies {
-            // Darwin 엔진(HttpClient {} 가 자동 선택)
-            implementation(libs.ktor.client.darwin)
-        }
+    defaultConfig {
+        minSdk = 24
     }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+dependencies {
+    implementation(project(":core:domain"))
+
+    // Retrofit/OkHttp/Json 은 NetworkModule 의 @Provides 시그니처와 data 모듈의 API 생성에 노출되므로 api.
+    api(libs.retrofit)
+    api(libs.retrofit.converter.kotlinx.serialization)
+    api(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.timber)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 }

@@ -5,20 +5,37 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.android_ruleup.deeplink.resolveNewIntentRoute
 import com.ruleup.android_ruleup.deeplink.resolveStartStack
+import com.ruleup.domain.helper.MessageHelper
+import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.shared.AppRoot
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    // App 에서 생성된 전역 그래프. 필드 주입(@AndroidEntryPoint) 대신 그래프 accessor 로 의존성을 꺼낸다.
-    private val graph by lazy { (application as App).appGraph }
+    @Inject
+    lateinit var navigationHelper: NavigationHelper
+
+    @Inject
+    lateinit var messageHelper: MessageHelper
+
+    @Inject
+    lateinit var analyticsLogger: AnalyticsLogger
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val startStack = resolveStartStack(intent?.data)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppRoot(graph = graph, startStack = startStack)
+            AppRoot(
+                navigationHelper = navigationHelper,
+                messageHelper = messageHelper,
+                analyticsLogger = analyticsLogger,
+                startStack = startStack,
+            )
         }
     }
 
@@ -28,6 +45,6 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         intent.data
             ?.let { resolveNewIntentRoute(it) }
-            ?.let { graph.navigationHelper.navigateByRoute(it) }
+            ?.let { navigationHelper.navigateByRoute(it) }
     }
 }
