@@ -10,7 +10,7 @@ import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.VerificationDetail
 
 /**
- * 인증 서버 포트 (명세 §3). 도메인은 본 포트만 알고, data 어댑터가 ktorfit 으로 채운다.
+ * 인증 서버 포트 (명세 §3). 도메인은 본 포트만 알고, data 어댑터가 Retrofit 으로 채운다.
  *
  * 실패는 예외로 전파된다. sync 는 [com.ruleup.verification.domain.entity.SyncTooFrequentException]
  * (429)·[com.ruleup.verification.domain.entity.InvalidSignalPayloadException](400) 로 분기한다.

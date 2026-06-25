@@ -4,7 +4,7 @@ package com.ruleup.analytics
  * 비즈니스 이벤트 로깅 추상화.
  *
  * 비즈니스 코드(UseCase/ViewModel)는 Firebase 등 구체 SDK 를 모른 채 이 인터페이스에만 의존한다.
- * 플랫폼별 구현(Android = Firebase Analytics, iOS = 스텁)이 Metro 그래프에 [AnalyticsLogger] 로 바인딩된다.
+ * 구현(Firebase Analytics)은 Hilt 그래프에 [AnalyticsLogger] 로 바인딩된다.
  */
 interface AnalyticsLogger {
     /** [event] 를 분석 백엔드로 전송한다. */

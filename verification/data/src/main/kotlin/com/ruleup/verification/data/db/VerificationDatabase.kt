@@ -51,8 +51,8 @@ abstract class VerificationDatabase : RoomDatabase() {
 /**
  * 프로세스 전역 단일 인스턴스 홀더.
  *
- * BroadcastReceiver(지오펜스·부팅)는 OS 가 인스턴스화하므로 Metro 그래프에 접근할 수 없다.
- * Metro DI 모듈과 리시버가 **같은** DB 파일/인스턴스를 공유하도록 본 홀더를 단일 출처로 둔다.
+ * BroadcastReceiver(지오펜스·부팅)는 OS 가 인스턴스화하므로 Hilt 그래프에 접근할 수 없다.
+ * Hilt DI 모듈과 리시버가 **같은** DB 파일/인스턴스를 공유하도록 본 홀더를 단일 출처로 둔다.
  */
 internal object VerificationDatabaseHolder {
     @Volatile

@@ -12,9 +12,8 @@ import com.ruleup.shared.LocalAnalyticsLogger
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 /**
- * 내비게이션 신호를 수신해 백스택을 갱신하고, 플랫폼별 [PlatformNavDisplay] 로 현재 스택을 렌더한다.
- * 백스택 자료구조(navigation3-runtime)는 멀티플랫폼이지만, NavDisplay 렌더링(navigation3-ui)은 iOS 를
- * 지원하지 않으므로 화면 렌더는 expect/actual 로 분리한다.
+ * 내비게이션 신호를 수신해 백스택(navigation3-runtime)을 갱신하고,
+ * [PlatformNavDisplay](navigation3-ui)로 현재 스택을 렌더한다.
  */
 @Composable
 fun AppNavHost(
