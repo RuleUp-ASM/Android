@@ -1,6 +1,7 @@
 package com.ruleup.map
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.runtime.Composable
@@ -77,6 +78,8 @@ private class FusedLocationLocator(
     private val appContext = context.applicationContext
     private val fused by lazy { LocationServices.getFusedLocationProviderClient(appContext) }
 
+    // locate() 진입 시 checkSelfPermission 으로 직접 권한을 확인한다(아래 가드).
+    @SuppressLint("MissingPermission")
     override suspend fun locate(): MapLatLng? {
         if (appContext.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return null

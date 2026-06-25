@@ -1,5 +1,6 @@
 package com.ruleup.verification.data.signal
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import com.google.android.gms.location.LocationServices
@@ -16,7 +17,10 @@ import javax.inject.Inject
 /**
  * sync 시점 OS 신호 수집(명세 §2.3). 보조 측위 단발(isMock 포함) + UsageStats 델타 + 움직임/수면(HEALTH·SLEEP).
  * 지오펜스 전이는 리시버가 이미 적재한다. 연속 측위(requestLocationUpdates)는 쓰지 않는다(배터리, 명세 §2.3).
+ *
+ * 측위/UsageStats 호출은 모두 런타임 권한 가드 뒤에서 일어나므로 MissingPermission lint 를 클래스 단위로 억제한다.
  */
+@SuppressLint("MissingPermission")
 class SignalCollectorImpl
     @Inject
     constructor(

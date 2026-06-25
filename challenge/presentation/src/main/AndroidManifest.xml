@@ -3,6 +3,7 @@
 
     <!-- AUTO 인증(루틴) 런타임 권한. 앱 매니페스트로 머지된다. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.CAMERA" />
 

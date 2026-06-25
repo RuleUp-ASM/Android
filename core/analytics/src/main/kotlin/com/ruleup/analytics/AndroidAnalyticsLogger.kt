@@ -1,5 +1,6 @@
 package com.ruleup.analytics
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -17,6 +18,8 @@ class AndroidAnalyticsLogger
     constructor(
         @ApplicationContext context: Context,
     ) : AnalyticsLogger {
+        // INTERNET/ACCESS_NETWORK_STATE/WAKE_LOCK 은 firebase-analytics AAR + app 매니페스트에서 병합 제공된다.
+        @SuppressLint("MissingPermission")
         private val firebaseAnalytics = FirebaseAnalytics.getInstance(context)
 
         override fun log(event: AnalyticsEvent) {

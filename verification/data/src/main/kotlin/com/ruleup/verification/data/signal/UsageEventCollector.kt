@@ -1,5 +1,6 @@
 package com.ruleup.verification.data.signal
 
+import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
@@ -15,7 +16,10 @@ import javax.inject.Inject
  * UsageStats 증분 수집(명세 §2.2). 매 sync 마다 직전 커서~now 구간을 queryEvents 로 읽어
  * Room usage_event 에 누적한다(시스템 보존 한계 대응, 마감 시점 몰아 조회 금지).
  * 누적 foregroundSec 단일값은 만들지 않고 RESUMED/PAUSED 시퀀스를 그대로 보존한다.
+ *
+ * queryEvents(PACKAGE_USAGE_STATS)는 UsageStats 접근 권한 가드 뒤에서만 호출되므로 lint 를 억제한다.
  */
+@SuppressLint("MissingPermission")
 class UsageEventCollector
     @Inject
     constructor(
