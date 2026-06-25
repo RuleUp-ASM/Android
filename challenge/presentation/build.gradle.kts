@@ -1,61 +1,63 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kotlin.multiplatform.library)
-    alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.metro)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
+}
+
+android {
+    namespace = "com.ruleup.challenge.presentation"
+    compileSdk = 37
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        // ChallengeDates 가 java.time(LocalDate) 사용 — minSdk 24 desugaring.
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    buildFeatures {
+        compose = true
+    }
 }
 
 kotlin {
-    android {
-        namespace = "com.ruleup.challenge.presentation"
-        compileSdk = 37
-        minSdk = 24
-        compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-        }
-    }
-    iosArm64()
-    iosSimulatorArm64()
-
     compilerOptions {
-        // core:ui 가 -Xexplicit-backing-fields(실험 기능)로 컴파일되어 pre-release 메타데이터를
-        // 가지므로, 이를 소비하기 위해 pre-release 체크를 건너뛴다.
+        jvmTarget = JvmTarget.JVM_11
         freeCompilerArgs.add("-Xskip-prerelease-check")
     }
+}
 
-    sourceSets {
-        commonMain.dependencies {
-            implementation(project(":core:entity"))
-            implementation(project(":core:ui"))
-            implementation(project(":challenge:domain"))
+dependencies {
+    implementation(project(":core:entity"))
+    implementation(project(":core:ui"))
+    implementation(project(":challenge:domain"))
 
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.uiToolingPreview)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
 
-            implementation(libs.coil.compose)
-            implementation(libs.kotlinx.datetime)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network)
 
-            implementation(libs.metrox.viewmodel)
-            implementation(libs.metrox.viewmodel.compose)
-            implementation(libs.jetbrains.lifecycle.runtime.compose)
-        }
-        androidMain.dependencies {
-            implementation(libs.androidx.core.ktx)
-            implementation(libs.androidx.appcompat)
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.lifecycle.viewmodel.compose)
-            implementation(libs.material)
-            // OkHttp 기반 coil 네트워크 페처(JVM 전용)
-            implementation(libs.coil.network)
-        }
-        iosMain.dependencies {
-            // iOS 네트워크 이미지: Ktor(Darwin) 기반 coil 페처
-            implementation(libs.coil.network.ktor)
-            implementation(libs.ktor.client.darwin)
-        }
-    }
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.hilt.compiler)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
