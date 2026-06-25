@@ -1,99 +1,68 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.android.kotlin.multiplatform.library)
-    alias(libs.plugins.metro)
-    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.ktorfit)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+android {
+    namespace = "com.ruleup.verification.data"
+    compileSdk = 37
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        // VerificationSyncWorker 등에서 java.time(Instant) 사용 — minSdk 24 desugaring.
+        isCoreLibraryDesugaringEnabled = true
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
 }
 
 kotlin {
-    android {
-        namespace = "com.ruleup.verification.data"
-        compileSdk = 37
-        minSdk = 24
-        // commonTest(DTO 직렬화 테스트, 명세 부록 A Phase 0 수용)를 JVM 호스트에서 실행한다.
-        withHostTest {}
-        compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
-        }
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
-    iosArm64()
-    iosSimulatorArm64()
-
-    sourceSets {
-        androidMain {
-            // AGP KMP 라이브러리 플러그인은 Ktorfit(KSP)이 kspAndroidMain 으로 생성한
-            // createXxxApi() 확장과 Room 생성 DAO/Impl 을 컴파일 소스셋에 자동 등록하지 않으므로 직접 추가한다.
-            kotlin.srcDir("build/generated/ksp/android/androidMain/kotlin")
-        }
-        commonMain.dependencies {
-            implementation(project(":verification:domain"))
-            implementation(project(":core:network"))
-            implementation(project(":core:domain"))
-            implementation(project(":core:entity"))
-            implementation(libs.ktor.client.core)
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.coroutines.core)
-            // 신호 타임스탬프(epoch millis) → ISO 변환(kotlin.time.Instant)
-            implementation(libs.kotlinx.datetime)
-        }
-        androidMain.dependencies {
-            // Geofence(GeofencingClient) + 보조 측위(FusedLocationProviderClient)
-            implementation(libs.play.services.location)
-            implementation(libs.kotlinx.coroutines.play.services)
-            // 로컬 버퍼(단일 진실원) — geofence_transition / location_sample / geofence_target / progress_cache
-            implementation(libs.androidx.room.runtime)
-            // 백그라운드 sync 오케스트레이션(WorkManager PeriodicWork + WorkerFactory)
-            implementation(libs.androidx.work.runtime)
-            // 움직임·수면 온디바이스 읽기(Health Connect, 명세 §8) + 신뢰 메타데이터
-            implementation(libs.androidx.health.connect.client)
-        }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.kotlinx.coroutines.test)
-        }
-    }
-
-    // iOS: createVerificationApi() 는 타깃별 KSP 생성물이라 intermediate(iosMain)에서 참조 불가.
-    // 각 leaf 소스셋에 공유 DI 모듈(src/iosShared)과 해당 타깃 KSP 생성물을 등록한다(androidMain 패턴의 iOS 대응).
-    listOf("iosArm64", "iosSimulatorArm64").forEach { target ->
-        sourceSets.getByName("${target}Main").kotlin.srcDir("src/iosShared/kotlin")
-        sourceSets.getByName("${target}Main").kotlin.srcDir("build/generated/ksp/$target/${target}Main/kotlin")
-    }
-}
-
-// Room 어노테이션 프로세서(KSP)를 androidMain 소스셋에 건다.
-// ⚠️ KMP/KSP 에서 androidMain 의 declarable processor 구성명은 'kspAndroid'(타깃명) 다.
-// 'kspAndroidMain' 에 걸면 kspAndroidMainProcessorClasspath 로 흘러가지 않아 Room 이 침묵하고
-// _Impl 미생성 → 런타임 "VerificationDatabase_Impl does not exist" 크래시(컴파일은 통과).
-dependencies {
-    add("kspAndroid", libs.androidx.room.compiler)
 }
 
 ksp {
-    // Java 대신 Kotlin DAO/구현을 생성해 KMP androidMain(Kotlin 전용) 소스셋에 바로 등록되게 한다.
+    // Room 이 Kotlin DAO/구현(_Impl)을 생성하게 한다.
     arg("room.generateKotlin", "true")
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
-    if (name == "compileAndroidMain") dependsOn("kspAndroidMain")
-    if (name.startsWith("compileKotlinIos")) {
-        dependsOn("kspKotlin${name.removePrefix("compileKotlin")}")
-    }
-}
+dependencies {
+    implementation(project(":verification:domain"))
+    implementation(project(":core:network"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:entity"))
 
-// KSP(Ktorfit/Room) 생성 코드는 소스셋에 등록돼 있어 ktlint 가 린트·입력 스냅샷 대상으로 삼는다.
-// 생성물은 린트에서 제외하고, ktlint 태스크를 ksp 태스크에 의존시켜
-// "uses this output without declaring dependency" 태스크 검증 실패를 없앤다.
-extensions.configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-    filter {
-        exclude { it.file.path.contains("/generated/") }
-    }
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
+
+    // Geofence(GeofencingClient) + 보조 측위(FusedLocationProviderClient)
+    implementation(libs.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
+    // 로컬 버퍼(단일 진실원) Room
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    // 백그라운드 sync 오케스트레이션(WorkManager) + Hilt 통합(@HiltWorker / HiltWorkerFactory)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+    // 움직임·수면 온디바이스 읽기(Health Connect)
+    implementation(libs.androidx.health.connect.client)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // java.time desugaring (minSdk 24)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    testImplementation(kotlin("test-junit"))
+    testImplementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
-tasks
-    .matching { it.name.startsWith("runKtlintCheckOver") || it.name.startsWith("runKtlintFormatOver") }
-    .configureEach {
-        dependsOn(tasks.matching { it.name.startsWith("ksp") })
-    }
