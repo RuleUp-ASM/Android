@@ -16,9 +16,9 @@ import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 @Composable
-actual fun PlatformNavDisplay(
+fun PlatformNavDisplay(
     backStack: NavBackStack<NavKey>,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     NavDisplay(
         backStack = backStack,

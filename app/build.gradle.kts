@@ -1,15 +1,16 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import kotlin.apply
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.metro)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
 }
 
 // Firebase(google-services) 플러그인은 google-services.json 이 있어야 동작한다.
-// 파일이 없으면 processGoogleServices 가 빌드를 깨므로, 콘솔에서 받은 json 을 app/ 에 둘 때만 자동 적용된다.
 if (project.file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
 }
@@ -20,16 +21,9 @@ val localProperties =
         if (f.exists()) f.inputStream().use { load(it) }
     }
 
-val kakaoNativeAppKey: String =
-    localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
-
-// Google Maps API 키(지도 Location Binding). 비어 있으면 빌드는 되나 런타임 지도 타일이 안 뜬다.
-val mapsApiKey: String =
-    localProperties.getProperty("MAPS_API_KEY")?.trim().orEmpty()
-
-// BASE_URL 은 :shared 의 AppConfig(local.properties 생성)로 단일 관리하므로 app BuildConfig 에선 제거.
-
-// AppAuth(RedirectUriReceiverActivity) 가 사용하는 리다이렉트 scheme. GOOGLE_REDIRECT_URI 의 scheme 부분.
+val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
+val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY")?.trim().orEmpty()
+val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
 val appAuthRedirectScheme: String =
     localProperties
         .getProperty("GOOGLE_REDIRECT_URI")
@@ -62,6 +56,8 @@ android {
         manifestPlaceholders["appAuthRedirectScheme"] = appAuthRedirectScheme
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
+        // Retrofit base URL — Hilt AppModule(@BaseUrl)이 소비한다.
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 
     buildTypes {
@@ -74,6 +70,8 @@ android {
         }
     }
     compileOptions {
+        // verification:data·challenge:presentation 이 java.time desugaring 을 쓰므로 앱에서도 활성화한다.
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -85,21 +83,22 @@ android {
 
 kotlin {
     compilerOptions {
-        // core:ui 가 -Xexplicit-backing-fields(실험 기능)로 컴파일되어 pre-release 메타데이터를
-        // 가지므로, 이를 소비하기 위해 pre-release 체크를 건너뛴다.
+        // core:ui 가 -Xexplicit-backing-fields(실험 기능)로 컴파일되어 pre-release 메타데이터를 가지므로 건너뛴다.
         freeCompilerArgs.add("-Xskip-prerelease-check")
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
 dependencies {
     implementation(project(":shared"))
-    // Metro 그래프 생성(createGraphFactory)이 :shared 로 이동(createAppGraph)하면서 바인딩 집계도 :shared 에서
-    // 일어난다. 따라서 :app 은 더 이상 집계용으로 전 모듈을 의존할 필요가 없고, 자신이 직접 쓰는 모듈만 둔다.
-    // (런타임 클래스는 :shared 의 전이 의존으로 그대로 APK 에 패키징됨.)
-    implementation(project(":core:domain")) // 딥링크 파서의 NavRoute
-    implementation(project(":onboarding:domain")) // 딥링크 시작 라우트(SplashPage/IntroPromisePage)
-    implementation(project(":verification:domain")) // SyncScheduler 타입(WorkManager 부팅 예약)
-    implementation(libs.androidx.work.runtime) // WorkManager Configuration.Provider + WorkerFactory
+    // Hilt 컴포넌트가 :shared 의 전이 의존(전 모듈)을 집계한다. :app 은 직접 쓰는 모듈만 둔다.
+    implementation(project(":core:domain")) // 딥링크 파서의 NavRoute, NavigationHelper/MessageHelper
+    implementation(project(":core:network")) // @BaseUrl 한정자(AppModule)
+    implementation(project(":core:analytics")) // AnalyticsLogger 주입
+    implementation(project(":onboarding:domain")) // 딥링크 시작 라우트
+    implementation(project(":verification:domain")) // SyncScheduler(App 주입)
+
+    implementation(libs.androidx.work.runtime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -112,10 +111,13 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
-    implementation(libs.metrox.viewmodel)
-    implementation(libs.metrox.viewmodel.compose)
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.hilt.compiler)
 
     implementation(libs.kakao.user)
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     testImplementation(libs.konsist)

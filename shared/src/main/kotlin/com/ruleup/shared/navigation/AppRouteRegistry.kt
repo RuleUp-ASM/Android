@@ -1,5 +1,6 @@
 package com.ruleup.shared.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.ChallengeCreatePage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
@@ -34,7 +35,6 @@ import com.ruleup.verification.presentation.detail.VerificationDetailScreen
 import com.ruleup.verification.presentation.location.VerificationLocationScreen
 import com.ruleup.verification.presentation.manual.VerificationManualScreen
 import com.ruleup.verification.presentation.progress.VerificationProgressScreen
-import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -76,7 +76,7 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = LoginPage.PATH,
             isRoot = true,
-            render = { LoginScreen(viewModel = metroViewModel<LoginViewModel>()) },
+            render = { LoginScreen(viewModel = hiltViewModel<LoginViewModel>()) },
         ),
         AppRoute(
             path = HomePage.PATH,

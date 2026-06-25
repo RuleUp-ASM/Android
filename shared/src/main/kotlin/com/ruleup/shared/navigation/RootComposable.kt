@@ -21,7 +21,6 @@ import androidx.navigation3.runtime.NavKey
 import com.ruleup.domain.message.MessageEffect
 import com.ruleup.onboarding.domain.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpTheme
 import kotlinx.coroutines.flow.Flow
 

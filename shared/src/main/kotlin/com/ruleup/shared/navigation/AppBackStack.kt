@@ -6,4 +6,4 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 
 @Composable
-actual fun rememberAppBackStack(startStack: List<NavKey>): NavBackStack<NavKey> = rememberNavBackStack(*startStack.toTypedArray())
+fun rememberAppBackStack(startStack: List<NavKey>): NavBackStack<NavKey> = rememberNavBackStack(*startStack.toTypedArray())
