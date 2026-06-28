@@ -1,7 +1,6 @@
 package com.ruleup.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 
 /** Design System v2.0 기본 CTA 버튼(그라데이션 채움). */
@@ -32,7 +32,7 @@ fun PrimaryGradientButton(
                 .height(height.dp)
                 .clip(RoundedCornerShape(14.dp))
                 .background(RuleUpGradients.Button)
-                .clickable(onClick = onClick),
+                .singleClickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)

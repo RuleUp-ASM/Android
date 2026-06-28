@@ -7,10 +7,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Health Connect(connect-client minSdk 26) vs 앱 minSdk 24 충돌 무시.
-         HEALTH/SLEEP 경로는 런타임 SDK_INT>=26 + getSdkStatus 로 가드(명세 §8). -->
-    <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
-
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -21,11 +17,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidRuleUp">
-
-        <!-- 지도 Location Binding(Google Maps). 키는 local.properties 의 MAPS_API_KEY 에서 주입. -->
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="${MAPS_API_KEY}" />
 
         <activity
             android:name=".MainActivity"

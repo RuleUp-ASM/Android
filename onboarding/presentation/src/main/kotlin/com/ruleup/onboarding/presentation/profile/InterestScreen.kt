@@ -3,7 +3,6 @@ package com.ruleup.onboarding.presentation.profile
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -33,6 +32,7 @@ import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
@@ -153,7 +153,7 @@ private fun InterestChip(
                             .background(RuleUpTheme.colors.surface)
                             .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(21.dp))
                     },
-                ).clickable { onClick(interest) },
+                ).singleClickable { onClick(interest) },
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {

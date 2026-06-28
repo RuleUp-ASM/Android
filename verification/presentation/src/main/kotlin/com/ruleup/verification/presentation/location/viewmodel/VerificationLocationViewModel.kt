@@ -6,6 +6,7 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
 import com.ruleup.verification.domain.usecase.SearchPlacesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,10 +24,14 @@ class VerificationLocationViewModel
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
             VerificationLocationState.initial,
         ) {
+        // 자동완성 디바운스용: 새 키워드가 오면 진행 중 검색을 취소해 응답 역전(stale)을 막는다.
+        private var searchJob: Job? = null
+
         override fun onIntent(intent: VerificationLocationIntent) {
             when (intent) {
                 is VerificationLocationIntent.Confirm -> bind(intent)
                 is VerificationLocationIntent.Search -> search(intent)
+                is VerificationLocationIntent.ClearSearch -> clearSearch()
                 is VerificationLocationIntent.SelectPlace ->
                     dispatch(
                         VerificationLocationReducerEvent.PlaceSelected(
@@ -76,23 +81,31 @@ class VerificationLocationViewModel
         }
 
         private fun search(intent: VerificationLocationIntent.Search) {
-            if (currentState.isSearching || intent.query.isBlank()) return
-            viewModelScope.launch {
-                dispatch(VerificationLocationReducerEvent.Searching)
-                runCatching {
-                    searchPlacesUseCase(
-                        query = intent.query,
-                        lat = intent.lat,
-                        lng = intent.lng,
-                        radiusM = intent.radiusM,
-                    )
-                }.onSuccess { places ->
-                    dispatch(VerificationLocationReducerEvent.SearchLoaded(places))
-                    if (places.isEmpty()) emitEffect(VerificationLocationEffect.ShowMessage("검색 결과가 없어요"))
-                }.onFailure { error ->
-                    dispatch(VerificationLocationReducerEvent.SearchLoaded(emptyList()))
-                    emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "장소 검색에 실패했어요"))
+            if (intent.query.isBlank()) return
+            // 직전 검색을 취소하고 최신 키워드만 살린다(디바운스 + 응답 역전 방지).
+            searchJob?.cancel()
+            searchJob =
+                viewModelScope.launch {
+                    dispatch(VerificationLocationReducerEvent.Searching)
+                    runCatching {
+                        searchPlacesUseCase(
+                            query = intent.query,
+                            lat = intent.lat,
+                            lng = intent.lng,
+                            radiusM = intent.radiusM,
+                        )
+                    }.onSuccess { places ->
+                        // 자동완성이라 빈 결과 토스트는 띄우지 않는다(타이핑 중 방해).
+                        dispatch(VerificationLocationReducerEvent.SearchLoaded(places))
+                    }.onFailure { error ->
+                        dispatch(VerificationLocationReducerEvent.SearchLoaded(emptyList()))
+                        emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "장소 검색에 실패했어요"))
+                    }
                 }
-            }
+        }
+
+        private fun clearSearch() {
+            searchJob?.cancel()
+            dispatch(VerificationLocationReducerEvent.SearchLoaded(emptyList()))
         }
     }

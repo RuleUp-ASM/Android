@@ -166,21 +166,26 @@ class VerificationDtoSerializationTest {
     }
 
     @Test
-    fun `장소 검색 응답은 좌표 없는 항목을 거르고 매핑된다`() {
+    fun `카카오 장소 검색 응답은 좌표 없는 항목을 거르고 매핑된다`() {
         val payload =
             """
-            { "places": [
-                { "name": "스포애니 강남", "lat": 37.5, "lng": 127.0, "address": "서울 강남구", "category": "헬스장" },
-                { "name": "좌표없음", "address": "주소만 있음" }
+            { "documents": [
+                { "place_name": "스포애니 강남", "x": "127.0", "y": "37.5",
+                  "road_address_name": "서울 강남구 테헤란로", "address_name": "서울 강남구",
+                  "category_group_name": "헬스장", "category_name": "스포츠,레저 > 헬스장" },
+                { "place_name": "좌표없음", "address_name": "주소만 있음" }
             ] }
             """.trimIndent()
 
-        val places = json.decodeFromString<PlaceSearchResponse>(payload).toDomain()
+        val places = json.decodeFromString<KakaoKeywordResponse>(payload).toDomain()
 
-        // 좌표 없는 항목은 앵커로 못 쓰므로 제외(명세 §11.7).
+        // 좌표(x=경도, y=위도) 없는 항목은 앵커로 못 쓰므로 제외(명세 §5.2).
         assertEquals(1, places.size)
         assertEquals("스포애니 강남", places.single().name)
         assertEquals(37.5, places.single().lat)
+        assertEquals(127.0, places.single().lng)
+        // 도로명 주소·카테고리 그룹명 우선.
+        assertEquals("서울 강남구 테헤란로", places.single().address)
         assertEquals("헬스장", places.single().category)
     }
 

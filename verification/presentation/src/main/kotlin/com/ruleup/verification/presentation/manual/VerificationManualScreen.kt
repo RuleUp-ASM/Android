@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.ui.helper.LocalMessageHelper
+import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.presentation.manual.viewmodel.VerificationManualEffect
 import com.ruleup.verification.presentation.manual.viewmodel.VerificationManualIntent
@@ -54,9 +55,10 @@ fun VerificationManualScreen(
         Text("자동으로 판정할 수 없는 인증은 직접 제출해요.")
 
         Button(
-            onClick = {
-                viewModel.onIntent(VerificationManualIntent.Submit(challengeId, ManualMethod.SELF_CHECK))
-            },
+            onClick =
+                rememberSingleClick {
+                    viewModel.onIntent(VerificationManualIntent.Submit(challengeId, ManualMethod.SELF_CHECK))
+                },
             enabled = !state.isSubmitting,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -77,15 +79,16 @@ fun VerificationManualScreen(
         // 주1회 한도, 제출 즉시 잠정 성공 후 이의 윈도우(24h) 무이의면 확정.
         Text("자동 인증이 오늘 안 될 때만 사용하세요. 주 1회 한정이에요.")
         OutlinedButton(
-            onClick = {
-                viewModel.onIntent(
-                    VerificationManualIntent.Submit(
-                        challengeId = challengeId,
-                        method = ManualMethod.SELF_CHECK,
-                        asFallback = true,
-                    ),
-                )
-            },
+            onClick =
+                rememberSingleClick {
+                    viewModel.onIntent(
+                        VerificationManualIntent.Submit(
+                            challengeId = challengeId,
+                            method = ManualMethod.SELF_CHECK,
+                            asFallback = true,
+                        ),
+                    )
+                },
             enabled = !state.isSubmitting,
             modifier = Modifier.fillMaxWidth(),
         ) {

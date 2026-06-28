@@ -3,7 +3,6 @@ package com.ruleup.onboarding.presentation.profile
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +35,7 @@ import com.ruleup.onboarding.presentation.profile.component.rememberProfileImage
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
@@ -152,7 +152,7 @@ private fun SourceCard(
                 .clip(RuleUpTheme.shapes.card)
                 .background(RuleUpTheme.colors.surface)
                 .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card)
-                .clickable { onClick() },
+                .singleClickable { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

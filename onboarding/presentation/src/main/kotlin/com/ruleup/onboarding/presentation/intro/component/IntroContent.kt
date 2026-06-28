@@ -1,7 +1,6 @@
 package com.ruleup.onboarding.presentation.intro.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +29,7 @@ import com.ruleup.ui.component.BottomBar
 import com.ruleup.ui.component.PageDots
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpTheme
 
 /** 02 · 03 · 04 온보딩 화면. */
@@ -59,7 +59,7 @@ fun IntroContent(
                 Text(
                     "건너뛰기",
                     modifier =
-                        Modifier.clickable {
+                        Modifier.singleClickable {
                             navigationHelper.navigateTo(IntroTrustPage)
                         },
                     color = RuleUpTheme.colors.textSecondary,

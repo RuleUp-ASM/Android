@@ -12,12 +12,10 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
     }
 
     compileOptions {
-        // ChallengeDates 가 java.time(LocalDate) 사용 — minSdk 24 desugaring.
-        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -58,6 +56,4 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
-
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

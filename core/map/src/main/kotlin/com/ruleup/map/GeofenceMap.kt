@@ -4,24 +4,51 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.maps.android.compose.Circle
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import com.kakao.vectormap.KakaoMap
+import com.kakao.vectormap.KakaoMapReadyCallback
+import com.kakao.vectormap.LatLng
+import com.kakao.vectormap.MapLifeCycleCallback
+import com.kakao.vectormap.MapView
+import com.kakao.vectormap.camera.CameraUpdateFactory
+import com.kakao.vectormap.label.Label
+import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelStyles
+import com.kakao.vectormap.shape.DotPoints
+import com.kakao.vectormap.shape.Polygon
+import com.kakao.vectormap.shape.PolygonOptions
+import com.kakao.vectormap.shape.PolygonStyles
+import com.kakao.vectormap.shape.PolygonStylesSet
 import kotlinx.coroutines.tasks.await
 
+/**
+ * 카카오 지도 기반 지오펜스 미리보기(명세 §5.3). 중심 핀 + 반경 원을 그리고, 지도를 탭하면
+ * 그 좌표로 중심을 옮긴다([onCenterChange]). 외부에서 [center] 가 바뀌면(검색 결과 선택·현재 위치)
+ * 카메라·핀·원이 따라간다.
+ *
+ * Kakao [MapView] 는 GLSurfaceView 기반 네이티브 뷰라 [AndroidView] 로 감싸고, 호스트의
+ * resume/pause 를 전달해야 한다(카카오 가이드, 미전달 시 렌더링 크래시).
+ */
 @Composable
 fun GeofenceMap(
     center: MapLatLng,
@@ -29,34 +56,118 @@ fun GeofenceMap(
     onCenterChange: (MapLatLng) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val latLng = LatLng(center.lat, center.lng)
-    val cameraPositionState =
-        rememberCameraPositionState {
-            position = CameraPosition.fromLatLngZoom(latLng, DEFAULT_ZOOM)
-        }
-    val markerState = remember { MarkerState(position = latLng) }
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    // 지도 콜백은 컴포지션 밖에서 호출되므로 항상 최신 람다를 가리키게 한다.
+    val currentOnCenterChange by rememberUpdatedState(onCenterChange)
 
-    // 외부에서 center 가 바뀌면(현재 위치 점프 등) 카메라·핀을 따라가게 한다.
-    LaunchedEffect(center) {
-        val target = LatLng(center.lat, center.lng)
-        markerState.position = target
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(target, cameraPositionState.position.zoom)
+    // 카카오 지도 네이티브 라이브러리가 없는 ABI(x86_64 에뮬레이터 등)에서는 MapView 생성/시작이 던진다.
+    // 화면 전체가 죽지 않도록 막고, 지도 자리에 안내를 보여준다(나머지 picker 는 정상 동작).
+    val mapView = remember { runCatching { MapView(context) }.getOrNull() }
+    if (mapView == null) {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Text("이 기기에서는 지도를 표시할 수 없어요")
+        }
+        return
+    }
+    val objects = remember { GeofenceMapObjects() }
+
+    // 지도 시작/정리(컴포저블 수명 1회). getPosition/getZoomLevel 로 최초 카메라를 잡는다.
+    DisposableEffect(Unit) {
+        runCatching {
+            mapView.start(
+                object : MapLifeCycleCallback() {
+                    override fun onMapDestroy() = Unit
+
+                    override fun onMapError(error: Exception) = Unit
+                },
+                object : KakaoMapReadyCallback() {
+                    override fun onMapReady(kakaoMap: KakaoMap) {
+                        objects.kakaoMap = kakaoMap
+                        // 탭으로 중심 이동(명세 §5.3).
+                        kakaoMap.setOnMapClickListener { _, position, _, _ ->
+                            currentOnCenterChange(MapLatLng(position.latitude, position.longitude))
+                        }
+                        objects.drawCenter(center)
+                        objects.drawCircle(center, radiusM)
+                    }
+
+                    override fun getPosition(): LatLng = LatLng.from(center.lat, center.lng)
+
+                    override fun getZoomLevel(): Int = DEFAULT_ZOOM_LEVEL
+                },
+            )
+        }
+        onDispose { objects.kakaoMap = null }
     }
 
-    GoogleMap(
-        modifier = modifier,
-        cameraPositionState = cameraPositionState,
-        // 탭으로 중심 이동(명세 §5.3).
-        onMapClick = { tapped -> onCenterChange(MapLatLng(tapped.latitude, tapped.longitude)) },
+    // 호스트 resume/pause 를 MapView 에 전달.
+    DisposableEffect(lifecycleOwner) {
+        val observer =
+            LifecycleEventObserver { _, event ->
+                runCatching {
+                    when (event) {
+                        Lifecycle.Event.ON_RESUME -> mapView.resume()
+                        Lifecycle.Event.ON_PAUSE -> mapView.pause()
+                        else -> Unit
+                    }
+                }
+            }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // 외부 center/radius 변경 → 카메라·핀·원 동기화.
+    LaunchedEffect(center, radiusM) {
+        val kakaoMap = objects.kakaoMap ?: return@LaunchedEffect
+        kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(LatLng.from(center.lat, center.lng)))
+        objects.drawCenter(center)
+        objects.drawCircle(center, radiusM)
+    }
+
+    AndroidView(factory = { mapView }, modifier = modifier)
+}
+
+/**
+ * KakaoMap·핀·원 참조를 recomposition/콜백 간 보관한다(컴포지션 밖 SDK 호출용).
+ * 핀은 생성 후 [Label.moveTo] 로 이동, 원은 반경이 바뀔 수 있으니 매번 지우고 다시 그린다.
+ */
+private class GeofenceMapObjects {
+    var kakaoMap: KakaoMap? = null
+    private var label: Label? = null
+    private var circle: Polygon? = null
+    private var styles: LabelStyles? = null
+
+    fun drawCenter(center: MapLatLng) {
+        val manager = kakaoMap?.labelManager ?: return
+        val position = LatLng.from(center.lat, center.lng)
+        val current = label
+        if (current != null) {
+            current.moveTo(position)
+            return
+        }
+        var style = styles
+        if (style == null) {
+            style = manager.addLabelStyles(LabelStyles.from(LabelStyle.from(R.drawable.ic_map_pin)))
+            styles = style
+        }
+        label = manager.layer?.addLabel(LabelOptions.from(position).setStyles(style))
+    }
+
+    fun drawCircle(
+        center: MapLatLng,
+        radiusM: Float,
     ) {
-        Marker(state = markerState)
-        Circle(
-            center = latLng,
-            radius = radiusM.toDouble(),
-            strokeColor = Color(0xFF3D5AFE),
-            fillColor = Color(0x223D5AFE),
-            strokeWidth = 3f,
-        )
+        val manager = kakaoMap?.shapeManager ?: return
+        circle?.let { manager.layer?.remove(it) }
+        val dots = DotPoints.fromCircle(LatLng.from(center.lat, center.lng), radiusM)
+        val stylesSet = PolygonStylesSet.from(PolygonStyles.from(CIRCLE_FILL_ARGB))
+        circle = manager.layer?.addPolygon(PolygonOptions.from(dots, stylesSet))
+    }
+
+    companion object {
+        // 반경 원 채움색(반투명 파랑). Compose Color → ARGB Int.
+        private val CIRCLE_FILL_ARGB = Color(0x333D5AFE).toArgb()
     }
 }
 
@@ -96,4 +207,5 @@ private class FusedLocationLocator(
     }
 }
 
-private const val DEFAULT_ZOOM = 15f
+// 카카오 지도 줌 레벨(구글 zoom 15f 와 유사한 동네 단위).
+private const val DEFAULT_ZOOM_LEVEL = 15

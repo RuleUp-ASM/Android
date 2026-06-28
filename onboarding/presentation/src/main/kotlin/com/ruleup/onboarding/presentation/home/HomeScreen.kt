@@ -2,7 +2,6 @@ package com.ruleup.onboarding.presentation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +25,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.onboarding.presentation.home.viewmodel.HomeIntent
 import com.ruleup.onboarding.presentation.home.viewmodel.HomeViewModel
 import com.ruleup.ui.component.PrimaryGradientButton
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpTheme
 
 /** 홈. 온보딩 완료 후 진입하는 루트 화면. */
@@ -94,7 +94,7 @@ private fun LogoutButton(
                 .clip(RoundedCornerShape(14.dp))
                 .background(RuleUpTheme.colors.surface)
                 .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp))
-                .clickable(enabled = !isLoggingOut, onClick = onClick),
+                .singleClickable(enabled = !isLoggingOut, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(

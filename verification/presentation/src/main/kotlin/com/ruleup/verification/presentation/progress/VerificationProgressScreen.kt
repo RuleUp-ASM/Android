@@ -1,6 +1,5 @@
 package com.ruleup.verification.presentation.progress
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.presentation.progress.viewmodel.VerificationProgressIntent
 import com.ruleup.verification.presentation.progress.viewmodel.VerificationProgressViewModel
@@ -74,7 +74,7 @@ private fun ProgressCard(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .singleClickable(onClick = onClick),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

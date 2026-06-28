@@ -22,7 +22,6 @@ val localProperties =
     }
 
 val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
-val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY")?.trim().orEmpty()
 val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
 val appAuthRedirectScheme: String =
     localProperties
@@ -42,7 +41,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ruleup.android_ruleup"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode =
             libs.versions.versionCode
@@ -54,7 +53,6 @@ android {
 
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
         manifestPlaceholders["appAuthRedirectScheme"] = appAuthRedirectScheme
-        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
         // Retrofit base URL — Hilt AppModule(@BaseUrl)이 소비한다.
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
@@ -70,8 +68,6 @@ android {
         }
     }
     compileOptions {
-        // verification:data·challenge:presentation 이 java.time desugaring 을 쓰므로 앱에서도 활성화한다.
-        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -131,8 +127,12 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.kakao.user)
+    // KakaoMapSdk.init(앱키) 호출용. 지도 렌더링은 :core:map.
+    implementation(libs.kakao.map)
 
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.timber)
+    // 프레임 jank 측정(JankStats). 디버그 빌드에서만 트래킹 → Timber 로 로깅(디버그 오버레이 표시).
+    implementation(libs.androidx.metrics.performance)
 
     testImplementation(libs.junit)
     testImplementation(libs.konsist)

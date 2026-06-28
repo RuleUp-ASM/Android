@@ -1,7 +1,6 @@
 package com.ruleup.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
@@ -49,7 +49,7 @@ fun ProfileSetupTopBar(
             modifier =
                 Modifier
                     .size(24.dp)
-                    .clickable(onClick = onBack),
+                    .singleClickable(onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
             Text("‹", color = RuleUpTheme.colors.textPrimary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
@@ -57,7 +57,7 @@ fun ProfileSetupTopBar(
         StepDots(currentStep = currentStep, totalSteps = totalSteps)
         Text(
             "건너뛰기",
-            modifier = Modifier.clickable(onClick = onSkip),
+            modifier = Modifier.singleClickable(onClick = onSkip),
             color = RuleUpTheme.colors.textSecondary,
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,

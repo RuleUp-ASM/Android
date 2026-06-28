@@ -19,6 +19,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+    // Authorization 헤더를 붙이면 안 되는 공개(비인증) 엔드포인트 경로 조각.
+    private val NO_AUTH_PATHS =
+        listOf(
+            "/account/login/",
+            "/account/signup",
+            "/account/token/refresh",
+        )
+
     @Provides
     @Singleton
     fun provideJson(): Json =
@@ -32,19 +40,21 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(tokenRepository: TokenRepository): OkHttpClient {
         // 저장된 accessToken 이 있으면 매 요청마다 Authorization 헤더로 주입한다.
-        // 토큰이 없는 로그인/가입 등 비인증 요청에는 헤더를 붙이지 않는다.
+        // 단, 로그인/가입/토큰갱신 같은 공개(비인증) 엔드포인트에는 헤더를 붙이지 않는다.
+        // (만료된 토큰이 로그인 요청에 실려 나가면 백엔드 JWT 필터가 401 로 막아버린다.)
         val authInterceptor =
             Interceptor { chain ->
+                val original = chain.request()
+                val skipAuth = NO_AUTH_PATHS.any { original.url.encodedPath.contains(it) }
                 val token = runBlocking { tokenRepository.getAccessToken() }
                 val request =
-                    if (!token.isNullOrBlank()) {
-                        chain
-                            .request()
+                    if (!token.isNullOrBlank() && !skipAuth) {
+                        original
                             .newBuilder()
                             .header("Authorization", "Bearer $token")
                             .build()
                     } else {
-                        chain.request()
+                        original
                     }
                 chain.proceed(request)
             }

@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.create.component
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,6 +80,20 @@ private class AndroidPermissionHolder {
         deferred = null
     }
 }
+
+/**
+ * 토큰들이 모두 이미 허용돼 있는지(런타임 권한 한정) 확인한다.
+ * 매핑되지 않는 토큰(usage/health 등 특수권한)은 런타임 권한이 아니므로 여기선 허용으로 간주한다.
+ * 상세 화면이 "참여하기" 시 권한 허용 모달을 띄울지 판단하는 데 쓴다.
+ */
+fun challengePermissionsGranted(
+    context: Context,
+    tokens: List<String>,
+): Boolean =
+    tokens.all { token ->
+        val perm = androidPermission(token)
+        perm == null || ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
+    }
 
 // TODO(server-contract): 서버 권한 토큰 어휘 확정 시 매핑 보완.
 private fun androidPermission(token: String): String? =

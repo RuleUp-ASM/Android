@@ -2,7 +2,6 @@ package com.ruleup.onboarding.presentation.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,6 +30,7 @@ import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.component.ProfileSetupScaffold
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
@@ -64,7 +64,7 @@ fun AgreementsContent(
                     .fillMaxWidth()
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpTheme.colors.brandSoft)
-                    .clickable {
+                    .singleClickable {
                         onIntent(
                             ProfileIntent.SetAgreements(
                                 Agreement(
@@ -116,7 +116,7 @@ fun AgreementsContent(
                     label = item.label,
                     required = item.required,
                     modifier =
-                        Modifier.clickable {
+                        Modifier.singleClickable {
                             onIntent(ProfileIntent.SetAgreements(item.toggle(!item.checked)))
                         },
                 )
