@@ -2,10 +2,11 @@ package com.ruleup.verification.data.repository
 
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.ErrorBody
+import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
+import com.ruleup.verification.data.dto.KakaoKeywordResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
-import com.ruleup.verification.data.dto.PlaceSearchResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SyncRequest
 import com.ruleup.verification.data.dto.SyncResponse
@@ -24,7 +25,7 @@ class VerificationRepositoryImplTest {
     fun `수동 제출 409 ALREADY_VERIFIED 는 도메인 예외로 변환된다`() =
         runTest {
             val api = FakeVerificationApi(manualError = ErrorBody("ALREADY_VERIFIED", "이미 인증함"))
-            val repository = VerificationRepositoryImpl(api)
+            val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
             assertFailsWith<AlreadyVerifiedException> {
                 repository.submitManual("c1", ManualMethod.SELF_CHECK)
@@ -44,7 +45,7 @@ class VerificationRepositoryImplTest {
                             progressRate = 60.0,
                         ),
                 )
-            val repository = VerificationRepositoryImpl(api)
+            val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
             val result = repository.submitManual("c1", ManualMethod.SELF_CHECK)
 
@@ -59,7 +60,7 @@ class VerificationRepositoryImplTest {
     fun `예비 폴백 409 FALLBACK_LIMIT_EXCEEDED 는 도메인 예외로 변환된다`() =
         runTest {
             val api = FakeVerificationApi(manualError = ErrorBody("FALLBACK_LIMIT_EXCEEDED", "한도 초과"))
-            val repository = VerificationRepositoryImpl(api)
+            val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
             assertFailsWith<FallbackLimitExceededException> {
                 repository.submitManual("c1", ManualMethod.SELF_CHECK, asFallback = true)
@@ -81,7 +82,7 @@ class VerificationRepositoryImplTest {
                             disputeClosesAt = "2026-06-25T00:00:00Z",
                         ),
                 )
-            val repository = VerificationRepositoryImpl(api)
+            val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
             val result = repository.submitManual("c1", ManualMethod.SELF_CHECK, asFallback = true)
 
@@ -111,12 +112,16 @@ class VerificationRepositoryImplTest {
             } else {
                 BaseResponse(success = true, data = manualSuccess, error = null)
             }
+    }
 
-        override suspend fun searchPlaces(
+    private class FakeKakaoLocalApi : KakaoLocalApi {
+        override suspend fun searchKeyword(
             query: String,
-            lat: Double?,
-            lng: Double?,
+            longitude: Double?,
+            latitude: Double?,
             radiusM: Int?,
-        ): BaseResponse<PlaceSearchResponse> = error("unused")
+            size: Int,
+            sort: String,
+        ): KakaoKeywordResponse = KakaoKeywordResponse(documents = emptyList())
     }
 }

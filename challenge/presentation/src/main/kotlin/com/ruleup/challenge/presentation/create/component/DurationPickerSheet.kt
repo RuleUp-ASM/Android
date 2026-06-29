@@ -2,7 +2,6 @@ package com.ruleup.challenge.presentation.create.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.presentation.create.CalendarCell
 import com.ruleup.challenge.presentation.create.ChallengeDates
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
@@ -153,7 +153,7 @@ private fun SheetHeader(onDismiss: () -> Unit) {
         }
         Text(
             "✕",
-            modifier = Modifier.clickable(onClick = onDismiss),
+            modifier = Modifier.singleClickable(onClick = onDismiss),
             color = RuleUpTheme.colors.textSecondary,
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
@@ -185,7 +185,7 @@ private fun PresetChips(
                                     .background(RuleUpTheme.colors.surface)
                                     .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
                             }
-                        }.clickable { onSelect(preset) }
+                        }.singleClickable { onSelect(preset) }
                         .padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -238,7 +238,7 @@ private fun MonthNavButton(
                 .size(32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .background(RuleUpTheme.colors.surfaceVariant)
-                .clickable(onClick = onClick),
+                .singleClickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(label, color = RuleUpTheme.colors.textSlate, fontSize = 18.sp, fontWeight = FontWeight.Medium)
@@ -494,7 +494,7 @@ private fun SheetButtons(
                     .clip(RuleUpTheme.shapes.large)
                     .background(RuleUpTheme.colors.surface)
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    .clickable(onClick = onCancel),
+                    .singleClickable(onClick = onCancel),
             contentAlignment = Alignment.Center,
         ) {
             Text("취소", color = RuleUpTheme.colors.textSlate, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -506,7 +506,7 @@ private fun SheetButtons(
                     .height(52.dp)
                     .clip(RuleUpTheme.shapes.large)
                     .background(RuleUpGradients.Button)
-                    .clickable(onClick = onConfirm),
+                    .singleClickable(onClick = onConfirm),
             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {

@@ -1,0 +1,424 @@
+package com.ruleup.challenge.presentation.detail
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ParticipationType
+import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
+import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
+import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
+import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
+import com.ruleup.entity.user.InterestCategory
+import com.ruleup.ui.component.PrimaryGradientButton
+import com.ruleup.ui.helper.LocalMessageHelper
+import com.ruleup.ui.helper.singleClickable
+import com.ruleup.ui.theme.RuleUpTheme
+import kotlinx.coroutines.launch
+
+/**
+ * 챌린지 상세/참여 화면. 홈 카드 탭으로 진입한다.
+ *
+ * "참여하기" 를 누르면 자동 인증에 필요한 런타임 권한을 확인하고, 하나라도 미허용이면
+ * 권한 허용 모달(바텀시트)을 띄운다. 모두 허용되면 좌표 바인딩 화면으로 이어진다.
+ */
+@Composable
+fun ChallengeDetailScreen(
+    challengeId: String,
+    modifier: Modifier = Modifier,
+    viewModel: ChallengeDetailViewModel = hiltViewModel(),
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val messageHelper = LocalMessageHelper.current
+    val permissionRequester = rememberPermissionRequester()
+    val scope = rememberCoroutineScope()
+    var showPermissionSheet by remember { mutableStateOf(false) }
+
+    androidx.compose.runtime.LaunchedEffect(challengeId) {
+        viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
+    }
+
+    val tokens =
+        state.detail
+            ?.verification
+            ?.requiredPermissions
+            .orEmpty()
+
+    ChallengeDetailContent(
+        modifier = modifier,
+        state = state,
+        onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
+        onJoin = {
+            if (challengePermissionsGranted(context, tokens)) {
+                viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            } else {
+                showPermissionSheet = true
+            }
+        },
+    )
+
+    if (showPermissionSheet) {
+        PermissionBottomSheet(
+            tokens = tokens,
+            onDismiss = { showPermissionSheet = false },
+            onAllow = {
+                scope.launch {
+                    permissionRequester.request(tokens)
+                    if (challengePermissionsGranted(context, tokens)) {
+                        showPermissionSheet = false
+                        viewModel.onIntent(ChallengeDetailIntent.Proceed)
+                    } else {
+                        messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")
+                    }
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun ChallengeDetailContent(
+    state: ChallengeDetailState,
+    onBack: () -> Unit,
+    onJoin: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(RuleUpTheme.colors.background),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding(),
+        ) {
+            DetailTopBar(onBack = onBack)
+
+            when {
+                state.isLoading ->
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = RuleUpTheme.colors.brand)
+                    }
+
+                state.detail == null ->
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = state.errorMessage ?: "챌린지를 불러오지 못했어요",
+                            color = RuleUpTheme.colors.textSecondary,
+                            fontSize = 14.sp,
+                        )
+                    }
+
+                else ->
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(horizontal = 20.dp)
+                                .padding(top = 8.dp, bottom = 120.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        DetailHero(state.detail)
+                        DetailInfoCard(state.detail)
+                    }
+            }
+        }
+
+        // 하단 고정 CTA. 상세 로딩 완료 후에만 활성화한다.
+        if (state.detail != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .background(RuleUpTheme.colors.surface)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+            ) {
+                PrimaryGradientButton(
+                    text = "참여하기",
+                    onClick = onJoin,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailTopBar(onBack: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .singleClickable(onClick = onBack),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                contentDescription = "뒤로",
+                tint = RuleUpTheme.colors.textPrimary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Text(
+            text = "챌린지",
+            color = RuleUpTheme.colors.textPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Composable
+private fun DetailHero(detail: ChallengeDetail) {
+    val accent = accentColorFor(detail.category)
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface)
+                .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(accent),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(text = detail.category?.emoji ?: "🎯", fontSize = 26.sp)
+        }
+        Text(
+            text = detail.title,
+            color = RuleUpTheme.colors.textPrimary,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = "${detail.owner.nickname} · ${detail.stats.participantCount}명 참여 중",
+            color = RuleUpTheme.colors.textSecondary,
+            fontSize = 12.sp,
+        )
+        detail.description?.takeIf { it.isNotBlank() }?.let {
+            Text(
+                text = it,
+                color = RuleUpTheme.colors.textSlate,
+                fontSize = 13.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailInfoCard(detail: ChallengeDetail) {
+    val method =
+        when (detail.verification?.selectedMethod) {
+            SelectedMethod.AUTO -> "자동 인증"
+            SelectedMethod.MANUAL -> "수동 인증"
+            null -> "수동 인증"
+        }
+    val participation = if (detail.participationType == ParticipationType.GROUP) "그룹" else "솔로"
+    val repeat = detail.repeatDays.joinToString(" · ") { it.label }.ifBlank { "—" }
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        InfoRow(label = "기간", value = "${detail.durationDays}일")
+        InfoRow(label = "반복", value = repeat)
+        InfoRow(label = "참여 형태", value = participation)
+        InfoRow(label = "인증 방식", value = method)
+    }
+}
+
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String,
+) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            color = RuleUpTheme.colors.textMuted,
+            fontSize = 13.sp,
+            modifier = Modifier.width(80.dp),
+        )
+        Text(
+            text = value,
+            color = RuleUpTheme.colors.textPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PermissionBottomSheet(
+    tokens: List<String>,
+    onDismiss: () -> Unit,
+    onAllow: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = RuleUpTheme.colors.surface,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp),
+        ) {
+            Text(
+                text = "권한 허용이 필요해요",
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "이 챌린지는 자동 인증을 위해 아래 권한이 필요해요.\n허용하면 참여를 이어갈 수 있어요.",
+                color = RuleUpTheme.colors.textSecondary,
+                fontSize = 13.sp,
+            )
+            Spacer(Modifier.height(16.dp))
+            tokens.distinct().forEach { token ->
+                PermissionRow(label = permissionLabel(token))
+            }
+            Spacer(Modifier.height(20.dp))
+            PrimaryGradientButton(
+                text = "허용하고 참여하기",
+                onClick = onAllow,
+            )
+            Spacer(Modifier.height(4.dp))
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .singleClickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "다음에",
+                    color = RuleUpTheme.colors.textSecondary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PermissionRow(label: String) {
+    Row(
+        modifier = Modifier.padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(RuleUpTheme.colors.brand),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = label,
+            color = RuleUpTheme.colors.textPrimary,
+            fontSize = 14.sp,
+        )
+    }
+}
+
+private fun permissionLabel(token: String): String =
+    when (token.uppercase()) {
+        "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> "위치 (자동 위치 인증)"
+        "ACTIVITY_RECOGNITION", "PHYSICAL_ACTIVITY" -> "신체 활동"
+        "CAMERA", "PHOTO" -> "카메라"
+        "HEALTH", "HEALTH_CONNECT" -> "건강 데이터"
+        "USAGE", "USAGE_STATS", "PACKAGE_USAGE_STATS" -> "사용 기록 접근"
+        else -> token
+    }
+
+/** 카테고리별 강조색(Figma 카드 아이콘 톤). 디자인 시스템 brand 와 별개로 violet 계열 포함. */
+private fun accentColorFor(category: InterestCategory?): Color =
+    when (category) {
+        InterestCategory.WAKE_UP, InterestCategory.MEDITATION -> Color(0xFF6C5CE7)
+        InterestCategory.READING, InterestCategory.STUDY, InterestCategory.WRITING -> Color(0xFF22C55E)
+        InterestCategory.HEALTH, InterestCategory.COOKING -> Color(0xFFF59E0B)
+        InterestCategory.EXERCISE -> Color(0xFFF43F5E)
+        InterestCategory.FINANCE, InterestCategory.WORK -> Color(0xFF3B82F6)
+        InterestCategory.MUSIC, InterestCategory.HOBBY -> Color(0xFF06B6D4)
+        else -> Color(0xFF6C5CE7)
+    }

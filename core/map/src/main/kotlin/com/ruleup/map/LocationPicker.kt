@@ -11,6 +11,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.ruleup.ui.helper.rememberSingleClick
 import kotlinx.coroutines.launch
 
 /**
@@ -39,6 +41,13 @@ fun LocationPickerContent(
     var center by remember { mutableStateOf(initialCenter) }
     var radius by remember { mutableFloatStateOf(clampRadius(initialRadiusM)) }
     var label by remember { mutableStateOf(initialLabel) }
+
+    // 검색 결과 선택 등 외부에서 initialCenter 가 바뀌면 핀을 그 위치로 점프시킨다(화면이 key() 로
+    // 재구성하지 않아도 되도록 — 카카오 MapView 는 무거운 네이티브 뷰라 재생성을 피한다).
+    LaunchedEffect(initialCenter) {
+        center = initialCenter
+        if (initialLabel.isNotBlank()) label = initialLabel
+    }
 
     val locator = rememberLocationLocator()
     val permissionGranted = rememberLocationPermissionGranted()
@@ -61,7 +70,7 @@ fun LocationPickerContent(
         ) {
             Text("반경 ${radius.toInt()}m")
             OutlinedButton(
-                onClick = { scope.launch { locator.locate()?.let { center = it } } },
+                onClick = rememberSingleClick { scope.launch { locator.locate()?.let { center = it } } },
                 // 권한 거부 시 "현재 위치"만 비활성(명세 §5.4.2).
                 enabled = permissionGranted,
             ) {
@@ -84,7 +93,7 @@ fun LocationPickerContent(
         )
 
         Button(
-            onClick = { onConfirm(center.lat, center.lng, clampRadius(radius), label.trim()) },
+            onClick = rememberSingleClick { onConfirm(center.lat, center.lng, clampRadius(radius), label.trim()) },
             enabled = confirmEnabled,
             modifier =
                 Modifier

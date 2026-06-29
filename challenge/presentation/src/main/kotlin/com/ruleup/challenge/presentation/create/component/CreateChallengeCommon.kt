@@ -1,7 +1,6 @@
 package com.ruleup.challenge.presentation.create.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -20,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
@@ -48,7 +48,7 @@ fun CreateChallengeTopBar(
         ) {
             Text(
                 "‹",
-                modifier = Modifier.clickable(onClick = onBack),
+                modifier = Modifier.singleClickable(onClick = onBack),
                 color = RuleUpTheme.colors.textPrimary,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
@@ -63,7 +63,7 @@ fun CreateChallengeTopBar(
         if (trailingText != null) {
             Text(
                 trailingText,
-                modifier = Modifier.clickable(onClick = onTrailingClick),
+                modifier = Modifier.singleClickable(onClick = onTrailingClick),
                 color = RuleUpTheme.colors.textSecondary,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
@@ -142,7 +142,7 @@ fun GradientSwitch(
                     } else {
                         base.background(RuleUpTheme.colors.borderStrong)
                     }
-                }.clickable(enabled = enabled) { onCheckedChange(!checked) }
+                }.singleClickable(enabled = enabled) { onCheckedChange(!checked) }
                 .padding(horizontal = 3.dp),
         contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
     ) {

@@ -30,6 +30,9 @@ sealed interface VerificationLocationIntent : MviIntent {
     data class SelectPlace(
         val place: Place,
     ) : VerificationLocationIntent
+
+    /** 입력칸이 비거나 결과를 고른 뒤 자동완성 목록을 닫는다. */
+    data object ClearSearch : VerificationLocationIntent
 }
 
 /** 검색에서 고른 앵커 후보(지도 중심 이동용). */

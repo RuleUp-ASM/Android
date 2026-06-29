@@ -2,6 +2,7 @@ package com.ruleup.verification.data.repository
 
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
+import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.toDomain
@@ -26,6 +27,7 @@ class VerificationRepositoryImpl
     @Inject
     constructor(
         private val api: VerificationApi,
+        private val kakaoLocalApi: KakaoLocalApi,
     ) : VerificationRepository {
         override suspend fun sync(batch: SignalBatch): SyncResult =
             try {
@@ -87,16 +89,20 @@ class VerificationRepositoryImpl
                 }
             }
 
+        // 카카오 로컬 키워드 검색을 앱에서 직접 호출(명세 §5.2). x=경도, y=위도. radiusM 없으면 전국.
         override suspend fun searchPlaces(
             query: String,
             lat: Double?,
             lng: Double?,
             radiusM: Int?,
         ): List<Place> =
-            api
-                .searchPlaces(query, lat, lng, radiusM)
-                .getOrThrow()
-                .toDomain()
+            kakaoLocalApi
+                .searchKeyword(
+                    query = query,
+                    longitude = lng,
+                    latitude = lat,
+                    radiusM = radiusM,
+                ).toDomain()
 
         companion object {
             private const val CODE_SYNC_TOO_FREQUENT = "SYNC_TOO_FREQUENT"

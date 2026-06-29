@@ -2,9 +2,11 @@ package com.ruleup.challenge.presentation.create.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.ChallengeConfirmPage
+import com.ruleup.challenge.domain.MyChallengeStore
 import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
+import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.Penalty
 import com.ruleup.challenge.domain.entity.Reward
@@ -34,6 +36,7 @@ class CreateChallengeViewModel
         private val recommendChallengeUseCase: RecommendChallengeUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,
         private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
+        private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<CreateChallengeIntent, CreateChallengeState, CreateChallengeReducerEvent, CreateChallengeEffect>(
             CreateChallengeState.initial,
@@ -335,7 +338,17 @@ class CreateChallengeViewModel
                     // 커버 이미지가 있으면 먼저 업로드(3.9)해 URL 을 확보한 뒤 생성한다.
                     val imageUrl = coverImageUri?.let { uploadChallengeImageUseCase(it) }
                     createChallengeUseCase(form.copy(imageUrl = imageUrl))
-                }.onSuccess {
+                }.onSuccess { challenge ->
+                    // 진행률 API 반영 전이라도 홈에 즉시 노출되도록 로컬 스토어에 반영한다.
+                    myChallengeStore.add(
+                        MyChallengeSummary(
+                            challengeId = challenge.challengeId,
+                            title = challenge.title,
+                            category = challenge.category,
+                            participationType = challenge.participationType,
+                            durationDays = challenge.durationDays,
+                        ),
+                    )
                     // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
                     navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 }.onFailure { error ->

@@ -2,7 +2,6 @@ package com.ruleup.challenge.presentation.create
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +58,7 @@ import com.ruleup.challenge.presentation.create.component.rememberChallengeImage
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpPalette
 import com.ruleup.ui.theme.RuleUpTheme
@@ -300,7 +300,7 @@ private fun CoverPhotoSection(
                         .height(30.dp)
                         .clip(RoundedCornerShape(15.dp))
                         .background(Color.Black.copy(alpha = 0.55f))
-                        .clickable(onClick = openGallery)
+                        .singleClickable(onClick = openGallery)
                         .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -342,7 +342,7 @@ private fun CoverSourceChip(
                             .background(RuleUpTheme.colors.surface)
                             .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(18.dp))
                     }
-                }.clickable(onClick = onClick)
+                }.singleClickable(onClick = onClick)
                 .padding(horizontal = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -449,7 +449,7 @@ private fun ParticipationCard(
                 .background(background)
                 .let { base ->
                     if (selected) base.border(3.dp, RuleUpTheme.colors.brand, RuleUpTheme.shapes.large) else base
-                }.clickable(onClick = onClick)
+                }.singleClickable(onClick = onClick)
                 .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -610,7 +610,7 @@ private fun MannerTemperatureSection(
                                 .height(24.dp)
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(if (active) RuleUpTheme.colors.brand else level.background)
-                                .clickable {
+                                .singleClickable {
                                     onIntent(CreateChallengeIntent.SetMinMannerTemperature(level.representative))
                                 },
                         contentAlignment = Alignment.Center,
@@ -720,7 +720,7 @@ private fun FrequencyAndPeriodSection(
                             .clip(RoundedCornerShape(16.dp))
                             .background(RuleUpTheme.colors.brandSoft)
                             .border(1.dp, RuleUpTheme.colors.brand, RoundedCornerShape(16.dp))
-                            .clickable(onClick = onPeriodClick)
+                            .singleClickable(onClick = onPeriodClick)
                             .padding(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -763,7 +763,7 @@ private fun RepeatDayChip(
                             .background(RuleUpTheme.colors.surface)
                             .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(19.dp))
                     },
-                ).clickable(onClick = onClick),
+                ).singleClickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -836,7 +836,7 @@ private fun MethodCard(
                     } else {
                         Modifier.border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
                     },
-                ).clickable(enabled = enabled, onClick = onClick)
+                ).singleClickable(enabled = enabled, onClick = onClick)
                 .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -1306,7 +1306,7 @@ private fun ConfirmBottomBar(
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpTheme.colors.surface)
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card)
-                    .clickable(enabled = !isRecommending && !isCreating) {
+                    .singleClickable(enabled = !isRecommending && !isCreating) {
                         onIntent(CreateChallengeIntent.Recommend)
                     },
             contentAlignment = Alignment.Center,
@@ -1325,7 +1325,7 @@ private fun ConfirmBottomBar(
                     .height(56.dp)
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpGradients.Button)
-                    .clickable(enabled = !isRecommending && !isCreating) {
+                    .singleClickable(enabled = !isRecommending && !isCreating) {
                         onIntent(CreateChallengeIntent.Create)
                     },
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),

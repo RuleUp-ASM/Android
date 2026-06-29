@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.VerificationDetail
 import com.ruleup.verification.presentation.detail.viewmodel.VerificationDetailEffect
@@ -113,7 +114,9 @@ private fun ColumnScope.DetailBody(
             detail.today.failureReason?.let { reason ->
                 Text(failureReasonCopy(reason), color = MaterialTheme.colorScheme.error)
                 ctaLabel(failureReasonCta(reason))?.let { label ->
-                    Button(onClick = onCtaClick, modifier = Modifier.fillMaxWidth()) { Text(label) }
+                    Button(onClick = rememberSingleClick(onClick = onCtaClick), modifier = Modifier.fillMaxWidth()) {
+                        Text(label)
+                    }
                 }
             }
         }

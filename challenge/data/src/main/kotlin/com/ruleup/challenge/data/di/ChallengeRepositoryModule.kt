@@ -1,7 +1,9 @@
 package com.ruleup.challenge.data.di
 
 import com.ruleup.challenge.data.repository.ChallengeRepositoryImpl
+import com.ruleup.challenge.data.repository.MyChallengeStoreImpl
 import com.ruleup.challenge.domain.ChallengeRepository
+import com.ruleup.challenge.domain.MyChallengeStore
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -14,4 +16,8 @@ abstract class ChallengeRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMyChallengeStore(impl: MyChallengeStoreImpl): MyChallengeStore
 }

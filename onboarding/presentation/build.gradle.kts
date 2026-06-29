@@ -26,7 +26,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 26
         // local.properties 의 OAuth 시크릿을 BuildConfig 로 노출(OAuthActivity 가 소비).
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
         buildConfigField("String", "GOOGLE_CLIENT_ID", "\"$googleClientId\"")

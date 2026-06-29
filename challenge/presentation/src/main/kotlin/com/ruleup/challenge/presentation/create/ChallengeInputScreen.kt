@@ -2,7 +2,6 @@ package com.ruleup.challenge.presentation.create
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +35,7 @@ import com.ruleup.challenge.presentation.create.component.SmallBadge
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpPalette
 import com.ruleup.ui.theme.RuleUpTheme
@@ -286,7 +286,7 @@ private fun ExampleChips(onIntent: (CreateChallengeIntent) -> Unit) {
                             .clip(RoundedCornerShape(15.dp))
                             .background(RuleUpTheme.colors.surface)
                             .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(15.dp))
-                            .clickable { onIntent(CreateChallengeIntent.SetTitle(example.title)) }
+                            .singleClickable { onIntent(CreateChallengeIntent.SetTitle(example.title)) }
                             .padding(horizontal = 12.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -323,7 +323,7 @@ private fun BottomCta(
                     .height(56.dp)
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpGradients.Button)
-                    .clickable(enabled = !isRecommending) { onIntent(CreateChallengeIntent.Recommend) },
+                    .singleClickable(enabled = !isRecommending) { onIntent(CreateChallengeIntent.Recommend) },
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {

@@ -2,7 +2,6 @@ package com.ruleup.verification.data.signal
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -37,11 +36,8 @@ class SignalCollectorImpl
             captureLocation()
             // SCREEN_TIME + WAKE 증분 수집(Phase 3). 대상 패키지는 스코프에서, WAKE 는 패키지 무관.
             usageEventCollector.collect(scope.targetPackages)
-            // 움직임·수면(명세 §8). connect-client minSdk 26 + java.time → API 26 미만에선 호출 자체를 막는다
-            // (이 가드가 HealthConnectCollector.capture 의 java.time 코드가 구 기기에서 실행되지 않게 보장).
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-                (scope.healthTargets.isNotEmpty() || scope.sleepRequested)
-            ) {
+            // 움직임·수면(명세 §8). HC 가용 시에만 수집(미설치/미지원이면 collector 내부에서 생략).
+            if (scope.healthTargets.isNotEmpty() || scope.sleepRequested) {
                 healthConnectCollector.capture(scope.healthTargets, scope.sleepRequested)
             }
         }

@@ -1,8 +1,6 @@
 package com.ruleup.verification.data.signal
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
@@ -32,8 +30,7 @@ import javax.inject.Inject
  * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(명세 §8). Health Connect 에서 **결과값+신뢰 메타데이터만**
  * 읽어(원시 트랙 미전송, §1.5) 로컬 버퍼에 적재한다. 하루치 누적은 매 sync 마다 최신 스냅샷으로 교체한다.
  *
- * 호출은 반드시 API 26 가드 뒤에서(아래 [capture] 의 [RequiresApi]). connect-client minSdk 26 +
- * java.time 사용이라 26 미만 기기에선 이 클래스의 메서드를 실행하지 않는다(생성자·필드는 java.time 무관).
+ * connect-client·java.time 모두 minSdk 26 이며 앱 minSdk 도 26 이라 별도 API 가드는 두지 않는다.
  */
 class HealthConnectCollector
     @Inject
@@ -42,7 +39,6 @@ class HealthConnectCollector
         private val healthReadingDao: HealthReadingDao,
         private val sleepSegmentDao: SleepSegmentDao,
     ) {
-        @RequiresApi(Build.VERSION_CODES.O)
         suspend fun capture(
             healthTargets: Set<HealthTarget>,
             sleepRequested: Boolean,
@@ -60,7 +56,6 @@ class HealthConnectCollector
             if (sleepRequested) captureSleep(client, granted)
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
         private suspend fun captureHealth(
             client: HealthConnectClient,
             granted: Set<String>,
@@ -91,7 +86,6 @@ class HealthConnectCollector
             if (rows.isNotEmpty()) healthReadingDao.insertAll(rows)
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
         private suspend fun readDistance(
             client: HealthConnectClient,
             granted: Set<String>,
@@ -116,7 +110,6 @@ class HealthConnectCollector
                 }
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
         private suspend fun readSteps(
             client: HealthConnectClient,
             granted: Set<String>,
@@ -141,7 +134,6 @@ class HealthConnectCollector
                 }
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
         private suspend fun readExercise(
             client: HealthConnectClient,
             granted: Set<String>,
@@ -170,7 +162,6 @@ class HealthConnectCollector
                 }
         }
 
-        @RequiresApi(Build.VERSION_CODES.O)
         private suspend fun captureSleep(
             client: HealthConnectClient,
             granted: Set<String>,

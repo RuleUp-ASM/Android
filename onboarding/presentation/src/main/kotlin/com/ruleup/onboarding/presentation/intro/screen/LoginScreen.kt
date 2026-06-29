@@ -2,7 +2,6 @@ package com.ruleup.onboarding.presentation.intro.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +31,7 @@ import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.oauth.rememberOAuthLauncher
+import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpColors
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
@@ -151,7 +151,7 @@ private fun SocialButton(
         modifier =
             withBorder
                 .background(provider.background)
-                .clickable(onClick = onClick)
+                .singleClickable(onClick = onClick)
                 .padding(horizontal = RuleUpTheme.spacing.lg),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
