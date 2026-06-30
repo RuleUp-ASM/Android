@@ -1,5 +1,8 @@
 package com.ruleup.onboarding.data.auth.repository
 
+import android.app.ActivityManager
+import android.content.Context
+import android.os.Build
 import com.ruleup.entity.user.Agreement
 import com.ruleup.entity.user.AuthSession
 import com.ruleup.entity.user.InterestCategory
@@ -9,6 +12,7 @@ import com.ruleup.network.dto.throwOnError
 import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.auth.dto.AgreementsDto
 import com.ruleup.onboarding.data.auth.dto.ClientPropertiesDto
+import com.ruleup.onboarding.data.auth.dto.DeviceInfoDto
 import com.ruleup.onboarding.data.auth.dto.LogoutRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
@@ -19,12 +23,14 @@ import com.ruleup.onboarding.data.auth.dto.toToken
 import com.ruleup.onboarding.domain.auth.usecase.AuthRepository
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class AuthRepositoryImpl
     @Inject
     constructor(
         private val api: AuthApi,
+        @ApplicationContext private val context: Context,
     ) : AuthRepository {
         override suspend fun exchangeToken(authorization: OAuthAuthorization): OAuthResult =
             api
@@ -35,6 +41,7 @@ class AuthRepositoryImpl
                             code = authorization.code,
                             codeVerifier = authorization.codeVerifier,
                             redirectUri = authorization.redirectUri,
+                            deviceInfo = context.deviceInfo(),
                         ),
                 ).getOrThrow()
                 .toOAuthResult()
@@ -55,6 +62,7 @@ class AuthRepositoryImpl
                             interestCategories = interestCategories.map { it.value },
                             profileImageUrl = profileImageUrl,
                             clientProperties = agreements.toClientProperties(),
+                            deviceInfo = context.deviceInfo(),
                         ),
                 ).getOrThrow()
                 .toAuthSession()
@@ -79,3 +87,25 @@ private fun Agreement.toClientProperties(): ClientPropertiesDto =
                 marketing = marketing,
             ),
     )
+
+/** 공통 기기 정보 채집(명세 4.1~4.3). Build/ActivityManager/PackageManager 에서 읽는다. */
+private fun Context.deviceInfo(): DeviceInfoDto {
+    val packageInfo = packageManager.getPackageInfo(packageName, 0)
+    val versionCode =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.longVersionCode.toInt()
+        } else {
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode
+        }
+    return DeviceInfoDto(
+        platform = "ANDROID",
+        osVersion = Build.VERSION.RELEASE.orEmpty(),
+        sdkInt = Build.VERSION.SDK_INT,
+        deviceModel = Build.MODEL.orEmpty(),
+        manufacturer = Build.MANUFACTURER.orEmpty(),
+        lowRam = getSystemService(ActivityManager::class.java)?.isLowRamDevice ?: false,
+        versionName = packageInfo.versionName.orEmpty(),
+        versionCode = versionCode,
+    )
+}
