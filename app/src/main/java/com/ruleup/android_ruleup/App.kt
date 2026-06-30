@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.kakao.sdk.common.KakaoSdk
+import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
 import com.ruleup.android_ruleup.debug.DebugLogTree
 import com.ruleup.domain.token.TokenRepository
@@ -53,6 +54,8 @@ class App :
         // Logcat 출력 + 화면 우측 상단 오버레이([DebugLogOverlay]) 동시 적재.
         if (BuildConfig.DEBUG) {
             Timber.plant(DebugLogTree())
+            // 카카오 콘솔(네이티브 앱키 → Android 플랫폼)에 등록할 키해시. 등록 안 되면 지도 인증 실패로 빈 화면.
+            Timber.tag("KakaoMap").i("등록용 키해시 = %s / 패키지 = %s", Utility.getKeyHash(this), packageName)
         }
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
         // 지도 SDK(v2)는 로그인 SDK 와 별개로 초기화한다. 같은 네이티브 앱키를 쓴다(:core:map 이 MapView 사용).
