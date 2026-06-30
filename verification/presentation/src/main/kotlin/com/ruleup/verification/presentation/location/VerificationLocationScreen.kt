@@ -42,6 +42,8 @@ import com.ruleup.map.rememberLocationPermissionGranted
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.ui.helper.singleClickable
+import com.ruleup.verification.domain.entity.LocationPin
+import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.presentation.location.viewmodel.PendingSelection
 import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationEffect
 import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationIntent
@@ -186,8 +188,8 @@ fun VerificationLocationScreen(
             }
         }
 
-        // 현재 위치 — 확인 카드가 없을 때만 노출(카드와 겹치지 않게). 권한 거부 시 숨김(명세 §5.4.2).
-        if (state.pending == null && permissionGranted) {
+        // 현재 위치 — 확인 카드·앵커 목록이 없을 때만 노출(겹침 방지). 권한 거부 시 숨김(명세 §5.4.2).
+        if (state.pending == null && state.anchors.isEmpty() && permissionGranted) {
             FilledTonalButton(
                 onClick =
                     rememberSingleClick {
@@ -206,18 +208,31 @@ fun VerificationLocationScreen(
             }
         }
 
-        // 하단 확인 카드(네이버 스타일). 핀이 찍히면 올라온다.
-        state.pending?.let { pending ->
+        // 하단 영역: 확인 핀이 있으면 추가 카드, 없으면 누적 앵커 + 제출 바.
+        val pending = state.pending
+        if (pending != null) {
+            // 핀이 찍히면 올라오는 확인 카드. [이 위치 추가] 로 앵커 목록에 담는다.
             SelectionCard(
                 pending = pending,
                 isResolving = state.isResolving,
-                isBinding = state.isBinding,
+                canAdd = state.anchors.size < SetupAnchors.MAX_COUNT,
                 onCancel = { viewModel.onIntent(VerificationLocationIntent.CancelSelection) },
-                onConfirm = {
+                onAdd = { viewModel.onIntent(VerificationLocationIntent.AddAnchor(radiusM = defaultRadiusM)) },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth(),
+            )
+        } else if (state.anchors.isNotEmpty()) {
+            // 누적된 앵커 목록 + 제출(setup 송신).
+            AnchorsBar(
+                anchors = state.anchors,
+                isSubmitting = state.isSubmitting,
+                onRemove = { viewModel.onIntent(VerificationLocationIntent.RemoveAnchor(it)) },
+                onSubmit = {
                     viewModel.onIntent(
-                        VerificationLocationIntent.Confirm(
-                            challengeMemberId = challengeMemberId,
-                            radiusM = defaultRadiusM,
+                        VerificationLocationIntent.Submit(
+                            challengeId = challengeMemberId,
                             dwellMinutes = dwellMinutes,
                         ),
                     )
@@ -232,16 +247,16 @@ fun VerificationLocationScreen(
 }
 
 /**
- * 핀 위치 확인 카드(명세 §5.3). 장소명·주소를 보여주고 "이 위치 선택" 으로 확정한다.
- * 역지오코딩 중([isResolving])엔 확정 버튼을 잠그고, 등록 중([isBinding])엔 스피너를 띄운다.
+ * 핀 위치 확인 카드(명세 §5.3·setup). 장소명·주소를 보여주고 "이 위치 추가" 로 앵커 목록에 담는다.
+ * 역지오코딩 중([isResolving])이거나 앵커가 가득 차([canAdd]=false) 추가할 수 없으면 추가 버튼을 잠근다.
  */
 @Composable
 private fun SelectionCard(
     pending: PendingSelection,
     isResolving: Boolean,
-    isBinding: Boolean,
+    canAdd: Boolean,
     onCancel: () -> Unit,
-    onConfirm: () -> Unit,
+    onAdd: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -257,7 +272,7 @@ private fun SelectionCard(
                     .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("이 위치를 선택하시겠습니까?", style = MaterialTheme.typography.titleMedium)
+            Text("이 위치를 앵커로 추가할까요?", style = MaterialTheme.typography.titleMedium)
             Text(
                 pending.name,
                 style = MaterialTheme.typography.bodyLarge,
@@ -280,22 +295,93 @@ private fun SelectionCard(
             ) {
                 OutlinedButton(
                     onClick = rememberSingleClick { onCancel() },
-                    enabled = !isBinding,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text("취소")
                 }
                 Button(
-                    onClick = rememberSingleClick { onConfirm() },
-                    // 주소 확인 전(resolving)·등록 중엔 확정 차단.
-                    enabled = !isBinding && !isResolving,
+                    onClick = rememberSingleClick { onAdd() },
+                    // 주소 확인 전(resolving)·앵커 가득 차면 추가 차단.
+                    enabled = !isResolving && canAdd,
                     modifier = Modifier.weight(1f),
                 ) {
-                    if (isBinding) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text("이 위치 선택")
+                    Text("이 위치 추가")
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 누적 앵커 목록 + 제출 바(명세 setup). 추가한 앵커를 보여주고(개별 삭제 가능) "제출" 로 setup 을 송신한다.
+ * 제출 중([isSubmitting])엔 버튼에 스피너를 띄우고 입력을 막는다.
+ */
+@Composable
+private fun AnchorsBar(
+    anchors: List<LocationPin>,
+    isSubmitting: Boolean,
+    onRemove: (Int) -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        shadowElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = modifier,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                "추가한 앵커 ${anchors.size}/${SetupAnchors.MAX_COUNT}",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Column(
+                modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                anchors.forEachIndexed { index, anchor ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            anchor.label ?: "선택한 위치",
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        // 제출 중엔 삭제를 막는다(목록 고정).
+                        Text(
+                            "삭제",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier =
+                                if (isSubmitting) {
+                                    Modifier
+                                } else {
+                                    Modifier.singleClickable { onRemove(index) }
+                                },
+                        )
                     }
+                }
+            }
+            Button(
+                onClick = rememberSingleClick { onSubmit() },
+                enabled = !isSubmitting,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (isSubmitting) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("제출")
                 }
             }
         }

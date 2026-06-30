@@ -1,7 +1,9 @@
 package com.ruleup.verification.domain.port
 
+import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
+import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.Place
@@ -42,6 +44,17 @@ interface VerificationRepository {
         challengeId: String,
         logDays: Int = 7,
     ): VerificationDetail
+
+    /**
+     * 셋업(앵커·대상앱 바인딩) 제출(명세 setup). 모두 충족 시 [com.ruleup.verification.domain.entity.SetupStatus.READY],
+     * 미충족 시 missing[] 과 함께 PENDING_SETUP. 앵커 미입력이면 [anchors] 빈 리스트로 location 을 생략한다.
+     * 반경 범위(500~5000m)·개수(최대 10) 위반은 [com.ruleup.verification.domain.entity.InvalidAnchorException] 로 분기한다.
+     */
+    suspend fun setupChallenge(
+        challengeId: String,
+        anchors: List<LocationPin>,
+        targetPackages: List<String> = emptyList(),
+    ): ChallengeSetupResult
 
     /** 수동 인증 제출(명세 3.4·§9). PHOTO 는 [imageUrl] 필수. [asFallback]=true 면 예비 폴백(§9.2). */
     suspend fun submitManual(

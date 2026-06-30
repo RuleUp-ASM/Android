@@ -2,12 +2,14 @@ package com.ruleup.verification.domain.usecase
 
 import com.ruleup.analytics.AnalyticsEvent
 import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
+import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
@@ -214,6 +216,12 @@ class RunSyncUseCaseTest {
             challengeId: String,
             logDays: Int,
         ): VerificationDetail = error("unused")
+
+        override suspend fun setupChallenge(
+            challengeId: String,
+            anchors: List<LocationPin>,
+            targetPackages: List<String>,
+        ): ChallengeSetupResult = error("unused")
 
         override suspend fun submitManual(
             challengeId: String,

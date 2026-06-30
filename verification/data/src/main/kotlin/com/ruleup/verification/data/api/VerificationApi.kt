@@ -1,6 +1,8 @@
 package com.ruleup.verification.data.api
 
 import com.ruleup.network.dto.BaseResponse
+import com.ruleup.verification.data.dto.ChallengeSetupRequest
+import com.ruleup.verification.data.dto.ChallengeSetupResponse
 import com.ruleup.verification.data.dto.IntroRequest
 import com.ruleup.verification.data.dto.IntroResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
@@ -47,4 +49,11 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
         @Body request: ManualSubmitRequest,
     ): BaseResponse<ManualSubmitResponse>
+
+    // setup 앵커·대상앱 바인딩 제출 (명세 setup)
+    @POST("v1/challenges/{challengeId}/setup")
+    suspend fun setup(
+        @Path("challengeId") challengeId: String,
+        @Body request: ChallengeSetupRequest,
+    ): BaseResponse<ChallengeSetupResponse>
 }
