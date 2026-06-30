@@ -8,9 +8,15 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
+import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
+import okio.BufferedSink
+import okio.GzipSink
+import okio.buffer
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import timber.log.Timber
@@ -67,8 +73,55 @@ object NetworkModule {
         return OkHttpClient
             .Builder()
             .addInterceptor(authInterceptor)
+            // 로깅 → gzip 순서로 두어 BODY 로그는 압축 전 원문이 보이고, 전송만 압축된다.
             .addInterceptor(loggingInterceptor)
+            .addInterceptor(GzipRequestInterceptor())
             .build()
+    }
+
+    /**
+     * 일정 크기 이상의 요청 본문만 gzip 압축한다(전송 스펙 §0.6). sync envelope 처럼 큰 페이로드만
+     * 압축되고 로그인 등 작은 요청은 원문으로 둔다(서버는 `Content-Encoding: gzip` 해제 지원 전제).
+     * 길이를 모르는(streaming) 본문은 건너뛴다.
+     */
+    private class GzipRequestInterceptor(
+        private val minBytes: Long = MIN_GZIP_BYTES,
+    ) : Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request = chain.request()
+            val body = request.body
+            if (body == null || request.header("Content-Encoding") != null) {
+                return chain.proceed(request)
+            }
+            val length = body.contentLength()
+            if (length < minBytes) return chain.proceed(request)
+
+            val compressed =
+                request
+                    .newBuilder()
+                    .header("Content-Encoding", "gzip")
+                    .method(request.method, body.gzip())
+                    .build()
+            return chain.proceed(compressed)
+        }
+
+        private fun RequestBody.gzip(): RequestBody =
+            object : RequestBody() {
+                override fun contentType(): MediaType? = this@gzip.contentType()
+
+                // 압축 후 길이를 미리 모르므로 -1(chunked) 로 둔다.
+                override fun contentLength(): Long = -1
+
+                override fun writeTo(sink: BufferedSink) {
+                    val gzipSink = GzipSink(sink).buffer()
+                    this@gzip.writeTo(gzipSink)
+                    gzipSink.close()
+                }
+            }
+
+        private companion object {
+            const val MIN_GZIP_BYTES = 1024L
+        }
     }
 
     @Provides

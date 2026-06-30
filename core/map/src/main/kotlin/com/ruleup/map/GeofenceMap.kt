@@ -42,24 +42,25 @@ import com.kakao.vectormap.shape.PolygonStylesSet
 import kotlinx.coroutines.tasks.await
 
 /**
- * 카카오 지도 기반 지오펜스 미리보기(명세 §5.3). 중심 핀 + 반경 원을 그리고, 지도를 탭하면
- * 그 좌표로 중심을 옮긴다([onCenterChange]). 외부에서 [center] 가 바뀌면(검색 결과 선택·현재 위치)
- * 카메라·핀·원이 따라간다.
+ * 카카오 지도 기반 위치 선택(명세 §5.3). 지도를 탭하면 그 좌표를 [onMapTap] 으로 올려보내고(확인 대기),
+ * 외부에서 [pin] 이 정해지면(탭 역지오코딩·검색 결과) 그 자리에 핀 + 반경 원을 그리고 카메라가 따라간다.
+ * [pin] 이 null 이면 핀/원을 지운다(아직 선택 전·취소).
  *
  * Kakao [MapView] 는 GLSurfaceView 기반 네이티브 뷰라 [AndroidView] 로 감싸고, 호스트의
  * resume/pause 를 전달해야 한다(카카오 가이드, 미전달 시 렌더링 크래시).
  */
 @Composable
 fun GeofenceMap(
-    center: MapLatLng,
+    initialCenter: MapLatLng,
+    pin: MapLatLng?,
     radiusM: Float,
-    onCenterChange: (MapLatLng) -> Unit,
+    onMapTap: (MapLatLng) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     // 지도 콜백은 컴포지션 밖에서 호출되므로 항상 최신 람다를 가리키게 한다.
-    val currentOnCenterChange by rememberUpdatedState(onCenterChange)
+    val currentOnMapTap by rememberUpdatedState(onMapTap)
 
     // 카카오 지도 네이티브 라이브러리가 없는 ABI(x86_64 에뮬레이터 등)에서는 MapView 생성/시작이 던진다.
     // 화면 전체가 죽지 않도록 막고, 지도 자리에 안내를 보여준다(나머지 picker 는 정상 동작).
@@ -84,15 +85,19 @@ fun GeofenceMap(
                 object : KakaoMapReadyCallback() {
                     override fun onMapReady(kakaoMap: KakaoMap) {
                         objects.kakaoMap = kakaoMap
-                        // 탭으로 중심 이동(명세 §5.3).
+                        // 탭한 좌표를 화면으로 올려보낸다(확인 대기 핀 → 카드, 명세 §5.3).
                         kakaoMap.setOnMapClickListener { _, position, _, _ ->
-                            currentOnCenterChange(MapLatLng(position.latitude, position.longitude))
+                            currentOnMapTap(MapLatLng(position.latitude, position.longitude))
                         }
-                        objects.drawCenter(center)
-                        objects.drawCircle(center, radiusM)
+                        // 진입 시 이미 핀이 정해져 있으면(편집 등) 그려둔다.
+                        objects.drawPin(pin)
+                        objects.drawCircle(pin, radiusM)
                     }
 
-                    override fun getPosition(): LatLng = LatLng.from(center.lat, center.lng)
+                    override fun getPosition(): LatLng {
+                        val start = pin ?: initialCenter
+                        return LatLng.from(start.lat, start.lng)
+                    }
 
                     override fun getZoomLevel(): Int = DEFAULT_ZOOM_LEVEL
                 },
@@ -117,12 +122,14 @@ fun GeofenceMap(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // 외부 center/radius 변경 → 카메라·핀·원 동기화.
-    LaunchedEffect(center, radiusM) {
+    // 외부 pin/radius 변경 → 카메라·핀·원 동기화. pin 이 null 이면 핀/원을 지운다.
+    LaunchedEffect(pin, radiusM) {
         val kakaoMap = objects.kakaoMap ?: return@LaunchedEffect
-        kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(LatLng.from(center.lat, center.lng)))
-        objects.drawCenter(center)
-        objects.drawCircle(center, radiusM)
+        if (pin != null) {
+            kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(LatLng.from(pin.lat, pin.lng)))
+        }
+        objects.drawPin(pin)
+        objects.drawCircle(pin, radiusM)
     }
 
     AndroidView(factory = { mapView }, modifier = modifier)
@@ -131,6 +138,7 @@ fun GeofenceMap(
 /**
  * KakaoMap·핀·원 참조를 recomposition/콜백 간 보관한다(컴포지션 밖 SDK 호출용).
  * 핀은 생성 후 [Label.moveTo] 로 이동, 원은 반경이 바뀔 수 있으니 매번 지우고 다시 그린다.
+ * [pin] 이 null 이면 둘 다 레이어에서 제거한다(선택 전·취소).
  */
 private class GeofenceMapObjects {
     var kakaoMap: KakaoMap? = null
@@ -138,9 +146,14 @@ private class GeofenceMapObjects {
     private var circle: Polygon? = null
     private var styles: LabelStyles? = null
 
-    fun drawCenter(center: MapLatLng) {
+    fun drawPin(pin: MapLatLng?) {
         val manager = kakaoMap?.labelManager ?: return
-        val position = LatLng.from(center.lat, center.lng)
+        if (pin == null) {
+            label?.let { manager.layer?.remove(it) }
+            label = null
+            return
+        }
+        val position = LatLng.from(pin.lat, pin.lng)
         val current = label
         if (current != null) {
             current.moveTo(position)
@@ -155,12 +168,14 @@ private class GeofenceMapObjects {
     }
 
     fun drawCircle(
-        center: MapLatLng,
+        pin: MapLatLng?,
         radiusM: Float,
     ) {
         val manager = kakaoMap?.shapeManager ?: return
         circle?.let { manager.layer?.remove(it) }
-        val dots = DotPoints.fromCircle(LatLng.from(center.lat, center.lng), radiusM)
+        circle = null
+        if (pin == null) return
+        val dots = DotPoints.fromCircle(LatLng.from(pin.lat, pin.lng), radiusM)
         val stylesSet = PolygonStylesSet.from(PolygonStyles.from(CIRCLE_FILL_ARGB))
         circle = manager.layer?.addPolygon(PolygonOptions.from(dots, stylesSet))
     }

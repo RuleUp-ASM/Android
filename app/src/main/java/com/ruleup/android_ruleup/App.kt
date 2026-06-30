@@ -6,8 +6,15 @@ import androidx.work.Configuration
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.vectormap.KakaoMapSdk
 import com.ruleup.android_ruleup.debug.DebugLogTree
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.verification.domain.port.SyncScheduler
+import com.ruleup.verification.domain.usecase.SubmitDeviceIntroUseCase
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -23,6 +30,15 @@ class App :
     // 앱 시작 시 30분 주기 sync 예약을 보장하기 위한 스케줄러.
     @Inject
     lateinit var syncScheduler: SyncScheduler
+
+    // Phase 0 인트로(전송 스펙 §0.3): 로그인 상태면 정적 프로필+권한 스냅샷을 보내고 서버 정책을 받는다.
+    @Inject
+    lateinit var submitDeviceIntro: SubmitDeviceIntroUseCase
+
+    @Inject
+    lateinit var tokenRepository: TokenRepository
+
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
         get() =
@@ -46,5 +62,13 @@ class App :
             .onFailure { Timber.w(it, "KakaoMapSdk init 실패(미지원 ABI 가능성) — 지도 비활성") }
         // 30분 주기 자동인증 sync 예약(이미 예약돼 있으면 유지). WorkManager 를 여기서 처음 깨운다.
         syncScheduler.ensureScheduled()
+
+        // 로그인 상태면 Phase 0 인트로 1회 전송(전송 스펙 §0.3). 실패는 무시 — 다음 시작/주기 sync 가 정책을 보정.
+        appScope.launch {
+            if (tokenRepository.isLoggedIn.first()) {
+                runCatching { submitDeviceIntro() }
+                    .onFailure { Timber.tag("VerificationIntro").w(it, "Phase 0 인트로 전송 실패") }
+            }
+        }
     }
 }

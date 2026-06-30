@@ -2,19 +2,30 @@ package com.ruleup.verification.domain.usecase
 
 import com.ruleup.analytics.AnalyticsEvent
 import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.verification.domain.entity.DeviceClock
+import com.ruleup.verification.domain.entity.DeviceDiagnostics
+import com.ruleup.verification.domain.entity.DeviceIntro
+import com.ruleup.verification.domain.entity.EnvelopeMetadata
+import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.NetworkState
+import com.ruleup.verification.domain.entity.PermissionSnapshot
+import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SignalScope
+import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import com.ruleup.verification.domain.entity.VerificationDetail
 import com.ruleup.verification.domain.entity.VerificationSignal
+import com.ruleup.verification.domain.port.EnvelopeMetadataProvider
 import com.ruleup.verification.domain.port.SignalCollector
 import com.ruleup.verification.domain.port.SignalRepository
 import com.ruleup.verification.domain.port.VerificationRepository
@@ -35,7 +46,14 @@ class RunSyncUseCaseTest {
         runBlocking {
             val signalRepo = FakeSignalRepository(drain = null)
             val verificationRepo = FakeVerificationRepository()
-            val useCase = RunSyncUseCase(FakeSignalCollector(), signalRepo, verificationRepo, FakeAnalyticsLogger())
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(),
+                    verificationRepo,
+                    FakeAnalyticsLogger(),
+                )
 
             val result = useCase(scope, collectedAt)
 
@@ -49,7 +67,14 @@ class RunSyncUseCaseTest {
         runBlocking {
             val signalRepo = FakeSignalRepository(drain = nonEmptyBatch())
             val verificationRepo = FakeVerificationRepository(result = syncResult())
-            val useCase = RunSyncUseCase(FakeSignalCollector(), signalRepo, verificationRepo, FakeAnalyticsLogger())
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(),
+                    verificationRepo,
+                    FakeAnalyticsLogger(),
+                )
 
             val result = useCase(scope, collectedAt)
 
@@ -64,7 +89,14 @@ class RunSyncUseCaseTest {
         runBlocking {
             val signalRepo = FakeSignalRepository(drain = nonEmptyBatch())
             val verificationRepo = FakeVerificationRepository(error = InvalidSignalPayloadException())
-            val useCase = RunSyncUseCase(FakeSignalCollector(), signalRepo, verificationRepo, FakeAnalyticsLogger())
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(),
+                    verificationRepo,
+                    FakeAnalyticsLogger(),
+                )
 
             assertFailsWith<InvalidSignalPayloadException> { useCase(scope, collectedAt) }
             // 폐기 = synced 표시(무한 재전송 금지).
@@ -76,7 +108,14 @@ class RunSyncUseCaseTest {
         runBlocking {
             val signalRepo = FakeSignalRepository(drain = nonEmptyBatch())
             val verificationRepo = FakeVerificationRepository(error = SyncTooFrequentException())
-            val useCase = RunSyncUseCase(FakeSignalCollector(), signalRepo, verificationRepo, FakeAnalyticsLogger())
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(),
+                    verificationRepo,
+                    FakeAnalyticsLogger(),
+                )
 
             assertFailsWith<SyncTooFrequentException> { useCase(scope, collectedAt) }
             // 전송분 유지(다음 백오프 재시도가 다시 보냄).
@@ -110,11 +149,14 @@ class RunSyncUseCaseTest {
 
     private class FakeSignalRepository(
         private val drain: SignalBatch?,
+        private val gaps: List<SignalGap> = emptyList(),
     ) : SignalRepository {
         var markSyncedCalled = false
         var purgeCalled = false
 
         override suspend fun drainPending(collectedAt: String): SignalBatch? = drain
+
+        override suspend fun drainGaps(collectedAt: String): List<SignalGap> = gaps
 
         override suspend fun markSynced(collectedAt: String) {
             markSyncedCalled = true
@@ -125,13 +167,42 @@ class RunSyncUseCaseTest {
         }
     }
 
+    private class FakeEnvelopeMetadataProvider : EnvelopeMetadataProvider {
+        override suspend fun capture(scope: SignalScope): EnvelopeMetadata =
+            EnvelopeMetadata(
+                clock = DeviceClock(deviceTimeMillis = 1L, elapsedRealtimeMillis = 1L, bootSessionId = "boot", timeZone = "Asia/Seoul"),
+                activeChallengeIds = emptyList(),
+                permissions =
+                    PermissionSnapshot(
+                        location = PermissionState.GRANTED,
+                        backgroundLocation = PermissionState.GRANTED,
+                        activityRecognition = PermissionState.GRANTED,
+                        usageStats = PermissionState.GRANTED,
+                        postNotifications = PermissionState.GRANTED,
+                        healthDistance = PermissionState.GRANTED,
+                        healthSteps = PermissionState.GRANTED,
+                        healthSleep = PermissionState.GRANTED,
+                        healthBackground = PermissionState.GRANTED,
+                    ),
+                network = NetworkState(vpnActive = false),
+                integrity = IntegritySnapshot(token = null),
+                diagnostics = DeviceDiagnostics(null, null, null, null, null, null, null),
+                gaps = emptyList(),
+            )
+    }
+
     private class FakeVerificationRepository(
         private val result: SyncResult? = null,
         private val error: Throwable? = null,
     ) : VerificationRepository {
         var syncCalled = false
 
-        override suspend fun sync(batch: SignalBatch): SyncResult {
+        override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy = error("unused")
+
+        override suspend fun sync(
+            metadata: EnvelopeMetadata,
+            batch: SignalBatch,
+        ): SyncResult {
             syncCalled = true
             error?.let { throw it }
             return requireNotNull(result)
@@ -158,6 +229,11 @@ class RunSyncUseCaseTest {
             lng: Double?,
             radiusM: Int?,
         ): List<Place> = error("unused")
+
+        override suspend fun reverseGeocode(
+            lat: Double,
+            lng: Double,
+        ): Place? = error("unused")
     }
 
     private class FakeAnalyticsLogger : AnalyticsLogger {

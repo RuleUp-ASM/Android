@@ -4,11 +4,14 @@ import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.ErrorBody
 import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
+import com.ruleup.verification.data.dto.IntroRequest
+import com.ruleup.verification.data.dto.IntroResponse
+import com.ruleup.verification.data.dto.KakaoCoord2AddressResponse
 import com.ruleup.verification.data.dto.KakaoKeywordResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
 import com.ruleup.verification.data.dto.ProgressResponse
-import com.ruleup.verification.data.dto.SyncRequest
+import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.VerificationDetailResponse
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
@@ -94,7 +97,9 @@ class VerificationRepositoryImplTest {
         private val manualSuccess: ManualSubmitResponse? = null,
         private val manualError: ErrorBody? = null,
     ) : VerificationApi {
-        override suspend fun sync(request: SyncRequest): BaseResponse<SyncResponse> = error("unused")
+        override suspend fun intro(request: IntroRequest): BaseResponse<IntroResponse> = error("unused")
+
+        override suspend fun sync(request: SyncEnvelopeRequest): BaseResponse<SyncResponse> = error("unused")
 
         override suspend fun getProgress(status: String?): BaseResponse<ProgressResponse> = error("unused")
 
@@ -123,5 +128,10 @@ class VerificationRepositoryImplTest {
             size: Int,
             sort: String,
         ): KakaoKeywordResponse = KakaoKeywordResponse(documents = emptyList())
+
+        override suspend fun coord2Address(
+            longitude: Double,
+            latitude: Double,
+        ): KakaoCoord2AddressResponse = KakaoCoord2AddressResponse(documents = emptyList())
     }
 }

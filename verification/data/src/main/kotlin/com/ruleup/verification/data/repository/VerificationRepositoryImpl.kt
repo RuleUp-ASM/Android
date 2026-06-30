@@ -6,8 +6,11 @@ import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.toDomain
+import com.ruleup.verification.data.dto.toPlaceOrNull
 import com.ruleup.verification.data.dto.toRequest
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
+import com.ruleup.verification.domain.entity.DeviceIntro
+import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.FallbackLimitExceededException
 import com.ruleup.verification.domain.entity.ImageRequiredException
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
@@ -17,6 +20,7 @@ import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import com.ruleup.verification.domain.entity.VerificationDetail
@@ -29,10 +33,19 @@ class VerificationRepositoryImpl
         private val api: VerificationApi,
         private val kakaoLocalApi: KakaoLocalApi,
     ) : VerificationRepository {
-        override suspend fun sync(batch: SignalBatch): SyncResult =
+        override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy =
+            api
+                .intro(intro.toRequest())
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun sync(
+            metadata: EnvelopeMetadata,
+            batch: SignalBatch,
+        ): SyncResult =
             try {
                 api
-                    .sync(batch.toRequest())
+                    .sync(metadata.toRequest(batch))
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
@@ -103,6 +116,15 @@ class VerificationRepositoryImpl
                     latitude = lat,
                     radiusM = radiusM,
                 ).toDomain()
+
+        // 카카오 로컬 좌표→주소(명세 §5.3). x=경도, y=위도. 결과 없으면 null.
+        override suspend fun reverseGeocode(
+            lat: Double,
+            lng: Double,
+        ): Place? =
+            kakaoLocalApi
+                .coord2Address(longitude = lng, latitude = lat)
+                .toPlaceOrNull(lat, lng)
 
         companion object {
             private const val CODE_SYNC_TOO_FREQUENT = "SYNC_TOO_FREQUENT"

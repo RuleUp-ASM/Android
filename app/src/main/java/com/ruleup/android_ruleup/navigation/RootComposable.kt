@@ -2,6 +2,7 @@ package com.ruleup.android_ruleup.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
@@ -16,11 +17,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.BuildConfig
 import com.ruleup.android_ruleup.debug.DebugLogOverlay
+import com.ruleup.android_ruleup.debug.DebugSyncButton
 import com.ruleup.android_ruleup.debug.TrackJankScreen
 import com.ruleup.domain.message.MessageEffect
 import com.ruleup.onboarding.domain.SplashPage
@@ -102,6 +106,14 @@ fun RootComposable(
             // 디버그 빌드 전용: 우측 상단 반투명 로그 오버레이. 포인터 입력이 없어 터치를 통과시킨다.
             if (BuildConfig.DEBUG) {
                 DebugLogOverlay()
+                // 좌하단 "수집·동기화" 트리거. 결과는 위 오버레이에 'VerifySync' 로 뜬다.
+                DebugSyncButton(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .navigationBarsPadding()
+                            .padding(12.dp),
+                )
             }
         }
     }

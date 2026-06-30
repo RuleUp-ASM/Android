@@ -1,10 +1,12 @@
 package com.ruleup.verification.data.api
 
 import com.ruleup.network.dto.BaseResponse
+import com.ruleup.verification.data.dto.IntroRequest
+import com.ruleup.verification.data.dto.IntroResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
 import com.ruleup.verification.data.dto.ProgressResponse
-import com.ruleup.verification.data.dto.SyncRequest
+import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.VerificationDetailResponse
 import retrofit2.http.Body
@@ -14,10 +16,16 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface VerificationApi {
-    // 3.1 30분마다 신호 받고 평가
+    // Phase 0 인트로 (전송 스펙 §0.3): 정적 프로필 + 최초 권한 스냅샷 → 서버 정책
+    @POST("v1/verifications/intro")
+    suspend fun intro(
+        @Body request: IntroRequest,
+    ): BaseResponse<IntroResponse>
+
+    // 3.1 30분마다 신호 받고 평가 (전송 스펙 §0.1 envelope)
     @POST("v1/verifications/sync")
     suspend fun sync(
-        @Body request: SyncRequest,
+        @Body request: SyncEnvelopeRequest,
     ): BaseResponse<SyncResponse>
 
     // 3.2 챌린지 진행률 일괄 조회
@@ -40,4 +48,3 @@ interface VerificationApi {
         @Body request: ManualSubmitRequest,
     ): BaseResponse<ManualSubmitResponse>
 }
-

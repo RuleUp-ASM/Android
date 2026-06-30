@@ -44,3 +44,53 @@ internal fun KakaoKeywordResponse.toDomain(): List<Place> =
             category = dto.categoryGroupName?.ifBlank { null } ?: dto.categoryName?.ifBlank { null },
         )
     }
+
+// ---------- 카카오 로컬 좌표→주소(coord2address) 응답(필요 필드만) ----------
+@Serializable
+data class KakaoCoord2AddressResponse(
+    @SerialName("documents")
+    val documents: List<KakaoAddressDto>? = null,
+)
+
+@Serializable
+data class KakaoAddressDto(
+    @SerialName("road_address")
+    val roadAddress: KakaoRoadAddressDto? = null,
+    @SerialName("address")
+    val address: KakaoLotAddressDto? = null,
+)
+
+@Serializable
+data class KakaoRoadAddressDto(
+    @SerialName("address_name")
+    val addressName: String? = null,
+    @SerialName("building_name")
+    val buildingName: String? = null,
+)
+
+@Serializable
+data class KakaoLotAddressDto(
+    @SerialName("address_name")
+    val addressName: String? = null,
+)
+
+/**
+ * 역지오코딩 1건 → 앵커 [Place]. 좌표는 coord2address 가 돌려주지 않으므로 호출 시점의 탭 좌표를 그대로 유지한다.
+ * 건물명이 있으면 이름으로, 없으면 주소를 이름으로 쓴다(이름=주소일 땐 [Place.address] 를 비워 중복 표기 방지).
+ */
+internal fun KakaoCoord2AddressResponse.toPlaceOrNull(
+    lat: Double,
+    lng: Double,
+): Place? {
+    val doc = documents?.firstOrNull() ?: return null
+    // 도로명 주소 우선, 없으면 지번 주소.
+    val address = doc.roadAddress?.addressName?.ifBlank { null } ?: doc.address?.addressName?.ifBlank { null } ?: return null
+    val building = doc.roadAddress?.buildingName?.ifBlank { null }
+    return Place(
+        name = building ?: address,
+        lat = lat,
+        lng = lng,
+        address = if (building != null) address else null,
+        category = null,
+    )
+}

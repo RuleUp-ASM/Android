@@ -1,14 +1,23 @@
 package com.ruleup.verification.data.dto
 
+import com.ruleup.verification.domain.entity.DeviceClock
+import com.ruleup.verification.domain.entity.DeviceDiagnostics
+import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.FailureReason
+import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTransitionEvent
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
 import com.ruleup.verification.domain.entity.HealthDeviceType
 import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.HealthOrigin
 import com.ruleup.verification.domain.entity.HealthReading
+import com.ruleup.verification.domain.entity.IntegritySnapshot
+import com.ruleup.verification.domain.entity.NetworkState
+import com.ruleup.verification.domain.entity.PermissionSnapshot
+import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.RecordingMethod
 import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SleepSegment
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.VerificationSignal
@@ -26,7 +35,64 @@ import kotlin.test.assertTrue
  * (서버 응답의 미인식/누락 필드가 안전한 기본값으로 떨어지는지도 함께 검증)
  */
 class VerificationDtoSerializationTest {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json =
+        Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+        }
+
+    /** 테스트용 envelope 메타데이터(§0.1). 신호 배치와 합쳐 envelope 와이어로 직렬화한다. */
+    private fun metadata(gaps: List<SignalGap> = emptyList()): EnvelopeMetadata =
+        EnvelopeMetadata(
+            clock =
+                DeviceClock(
+                    deviceTimeMillis = 1_719_600_000_000L,
+                    elapsedRealtimeMillis = 987_654_321L,
+                    bootSessionId = "boot-1",
+                    timeZone = "Asia/Seoul",
+                ),
+            activeChallengeIds = listOf("c-1"),
+            permissions =
+                PermissionSnapshot(
+                    location = PermissionState.GRANTED,
+                    backgroundLocation = PermissionState.DENIED,
+                    activityRecognition = PermissionState.GRANTED,
+                    usageStats = PermissionState.GRANTED,
+                    postNotifications = PermissionState.GRANTED,
+                    healthDistance = PermissionState.GRANTED,
+                    healthSteps = PermissionState.DENIED,
+                    healthSleep = PermissionState.GRANTED,
+                    healthBackground = PermissionState.GRANTED,
+                ),
+            network = NetworkState(vpnActive = false),
+            integrity = IntegritySnapshot(token = null),
+            diagnostics = DeviceDiagnostics(null, null, null, null, null, null, "SDK_AVAILABLE"),
+            gaps = gaps,
+        )
+
+    @Test
+    fun `envelope 는 디바이스 시계·권한·gap·신호를 함께 직렬화하고 token 없으면 integrity 를 생략한다`() {
+        val batch = SignalBatch(collectedAt = "2026-06-21T00:00:00Z", signals = emptyList())
+        val gap = SignalGap("HEALTH", GapReason.PERMISSION_MISSING, fromMillis = 10L, toMillis = 20L, recoverable = true)
+
+        val encoded = json.encodeToString(metadata(gaps = listOf(gap)).toRequest(batch))
+        val decoded = json.decodeFromString<SyncEnvelopeRequest>(encoded)
+
+        assertEquals(1_719_600_000_000L, decoded.deviceTimeMillis)
+        assertEquals("boot-1", decoded.bootSessionId)
+        assertEquals("Asia/Seoul", decoded.timeZone)
+        assertEquals(listOf("c-1"), decoded.activeChallengeIds)
+        assertEquals("GRANTED", decoded.permissions.location)
+        assertEquals("DENIED", decoded.permissions.backgroundLocation)
+        assertEquals("DENIED", decoded.permissions.healthConnect.steps)
+        assertEquals(false, decoded.network.vpnActive)
+        // token 없으면 integrity 객체 통째로 생략(explicitNulls=false).
+        assertTrue(!encoded.contains("\"integrity\""))
+        val g = decoded.gaps.single()
+        assertEquals("HEALTH", g.signalType)
+        assertEquals("PERMISSION_MISSING", g.reason)
+        assertEquals(true, g.recoverable)
+    }
 
     @Test
     fun `SignalBatch 를 sync 요청으로 매핑하면 epoch 가 ISO 로 변환되고 라운드트립한다`() {
@@ -52,11 +118,10 @@ class VerificationDtoSerializationTest {
                     ),
             )
 
-        val request = batch.toRequest()
+        val request = metadata().toRequest(batch)
         val encoded = json.encodeToString(request)
-        val decoded = json.decodeFromString<SyncRequest>(encoded)
+        val decoded = json.decodeFromString<SyncEnvelopeRequest>(encoded)
 
-        assertEquals("2026-06-21T00:00:00Z", decoded.collectedAt)
         val signal = decoded.signals.single()
         assertEquals("GEOFENCE_TRANSITION", signal.type)
         val event = assertNotNull(signal.events).single()
@@ -97,7 +162,7 @@ class VerificationDtoSerializationTest {
                     ),
             )
 
-        val decoded = json.decodeFromString<SyncRequest>(json.encodeToString(batch.toRequest()))
+        val decoded = json.decodeFromString<SyncEnvelopeRequest>(json.encodeToString(metadata().toRequest(batch)))
         val signal = decoded.signals.single()
         assertEquals("HEALTH", signal.type)
         assertEquals("2026-06-24", signal.date)
@@ -125,7 +190,7 @@ class VerificationDtoSerializationTest {
                     ),
             )
 
-        val decoded = json.decodeFromString<SyncRequest>(json.encodeToString(batch.toRequest()))
+        val decoded = json.decodeFromString<SyncEnvelopeRequest>(json.encodeToString(metadata().toRequest(batch)))
         val signal = decoded.signals.single()
         assertEquals("SLEEP", signal.type)
         val segment = assertNotNull(signal.segments).single()

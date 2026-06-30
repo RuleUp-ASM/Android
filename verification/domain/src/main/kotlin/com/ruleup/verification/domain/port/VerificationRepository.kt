@@ -1,11 +1,14 @@
 package com.ruleup.verification.domain.port
 
+import com.ruleup.verification.domain.entity.DeviceIntro
+import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.VerificationDetail
 
@@ -16,8 +19,20 @@ import com.ruleup.verification.domain.entity.VerificationDetail
  * (429)·[com.ruleup.verification.domain.entity.InvalidSignalPayloadException](400) 로 분기한다.
  */
 interface VerificationRepository {
-    /** 30분 배치 신호를 전송하고 오늘자 평가 결과를 받는다(명세 3.1). */
-    suspend fun sync(batch: SignalBatch): SyncResult
+    /**
+     * Phase 0 인트로(전송 스펙 §0.3). 정적 프로필 + 최초 권한 스냅샷을 보내고 서버 정책을 받는다.
+     * 로그인 직후 1회 호출.
+     */
+    suspend fun submitIntro(intro: DeviceIntro): SyncPolicy
+
+    /**
+     * 30분 배치 신호 + envelope 메타데이터([metadata])를 한 번에 전송하고 오늘자 평가 결과를 받는다
+     * (전송 스펙 §0.1). data 어댑터가 둘을 합쳐 §0.1 envelope 로 직렬화한다.
+     */
+    suspend fun sync(
+        metadata: EnvelopeMetadata,
+        batch: SignalBatch,
+    ): SyncResult
 
     /** 참여 중인 모든 챌린지 진행률 일괄 조회(명세 3.2). */
     suspend fun getProgress(filter: ProgressFilter = ProgressFilter.ACTIVE): ProgressSnapshot
@@ -47,4 +62,13 @@ interface VerificationRepository {
         lng: Double? = null,
         radiusM: Int? = null,
     ): List<Place>
+
+    /**
+     * 좌표 → 주소 역지오코딩(명세 §5.3, 카카오 로컬 coord2address). 지도를 탭한 지점의 이름/주소를 채운다.
+     * 결과가 없으면 null(바다·해외 등) — 호출자는 좌표만으로 선택을 진행할 수 있다.
+     */
+    suspend fun reverseGeocode(
+        lat: Double,
+        lng: Double,
+    ): Place?
 }

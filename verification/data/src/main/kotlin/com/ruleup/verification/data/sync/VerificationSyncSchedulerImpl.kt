@@ -3,7 +3,10 @@ package com.ruleup.verification.data.sync
 import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.ruleup.verification.domain.port.SyncScheduler
@@ -39,6 +42,8 @@ class VerificationSyncSchedulerImpl
             )
         }
 
+        override fun enqueueCatchUp() = enqueueCatchUp(context)
+
         private fun buildRequest(intervalMinutes: Long): PeriodicWorkRequest =
             PeriodicWorkRequest
                 .Builder(VerificationSyncWorker::class.java, intervalMinutes, TimeUnit.MINUTES)
@@ -53,5 +58,29 @@ class VerificationSyncSchedulerImpl
             private const val DEFAULT_INTERVAL_MIN = 30L
             private const val MIN_INTERVAL_MIN = 15L
             private const val SECONDS_PER_MINUTE = 60L
+            const val CATCH_UP_WORK_NAME = "verification_sync_catchup"
+
+            /**
+             * push 트리거용 expedited catch-up. Hilt 그래프에 접근 못 하는 BroadcastReceiver 도
+             * WorkManager 싱글톤으로 직접 호출할 수 있도록 static 으로 노출한다(전송 스펙 §0.6).
+             */
+            fun enqueueCatchUp(context: Context) {
+                val request =
+                    OneTimeWorkRequest
+                        .Builder(VerificationSyncWorker::class.java)
+                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                        .setConstraints(
+                            Constraints
+                                .Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build(),
+                        ).build()
+                WorkManager.getInstance(context).enqueueUniqueWork(
+                    CATCH_UP_WORK_NAME,
+                    // 이미 대기 중인 catch-up 이 있으면 유지(연쇄 발화 시 폭주 방지).
+                    ExistingWorkPolicy.KEEP,
+                    request,
+                )
+            }
         }
     }

@@ -7,6 +7,7 @@ import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.ruleup.verification.data.db.GeofenceTransitionEntity
 import com.ruleup.verification.data.db.verificationDatabase
+import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +53,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         ),
                     )
                 }
+                // 적재 직후 expedited catch-up flush 를 걸어 다음 30분 주기를 기다리지 않고 전송(전송 스펙 §0.6).
+                VerificationSyncSchedulerImpl.enqueueCatchUp(context.applicationContext)
             } finally {
                 pending.finish()
             }

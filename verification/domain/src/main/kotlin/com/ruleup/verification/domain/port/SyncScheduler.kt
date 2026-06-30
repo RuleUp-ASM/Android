@@ -10,4 +10,10 @@ interface SyncScheduler {
 
     /** 서버 권장 간격(nextSyncAfterSec)으로 다음 주기를 동적 재설정한다. */
     fun reschedule(nextSyncAfterSec: Int)
+
+    /**
+     * push(지오펜스 발화 등) 발생 시 expedited OneTimeWork 로 즉시 catch-up flush 를 건다(전송 스펙 §0.6).
+     * 쿼터 소진 시 일반 워크로 강등(RUN_AS_NON_EXPEDITED_WORK_REQUEST).
+     */
+    fun enqueueCatchUp()
 }
