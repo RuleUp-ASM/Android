@@ -16,11 +16,15 @@ data class SocialLoginAuthRequest(
     val deviceInfo: DeviceInfoDto? = null,
 )
 
-/** 공통 기기 정보 객체(명세 4.1~4.3). 로그인·가입 양쪽에 동반해 기기·SDK·앱버전을 저장한다. */
+/**
+ * 공통 기기 정보 객체(명세 4.1~4.3). 로그인·가입 양쪽에 동반해 기기·SDK·앱버전을 저장한다.
+ * [platform] 은 기본값을 두지 않는다 — Json(encodeDefaults=false)에서 값이 기본값과 같으면 제외돼
+ * "ANDROID" 가 누락되기 때문(빌더가 항상 채운다).
+ */
 @Serializable
 data class DeviceInfoDto(
     @SerialName("platform")
-    val platform: String = "ANDROID",
+    val platform: String,
     @SerialName("osVersion")
     val osVersion: String? = null,
     @SerialName("sdkInt")
