@@ -19,6 +19,21 @@ import javax.inject.Inject
 // 수집·동기화 경로 공통 로그 태그(Worker 와 동일). 디버그 오버레이/Logcat 에서 'VerifySync' 로 필터.
 private const val SYNC_LOG_TAG = "VerifySync"
 
+// 상세 로그 폭주 방지: 타입별 최대 이만큼만 값까지 찍고 나머지는 "…외 N건" 으로 줄인다.
+private const val MAX_DETAIL_PER_TYPE = 30
+
+// 드레인된 행의 실제 값을 한 줄씩 'VerifySync' 로 남긴다(디버그 오버레이/Logcat). 릴리스는 트리 미식재라 무시된다.
+private fun <T> List<T>.logSignalDetail(
+    type: String,
+    line: (T) -> String,
+) {
+    if (isEmpty()) return
+    take(MAX_DETAIL_PER_TYPE).forEach { Timber.tag(SYNC_LOG_TAG).i("  · %s", line(it)) }
+    if (size > MAX_DETAIL_PER_TYPE) {
+        Timber.tag(SYNC_LOG_TAG).i("  · %s …외 %d건", type, size - MAX_DETAIL_PER_TYPE)
+    }
+}
+
 /**
  * Room 기반 로컬 신호 버퍼(명세 §2.4·전송 스펙 §0.5). 드레인은 tagPending(배치키 부여) → byBatch → markSynced 흐름.
  * geofence/location/usage/health/sleep 신호 + signal_gap 공백 버퍼를 한 배치로 묶는다.
@@ -55,6 +70,23 @@ class SignalRepositoryImpl
                 healthReadings.size,
                 sleepSegments.size,
             )
+            // 건수 다음으로 실제 값까지 한 줄씩(타입별 최대 30건). 어느 패키지·좌표·헬스 수치·전이인지 눈으로 확인.
+            transitions.logSignalDetail("geofence") {
+                "geofence ${it.transition} req=${it.requestId} " +
+                    "(${"%.5f".format(it.lat)}, ${"%.5f".format(it.lng)}) acc=${it.accuracy}m mock=${it.isMock}"
+            }
+            locations.logSignalDetail("location") {
+                "location (${"%.5f".format(it.lat)}, ${"%.5f".format(it.lng)}) acc=${it.accuracy}m mock=${it.isMock}"
+            }
+            usage.logSignalDetail("usage") { "usage ${it.kind}/${it.eventType} ${it.packageName}" }
+            healthReadings.logSignalDetail("health") {
+                "health ${it.metric}=${it.value}${it.unit}" +
+                    (it.exerciseType?.let { e -> " ($e)" }.orEmpty()) +
+                    " ${it.date} via ${it.dataOrigin}"
+            }
+            sleepSegments.logSignalDetail("sleep") {
+                "sleep ${it.status} ${(it.endAt - it.startAt) / 60_000}m"
+            }
             if (transitions.isEmpty() &&
                 locations.isEmpty() &&
                 usage.isEmpty() &&
