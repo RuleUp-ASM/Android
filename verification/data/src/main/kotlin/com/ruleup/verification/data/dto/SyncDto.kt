@@ -1,6 +1,9 @@
 package com.ruleup.verification.data.dto
 
+import com.ruleup.verification.domain.entity.EnvelopeMetadata
+import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.UpdatedChallenge
@@ -10,7 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-// ---------- 3.1 sync 요청 (명세 §3.2 스코핑 페이로드) ----------
+// ---------- 3.1 sync 요청 (전송 스펙 §0.1 공통 envelope) ----------
 
 /** epoch millis → ISO-8601 (BE 가 KST 로 변환해 target_date 산정, 명세 §2.10). */
 @OptIn(ExperimentalTime::class)
@@ -128,10 +131,112 @@ data class SignalDto(
     val segments: List<SleepSegmentDto>? = null,
 )
 
+// ---------- §0.1 공통 envelope 필드 ----------
+
+/** Health Connect 신호별 권한 현황(전송 스펙 §0.1 permissions.healthConnect). */
 @Serializable
-data class SyncRequest(
-    @SerialName("collectedAt")
-    val collectedAt: String,
+data class HealthConnectPermissionsDto(
+    @SerialName("distance")
+    val distance: String,
+    @SerialName("steps")
+    val steps: String,
+    @SerialName("sleep")
+    val sleep: String,
+    @SerialName("background")
+    val background: String,
+)
+
+/** 신호별 권한 현황 스냅샷(전송 스펙 §0.1 permissions). 값은 GRANTED/DENIED. */
+@Serializable
+data class PermissionsDto(
+    @SerialName("location")
+    val location: String,
+    @SerialName("backgroundLocation")
+    val backgroundLocation: String,
+    @SerialName("activityRecognition")
+    val activityRecognition: String,
+    @SerialName("usageStats")
+    val usageStats: String,
+    @SerialName("postNotifications")
+    val postNotifications: String,
+    @SerialName("healthConnect")
+    val healthConnect: HealthConnectPermissionsDto,
+)
+
+/** VPN 게이트(전송 스펙 §6.1). */
+@Serializable
+data class NetworkDto(
+    @SerialName("vpnActive")
+    val vpnActive: Boolean,
+)
+
+/** Play Integrity verdict 토큰(전송 스펙 §6.5). token 없으면 envelope 에서 통째로 생략. */
+@Serializable
+data class IntegrityDto(
+    @SerialName("token")
+    val token: String,
+)
+
+/** worker heartbeat 진단(전송 스펙 §0.7). null 필드는 explicitNulls=false 로 생략. */
+@Serializable
+data class DiagnosticsDto(
+    @SerialName("lastSuccessfulFlushAt")
+    val lastSuccessfulFlushAt: Long? = null,
+    @SerialName("standbyBucket")
+    val standbyBucket: Int? = null,
+    @SerialName("backgroundRestricted")
+    val backgroundRestricted: Boolean? = null,
+    @SerialName("isIgnoringBatteryOptimizations")
+    val isIgnoringBatteryOptimizations: Boolean? = null,
+    @SerialName("expeditedDeferred")
+    val expeditedDeferred: Boolean? = null,
+    @SerialName("lastGeofenceReregisterAt")
+    val lastGeofenceReregisterAt: Long? = null,
+    @SerialName("hcSdkStatus")
+    val hcSdkStatus: String? = null,
+)
+
+/** 신호 공백 1건(전송 스펙 §0.5 gaps[]). 시각은 epoch millis. */
+@Serializable
+data class GapDto(
+    @SerialName("signalType")
+    val signalType: String,
+    @SerialName("reason")
+    val reason: String,
+    @SerialName("fromMillis")
+    val fromMillis: Long,
+    @SerialName("toMillis")
+    val toMillis: Long,
+    @SerialName("recoverable")
+    val recoverable: Boolean,
+)
+
+/**
+ * sync 1회 전송 단위 envelope(전송 스펙 §0.1). 신호 배치 + 디바이스 시계·권한·VPN·integrity·진단·gap.
+ * 정적 프로필(sdkInt/model/lowRam/appVersion)은 Phase 0(로그인)에서만 보내고 여기엔 싣지 않는다.
+ */
+@Serializable
+data class SyncEnvelopeRequest(
+    @SerialName("deviceTimeMillis")
+    val deviceTimeMillis: Long,
+    @SerialName("elapsedRealtimeMillis")
+    val elapsedRealtimeMillis: Long,
+    @SerialName("bootSessionId")
+    val bootSessionId: String,
+    @SerialName("timeZone")
+    val timeZone: String,
+    @SerialName("activeChallengeIds")
+    val activeChallengeIds: List<String>,
+    @SerialName("permissions")
+    val permissions: PermissionsDto,
+    @SerialName("network")
+    val network: NetworkDto,
+    @SerialName("integrity")
+    val integrity: IntegrityDto? = null,
+    @SerialName("diagnostics")
+    val diagnostics: DiagnosticsDto? = null,
+    @SerialName("gaps")
+    val gaps: List<GapDto>,
     @SerialName("signals")
     val signals: List<SignalDto>,
 )
@@ -225,10 +330,56 @@ private fun VerificationSignal.toDto(): SignalDto =
             )
     }
 
-internal fun SignalBatch.toRequest(): SyncRequest =
-    SyncRequest(
-        collectedAt = collectedAt,
-        signals = signals.map { it.toDto() },
+internal fun PermissionSnapshot.toDto(): PermissionsDto =
+    PermissionsDto(
+        location = location.name,
+        backgroundLocation = backgroundLocation.name,
+        activityRecognition = activityRecognition.name,
+        usageStats = usageStats.name,
+        postNotifications = postNotifications.name,
+        healthConnect =
+            HealthConnectPermissionsDto(
+                distance = healthDistance.name,
+                steps = healthSteps.name,
+                sleep = healthSleep.name,
+                background = healthBackground.name,
+            ),
+    )
+
+private fun SignalGap.toDto(): GapDto =
+    GapDto(
+        signalType = signalType,
+        reason = reason.name,
+        fromMillis = fromMillis,
+        toMillis = toMillis,
+        recoverable = recoverable,
+    )
+
+/**
+ * 도메인 envelope 메타데이터 + 신호 배치 → §0.1 envelope 와이어. 정적 프로필은 제외(Phase 0 전용).
+ */
+internal fun EnvelopeMetadata.toRequest(batch: SignalBatch): SyncEnvelopeRequest =
+    SyncEnvelopeRequest(
+        deviceTimeMillis = clock.deviceTimeMillis,
+        elapsedRealtimeMillis = clock.elapsedRealtimeMillis,
+        bootSessionId = clock.bootSessionId,
+        timeZone = clock.timeZone,
+        activeChallengeIds = activeChallengeIds,
+        permissions = permissions.toDto(),
+        network = NetworkDto(vpnActive = network.vpnActive),
+        integrity = integrity.token?.let { IntegrityDto(token = it) },
+        diagnostics =
+            DiagnosticsDto(
+                lastSuccessfulFlushAt = diagnostics.lastSuccessfulFlushAt,
+                standbyBucket = diagnostics.standbyBucket,
+                backgroundRestricted = diagnostics.backgroundRestricted,
+                isIgnoringBatteryOptimizations = diagnostics.isIgnoringBatteryOptimizations,
+                expeditedDeferred = diagnostics.expeditedDeferred,
+                lastGeofenceReregisterAt = diagnostics.lastGeofenceReregisterAt,
+                hcSdkStatus = diagnostics.hcSdkStatus,
+            ),
+        gaps = gaps.map { it.toDto() },
+        signals = batch.signals.map { it.toDto() },
     )
 
 // ---------- 3.1 sync 응답 ----------

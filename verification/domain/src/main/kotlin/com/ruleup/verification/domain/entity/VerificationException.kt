@@ -30,3 +30,9 @@ class ImageRequiredException : Exception("사진 인증에는 이미지가 필�
  * 이미 이번 주 폴백을 썼으면 그냥 NO_SIGNAL_RECEIVED 실패로 떨어진다 — 화면은 한도 안내.
  */
 class FallbackLimitExceededException : Exception("이번 주 수동 인증 횟수를 모두 사용했어요.")
+
+/**
+ * 셋업 앵커가 유효하지 않음 (명세 setup, HTTP 400 INVALID_ANCHOR).
+ * 반경 범위(500~5000m)·개수(최대 10) 위반 등 — 화면은 입력 수정 안내.
+ */
+class InvalidAnchorException : Exception("앵커 위치가 유효하지 않습니다.")

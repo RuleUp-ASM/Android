@@ -55,6 +55,8 @@ work = "2.10.0"
 healthConnect = "1.1.0-rc03"
 # 지도(Kakao Map SDK v2). 네이티브 앱키/REST 키는 local.properties → BuildConfig 주입.
 kakaoMap = "2.13.5"
+# 기기 무결성 verdict(Play Integrity, 전송 스펙 §6.5) — graded 신뢰도 하향용
+playIntegrity = "1.4.0"
 
 # image
 coil = "3.4.0"
@@ -153,6 +155,8 @@ androidx-metrics-performance = { group = "androidx.metrics", name = "metrics-per
 androidx-health-connect-client = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
 # 지도(Kakao Map SDK v2) — :core:map / :app(KakaoMapSdk.init)
 kakao-map = { module = "com.kakao.maps.open:android", version.ref = "kakaoMap" }
+# Play Integrity(기기 무결성 verdict) — verification:data
+play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 
 # logging
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }

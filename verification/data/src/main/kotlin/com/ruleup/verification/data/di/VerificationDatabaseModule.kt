@@ -7,6 +7,7 @@ import com.ruleup.verification.data.db.HealthReadingDao
 import com.ruleup.verification.data.db.HealthTargetDao
 import com.ruleup.verification.data.db.LocationSampleDao
 import com.ruleup.verification.data.db.ProgressCacheDao
+import com.ruleup.verification.data.db.SignalGapDao
 import com.ruleup.verification.data.db.SleepSegmentDao
 import com.ruleup.verification.data.db.UsageCursorDao
 import com.ruleup.verification.data.db.UsageEventDao
@@ -62,4 +63,7 @@ object VerificationDatabaseModule {
 
     @Provides
     fun provideHealthTargetDao(database: VerificationDatabase): HealthTargetDao = database.healthTargetDao()
+
+    @Provides
+    fun provideSignalGapDao(database: VerificationDatabase): SignalGapDao = database.signalGapDao()
 }

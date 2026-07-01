@@ -1,5 +1,6 @@
 package com.ruleup.verification.data.api
 
+import com.ruleup.verification.data.dto.KakaoCoord2AddressResponse
 import com.ruleup.verification.data.dto.KakaoKeywordResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -20,6 +21,16 @@ interface KakaoLocalApi {
         @Query("size") size: Int = DEFAULT_SIZE,
         @Query("sort") sort: String = SORT_ACCURACY,
     ): KakaoKeywordResponse
+
+    /**
+     * 좌표 → 주소 역지오코딩(명세 §5.3 지도 탭 보강). 지도를 탭한 지점의 행정/도로명 주소를 받아온다.
+     * x=경도, y=위도. 결과(documents)가 비면 좌표만으로 진행한다(바다·해외 등).
+     */
+    @GET("v2/local/geo/coord2address.json")
+    suspend fun coord2Address(
+        @Query("x") longitude: Double,
+        @Query("y") latitude: Double,
+    ): KakaoCoord2AddressResponse
 
     companion object {
         // 카카오 최대 15(명세 §5.2 상한 10과 호환). 자동완성 후보 개수.

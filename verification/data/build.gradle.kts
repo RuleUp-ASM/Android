@@ -70,9 +70,16 @@ dependencies {
     ksp(libs.androidx.hilt.compiler)
     // 움직임·수면 온디바이스 읽기(Health Connect)
     implementation(libs.androidx.health.connect.client)
+    // 부팅 세션 id·서버 정책(flushInterval/pollSec)·진단 앵커 영속(전송 스펙 §0.1·§0.3)
+    implementation(libs.androidx.datastore.preferences)
+    // 기기 무결성 verdict(Play Integrity, 전송 스펙 §6.5)
+    implementation(libs.play.integrity)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // 수집·동기화 경로 가시화 로그(디버그 오버레이/Logcat). Tree 는 :app 디버그 빌드에서 심는다.
+    implementation(libs.timber)
 
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.kotlinx.serialization.json)

@@ -15,6 +15,7 @@ import com.ruleup.verification.data.db.HealthReadingDao
 import com.ruleup.verification.data.db.HealthReadingEntity
 import com.ruleup.verification.data.db.SleepSegmentDao
 import com.ruleup.verification.data.db.SleepSegmentEntity
+import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.HealthDeviceType
 import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.HealthTarget
@@ -38,12 +39,30 @@ class HealthConnectCollector
         @ApplicationContext private val context: Context,
         private val healthReadingDao: HealthReadingDao,
         private val sleepSegmentDao: SleepSegmentDao,
+        private val gapRecorder: GapRecorder,
     ) {
         suspend fun capture(
             healthTargets: Set<HealthTarget>,
             sleepRequested: Boolean,
         ) {
             if (healthTargets.isEmpty() && !sleepRequested) return
+
+            // HC 가용성 분기(전송 스펙 §2.1) — 미지원/구버전 provider 는 gap 으로 사유를 보고하고 종료.
+            when (
+                androidx.health.connect.client.HealthConnectClient
+                    .getSdkStatus(context)
+            ) {
+                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE -> {
+                    recordHealthGaps(healthTargets, sleepRequested, GapReason.SIGNAL_UNSUPPORTED_DEVICE, recoverable = false)
+                    return
+                }
+                androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
+                    recordHealthGaps(healthTargets, sleepRequested, GapReason.HC_PROVIDER_UPDATE_REQUIRED, recoverable = true)
+                    return
+                }
+                else -> Unit
+            }
+
             val client = HealthPermissions.clientOrNull(context) ?: return
             val granted =
                 try {
@@ -54,6 +73,18 @@ class HealthConnectCollector
 
             if (healthTargets.isNotEmpty()) captureHealth(client, granted, healthTargets)
             if (sleepRequested) captureSleep(client, granted)
+        }
+
+        private suspend fun recordHealthGaps(
+            healthTargets: Set<HealthTarget>,
+            sleepRequested: Boolean,
+            reason: GapReason,
+            recoverable: Boolean,
+        ) {
+            val now = System.currentTimeMillis()
+            val from = now - GAP_WINDOW_MS
+            if (healthTargets.isNotEmpty()) gapRecorder.record("HEALTH", reason, from, now, recoverable)
+            if (sleepRequested) gapRecorder.record("SLEEP", reason, from, now, recoverable)
         }
 
         private suspend fun captureHealth(
@@ -268,5 +299,6 @@ class HealthConnectCollector
 
         private companion object {
             const val SLEEP_WINDOW_HOURS = 36L
+            const val GAP_WINDOW_MS = 30L * 60 * 1000
         }
     }

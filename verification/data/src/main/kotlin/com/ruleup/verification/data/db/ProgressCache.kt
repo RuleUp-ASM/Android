@@ -26,4 +26,8 @@ interface ProgressCacheDao {
 
     @Query("SELECT * FROM progress_cache ORDER BY updatedAt DESC")
     fun observeAll(): Flow<List<ProgressCacheEntity>>
+
+    /** envelope `activeChallengeIds` 소스(전송 스펙 §0.1) — 클라가 추적 중인 챌린지 id. */
+    @Query("SELECT challengeId FROM progress_cache")
+    suspend fun allChallengeIds(): List<String>
 }

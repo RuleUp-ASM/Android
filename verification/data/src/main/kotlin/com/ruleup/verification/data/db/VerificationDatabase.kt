@@ -22,8 +22,9 @@ import androidx.room.RoomDatabase
         SleepSegmentEntity::class,
         HealthTargetEntity::class,
         HealthSettingsEntity::class,
+        SignalGapEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class VerificationDatabase : RoomDatabase() {
@@ -46,6 +47,8 @@ abstract class VerificationDatabase : RoomDatabase() {
     abstract fun sleepSegmentDao(): SleepSegmentDao
 
     abstract fun healthTargetDao(): HealthTargetDao
+
+    abstract fun signalGapDao(): SignalGapDao
 }
 
 /**
