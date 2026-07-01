@@ -134,6 +134,6 @@ private fun needsBackgroundLocation(context: Context): Boolean {
 /** [SyncScheduler] 를 컴포저블(비-Hilt)에서 꺼내기 위한 Hilt 진입점(디버그 트리거 전용). */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
-interface DebugToolsEntryPoint {
+fun interface DebugToolsEntryPoint {
     fun syncScheduler(): SyncScheduler
 }

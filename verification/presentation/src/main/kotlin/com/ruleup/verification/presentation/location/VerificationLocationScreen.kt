@@ -43,6 +43,7 @@ import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.ui.helper.singleClickable
 import com.ruleup.verification.domain.entity.LocationPin
+import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.presentation.location.viewmodel.PendingSelection
 import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationEffect
@@ -111,82 +112,23 @@ fun VerificationLocationScreen(
         )
 
         // 상단 검색 오버레이(검색창 + 자동완성 목록).
-        Column(
+        SearchOverlay(
+            query = query,
+            isSearching = state.isSearching,
+            places = state.places,
+            onQueryChange = { query = it },
+            onPlaceClick = { place ->
+                // 결과 선택: 디바운스 재검색 1회 건너뛰고 입력칸을 이름으로 채운 뒤 핀 요청.
+                suppressSearch = true
+                query = place.name
+                viewModel.onIntent(VerificationLocationIntent.SelectPlace(place))
+            },
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                shadowElevation = 4.dp,
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    placeholder = { Text("브랜드·지점 검색 (예: 스포애니)") },
-                    singleLine = true,
-                    trailingIcon =
-                        if (state.isSearching) {
-                            { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) }
-                        } else {
-                            null
-                        },
-                    // 컨테이너(Surface)가 배경을 그리므로 테두리는 지운다.
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            // 자동완성 결과(상한 15개, 명세 §5.2). 선택 시 핀이 찍히고 목록이 닫힌다.
-            if (state.places.isNotEmpty()) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    shadowElevation = 4.dp,
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .heightIn(max = 280.dp)
-                                .verticalScroll(rememberScrollState()),
-                    ) {
-                        state.places.forEach { place ->
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .singleClickable {
-                                            suppressSearch = true
-                                            query = place.name
-                                            viewModel.onIntent(VerificationLocationIntent.SelectPlace(place))
-                                        }.padding(horizontal = 16.dp, vertical = 12.dp),
-                            ) {
-                                Text(place.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                place.address?.let {
-                                    Text(
-                                        it,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        )
 
         // 현재 위치 — 확인 카드·앵커 목록이 없을 때만 노출(겹침 방지). 권한 거부 시 숨김(명세 §5.4.2).
         if (state.pending == null && state.anchors.isEmpty() && permissionGranted) {
@@ -242,6 +184,90 @@ fun VerificationLocationScreen(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth(),
             )
+        }
+    }
+}
+
+/**
+ * 상단 검색 오버레이(명세 §5.2). 검색창 + 카카오 로컬 자동완성 목록(상한 15개)을 그린다.
+ * 결과를 고르면 [onPlaceClick] 으로 올려보낸다(핀 요청은 호스트가 처리).
+ */
+@Composable
+private fun SearchOverlay(
+    query: String,
+    isSearching: Boolean,
+    places: List<Place>,
+    onQueryChange: (String) -> Unit,
+    onPlaceClick: (Place) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            shadowElevation = 4.dp,
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                placeholder = { Text("브랜드·지점 검색 (예: 스포애니)") },
+                singleLine = true,
+                trailingIcon =
+                    if (isSearching) {
+                        { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) }
+                    } else {
+                        null
+                    },
+                // 컨테이너(Surface)가 배경을 그리므로 테두리는 지운다.
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                    ),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        // 자동완성 결과(상한 15개, 명세 §5.2). 선택 시 핀이 찍히고 목록이 닫힌다.
+        if (places.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                shadowElevation = 4.dp,
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier =
+                        Modifier
+                            .heightIn(max = 280.dp)
+                            .verticalScroll(rememberScrollState()),
+                ) {
+                    places.forEach { place ->
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .singleClickable { onPlaceClick(place) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                        ) {
+                            Text(place.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            place.address?.let {
+                                Text(
+                                    it,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
