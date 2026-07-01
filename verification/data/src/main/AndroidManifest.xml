@@ -11,6 +11,15 @@
     <!-- 재부팅 후 지오펜스 재등록(BootReceiver, §2.3). OS 등록은 부팅 시 소멸한다. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- VPN 활성 여부 동기 게이트(NetworkStateProvider, 전송 스펙 §6.1). 설치 시 자동 부여되는
+         일반 권한이지만 ConnectivityManager 접근에는 매니페스트 선언이 필요하다(MissingPermission). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- expedited catch-up sync 가 API 31 미만에서 foreground service 로 승격될 때 필요
+         (VerificationSyncWorker.getForegroundInfo, 전송 스펙 §0.6). DATA_SYNC 는 API 34+ 전용. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <!-- 스크린타임/WAKE 특수권한(사용기록 접근, §4). 런타임 권한이 아니라 Settings 에서 토글하는
          보호 권한이라 lint(ProtectedPermissions)를 억제한다. -->
     <uses-permission
@@ -29,6 +38,13 @@
     </queries>
 
     <application>
+        <!-- WorkManager 의 foreground service 승격 경로에 dataSync 타입을 부여(SpecifyForegroundServiceType).
+             work-runtime 이 선언한 SystemForegroundService 에 속성만 병합한다. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
         <!-- 지오펜스 전이 수신(§2.1). 앱이 만든 '명시적' PendingIntent(geofencePendingIntent)로만
              Play Services 가 호출하므로 외부 노출 불필요 → exported=false. -->
         <receiver
