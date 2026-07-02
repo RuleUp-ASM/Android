@@ -35,7 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,7 +53,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.ui.category.categoryAccentColor
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.singleClickable
@@ -254,7 +253,7 @@ private fun DetailTopBar(onBack: () -> Unit) {
 
 @Composable
 private fun DetailHero(detail: ChallengeDetail) {
-    val accent = accentColorFor(detail.category)
+    val accent = categoryAccentColor(detail.category)
     Column(
         modifier =
             Modifier
@@ -436,16 +435,4 @@ private fun permissionLabel(token: String): String =
         "HEALTH", "HEALTH_CONNECT" -> "건강 데이터"
         "USAGE", "USAGE_STATS", "PACKAGE_USAGE_STATS" -> "사용 기록 접근"
         else -> token
-    }
-
-/** 카테고리별 강조색(Figma 카드 아이콘 톤). 디자인 시스템 brand 와 별개로 violet 계열 포함. */
-private fun accentColorFor(category: InterestCategory?): Color =
-    when (category) {
-        InterestCategory.WAKE_UP, InterestCategory.MEDITATION -> Color(0xFF6C5CE7)
-        InterestCategory.READING, InterestCategory.STUDY, InterestCategory.WRITING -> Color(0xFF22C55E)
-        InterestCategory.HEALTH, InterestCategory.COOKING -> Color(0xFFF59E0B)
-        InterestCategory.EXERCISE -> Color(0xFFF43F5E)
-        InterestCategory.FINANCE, InterestCategory.WORK -> Color(0xFF3B82F6)
-        InterestCategory.MUSIC, InterestCategory.HOBBY -> Color(0xFF06B6D4)
-        else -> Color(0xFF6C5CE7)
     }
