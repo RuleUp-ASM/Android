@@ -1,6 +1,5 @@
 package com.ruleup.android_ruleup.navigation
 
-import android.util.Log
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.togetherWith
@@ -14,6 +13,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.ui.helper.LocalNavigationHelper
+import timber.log.Timber
 
 @Composable
 fun PlatformNavDisplay(
@@ -38,7 +38,7 @@ fun PlatformNavDisplay(
                 entry<GenericNavKey> { navKey ->
                     val route = appRouteByPath[navKey.path]
                     if (route == null) {
-                        Log.w("[Navigation]", "Unknown path on render: ${navKey.path}")
+                        Timber.tag("[Navigation]").w("Unknown path on render: %s", navKey.path)
                         LocalNavigationHelper.current.navigateTo(IntroPromisePage)
                         return@entry
                     }
