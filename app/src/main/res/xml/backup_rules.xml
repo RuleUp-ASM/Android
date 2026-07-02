@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+   Auto Backup 규칙 (API < 31, fullBackupContent).
+   인증 토큰 DataStore 는 클라우드 백업 대상에서 제외한다(refresh 토큰 유출 방지).
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <exclude domain="file" path="datastore/token.preferences_pb" />
 </full-backup-content>

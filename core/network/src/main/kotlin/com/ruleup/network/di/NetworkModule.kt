@@ -20,11 +20,15 @@ import okio.buffer
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import timber.log.Timber
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+    /** app 계층이 BuildConfig.DEBUG 로 채워 주입하는 HTTP 로깅 on/off 플래그. */
+    const val DEBUG_LOGGING = "network_debug_logging"
+
     // Authorization 헤더를 붙이면 안 되는 공개(비인증) 엔드포인트 경로 조각.
     private val NO_AUTH_PATHS =
         listOf(
@@ -44,7 +48,10 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(tokenRepository: TokenRepository): OkHttpClient {
+    fun provideOkHttpClient(
+        tokenRepository: TokenRepository,
+        @Named(DEBUG_LOGGING) debugLogging: Boolean,
+    ): OkHttpClient {
         // 저장된 accessToken 이 있으면 매 요청마다 Authorization 헤더로 주입한다.
         // 단, 로그인/가입/토큰갱신 같은 공개(비인증) 엔드포인트에는 헤더를 붙이지 않는다.
         // (만료된 토큰이 로그인 요청에 실려 나가면 백엔드 JWT 필터가 401 로 막아버린다.)
@@ -65,16 +72,26 @@ object NetworkModule {
                 chain.proceed(request)
             }
 
-        // 기본 로깅 인터셉터를 Timber 로 출력해 Logcat 에서 HttpClient 태그로 보이게 한다.
-        val loggingInterceptor =
-            HttpLoggingInterceptor { message -> Timber.tag("HttpClient").d(message) }
-                .apply { level = HttpLoggingInterceptor.Level.BODY }
+        val builder =
+            OkHttpClient
+                .Builder()
+                .addInterceptor(authInterceptor)
 
-        return OkHttpClient
-            .Builder()
-            .addInterceptor(authInterceptor)
+        // BODY 로깅은 디버그 빌드에서만 장착한다. 릴리스에선 전체 본문 버퍼링·문자열화 비용과
+        // 토큰/좌표·헬스 페이로드 유출 위험을 모두 제거한다. 디버그에서도 인증 헤더는 마스킹.
+        if (debugLogging) {
+            val loggingInterceptor =
+                HttpLoggingInterceptor { message -> Timber.tag("HttpClient").d(message) }
+                    .apply {
+                        level = HttpLoggingInterceptor.Level.BODY
+                        redactHeader("Authorization")
+                        redactHeader("Cookie")
+                    }
             // 로깅 → gzip 순서로 두어 BODY 로그는 압축 전 원문이 보이고, 전송만 압축된다.
-            .addInterceptor(loggingInterceptor)
+            builder.addInterceptor(loggingInterceptor)
+        }
+
+        return builder
             .addInterceptor(GzipRequestInterceptor())
             .build()
     }
