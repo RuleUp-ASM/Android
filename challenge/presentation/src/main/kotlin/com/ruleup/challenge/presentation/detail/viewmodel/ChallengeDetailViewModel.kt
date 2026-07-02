@@ -95,6 +95,7 @@ class ChallengeDetailViewModel
             if (id.isBlank()) return
             // GPS 루틴 좌표 바인딩(verification/location) 으로 이동. 참여 API 가 memberId 를 돌려주지 않아
             // verification 의 기존 POC 관례대로 challengeMemberId 자리에 challengeId 를 넣는다.
+            // 로컬 등록한 대상 앱을 함께 실어보내, 앵커 등록 화면이 setup 제출 시 앵커와 같이 전송하게 한다.
             navigationHelper.navigateByRoute(
                 NavRoute(
                     AppRoutes.VERIFICATION_LOCATION,
@@ -102,6 +103,7 @@ class ChallengeDetailViewModel
                         "challengeMemberId" to id,
                         "defaultRadiusM" to "100.0",
                         "dwellMinutes" to "60",
+                        "targetPackages" to targetAppStore.registered(id).joinToString(","),
                     ),
                 ),
             )

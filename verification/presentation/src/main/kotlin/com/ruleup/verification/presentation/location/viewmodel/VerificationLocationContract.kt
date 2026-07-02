@@ -38,10 +38,11 @@ sealed interface VerificationLocationIntent : MviIntent {
         val index: Int,
     ) : VerificationLocationIntent
 
-    /** [제출] → 누적 앵커를 setup 으로 송신(명세 setup). READY 면 첫 앵커를 OS 지오펜스로 등록 후 종료. */
+    /** [제출] → 누적 앵커 + 대상 앱을 setup 으로 함께 송신(명세 setup). READY 면 첫 앵커를 OS 지오펜스로 등록 후 종료. */
     data class Submit(
         val challengeId: String,
         val dwellMinutes: Int,
+        val targetPackages: List<String>,
     ) : VerificationLocationIntent
 
     /** 하단 카드 [취소] → 핀/카드 제거. */

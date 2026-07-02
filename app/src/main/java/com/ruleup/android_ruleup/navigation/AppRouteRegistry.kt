@@ -136,6 +136,11 @@ val appRoutes: List<AppRoute> =
                     challengeMemberId = args[VerificationLocationPage.ARG_MEMBER_ID].orEmpty(),
                     defaultRadiusM = args[VerificationLocationPage.ARG_RADIUS]?.toFloatOrNull() ?: 100f,
                     dwellMinutes = args[VerificationLocationPage.ARG_DWELL]?.toIntOrNull() ?: 60,
+                    targetPackages =
+                        args[VerificationLocationPage.ARG_TARGET_PACKAGES]
+                            ?.split(VerificationLocationPage.TARGET_PACKAGES_DELIMITER)
+                            ?.filter { it.isNotBlank() }
+                            .orEmpty(),
                 )
             },
         ),
