@@ -59,7 +59,8 @@ object NetworkModule {
             Interceptor { chain ->
                 val original = chain.request()
                 val skipAuth = NO_AUTH_PATHS.any { original.url.encodedPath.contains(it) }
-                val token = runBlocking { tokenRepository.getAccessToken() }
+                // 캐시 스냅샷을 먼저 읽어 워커 스레드 블로킹을 피하고, 콜드(앱 재시작 직후 첫 요청)일 때만 1회 블로킹 조회한다.
+                val token = tokenRepository.cachedAccessToken() ?: runBlocking { tokenRepository.getAccessToken() }
                 val request =
                     if (!token.isNullOrBlank() && !skipAuth) {
                         original

@@ -16,22 +16,34 @@ class TokenRepositoryImpl
     constructor(
         private val dataStore: DataStore<Preferences>,
     ) : TokenRepository {
+        // 인터셉터의 동기 조회용 accessToken 스냅샷. 저장/조회/삭제 시 갱신한다(@Volatile: 스레드 간 가시성).
+        @Volatile
+        private var cachedAccess: String? = null
+
         // refreshToken 존재 여부로 로그인 상태를 반영하는 reactive Flow.
         override val isLoggedIn: Flow<Boolean> =
             dataStore.data.map { prefs -> prefs[KEY_REFRESH] != null }
 
         override suspend fun saveTokens(token: Token) {
+            cachedAccess = token.accessToken
             dataStore.edit { prefs ->
                 prefs[KEY_ACCESS] = token.accessToken
                 prefs[KEY_REFRESH] = token.refreshToken
             }
         }
 
-        override suspend fun getAccessToken(): String? = dataStore.data.map { it[KEY_ACCESS] }.first()
+        override suspend fun getAccessToken(): String? =
+            dataStore.data
+                .map { it[KEY_ACCESS] }
+                .first()
+                .also { cachedAccess = it }
+
+        override fun cachedAccessToken(): String? = cachedAccess
 
         override suspend fun getRefreshToken(): String? = dataStore.data.map { it[KEY_REFRESH] }.first()
 
         override suspend fun clear() {
+            cachedAccess = null
             dataStore.edit { it.clear() }
         }
 
