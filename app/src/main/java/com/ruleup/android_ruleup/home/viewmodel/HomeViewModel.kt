@@ -12,6 +12,9 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import com.ruleup.verification.domain.usecase.ObserveProgressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,6 +32,9 @@ class HomeViewModel
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<HomeIntent, HomeState, HomeReducerEvent, NoEffect>(HomeState.initial) {
+        // 진행 중 로드. 홈 재진입(LaunchedEffect 재발화)마다 중복 요청을 막는다.
+        private var loadJob: Job? = null
+
         override fun onIntent(intent: HomeIntent) {
             when (intent) {
                 HomeIntent.Load -> load()
@@ -54,15 +60,24 @@ class HomeViewModel
             }
 
         private fun load() {
-            viewModelScope.launch {
-                dispatch(HomeReducerEvent.Loading)
-                val myChallenges = runCatching { getMyChallengesUseCase() }.getOrDefault(emptyList())
-                val progress = runCatching { observeProgressUseCase() }.getOrNull()
-                dispatch(
-                    HomeReducerEvent.Loaded(
-                        mergeHomeChallenges(myChallenges, progress, myChallengeStore.all()),
-                    ),
-                )
-            }
+            // 이미 로드 중이면 중복 실행하지 않는다(재진입 시 요청 폭주 방지).
+            if (loadJob?.isActive == true) return
+            loadJob =
+                viewModelScope.launch {
+                    // 첫 로드만 로딩 스피너를 띄우고, 데이터가 이미 있으면 깜빡임 없이 백그라운드 새로고침한다.
+                    if (currentState.challenges.isEmpty()) dispatch(HomeReducerEvent.Loading)
+                    // 서로 독립인 두 조회를 병렬로 실행해 첫 렌더 지연을 줄인다(각 실패는 흡수).
+                    val (myChallenges, progress) =
+                        coroutineScope {
+                            val challenges = async { runCatching { getMyChallengesUseCase() }.getOrDefault(emptyList()) }
+                            val progressSnapshot = async { runCatching { observeProgressUseCase() }.getOrNull() }
+                            challenges.await() to progressSnapshot.await()
+                        }
+                    dispatch(
+                        HomeReducerEvent.Loaded(
+                            mergeHomeChallenges(myChallenges, progress, myChallengeStore.all()),
+                        ),
+                    )
+                }
         }
     }
