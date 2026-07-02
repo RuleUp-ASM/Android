@@ -486,6 +486,9 @@ private fun MannerTemperatureSection(
     temperature: Int,
     onIntent: (CreateChallengeIntent) -> Unit,
 ) {
+    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 커밋한다(프레임마다 전체 State 왕복 방지).
+    var drag by remember(temperature) { mutableStateOf(temperature.toFloat()) }
+    val shown = drag.roundToInt()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionLabel(text = "참여 매너 온도") {
             Row(
@@ -538,7 +541,7 @@ private fun MannerTemperatureSection(
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        "$temperature",
+                        "$shown",
                         style =
                             TextStyle(
                                 brush =
@@ -561,9 +564,10 @@ private fun MannerTemperatureSection(
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Slider(
-                    value = temperature.toFloat(),
-                    onValueChange = {
-                        onIntent(CreateChallengeIntent.SetMinMannerTemperature(it.toInt()))
+                    value = drag,
+                    onValueChange = { drag = it },
+                    onValueChangeFinished = {
+                        onIntent(CreateChallengeIntent.SetMinMannerTemperature(shown))
                     },
                     valueRange =
                         CreateChallengeState.MANNER_MIN.toFloat()..CreateChallengeState.MANNER_MAX.toFloat(),
@@ -603,7 +607,7 @@ private fun MannerTemperatureSection(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 mannerLevels.forEach { level ->
-                    val active = temperature in level.range
+                    val active = shown in level.range
                     Box(
                         modifier =
                             Modifier
@@ -1002,11 +1006,14 @@ private fun NumberSliderRow(
     max: Double,
     onIntent: (CreateChallengeIntent) -> Unit,
 ) {
-    val current = ((spec.value as? ParamValue.Num)?.value ?: min).coerceIn(min, max)
+    val committed = ((spec.value as? ParamValue.Num)?.value ?: min).coerceIn(min, max)
     val isInt = min % 1.0 == 0.0 && max % 1.0 == 0.0
     val span = (max - min).toInt()
     // 정수 범위가 촘촘하면 각 정수에 스냅(steps=칸수-1), 넓거나 소수면 연속으로 두고 반올림.
     val steps = if (isInt && span in 2..50) span - 1 else 0
+    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 State 로 커밋한다(프레임마다 전체 State 왕복·섹션 리컴포지션 방지).
+    var dragValue by remember(committed) { mutableStateOf(committed.toFloat()) }
+    val shown = if (isInt) dragValue.roundToInt().toDouble() else dragValue.toDouble()
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1024,7 +1031,7 @@ private fun NumberSliderRow(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    current.asParamText(),
+                    shown.asParamText(),
                     color = RuleUpTheme.colors.brand,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -1041,9 +1048,10 @@ private fun NumberSliderRow(
             }
         }
         Slider(
-            value = current.toFloat(),
-            onValueChange = { v ->
-                val snapped = if (isInt) v.roundToInt().toDouble() else v.toDouble()
+            value = dragValue,
+            onValueChange = { dragValue = it },
+            onValueChangeFinished = {
+                val snapped = if (isInt) dragValue.roundToInt().toDouble() else dragValue.toDouble()
                 onIntent(CreateChallengeIntent.EditParam(spec.key, ParamValue.Num(snapped.coerceIn(min, max))))
             },
             valueRange = min.toFloat()..max.toFloat(),

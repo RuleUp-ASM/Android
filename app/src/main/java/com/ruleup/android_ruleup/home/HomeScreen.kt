@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,10 +16,10 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,27 +81,28 @@ private fun HomeContent(
                     .statusBarsPadding(),
         ) {
             HomeHeader()
-            Column(
+            LazyColumn(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp)
-                        .padding(top = 12.dp, bottom = 120.dp),
+                        .weight(1f),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                WeekStreakCard()
-                FilterTabs(
-                    filter = state.filter,
-                    activeCount = state.activeCount,
-                    todayCount = state.todayCount,
-                    onSelect = { onIntent(HomeIntent.SelectFilter(it)) },
-                )
-                if (state.visibleChallenges.isEmpty() && !state.isLoading) {
-                    EmptyChallenges()
+                item { WeekStreakCard() }
+                item {
+                    FilterTabs(
+                        filter = state.filter,
+                        activeCount = state.activeCount,
+                        todayCount = state.todayCount,
+                        onSelect = { onIntent(HomeIntent.SelectFilter(it)) },
+                    )
+                }
+                val cards = state.visibleChallenges
+                if (cards.isEmpty() && !state.isLoading) {
+                    item { EmptyChallenges() }
                 } else {
-                    state.visibleChallenges.forEach { card ->
+                    items(cards, key = { it.challengeId }) { card ->
                         ChallengeCard(card = card, onClick = { onIntent(HomeIntent.OpenChallenge(card.challengeId)) })
                     }
                 }
