@@ -7,6 +7,7 @@ import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
+import com.ruleup.verification.domain.usecase.GetMyLocationUseCase
 import com.ruleup.verification.domain.usecase.ReverseGeocodeUseCase
 import com.ruleup.verification.domain.usecase.SearchPlacesUseCase
 import com.ruleup.verification.domain.usecase.SubmitChallengeSetupUseCase
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class VerificationLocationViewModel
     @Inject
     constructor(
+        private val getMyLocationUseCase: GetMyLocationUseCase,
         private val submitChallengeSetupUseCase: SubmitChallengeSetupUseCase,
         private val bindLocationUseCase: BindLocationUseCase,
         private val searchPlacesUseCase: SearchPlacesUseCase,
@@ -41,6 +43,7 @@ class VerificationLocationViewModel
 
         override fun onIntent(intent: VerificationLocationIntent) {
             when (intent) {
+                is VerificationLocationIntent.Init -> init(intent)
                 is VerificationLocationIntent.AddAnchor -> addAnchor(intent)
                 is VerificationLocationIntent.RemoveAnchor -> dispatch(VerificationLocationReducerEvent.AnchorRemoved(intent.index))
                 is VerificationLocationIntent.Submit -> submit(intent)
@@ -57,6 +60,7 @@ class VerificationLocationViewModel
             event: VerificationLocationReducerEvent,
         ): VerificationLocationState =
             when (event) {
+                VerificationLocationReducerEvent.CheckingDone -> state.copy(isChecking = false)
                 VerificationLocationReducerEvent.Submitting -> state.copy(isSubmitting = true, missing = emptyList())
                 VerificationLocationReducerEvent.Finished -> state.copy(isSubmitting = false)
                 VerificationLocationReducerEvent.Searching -> state.copy(isSearching = true)
@@ -75,6 +79,20 @@ class VerificationLocationViewModel
                     state.copy(anchors = state.anchors.filterIndexed { i, _ -> i != event.index })
                 is VerificationLocationReducerEvent.MissingUpdated -> state.copy(missing = event.missing)
             }
+
+        // 진입 게이트: 앵커 조회로 등록 여부 확인. 이미 등록돼 있으면 재등록하지 않고 종료(뒤로가기),
+        // 미등록(null)일 때만 지도 등록 UI 를 연다. 조회 자체 실패는 등록을 막지 않도록 미등록처럼 진행한다.
+        private fun init(intent: VerificationLocationIntent.Init) {
+            viewModelScope.launch {
+                val existing = runCatching { getMyLocationUseCase(intent.challengeId) }.getOrNull()
+                if (existing != null) {
+                    emitEffect(VerificationLocationEffect.ShowMessage("이미 인증 장소가 등록돼 있어요"))
+                    navigationHelper.navigateToBack()
+                } else {
+                    dispatch(VerificationLocationReducerEvent.CheckingDone)
+                }
+            }
+        }
 
         // 지도 탭: 핀은 즉시 표시(주소는 뒤따라). 결과가 없으면 좌표만으로 진행한다.
         private fun tapMap(intent: VerificationLocationIntent.TapMap) {

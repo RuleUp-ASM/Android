@@ -9,6 +9,14 @@ import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.SetupMissing
 
 sealed interface VerificationLocationIntent : MviIntent {
+    /**
+     * 화면 진입 → 앵커 조회(명세: GET /my-location)로 등록 여부 확인. 이미 등록돼 있으면 재등록하지 않고
+     * 종료하고, 미등록일 때만 지도 등록 UI 를 노출한다.
+     */
+    data class Init(
+        val challengeId: String,
+    ) : VerificationLocationIntent
+
     /** 지도 탭 → 역지오코딩 후 확인 대기 핀(명세 §5.3). 핀은 즉시 뜨고 주소는 뒤따라 채워진다. */
     data class TapMap(
         val lat: Double,
@@ -60,6 +68,8 @@ data class PendingSelection(
 )
 
 data class VerificationLocationState(
+    // 진입 시 앵커 조회로 등록 여부 확인 중(완료 전에는 지도 대신 로딩 표시).
+    val isChecking: Boolean = true,
     // setup 제출 진행 중(서버 송신 + READY 시 OS 등록).
     val isSubmitting: Boolean = false,
     val isSearching: Boolean = false,
@@ -78,6 +88,9 @@ data class VerificationLocationState(
 }
 
 sealed interface VerificationLocationReducerEvent : ReducerEvent {
+    /** 앵커 조회 완료(미등록 확인) → 로딩 해제하고 지도 등록 UI 노출. */
+    data object CheckingDone : VerificationLocationReducerEvent
+
     data object Submitting : VerificationLocationReducerEvent
 
     data object Finished : VerificationLocationReducerEvent

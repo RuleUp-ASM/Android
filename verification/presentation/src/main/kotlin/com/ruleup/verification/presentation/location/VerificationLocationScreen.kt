@@ -84,6 +84,19 @@ fun VerificationLocationScreen(
         }
     }
 
+    // 진입 시 앵커 조회로 등록 여부 확인. 이미 등록돼 있으면 재등록 없이 종료된다.
+    LaunchedEffect(Unit) {
+        viewModel.onIntent(VerificationLocationIntent.Init(challengeMemberId))
+    }
+
+    // 확인 전에는 지도 대신 로딩만 노출(등록된 경우 곧바로 뒤로가기 되므로 지도를 띄우지 않는다).
+    if (state.isChecking) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
     // 입력이 멈추면(디바운스) 카카오 로컬 자동완성. 공백이면 목록을 닫는다.
     LaunchedEffect(query) {
         if (suppressSearch) {

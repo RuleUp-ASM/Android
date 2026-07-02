@@ -224,7 +224,7 @@ class RunSyncUseCaseTest {
             targetPackages: List<String>,
         ): ChallengeSetupResult = error("unused")
 
-        override suspend fun getMyLocation(challengeId: String): MyLocation = error("unused")
+        override suspend fun getMyLocation(challengeId: String): MyLocation? = error("unused")
 
         override suspend fun submitManual(
             challengeId: String,
