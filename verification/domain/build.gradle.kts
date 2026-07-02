@@ -29,7 +29,7 @@ dependencies {
     api(project(":core:domain"))
     api(project(":core:entity"))
     // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
-    implementation(project(":core:analytics"))
+    implementation(project(":core:analytics-api"))
     // 진행률 캐시 관찰(ProgressCacheStore.observe(): Flow).
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
