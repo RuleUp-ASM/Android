@@ -6,6 +6,7 @@ import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -55,6 +56,13 @@ interface VerificationRepository {
         anchors: List<LocationPin>,
         targetPackages: List<String> = emptyList(),
     ): ChallengeSetupResult
+
+    /**
+     * 내 인증 장소(앵커) 조회(명세: GET /my-location). 위치 셋업/수정 재진입 시 지도 핀 복원용.
+     * 참여(ACTIVE) 멤버만 접근하며, 바인딩된 앵커가 없으면 서버가 GEOFENCE_NOT_CONFIGURED(400) 로
+     * 실패해 [com.ruleup.network.dto.ApiException] 로 전파된다.
+     */
+    suspend fun getMyLocation(challengeId: String): MyLocation
 
     /** 수동 인증 제출(명세 3.4·§9). PHOTO 는 [imageUrl] 필수. [asFallback]=true 면 예비 폴백(§9.2). */
     suspend fun submitManual(

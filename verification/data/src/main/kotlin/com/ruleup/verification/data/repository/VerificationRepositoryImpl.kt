@@ -20,6 +20,7 @@ import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -96,6 +97,12 @@ class VerificationRepositoryImpl
                     else -> throw e
                 }
             }
+
+        override suspend fun getMyLocation(challengeId: String): MyLocation =
+            api
+                .getMyLocation(challengeId)
+                .getOrThrow()
+                .toDomain()
 
         override suspend fun submitManual(
             challengeId: String,
