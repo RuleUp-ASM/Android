@@ -5,8 +5,8 @@ import androidx.compose.ui.graphics.Color
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.ui.R
+import com.ruleup.ui.category.categoryAccentColor
+import com.ruleup.ui.category.categoryIconRes
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 
@@ -67,8 +67,8 @@ private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi 
         subtitle = listOf(dayPart, groupPart).joinToString(" · "),
         progress = progress?.let { (it.progressRate / 100.0).toFloat().coerceIn(0f, 1f) } ?: 0f,
         todayTarget = progress?.todayTarget ?: false,
-        iconRes = iconResFor(category),
-        accentColor = accentColorFor(category),
+        iconRes = categoryIconRes(category),
+        accentColor = categoryAccentColor(category),
     )
 }
 
@@ -86,8 +86,8 @@ private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
         subtitle = listOfNotNull(dayPart, groupPart).joinToString(" · "),
         progress = (progressRate / 100.0).toFloat().coerceIn(0f, 1f),
         todayTarget = todayTarget,
-        iconRes = iconResFor(category),
-        accentColor = accentColorFor(category),
+        iconRes = categoryIconRes(category),
+        accentColor = categoryAccentColor(category),
     )
 }
 
@@ -98,38 +98,6 @@ private fun MyChallengeSummary.toHomeUi(): HomeChallengeUi =
         subtitle = "오늘 시작 · ${if (participationType == ParticipationType.GROUP) "함께" else "솔로"}",
         progress = 0f,
         todayTarget = true,
-        iconRes = iconResFor(category),
-        accentColor = accentColorFor(category),
+        iconRes = categoryIconRes(category),
+        accentColor = categoryAccentColor(category),
     )
-
-@DrawableRes
-private fun iconResFor(category: InterestCategory?): Int =
-    when (category) {
-        InterestCategory.EXERCISE -> R.drawable.ic_cat_exercise
-        InterestCategory.READING, InterestCategory.STUDY -> R.drawable.ic_cat_reading
-        InterestCategory.MEDITATION -> R.drawable.ic_cat_meditation
-        InterestCategory.HEALTH -> R.drawable.ic_cat_health
-        InterestCategory.WAKE_UP -> R.drawable.ic_cat_wakeup
-        InterestCategory.WORK -> R.drawable.ic_cat_work
-        InterestCategory.HOBBY -> R.drawable.ic_cat_hobby
-        InterestCategory.COOKING -> R.drawable.ic_cat_cooking
-        InterestCategory.FINANCE -> R.drawable.ic_cat_finance
-        InterestCategory.ENVIRONMENT -> R.drawable.ic_cat_environment
-        InterestCategory.RELATIONSHIP -> R.drawable.ic_cat_relationship
-        InterestCategory.MUSIC -> R.drawable.ic_cat_music
-        InterestCategory.WRITING -> R.drawable.ic_cat_writing
-        InterestCategory.CODING -> R.drawable.ic_cat_coding
-        null -> R.drawable.ic_cat_exercise
-    }
-
-/** 카테고리별 강조색(Figma 카드 아이콘 톤). */
-private fun accentColorFor(category: InterestCategory?): Color =
-    when (category) {
-        InterestCategory.WAKE_UP, InterestCategory.MEDITATION -> Color(0xFF6C5CE7)
-        InterestCategory.READING, InterestCategory.STUDY, InterestCategory.WRITING -> Color(0xFF22C55E)
-        InterestCategory.HEALTH, InterestCategory.COOKING -> Color(0xFFF59E0B)
-        InterestCategory.EXERCISE -> Color(0xFFF43F5E)
-        InterestCategory.FINANCE, InterestCategory.WORK -> Color(0xFF3B82F6)
-        InterestCategory.MUSIC, InterestCategory.HOBBY -> Color(0xFF06B6D4)
-        else -> Color(0xFF6C5CE7)
-    }

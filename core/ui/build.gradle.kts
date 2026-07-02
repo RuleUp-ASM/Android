@@ -35,6 +35,8 @@ kotlin {
 
 dependencies {
     api(project(":core:domain"))
+    // 카테고리 → 색/아이콘 매핑(CategoryVisuals)이 InterestCategory 를 공개 시그니처로 노출한다.
+    api(project(":core:entity"))
 
     // core:ui 는 공유 UI 키트이므로 Compose/ViewModel 을 api 로 전파한다.
     api(platform(libs.androidx.compose.bom))
