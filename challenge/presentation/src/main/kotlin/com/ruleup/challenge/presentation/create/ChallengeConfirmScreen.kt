@@ -62,6 +62,7 @@ import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpPalette
 import com.ruleup.ui.theme.RuleUpTheme
+import kotlin.math.roundToInt
 
 /** 02 · AI 추천 확인. 추천값을 항목별로 보여주고 자유롭게 수정한 뒤 확정한다. */
 @Composable
@@ -980,6 +981,95 @@ private fun ParamsEditor(
 
 @Composable
 private fun ParamRow(
+    spec: ParamSpec,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    val min = spec.min
+    val max = spec.max
+    // 범위(min·max)가 있는 숫자 목표값은 슬라이더로, TIME·범위 없는 값은 텍스트 입력으로.
+    if (spec.kind == ParamKind.NUMBER && min != null && max != null && max > min) {
+        NumberSliderRow(spec = spec, min = min, max = max, onIntent = onIntent)
+    } else {
+        TextParamRow(spec = spec, onIntent = onIntent)
+    }
+}
+
+/** min~max 슬라이더로 "얼만큼 할지"를 고른다. 정수 범위면 정수 스텝, 현재값·단위는 상단에 강조 표시. */
+@Composable
+private fun NumberSliderRow(
+    spec: ParamSpec,
+    min: Double,
+    max: Double,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    val current = ((spec.value as? ParamValue.Num)?.value ?: min).coerceIn(min, max)
+    val isInt = min % 1.0 == 0.0 && max % 1.0 == 0.0
+    val span = (max - min).toInt()
+    // 정수 범위가 촘촘하면 각 정수에 스냅(steps=칸수-1), 넓거나 소수면 연속으로 두고 반올림.
+    val steps = if (isInt && span in 2..50) span - 1 else 0
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                spec.key,
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    current.asParamText(),
+                    color = RuleUpTheme.colors.brand,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                spec.unit?.let {
+                    Text(
+                        it,
+                        color = RuleUpTheme.colors.textSecondary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 2.dp),
+                    )
+                }
+            }
+        }
+        Slider(
+            value = current.toFloat(),
+            onValueChange = { v ->
+                val snapped = if (isInt) v.roundToInt().toDouble() else v.toDouble()
+                onIntent(CreateChallengeIntent.EditParam(spec.key, ParamValue.Num(snapped.coerceIn(min, max))))
+            },
+            valueRange = min.toFloat()..max.toFloat(),
+            steps = steps,
+            colors =
+                SliderDefaults.colors(
+                    thumbColor = RuleUpTheme.colors.brand,
+                    activeTrackColor = RuleUpTheme.colors.brand,
+                    inactiveTrackColor = RuleUpTheme.colors.surfaceVariant,
+                ),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(min.asParamText(), color = RuleUpTheme.colors.textMuted, fontSize = 10.sp)
+            Text(max.asParamText(), color = RuleUpTheme.colors.textMuted, fontSize = 10.sp)
+        }
+    }
+}
+
+/** 정수면 소수점 없이, 아니면 그대로 표시. */
+private fun Double.asParamText(): String = if (this % 1.0 == 0.0) toInt().toString() else toString()
+
+@Composable
+private fun TextParamRow(
     spec: ParamSpec,
     onIntent: (CreateChallengeIntent) -> Unit,
 ) {
