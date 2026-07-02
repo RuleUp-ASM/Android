@@ -2,6 +2,7 @@ package com.ruleup.android_ruleup.home
 
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
+import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.entity.user.InterestCategory
@@ -25,22 +26,50 @@ data class HomeChallengeUi(
 )
 
 /**
- * 진행률 응답 + 로컬 "내 챌린지"를 병합한다.
+ * 홈 카드 소스를 병합한다.
  *
- * 진행률에 아직 없는(방금 만든) 로컬 챌린지를 맨 앞에 올려 즉시 노출하고, 같은 challengeId 가
- * 진행률에도 있으면 실제 데이터(진행률) 쪽을 사용한다.
+ * 서버 "내 챌린지 목록"(GET /challenges)을 권위 있는 기준으로 삼고, 진행률(verification/progress)로
+ * 각 카드의 진행바·오늘 대상 여부를 채운다. 목록 조회가 실패해 비면 진행률만으로도 렌더되도록
+ * 목록에 없는 진행률 카드를 뒤에 유지하고, 아직 목록·진행률 어디에도 없는(방금 만든) 로컬 챌린지는
+ * 맨 앞에 올려 즉시 노출한다.
  */
 fun mergeHomeChallenges(
+    myChallenges: List<MyChallenge>,
     progress: ProgressSnapshot?,
     locals: List<MyChallengeSummary>,
 ): List<HomeChallengeUi> {
-    val progressCards = progress?.challenges.orEmpty().map { it.toHomeUi() }
-    val progressIds = progressCards.map { it.challengeId }.toSet()
+    val progressById = progress?.challenges.orEmpty().associateBy { it.challengeId }
+    val serverCards = myChallenges.map { it.toHomeUi(progressById[it.challengeId]) }
+    val serverIds = myChallenges.map { it.challengeId }.toSet()
+
+    // 목록 조회 실패 등으로 서버 목록이 비어도 진행률 카드는 유지한다.
+    val progressOnlyCards =
+        progress
+            ?.challenges
+            .orEmpty()
+            .filter { it.challengeId !in serverIds }
+            .map { it.toHomeUi() }
+
+    val coveredIds = serverIds + progressOnlyCards.map { it.challengeId }.toSet()
     val localCards =
         locals
-            .filter { it.challengeId !in progressIds }
+            .filter { it.challengeId !in coveredIds }
             .map { it.toHomeUi() }
-    return localCards + progressCards
+    return localCards + serverCards + progressOnlyCards
+}
+
+private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi {
+    val dayPart = if (progress == null || progress.successDays <= 0) "오늘 시작" else "${progress.successDays}일째"
+    val groupPart = if (participationType == ParticipationType.GROUP) "함께" else "솔로"
+    return HomeChallengeUi(
+        challengeId = challengeId,
+        title = title,
+        subtitle = listOf(dayPart, groupPart).joinToString(" · "),
+        progress = progress?.let { (it.progressRate / 100.0).toFloat().coerceIn(0f, 1f) } ?: 0f,
+        todayTarget = progress?.todayTarget ?: false,
+        iconRes = iconResFor(category),
+        accentColor = accentColorFor(category),
+    )
 }
 
 private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
