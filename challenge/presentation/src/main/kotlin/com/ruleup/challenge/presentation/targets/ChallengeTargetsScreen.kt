@@ -23,7 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,7 +69,8 @@ fun ChallengeTargetsScreen(
     val messageHelper = LocalMessageHelper.current
 
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
-    val selected = remember { mutableStateListOf<String>() }
+    // Map state 로 두어 항목 토글 시 해당 키를 읽는 행만 리컴포지션되게 한다(List 는 전체 무효화).
+    val selected = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -138,12 +139,12 @@ fun ChallengeTargetsScreen(
                         items(loaded, key = { it.packageName }) { app ->
                             AppRow(
                                 label = app.label,
-                                checked = app.packageName in selected,
+                                checked = selected[app.packageName] == true,
                                 onToggle = {
-                                    if (app.packageName in selected) {
+                                    if (selected[app.packageName] == true) {
                                         selected.remove(app.packageName)
                                     } else {
-                                        selected.add(app.packageName)
+                                        selected[app.packageName] = true
                                     }
                                 },
                             )
@@ -161,13 +162,14 @@ fun ChallengeTargetsScreen(
                     .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
+            val selectedPackages = selected.filterValues { it }.keys.toList()
             PrimaryGradientButton(
-                text = if (state.isSaving) "등록 중…" else "등록 완료 (${selected.size})",
+                text = if (state.isSaving) "등록 중…" else "등록 완료 (${selectedPackages.size})",
                 onClick = {
                     viewModel.onIntent(
                         ChallengeTargetsIntent.Save(
                             challengeId = challengeId,
-                            packages = selected.toList(),
+                            packages = selectedPackages,
                         ),
                     )
                 },

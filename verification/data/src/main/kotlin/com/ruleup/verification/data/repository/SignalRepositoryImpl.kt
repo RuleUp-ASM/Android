@@ -27,7 +27,8 @@ private fun <T> List<T>.logSignalDetail(
     type: String,
     line: (T) -> String,
 ) {
-    if (isEmpty()) return
+    // line(it) 는 String.format 을 포함해 즉시 평가되므로, 심을 트리가 없으면(릴리스) 아예 만들지 않는다.
+    if (isEmpty() || Timber.treeCount == 0) return
     take(MAX_DETAIL_PER_TYPE).forEach { Timber.tag(SYNC_LOG_TAG).i("  · %s", line(it)) }
     if (size > MAX_DETAIL_PER_TYPE) {
         Timber.tag(SYNC_LOG_TAG).i("  · %s …외 %d건", type, size - MAX_DETAIL_PER_TYPE)
