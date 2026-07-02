@@ -7,6 +7,7 @@ import com.ruleup.challenge.data.dto.ChallengeResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.MemberDecisionRequest
 import com.ruleup.challenge.data.dto.MemberStatusResponse
+import com.ruleup.challenge.data.dto.MyChallengesResponse
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.RecommendationResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeRequest
@@ -82,4 +83,10 @@ interface ChallengeApi {
     suspend fun uploadImage(
         @Part image: MultipartBody.Part,
     ): BaseResponse<ChallengeImageResponse>
+
+    // 내 챌린지 목록 조회 (GET /challenges): scope 기본 ACTIVE, ALL 은 PENDING 포함
+    @GET("v1/challenges")
+    suspend fun getMyChallenges(
+        @Query("scope") scope: String? = null,
+    ): BaseResponse<MyChallengesResponse>
 }

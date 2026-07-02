@@ -20,6 +20,7 @@ import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -97,6 +98,18 @@ class VerificationRepositoryImpl
                 }
             }
 
+        override suspend fun getMyLocation(challengeId: String): MyLocation? =
+            try {
+                api
+                    .getMyLocation(challengeId)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 앵커 미등록(400)은 정상 상태이므로 null 로 내려 호출자가 "등록 안 됨"으로 분기한다.
+                // 401/403 등은 그대로 전파해 화면이 메시지를 노출한다.
+                if (e.code == CODE_GEOFENCE_NOT_CONFIGURED) null else throw e
+            }
+
         override suspend fun submitManual(
             challengeId: String,
             method: ManualMethod,
@@ -158,5 +171,6 @@ class VerificationRepositoryImpl
             private const val CODE_IMAGE_REQUIRED = "IMAGE_REQUIRED"
             private const val CODE_FALLBACK_LIMIT_EXCEEDED = "FALLBACK_LIMIT_EXCEEDED"
             private const val CODE_INVALID_ANCHOR = "INVALID_ANCHOR"
+            private const val CODE_GEOFENCE_NOT_CONFIGURED = "GEOFENCE_NOT_CONFIGURED"
         }
     }

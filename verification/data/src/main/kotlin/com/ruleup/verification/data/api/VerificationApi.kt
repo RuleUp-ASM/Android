@@ -7,6 +7,7 @@ import com.ruleup.verification.data.dto.IntroRequest
 import com.ruleup.verification.data.dto.IntroResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
+import com.ruleup.verification.data.dto.MyLocationResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
@@ -56,4 +57,10 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
         @Body request: ChallengeSetupRequest,
     ): BaseResponse<ChallengeSetupResponse>
+
+    // 앵커 조회 (GET /my-location): 셋업/수정 재진입 시 내 인증 장소 핀 복원
+    @GET("v1/challenges/{challengeId}/my-location")
+    suspend fun getMyLocation(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<MyLocationResponse>
 }

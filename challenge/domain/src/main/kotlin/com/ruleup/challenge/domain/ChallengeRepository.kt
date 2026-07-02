@@ -9,6 +9,8 @@ import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.MemberAction
 import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.MemberStatusFilter
+import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeScope
 
 interface ChallengeRepository {
     /**
@@ -59,4 +61,11 @@ interface ChallengeRepository {
         challengeId: String,
         status: MemberStatusFilter = MemberStatusFilter.ACTIVE,
     ): ChallengeMembers
+
+    /**
+     * 내가 참여 중인 챌린지 목록 조회(명세: GET /challenges). 페이지네이션 없이 전량 반환하며,
+     * 항목마다 내 멤버십 상태(memberStatus)를 포함한다. 기본 [MyChallengeScope.ACTIVE],
+     * [MyChallengeScope.ALL] 은 승인 대기(PENDING) 멤버십까지 포함한다.
+     */
+    suspend fun getMyChallenges(scope: MyChallengeScope = MyChallengeScope.ACTIVE): List<MyChallenge>
 }

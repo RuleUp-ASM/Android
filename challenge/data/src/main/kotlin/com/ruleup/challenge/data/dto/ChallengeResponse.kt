@@ -1,5 +1,6 @@
 package com.ruleup.challenge.data.dto
 
+import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeEligibility
@@ -11,6 +12,7 @@ import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MemberStatus
+import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.toRepeatDays
@@ -307,3 +309,65 @@ data class ChallengeImageResponse(
     @SerialName("imageUrl")
     val imageUrl: String? = null,
 )
+
+// ---------- 내 챌린지 목록 조회 (GET /challenges) ----------
+@Serializable
+data class MyChallengeDto(
+    @SerialName("challengeId")
+    val challengeId: String? = null,
+    @SerialName("title")
+    val title: String? = null,
+    @SerialName("description")
+    val description: String? = null,
+    @SerialName("imageUrl")
+    val imageUrl: String? = null,
+    @SerialName("category")
+    val category: String? = null,
+    @SerialName("participationType")
+    val participationType: String? = null,
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("anonymity")
+    val anonymity: String? = null,
+    @SerialName("participantCount")
+    val participantCount: Int? = null,
+    @SerialName("minMannerTemperature")
+    val minMannerTemperature: Double? = null,
+    @SerialName("repeatDays")
+    val repeatDays: List<String>? = null,
+    @SerialName("durationDays")
+    val durationDays: Int? = null,
+    @SerialName("startDate")
+    val startDate: String? = null,
+    @SerialName("endDate")
+    val endDate: String? = null,
+    @SerialName("memberStatus")
+    val memberStatus: String? = null,
+)
+
+internal fun MyChallengeDto.toDomain(): MyChallenge =
+    MyChallenge(
+        challengeId = challengeId.requireField("challengeId"),
+        title = title.requireField("title"),
+        description = description,
+        imageUrl = imageUrl,
+        category = InterestCategory.fromValue(category.orEmpty()),
+        participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
+        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.RECRUITING,
+        anonymity = Anonymity.fromValue(anonymity) ?: Anonymity.REAL,
+        participantCount = participantCount ?: 0,
+        minMannerTemperature = minMannerTemperature,
+        repeatDays = repeatDays.toRepeatDays(),
+        durationDays = durationDays ?: 0,
+        startDate = startDate.requireField("startDate"),
+        endDate = endDate.requireField("endDate"),
+        memberStatus = MemberStatus.fromValue(memberStatus) ?: MemberStatus.ACTIVE,
+    )
+
+@Serializable
+data class MyChallengesResponse(
+    @SerialName("challenges")
+    val challenges: List<MyChallengeDto>? = null,
+)
+
+internal fun MyChallengesResponse.toDomain(): List<MyChallenge> = challenges.orEmpty().map { it.toDomain() }

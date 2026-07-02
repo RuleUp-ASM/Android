@@ -2,6 +2,7 @@ package com.ruleup.verification.data.dto
 
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.LocationPin
+import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.entity.SetupStatus
 import kotlinx.serialization.SerialName
@@ -86,4 +87,29 @@ internal fun ChallengeSetupResponse.toDomain(): ChallengeSetupResult =
         status = SetupStatus.fromValue(setupStatus),
         // 알 수 없는 항목은 버린다(서버가 새 항목을 추가해도 안전).
         missing = missing.orEmpty().mapNotNull { SetupMissing.fromValue(it) },
+    )
+
+// ---------- 앵커 조회 응답 (명세: GET /my-location) ----------
+
+/** setup 요청과 동일한 앵커 표현을 재사용한다. radiusM 은 도메인에서 Float 로 승격. */
+internal fun AnchorDto.toDomain(): LocationPin =
+    LocationPin(
+        lat = lat,
+        lng = lng,
+        radiusM = radiusM.toFloat(),
+        label = label,
+    )
+
+@Serializable
+data class MyLocationResponse(
+    @SerialName("anchors")
+    val anchors: List<AnchorDto>? = null,
+    @SerialName("appliedFrom")
+    val appliedFrom: String? = null,
+)
+
+internal fun MyLocationResponse.toDomain(): MyLocation =
+    MyLocation(
+        anchors = anchors.orEmpty().map { it.toDomain() },
+        appliedFrom = appliedFrom,
     )

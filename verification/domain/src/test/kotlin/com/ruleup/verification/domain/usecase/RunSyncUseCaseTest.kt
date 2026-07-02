@@ -13,6 +13,7 @@ import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
+import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.NetworkState
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
@@ -222,6 +223,8 @@ class RunSyncUseCaseTest {
             anchors: List<LocationPin>,
             targetPackages: List<String>,
         ): ChallengeSetupResult = error("unused")
+
+        override suspend fun getMyLocation(challengeId: String): MyLocation? = error("unused")
 
         override suspend fun submitManual(
             challengeId: String,

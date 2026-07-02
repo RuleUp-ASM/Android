@@ -16,6 +16,8 @@ import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.MemberAction
 import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.MemberStatusFilter
+import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeScope
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
@@ -122,5 +124,11 @@ class ChallengeRepositoryImpl
                     challengeId = challengeId,
                     status = status.value,
                 ).getOrThrow()
+                .toDomain()
+
+        override suspend fun getMyChallenges(scope: MyChallengeScope): List<MyChallenge> =
+            api
+                .getMyChallenges(scope.value)
+                .getOrThrow()
                 .toDomain()
     }
