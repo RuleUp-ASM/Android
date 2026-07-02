@@ -64,6 +64,7 @@ fun VerificationLocationScreen(
     defaultRadiusM: Float,
     dwellMinutes: Int,
     modifier: Modifier = Modifier,
+    targetPackages: List<String> = emptyList(),
     viewModel: VerificationLocationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -189,6 +190,7 @@ fun VerificationLocationScreen(
                         VerificationLocationIntent.Submit(
                             challengeId = challengeMemberId,
                             dwellMinutes = dwellMinutes,
+                            targetPackages = targetPackages,
                         ),
                     )
                 },

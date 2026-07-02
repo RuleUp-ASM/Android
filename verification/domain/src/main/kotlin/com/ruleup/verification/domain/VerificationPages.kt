@@ -45,6 +45,8 @@ data class VerificationLocationPage(
     val challengeMemberId: String,
     val defaultRadiusM: Float,
     val dwellMinutes: Int,
+    // 셋업 제출 시 앵커와 함께 보낼 대상 앱 패키지(로컬 등록분). 없으면 빈 리스트.
+    val targetPackages: List<String> = emptyList(),
 ) : Page {
     override fun toRoute(): NavRoute =
         NavRoute(
@@ -53,6 +55,7 @@ data class VerificationLocationPage(
                 ARG_MEMBER_ID to challengeMemberId,
                 ARG_RADIUS to defaultRadiusM.toString(),
                 ARG_DWELL to dwellMinutes.toString(),
+                ARG_TARGET_PACKAGES to targetPackages.joinToString(TARGET_PACKAGES_DELIMITER),
             ),
         )
 
@@ -61,5 +64,9 @@ data class VerificationLocationPage(
         const val ARG_MEMBER_ID = "challengeMemberId"
         const val ARG_RADIUS = "defaultRadiusM"
         const val ARG_DWELL = "dwellMinutes"
+        const val ARG_TARGET_PACKAGES = "targetPackages"
+
+        // 패키지명엔 콤마가 없어 콤마로 안전하게 직렬화한다.
+        const val TARGET_PACKAGES_DELIMITER = ","
     }
 }

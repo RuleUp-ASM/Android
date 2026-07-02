@@ -168,7 +168,11 @@ class VerificationLocationViewModel
             viewModelScope.launch {
                 dispatch(VerificationLocationReducerEvent.Submitting)
                 runCatching {
-                    submitChallengeSetupUseCase(challengeId = intent.challengeId, anchors = anchors)
+                    submitChallengeSetupUseCase(
+                        challengeId = intent.challengeId,
+                        anchors = anchors,
+                        targetPackages = intent.targetPackages,
+                    )
                 }.onSuccess { result ->
                     dispatch(VerificationLocationReducerEvent.Finished)
                     if (result.isReady) {
