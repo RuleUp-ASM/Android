@@ -42,6 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ParticipationType
@@ -51,6 +53,7 @@ import com.ruleup.challenge.presentation.create.component.rememberPermissionRequ
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
+import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -81,21 +84,44 @@ fun ChallengeDetailScreen(
         viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
     }
 
+    // 앱 등록 화면 등에서 돌아오면 등록 상태를 재확인해 버튼 모드를 갱신한다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
+    }
+
     val tokens =
         state.detail
             ?.verification
             ?.requiredPermissions
             .orEmpty()
 
+    // 자동 인증 챌린지는 권한 → 앱 등록 → 참여 순으로 유도한다. 수동 인증은 곧바로 참여.
+    val needsAuto = state.detail?.verification?.selectedMethod == SelectedMethod.AUTO
+    val permissionGranted = challengePermissionsGranted(context, tokens)
+    val action =
+        when {
+            !needsAuto -> DetailSetupAction.JOIN
+            !permissionGranted -> DetailSetupAction.GRANT_PERMISSION
+            !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
+            else -> DetailSetupAction.JOIN
+        }
+    val ctaLabel =
+        when (action) {
+            DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
+            DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
+            DetailSetupAction.JOIN -> "참여하기"
+        }
+
     ChallengeDetailContent(
         modifier = modifier,
         state = state,
+        ctaLabel = ctaLabel,
         onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
-        onJoin = {
-            if (challengePermissionsGranted(context, tokens)) {
-                viewModel.onIntent(ChallengeDetailIntent.Proceed)
-            } else {
-                showPermissionSheet = true
+        onCta = {
+            when (action) {
+                DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
+                DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
+                DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
             }
         },
     )
@@ -108,8 +134,8 @@ fun ChallengeDetailScreen(
                 scope.launch {
                     permissionRequester.request(tokens)
                     if (challengePermissionsGranted(context, tokens)) {
+                        // 권한이 확보되면 시트를 닫는다. 버튼은 다음 단계(앱 등록)로 자동 전환된다.
                         showPermissionSheet = false
-                        viewModel.onIntent(ChallengeDetailIntent.Proceed)
                     } else {
                         messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")
                     }
@@ -122,8 +148,9 @@ fun ChallengeDetailScreen(
 @Composable
 private fun ChallengeDetailContent(
     state: ChallengeDetailState,
+    ctaLabel: String,
     onBack: () -> Unit,
-    onJoin: () -> Unit,
+    onCta: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -183,8 +210,8 @@ private fun ChallengeDetailContent(
                         .padding(horizontal = 20.dp, vertical = 12.dp),
             ) {
                 PrimaryGradientButton(
-                    text = "참여하기",
-                    onClick = onJoin,
+                    text = ctaLabel,
+                    onClick = onCta,
                 )
             }
         }
@@ -356,7 +383,7 @@ private fun PermissionBottomSheet(
             }
             Spacer(Modifier.height(20.dp))
             PrimaryGradientButton(
-                text = "허용하고 참여하기",
+                text = "허용하기",
                 onClick = onAllow,
             )
             Spacer(Modifier.height(4.dp))

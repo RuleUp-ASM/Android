@@ -5,9 +5,11 @@ import com.ruleup.android_ruleup.home.HomeScreen
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.ChallengeCreatePage
 import com.ruleup.challenge.domain.ChallengeDetailPage
+import com.ruleup.challenge.domain.ChallengeTargetsPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
+import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.onboarding.domain.HomePage
 import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.onboarding.domain.IntroTrustPage
@@ -103,6 +105,12 @@ val appRoutes: List<AppRoute> =
             path = ChallengeDetailPage.PATH,
             render = { args ->
                 ChallengeDetailScreen(challengeId = args[ChallengeDetailPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeTargetsPage.PATH,
+            render = { args ->
+                ChallengeTargetsScreen(challengeId = args[ChallengeTargetsPage.ARG_CHALLENGE_ID].orEmpty())
             },
         ),
         AppRoute(

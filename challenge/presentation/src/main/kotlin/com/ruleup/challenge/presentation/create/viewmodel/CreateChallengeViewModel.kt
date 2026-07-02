@@ -3,6 +3,7 @@ package com.ruleup.challenge.presentation.create.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.ChallengeConfirmPage
 import com.ruleup.challenge.domain.MyChallengeStore
+import com.ruleup.challenge.domain.SetupNotifier
 import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
@@ -37,6 +38,7 @@ class CreateChallengeViewModel
         private val createChallengeUseCase: CreateChallengeUseCase,
         private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
         private val myChallengeStore: MyChallengeStore,
+        private val setupNotifier: SetupNotifier,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<CreateChallengeIntent, CreateChallengeState, CreateChallengeReducerEvent, CreateChallengeEffect>(
             CreateChallengeState.initial,
@@ -348,6 +350,13 @@ class CreateChallengeViewModel
                             participationType = challenge.participationType,
                             durationDays = challenge.durationDays,
                         ),
+                    )
+                    // 자동 인증인데 셋업(권한/대상 앱)이 미완료면 로컬 알림으로 상세 진입을 유도한다.
+                    setupNotifier.notifyAfterCreate(
+                        challengeId = challenge.challengeId,
+                        title = challenge.title,
+                        requiredPermissions = challenge.verification?.requiredPermissions.orEmpty(),
+                        isAuto = challenge.verification?.selectedMethod == SelectedMethod.AUTO,
                     )
                     // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
                     navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
