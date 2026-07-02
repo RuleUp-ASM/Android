@@ -1,6 +1,8 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.challenge.domain.ChallengeTargetsPage
+import com.ruleup.challenge.domain.TargetAppStore
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -22,6 +24,7 @@ class ChallengeDetailViewModel
     @Inject
     constructor(
         private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
+        private val targetAppStore: TargetAppStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, NoEffect>(
             ChallengeDetailState.initial,
@@ -29,6 +32,8 @@ class ChallengeDetailViewModel
         override fun onIntent(intent: ChallengeDetailIntent) {
             when (intent) {
                 is ChallengeDetailIntent.Load -> load(intent.challengeId)
+                ChallengeDetailIntent.RefreshSetup -> refreshSetup()
+                ChallengeDetailIntent.RegisterApps -> registerApps()
                 ChallengeDetailIntent.Proceed -> proceed()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
@@ -43,10 +48,18 @@ class ChallengeDetailViewModel
                     state.copy(isLoading = true, challengeId = event.challengeId, errorMessage = null)
 
                 is ChallengeDetailReducerEvent.Loaded ->
-                    state.copy(isLoading = false, detail = event.detail, errorMessage = null)
+                    state.copy(
+                        isLoading = false,
+                        detail = event.detail,
+                        errorMessage = null,
+                        targetAppsRegistered = event.targetAppsRegistered,
+                    )
 
                 is ChallengeDetailReducerEvent.Failed ->
                     state.copy(isLoading = false, errorMessage = event.message)
+
+                is ChallengeDetailReducerEvent.SetupRefreshed ->
+                    state.copy(targetAppsRegistered = event.targetAppsRegistered)
             }
 
         private fun load(challengeId: String) {
@@ -54,9 +67,27 @@ class ChallengeDetailViewModel
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
                 runCatching { getChallengeDetailUseCase(challengeId) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
+                    .onSuccess {
+                        dispatch(
+                            ChallengeDetailReducerEvent.Loaded(
+                                detail = it,
+                                targetAppsRegistered = targetAppStore.isRegistered(challengeId),
+                            ),
+                        )
+                    }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
+        }
+
+        // 앱 등록 화면에서 돌아왔을 때 등록 상태를 재확인해 버튼 모드를 갱신한다.
+        private fun refreshSetup() {
+            val id = currentState.detail?.challengeId ?: return
+            dispatch(ChallengeDetailReducerEvent.SetupRefreshed(targetAppStore.isRegistered(id)))
+        }
+
+        private fun registerApps() {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
         }
 
         private fun proceed() {

@@ -28,6 +28,7 @@ object AppRoutes {
     const val CHALLENGE_CREATE = "challenge/create" // 진입점
     const val CHALLENGE_CONFIRM = "challenge/confirm"
     const val CHALLENGE_DETAIL = "challenge/detail" // 진입점 (홈 카드 → 챌린지 상세/참여)
+    const val CHALLENGE_TARGETS = "challenge/targets" // 대상 앱 등록(상세 → 앱 등록하기)
 
     // verification
     const val VERIFICATION_PROGRESS = "verification/progress" // 진입점 (내 챌린지 진행률 일괄)

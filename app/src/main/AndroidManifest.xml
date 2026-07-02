@@ -9,6 +9,14 @@
     <!-- sync 워커 포그라운드 알림(API33+). 수집 자체를 막지는 않지만 디버그 권한 트리거에서 함께 요청. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 대상 앱 등록 화면에서 설치된 실행 가능한 앱 목록 조회(Android 11+ 패키지 가시성). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
     <application
         android:name=".App"
         android:allowBackup="true"
