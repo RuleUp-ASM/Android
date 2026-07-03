@@ -14,27 +14,27 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface AuthApi {
-    // 4.1/4.2 소셜 로그인 (provider: kakao / google …)
-    @POST("v1/account/login/{provider}")
+    // OAuth 로그인 (provider: kakao / google …). base(.../api/) + auth/oauth → /api/v1/auth/oauth/{provider}.
+    @POST("v1/auth/oauth/{provider}")
     suspend fun socialLogin(
         @Path("provider") provider: String,
         @Body request: SocialLoginAuthRequest,
     ): BaseResponse<SocialLoginAuthResponse>
 
-    // 4.3 신규 가입 완료
-    @POST("v1/account/signup")
+    // 회원가입 완료. → /api/v1/auth/signup.
+    @POST("v1/auth/signup")
     suspend fun signup(
         @Body request: SignUpRequest,
     ): BaseResponse<SignUpResponse>
 
-    // 4.4 앱 토큰 재발급
-    @POST("v1/account/token/refresh")
+    // 앱 토큰 재발급. → /api/v1/auth/refresh.
+    @POST("v1/auth/refresh")
     suspend fun refreshToken(
         @Body request: TokenRefreshRequest,
     ): BaseResponse<TokenRefreshResponse>
 
-    // 4.5 로그아웃 (refreshToken revoke)
-    @POST("v1/account/logout")
+    // 로그아웃 (refreshToken revoke). → /api/v1/auth/logout.
+    @POST("v1/auth/logout")
     suspend fun logout(
         @Body request: LogoutRequest,
     ): BaseResponse<EmptyData>
