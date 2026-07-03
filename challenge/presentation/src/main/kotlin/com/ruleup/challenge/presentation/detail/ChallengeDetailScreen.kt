@@ -88,26 +88,30 @@ fun ChallengeDetailScreen(
         viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
     }
 
+    val setup = state.setup
+    // 권한 토큰은 GET setup 의 requiredPermissions 를 우선 사용(없으면 상세 verification 값).
     val tokens =
-        state.detail
+        setup?.requiredPermissions ?: state.detail
             ?.verification
             ?.requiredPermissions
             .orEmpty()
-
-    // 자동 인증 챌린지는 권한 → 앱 등록 → 참여 순으로 유도한다. 수동 인증은 곧바로 참여.
-    val needsAuto = state.detail?.verification?.selectedMethod == SelectedMethod.AUTO
     val permissionGranted = challengePermissionsGranted(context, tokens)
+
+    // GET setup 요구사항으로 "필요한 등록만" 유도: 권한 → (requiresTargetPackages) 앱 → (requiresAnchors) 지도 → 참여.
+    // 수동 인증(manual)이거나 셋업 정보가 없으면 바로 참여.
     val action =
         when {
-            !needsAuto -> DetailSetupAction.JOIN
+            state.detail == null || setup == null || setup.manual -> DetailSetupAction.JOIN
             !permissionGranted -> DetailSetupAction.GRANT_PERMISSION
-            !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
+            setup.requiresTargetPackages && !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
+            setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
             else -> DetailSetupAction.JOIN
         }
     val ctaLabel =
         when (action) {
             DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
             DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
+            DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
             DetailSetupAction.JOIN -> "참여하기"
         }
 
@@ -120,6 +124,7 @@ fun ChallengeDetailScreen(
             when (action) {
                 DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
                 DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
+                DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
                 DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
             }
         },

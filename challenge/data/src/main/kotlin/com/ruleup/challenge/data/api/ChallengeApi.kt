@@ -4,6 +4,7 @@ import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeResponse
+import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.MemberDecisionRequest
 import com.ruleup.challenge.data.dto.MemberStatusResponse
@@ -42,6 +43,12 @@ interface ChallengeApi {
     suspend fun getChallenge(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<ChallengeDetailResponse>
+
+    // 챌린지 최초 조회 (GET setup): 셋업 단계에서 무엇을 바인딩해야 하는지 요구사항 조회
+    @GET("v1/challenges/{challengeId}/setup")
+    suspend fun getSetup(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeSetupInfoResponse>
 
     // 3.4 챌린지 수정 (시작 전, 생성자만)
     @PATCH("v1/challenges/{challengeId}")

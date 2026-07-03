@@ -8,6 +8,7 @@ import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeOwner
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MemberRole
@@ -371,3 +372,31 @@ data class MyChallengesResponse(
 )
 
 internal fun MyChallengesResponse.toDomain(): List<MyChallenge> = challenges.orEmpty().map { it.toDomain() }
+
+// ---------- 챌린지 최초 조회 (GET setup) ----------
+@Serializable
+data class ChallengeSetupInfoResponse(
+    @SerialName("setupStatus")
+    val setupStatus: String? = null,
+    @SerialName("manual")
+    val manual: Boolean? = null,
+    @SerialName("verificationMethods")
+    val verificationMethods: List<String>? = null,
+    @SerialName("requiredPermissions")
+    val requiredPermissions: List<String>? = null,
+    @SerialName("requiresAnchors")
+    val requiresAnchors: Boolean? = null,
+    @SerialName("anchorsConfigured")
+    val anchorsConfigured: Boolean? = null,
+    @SerialName("requiresTargetPackages")
+    val requiresTargetPackages: Boolean? = null,
+)
+
+internal fun ChallengeSetupInfoResponse.toDomain(): ChallengeSetupInfo =
+    ChallengeSetupInfo(
+        manual = manual ?: false,
+        requiredPermissions = requiredPermissions.orEmpty(),
+        requiresAnchors = requiresAnchors ?: false,
+        anchorsConfigured = anchorsConfigured ?: false,
+        requiresTargetPackages = requiresTargetPackages ?: false,
+    )
