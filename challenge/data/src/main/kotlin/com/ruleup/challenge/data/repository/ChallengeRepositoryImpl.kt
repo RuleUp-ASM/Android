@@ -12,6 +12,7 @@ import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.MemberAction
 import com.ruleup.challenge.domain.entity.MemberStatus
@@ -80,6 +81,12 @@ class ChallengeRepositoryImpl
         override suspend fun getChallenge(challengeId: String): ChallengeDetail =
             api
                 .getChallenge(challengeId)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getSetupInfo(challengeId: String): ChallengeSetupInfo =
+            api
+                .getSetup(challengeId)
                 .getOrThrow()
                 .toDomain()
 

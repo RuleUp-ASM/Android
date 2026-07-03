@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.ChallengeTargetsPage
 import com.ruleup.challenge.domain.TargetAppStore
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
+import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -16,7 +17,8 @@ import javax.inject.Inject
 /**
  * 챌린지 상세/참여 ViewModel.
  *
- * 상세를 조회해 렌더하고, "참여하기"의 권한 확보가 끝나면([Proceed]) 좌표 바인딩 화면으로 이동한다.
+ * 상세 + 셋업 요구사항(GET setup)을 조회해, requiresAnchors/requiresTargetPackages 로 필요한 등록만
+ * 유도한다: 권한 → (필요 시) 앱 등록 → (필요 시) 지도 앵커 → 시작.
  * 권한 확인/요청·모달 노출은 Context 가 필요해 화면(Composable)이 담당한다.
  */
 @HiltViewModel
@@ -24,6 +26,7 @@ class ChallengeDetailViewModel
     @Inject
     constructor(
         private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
+        private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
         private val targetAppStore: TargetAppStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, NoEffect>(
@@ -34,7 +37,8 @@ class ChallengeDetailViewModel
                 is ChallengeDetailIntent.Load -> load(intent.challengeId)
                 ChallengeDetailIntent.RefreshSetup -> refreshSetup()
                 ChallengeDetailIntent.RegisterApps -> registerApps()
-                ChallengeDetailIntent.Proceed -> proceed()
+                ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
+                ChallengeDetailIntent.Proceed -> navigationHelper.navigateToBack()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -52,6 +56,7 @@ class ChallengeDetailViewModel
                         isLoading = false,
                         detail = event.detail,
                         errorMessage = null,
+                        setup = event.setup,
                         targetAppsRegistered = event.targetAppsRegistered,
                     )
 
@@ -59,7 +64,7 @@ class ChallengeDetailViewModel
                     state.copy(isLoading = false, errorMessage = event.message)
 
                 is ChallengeDetailReducerEvent.SetupRefreshed ->
-                    state.copy(targetAppsRegistered = event.targetAppsRegistered)
+                    state.copy(setup = event.setup, targetAppsRegistered = event.targetAppsRegistered)
             }
 
         private fun load(challengeId: String) {
@@ -67,10 +72,13 @@ class ChallengeDetailViewModel
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
                 runCatching { getChallengeDetailUseCase(challengeId) }
-                    .onSuccess {
+                    .onSuccess { detail ->
+                        // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
+                        val setup = runCatching { getChallengeSetupUseCase(challengeId) }.getOrNull()
                         dispatch(
                             ChallengeDetailReducerEvent.Loaded(
-                                detail = it,
+                                detail = detail,
+                                setup = setup,
                                 targetAppsRegistered = targetAppStore.isRegistered(challengeId),
                             ),
                         )
@@ -78,10 +86,18 @@ class ChallengeDetailViewModel
             }
         }
 
-        // 앱 등록 화면에서 돌아왔을 때 등록 상태를 재확인해 버튼 모드를 갱신한다.
+        // 등록 화면에서 돌아왔을 때 셋업 상태(앵커 바인딩 여부·앱 등록 여부)를 재확인해 버튼 모드를 갱신한다.
         private fun refreshSetup() {
             val id = currentState.detail?.challengeId ?: return
-            dispatch(ChallengeDetailReducerEvent.SetupRefreshed(targetAppStore.isRegistered(id)))
+            viewModelScope.launch {
+                val setup = runCatching { getChallengeSetupUseCase(id) }.getOrNull() ?: currentState.setup
+                dispatch(
+                    ChallengeDetailReducerEvent.SetupRefreshed(
+                        setup = setup,
+                        targetAppsRegistered = targetAppStore.isRegistered(id),
+                    ),
+                )
+            }
         }
 
         private fun registerApps() {
@@ -90,7 +106,7 @@ class ChallengeDetailViewModel
             navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
         }
 
-        private fun proceed() {
+        private fun registerAnchor() {
             val id = currentState.detail?.challengeId ?: currentState.challengeId
             if (id.isBlank()) return
             // GPS 루틴 좌표 바인딩(verification/location) 으로 이동. 참여 API 가 memberId 를 돌려주지 않아

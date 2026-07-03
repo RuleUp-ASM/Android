@@ -5,6 +5,7 @@ import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.MemberAction
 import com.ruleup.challenge.domain.entity.MemberStatus
@@ -32,6 +33,13 @@ interface ChallengeRepository {
 
     /** 챌린지 상세 + 참여 자격 조회(명세 3.3). */
     suspend fun getChallenge(challengeId: String): ChallengeDetail
+
+    /**
+     * 챌린지 셋업 요구사항 조회(명세: GET /challenges/{id}/setup). 셋업 단계에서 무엇을 바인딩해야 하는지
+     * (앵커·대상 앱)와 참고용 requiredPermissions 를 받아, 상세가 필요한 등록만 유도하는 데 쓴다.
+     * (제출은 verification 의 POST /setup 이 담당한다.)
+     */
+    suspend fun getSetupInfo(challengeId: String): ChallengeSetupInfo
 
     /** 챌린지 수정(시작 전, 생성자만). 변경할 필드만 전달한다(명세 3.4). */
     suspend fun update(
