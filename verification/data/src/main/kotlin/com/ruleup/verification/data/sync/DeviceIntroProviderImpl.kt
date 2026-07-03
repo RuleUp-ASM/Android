@@ -6,7 +6,7 @@ import android.os.Build
 import com.ruleup.verification.data.signal.PermissionSnapshotProvider
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.DeviceProfile
-import com.ruleup.verification.domain.port.DeviceIntroProvider
+import com.ruleup.verification.domain.repository.DeviceIntroProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 

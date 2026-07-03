@@ -11,7 +11,7 @@ import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SignalScope
-import com.ruleup.verification.domain.port.EnvelopeMetadataProvider
+import com.ruleup.verification.domain.repository.EnvelopeMetadataProvider
 import javax.inject.Inject
 
 /**

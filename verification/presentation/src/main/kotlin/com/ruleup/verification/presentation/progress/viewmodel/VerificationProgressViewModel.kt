@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
-import com.ruleup.verification.domain.VerificationDetailPage
+import com.ruleup.verification.domain.navigation.VerificationDetailPage
 import com.ruleup.verification.domain.usecase.ObserveProgressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch

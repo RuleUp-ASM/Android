@@ -1,6 +1,6 @@
 package com.ruleup.challenge.data.repository
 
-import com.ruleup.challenge.domain.TargetAppStore
+import com.ruleup.challenge.domain.repository.TargetAppStore
 import javax.inject.Inject
 import javax.inject.Singleton
 

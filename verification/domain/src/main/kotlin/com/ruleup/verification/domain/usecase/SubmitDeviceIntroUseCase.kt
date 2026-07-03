@@ -1,9 +1,9 @@
 package com.ruleup.verification.domain.usecase
 
-import com.ruleup.verification.domain.port.DeviceIntroProvider
-import com.ruleup.verification.domain.port.SyncPolicyStore
-import com.ruleup.verification.domain.port.SyncScheduler
-import com.ruleup.verification.domain.port.VerificationRepository
+import com.ruleup.verification.domain.repository.DeviceIntroProvider
+import com.ruleup.verification.domain.repository.SyncPolicyStore
+import com.ruleup.verification.domain.repository.SyncScheduler
+import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
 
 /**

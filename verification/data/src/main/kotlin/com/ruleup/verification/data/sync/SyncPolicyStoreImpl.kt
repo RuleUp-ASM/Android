@@ -2,7 +2,7 @@ package com.ruleup.verification.data.sync
 
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.domain.entity.SyncPolicy
-import com.ruleup.verification.domain.port.SyncPolicyStore
+import com.ruleup.verification.domain.repository.SyncPolicyStore
 import javax.inject.Inject
 
 /**

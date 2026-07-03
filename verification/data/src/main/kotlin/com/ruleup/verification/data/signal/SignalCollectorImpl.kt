@@ -8,7 +8,7 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.ruleup.verification.data.db.LocationSampleDao
 import com.ruleup.verification.data.db.LocationSampleEntity
 import com.ruleup.verification.domain.entity.SignalScope
-import com.ruleup.verification.domain.port.SignalCollector
+import com.ruleup.verification.domain.repository.SignalCollector
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject

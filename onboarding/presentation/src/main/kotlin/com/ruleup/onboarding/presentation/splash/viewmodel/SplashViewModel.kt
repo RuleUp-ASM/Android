@@ -2,10 +2,10 @@ package com.ruleup.onboarding.presentation.splash.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.onboarding.domain.HomePage
-import com.ruleup.onboarding.domain.IntroPromisePage
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.intro.usecase.CheckAppVersionUseCase
+import com.ruleup.onboarding.domain.navigation.HomePage
+import com.ruleup.onboarding.domain.navigation.IntroPromisePage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel

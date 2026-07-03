@@ -29,7 +29,7 @@ import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import com.ruleup.verification.domain.entity.VerificationDetail
-import com.ruleup.verification.domain.port.VerificationRepository
+import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
 
 class VerificationRepositoryImpl

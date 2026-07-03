@@ -3,7 +3,7 @@ package com.ruleup.verification.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
-import com.ruleup.verification.domain.VerificationLocationPage
+import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.usecase.GetVerificationDetailUseCase
 import com.ruleup.verification.presentation.render.CtaTarget
 import com.ruleup.verification.presentation.render.failureReasonCta

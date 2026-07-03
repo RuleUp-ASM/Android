@@ -2,11 +2,11 @@ package com.ruleup.challenge.domain.usecase
 
 import com.ruleup.analytics.AnalyticsEvent
 import com.ruleup.analytics.AnalyticsLogger
-import com.ruleup.challenge.domain.ChallengeRepository
-import com.ruleup.challenge.domain.SetupNotifier
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.repository.ChallengeRepository
+import com.ruleup.challenge.domain.repository.SetupNotifier
 import javax.inject.Inject
 
 /**

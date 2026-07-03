@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.intro.usecase
 
 import com.ruleup.onboarding.domain.entity.AppVersionGate
-import com.ruleup.onboarding.domain.intro.IntroRepository
+import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import javax.inject.Inject
 
 /**

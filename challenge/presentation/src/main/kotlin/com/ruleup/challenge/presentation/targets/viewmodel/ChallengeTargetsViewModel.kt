@@ -2,7 +2,7 @@ package com.ruleup.challenge.presentation.targets.viewmodel
 
 import com.ruleup.analytics.AnalyticsEvent
 import com.ruleup.analytics.AnalyticsLogger
-import com.ruleup.challenge.domain.TargetAppStore
+import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel

@@ -20,7 +20,7 @@ import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.toAuthSession
 import com.ruleup.onboarding.data.auth.dto.toOAuthResult
 import com.ruleup.onboarding.data.auth.dto.toToken
-import com.ruleup.onboarding.domain.auth.usecase.AuthRepository
+import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 import dagger.hilt.android.qualifiers.ApplicationContext

@@ -7,10 +7,10 @@ import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalScope
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
-import com.ruleup.verification.domain.port.EnvelopeMetadataProvider
-import com.ruleup.verification.domain.port.SignalCollector
-import com.ruleup.verification.domain.port.SignalRepository
-import com.ruleup.verification.domain.port.VerificationRepository
+import com.ruleup.verification.domain.repository.EnvelopeMetadataProvider
+import com.ruleup.verification.domain.repository.SignalCollector
+import com.ruleup.verification.domain.repository.SignalRepository
+import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
 
 /**

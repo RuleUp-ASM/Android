@@ -1,7 +1,7 @@
 package com.ruleup.challenge.data.repository
 
-import com.ruleup.challenge.domain.MyChallengeStore
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
+import com.ruleup.challenge.domain.repository.MyChallengeStore
 import javax.inject.Inject
 import javax.inject.Singleton
 

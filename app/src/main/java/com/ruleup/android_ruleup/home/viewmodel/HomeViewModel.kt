@@ -2,8 +2,8 @@ package com.ruleup.android_ruleup.home.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.android_ruleup.home.mergeHomeChallenges
-import com.ruleup.challenge.domain.ChallengeDetailPage
-import com.ruleup.challenge.domain.MyChallengeStore
+import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.GetMyChallengesUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes

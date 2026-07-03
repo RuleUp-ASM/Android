@@ -2,7 +2,7 @@ package com.ruleup.verification.domain.usecase
 
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
-import com.ruleup.verification.domain.port.VerificationRepository
+import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
 
 /**

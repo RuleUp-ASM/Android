@@ -27,7 +27,7 @@ import com.ruleup.android_ruleup.debug.DebugLogOverlay
 import com.ruleup.android_ruleup.debug.DebugSyncButton
 import com.ruleup.android_ruleup.debug.TrackJankScreen
 import com.ruleup.domain.message.MessageEffect
-import com.ruleup.onboarding.domain.SplashPage
+import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.ui.theme.RuleUpTheme

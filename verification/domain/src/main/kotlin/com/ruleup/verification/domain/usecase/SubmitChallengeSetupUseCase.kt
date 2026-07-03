@@ -3,7 +3,7 @@ package com.ruleup.verification.domain.usecase
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.SetupAnchors
-import com.ruleup.verification.domain.port.VerificationRepository
+import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
 
 /**
