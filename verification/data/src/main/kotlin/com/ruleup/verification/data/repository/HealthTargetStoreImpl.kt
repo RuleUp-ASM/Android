@@ -5,7 +5,7 @@ import com.ruleup.verification.data.db.HealthTargetDao
 import com.ruleup.verification.data.db.toDomain
 import com.ruleup.verification.data.db.toEntity
 import com.ruleup.verification.domain.entity.HealthTarget
-import com.ruleup.verification.domain.port.HealthTargetStore
+import com.ruleup.verification.domain.repository.HealthTargetStore
 import javax.inject.Inject
 
 /**

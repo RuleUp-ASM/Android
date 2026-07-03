@@ -6,8 +6,8 @@ import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
-import com.ruleup.onboarding.domain.IntroPromisePage
-import com.ruleup.onboarding.domain.SplashPage
+import com.ruleup.onboarding.domain.navigation.IntroPromisePage
+import com.ruleup.onboarding.domain.navigation.SplashPage
 import timber.log.Timber
 
 private const val TAG = "[DeepLink]"

@@ -1,9 +1,9 @@
 package com.ruleup.onboarding.domain.auth.usecase
-
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.entity.user.User
 import com.ruleup.onboarding.domain.auth.model.SignupForm
-import com.ruleup.onboarding.domain.profile.ProfileRepository
+import com.ruleup.onboarding.domain.auth.repository.AuthRepository
+import com.ruleup.onboarding.domain.profile.repository.ProfileRepository
 import javax.inject.Inject
 
 /**

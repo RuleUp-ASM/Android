@@ -2,9 +2,9 @@ package com.ruleup.verification.data.sync
 
 import com.ruleup.verification.data.db.GeofenceTargetDao
 import com.ruleup.verification.domain.entity.SignalScope
-import com.ruleup.verification.domain.port.HealthTargetStore
-import com.ruleup.verification.domain.port.SyncScopeProvider
-import com.ruleup.verification.domain.port.UsageTargetStore
+import com.ruleup.verification.domain.repository.HealthTargetStore
+import com.ruleup.verification.domain.repository.SyncScopeProvider
+import com.ruleup.verification.domain.repository.UsageTargetStore
 import javax.inject.Inject
 
 /**

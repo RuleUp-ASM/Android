@@ -4,11 +4,11 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.message.IconType
-import com.ruleup.onboarding.domain.HomePage
-import com.ruleup.onboarding.domain.ProfileIconPage
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.entity.LoginResult
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.navigation.HomePage
+import com.ruleup.onboarding.domain.navigation.ProfileIconPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch

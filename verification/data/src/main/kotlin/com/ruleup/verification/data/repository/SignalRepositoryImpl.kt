@@ -12,7 +12,7 @@ import com.ruleup.verification.data.db.toScreenEvent
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.VerificationSignal
-import com.ruleup.verification.domain.port.SignalRepository
+import com.ruleup.verification.domain.repository.SignalRepository
 import timber.log.Timber
 import javax.inject.Inject
 

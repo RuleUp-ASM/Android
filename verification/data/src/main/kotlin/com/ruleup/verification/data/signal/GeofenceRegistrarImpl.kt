@@ -8,7 +8,7 @@ import com.google.android.gms.location.LocationServices
 import com.ruleup.verification.data.db.GeofenceTargetDao
 import com.ruleup.verification.data.db.toEntity
 import com.ruleup.verification.domain.entity.GeofenceTarget
-import com.ruleup.verification.domain.port.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegistrar
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject

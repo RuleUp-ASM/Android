@@ -12,7 +12,7 @@ import com.ruleup.onboarding.data.profile.api.ProfileApi
 import com.ruleup.onboarding.data.profile.dto.NicknameCheckRequest
 import com.ruleup.onboarding.data.profile.dto.UpdateProfileRequest
 import com.ruleup.onboarding.data.profile.dto.toDomain
-import com.ruleup.onboarding.domain.profile.ProfileRepository
+import com.ruleup.onboarding.domain.profile.repository.ProfileRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody

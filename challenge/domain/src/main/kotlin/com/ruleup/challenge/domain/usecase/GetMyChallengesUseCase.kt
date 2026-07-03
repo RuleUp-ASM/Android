@@ -1,8 +1,8 @@
 package com.ruleup.challenge.domain.usecase
 
-import com.ruleup.challenge.domain.ChallengeRepository
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeScope
+import com.ruleup.challenge.domain.repository.ChallengeRepository
 import javax.inject.Inject
 
 /**

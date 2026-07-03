@@ -6,7 +6,7 @@ import com.ruleup.network.dto.getOrThrow
 import com.ruleup.onboarding.data.intro.api.IntroApi
 import com.ruleup.onboarding.data.intro.dto.toDomain
 import com.ruleup.onboarding.domain.entity.AppVersionGate
-import com.ruleup.onboarding.domain.intro.IntroRepository
+import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 

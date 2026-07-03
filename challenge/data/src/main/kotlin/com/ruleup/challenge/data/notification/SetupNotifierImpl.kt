@@ -3,8 +3,8 @@ package com.ruleup.challenge.data.notification
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import com.ruleup.challenge.domain.SetupNotifier
-import com.ruleup.challenge.domain.TargetAppStore
+import com.ruleup.challenge.domain.repository.SetupNotifier
+import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.domain.helper.PushNotificationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import dagger.hilt.android.qualifiers.ApplicationContext

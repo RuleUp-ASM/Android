@@ -8,7 +8,7 @@ import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.RootComposable
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.onboarding.domain.SplashPage
+import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 

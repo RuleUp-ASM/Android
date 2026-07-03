@@ -5,7 +5,6 @@ import com.ruleup.challenge.data.dto.MemberDecisionRequest
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
-import com.ruleup.challenge.domain.ChallengeRepository
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeForm
@@ -19,6 +18,7 @@ import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.MemberStatusFilter
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeScope
+import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField

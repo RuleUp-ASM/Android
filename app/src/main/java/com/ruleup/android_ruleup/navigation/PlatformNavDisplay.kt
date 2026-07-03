@@ -11,7 +11,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.ruleup.onboarding.domain.IntroPromisePage
+import com.ruleup.onboarding.domain.navigation.IntroPromisePage
 import com.ruleup.ui.helper.LocalNavigationHelper
 import timber.log.Timber
 

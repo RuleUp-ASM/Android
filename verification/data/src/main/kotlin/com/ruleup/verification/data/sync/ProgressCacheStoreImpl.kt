@@ -4,7 +4,7 @@ import com.ruleup.verification.data.db.ProgressCacheDao
 import com.ruleup.verification.data.db.ProgressCacheEntity
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.UpdatedChallenge
-import com.ruleup.verification.domain.port.ProgressCacheStore
+import com.ruleup.verification.domain.repository.ProgressCacheStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject

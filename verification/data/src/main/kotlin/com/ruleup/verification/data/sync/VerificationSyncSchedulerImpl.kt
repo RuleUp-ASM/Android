@@ -9,7 +9,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import com.ruleup.verification.domain.port.SyncScheduler
+import com.ruleup.verification.domain.repository.SyncScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject

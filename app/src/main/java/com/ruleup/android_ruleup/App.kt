@@ -8,7 +8,7 @@ import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
 import com.ruleup.android_ruleup.debug.DebugLogTree
 import com.ruleup.domain.token.TokenRepository
-import com.ruleup.verification.domain.port.SyncScheduler
+import com.ruleup.verification.domain.repository.SyncScheduler
 import com.ruleup.verification.domain.usecase.SubmitDeviceIntroUseCase
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope

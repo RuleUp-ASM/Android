@@ -14,9 +14,9 @@ import com.ruleup.analytics.AnalyticsEvent
 import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.analytics.CrashReporter
 import com.ruleup.verification.data.settings.VerificationSettingsStore
-import com.ruleup.verification.domain.port.ProgressCacheStore
-import com.ruleup.verification.domain.port.SyncScheduler
-import com.ruleup.verification.domain.port.SyncScopeProvider
+import com.ruleup.verification.domain.repository.ProgressCacheStore
+import com.ruleup.verification.domain.repository.SyncScheduler
+import com.ruleup.verification.domain.repository.SyncScopeProvider
 import com.ruleup.verification.domain.usecase.RunSyncUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

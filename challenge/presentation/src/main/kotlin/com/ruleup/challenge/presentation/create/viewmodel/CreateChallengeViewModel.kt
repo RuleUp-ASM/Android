@@ -1,8 +1,6 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.challenge.domain.ChallengeConfirmPage
-import com.ruleup.challenge.domain.MyChallengeStore
 import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
@@ -12,6 +10,8 @@ import com.ruleup.challenge.domain.entity.Penalty
 import com.ruleup.challenge.domain.entity.Reward
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.SnsShare
+import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
+import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RecommendChallengeUseCase
 import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase

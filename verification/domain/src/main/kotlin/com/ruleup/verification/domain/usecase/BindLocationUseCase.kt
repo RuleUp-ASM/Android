@@ -1,7 +1,7 @@
 package com.ruleup.verification.domain.usecase
 
 import com.ruleup.verification.domain.entity.GeofenceTarget
-import com.ruleup.verification.domain.port.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegistrar
 import javax.inject.Inject
 
 /**

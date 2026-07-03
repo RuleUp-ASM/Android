@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.onboarding.domain.IntroTrustPage
-import com.ruleup.onboarding.domain.IntroVerifyPage
-import com.ruleup.onboarding.domain.LoginPage
+import com.ruleup.onboarding.domain.navigation.IntroTrustPage
+import com.ruleup.onboarding.domain.navigation.IntroVerifyPage
+import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.presentation.intro.screen.OnboardingPage
 import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
 import com.ruleup.ui.component.BottomBar

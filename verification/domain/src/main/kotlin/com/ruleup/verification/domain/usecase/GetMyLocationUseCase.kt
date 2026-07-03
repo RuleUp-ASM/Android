@@ -1,7 +1,7 @@
 package com.ruleup.verification.domain.usecase
 
 import com.ruleup.verification.domain.entity.MyLocation
-import com.ruleup.verification.domain.port.VerificationRepository
+import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
 
 /**
