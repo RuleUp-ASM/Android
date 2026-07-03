@@ -10,19 +10,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.verification.data.signal.HealthPermissions
 import com.ruleup.verification.data.signal.hasUsageAccess
 import com.ruleup.verification.data.signal.usageAccessSettingsIntent
-import com.ruleup.verification.domain.port.SyncScheduler
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
+import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 import timber.log.Timber
 
 // 수집·동기화 로그 태그(Worker/Repository 와 동일). 디버그 오버레이/Logcat 에서 'VerifySync' 로 필터.
@@ -41,6 +40,19 @@ private const val LOG_TAG = "VerifySync"
 @Composable
 fun DebugSyncButton(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+
+    // catch-up 작업 상태를 로그로 노출(ENQUEUED→RUNNING→SUCCEEDED/FAILED). enqueue 후 워커가 실제로 도는지,
+    // 실패면 몇 번째 시도인지 눈으로 확인한다. 결과는 오버레이/Logcat 의 'VerifySync' 태그로 뜬다.
+    LaunchedEffect(Unit) {
+        WorkManager
+            .getInstance(context)
+            .getWorkInfosForUniqueWorkFlow(VerificationSyncSchedulerImpl.CATCH_UP_WORK_NAME)
+            .collect { infos ->
+                val info = infos.lastOrNull() ?: return@collect
+                Timber.tag(LOG_TAG).i("catch-up 상태 — %s (시도 %d회)", info.state, info.runAttemptCount)
+            }
+    }
+
     // HC 권한 요청 컨트랙트(verification:data 가 HC 클래스를 숨김 — 여기선 Set<String> 만 다룬다).
     val healthContract = remember { HealthPermissions.requestPermissionsContract() }
 
@@ -104,12 +116,9 @@ private fun handleUsageThenCollect(context: Context) {
 }
 
 private fun enqueueCollect(context: Context) {
-    val scheduler =
-        EntryPointAccessors
-            .fromApplication(context.applicationContext, DebugToolsEntryPoint::class.java)
-            .syncScheduler()
-    Timber.tag(LOG_TAG).i("✔ 권한 확인 완료 — catch-up 수집·동기화 enqueue")
-    scheduler.enqueueCatchUp()
+    // 디버그 수동 트리거는 REPLACE — 이전 실패(재시도 백오프)로 대기 중인 작업이 있어도 지금 새로 돌린다.
+    Timber.tag(LOG_TAG).i("✔ 권한 확인 완료 — catch-up 수집·동기화 enqueue (REPLACE)")
+    VerificationSyncSchedulerImpl.enqueueCatchUp(context, ExistingWorkPolicy.REPLACE)
 }
 
 // 요청할 런타임 권한(OS 버전별 추가). 백그라운드 위치는 포그라운드 허용 후 별도 단계라 여기 넣지 않는다.
@@ -129,11 +138,4 @@ private fun needsBackgroundLocation(context: Context): Boolean {
     val backgroundGranted =
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
     return fineGranted && !backgroundGranted
-}
-
-/** [SyncScheduler] 를 컴포저블(비-Hilt)에서 꺼내기 위한 Hilt 진입점(디버그 트리거 전용). */
-@EntryPoint
-@InstallIn(SingletonComponent::class)
-fun interface DebugToolsEntryPoint {
-    fun syncScheduler(): SyncScheduler
 }

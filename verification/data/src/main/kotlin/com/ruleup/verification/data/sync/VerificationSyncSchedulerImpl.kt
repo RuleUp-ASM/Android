@@ -63,8 +63,14 @@ class VerificationSyncSchedulerImpl
             /**
              * push 트리거용 expedited catch-up. Hilt 그래프에 접근 못 하는 BroadcastReceiver 도
              * WorkManager 싱글톤으로 직접 호출할 수 있도록 static 으로 노출한다(전송 스펙 §0.6).
+             *
+             * 기본 [ExistingWorkPolicy.KEEP] 은 연쇄 발화 시 폭주를 막는다(운영 경로). 디버그의 수동 트리거처럼
+             * "지금 새로 돌려라"가 필요하면 [ExistingWorkPolicy.REPLACE] 로 대기/재시도 중인 작업을 갈아끼운다.
              */
-            fun enqueueCatchUp(context: Context) {
+            fun enqueueCatchUp(
+                context: Context,
+                policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
+            ) {
                 val request =
                     OneTimeWorkRequest
                         .Builder(VerificationSyncWorker::class.java)
@@ -77,8 +83,7 @@ class VerificationSyncSchedulerImpl
                         ).build()
                 WorkManager.getInstance(context).enqueueUniqueWork(
                     CATCH_UP_WORK_NAME,
-                    // 이미 대기 중인 catch-up 이 있으면 유지(연쇄 발화 시 폭주 방지).
-                    ExistingWorkPolicy.KEEP,
+                    policy,
                     request,
                 )
             }
