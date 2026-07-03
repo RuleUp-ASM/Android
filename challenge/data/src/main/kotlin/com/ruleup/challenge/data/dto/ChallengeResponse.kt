@@ -39,9 +39,9 @@ data class RecommendationResponse(
     @SerialName("recommendedMethod")
     val recommendedMethod: String? = null,
     @SerialName("options")
-    val options: List<VerificationOptionDto>? = null,
+    val options: List<VerificationOptionResponse>? = null,
     @SerialName("params")
-    val params: List<ParamSpecDto>? = null,
+    val params: List<ParamSpecResponse>? = null,
     @SerialName("rationale")
     val rationale: String? = null,
     @SerialName("participationType")
@@ -113,7 +113,7 @@ data class ChallengeResponse(
     @SerialName("templateId")
     val templateId: Int? = null,
     @SerialName("verification")
-    val verification: VerificationConfigDto? = null,
+    val verification: VerificationConfigResponse? = null,
     @SerialName("params")
     val params: JsonObject? = null,
     @SerialName("penalty")
@@ -145,13 +145,13 @@ internal fun ChallengeResponse.toDomain(): Challenge =
 
 // ---------- 3.3 챌린지 상세 + 참여 자격 ----------
 @Serializable
-data class ChallengeOwnerDto(
+data class ChallengeOwnerResponse(
     @SerialName("nickname")
     val nickname: String? = null,
 )
 
 @Serializable
-data class ChallengeStatsDto(
+data class ChallengeStatsResponse(
     @SerialName("participantCount")
     val participantCount: Int? = null,
     @SerialName("averageMannerTemperature")
@@ -161,7 +161,7 @@ data class ChallengeStatsDto(
 )
 
 @Serializable
-data class ChallengeEligibilityDto(
+data class ChallengeEligibilityResponse(
     @SerialName("canJoin")
     val canJoin: Boolean? = null,
     @SerialName("myMannerTemperature")
@@ -187,7 +187,7 @@ data class ChallengeDetailResponse(
     @SerialName("status")
     val status: String? = null,
     @SerialName("owner")
-    val owner: ChallengeOwnerDto? = null,
+    val owner: ChallengeOwnerResponse? = null,
     @SerialName("repeatDays")
     val repeatDays: List<String>? = null,
     @SerialName("durationDays")
@@ -199,7 +199,7 @@ data class ChallengeDetailResponse(
     @SerialName("templateId")
     val templateId: Int? = null,
     @SerialName("verification")
-    val verification: VerificationConfigDto? = null,
+    val verification: VerificationConfigResponse? = null,
     @SerialName("params")
     val params: JsonObject? = null,
     @SerialName("penalty")
@@ -207,9 +207,9 @@ data class ChallengeDetailResponse(
     @SerialName("reward")
     val reward: RewardDto? = null,
     @SerialName("stats")
-    val stats: ChallengeStatsDto? = null,
+    val stats: ChallengeStatsResponse? = null,
     @SerialName("eligibility")
-    val eligibility: ChallengeEligibilityDto? = null,
+    val eligibility: ChallengeEligibilityResponse? = null,
 )
 
 internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
@@ -259,7 +259,7 @@ internal fun MemberStatusResponse.toDomain(): MemberStatus = MemberStatus.fromVa
 
 // ---------- 3.8 멤버 목록 ----------
 @Serializable
-data class ChallengeMemberDto(
+data class ChallengeMemberResponse(
     @SerialName("userId")
     val userId: String? = null,
     @SerialName("nickname")
@@ -276,7 +276,7 @@ data class ChallengeMemberDto(
     val joinedAt: String? = null,
 )
 
-internal fun ChallengeMemberDto.toDomain(): ChallengeMember =
+internal fun ChallengeMemberResponse.toDomain(): ChallengeMember =
     ChallengeMember(
         userId = userId.requireField("userId"),
         nickname = nickname.requireField("nickname"),
@@ -294,7 +294,7 @@ data class ChallengeMembersResponse(
     @SerialName("participantCount")
     val participantCount: Int? = null,
     @SerialName("members")
-    val members: List<ChallengeMemberDto>? = null,
+    val members: List<ChallengeMemberResponse>? = null,
 )
 
 internal fun ChallengeMembersResponse.toDomain(): ChallengeMembers =
@@ -313,7 +313,7 @@ data class ChallengeImageResponse(
 
 // ---------- 내 챌린지 목록 조회 (GET /challenges) ----------
 @Serializable
-data class MyChallengeDto(
+data class MyChallengeResponse(
     @SerialName("challengeId")
     val challengeId: String? = null,
     @SerialName("title")
@@ -346,7 +346,7 @@ data class MyChallengeDto(
     val memberStatus: String? = null,
 )
 
-internal fun MyChallengeDto.toDomain(): MyChallenge =
+internal fun MyChallengeResponse.toDomain(): MyChallenge =
     MyChallenge(
         challengeId = challengeId.requireField("challengeId"),
         title = title.requireField("title"),
@@ -368,7 +368,7 @@ internal fun MyChallengeDto.toDomain(): MyChallenge =
 @Serializable
 data class MyChallengesResponse(
     @SerialName("challenges")
-    val challenges: List<MyChallengeDto>? = null,
+    val challenges: List<MyChallengeResponse>? = null,
 )
 
 internal fun MyChallengesResponse.toDomain(): List<MyChallenge> = challenges.orEmpty().map { it.toDomain() }

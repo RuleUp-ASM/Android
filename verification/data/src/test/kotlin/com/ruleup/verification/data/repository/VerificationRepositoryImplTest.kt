@@ -12,6 +12,7 @@ import com.ruleup.verification.data.dto.KakaoCoord2AddressResponse
 import com.ruleup.verification.data.dto.KakaoKeywordResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
+import com.ruleup.verification.data.dto.MyLocationResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
@@ -124,6 +125,8 @@ class VerificationRepositoryImplTest {
             challengeId: String,
             request: ChallengeSetupRequest,
         ): BaseResponse<ChallengeSetupResponse> = error("unused")
+
+        override suspend fun getMyLocation(challengeId: String): BaseResponse<MyLocationResponse> = error("unused")
     }
 
     private class FakeKakaoLocalApi : KakaoLocalApi {

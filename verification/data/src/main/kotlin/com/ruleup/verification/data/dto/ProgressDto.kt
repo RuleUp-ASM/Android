@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 
 // ---------- 3.2 진행률 일괄 조회 ----------
 @Serializable
-data class ChallengeProgressDto(
+data class ChallengeProgressResponse(
     @SerialName("challengeId")
     val challengeId: String? = null,
     @SerialName("title")
@@ -42,10 +42,10 @@ data class ProgressResponse(
     @SerialName("asOf")
     val asOf: String? = null,
     @SerialName("challenges")
-    val challenges: List<ChallengeProgressDto>? = null,
+    val challenges: List<ChallengeProgressResponse>? = null,
 )
 
-internal fun ChallengeProgressDto.toDomain(): ChallengeProgress =
+internal fun ChallengeProgressResponse.toDomain(): ChallengeProgress =
     ChallengeProgress(
         challengeId = challengeId.requireField("challengeId"),
         title = title.orEmpty(),

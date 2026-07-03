@@ -20,7 +20,7 @@ import kotlin.time.Instant
 private fun Long.toIso(): String = Instant.fromEpochMilliseconds(this).toString()
 
 @Serializable
-data class GeofenceEventDto(
+data class GeofenceEventRequest(
     @SerialName("requestId")
     val requestId: String,
     @SerialName("transition")
@@ -38,7 +38,7 @@ data class GeofenceEventDto(
 )
 
 @Serializable
-data class AppEventDto(
+data class AppEventRequest(
     @SerialName("packageName")
     val packageName: String,
     @SerialName("eventType")
@@ -48,7 +48,7 @@ data class AppEventDto(
 )
 
 @Serializable
-data class ScreenEventDto(
+data class ScreenEventRequest(
     @SerialName("event")
     val event: String,
     @SerialName("at")
@@ -56,7 +56,7 @@ data class ScreenEventDto(
 )
 
 @Serializable
-data class LocationPointDto(
+data class LocationPointRequest(
     @SerialName("lat")
     val lat: Double,
     @SerialName("lng")
@@ -71,7 +71,7 @@ data class LocationPointDto(
 
 /** HEALTH readings 의 신뢰 메타데이터(명세 §6.2·§8.2). 필수 동봉 — 없으면 BE 거부. */
 @Serializable
-data class HealthOriginDto(
+data class HealthOriginRequest(
     @SerialName("dataOrigin")
     val dataOrigin: String,
     @SerialName("recordingMethod")
@@ -82,7 +82,7 @@ data class HealthOriginDto(
 
 /** Health Connect 읽은 값 1건(명세 §6.2). 집계·게이트는 BE. */
 @Serializable
-data class HealthReadingDto(
+data class HealthReadingRequest(
     @SerialName("metric")
     val metric: String,
     @SerialName("value")
@@ -92,12 +92,12 @@ data class HealthReadingDto(
     @SerialName("exerciseType")
     val exerciseType: String? = null,
     @SerialName("origin")
-    val origin: HealthOriginDto,
+    val origin: HealthOriginRequest,
 )
 
 /** 수면 세그먼트 1건(명세 §6.2). */
 @Serializable
-data class SleepSegmentDto(
+data class SleepSegmentRequest(
     @SerialName("startAt")
     val startAt: String,
     @SerialName("endAt")
@@ -112,30 +112,30 @@ data class SleepSegmentDto(
  * HEALTH → [date]/[readings], SLEEP → [segments].
  */
 @Serializable
-data class SignalDto(
+data class SignalRequest(
     @SerialName("type")
     val type: String,
     @SerialName("events")
-    val events: List<GeofenceEventDto>? = null,
+    val events: List<GeofenceEventRequest>? = null,
     @SerialName("appEvents")
-    val appEvents: List<AppEventDto>? = null,
+    val appEvents: List<AppEventRequest>? = null,
     @SerialName("screenEvents")
-    val screenEvents: List<ScreenEventDto>? = null,
+    val screenEvents: List<ScreenEventRequest>? = null,
     @SerialName("points")
-    val points: List<LocationPointDto>? = null,
+    val points: List<LocationPointRequest>? = null,
     @SerialName("date")
     val date: String? = null,
     @SerialName("readings")
-    val readings: List<HealthReadingDto>? = null,
+    val readings: List<HealthReadingRequest>? = null,
     @SerialName("segments")
-    val segments: List<SleepSegmentDto>? = null,
+    val segments: List<SleepSegmentRequest>? = null,
 )
 
 // ---------- §0.1 공통 envelope 필드 ----------
 
 /** Health Connect 신호별 권한 현황(전송 스펙 §0.1 permissions.healthConnect). */
 @Serializable
-data class HealthConnectPermissionsDto(
+data class HealthConnectPermissionsRequest(
     @SerialName("distance")
     val distance: String,
     @SerialName("steps")
@@ -148,7 +148,7 @@ data class HealthConnectPermissionsDto(
 
 /** 신호별 권한 현황 스냅샷(전송 스펙 §0.1 permissions). 값은 GRANTED/DENIED. */
 @Serializable
-data class PermissionsDto(
+data class PermissionsRequest(
     @SerialName("location")
     val location: String,
     @SerialName("backgroundLocation")
@@ -160,26 +160,26 @@ data class PermissionsDto(
     @SerialName("postNotifications")
     val postNotifications: String,
     @SerialName("healthConnect")
-    val healthConnect: HealthConnectPermissionsDto,
+    val healthConnect: HealthConnectPermissionsRequest,
 )
 
 /** VPN 게이트(전송 스펙 §6.1). */
 @Serializable
-data class NetworkDto(
+data class NetworkRequest(
     @SerialName("vpnActive")
     val vpnActive: Boolean,
 )
 
 /** Play Integrity verdict 토큰(전송 스펙 §6.5). token 없으면 envelope 에서 통째로 생략. */
 @Serializable
-data class IntegrityDto(
+data class IntegrityRequest(
     @SerialName("token")
     val token: String,
 )
 
 /** worker heartbeat 진단(전송 스펙 §0.7). null 필드는 explicitNulls=false 로 생략. */
 @Serializable
-data class DiagnosticsDto(
+data class DiagnosticsRequest(
     @SerialName("lastSuccessfulFlushAt")
     val lastSuccessfulFlushAt: Long? = null,
     @SerialName("standbyBucket")
@@ -198,7 +198,7 @@ data class DiagnosticsDto(
 
 /** 신호 공백 1건(전송 스펙 §0.5 gaps[]). 시각은 epoch millis. */
 @Serializable
-data class GapDto(
+data class GapRequest(
     @SerialName("signalType")
     val signalType: String,
     @SerialName("reason")
@@ -228,27 +228,27 @@ data class SyncEnvelopeRequest(
     @SerialName("activeChallengeIds")
     val activeChallengeIds: List<String>,
     @SerialName("permissions")
-    val permissions: PermissionsDto,
+    val permissions: PermissionsRequest,
     @SerialName("network")
-    val network: NetworkDto,
+    val network: NetworkRequest,
     @SerialName("integrity")
-    val integrity: IntegrityDto? = null,
+    val integrity: IntegrityRequest? = null,
     @SerialName("diagnostics")
-    val diagnostics: DiagnosticsDto? = null,
+    val diagnostics: DiagnosticsRequest? = null,
     @SerialName("gaps")
-    val gaps: List<GapDto>,
+    val gaps: List<GapRequest>,
     @SerialName("signals")
-    val signals: List<SignalDto>,
+    val signals: List<SignalRequest>,
 )
 
-private fun VerificationSignal.toDto(): SignalDto =
+private fun VerificationSignal.toDto(): SignalRequest =
     when (this) {
         is VerificationSignal.GeofenceTransitions ->
-            SignalDto(
+            SignalRequest(
                 type = "GEOFENCE_TRANSITION",
                 events =
                     events.map {
-                        GeofenceEventDto(
+                        GeofenceEventRequest(
                             requestId = it.requestId,
                             transition = it.transition.name,
                             at = it.at.toIso(),
@@ -261,11 +261,11 @@ private fun VerificationSignal.toDto(): SignalDto =
             )
 
         is VerificationSignal.ScreenTime ->
-            SignalDto(
+            SignalRequest(
                 type = "SCREEN_TIME",
                 appEvents =
                     appEvents.map {
-                        AppEventDto(
+                        AppEventRequest(
                             packageName = it.packageName,
                             eventType = it.eventType.name,
                             at = it.at.toIso(),
@@ -273,7 +273,7 @@ private fun VerificationSignal.toDto(): SignalDto =
                     },
                 screenEvents =
                     screenEvents.map {
-                        ScreenEventDto(
+                        ScreenEventRequest(
                             event = it.event.name,
                             at = it.at.toIso(),
                         )
@@ -281,11 +281,11 @@ private fun VerificationSignal.toDto(): SignalDto =
             )
 
         is VerificationSignal.Locations ->
-            SignalDto(
+            SignalRequest(
                 type = "LOCATION",
                 points =
                     points.map {
-                        LocationPointDto(
+                        LocationPointRequest(
                             lat = it.lat,
                             lng = it.lng,
                             accuracy = it.accuracy.toDouble(),
@@ -296,18 +296,18 @@ private fun VerificationSignal.toDto(): SignalDto =
             )
 
         is VerificationSignal.Health ->
-            SignalDto(
+            SignalRequest(
                 type = "HEALTH",
                 date = date,
                 readings =
                     readings.map {
-                        HealthReadingDto(
+                        HealthReadingRequest(
                             metric = it.metric.name,
                             value = it.value,
                             unit = it.unit,
                             exerciseType = it.exerciseType,
                             origin =
-                                HealthOriginDto(
+                                HealthOriginRequest(
                                     dataOrigin = it.origin.dataOrigin,
                                     recordingMethod = it.origin.recordingMethod.name,
                                     deviceType = it.origin.deviceType.name,
@@ -317,11 +317,11 @@ private fun VerificationSignal.toDto(): SignalDto =
             )
 
         is VerificationSignal.Sleep ->
-            SignalDto(
+            SignalRequest(
                 type = "SLEEP",
                 segments =
                     segments.map {
-                        SleepSegmentDto(
+                        SleepSegmentRequest(
                             startAt = it.startAt.toIso(),
                             endAt = it.endAt.toIso(),
                             status = it.status,
@@ -330,15 +330,15 @@ private fun VerificationSignal.toDto(): SignalDto =
             )
     }
 
-internal fun PermissionSnapshot.toDto(): PermissionsDto =
-    PermissionsDto(
+internal fun PermissionSnapshot.toDto(): PermissionsRequest =
+    PermissionsRequest(
         location = location.name,
         backgroundLocation = backgroundLocation.name,
         activityRecognition = activityRecognition.name,
         usageStats = usageStats.name,
         postNotifications = postNotifications.name,
         healthConnect =
-            HealthConnectPermissionsDto(
+            HealthConnectPermissionsRequest(
                 distance = healthDistance.name,
                 steps = healthSteps.name,
                 sleep = healthSleep.name,
@@ -346,8 +346,8 @@ internal fun PermissionSnapshot.toDto(): PermissionsDto =
             ),
     )
 
-private fun SignalGap.toDto(): GapDto =
-    GapDto(
+private fun SignalGap.toDto(): GapRequest =
+    GapRequest(
         signalType = signalType,
         reason = reason.name,
         fromMillis = fromMillis,
@@ -366,10 +366,10 @@ internal fun EnvelopeMetadata.toRequest(batch: SignalBatch): SyncEnvelopeRequest
         timeZone = clock.timeZone,
         activeChallengeIds = activeChallengeIds,
         permissions = permissions.toDto(),
-        network = NetworkDto(vpnActive = network.vpnActive),
-        integrity = integrity.token?.let { IntegrityDto(token = it) },
+        network = NetworkRequest(vpnActive = network.vpnActive),
+        integrity = integrity.token?.let { IntegrityRequest(token = it) },
         diagnostics =
-            DiagnosticsDto(
+            DiagnosticsRequest(
                 lastSuccessfulFlushAt = diagnostics.lastSuccessfulFlushAt,
                 standbyBucket = diagnostics.standbyBucket,
                 backgroundRestricted = diagnostics.backgroundRestricted,
@@ -384,7 +384,7 @@ internal fun EnvelopeMetadata.toRequest(batch: SignalBatch): SyncEnvelopeRequest
 
 // ---------- 3.1 sync 응답 ----------
 @Serializable
-data class UpdatedChallengeDto(
+data class UpdatedChallengeResponse(
     @SerialName("challengeId")
     val challengeId: String? = null,
     @SerialName("todayStatus")
@@ -400,7 +400,7 @@ data class SyncResponse(
     @SerialName("nextSyncAfterSec")
     val nextSyncAfterSec: Int? = null,
     @SerialName("updatedChallenges")
-    val updatedChallenges: List<UpdatedChallengeDto>? = null,
+    val updatedChallenges: List<UpdatedChallengeResponse>? = null,
     @SerialName("ignoredSignalTypes")
     val ignoredSignalTypes: List<String>? = null,
 )

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 
 /** 정적 디바이스 프로필. appVersion 은 요청 최상위로 보낸다(§0.3 예시). */
 @Serializable
-data class DeviceProfileDto(
+data class DeviceProfileRequest(
     @SerialName("sdkInt")
     val sdkInt: Int,
     @SerialName("model")
@@ -24,16 +24,16 @@ data class DeviceProfileDto(
 @Serializable
 data class IntroRequest(
     @SerialName("deviceProfile")
-    val deviceProfile: DeviceProfileDto,
+    val deviceProfile: DeviceProfileRequest,
     @SerialName("appVersion")
     val appVersion: String,
     @SerialName("permissions")
-    val permissions: PermissionsDto,
+    val permissions: PermissionsRequest,
 )
 
 /** 신호별 cadence(§0.3 collection.*). */
 @Serializable
-data class CadenceDto(
+data class CadenceResponse(
     @SerialName("enabled")
     val enabled: Boolean = true,
     @SerialName("pollSec")
@@ -41,19 +41,19 @@ data class CadenceDto(
 )
 
 @Serializable
-data class CollectionDto(
+data class CollectionResponse(
     @SerialName("GEOFENCE")
-    val geofence: CadenceDto? = null,
+    val geofence: CadenceResponse? = null,
     @SerialName("SCREEN_TIME")
-    val screenTime: CadenceDto? = null,
+    val screenTime: CadenceResponse? = null,
     @SerialName("WAKE")
-    val wake: CadenceDto? = null,
+    val wake: CadenceResponse? = null,
     @SerialName("HEALTH")
-    val health: CadenceDto? = null,
+    val health: CadenceResponse? = null,
 )
 
 @Serializable
-data class BackoffDto(
+data class BackoffResponse(
     @SerialName("maxSec")
     val maxSec: Int? = null,
     @SerialName("factor")
@@ -68,9 +68,9 @@ data class IntroResponse(
     @SerialName("flushIntervalSec")
     val flushIntervalSec: Int? = null,
     @SerialName("collection")
-    val collection: CollectionDto? = null,
+    val collection: CollectionResponse? = null,
     @SerialName("backoff")
-    val backoff: BackoffDto? = null,
+    val backoff: BackoffResponse? = null,
     @SerialName("sessionId")
     val sessionId: String? = null,
 )
@@ -78,7 +78,7 @@ data class IntroResponse(
 internal fun DeviceIntro.toRequest(): IntroRequest =
     IntroRequest(
         deviceProfile =
-            DeviceProfileDto(
+            DeviceProfileRequest(
                 sdkInt = profile.sdkInt,
                 model = profile.model,
                 lowRam = profile.lowRam,
@@ -87,7 +87,7 @@ internal fun DeviceIntro.toRequest(): IntroRequest =
         permissions = permissions.toDto(),
     )
 
-private fun CadenceDto.toDomain(): SignalCadence = SignalCadence(enabled = enabled, pollSec = pollSec)
+private fun CadenceResponse.toDomain(): SignalCadence = SignalCadence(enabled = enabled, pollSec = pollSec)
 
 internal fun IntroResponse.toDomain(): SyncPolicy =
     SyncPolicy(
