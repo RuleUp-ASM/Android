@@ -10,6 +10,9 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.ruleup.analytics.AnalyticsEvent
+import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.CrashReporter
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.domain.port.ProgressCacheStore
 import com.ruleup.verification.domain.port.SyncScheduler
@@ -37,6 +40,8 @@ class VerificationSyncWorker
         private val progressCacheStore: ProgressCacheStore,
         private val syncScheduler: SyncScheduler,
         private val settingsStore: VerificationSettingsStore,
+        private val analyticsLogger: AnalyticsLogger,
+        private val crashReporter: CrashReporter,
     ) : CoroutineWorker(appContext, params) {
         override suspend fun doWork(): Result {
             val scope = syncScopeProvider.currentScope()
@@ -63,6 +68,12 @@ class VerificationSyncWorker
                         result.ignoredSignalTypes,
                         result.nextSyncAfterSec,
                     )
+                    analyticsLogger.log(
+                        AnalyticsEvent.VerificationSynced(
+                            updatedCount = result.updatedChallenges.size,
+                            ignoredCount = result.ignoredSignalTypes.size,
+                        ),
+                    )
                 } else {
                     // 신호도 gap 도 없어 전송 생략(전송 스펙 §0.2).
                     Timber.tag(LOG_TAG).i("sync 전송 생략 — 수집 신호·gap 0 (스코프/권한 확인)")
@@ -73,6 +84,9 @@ class VerificationSyncWorker
             } catch (e: Exception) {
                 val outcome = syncOutcomeFor(e)
                 Timber.tag(LOG_TAG).w(e, "sync 실패 — outcome=%s", outcome)
+                // 처리된 실패도 기기별 원인 파악을 위해 관측: non-fatal 스택 + 분류 이벤트(비식별).
+                crashReporter.recordException(e, mapOf("sync_outcome" to outcome.name))
+                analyticsLogger.log(AnalyticsEvent.VerificationSyncFailed(reason = outcome.name))
                 when (outcome) {
                     SyncOutcome.SUCCESS, SyncOutcome.DISCARD -> Result.success()
                     SyncOutcome.RETRY -> Result.retry()

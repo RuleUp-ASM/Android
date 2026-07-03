@@ -12,4 +12,8 @@ abstract class AnalyticsLoggerModule {
     @Binds
     @Singleton
     abstract fun bindAnalyticsLogger(impl: AndroidAnalyticsLogger): AnalyticsLogger
+
+    @Binds
+    @Singleton
+    abstract fun bindCrashReporter(impl: FirebaseCrashReporter): CrashReporter
 }
