@@ -20,7 +20,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /** 추천 options[] 한 건. */
 @Serializable
-data class VerificationOptionDto(
+data class VerificationOptionResponse(
     @SerialName("method")
     val method: String? = null,
     @SerialName("recommended")
@@ -37,7 +37,7 @@ data class VerificationOptionDto(
     val requiredPermissions: List<String>? = null,
 )
 
-internal fun VerificationOptionDto.toDomain(): VerificationOption =
+internal fun VerificationOptionResponse.toDomain(): VerificationOption =
     VerificationOption(
         method = SelectedMethod.fromValue(method) ?: SelectedMethod.MANUAL,
         recommended = recommended ?: false,
@@ -50,7 +50,7 @@ internal fun VerificationOptionDto.toDomain(): VerificationOption =
 
 /** 추천 params[] 한 건. value/defaultValue 는 Number|String 이라 JsonElement 로 받는다. */
 @Serializable
-data class ParamSpecDto(
+data class ParamSpecResponse(
     @SerialName("key")
     val key: String? = null,
     @SerialName("value")
@@ -67,7 +67,7 @@ data class ParamSpecDto(
     val max: Double? = null,
 )
 
-internal fun ParamSpecDto.toDomain(): ParamSpec {
+internal fun ParamSpecResponse.toDomain(): ParamSpec {
     val paramKind = ParamKind.fromValue(kind)
     return ParamSpec(
         key = key.orEmpty(),
@@ -82,7 +82,7 @@ internal fun ParamSpecDto.toDomain(): ParamSpec {
 
 /** 인증 스냅샷 (생성/상세 응답 verification). */
 @Serializable
-data class VerificationConfigDto(
+data class VerificationConfigResponse(
     @SerialName("selectedMethod")
     val selectedMethod: String? = null,
     @SerialName("verificationType")
@@ -97,7 +97,7 @@ data class VerificationConfigDto(
     val externalService: String? = null,
 )
 
-internal fun VerificationConfigDto.toDomain(): VerificationConfig =
+internal fun VerificationConfigResponse.toDomain(): VerificationConfig =
     VerificationConfig(
         selectedMethod = SelectedMethod.fromValue(selectedMethod) ?: SelectedMethod.MANUAL,
         verificationType = VerificationType.fromValue(verificationType) ?: VerificationType.MANUAL,
