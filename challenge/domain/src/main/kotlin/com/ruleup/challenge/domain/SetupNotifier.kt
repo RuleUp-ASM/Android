@@ -8,7 +8,7 @@ package com.ruleup.challenge.domain
  * 안내한다. 둘 다 완료됐거나 수동 인증이면 알림을 띄우지 않는다.
  *
  * 권한 여부는 OS 런타임 권한으로, 대상 앱 등록 여부는 로컬 저장([TargetAppStore])으로 판별한다.
- * 구현은 플랫폼(NotificationManager) 의존이라 app 계층이 채운다.
+ * 구현(challenge:data)은 "무슨 알림"만 결정하고, 실제 발송·딥링크는 PushNotificationHelper 에 위임한다.
  */
 interface SetupNotifier {
     fun notifyAfterCreate(
