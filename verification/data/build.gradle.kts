@@ -52,6 +52,8 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:domain"))
     implementation(project(":core:entity"))
+    // sync 결과 관측: Analytics 이벤트 방출 + 실패 시 non-fatal 기록.
+    implementation(project(":core:analytics-api"))
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
