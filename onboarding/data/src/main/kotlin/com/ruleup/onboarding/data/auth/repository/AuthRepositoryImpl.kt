@@ -10,9 +10,9 @@ import com.ruleup.entity.user.Token
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
 import com.ruleup.onboarding.data.auth.api.AuthApi
-import com.ruleup.onboarding.data.auth.dto.AgreementsDto
-import com.ruleup.onboarding.data.auth.dto.ClientPropertiesDto
-import com.ruleup.onboarding.data.auth.dto.DeviceInfoDto
+import com.ruleup.onboarding.data.auth.dto.AgreementsRequest
+import com.ruleup.onboarding.data.auth.dto.ClientPropertiesRequest
+import com.ruleup.onboarding.data.auth.dto.DeviceInfoRequest
 import com.ruleup.onboarding.data.auth.dto.LogoutRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
@@ -78,10 +78,10 @@ class AuthRepositoryImpl
         }
     }
 
-private fun Agreement.toClientProperties(): ClientPropertiesDto =
-    ClientPropertiesDto(
+private fun Agreement.toClientProperties(): ClientPropertiesRequest =
+    ClientPropertiesRequest(
         agreements =
-            AgreementsDto(
+            AgreementsRequest(
                 terms = terms,
                 privacy = privacy,
                 marketing = marketing,
@@ -89,7 +89,7 @@ private fun Agreement.toClientProperties(): ClientPropertiesDto =
     )
 
 /** 공통 기기 정보 채집(명세 4.1~4.3). Build/ActivityManager/PackageManager 에서 읽는다. */
-private fun Context.deviceInfo(): DeviceInfoDto {
+private fun Context.deviceInfo(): DeviceInfoRequest {
     val packageInfo = packageManager.getPackageInfo(packageName, 0)
     val versionCode =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -98,7 +98,7 @@ private fun Context.deviceInfo(): DeviceInfoDto {
             @Suppress("DEPRECATION")
             packageInfo.versionCode
         }
-    return DeviceInfoDto(
+    return DeviceInfoRequest(
         platform = "ANDROID",
         osVersion = Build.VERSION.RELEASE.orEmpty(),
         sdkInt = Build.VERSION.SDK_INT,

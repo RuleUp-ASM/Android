@@ -24,18 +24,18 @@ data class SocialLoginAuthResponse(
     @SerialName("expiresIn")
     val expiresIn: Int? = null,
     @SerialName("user")
-    val user: UserDto? = null,
+    val user: UserResponse? = null,
     // 신규 사용자 (isNewUser = true)
     @SerialName("signupToken")
     val signupToken: String? = null,
     @SerialName("signupTokenExpiresIn")
     val signupTokenExpiresIn: Int? = null,
     @SerialName("oauthProfile")
-    val oauthProfile: OAuthProfileDto? = null,
+    val oauthProfile: OAuthProfileResponse? = null,
 )
 
 @Serializable
-data class UserDto(
+data class UserResponse(
     @SerialName("id")
     val id: String? = null,
     @SerialName("nickname")
@@ -51,7 +51,7 @@ data class UserDto(
 )
 
 @Serializable
-data class OAuthProfileDto(
+data class OAuthProfileResponse(
     @SerialName("email")
     val email: String? = null,
     @SerialName("profileImageUrlHint")
@@ -69,7 +69,7 @@ data class SignUpResponse(
     @SerialName("expiresIn")
     val expiresIn: Int? = null,
     @SerialName("user")
-    val user: UserDto? = null,
+    val user: UserResponse? = null,
 )
 
 @Serializable
@@ -110,13 +110,13 @@ internal fun SocialLoginAuthResponse.toOAuthResult(): OAuthResult {
     }
 }
 
-internal fun OAuthProfileDto?.toDomain(): OAuthProfile =
+internal fun OAuthProfileResponse?.toDomain(): OAuthProfile =
     OAuthProfile(
         email = this?.email,
         profileImageUrlHint = this?.profileImageUrlHint,
     )
 
-internal fun UserDto.toDomain(): User =
+internal fun UserResponse.toDomain(): User =
     User(
         id = id.requireField("user.id"),
         nickname = nickname.requireField("nickname"),

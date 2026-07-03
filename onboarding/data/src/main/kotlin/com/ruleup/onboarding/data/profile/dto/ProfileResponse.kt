@@ -33,11 +33,11 @@ data class CategoriesResponse(
     @SerialName("maxSelectable")
     val maxSelectable: Int? = null,
     @SerialName("categories")
-    val categories: List<CategoryDto>? = null,
+    val categories: List<CategoryResponse>? = null,
 )
 
 @Serializable
-data class CategoryDto(
+data class CategoryResponse(
     @SerialName("code")
     val code: String? = null,
     @SerialName("label")

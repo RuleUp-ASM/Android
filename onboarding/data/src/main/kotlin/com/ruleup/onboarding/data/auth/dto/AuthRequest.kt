@@ -13,7 +13,7 @@ data class SocialLoginAuthRequest(
     val redirectUri: String? = null,
     // 기기·SDK·버전 정보. 매 로그인마다 동반해 서버가 최신 1건으로 갱신한다(명세 4.1/4.2).
     @SerialName("deviceInfo")
-    val deviceInfo: DeviceInfoDto? = null,
+    val deviceInfo: DeviceInfoRequest? = null,
 )
 
 /**
@@ -22,7 +22,7 @@ data class SocialLoginAuthRequest(
  * "ANDROID" 가 누락되기 때문(빌더가 항상 채운다).
  */
 @Serializable
-data class DeviceInfoDto(
+data class DeviceInfoRequest(
     @SerialName("platform")
     val platform: String,
     @SerialName("osVersion")
@@ -42,13 +42,13 @@ data class DeviceInfoDto(
 )
 
 @Serializable
-data class ClientPropertiesDto(
+data class ClientPropertiesRequest(
     @SerialName("agreements")
-    val agreements: AgreementsDto? = null,
+    val agreements: AgreementsRequest? = null,
 )
 
 @Serializable
-data class AgreementsDto(
+data class AgreementsRequest(
     @SerialName("terms")
     val terms: Boolean? = null,
     @SerialName("privacy")
@@ -69,10 +69,10 @@ data class SignUpRequest(
     val profileImageUrl: String? = null,
     // 약관 동의를 가입 완료 단계에서 함께 전달한다(명세 4.3).
     @SerialName("clientProperties")
-    val clientProperties: ClientPropertiesDto? = null,
+    val clientProperties: ClientPropertiesRequest? = null,
     // 신규 회원의 기기 정보 확정 저장(명세 4.3, 로그인·가입 양쪽 동반).
     @SerialName("deviceInfo")
-    val deviceInfo: DeviceInfoDto? = null,
+    val deviceInfo: DeviceInfoRequest? = null,
 )
 
 @Serializable
