@@ -24,7 +24,7 @@ data class AnchorDto(
 
 /** 장소 바인딩(GPS_PRESENCE). 현재 앱은 지도 수동 입력만 지원하므로 fillMode 는 MANUAL 고정. */
 @Serializable
-data class LocationBindingDto(
+data class LocationBindingRequest(
     @SerialName("fillMode")
     val fillMode: String = FILL_MODE_MANUAL,
     @SerialName("anchors")
@@ -42,7 +42,7 @@ data class LocationBindingDto(
 @Serializable
 data class ChallengeSetupRequest(
     @SerialName("location")
-    val location: LocationBindingDto? = null,
+    val location: LocationBindingRequest? = null,
     @SerialName("targetPackages")
     val targetPackages: List<String>? = null,
 )
@@ -57,7 +57,7 @@ internal fun buildChallengeSetupRequest(
             anchors
                 .takeIf { it.isNotEmpty() }
                 ?.let { pins ->
-                    LocationBindingDto(
+                    LocationBindingRequest(
                         anchors =
                             pins.map {
                                 AnchorDto(

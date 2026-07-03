@@ -8,11 +8,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class KakaoKeywordResponse(
     @SerialName("documents")
-    val documents: List<KakaoPlaceDto>? = null,
+    val documents: List<KakaoPlaceResponse>? = null,
 )
 
 @Serializable
-data class KakaoPlaceDto(
+data class KakaoPlaceResponse(
     @SerialName("place_name")
     val placeName: String? = null,
     // 카카오는 x=경도, y=위도 를 "문자열" 로 준다.
@@ -49,19 +49,19 @@ internal fun KakaoKeywordResponse.toDomain(): List<Place> =
 @Serializable
 data class KakaoCoord2AddressResponse(
     @SerialName("documents")
-    val documents: List<KakaoAddressDto>? = null,
+    val documents: List<KakaoAddressResponse>? = null,
 )
 
 @Serializable
-data class KakaoAddressDto(
+data class KakaoAddressResponse(
     @SerialName("road_address")
-    val roadAddress: KakaoRoadAddressDto? = null,
+    val roadAddress: KakaoRoadAddressResponse? = null,
     @SerialName("address")
-    val address: KakaoLotAddressDto? = null,
+    val address: KakaoLotAddressResponse? = null,
 )
 
 @Serializable
-data class KakaoRoadAddressDto(
+data class KakaoRoadAddressResponse(
     @SerialName("address_name")
     val addressName: String? = null,
     @SerialName("building_name")
@@ -69,7 +69,7 @@ data class KakaoRoadAddressDto(
 )
 
 @Serializable
-data class KakaoLotAddressDto(
+data class KakaoLotAddressResponse(
     @SerialName("address_name")
     val addressName: String? = null,
 )

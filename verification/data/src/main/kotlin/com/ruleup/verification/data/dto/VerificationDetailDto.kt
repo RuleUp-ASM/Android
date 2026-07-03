@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 
 // ---------- 3.3 챌린지 인증 여부 판단 ----------
 @Serializable
-data class EvidenceDto(
+data class EvidenceResponse(
     @SerialName("dwellMinutes")
     val dwellMinutes: Int? = null,
     @SerialName("usageMinutes")
@@ -34,7 +34,7 @@ data class EvidenceDto(
 )
 
 @Serializable
-data class TodayDto(
+data class TodayResponse(
     @SerialName("isTarget")
     val isTarget: Boolean? = null,
     @SerialName("status")
@@ -44,7 +44,7 @@ data class TodayDto(
     @SerialName("failureReason")
     val failureReason: String? = null,
     @SerialName("evidence")
-    val evidence: EvidenceDto? = null,
+    val evidence: EvidenceResponse? = null,
     @SerialName("verifiedVia")
     val verifiedVia: String? = null,
     @SerialName("disputeClosesAt")
@@ -54,7 +54,7 @@ data class TodayDto(
 )
 
 @Serializable
-data class MethodDetailDto(
+data class MethodDetailResponse(
     @SerialName("insideGeofence")
     val insideGeofence: Boolean? = null,
     @SerialName("dwellMinutes")
@@ -82,19 +82,19 @@ data class MethodDetailDto(
 )
 
 @Serializable
-data class MethodDto(
+data class MethodResponse(
     @SerialName("method")
     val method: String? = null,
     @SerialName("lastEvaluatedAt")
     val lastEvaluatedAt: String? = null,
     @SerialName("detail")
-    val detail: MethodDetailDto? = null,
+    val detail: MethodDetailResponse? = null,
     @SerialName("supported")
     val supported: Boolean? = null,
 )
 
 @Serializable
-data class DailyLogDto(
+data class DailyLogResponse(
     @SerialName("date")
     val date: String? = null,
     @SerialName("status")
@@ -106,7 +106,7 @@ data class DailyLogDto(
 )
 
 @Serializable
-data class VerificationSummaryDto(
+data class VerificationSummaryResponse(
     @SerialName("overallStatus")
     val overallStatus: String? = null,
     @SerialName("progressRate")
@@ -118,11 +118,11 @@ data class VerificationSummaryDto(
     @SerialName("remainingDays")
     val remainingDays: Int? = null,
     @SerialName("today")
-    val today: TodayDto? = null,
+    val today: TodayResponse? = null,
     @SerialName("methods")
-    val methods: List<MethodDto>? = null,
+    val methods: List<MethodResponse>? = null,
     @SerialName("dailyLogs")
-    val dailyLogs: List<DailyLogDto>? = null,
+    val dailyLogs: List<DailyLogResponse>? = null,
 )
 
 @Serializable
@@ -134,10 +134,10 @@ data class VerificationDetailResponse(
     @SerialName("status")
     val status: String? = null,
     @SerialName("verification")
-    val verification: VerificationSummaryDto? = null,
+    val verification: VerificationSummaryResponse? = null,
 )
 
-private fun TodayDto?.toDomain(): TodayVerification =
+private fun TodayResponse?.toDomain(): TodayVerification =
     TodayVerification(
         isTarget = this?.isTarget ?: false,
         status = TodayStatus.fromValue(this?.status),
@@ -160,7 +160,7 @@ private fun TodayDto?.toDomain(): TodayVerification =
         windowClosesAt = this?.windowClosesAt,
     )
 
-private fun MethodDto.toDomain(): MethodEvaluation =
+private fun MethodResponse.toDomain(): MethodEvaluation =
     MethodEvaluation(
         method = method.orEmpty(),
         lastEvaluatedAt = lastEvaluatedAt,
@@ -185,7 +185,7 @@ private fun MethodDto.toDomain(): MethodEvaluation =
         supported = supported ?: true,
     )
 
-private fun DailyLogDto.toDomain(): DailyLog =
+private fun DailyLogResponse.toDomain(): DailyLog =
     DailyLog(
         date = date.requireField("dailyLogs.date"),
         status = TodayStatus.fromValue(status),
