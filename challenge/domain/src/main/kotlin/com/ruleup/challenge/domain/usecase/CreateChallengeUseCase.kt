@@ -3,8 +3,10 @@ package com.ruleup.challenge.domain.usecase
 import com.ruleup.analytics.AnalyticsEvent
 import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.challenge.domain.ChallengeRepository
+import com.ruleup.challenge.domain.SetupNotifier
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeForm
+import com.ruleup.challenge.domain.entity.SelectedMethod
 import javax.inject.Inject
 
 /**
@@ -18,6 +20,7 @@ class CreateChallengeUseCase
     constructor(
         private val challengeRepository: ChallengeRepository,
         private val analyticsLogger: AnalyticsLogger,
+        private val setupNotifier: SetupNotifier,
     ) {
         suspend operator fun invoke(form: ChallengeForm): Challenge {
             val challenge = challengeRepository.create(form)
@@ -27,6 +30,13 @@ class CreateChallengeUseCase
                     challengeId = challenge.challengeId,
                     durationDays = challenge.durationDays,
                 ),
+            )
+            // 자동 인증인데 셋업(권한/대상 앱)이 미완료면 로컬 알림으로 상세 진입을 유도한다(생성의 부수효과).
+            setupNotifier.notifyAfterCreate(
+                challengeId = challenge.challengeId,
+                title = challenge.title,
+                requiredPermissions = challenge.verification?.requiredPermissions.orEmpty(),
+                isAuto = challenge.verification?.selectedMethod == SelectedMethod.AUTO,
             )
             return challenge
         }
