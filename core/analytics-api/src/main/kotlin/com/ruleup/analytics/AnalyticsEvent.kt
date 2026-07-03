@@ -62,4 +62,26 @@ sealed class AnalyticsEvent(
             name = "verification_sync_failed",
             params = mapOf("reason" to reason),
         )
+
+    /**
+     * 생성 후 셋업 퍼널 단계 완료. [step] 은 `permission`/`target_apps`/`anchor` 중 하나로,
+     * 어느 단계에서 이탈하는지 본다(권한 허용 → 앱 등록 → 앵커 등록).
+     */
+    data class SetupStepCompleted(
+        val step: String,
+        val challengeId: String,
+    ) : AnalyticsEvent(
+            name = "setup_step_completed",
+            params =
+                mapOf(
+                    "step" to step,
+                    "challenge_id" to challengeId,
+                ),
+        ) {
+        companion object {
+            const val STEP_PERMISSION = "permission"
+            const val STEP_TARGET_APPS = "target_apps"
+            const val STEP_ANCHOR = "anchor"
+        }
+    }
 }

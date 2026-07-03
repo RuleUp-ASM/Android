@@ -1,5 +1,7 @@
 package com.ruleup.challenge.presentation.targets.viewmodel
 
+import com.ruleup.analytics.AnalyticsEvent
+import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.challenge.domain.TargetAppStore
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
@@ -15,6 +17,7 @@ class ChallengeTargetsViewModel
     @Inject
     constructor(
         private val targetAppStore: TargetAppStore,
+        private val analyticsLogger: AnalyticsLogger,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeTargetsIntent, ChallengeTargetsState, ChallengeTargetsReducerEvent, ChallengeTargetsEffect>(
             ChallengeTargetsState.initial,
@@ -45,6 +48,12 @@ class ChallengeTargetsViewModel
             dispatch(ChallengeTargetsReducerEvent.Saving)
             targetAppStore.save(intent.challengeId, packages)
             dispatch(ChallengeTargetsReducerEvent.Finished)
+            analyticsLogger.log(
+                AnalyticsEvent.SetupStepCompleted(
+                    step = AnalyticsEvent.SetupStepCompleted.STEP_TARGET_APPS,
+                    challengeId = intent.challengeId,
+                ),
+            )
             emitEffect(ChallengeTargetsEffect.ShowMessage("대상 앱이 등록됐어요"))
             navigationHelper.navigateToBack()
         }

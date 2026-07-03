@@ -1,6 +1,8 @@
 package com.ruleup.verification.presentation.location.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.analytics.AnalyticsEvent
+import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.LocationPin
@@ -31,6 +33,7 @@ class VerificationLocationViewModel
         private val bindLocationUseCase: BindLocationUseCase,
         private val searchPlacesUseCase: SearchPlacesUseCase,
         private val reverseGeocodeUseCase: ReverseGeocodeUseCase,
+        private val analyticsLogger: AnalyticsLogger,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
             VerificationLocationState.initial,
@@ -188,6 +191,12 @@ class VerificationLocationViewModel
                                 )
                             }
                         }
+                        analyticsLogger.log(
+                            AnalyticsEvent.SetupStepCompleted(
+                                step = AnalyticsEvent.SetupStepCompleted.STEP_ANCHOR,
+                                challengeId = intent.challengeId,
+                            ),
+                        )
                         emitEffect(VerificationLocationEffect.ShowMessage("장소가 등록됐어요"))
                         navigationHelper.navigateToBack()
                     } else {
