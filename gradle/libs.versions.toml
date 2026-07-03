@@ -63,6 +63,7 @@ coil = "3.4.0"
 
 # firebase
 googleservice = "4.4.4"
+firebaseCrashlyticsPlugin = "3.0.6"
 firebaseBom = "34.14.0"
 runtime = "1.11.2"
 
@@ -168,6 +169,7 @@ coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = 
 # firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
@@ -186,3 +188,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 # firebase
 google-services = { id = "com.google.gms.google-services", version.ref = "googleservice" }
+firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }

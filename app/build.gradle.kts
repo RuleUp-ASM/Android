@@ -11,8 +11,10 @@ plugins {
 }
 
 // Firebase(google-services) 플러그인은 google-services.json 이 있어야 동작한다.
+// Crashlytics 도 같은 설정에 의존하므로 함께 적용한다(자동 크래시/ANR 수집).
 if (project.file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 val localProperties =
