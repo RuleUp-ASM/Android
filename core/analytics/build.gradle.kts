@@ -34,6 +34,8 @@ dependencies {
     // Firebase Analytics native SDK. google-services.json + google-services 플러그인(app 모듈)으로 초기화된다.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    // Crashlytics: 플러그인(app)과 함께 자동 크래시/ANR 수집. 초기화는 ContentProvider 로 자동.
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

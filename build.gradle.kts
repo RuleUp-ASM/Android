@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
 }
 
 // 모든 모듈에 ktlint 적용. CI 는 ./gradlew ktlintCheck 로 검사, 로컬은 ./gradlew ktlintFormat 로 자동 포맷.
