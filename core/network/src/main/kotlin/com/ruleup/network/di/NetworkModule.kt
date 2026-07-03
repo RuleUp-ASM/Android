@@ -29,12 +29,13 @@ object NetworkModule {
     /** app 계층이 BuildConfig.DEBUG 로 채워 주입하는 HTTP 로깅 on/off 플래그. */
     const val DEBUG_LOGGING = "network_debug_logging"
 
-    // Authorization 헤더를 붙이면 안 되는 공개(비인증) 엔드포인트 경로 조각.
+    // Authorization 헤더를 붙이면 안 되는 공개(비인증) 엔드포인트 경로 조각(명세 /auth/*).
+    // 로그아웃은 액세스 토큰이 필요하므로 제외한다.
     private val NO_AUTH_PATHS =
         listOf(
-            "/account/login/",
-            "/account/signup",
-            "/account/token/refresh",
+            "/auth/oauth",
+            "/auth/signup",
+            "/auth/refresh",
         )
 
     @Provides
