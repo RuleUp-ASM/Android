@@ -1,7 +1,7 @@
 package com.ruleup.challenge.domain.usecase
 
-import com.ruleup.analytics.AnalyticsEvent
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsEvent
+import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.SelectedMethod

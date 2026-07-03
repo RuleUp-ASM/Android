@@ -1,5 +1,7 @@
-package com.ruleup.analytics
+package com.ruleup.analytics.data
 
+import com.ruleup.analytics.domain.AnalyticsLogger
+import com.ruleup.analytics.domain.CrashReporter
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

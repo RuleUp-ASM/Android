@@ -1,9 +1,11 @@
-package com.ruleup.analytics
+package com.ruleup.analytics.data
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.ruleup.analytics.domain.AnalyticsEvent
+import com.ruleup.analytics.domain.AnalyticsLogger
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 

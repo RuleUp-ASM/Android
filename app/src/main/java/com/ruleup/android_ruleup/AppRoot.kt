@@ -3,7 +3,7 @@ package com.ruleup.android_ruleup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation3.runtime.NavKey
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.RootComposable
 import com.ruleup.domain.helper.MessageHelper

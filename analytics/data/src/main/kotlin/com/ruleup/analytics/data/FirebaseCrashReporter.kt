@@ -1,6 +1,7 @@
-package com.ruleup.analytics
+package com.ruleup.analytics.data
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.ruleup.analytics.domain.CrashReporter
 import javax.inject.Inject
 
 /**

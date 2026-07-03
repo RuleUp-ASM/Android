@@ -1,7 +1,7 @@
 package com.ruleup.android_ruleup
 
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsLogger
 
 /**
  * 그래프의 [AnalyticsLogger] 를 컴포지션 전역으로 제공한다([AppRoot] 에서 주입).

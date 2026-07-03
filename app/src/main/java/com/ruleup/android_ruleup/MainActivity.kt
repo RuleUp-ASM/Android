@@ -6,7 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.metrics.performance.JankStats
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.android_ruleup.deeplink.resolveNewIntentRoute
 import com.ruleup.android_ruleup.deeplink.resolveStartStack
 import com.ruleup.domain.helper.MessageHelper

@@ -1,4 +1,4 @@
-package com.ruleup.analytics
+package com.ruleup.analytics.domain
 
 /**
  * 추적할 비즈니스 이벤트를 타입 안전하게 정의한다.

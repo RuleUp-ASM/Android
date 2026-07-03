@@ -1,7 +1,7 @@
 package com.ruleup.verification.domain.usecase
 
-import com.ruleup.analytics.AnalyticsEvent
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsEvent
+import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics

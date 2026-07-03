@@ -95,7 +95,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:network"))
     implementation(project(":core:datastore"))
-    implementation(project(":core:analytics"))
+    implementation(project(":analytics:data"))
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:presentation"))

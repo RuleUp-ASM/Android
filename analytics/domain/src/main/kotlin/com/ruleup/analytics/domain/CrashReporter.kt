@@ -1,4 +1,4 @@
-package com.ruleup.analytics
+package com.ruleup.analytics.domain
 
 /**
  * 처리된(치명적이지 않은) 예외를 크래시 리포터에 non-fatal 로 기록하는 추상화.
