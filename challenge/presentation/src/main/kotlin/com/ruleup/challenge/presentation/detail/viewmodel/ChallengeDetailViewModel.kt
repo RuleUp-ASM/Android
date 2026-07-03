@@ -1,8 +1,8 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.analytics.AnalyticsEvent
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsEvent
+import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase

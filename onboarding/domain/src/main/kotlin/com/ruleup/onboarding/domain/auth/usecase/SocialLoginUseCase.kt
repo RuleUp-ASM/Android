@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.usecase
-import com.ruleup.analytics.AnalyticsEvent
-import com.ruleup.analytics.AnalyticsLogger
+import com.ruleup.analytics.domain.AnalyticsEvent
+import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.entity.LoginResult

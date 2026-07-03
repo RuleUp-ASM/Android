@@ -35,7 +35,7 @@ kotlin {
 dependencies {
     implementation(project(":core:entity"))
     implementation(project(":core:ui"))
-    implementation(project(":core:analytics-api"))
+    implementation(project(":analytics:domain"))
     implementation(project(":challenge:domain"))
 
     implementation(platform(libs.androidx.compose.bom))

@@ -1,4 +1,4 @@
-package com.ruleup.analytics
+package com.ruleup.analytics.domain
 
 /**
  * 비즈니스 이벤트 로깅 추상화.

@@ -5,7 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.ruleup.analytics.AnalyticsEvent
+import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.android_ruleup.LocalAnalyticsLogger
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.NavSignal
