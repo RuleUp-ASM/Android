@@ -139,6 +139,7 @@ fun ChallengeDetailScreen(
                     permissionRequester.request(tokens)
                     if (challengePermissionsGranted(context, tokens)) {
                         // 권한이 확보되면 시트를 닫는다. 버튼은 다음 단계(앱 등록)로 자동 전환된다.
+                        viewModel.onIntent(ChallengeDetailIntent.PermissionGranted)
                         showPermissionSheet = false
                     } else {
                         messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")

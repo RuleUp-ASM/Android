@@ -1,6 +1,8 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.analytics.AnalyticsEvent
+import com.ruleup.analytics.AnalyticsLogger
 import com.ruleup.challenge.domain.ChallengeTargetsPage
 import com.ruleup.challenge.domain.TargetAppStore
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
@@ -28,6 +30,7 @@ class ChallengeDetailViewModel
         private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
         private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
         private val targetAppStore: TargetAppStore,
+        private val analyticsLogger: AnalyticsLogger,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, NoEffect>(
             ChallengeDetailState.initial,
@@ -38,6 +41,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RefreshSetup -> refreshSetup()
                 ChallengeDetailIntent.RegisterApps -> registerApps()
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
+                ChallengeDetailIntent.PermissionGranted -> logSetupStep(AnalyticsEvent.SetupStepCompleted.STEP_PERMISSION)
                 ChallengeDetailIntent.Proceed -> navigationHelper.navigateToBack()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
@@ -104,6 +108,13 @@ class ChallengeDetailViewModel
             val id = currentState.detail?.challengeId ?: currentState.challengeId
             if (id.isBlank()) return
             navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
+        }
+
+        // 셋업 퍼널 단계 완료 이벤트(권한/앱/앵커). 어느 단계에서 이탈하는지 관측한다.
+        private fun logSetupStep(step: String) {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            analyticsLogger.log(AnalyticsEvent.SetupStepCompleted(step = step, challengeId = id))
         }
 
         private fun registerAnchor() {
