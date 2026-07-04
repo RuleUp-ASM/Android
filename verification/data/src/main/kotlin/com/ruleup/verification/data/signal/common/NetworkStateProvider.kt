@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.common
 
 import android.content.Context
 import android.net.ConnectivityManager

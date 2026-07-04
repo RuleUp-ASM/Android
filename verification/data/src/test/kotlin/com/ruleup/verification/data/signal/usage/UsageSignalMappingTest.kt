@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.usage
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

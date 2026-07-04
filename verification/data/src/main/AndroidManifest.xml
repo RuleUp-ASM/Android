@@ -48,14 +48,14 @@
         <!-- 지오펜스 전이 수신(§2.1). 앱이 만든 '명시적' PendingIntent(geofencePendingIntent)로만
              Play Services 가 호출하므로 외부 노출 불필요 → exported=false. -->
         <receiver
-            android:name="com.ruleup.verification.data.signal.GeofenceBroadcastReceiver"
+            android:name="com.ruleup.verification.data.signal.geofence.GeofenceBroadcastReceiver"
             android:exported="false" />
 
         <!-- 재부팅 재등록(§2.3). 시스템이 BOOT_COMPLETED 브로드캐스트를 보내므로 exported=true.
              DB(ruleup_verification.db)는 자격증명 암호화 저장소라 잠금해제(BOOT_COMPLETED) 이후에만
              접근 가능 → directBootAware 미지정(LOCKED_BOOT_COMPLETED 는 의도적으로 미수신). -->
         <receiver
-            android:name="com.ruleup.verification.data.signal.BootReceiver"
+            android:name="com.ruleup.verification.data.signal.geofence.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

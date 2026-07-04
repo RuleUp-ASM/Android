@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.common
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -7,6 +7,10 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.ruleup.verification.data.db.LocationSampleDao
 import com.ruleup.verification.data.db.LocationSampleEntity
+import com.ruleup.verification.data.signal.geofence.hasFineLocation
+import com.ruleup.verification.data.signal.geofence.isMockCompat
+import com.ruleup.verification.data.signal.health.HealthConnectCollector
+import com.ruleup.verification.data.signal.usage.UsageEventCollector
 import com.ruleup.verification.domain.entity.SignalScope
 import com.ruleup.verification.domain.repository.SignalCollector
 import dagger.hilt.android.qualifiers.ApplicationContext

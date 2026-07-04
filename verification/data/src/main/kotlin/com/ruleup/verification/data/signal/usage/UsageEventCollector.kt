@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.usage
 
 import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
@@ -9,6 +9,7 @@ import com.ruleup.verification.data.db.UsageCursorDao
 import com.ruleup.verification.data.db.UsageCursorEntity
 import com.ruleup.verification.data.db.UsageEventDao
 import com.ruleup.verification.data.db.UsageEventEntity
+import com.ruleup.verification.data.signal.common.GapRecorder
 import com.ruleup.verification.domain.entity.GapReason
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
