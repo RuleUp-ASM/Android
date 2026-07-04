@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.geofence
 
 import android.content.BroadcastReceiver
 import android.content.Context

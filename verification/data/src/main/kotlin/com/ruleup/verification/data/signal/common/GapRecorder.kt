@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.common
 
 import com.ruleup.verification.data.db.SignalGapDao
 import com.ruleup.verification.data.db.SignalGapEntity

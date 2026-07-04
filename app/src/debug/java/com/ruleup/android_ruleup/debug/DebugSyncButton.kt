@@ -18,9 +18,9 @@ import androidx.core.content.ContextCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import com.ruleup.ui.helper.rememberSingleClick
-import com.ruleup.verification.data.signal.HealthPermissions
-import com.ruleup.verification.data.signal.hasUsageAccess
-import com.ruleup.verification.data.signal.usageAccessSettingsIntent
+import com.ruleup.verification.data.signal.health.HealthPermissions
+import com.ruleup.verification.data.signal.usage.hasUsageAccess
+import com.ruleup.verification.data.signal.usage.usageAccessSettingsIntent
 import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 import timber.log.Timber
 

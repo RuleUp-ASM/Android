@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.usage
 
 import android.app.usage.UsageEvents
 import com.ruleup.verification.data.db.KIND_APP

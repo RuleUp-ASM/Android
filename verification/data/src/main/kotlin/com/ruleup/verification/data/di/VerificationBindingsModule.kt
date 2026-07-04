@@ -4,8 +4,8 @@ import com.ruleup.verification.data.repository.HealthTargetStoreImpl
 import com.ruleup.verification.data.repository.SignalRepositoryImpl
 import com.ruleup.verification.data.repository.UsageTargetStoreImpl
 import com.ruleup.verification.data.repository.VerificationRepositoryImpl
-import com.ruleup.verification.data.signal.GeofenceRegistrarImpl
-import com.ruleup.verification.data.signal.SignalCollectorImpl
+import com.ruleup.verification.data.signal.common.SignalCollectorImpl
+import com.ruleup.verification.data.signal.geofence.GeofenceRegistrarImpl
 import com.ruleup.verification.data.sync.DeviceIntroProviderImpl
 import com.ruleup.verification.data.sync.EnvelopeMetadataProviderImpl
 import com.ruleup.verification.data.sync.ProgressCacheStoreImpl

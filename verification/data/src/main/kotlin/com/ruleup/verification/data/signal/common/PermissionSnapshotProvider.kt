@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.common
 
 import android.Manifest
 import android.content.Context
@@ -8,6 +8,9 @@ import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
+import com.ruleup.verification.data.signal.geofence.hasBackgroundLocation
+import com.ruleup.verification.data.signal.health.HealthPermissions
+import com.ruleup.verification.data.signal.usage.hasUsageAccess
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import dagger.hilt.android.qualifiers.ApplicationContext

@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.health
 
 import android.content.Context
 import androidx.activity.result.contract.ActivityResultContract

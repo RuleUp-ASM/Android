@@ -3,7 +3,7 @@ package com.ruleup.verification.data.sync
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
-import com.ruleup.verification.data.signal.PermissionSnapshotProvider
+import com.ruleup.verification.data.signal.common.PermissionSnapshotProvider
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.DeviceProfile
 import com.ruleup.verification.domain.repository.DeviceIntroProvider

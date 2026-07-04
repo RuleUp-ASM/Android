@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.usage
 
 import android.app.AppOpsManager
 import android.content.Context

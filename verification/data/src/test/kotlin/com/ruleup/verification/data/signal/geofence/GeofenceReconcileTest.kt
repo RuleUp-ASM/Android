@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.signal
+package com.ruleup.verification.data.signal.geofence
 
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import kotlin.test.Test
