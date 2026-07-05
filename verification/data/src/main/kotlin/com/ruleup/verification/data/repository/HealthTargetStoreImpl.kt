@@ -1,9 +1,9 @@
 package com.ruleup.verification.data.repository
 
-import com.ruleup.verification.data.db.HealthSettingsEntity
-import com.ruleup.verification.data.db.HealthTargetDao
-import com.ruleup.verification.data.db.toDomain
-import com.ruleup.verification.data.db.toEntity
+import com.ruleup.verification.data.db.common.toDomain
+import com.ruleup.verification.data.db.common.toEntity
+import com.ruleup.verification.data.db.health.HealthSettingsEntity
+import com.ruleup.verification.data.db.health.HealthTargetDao
 import com.ruleup.verification.domain.entity.HealthTarget
 import com.ruleup.verification.domain.repository.HealthTargetStore
 import javax.inject.Inject

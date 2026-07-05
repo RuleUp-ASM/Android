@@ -1,7 +1,7 @@
 package com.ruleup.verification.data.sync
 
 import android.util.Base64
-import com.ruleup.verification.data.db.ProgressCacheDao
+import com.ruleup.verification.data.db.common.ProgressCacheDao
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.data.signal.common.NetworkStateProvider
 import com.ruleup.verification.data.signal.common.PermissionSnapshotProvider

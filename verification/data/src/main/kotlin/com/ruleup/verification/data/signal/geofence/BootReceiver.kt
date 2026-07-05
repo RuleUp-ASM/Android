@@ -3,8 +3,8 @@ package com.ruleup.verification.data.signal.geofence
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.ruleup.verification.data.db.toDomain
-import com.ruleup.verification.data.db.verificationDatabase
+import com.ruleup.verification.data.db.common.toDomain
+import com.ruleup.verification.data.db.common.verificationDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

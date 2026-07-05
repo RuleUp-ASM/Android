@@ -1,9 +1,28 @@
-package com.ruleup.verification.data.db
+package com.ruleup.verification.data.db.common
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.ruleup.verification.data.db.geofence.GeofenceTargetDao
+import com.ruleup.verification.data.db.geofence.GeofenceTargetEntity
+import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
+import com.ruleup.verification.data.db.geofence.GeofenceTransitionEntity
+import com.ruleup.verification.data.db.geofence.LocationSampleDao
+import com.ruleup.verification.data.db.geofence.LocationSampleEntity
+import com.ruleup.verification.data.db.health.HealthReadingDao
+import com.ruleup.verification.data.db.health.HealthReadingEntity
+import com.ruleup.verification.data.db.health.HealthSettingsEntity
+import com.ruleup.verification.data.db.health.HealthTargetDao
+import com.ruleup.verification.data.db.health.HealthTargetEntity
+import com.ruleup.verification.data.db.health.SleepSegmentDao
+import com.ruleup.verification.data.db.health.SleepSegmentEntity
+import com.ruleup.verification.data.db.usage.UsageCursorDao
+import com.ruleup.verification.data.db.usage.UsageCursorEntity
+import com.ruleup.verification.data.db.usage.UsageEventDao
+import com.ruleup.verification.data.db.usage.UsageEventEntity
+import com.ruleup.verification.data.db.usage.UsageTargetDao
+import com.ruleup.verification.data.db.usage.UsageTargetEntity
 
 /**
  * 자동인증 로컬 버퍼 DB (단일 진실원, 명세 §2.4).

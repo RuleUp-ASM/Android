@@ -1,5 +1,10 @@
 package com.ruleup.verification.data.db
 
+import com.ruleup.verification.data.db.common.toDomain
+import com.ruleup.verification.data.db.geofence.GeofenceTransitionEntity
+import com.ruleup.verification.data.db.geofence.LocationSampleEntity
+import com.ruleup.verification.data.db.health.HealthReadingEntity
+import com.ruleup.verification.data.db.health.SleepSegmentEntity
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
 import com.ruleup.verification.domain.entity.HealthDeviceType
 import com.ruleup.verification.domain.entity.HealthMetric
