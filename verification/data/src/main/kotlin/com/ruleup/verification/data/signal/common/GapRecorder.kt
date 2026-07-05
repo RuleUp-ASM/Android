@@ -1,7 +1,7 @@
 package com.ruleup.verification.data.signal.common
 
-import com.ruleup.verification.data.db.SignalGapDao
-import com.ruleup.verification.data.db.SignalGapEntity
+import com.ruleup.verification.data.db.common.SignalGapDao
+import com.ruleup.verification.data.db.common.SignalGapEntity
 import com.ruleup.verification.domain.entity.GapReason
 import javax.inject.Inject
 

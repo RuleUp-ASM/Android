@@ -1,4 +1,4 @@
-package com.ruleup.verification.data.db
+package com.ruleup.verification.data.db.geofence
 
 import androidx.room.Dao
 import androidx.room.Insert

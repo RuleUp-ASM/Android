@@ -1,8 +1,8 @@
 package com.ruleup.verification.data.signal.usage
 
 import android.app.usage.UsageEvents
-import com.ruleup.verification.data.db.KIND_APP
-import com.ruleup.verification.data.db.KIND_SCREEN
+import com.ruleup.verification.data.db.usage.KIND_APP
+import com.ruleup.verification.data.db.usage.KIND_SCREEN
 import com.ruleup.verification.domain.entity.AppEventType
 import com.ruleup.verification.domain.entity.ScreenEventType
 

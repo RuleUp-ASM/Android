@@ -11,10 +11,10 @@ import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import com.ruleup.verification.data.db.HealthReadingDao
-import com.ruleup.verification.data.db.HealthReadingEntity
-import com.ruleup.verification.data.db.SleepSegmentDao
-import com.ruleup.verification.data.db.SleepSegmentEntity
+import com.ruleup.verification.data.db.health.HealthReadingDao
+import com.ruleup.verification.data.db.health.HealthReadingEntity
+import com.ruleup.verification.data.db.health.SleepSegmentDao
+import com.ruleup.verification.data.db.health.SleepSegmentEntity
 import com.ruleup.verification.data.signal.common.GapRecorder
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.HealthDeviceType

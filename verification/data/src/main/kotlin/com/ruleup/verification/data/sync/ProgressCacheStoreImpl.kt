@@ -1,7 +1,7 @@
 package com.ruleup.verification.data.sync
 
-import com.ruleup.verification.data.db.ProgressCacheDao
-import com.ruleup.verification.data.db.ProgressCacheEntity
+import com.ruleup.verification.data.db.common.ProgressCacheDao
+import com.ruleup.verification.data.db.common.ProgressCacheEntity
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.UpdatedChallenge
 import com.ruleup.verification.domain.repository.ProgressCacheStore

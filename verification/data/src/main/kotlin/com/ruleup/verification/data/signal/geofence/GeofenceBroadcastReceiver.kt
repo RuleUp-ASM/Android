@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
-import com.ruleup.verification.data.db.GeofenceTransitionEntity
-import com.ruleup.verification.data.db.verificationDatabase
+import com.ruleup.verification.data.db.common.verificationDatabase
+import com.ruleup.verification.data.db.geofence.GeofenceTransitionEntity
 import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
 import kotlinx.coroutines.CoroutineScope

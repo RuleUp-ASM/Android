@@ -5,8 +5,8 @@ import android.content.Context
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.ruleup.verification.data.db.LocationSampleDao
-import com.ruleup.verification.data.db.LocationSampleEntity
+import com.ruleup.verification.data.db.geofence.LocationSampleDao
+import com.ruleup.verification.data.db.geofence.LocationSampleEntity
 import com.ruleup.verification.data.signal.geofence.hasFineLocation
 import com.ruleup.verification.data.signal.geofence.isMockCompat
 import com.ruleup.verification.data.signal.health.HealthConnectCollector

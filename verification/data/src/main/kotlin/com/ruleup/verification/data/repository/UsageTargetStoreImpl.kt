@@ -1,7 +1,7 @@
 package com.ruleup.verification.data.repository
 
-import com.ruleup.verification.data.db.UsageTargetDao
-import com.ruleup.verification.data.db.UsageTargetEntity
+import com.ruleup.verification.data.db.usage.UsageTargetDao
+import com.ruleup.verification.data.db.usage.UsageTargetEntity
 import com.ruleup.verification.domain.repository.UsageTargetStore
 import javax.inject.Inject
 

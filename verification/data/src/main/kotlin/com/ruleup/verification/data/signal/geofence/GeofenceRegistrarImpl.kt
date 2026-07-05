@@ -5,8 +5,8 @@ import android.content.Context
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
-import com.ruleup.verification.data.db.GeofenceTargetDao
-import com.ruleup.verification.data.db.toEntity
+import com.ruleup.verification.data.db.common.toEntity
+import com.ruleup.verification.data.db.geofence.GeofenceTargetDao
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.repository.GeofenceRegistrar
 import dagger.hilt.android.qualifiers.ApplicationContext

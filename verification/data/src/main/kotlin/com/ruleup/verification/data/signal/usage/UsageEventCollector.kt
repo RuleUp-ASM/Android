@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import com.ruleup.verification.data.db.KIND_APP
-import com.ruleup.verification.data.db.UsageCursorDao
-import com.ruleup.verification.data.db.UsageCursorEntity
-import com.ruleup.verification.data.db.UsageEventDao
-import com.ruleup.verification.data.db.UsageEventEntity
+import com.ruleup.verification.data.db.usage.KIND_APP
+import com.ruleup.verification.data.db.usage.UsageCursorDao
+import com.ruleup.verification.data.db.usage.UsageCursorEntity
+import com.ruleup.verification.data.db.usage.UsageEventDao
+import com.ruleup.verification.data.db.usage.UsageEventEntity
 import com.ruleup.verification.data.signal.common.GapRecorder
 import com.ruleup.verification.domain.entity.GapReason
 import dagger.hilt.android.qualifiers.ApplicationContext

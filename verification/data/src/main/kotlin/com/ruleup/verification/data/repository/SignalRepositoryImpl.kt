@@ -1,14 +1,14 @@
 package com.ruleup.verification.data.repository
 
-import com.ruleup.verification.data.db.GeofenceTransitionDao
-import com.ruleup.verification.data.db.HealthReadingDao
-import com.ruleup.verification.data.db.LocationSampleDao
-import com.ruleup.verification.data.db.SignalGapDao
-import com.ruleup.verification.data.db.SleepSegmentDao
-import com.ruleup.verification.data.db.UsageEventDao
-import com.ruleup.verification.data.db.toAppEvent
-import com.ruleup.verification.data.db.toDomain
-import com.ruleup.verification.data.db.toScreenEvent
+import com.ruleup.verification.data.db.common.SignalGapDao
+import com.ruleup.verification.data.db.common.toAppEvent
+import com.ruleup.verification.data.db.common.toDomain
+import com.ruleup.verification.data.db.common.toScreenEvent
+import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
+import com.ruleup.verification.data.db.geofence.LocationSampleDao
+import com.ruleup.verification.data.db.health.HealthReadingDao
+import com.ruleup.verification.data.db.health.SleepSegmentDao
+import com.ruleup.verification.data.db.usage.UsageEventDao
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.VerificationSignal

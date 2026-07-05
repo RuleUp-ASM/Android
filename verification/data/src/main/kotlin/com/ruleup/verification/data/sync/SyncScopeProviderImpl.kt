@@ -1,6 +1,6 @@
 package com.ruleup.verification.data.sync
 
-import com.ruleup.verification.data.db.GeofenceTargetDao
+import com.ruleup.verification.data.db.geofence.GeofenceTargetDao
 import com.ruleup.verification.domain.entity.SignalScope
 import com.ruleup.verification.domain.repository.HealthTargetStore
 import com.ruleup.verification.domain.repository.SyncScopeProvider
