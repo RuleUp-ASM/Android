@@ -29,6 +29,8 @@ kotlin {
 
 dependencies {
     implementation(project(":core:domain"))
+    // TokenAuthenticator 가 갱신 토큰(Token)을 직접 다룬다.
+    implementation(project(":core:entity"))
 
     // Retrofit/OkHttp/Json 은 NetworkModule 의 @Provides 시그니처와 data 모듈의 API 생성에 노출되므로 api.
     api(libs.retrofit)
