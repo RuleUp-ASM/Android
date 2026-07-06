@@ -33,4 +33,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     // UseCase 의 @Inject 생성자(런타임 Hilt 컴포넌트에서 제공). 도메인은 hilt 런타임 없이 annotation 만.
     implementation(libs.javax.inject)
+
+    testImplementation(kotlin("test-junit"))
 }

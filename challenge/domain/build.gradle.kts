@@ -32,4 +32,6 @@ dependencies {
     implementation(project(":analytics:domain"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
+
+    testImplementation(kotlin("test-junit"))
 }
