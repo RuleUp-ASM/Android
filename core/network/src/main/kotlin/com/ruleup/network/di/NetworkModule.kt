@@ -1,6 +1,7 @@
 package com.ruleup.network.di
 
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.network.auth.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -45,6 +46,7 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         tokenRepository: TokenRepository,
+        tokenAuthenticator: TokenAuthenticator,
         @Named(DEBUG_LOGGING) debugLogging: Boolean,
     ): OkHttpClient {
         // 저장된 accessToken 이 있으면 매 요청마다 Authorization 헤더로 주입한다.
@@ -72,6 +74,8 @@ object NetworkModule {
             OkHttpClient
                 .Builder()
                 .addInterceptor(authInterceptor)
+                // 401(accessToken 만료) 시 refreshToken 으로 재발급 후 원요청을 자동 재시도한다.
+                .authenticator(tokenAuthenticator)
 
         // BODY 로깅은 디버그 빌드에서만 장착한다. 릴리스에선 전체 본문 버퍼링·문자열화 비용과
         // 토큰/좌표·헬스 페이로드 유출 위험을 모두 제거한다. 디버그에서도 인증 헤더는 마스킹.

@@ -21,14 +21,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.BuildConfig
 import com.ruleup.android_ruleup.debug.DebugLogOverlay
 import com.ruleup.android_ruleup.debug.DebugSyncButton
 import com.ruleup.android_ruleup.debug.TrackJankScreen
+import com.ruleup.android_ruleup.session.SessionViewModel
 import com.ruleup.domain.message.MessageEffect
+import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
+import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.ui.theme.RuleUpTheme
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +41,7 @@ import kotlinx.coroutines.flow.Flow
 fun RootComposable(
     modifier: Modifier = Modifier,
     startStack: List<NavKey> = listOf(GenericNavKey(SplashPage.PATH)),
+    sessionViewModel: SessionViewModel = hiltViewModel(),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {
@@ -46,6 +51,18 @@ fun RootComposable(
     RuleUpTheme {
         val backStack = rememberAppBackStack(startStack)
         val messageHelper = LocalMessageHelper.current
+        val navigationHelper = LocalNavigationHelper.current
+
+        // 세션 만료(토큰 정리)·로그아웃으로 로그인 상태가 풀리면 로그인 화면(root)으로 리셋한다.
+        // Splash 는 자동 로그인 실패 시 자체적으로 라우팅하므로 제외해 중복 이동을 막는다.
+        LaunchedEffect(Unit) {
+            sessionViewModel.sessionEnded.collect {
+                val topPath = (backStack.lastOrNull() as? GenericNavKey)?.path
+                if (topPath != SplashPage.PATH) {
+                    navigationHelper.navigateTo(LoginPage)
+                }
+            }
+        }
 
         // 디버그 빌드: 현재 화면(네비 경로)을 JankStats 상태로 주입 → jank 로그에 화면 이름이 함께 찍힌다.
         if (BuildConfig.DEBUG) {
