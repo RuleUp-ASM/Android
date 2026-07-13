@@ -3,15 +3,22 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
+import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
+import com.ruleup.challenge.domain.entity.WatcherInvitation
+import com.ruleup.challenge.domain.entity.WatcherInviteCard
+import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
+import com.ruleup.challenge.domain.usecase.CreateWatcherInvitationUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
+import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
+import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
-import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -29,10 +36,13 @@ class ChallengeDetailViewModel
     constructor(
         private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
         private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
+        private val getWatchersUseCase: GetWatchersUseCase,
+        private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
+        private val removeWatcherUseCase: RemoveWatcherUseCase,
         private val targetAppStore: TargetAppStore,
         private val analyticsLogger: AnalyticsLogger,
         private val navigationHelper: NavigationHelper,
-    ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, NoEffect>(
+    ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
             ChallengeDetailState.initial,
         ) {
         override fun onIntent(intent: ChallengeDetailIntent) {
@@ -43,6 +53,8 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
                 ChallengeDetailIntent.PermissionGranted -> logSetupStep(AnalyticsEvent.SetupStepCompleted.STEP_PERMISSION)
                 ChallengeDetailIntent.Proceed -> navigationHelper.navigateToBack()
+                ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
+                is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -69,6 +81,11 @@ class ChallengeDetailViewModel
 
                 is ChallengeDetailReducerEvent.SetupRefreshed ->
                     state.copy(setup = event.setup, targetAppsRegistered = event.targetAppsRegistered)
+
+                is ChallengeDetailReducerEvent.WatchersLoaded ->
+                    state.copy(watchers = event.watchers, watcherLimit = event.limit)
+
+                is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
             }
 
         private fun load(challengeId: String) {
@@ -86,6 +103,8 @@ class ChallengeDetailViewModel
                                 targetAppsRegistered = targetAppStore.isRegistered(challengeId),
                             ),
                         )
+                        // 감시자 섹션은 생성자 전용. 실패는 흡수(섹션만 비워둠).
+                        if (detail.isOwner) loadWatchers(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }
@@ -117,6 +136,57 @@ class ChallengeDetailViewModel
             analyticsLogger.log(AnalyticsEvent.SetupStepCompleted(step = step, challengeId = id))
         }
 
+        private fun loadWatchers(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { getWatchersUseCase(challengeId) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.WatchersLoaded(watchers = it.watchers, limit = it.limit))
+                    }
+            }
+        }
+
+        /**
+         * 감시자 초대 생성 → 본인 카카오톡 공유(스펙: 초대 전달은 사용자 본인 채널로만).
+         * 무료 한도(챌린지당 3명) 초과는 구독 안내 메시지로 분기한다.
+         */
+        private fun inviteWatcher() {
+            val detail = currentState.detail ?: return
+            if (currentState.isInvitingWatcher) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.InvitingWatcher(true))
+                runCatching { createWatcherInvitationUseCase(detail.challengeId) }
+                    .onSuccess { invitation ->
+                        emitEffect(
+                            ChallengeDetailEffect.ShareWatcherInvite(
+                                card = invitation.inviteCard(detail),
+                                inviteUrl = invitation.inviteUrl,
+                            ),
+                        )
+                        loadWatchers(detail.challengeId)
+                    }.onFailure { throwable ->
+                        val message =
+                            if (throwable is WatcherLimitExceededException) {
+                                "무료 감시자 ${WATCHER_FREE_LIMIT}명을 모두 사용했어요. 구독하면 무제한으로 추가할 수 있어요"
+                            } else {
+                                throwable.message ?: "감시자 초대에 실패했어요"
+                            }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(message))
+                    }
+                dispatch(ChallengeDetailReducerEvent.InvitingWatcher(false))
+            }
+        }
+
+        private fun removeWatcher(watcherId: String) {
+            val challengeId = currentState.detail?.challengeId ?: return
+            viewModelScope.launch {
+                runCatching { removeWatcherUseCase(challengeId, watcherId) }
+                    .onSuccess { loadWatchers(challengeId) }
+                    .onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "감시자 해제에 실패했어요"))
+                    }
+            }
+        }
+
         private fun registerAnchor() {
             val id = currentState.detail?.challengeId ?: currentState.challengeId
             if (id.isBlank()) return
@@ -136,3 +206,17 @@ class ChallengeDetailViewModel
             )
         }
     }
+
+/**
+ * 카톡 공유 카드 문구: 서버 kakaoShare 페이로드를 우선 사용하고,
+ * 없으면 감시자 통지 스펙 메시지 ①(중간 톤)로 클라이언트가 구성한다.
+ */
+private fun WatcherInvitation.inviteCard(detail: ChallengeDetail): WatcherInviteCard =
+    kakaoShare
+        ?: WatcherInviteCard(
+            title = "${detail.owner.nickname}님이 당신을 루틴 감시자로 초대했어요",
+            description =
+                "[${detail.title}]에서 ${detail.owner.nickname}님이 약속을 지키는지 지켜봐 주세요. " +
+                    "실패하면 알림이 가요.",
+            buttonLabel = "수락하기",
+        )

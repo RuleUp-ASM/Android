@@ -133,6 +133,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # kakao
 kakao-user = { module = "com.kakao.sdk:v2-user", version.ref = "kakao" }
+kakao-share = { module = "com.kakao.sdk:v2-share", version.ref = "kakao" }
 
 # google
 app-auth = { module = "net.openid:appauth", version.ref = "appauth" }

@@ -49,10 +49,13 @@ import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.WatcherSection
+import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
+import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.ui.category.categoryAccentColor
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -81,6 +84,25 @@ fun ChallengeDetailScreen(
 
     androidx.compose.runtime.LaunchedEffect(challengeId) {
         viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
+    }
+
+    // 단발성 효과: 감시자 초대 카카오톡 공유(사용자 본인 발신) + 안내 토스트.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is ChallengeDetailEffect.ShareWatcherInvite -> {
+                    val shared =
+                        WatcherInviteSharer.share(
+                            context = context,
+                            card = effect.card,
+                            inviteUrl = effect.inviteUrl,
+                        )
+                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
+                }
+
+                is ChallengeDetailEffect.ShowMessage -> messageHelper.showToast(effect.message)
+            }
+        }
     }
 
     // 앱 등록 화면 등에서 돌아오면 등록 상태를 재확인해 버튼 모드를 갱신한다.
@@ -119,6 +141,7 @@ fun ChallengeDetailScreen(
         modifier = modifier,
         state = state,
         ctaLabel = ctaLabel,
+        onIntent = viewModel::onIntent,
         onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
         onCta = {
             when (action) {
@@ -154,6 +177,7 @@ fun ChallengeDetailScreen(
 private fun ChallengeDetailContent(
     state: ChallengeDetailState,
     ctaLabel: String,
+    onIntent: (ChallengeDetailIntent) -> Unit,
     onBack: () -> Unit,
     onCta: () -> Unit,
     modifier: Modifier = Modifier,
@@ -199,6 +223,16 @@ private fun ChallengeDetailContent(
                     ) {
                         DetailHero(state.detail)
                         DetailInfoCard(state.detail)
+                        // 감시자 관리는 생성자 전용(감시자 통지 스펙: 생성 후 초대·목록·해제)
+                        if (state.detail.isOwner) {
+                            WatcherSection(
+                                watchers = state.watchers,
+                                limit = state.watcherLimit,
+                                isInviting = state.isInvitingWatcher,
+                                onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
+                                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
+                            )
+                        }
                     }
             }
         }
