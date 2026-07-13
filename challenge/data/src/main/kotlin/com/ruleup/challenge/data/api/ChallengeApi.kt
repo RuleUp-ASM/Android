@@ -15,6 +15,9 @@ import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.RecommendationResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeRequest
+import com.ruleup.challenge.data.dto.WatcherInvitationInfoResponse
+import com.ruleup.challenge.data.dto.WatcherInvitationResponse
+import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import okhttp3.MultipartBody
@@ -120,4 +123,35 @@ interface ChallengeApi {
         @Query("cursor") cursor: String? = null,
         @Query("size") size: Int? = null,
     ): BaseResponse<ExploreChallengesResponse>
+
+    // 감시자: 초대 생성 (토큰 7일 만료, 무료 3명 초과 시 에러)
+    @POST("v1/challenges/{challengeId}/watchers/invitations")
+    suspend fun createWatcherInvitation(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<WatcherInvitationResponse>
+
+    // 감시자: 목록 조회 (생성자만)
+    @GET("v1/challenges/{challengeId}/watchers")
+    suspend fun getWatchers(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<WatchersResponse>
+
+    // 감시자: 해제 (REVOKED + 연락처 파기)
+    @DELETE("v1/challenges/{challengeId}/watchers/{watcherId}")
+    suspend fun removeWatcher(
+        @Path("challengeId") challengeId: String,
+        @Path("watcherId") watcherId: String,
+    ): BaseResponse<EmptyData>
+
+    // 감시자: 초대 링크 진입 (토큰 검증 + 초대 정보)
+    @GET("v1/watchers/invitations/{token}")
+    suspend fun getWatcherInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<WatcherInvitationInfoResponse>
+
+    // 감시자: 인앱 수락 (= 수신동의, 채널 = 인앱 푸시)
+    @POST("v1/watchers/invitations/{token}/accept")
+    suspend fun acceptWatcherInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<EmptyData>
 }
