@@ -210,9 +210,6 @@ data class ChallengeDetailResponse(
     val stats: ChallengeStatsResponse? = null,
     @SerialName("eligibility")
     val eligibility: ChallengeEligibilityResponse? = null,
-    // 요청자가 생성자인지 (감시자 관리 등 생성자 전용 UI 노출 판단)
-    @SerialName("isOwner")
-    val isOwner: Boolean? = null,
 )
 
 internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
@@ -249,7 +246,6 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
                 myMannerTemperature = eligibility?.myMannerTemperature ?: 36.5,
                 minMannerTemperature = eligibility?.minMannerTemperature,
             ),
-        isOwner = isOwner ?: false,
     )
 
 // ---------- 3.6 / 3.7 멤버 상태 ----------

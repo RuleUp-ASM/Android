@@ -6,6 +6,7 @@ import com.ruleup.challenge.domain.entity.WatcherInvitationInfo
 
 /**
  * 루틴 실패 패널티 — 감시자 통지(감시자 초대·수락·관리).
+ * 감시자는 챌린지 × 참여자 단위로 붙는다(발송 대상 = (챌린지, 실패 사용자)의 ACTIVE 감시자).
  * 초대 전달은 사용자 본인 채널(카카오톡 공유)로만 하고, 실패 통지 발송은 서버가 담당한다.
  */
 interface WatcherRepository {
@@ -15,7 +16,7 @@ interface WatcherRepository {
      */
     suspend fun createInvitation(challengeId: String): WatcherInvitation
 
-    /** 감시자 목록 조회(명세: GET /challenges/{id}/watchers). 생성자만. INVITED 포함 전체(status=ALL)를 조회한다. */
+    /** 내 감시자 목록 조회(명세: GET /challenges/{id}/watchers). 참여자 본인 기준, INVITED 포함 전체(status=ALL). */
     suspend fun getWatchers(challengeId: String): ChallengeWatchers
 
     /** 감시자 해제(명세: DELETE /challenges/{id}/watchers/{watcherId}). REVOKED + 연락처 파기. */
