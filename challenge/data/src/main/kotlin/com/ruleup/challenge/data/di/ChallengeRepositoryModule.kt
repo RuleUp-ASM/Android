@@ -2,9 +2,11 @@ package com.ruleup.challenge.data.di
 
 import com.ruleup.challenge.data.notification.SetupNotifierImpl
 import com.ruleup.challenge.data.repository.ChallengeRepositoryImpl
+import com.ruleup.challenge.data.repository.ExploreRepositoryImpl
 import com.ruleup.challenge.data.repository.MyChallengeStoreImpl
 import com.ruleup.challenge.data.repository.TargetAppStoreImpl
 import com.ruleup.challenge.domain.repository.ChallengeRepository
+import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.repository.SetupNotifier
 import com.ruleup.challenge.domain.repository.TargetAppStore
@@ -20,6 +22,10 @@ abstract class ChallengeRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChallengeRepository(impl: ChallengeRepositoryImpl): ChallengeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindExploreRepository(impl: ExploreRepositoryImpl): ExploreRepository
 
     @Binds
     @Singleton
