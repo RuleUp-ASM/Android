@@ -26,6 +26,8 @@ private val EXTERNAL_ALLOWED_PATHS =
         AppRoutes.CHALLENGE_DETAIL,
         AppRoutes.VERIFICATION_DETAIL,
         AppRoutes.VERIFICATION_PROGRESS,
+        // 감시자 초대 수락(카카오톡 초대 카드 링크). 토큰 검증·상태 변경은 서버가 담당한다.
+        AppRoutes.WATCHER_INVITATION,
     )
 
 /**
