@@ -48,4 +48,6 @@ data class ChallengeDetail(
     val reward: Reward,
     val stats: ChallengeStats,
     val eligibility: ChallengeEligibility,
+    // 요청자가 이 챌린지의 생성자인지(감시자 관리 등 생성자 전용 UI 노출 판단)
+    val isOwner: Boolean = false,
 )
