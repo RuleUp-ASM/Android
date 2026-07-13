@@ -76,7 +76,7 @@ data class WatcherResponse(
     // 유저면 닉네임, 비유저면 null
     @SerialName("displayName")
     val displayName: String? = null,
-    // 비유저 마스킹 연락처(생성자에게 원본 미노출)
+    // 비유저 마스킹 연락처(초대한 참여자에게 원본 미노출)
     @SerialName("contactMasked")
     val contactMasked: String? = null,
     @SerialName("invitedAt")

@@ -31,8 +31,8 @@ import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
 /**
- * 챌린지 상세의 감시자 관리 섹션(생성자 전용).
- * 실패 시 통지받을 감시자를 카카오톡 공유로 초대하고, 목록에서 상태 확인·해제한다.
+ * 챌린지 상세의 "내 감시자" 관리 섹션(참여자 본인 전용 — 감시자는 챌린지 × 참여자 단위).
+ * 내가 실패하면 통지받을 감시자를 카카오톡 공유로 초대하고, 목록에서 상태 확인·해제한다.
  * 한도는 서버 값([limit], 무료 3 · 구독 시 null=무제한) — 초과 시도는 ViewModel 이 구독 안내로 처리한다.
  */
 @Composable
@@ -75,7 +75,7 @@ internal fun WatcherSection(
             )
         }
         Text(
-            text = "루틴 인증에 실패하면 감시자에게 알림이 가요. 초대는 내 카카오톡으로 직접 보내요.",
+            text = "내가 루틴 인증에 실패하면 감시자에게 알림이 가요. 초대는 내 카카오톡으로 직접 보내요.",
             color = RuleUpTheme.colors.textSecondary,
             fontSize = 11.sp,
         )

@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-/** 챌린지당 무료 감시자 수(초과는 구독 필요). */
+/** 챌린지당 · 참여자 기준 무료 감시자 수(초과는 구독 필요). */
 const val WATCHER_FREE_LIMIT = 3
 
 /**
@@ -59,7 +59,7 @@ enum class WatcherChannel(
 
 /**
  * 감시자 목록 항목(명세: GET /challenges/{id}/watchers watchers[]).
- * 비유저 감시자의 연락처는 생성자에게 원본을 노출하지 않으므로 마스킹 값만 온다.
+ * 감시자는 챌린지 × 참여자 단위. 비유저 감시자의 연락처는 초대자에게 원본을 노출하지 않으므로 마스킹 값만 온다.
  */
 data class Watcher(
     val watcherId: String,

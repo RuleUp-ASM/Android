@@ -130,7 +130,7 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<WatcherInvitationResponse>
 
-    // 감시자: 목록 조회 (생성자만)
+    // 감시자: 내 감시자 목록 조회 (참여자 본인 기준)
     @GET("v1/challenges/{challengeId}/watchers")
     suspend fun getWatchers(
         @Path("challengeId") challengeId: String,

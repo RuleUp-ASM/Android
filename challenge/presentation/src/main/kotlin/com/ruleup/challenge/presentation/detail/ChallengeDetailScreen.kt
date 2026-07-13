@@ -223,11 +223,12 @@ private fun ChallengeDetailContent(
                     ) {
                         DetailHero(state.detail)
                         DetailInfoCard(state.detail)
-                        // 감시자 관리는 생성자 전용(감시자 통지 스펙: 생성 후 초대·목록·해제)
-                        if (state.detail.isOwner) {
+                        // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
+                        val myWatchers = state.watchers
+                        if (myWatchers != null) {
                             WatcherSection(
-                                watchers = state.watchers,
-                                limit = state.watcherLimit,
+                                watchers = myWatchers.watchers,
+                                limit = myWatchers.limit,
                                 isInviting = state.isInvitingWatcher,
                                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
                                 onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },

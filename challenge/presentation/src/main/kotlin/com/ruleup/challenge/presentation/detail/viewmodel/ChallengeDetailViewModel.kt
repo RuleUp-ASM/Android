@@ -3,7 +3,6 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
-import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -82,8 +81,7 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.SetupRefreshed ->
                     state.copy(setup = event.setup, targetAppsRegistered = event.targetAppsRegistered)
 
-                is ChallengeDetailReducerEvent.WatchersLoaded ->
-                    state.copy(watchers = event.watchers, watcherLimit = event.limit)
+                is ChallengeDetailReducerEvent.WatchersLoaded -> state.copy(watchers = event.watchers)
 
                 is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
             }
@@ -103,8 +101,9 @@ class ChallengeDetailViewModel
                                 targetAppsRegistered = targetAppStore.isRegistered(challengeId),
                             ),
                         )
-                        // 감시자 섹션은 생성자 전용. 실패는 흡수(섹션만 비워둠).
-                        if (detail.isOwner) loadWatchers(challengeId)
+                        // 감시자는 챌린지 × 참여자 단위 — 항상 조회를 시도하고, 성공하면(=참여자)
+                        // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
+                        loadWatchers(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }
@@ -139,15 +138,13 @@ class ChallengeDetailViewModel
         private fun loadWatchers(challengeId: String) {
             viewModelScope.launch {
                 runCatching { getWatchersUseCase(challengeId) }
-                    .onSuccess {
-                        dispatch(ChallengeDetailReducerEvent.WatchersLoaded(watchers = it.watchers, limit = it.limit))
-                    }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.WatchersLoaded(it)) }
             }
         }
 
         /**
-         * 감시자 초대 생성 → 본인 카카오톡 공유(스펙: 초대 전달은 사용자 본인 채널로만).
-         * 무료 한도(챌린지당 3명) 초과는 구독 안내 메시지로 분기한다.
+         * 내 감시자 초대 생성 → 본인 카카오톡 공유(스펙: 초대 전달은 사용자 본인 채널로만).
+         * 무료 한도(참여자 기준 3명) 초과는 구독 안내 메시지로 분기한다.
          */
         private fun inviteWatcher() {
             val detail = currentState.detail ?: return
@@ -158,7 +155,7 @@ class ChallengeDetailViewModel
                     .onSuccess { invitation ->
                         emitEffect(
                             ChallengeDetailEffect.ShareWatcherInvite(
-                                card = invitation.inviteCard(detail),
+                                card = invitation.inviteCard(challengeTitle = detail.title),
                                 inviteUrl = invitation.inviteUrl,
                             ),
                         )
@@ -208,15 +205,14 @@ class ChallengeDetailViewModel
     }
 
 /**
- * 카톡 공유 카드 문구: 서버 kakaoShare 페이로드를 우선 사용하고,
- * 없으면 감시자 통지 스펙 메시지 ①(중간 톤)로 클라이언트가 구성한다.
+ * 카톡 공유 카드 문구. 초대자(나)의 닉네임이 들어간 스펙 메시지 ① 문구는 토큰 사용자를 아는
+ * 서버 kakaoShare 페이로드가 담당하고, 없을 때만 닉네임 없는 일반 문구로 폴백한다.
+ * (챌린지 생성자 닉네임을 쓰면 안 된다 — 초대자는 참여자 본인이다.)
  */
-private fun WatcherInvitation.inviteCard(detail: ChallengeDetail): WatcherInviteCard =
+private fun WatcherInvitation.inviteCard(challengeTitle: String): WatcherInviteCard =
     kakaoShare
         ?: WatcherInviteCard(
-            title = "${detail.owner.nickname}님이 당신을 루틴 감시자로 초대했어요",
-            description =
-                "[${detail.title}]에서 ${detail.owner.nickname}님이 약속을 지키는지 지켜봐 주세요. " +
-                    "실패하면 알림이 가요.",
+            title = "당신을 루틴 감시자로 초대했어요",
+            description = "[$challengeTitle]에서 약속을 지키는지 지켜봐 주세요. 실패하면 알림이 가요.",
             buttonLabel = "수락하기",
         )

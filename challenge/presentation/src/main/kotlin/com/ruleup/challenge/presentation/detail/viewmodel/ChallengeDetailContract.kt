@@ -2,8 +2,7 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
-import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
-import com.ruleup.challenge.domain.entity.Watcher
+import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
@@ -31,10 +30,10 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** 필요한 등록이 모두 끝난(또는 불필요한) 뒤 시작. */
     data object Proceed : ChallengeDetailIntent
 
-    /** (생성자) 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
+    /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
 
-    /** (생성자) 감시자 해제 — REVOKED + 연락처 파기. */
+    /** (참여자 본인) 내 감시자 해제 — REVOKED + 연락처 파기. */
     data class RemoveWatcher(
         val watcherId: String,
     ) : ChallengeDetailIntent
@@ -78,10 +77,9 @@ data class ChallengeDetailState(
     val setup: ChallengeSetupInfo? = null,
     // 대상 앱이 로컬에 등록됐는지(앱 등록 화면 저장 여부).
     val targetAppsRegistered: Boolean = false,
-    // 감시자 목록(생성자만 조회, 그 외 빈 리스트).
-    val watchers: List<Watcher> = emptyList(),
-    // 감시자 한도(무료 3, 구독이면 null=무제한). 목록 응답으로 갱신된다.
-    val watcherLimit: Int? = WATCHER_FREE_LIMIT,
+    // 이 챌린지에서의 "내 감시자"(감시자는 챌린지 × 참여자 단위). 조회 성공 시에만 값이 있고
+    // null 이면(미참여 403 등) 감시자 섹션을 숨긴다 — 권한 판단은 서버에 위임.
+    val watchers: ChallengeWatchers? = null,
     // 초대 생성 요청 중(버튼 중복 탭 방지).
     val isInvitingWatcher: Boolean = false,
 ) : UiState {
@@ -117,10 +115,9 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val targetAppsRegistered: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 감시자 목록 갱신(초대·해제 후 재조회 포함). */
+    /** 내 감시자 목록 갱신(초대·해제 후 재조회 포함). 조회 성공 = 참여자 = 섹션 노출. */
     data class WatchersLoaded(
-        val watchers: List<Watcher>,
-        val limit: Int?,
+        val watchers: ChallengeWatchers,
     ) : ChallengeDetailReducerEvent
 
     /** 초대 생성 요청 시작/종료. */
