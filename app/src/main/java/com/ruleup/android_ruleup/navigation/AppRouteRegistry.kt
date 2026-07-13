@@ -5,10 +5,14 @@ import com.ruleup.android_ruleup.home.HomeScreen
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
+import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
+import com.ruleup.challenge.presentation.explore.ExploreScreen
+import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.IntroPromisePage
@@ -85,7 +89,29 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = HomePage.PATH,
             isRoot = true,
+            isBottomTab = true,
             render = { HomeScreen() },
+        ),
+        AppRoute(
+            path = ChallengeExplorePage.PATH,
+            isBottomTab = true,
+            // 탐색은 홈 위에 쌓인 탭 화면: 뒤로가기 시 홈으로 돌아간다.
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(ChallengeExplorePage.PATH),
+                )
+            },
+            render = { ExploreScreen() },
+        ),
+        AppRoute(
+            path = ChallengeExploreListPage.PATH,
+            render = { args ->
+                ExploreListScreen(
+                    category = args[ChallengeExploreListPage.ARG_CATEGORY],
+                    sort = args[ChallengeExploreListPage.ARG_SORT],
+                )
+            },
         ),
         AppRoute(
             path = ChallengeCreatePage.PATH,

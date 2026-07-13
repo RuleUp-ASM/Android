@@ -19,6 +19,9 @@ sealed interface HomeIntent : MviIntent {
 
     data object CreateChallenge : HomeIntent
 
+    /** 하단 탭 "챌린지" → 탐색 메인. */
+    data object OpenExplore : HomeIntent
+
     data class OpenChallenge(
         val challengeId: String,
     ) : HomeIntent

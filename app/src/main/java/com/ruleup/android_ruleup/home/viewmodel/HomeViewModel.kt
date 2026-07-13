@@ -41,6 +41,9 @@ class HomeViewModel
                 HomeIntent.CreateChallenge ->
                     navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_CREATE))
 
+                HomeIntent.OpenExplore ->
+                    navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
+
                 is HomeIntent.OpenChallenge ->
                     navigationHelper.navigateByRoute(ChallengeDetailPage(intent.challengeId).toRoute())
 

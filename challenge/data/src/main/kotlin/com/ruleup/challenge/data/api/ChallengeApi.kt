@@ -1,16 +1,19 @@
 package com.ruleup.challenge.data.api
 
+import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
+import com.ruleup.challenge.data.dto.ExploreChallengesResponse
 import com.ruleup.challenge.data.dto.MemberDecisionRequest
 import com.ruleup.challenge.data.dto.MemberStatusResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.RecommendationResponse
+import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeRequest
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
@@ -96,4 +99,25 @@ interface ChallengeApi {
     suspend fun getMyChallenges(
         @Query("scope") scope: String? = null,
     ): BaseResponse<MyChallengesResponse>
+
+    // 탐색: 실시간 인기 챌린지 조회 (파라미터 없음, 서버가 Top 20 반환 · 홈은 상위 일부 사용)
+    @GET("v1/challenges/trending")
+    suspend fun getTrending(): BaseResponse<TrendingChallengesResponse>
+
+    // 탐색: 카테고리별 진행 중 챌린지 수 조회
+    @GET("v1/challenge-categories")
+    suspend fun getCategories(): BaseResponse<ChallengeCategoriesResponse>
+
+    // 탐색: 챌린지 둘러보기 (공통 제외 → 필터 AND → 정렬 → 커서 페이지네이션).
+    // 매너 온도 컷은 값 대신 joinableOnly 로 — 서버가 토큰 사용자 온도 기준으로 계산한다.
+    @GET("v1/challenges/explore")
+    suspend fun explore(
+        @Query("category") category: String? = null,
+        @Query("participationType") participationType: String? = null,
+        @Query("verificationType") verificationType: String? = null,
+        @Query("joinableOnly") joinableOnly: Boolean? = null,
+        @Query("sort") sort: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<ExploreChallengesResponse>
 }

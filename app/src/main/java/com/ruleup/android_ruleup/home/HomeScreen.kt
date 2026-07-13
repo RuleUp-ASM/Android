@@ -43,6 +43,8 @@ import com.ruleup.android_ruleup.home.viewmodel.HomeIntent
 import com.ruleup.android_ruleup.home.viewmodel.HomeState
 import com.ruleup.android_ruleup.home.viewmodel.HomeViewModel
 import com.ruleup.ui.R
+import com.ruleup.ui.component.RuleUpBottomTab
+import com.ruleup.ui.component.RuleUpBottomTabBar
 import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpTheme
 import java.time.LocalDate
@@ -109,7 +111,14 @@ private fun HomeContent(
             }
         }
 
-        HomeBottomBar(modifier = Modifier.align(Alignment.BottomCenter))
+        RuleUpBottomTabBar(
+            selected = RuleUpBottomTab.HOME,
+            selectedColor = FigmaBrand,
+            onTabClick = { tab ->
+                if (tab == RuleUpBottomTab.CHALLENGE) onIntent(HomeIntent.OpenExplore)
+            },
+            modifier = Modifier.align(Alignment.BottomCenter),
+        )
 
         // FAB · 챌린지 추가. 하단 탭 위에 떠 있도록 오프셋.
         Box(
@@ -417,54 +426,6 @@ private fun EmptyChallenges() {
             text = "오른쪽 아래 + 버튼으로 첫 챌린지를 만들어 보세요",
             color = RuleUpTheme.colors.textSecondary,
             fontSize = 12.sp,
-        )
-    }
-}
-
-@Composable
-private fun HomeBottomBar(modifier: Modifier = Modifier) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border)
-                .navigationBarsPadding()
-                .height(64.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        BottomTab(iconRes = R.drawable.ic_tab_home, label = "홈", selected = true, modifier = Modifier.weight(1f))
-        BottomTab(iconRes = R.drawable.ic_tab_challenge, label = "챌린지", selected = false, modifier = Modifier.weight(1f))
-        BottomTab(iconRes = R.drawable.ic_tab_group, label = "그룹", selected = false, modifier = Modifier.weight(1f))
-        BottomTab(iconRes = R.drawable.ic_person, label = "마이", selected = false, modifier = Modifier.weight(1f))
-    }
-}
-
-@Composable
-private fun BottomTab(
-    iconRes: Int,
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val tint = if (selected) FigmaBrand else RuleUpTheme.colors.textMuted
-    Column(
-        modifier = modifier.fillMaxHeight(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = label,
-            tint = tint,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = label,
-            color = tint,
-            fontSize = 10.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
         )
     }
 }
