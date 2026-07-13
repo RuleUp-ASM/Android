@@ -17,7 +17,7 @@ class ExploreChallengesUseCase
     ) {
         suspend operator fun invoke(
             filter: ExploreFilter = ExploreFilter.none,
-            sort: ExploreSort = ExploreSort.PARTICIPANTS,
+            sort: ExploreSort = ExploreSort.TRENDING,
             cursor: String? = null,
             size: Int? = null,
         ): ExploreResult = exploreRepository.explore(filter, sort, cursor, size)

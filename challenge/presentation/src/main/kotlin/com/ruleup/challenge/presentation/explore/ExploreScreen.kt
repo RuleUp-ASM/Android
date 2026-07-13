@@ -41,7 +41,6 @@ import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreIntent
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreState
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreViewModel
-import com.ruleup.entity.user.InterestCategory
 import com.ruleup.ui.R
 import com.ruleup.ui.category.categoryIconRes
 import com.ruleup.ui.component.RuleUpBottomTab
@@ -100,7 +99,13 @@ private fun ExploreContent(
                     SectionHeader(title = "카테고리 탐색", onSeeAll = { onIntent(ExploreIntent.OpenCategoryAll) })
                     CategoryGrid(
                         categories = state.categories,
-                        onClick = { onIntent(ExploreIntent.OpenCategory(it)) },
+                        onClick = { item ->
+                            // 서버 표시명이 앱 카테고리와 매칭되면 필터 진입, 아니면 전체 목록으로.
+                            val category = item.category
+                            onIntent(
+                                if (category != null) ExploreIntent.OpenCategory(category) else ExploreIntent.OpenCategoryAll,
+                            )
+                        },
                     )
                 }
             }
@@ -160,7 +165,7 @@ private fun TrendingCard(
         }
         trending.forEachIndexed { index, item ->
             if (index > 0) HorizontalDivider(thickness = 1.dp, color = RuleUpTheme.colors.border)
-            TrendingRow(rank = index + 1, item = item, onClick = { onClick(item.challengeId) })
+            TrendingRow(rank = item.rank, item = item, onClick = { onClick(item.challengeId) })
         }
     }
 }
@@ -237,7 +242,7 @@ private fun RankBadge(rank: Int) {
 @Composable
 private fun CategoryGrid(
     categories: List<ChallengeCategoryCount>,
-    onClick: (InterestCategory) -> Unit,
+    onClick: (ChallengeCategoryCount) -> Unit,
 ) {
     if (categories.isEmpty()) {
         Text(
@@ -254,7 +259,7 @@ private fun CategoryGrid(
                     CategoryCard(
                         item = item,
                         modifier = Modifier.weight(1f),
-                        onClick = { onClick(item.category) },
+                        onClick = { onClick(item) },
                     )
                 }
                 if (rowItems.size == 1) Spacer(Modifier.weight(1f))
@@ -297,7 +302,7 @@ private fun CategoryCard(
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = item.category.label,
+                text = item.name,
                 color = RuleUpTheme.colors.textPrimary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,

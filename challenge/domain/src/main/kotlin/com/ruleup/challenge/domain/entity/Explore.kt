@@ -37,37 +37,44 @@ enum class ExploreSort(
 }
 
 /**
- * 탐색 목록 필터(탐색 스펙 §3.1). 모든 조건은 AND 로 결합하며, null 은 미적용이다.
+ * 탐색 목록 필터(탐색 스펙 §3.1 · API 명세). 모든 조건은 AND 로 결합하며, null 은 미적용이다.
  * 홈 인기 섹션에는 적용하지 않는다.
  */
 data class ExploreFilter(
     val category: InterestCategory? = null,
     val participationType: ParticipationType? = null,
     val verificationMethod: SelectedMethod? = null,
-    // 매너 온도 컷: 이 값 이하의 참여 하한을 가진 챌린지만("내가 들어갈 수 있는 것"). null = 제한 없음
-    val mannerCut: Double? = null,
+    // 매너 온도 컷: 클라이언트가 온도 값을 보내지 않고, true 면 서버가 토큰 사용자 기준으로
+    // minMannerTemperature ≤ 내 매너 온도 인 챌린지만 반환한다(API 기본 true).
+    val joinableOnly: Boolean = true,
 ) {
+    // 필터 칩 배지 수. joinableOnly 는 기본 on 인 설정이라 세지 않는다.
     val activeCount: Int
-        get() =
-            listOfNotNull(category, participationType, verificationMethod, mannerCut).size
+        get() = listOfNotNull(category, participationType, verificationMethod).size
 
     companion object {
         val none = ExploreFilter()
     }
 }
 
-/** 홈 실시간 인기 항목(최근 24시간 참여 속도 기반, 서버 산정 순서 그대로 노출). */
+/** 홈 실시간 인기 항목(명세: GET /challenges/trending data.items[]). 서버가 Top 20 을 내려주고 홈은 상위 일부만 쓴다. */
 data class TrendingChallenge(
+    // 서버 산정 순위(1부터)
+    val rank: Int,
     val challengeId: String,
     val title: String,
     // 현재 참여자 수 (카드 우측 "N명")
     val participantCount: Int,
 )
 
-/** 카테고리 그리드 항목: 카테고리별 진행 중(now < endAt) 챌린지 수. */
+/** 카테고리 그리드 항목(명세: GET /challenge-categories items[]). */
 data class ChallengeCategoryCount(
-    val category: InterestCategory,
+    val categoryId: Long,
+    // 서버가 내려주는 표시명(예: "운동")
+    val name: String,
     val activeChallengeCount: Int,
+    // [name] 라벨로 매칭한 앱 카테고리(아이콘·목록 필터 연결용). 매칭 실패 시 null
+    val category: InterestCategory?,
 )
 
 /** 둘러보기 목록 카드 항목(명세: GET /challenges/explore challenges[]). */

@@ -18,6 +18,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// 탐색 메인에 노출할 실시간 인기 개수(서버는 Top 20 반환).
+private const val TRENDING_MAIN_COUNT = 5
+
 /**
  * 탐색 메인 ViewModel. 실시간 인기(서버 산정, 신선도 10분)와 카테고리별 챌린지 수를 병렬 조회한다.
  * 랭킹·집계는 서버 값을 그대로 노출하고, 클라이언트는 재계산하지 않는다.
@@ -77,7 +80,13 @@ class ExploreViewModel
                         trending.await() to categories.await()
                     }
                 }.onSuccess { (trending, categories) ->
-                    dispatch(ExploreReducerEvent.Loaded(trending = trending, categories = categories))
+                    dispatch(
+                        ExploreReducerEvent.Loaded(
+                            // 서버는 Top 20 을 내려주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
+                            trending = trending.take(TRENDING_MAIN_COUNT),
+                            categories = categories,
+                        ),
+                    )
                 }.onFailure { dispatch(ExploreReducerEvent.Failed(it.message ?: "탐색 정보를 불러오지 못했어요")) }
             }
         }

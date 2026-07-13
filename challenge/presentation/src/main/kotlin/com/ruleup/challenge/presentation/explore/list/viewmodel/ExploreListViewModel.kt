@@ -94,7 +94,8 @@ class ExploreListViewModel
             loaded = true
             fetchFirstPage(
                 filter = ExploreFilter(category = InterestCategory.fromValue(category.orEmpty())),
-                sort = ExploreSort.fromValue(sort) ?: ExploreSort.PARTICIPANTS,
+                // 라우트 인자가 없으면 API 기본 정렬(인기순)
+                sort = ExploreSort.fromValue(sort) ?: ExploreSort.TRENDING,
             )
         }
 

@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,16 +34,10 @@ import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
-// 매너 온도 컷 슬라이더 범위(온도 도달 가능 범위 5~95).
-private const val MANNER_CUT_MIN = 5f
-private const val MANNER_CUT_MAX = 95f
-
-// 프리셋 칩(Figma 04 · 챌린지 필터): 제한 없음 / 36.5° 이상 / 37.5° 이상
-private val mannerCutPresets = listOf<Double?>(null, 36.5, 37.5)
-
 /**
  * 04 · 챌린지 필터 시트. 유형(그룹/솔로)·인증(자동/수동)·매너 온도 컷을 편집하고
  * "결과 보기 · N개" 로 확정한다. 조건 변경 시마다 [onPreview] 로 카운트를 미리 집계한다.
+ * 매너 온도 컷은 API 정의대로 on/off(joinableOnly) — 온도 값은 서버가 토큰 사용자 기준으로 계산한다.
  * 카테고리 필터는 탐색 메인 그리드 진입 컨텍스트라 시트에서 다루지 않는다(초기화에서도 유지).
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,8 +108,8 @@ internal fun ExploreFilterSheet(
             }
             Spacer(Modifier.height(16.dp))
             MannerCutSection(
-                mannerCut = draft.mannerCut,
-                onChange = { update(draft.copy(mannerCut = it)) },
+                joinableOnly = draft.joinableOnly,
+                onChange = { update(draft.copy(joinableOnly = it)) },
             )
             Spacer(Modifier.height(20.dp))
             ApplyButton(
@@ -225,8 +217,8 @@ private fun FilterToggleButton(
 
 @Composable
 private fun MannerCutSection(
-    mannerCut: Double?,
-    onChange: (Double?) -> Unit,
+    joinableOnly: Boolean,
+    onChange: (Boolean) -> Unit,
 ) {
     Column {
         Row(
@@ -236,72 +228,33 @@ private fun MannerCutSection(
         ) {
             FilterSectionLabel("매너 온도 컷")
             Text(
-                text = mannerCut?.let { "${formatTemperature(it)}°C 이상" } ?: "제한 없음",
+                text = if (joinableOnly) "참여 가능만" else "제한 없음",
                 color = RuleUpTheme.colors.brand,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
             )
         }
-        MannerCutSlider(mannerCut = mannerCut, onChange = onChange)
-        MannerCutPresets(mannerCut = mannerCut, onChange = onChange)
-    }
-}
-
-@Composable
-private fun MannerCutSlider(
-    mannerCut: Double?,
-    onChange: (Double?) -> Unit,
-) {
-    Slider(
-        value = (mannerCut ?: 36.5).toFloat(),
-        onValueChange = { value ->
-            // 0.5도 단위로 스냅해 라벨이 널뛰지 않게 한다.
-            onChange((value * 2).toInt() / 2.0)
-        },
-        valueRange = MANNER_CUT_MIN..MANNER_CUT_MAX,
-        colors =
-            SliderDefaults.colors(
-                thumbColor = RuleUpTheme.colors.brand,
-                activeTrackColor = RuleUpTheme.colors.brand,
-                inactiveTrackColor = RuleUpTheme.colors.surfaceVariant,
-            ),
-    )
-}
-
-@Composable
-private fun MannerCutPresets(
-    mannerCut: Double?,
-    onChange: (Double?) -> Unit,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        mannerCutPresets.forEach { preset ->
-            val selected = mannerCut == preset
-            Box(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .height(36.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .let { base ->
-                            if (selected) {
-                                base
-                                    .background(RuleUpTheme.colors.brandSoft)
-                                    .border(1.dp, RuleUpTheme.colors.brand, RoundedCornerShape(10.dp))
-                            } else {
-                                base
-                                    .background(RuleUpTheme.colors.surface)
-                                    .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(10.dp))
-                            }
-                        }.singleClickable { onChange(preset) },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = preset?.let { "${formatTemperature(it)}° 이상" } ?: "제한 없음",
-                    color = if (selected) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textSlate,
-                    fontSize = 12.sp,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                )
-            }
+        Spacer(Modifier.height(6.dp))
+        // 온도 값은 서버가 내 매너 온도 기준으로 계산하므로(API joinableOnly) on/off 만 고른다.
+        Text(
+            text = "내 매너 온도로 들어갈 수 있는 챌린지만 보여요",
+            color = RuleUpTheme.colors.textSecondary,
+            fontSize = 11.sp,
+        )
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FilterToggleButton(
+                text = "제한 없음",
+                selected = !joinableOnly,
+                modifier = Modifier.weight(1f),
+                onClick = { onChange(false) },
+            )
+            FilterToggleButton(
+                text = "참여 가능만",
+                selected = joinableOnly,
+                modifier = Modifier.weight(1f),
+                onClick = { onChange(true) },
+            )
         }
     }
 }
@@ -329,11 +282,3 @@ private fun ApplyButton(
         )
     }
 }
-
-// 36.5 처럼 소수부가 있으면 살리고 37.0 은 37 로 표기.
-private fun formatTemperature(value: Double): String =
-    if (value % 1.0 == 0.0) {
-        value.toInt().toString()
-    } else {
-        value.toString()
-    }

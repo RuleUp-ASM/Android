@@ -8,7 +8,6 @@ import com.ruleup.challenge.domain.entity.ExploreResult
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.challenge.domain.repository.ExploreRepository
-import com.ruleup.entity.user.InterestCategory
 import com.ruleup.network.dto.getOrThrow
 import javax.inject.Inject
 
@@ -17,9 +16,9 @@ class ExploreRepositoryImpl
     constructor(
         private val api: ChallengeApi,
     ) : ExploreRepository {
-        override suspend fun getTrending(category: InterestCategory?): List<TrendingChallenge> =
+        override suspend fun getTrending(): List<TrendingChallenge> =
             api
-                .getTrending(category?.value)
+                .getTrending()
                 .getOrThrow()
                 .toDomain()
 
@@ -39,8 +38,8 @@ class ExploreRepositoryImpl
                 .explore(
                     category = filter.category?.value,
                     participationType = filter.participationType?.value,
-                    verificationMethod = filter.verificationMethod?.value,
-                    mannerCut = filter.mannerCut,
+                    verificationType = filter.verificationMethod?.value,
+                    joinableOnly = filter.joinableOnly,
                     sort = sort.value,
                     cursor = cursor,
                     size = size,

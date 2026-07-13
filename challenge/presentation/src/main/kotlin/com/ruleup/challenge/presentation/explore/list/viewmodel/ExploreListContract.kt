@@ -65,7 +65,8 @@ data class ExploreListState(
                 isLoading = true,
                 isLoadingMore = false,
                 filter = ExploreFilter.none,
-                sort = ExploreSort.PARTICIPANTS,
+                // API 기본 정렬 = 인기순
+                sort = ExploreSort.TRENDING,
                 totalCount = 0,
                 challenges = emptyList(),
                 nextCursor = null,
