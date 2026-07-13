@@ -28,10 +28,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AndroidRuleUp">
 
+        <!-- singleTask: 딥링크(VIEW)·재실행이 항상 기존 인스턴스의 onNewIntent 로 들어오게 한다.
+             standard 이면 인스턴스가 중복 생성되어, 싱글톤 NavigationHelper 의 신호를 두 NavHost 가
+             나눠 소비해 보이는 화면이 전환되지 않는 버그가 있었다(#94). -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.AndroidRuleUp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
