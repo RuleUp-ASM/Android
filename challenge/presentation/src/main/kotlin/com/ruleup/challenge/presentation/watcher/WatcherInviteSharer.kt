@@ -7,6 +7,7 @@ import com.kakao.sdk.share.ShareClient
 import com.kakao.sdk.share.WebSharerClient
 import com.kakao.sdk.template.model.Link
 import com.kakao.sdk.template.model.TextTemplate
+import com.ruleup.challenge.domain.entity.WatcherInviteCard
 
 /**
  * 감시자 초대 카드 카카오톡 공유(감시자 통지 스펙 메시지 ① · 중간 톤).
@@ -18,15 +19,15 @@ import com.kakao.sdk.template.model.TextTemplate
 object WatcherInviteSharer {
     /**
      * 초대 카드를 카카오톡으로 공유한다. 카카오톡 미설치면 웹 공유(브라우저)로 폴백한다.
+     * 카드 문구는 서버 kakaoShare 페이로드(없으면 ViewModel 기본 문구)를 그대로 쓴다.
      * @return 공유 UI 를 띄우지 못했으면 false (호출부가 안내 토스트 처리)
      */
     fun share(
         context: Context,
-        ownerNickname: String,
-        challengeTitle: String,
+        card: WatcherInviteCard,
         inviteUrl: String,
     ): Boolean {
-        val template = inviteTemplate(ownerNickname, challengeTitle, inviteUrl)
+        val template = inviteTemplate(card, inviteUrl)
         return if (ShareClient.instance.isKakaoTalkSharingAvailable(context)) {
             ShareClient.instance.shareDefault(context, template) { result, _ ->
                 result?.intent?.let(context::startActivity)
@@ -38,21 +39,17 @@ object WatcherInviteSharer {
     }
 
     private fun inviteTemplate(
-        ownerNickname: String,
-        challengeTitle: String,
+        card: WatcherInviteCard,
         inviteUrl: String,
     ): TextTemplate =
         TextTemplate(
-            text =
-                "${ownerNickname}님이 당신을 루틴 감시자로 초대했어요\n" +
-                    "[$challengeTitle]에서 ${ownerNickname}님이 약속을 지키는지 지켜봐 주세요. " +
-                    "실패하면 알림이 가요.",
+            text = "${card.title}\n${card.description}",
             link =
                 Link(
                     webUrl = inviteUrl,
                     mobileWebUrl = inviteUrl,
                 ),
-            buttonTitle = "수락하기",
+            buttonTitle = card.buttonLabel,
         )
 
     // 카카오톡 미설치: 카카오 웹 공유 페이지를 브라우저로 연다.

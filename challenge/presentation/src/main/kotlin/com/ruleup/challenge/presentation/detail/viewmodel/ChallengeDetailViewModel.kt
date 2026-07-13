@@ -3,7 +3,10 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
+import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
+import com.ruleup.challenge.domain.entity.WatcherInvitation
+import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
@@ -79,7 +82,8 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.SetupRefreshed ->
                     state.copy(setup = event.setup, targetAppsRegistered = event.targetAppsRegistered)
 
-                is ChallengeDetailReducerEvent.WatchersLoaded -> state.copy(watchers = event.watchers)
+                is ChallengeDetailReducerEvent.WatchersLoaded ->
+                    state.copy(watchers = event.watchers, watcherLimit = event.limit)
 
                 is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
             }
@@ -135,7 +139,9 @@ class ChallengeDetailViewModel
         private fun loadWatchers(challengeId: String) {
             viewModelScope.launch {
                 runCatching { getWatchersUseCase(challengeId) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.WatchersLoaded(it)) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.WatchersLoaded(watchers = it.watchers, limit = it.limit))
+                    }
             }
         }
 
@@ -152,8 +158,7 @@ class ChallengeDetailViewModel
                     .onSuccess { invitation ->
                         emitEffect(
                             ChallengeDetailEffect.ShareWatcherInvite(
-                                ownerNickname = detail.owner.nickname,
-                                challengeTitle = detail.title,
+                                card = invitation.inviteCard(detail),
                                 inviteUrl = invitation.inviteUrl,
                             ),
                         )
@@ -201,3 +206,17 @@ class ChallengeDetailViewModel
             )
         }
     }
+
+/**
+ * 카톡 공유 카드 문구: 서버 kakaoShare 페이로드를 우선 사용하고,
+ * 없으면 감시자 통지 스펙 메시지 ①(중간 톤)로 클라이언트가 구성한다.
+ */
+private fun WatcherInvitation.inviteCard(detail: ChallengeDetail): WatcherInviteCard =
+    kakaoShare
+        ?: WatcherInviteCard(
+            title = "${detail.owner.nickname}님이 당신을 루틴 감시자로 초대했어요",
+            description =
+                "[${detail.title}]에서 ${detail.owner.nickname}님이 약속을 지키는지 지켜봐 주세요. " +
+                    "실패하면 알림이 가요.",
+            buttonLabel = "수락하기",
+        )

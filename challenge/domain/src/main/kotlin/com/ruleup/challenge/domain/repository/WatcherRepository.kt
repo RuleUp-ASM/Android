@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.repository
 
-import com.ruleup.challenge.domain.entity.Watcher
+import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInvitationInfo
 
@@ -15,8 +15,8 @@ interface WatcherRepository {
      */
     suspend fun createInvitation(challengeId: String): WatcherInvitation
 
-    /** 감시자 목록 조회(명세: GET /challenges/{id}/watchers). 생성자만. */
-    suspend fun getWatchers(challengeId: String): List<Watcher>
+    /** 감시자 목록 조회(명세: GET /challenges/{id}/watchers). 생성자만. INVITED 포함 전체(status=ALL)를 조회한다. */
+    suspend fun getWatchers(challengeId: String): ChallengeWatchers
 
     /** 감시자 해제(명세: DELETE /challenges/{id}/watchers/{watcherId}). REVOKED + 연락처 파기. */
     suspend fun removeWatcher(

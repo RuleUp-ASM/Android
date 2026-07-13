@@ -134,6 +134,7 @@ interface ChallengeApi {
     @GET("v1/challenges/{challengeId}/watchers")
     suspend fun getWatchers(
         @Path("challengeId") challengeId: String,
+        @Query("status") status: String? = null,
     ): BaseResponse<WatchersResponse>
 
     // 감시자: 해제 (REVOKED + 연락처 파기)

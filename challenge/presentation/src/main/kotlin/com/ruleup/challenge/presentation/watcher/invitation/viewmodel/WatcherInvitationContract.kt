@@ -14,9 +14,6 @@ sealed interface WatcherInvitationIntent : MviIntent {
     /** "수락하기" — 인앱 수락이 곧 수신동의(채널 = 인앱 푸시). */
     data object Accept : WatcherInvitationIntent
 
-    /** 수락 완료 후 "챌린지 보러 가기". */
-    data object OpenChallenge : WatcherInvitationIntent
-
     data object Back : WatcherInvitationIntent
 }
 

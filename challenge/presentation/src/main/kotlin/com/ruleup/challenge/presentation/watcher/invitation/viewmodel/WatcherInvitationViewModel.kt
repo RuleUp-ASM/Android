@@ -1,7 +1,6 @@
 package com.ruleup.challenge.presentation.watcher.invitation.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.usecase.AcceptWatcherInvitationUseCase
 import com.ruleup.challenge.domain.usecase.GetWatcherInvitationUseCase
 import com.ruleup.domain.helper.NavigationHelper
@@ -30,7 +29,6 @@ class WatcherInvitationViewModel
             when (intent) {
                 is WatcherInvitationIntent.Load -> load(intent.token)
                 WatcherInvitationIntent.Accept -> accept()
-                WatcherInvitationIntent.OpenChallenge -> openChallenge()
                 WatcherInvitationIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -78,10 +76,5 @@ class WatcherInvitationViewModel
                         dispatch(WatcherInvitationReducerEvent.Failed(it.message ?: "초대 수락에 실패했어요"))
                     }
             }
-        }
-
-        private fun openChallenge() {
-            val challengeId = currentState.info?.challengeId ?: return
-            navigationHelper.navigateByRoute(ChallengeDetailPage(challengeId).toRoute())
         }
     }

@@ -94,8 +94,7 @@ fun ChallengeDetailScreen(
                     val shared =
                         WatcherInviteSharer.share(
                             context = context,
-                            ownerNickname = effect.ownerNickname,
-                            challengeTitle = effect.challengeTitle,
+                            card = effect.card,
                             inviteUrl = effect.inviteUrl,
                         )
                     if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
@@ -228,6 +227,7 @@ private fun ChallengeDetailContent(
                         if (state.detail.isOwner) {
                             WatcherSection(
                                 watchers = state.watchers,
+                                limit = state.watcherLimit,
                                 isInviting = state.isInvitingWatcher,
                                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
                                 onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },

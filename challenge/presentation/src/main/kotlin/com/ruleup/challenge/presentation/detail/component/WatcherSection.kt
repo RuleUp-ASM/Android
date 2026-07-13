@@ -23,7 +23,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.Watcher
 import com.ruleup.challenge.domain.entity.WatcherStatus
 import com.ruleup.ui.R
@@ -34,11 +33,12 @@ import com.ruleup.ui.theme.RuleUpTheme
 /**
  * 챌린지 상세의 감시자 관리 섹션(생성자 전용).
  * 실패 시 통지받을 감시자를 카카오톡 공유로 초대하고, 목록에서 상태 확인·해제한다.
- * 무료는 챌린지당 [WATCHER_FREE_LIMIT]명 — 초과 시도는 ViewModel 이 구독 안내로 처리한다.
+ * 한도는 서버 값([limit], 무료 3 · 구독 시 null=무제한) — 초과 시도는 ViewModel 이 구독 안내로 처리한다.
  */
 @Composable
 internal fun WatcherSection(
     watchers: List<Watcher>,
+    limit: Int?,
     isInviting: Boolean,
     onInvite: () -> Unit,
     onRemove: (watcherId: String) -> Unit,
@@ -65,11 +65,10 @@ internal fun WatcherSection(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
             )
+            val activeCount = watchers.count { it.status != WatcherStatus.EXPIRED && it.status != WatcherStatus.REVOKED }
             Text(
-                // 무료 한도 대비 현재 유효(만료·해제 제외) 감시자 수
-                text =
-                    "${watchers.count { it.status != WatcherStatus.EXPIRED && it.status != WatcherStatus.REVOKED }}" +
-                        "/$WATCHER_FREE_LIMIT",
+                // 무료 한도 대비 현재 유효(만료·해제 제외) 감시자 수. 구독(limit=null)이면 무제한
+                text = limit?.let { "$activeCount/$it" } ?: "${activeCount}명",
                 color = RuleUpTheme.colors.textSecondary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
@@ -124,7 +123,7 @@ private fun WatcherRow(
             )
         }
         Text(
-            text = watcher.displayName,
+            text = watcher.shownName,
             color = RuleUpTheme.colors.textPrimary,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,

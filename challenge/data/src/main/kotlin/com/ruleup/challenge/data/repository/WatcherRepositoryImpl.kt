@@ -2,7 +2,7 @@ package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.toDomain
-import com.ruleup.challenge.domain.entity.Watcher
+import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInvitationInfo
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
@@ -31,9 +31,10 @@ class WatcherRepositoryImpl
                 throw e
             }
 
-        override suspend fun getWatchers(challengeId: String): List<Watcher> =
+        override suspend fun getWatchers(challengeId: String): ChallengeWatchers =
             api
-                .getWatchers(challengeId)
+                // 관리 섹션은 수락 대기(INVITED)·만료 현황까지 보여주므로 전체를 조회한다.
+                .getWatchers(challengeId, status = "ALL")
                 .getOrThrow()
                 .toDomain()
 

@@ -84,7 +84,7 @@ fun WatcherInvitationScreen(
                 state.accepted ->
                     AcceptedContent(
                         info = info,
-                        onOpenChallenge = { viewModel.onIntent(WatcherInvitationIntent.OpenChallenge) },
+                        onConfirm = { viewModel.onIntent(WatcherInvitationIntent.Back) },
                     )
 
                 else ->
@@ -147,21 +147,30 @@ private fun InvitationContent(
             Notice(
                 emoji = "⏰",
                 title = "초대가 만료됐어요",
-                description = "${info.ownerNickname}님에게 다시 초대를 요청해 주세요",
+                description = "${info.inviterNickname}님에게 다시 초대를 요청해 주세요",
             )
 
         WatcherInvitationState.ALREADY_ACCEPTED ->
             Notice(
                 emoji = "✅",
                 title = "이미 수락한 초대예요",
-                description = "${info.ownerNickname}님이 실패하면 알림으로 알려드릴게요",
+                description = "${info.inviterNickname}님이 실패하면 알림으로 알려드릴게요",
+            )
+
+        WatcherInvitationState.REVOKED ->
+            Notice(
+                emoji = "🚫",
+                title = "더 이상 유효하지 않은 초대예요",
+                description = "${info.inviterNickname}님에게 새 초대를 요청해 주세요",
             )
 
         WatcherInvitationState.BLOCKED ->
             Notice(
                 emoji = "🚫",
                 title = "지금은 이 초대를 받을 수 없어요",
-                description = "수신거부 후 30일이 지나면 다시 받을 수 있어요",
+                description =
+                    info.blockedUntil?.take(10)?.let { "수신거부 이력이 있어 $it 이후 다시 받을 수 있어요" }
+                        ?: "수신거부 후 30일이 지나면 다시 받을 수 있어요",
             )
     }
 }
@@ -179,7 +188,7 @@ private fun PendingContent(
     ) {
         WatchBadge()
         Text(
-            text = "${info.ownerNickname}님이 당신을\n루틴 감시자로 초대했어요",
+            text = "${info.inviterNickname}님이 당신을\n루틴 감시자로 초대했어요",
             color = RuleUpTheme.colors.textPrimary,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
@@ -189,7 +198,7 @@ private fun PendingContent(
         // 수락 = 수신동의. 무엇에 동의하는지 투명하게 명시한다(스펙 메시지 ① 메모).
         Text(
             text =
-                "${info.ownerNickname}님이 약속을 지키는지 지켜봐 주세요.\n" +
+                "${info.inviterNickname}님이 약속을 지키는지 지켜봐 주세요.\n" +
                     "수락하면 루틴 인증에 실패할 때 알림을 받아요.",
             color = RuleUpTheme.colors.textSecondary,
             fontSize = 13.sp,
@@ -214,7 +223,7 @@ private fun PendingContent(
 @Composable
 private fun AcceptedContent(
     info: WatcherInvitationInfo,
-    onOpenChallenge: () -> Unit,
+    onConfirm: () -> Unit,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -228,15 +237,15 @@ private fun AcceptedContent(
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "${info.ownerNickname}님이 [${info.challengeTitle}] 인증에\n실패하면 알림으로 알려드릴게요",
+            text = "${info.inviterNickname}님이 [${info.challengeTitle}] 인증에\n실패하면 알림으로 알려드릴게요",
             color = RuleUpTheme.colors.textSecondary,
             fontSize = 13.sp,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(10.dp))
         PrimaryGradientButton(
-            text = "챌린지 보러 가기",
-            onClick = onOpenChallenge,
+            text = "확인",
+            onClick = onConfirm,
         )
     }
 }

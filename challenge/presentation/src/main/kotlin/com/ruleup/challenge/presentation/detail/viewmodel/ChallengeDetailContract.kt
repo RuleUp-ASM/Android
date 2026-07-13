@@ -2,7 +2,9 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
+import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.Watcher
+import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -41,10 +43,12 @@ sealed interface ChallengeDetailIntent : MviIntent {
 }
 
 sealed interface ChallengeDetailEffect : MviEffect {
-    /** 초대 생성 성공 → 사용자 본인 명의 카카오톡 공유 실행(룰업 직접 발송 금지). */
+    /**
+     * 초대 생성 성공 → 사용자 본인 명의 카카오톡 공유 실행(룰업 직접 발송 금지).
+     * 카드 문구는 서버 kakaoShare 페이로드를 그대로 쓴다(없으면 ViewModel 이 기본 문구 구성).
+     */
     data class ShareWatcherInvite(
-        val ownerNickname: String,
-        val challengeTitle: String,
+        val card: WatcherInviteCard,
         val inviteUrl: String,
     ) : ChallengeDetailEffect
 
@@ -76,6 +80,8 @@ data class ChallengeDetailState(
     val targetAppsRegistered: Boolean = false,
     // 감시자 목록(생성자만 조회, 그 외 빈 리스트).
     val watchers: List<Watcher> = emptyList(),
+    // 감시자 한도(무료 3, 구독이면 null=무제한). 목록 응답으로 갱신된다.
+    val watcherLimit: Int? = WATCHER_FREE_LIMIT,
     // 초대 생성 요청 중(버튼 중복 탭 방지).
     val isInvitingWatcher: Boolean = false,
 ) : UiState {
@@ -114,6 +120,7 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     /** 감시자 목록 갱신(초대·해제 후 재조회 포함). */
     data class WatchersLoaded(
         val watchers: List<Watcher>,
+        val limit: Int?,
     ) : ChallengeDetailReducerEvent
 
     /** 초대 생성 요청 시작/종료. */
