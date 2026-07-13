@@ -54,6 +54,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
 
+    // 감시자 초대 카드 카카오톡 공유 (사용자 본인 발신)
+    implementation(libs.kakao.share)
+
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.compiler)

@@ -2,6 +2,8 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
+import com.ruleup.challenge.domain.entity.Watcher
+import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
@@ -27,7 +29,28 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** 필요한 등록이 모두 끝난(또는 불필요한) 뒤 시작. */
     data object Proceed : ChallengeDetailIntent
 
+    /** (생성자) 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
+    data object InviteWatcher : ChallengeDetailIntent
+
+    /** (생성자) 감시자 해제 — REVOKED + 연락처 파기. */
+    data class RemoveWatcher(
+        val watcherId: String,
+    ) : ChallengeDetailIntent
+
     data object Back : ChallengeDetailIntent
+}
+
+sealed interface ChallengeDetailEffect : MviEffect {
+    /** 초대 생성 성공 → 사용자 본인 명의 카카오톡 공유 실행(룰업 직접 발송 금지). */
+    data class ShareWatcherInvite(
+        val ownerNickname: String,
+        val challengeTitle: String,
+        val inviteUrl: String,
+    ) : ChallengeDetailEffect
+
+    data class ShowMessage(
+        val message: String,
+    ) : ChallengeDetailEffect
 }
 
 /**
@@ -51,6 +74,10 @@ data class ChallengeDetailState(
     val setup: ChallengeSetupInfo? = null,
     // 대상 앱이 로컬에 등록됐는지(앱 등록 화면 저장 여부).
     val targetAppsRegistered: Boolean = false,
+    // 감시자 목록(생성자만 조회, 그 외 빈 리스트).
+    val watchers: List<Watcher> = emptyList(),
+    // 초대 생성 요청 중(버튼 중복 탭 방지).
+    val isInvitingWatcher: Boolean = false,
 ) : UiState {
     companion object {
         val initial =
@@ -82,5 +109,15 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     data class SetupRefreshed(
         val setup: ChallengeSetupInfo?,
         val targetAppsRegistered: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 감시자 목록 갱신(초대·해제 후 재조회 포함). */
+    data class WatchersLoaded(
+        val watchers: List<Watcher>,
+    ) : ChallengeDetailReducerEvent
+
+    /** 초대 생성 요청 시작/종료. */
+    data class InvitingWatcher(
+        val inviting: Boolean,
     ) : ChallengeDetailReducerEvent
 }
