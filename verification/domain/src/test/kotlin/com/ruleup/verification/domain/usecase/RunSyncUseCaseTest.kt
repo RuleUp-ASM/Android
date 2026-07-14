@@ -45,7 +45,7 @@ class RunSyncUseCaseTest {
     private val collectedAt = "2026-06-21T00:00:00Z"
 
     @Test
-    fun `보낼 게 없으면 전송하지 않고 null 을 반환한다`() =
+    fun `활성 챌린지도 보낼 것도 없으면 전송하지 않고 null 을 반환한다`() =
         runBlocking {
             val signalRepo = FakeSignalRepository(drain = null)
             val verificationRepo = FakeVerificationRepository()
@@ -63,6 +63,27 @@ class RunSyncUseCaseTest {
             assertNull(result)
             assertFalse(verificationRepo.syncCalled)
             assertFalse(signalRepo.markSyncedCalled)
+        }
+
+    @Test
+    fun `활성 챌린지가 있으면 신호·gap 이 없어도 빈 envelope 를 전송한다`() =
+        runBlocking {
+            val signalRepo = FakeSignalRepository(drain = null)
+            val verificationRepo = FakeVerificationRepository(result = syncResult())
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
+                    verificationRepo,
+                    FakeAnalyticsLogger(),
+                )
+
+            val result = useCase(scope, collectedAt)
+
+            assertTrue(verificationRepo.syncCalled)
+            assertTrue(verificationRepo.syncedBatch?.isEmpty == true)
+            assertEquals(1, result?.updatedChallenges?.size)
         }
 
     @Test
@@ -170,11 +191,13 @@ class RunSyncUseCaseTest {
         }
     }
 
-    private class FakeEnvelopeMetadataProvider : EnvelopeMetadataProvider {
+    private class FakeEnvelopeMetadataProvider(
+        private val activeChallengeIds: List<String> = emptyList(),
+    ) : EnvelopeMetadataProvider {
         override suspend fun capture(scope: SignalScope): EnvelopeMetadata =
             EnvelopeMetadata(
                 clock = DeviceClock(deviceTimeMillis = 1L, elapsedRealtimeMillis = 1L, bootSessionId = "boot", timeZone = "Asia/Seoul"),
-                activeChallengeIds = emptyList(),
+                activeChallengeIds = activeChallengeIds,
                 permissions =
                     PermissionSnapshot(
                         location = PermissionState.GRANTED,
@@ -199,6 +222,7 @@ class RunSyncUseCaseTest {
         private val error: Throwable? = null,
     ) : VerificationRepository {
         var syncCalled = false
+        var syncedBatch: SignalBatch? = null
 
         override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy = error("unused")
 
@@ -207,6 +231,7 @@ class RunSyncUseCaseTest {
             batch: SignalBatch,
         ): SyncResult {
             syncCalled = true
+            syncedBatch = batch
             error?.let { throw it }
             return requireNotNull(result)
         }

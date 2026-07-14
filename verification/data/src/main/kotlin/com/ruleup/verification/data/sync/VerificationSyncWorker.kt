@@ -75,8 +75,8 @@ class VerificationSyncWorker
                         ),
                     )
                 } else {
-                    // 신호도 gap 도 없어 전송 생략(전송 스펙 §0.2).
-                    Timber.tag(LOG_TAG).i("sync 전송 생략 — 수집 신호·gap 0 (스코프/권한 확인)")
+                    // 활성 챌린지도 신호·gap 도 없어 전송 생략.
+                    Timber.tag(LOG_TAG).i("sync 전송 생략 — 활성 챌린지·신호·gap 0")
                 }
                 Result.success()
             } catch (e: CancellationException) {
