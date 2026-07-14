@@ -18,8 +18,8 @@ enum class LocationBinding {
 }
 
 /**
- * OS 에 사전 등록할 지오펜스 1개 (명세 §2.1). [requestId] = challengeMemberId.
- * 반경은 50~1000m 로 클램프된다(명세 §5.3).
+ * OS 에 사전 등록할 지오펜스 1개 (명세 §2.1). [requestId] = "{challengeMemberId}#{anchorIndex}" —
+ * GEOFENCE 이벤트의 anchorId 로 서버에 보고된다. 반경은 아래 범위로 클램프된다.
  */
 data class GeofenceTarget(
     val requestId: String,

@@ -52,8 +52,11 @@ interface GeofenceTargetDao {
     @Upsert
     suspend fun upsertAll(items: List<GeofenceTargetEntity>)
 
-    @Query("DELETE FROM geofence_target WHERE requestId = :requestId")
-    suspend fun deleteByRequestId(requestId: String)
+    @Query("SELECT * FROM geofence_target WHERE requestId LIKE :prefix || '%'")
+    suspend fun byRequestIdPrefix(prefix: String): List<GeofenceTargetEntity>
+
+    @Query("DELETE FROM geofence_target WHERE requestId LIKE :prefix || '%'")
+    suspend fun deleteByRequestIdPrefix(prefix: String)
 
     @Query("DELETE FROM geofence_target")
     suspend fun clear()

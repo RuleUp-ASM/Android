@@ -58,19 +58,33 @@ class GeofenceRegistrarImpl
             reconcile(geofenceTargetDao.all().map { it.toDomain() })
         }
 
-        override suspend fun bind(target: GeofenceTarget) {
-            // 다른 목표는 유지하고 이 requestId 만 멱등 등록/갱신(변경 시 재등록 포함, 명세 §5.4.3).
-            if (context.hasFineLocation()) {
-                registerAll(listOf(target))
-            } else {
-                recordNotRegistered()
+        override suspend fun bind(
+            requestIdPrefix: String,
+            targets: List<GeofenceTarget>,
+        ) {
+            // 이 멤버(prefix) 소속 기존 펜스 중 새 목록에 없는 것만 해제 — 다른 멤버 목표는 유지(명세 §5.4.3).
+            val newIds = targets.mapTo(HashSet()) { it.requestId }
+            val stale =
+                geofenceTargetDao
+                    .byRequestIdPrefix(requestIdPrefix)
+                    .map { it.requestId }
+                    .filterNot { it in newIds }
+            if (stale.isNotEmpty()) {
+                runCatching { client.removeGeofences(stale).await() }
             }
-            geofenceTargetDao.upsertAll(listOf(target.toEntity()))
+            if (targets.isNotEmpty()) {
+                if (context.hasFineLocation()) registerAll(targets) else recordNotRegistered()
+            }
+            geofenceTargetDao.deleteByRequestIdPrefix(requestIdPrefix)
+            if (targets.isNotEmpty()) geofenceTargetDao.upsertAll(targets.map { it.toEntity() })
         }
 
-        override suspend fun unbind(requestId: String) {
-            runCatching { client.removeGeofences(listOf(requestId)).await() }
-            geofenceTargetDao.deleteByRequestId(requestId)
+        override suspend fun unbind(requestIdPrefix: String) {
+            val ids = geofenceTargetDao.byRequestIdPrefix(requestIdPrefix).map { it.requestId }
+            if (ids.isNotEmpty()) {
+                runCatching { client.removeGeofences(ids).await() }
+            }
+            geofenceTargetDao.deleteByRequestIdPrefix(requestIdPrefix)
         }
 
         override suspend fun clear() {

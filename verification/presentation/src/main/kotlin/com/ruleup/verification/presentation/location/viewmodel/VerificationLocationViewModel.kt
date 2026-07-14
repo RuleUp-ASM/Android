@@ -21,7 +21,7 @@ import javax.inject.Inject
 /**
  * 지도 핀 → 셋업(앵커 바인딩) 제출(명세 setup). 지도 탭/검색으로 확인 대기 핀을 찍고([pending]),
  * 하단 카드의 [VerificationLocationIntent.AddAnchor] 로 최대 10개까지 누적한 뒤
- * [VerificationLocationIntent.Submit] 시 [SubmitChallengeSetupUseCase] 로 송신한다. READY 면 첫 앵커를
+ * [VerificationLocationIntent.Submit] 시 [SubmitChallengeSetupUseCase] 로 송신한다. READY 면 앵커 전체를
  * [BindLocationUseCase] 로 OS 지오펜스 등록 후 종료한다. 탭 지점의 이름/주소는 [ReverseGeocodeUseCase] 로 채운다.
  */
 @HiltViewModel
@@ -160,7 +160,7 @@ class VerificationLocationViewModel
             )
         }
 
-        // 누적 앵커를 setup 으로 송신. READY 면 첫 앵커만 OS 지오펜스로 등록 후 종료, PENDING_SETUP 이면 미충족 안내.
+        // 누적 앵커를 setup 으로 송신. READY 면 앵커 전체를 OS 지오펜스로 등록 후 종료, PENDING_SETUP 이면 미충족 안내.
         private fun submit(intent: VerificationLocationIntent.Submit) {
             if (currentState.isSubmitting) return
             val anchors = currentState.anchors
@@ -179,17 +179,13 @@ class VerificationLocationViewModel
                 }.onSuccess { result ->
                     dispatch(VerificationLocationReducerEvent.Finished)
                     if (result.isReady) {
-                        // 첫 앵커 1개만 OS 등록(requestId=challengeMemberId 단일 가정 유지). 등록 실패는 무시(다음 reconcile 재시도).
-                        anchors.firstOrNull()?.let { first ->
-                            runCatching {
-                                bindLocationUseCase(
-                                    challengeMemberId = intent.challengeId,
-                                    lat = first.lat,
-                                    lng = first.lng,
-                                    radiusM = first.radiusM,
-                                    dwellMinutes = intent.dwellMinutes,
-                                )
-                            }
+                        // 앵커 전체를 OS 지오펜스로 등록. 등록 실패는 gap 으로 보고되고 다음 reconcile 이 재시도.
+                        runCatching {
+                            bindLocationUseCase(
+                                challengeMemberId = intent.challengeId,
+                                anchors = anchors,
+                                dwellMinutes = intent.dwellMinutes,
+                            )
                         }
                         analyticsLogger.log(
                             AnalyticsEvent.SetupStepCompleted(
