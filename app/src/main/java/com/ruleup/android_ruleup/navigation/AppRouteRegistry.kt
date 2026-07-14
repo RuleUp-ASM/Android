@@ -174,7 +174,7 @@ val appRoutes: List<AppRoute> =
             path = VerificationLocationPage.PATH,
             render = { args ->
                 VerificationLocationScreen(
-                    challengeMemberId = args[VerificationLocationPage.ARG_MEMBER_ID].orEmpty(),
+                    challengeId = args[VerificationLocationPage.ARG_CHALLENGE_ID].orEmpty(),
                     defaultRadiusM = args[VerificationLocationPage.ARG_RADIUS]?.toFloatOrNull() ?: 500f,
                     dwellMinutes = args[VerificationLocationPage.ARG_DWELL]?.toIntOrNull() ?: 60,
                     targetPackages =

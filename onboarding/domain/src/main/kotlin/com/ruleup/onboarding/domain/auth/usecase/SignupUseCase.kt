@@ -33,6 +33,7 @@ class SignupUseCase
                 )
 
             tokenRepository.saveTokens(session.token)
+            tokenRepository.saveUserId(session.user.id)
 
             val profileImageUrl =
                 form.localImageUri

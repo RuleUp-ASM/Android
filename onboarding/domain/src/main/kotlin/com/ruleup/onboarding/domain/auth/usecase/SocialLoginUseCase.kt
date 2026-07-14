@@ -19,6 +19,7 @@ class SocialLoginUseCase
             when (val result = authRepository.exchangeToken(authorization)) {
                 is OAuthResult.ExistingUser -> {
                     tokenRepository.saveTokens(result.session.token)
+                    tokenRepository.saveUserId(result.session.user.id)
                     // 기존 회원의 로그인 완료 시점. 신규 회원(NewUser)은 가입 완료 전이라 로그인으로 보지 않는다.
                     analyticsLogger.log(AnalyticsEvent.Login(provider = authorization.provider.provider))
                     LoginResult.GoMain
