@@ -6,6 +6,13 @@ data class MapLatLng(
     val lng: Double,
 )
 
+/** 지도에 고정 표시할 앵커 1개(등록된 인증 장소). 번호 핀 + 반경 원으로 그려진다. */
+data class MapAnchor(
+    val lat: Double,
+    val lng: Double,
+    val radiusM: Float,
+)
+
 /** 반경 클램프(명세 §5.3): 10m 는 GPS 오차보다 작아 영구 EXIT 오탐, 5km 는 상시 ENTER. */
 const val MIN_RADIUS_M: Float = 50f
 const val MAX_RADIUS_M: Float = 1000f

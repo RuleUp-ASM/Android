@@ -58,14 +58,19 @@ sealed interface VerificationLocationIntent : MviIntent {
 
     /** 입력칸이 비면 자동완성 목록을 닫는다. */
     data object ClearSearch : VerificationLocationIntent
+
+    /** 검색 필의 뒤로가기 → 화면 종료. */
+    data object Back : VerificationLocationIntent
 }
 
-/** 확정 대기 중인 선택 지점(탭/검색으로 찍은 핀). 하단 확인 카드에 표시된다. */
+/** 확정 대기 중인 선택 지점(탭/검색으로 찍은 핀). 하단 확인 시트에 표시된다. */
 data class PendingSelection(
     val lat: Double,
     val lng: Double,
     val name: String,
     val address: String?,
+    // 카카오 로컬 카테고리(검색 결과만, 예: "스포츠,레저 > 헬스장"). 시트의 카테고리 칩에 마지막 단계만 표시.
+    val category: String? = null,
 )
 
 data class VerificationLocationState(
