@@ -486,7 +486,7 @@ private fun MannerTemperatureSection(
     temperature: Int,
     onIntent: (CreateChallengeIntent) -> Unit,
 ) {
-    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 커밋한다(프레임마다 전체 State 왕복 방지).
+    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 커밋한다.
     var drag by remember(temperature) { mutableStateOf(temperature.toFloat()) }
     val shown = drag.roundToInt()
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1023,7 +1023,7 @@ private fun PenaltyDivider() {
     )
 }
 
-/** [PenaltyRow] 의 정적 표시 정보. 상호작용 상태(checked/enabled/onCheckedChange)와 분리한다. */
+/** [PenaltyRow] 의 정적 표시 정보. */
 private data class PenaltyRowSpec(
     val emoji: String,
     val tileBackground: Color,

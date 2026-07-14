@@ -31,8 +31,6 @@ import javax.inject.Inject
 /**
  * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(명세 §8). Health Connect 에서 **결과값+신뢰 메타데이터만**
  * 읽어(원시 트랙 미전송, §1.5) 로컬 버퍼에 적재한다. 하루치 누적은 매 sync 마다 최신 스냅샷으로 교체한다.
- *
- * connect-client·java.time 모두 minSdk 26 이며 앱 minSdk 도 26 이라 별도 API 가드는 두지 않는다.
  */
 class HealthConnectCollector
     @Inject

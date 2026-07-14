@@ -33,7 +33,7 @@ interface ChallengeImagePicker {
  */
 @Composable
 fun rememberChallengeImagePicker(onImagePick: (String) -> Unit): ChallengeImagePicker {
-    // 프리뷰(@Preview)에는 Activity/ActivityResultRegistry 가 없어 런처 등록이 불가하므로 no-op 을 돌려준다.
+    // 프리뷰(@Preview)에서는 no-op 을 돌려준다.
     if (LocalInspectionMode.current) return NoOpChallengeImagePicker
 
     val context = LocalContext.current

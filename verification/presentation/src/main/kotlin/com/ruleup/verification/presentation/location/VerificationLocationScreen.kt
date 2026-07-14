@@ -90,7 +90,7 @@ fun VerificationLocationScreen(
         viewModel.onIntent(VerificationLocationIntent.Init(challengeMemberId))
     }
 
-    // 확인 전에는 지도 대신 로딩만 노출(등록된 경우 곧바로 뒤로가기 되므로 지도를 띄우지 않는다).
+    // 확인 전에는 지도 대신 로딩만 노출.
     if (state.isChecking) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()

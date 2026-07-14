@@ -25,7 +25,6 @@ import com.ruleup.ui.theme.RuleUpTheme
 
 /**
  * 프로필 설정 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 를 더미로 제공한다.
- * (예전 Android 전용 ActivityResultRegistry 더미는 더 이상 읽는 곳이 없어 제거됨.)
  */
 @Composable
 internal fun ProfileFlowPreview(

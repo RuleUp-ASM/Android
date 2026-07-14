@@ -17,8 +17,7 @@ enum class ManualMethod(
 }
 
 /**
- * 인증 경로 (명세 §9.2). 새 enum 대신 verifiedVia + disputeClosesAt 로 폴백을 경량 표현한다
- * (VerificationStatus 5종 유지). [MANUAL_FALLBACK] 은 잠정 성공 — 이의 윈도우 후 확정.
+ * 인증 경로 (명세 §9.2). [MANUAL_FALLBACK] 은 잠정 성공 — 이의 윈도우 후 확정.
  */
 enum class VerifiedVia(
     val value: String,

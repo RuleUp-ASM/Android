@@ -23,7 +23,7 @@ interface PermissionRequester {
 /** 현재 플랫폼의 [PermissionRequester] 를 생성한다. */
 @Composable
 fun rememberPermissionRequester(): PermissionRequester {
-    // 프리뷰에는 Activity/Registry 가 없어 런처 등록 불가 → no-op(전부 허용 처리).
+    // 프리뷰에서는 no-op(전부 허용 처리).
     if (LocalInspectionMode.current) return NoOpPermissionRequester
 
     val context = LocalContext.current

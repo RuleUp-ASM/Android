@@ -15,7 +15,6 @@ import javax.inject.Singleton
 class MyChallengeStoreImpl
     @Inject
     constructor() : MyChallengeStore {
-        // 삽입 순서 보존 + challengeId 갱신을 위해 LinkedHashMap. 접근은 동기화로 보호한다.
         private val items = LinkedHashMap<String, MyChallengeSummary>()
 
         @Synchronized

@@ -89,7 +89,7 @@ private fun NumberSliderRow(
     val span = (max - min).toInt()
     // 정수 범위가 촘촘하면 각 정수에 스냅(steps=칸수-1), 넓거나 소수면 연속으로 두고 반올림.
     val steps = if (isInt && span in 2..50) span - 1 else 0
-    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 State 로 커밋한다(프레임마다 전체 State 왕복·섹션 리컴포지션 방지).
+    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 State 로 커밋한다.
     var dragValue by remember(committed) { mutableStateOf(committed.toFloat()) }
     val shown = if (isInt) dragValue.roundToInt().toDouble() else dragValue.toDouble()
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {

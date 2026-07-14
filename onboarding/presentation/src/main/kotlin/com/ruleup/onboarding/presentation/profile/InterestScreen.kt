@@ -153,7 +153,6 @@ private fun InterestChip(
                             .background(RuleUpTheme.colors.surface)
                             .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(21.dp))
                     },
-                    // 다중선택(≥3) 칩 — 서로 다른 칩을 빠르게 연속 탭하는 게 정상이라 전역 가드는 끈다.
                 ).singleClickable(globalGuard = false) { onClick(interest) },
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,

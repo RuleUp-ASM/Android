@@ -13,7 +13,7 @@ import javax.inject.Singleton
 
 /**
  * [SetupNotifier] 구현. "무슨 알림을 띄울지"만 결정하고(권한 미허용 → 앱 미등록), 실제 시스템 알림 발송은
- * [PushNotificationHelper] 에 위임한다(발송·딥링크는 core:ui, 결정은 challenge 소관).
+ * [PushNotificationHelper] 에 위임한다.
  * 탭 시 상세 화면으로 진입해 남은 셋업(권한 허용/앱 등록)을 이어가게 한다.
  */
 @Singleton

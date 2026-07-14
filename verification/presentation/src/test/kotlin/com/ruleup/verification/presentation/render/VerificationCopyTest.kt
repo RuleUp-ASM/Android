@@ -40,7 +40,6 @@ class VerificationCopyTest {
     fun `체류 부족 등은 CTA 가 없다`() {
         assertEquals(CtaTarget.NONE, failureReasonCta(FailureReason.INSUFFICIENT_DWELL))
         assertNull(ctaLabel(failureReasonCta(FailureReason.INSUFFICIENT_DWELL)))
-        // 카피는 존재.
         assertNotNull(failureReasonCopy(FailureReason.INSUFFICIENT_DWELL))
     }
 

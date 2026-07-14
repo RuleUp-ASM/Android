@@ -64,7 +64,6 @@ fun AgreementsContent(
                     .fillMaxWidth()
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpTheme.colors.brandSoft)
-                    // 토글 UI — 개별 약관을 빠르게 연속 체크하는 게 정상이라 전역 가드는 끈다.
                     .singleClickable(globalGuard = false) {
                         onIntent(
                             ProfileIntent.SetAgreements(

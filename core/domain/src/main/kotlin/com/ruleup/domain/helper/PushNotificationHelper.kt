@@ -4,7 +4,7 @@ package com.ruleup.domain.helper
  * OS 시스템 알림(트레이)을 띄우는 포트. 인앱 토스트/스낵바([MessageHelper])와 책임이 다르다 —
  * 앱이 백그라운드여도 보이고, 탭하면 딥링크로 앱에 진입한다.
  *
- * 구현은 플랫폼(NotificationManager) 의존이라 core:ui 가 채운다.
+ * 구현은 core:ui 가 채운다(NotificationManager 사용).
  */
 interface PushNotificationHelper {
     /**

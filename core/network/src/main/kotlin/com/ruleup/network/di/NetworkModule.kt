@@ -77,8 +77,7 @@ object NetworkModule {
                 // 401(accessToken 만료) 시 refreshToken 으로 재발급 후 원요청을 자동 재시도한다.
                 .authenticator(tokenAuthenticator)
 
-        // BODY 로깅은 디버그 빌드에서만 장착한다. 릴리스에선 전체 본문 버퍼링·문자열화 비용과
-        // 토큰/좌표·헬스 페이로드 유출 위험을 모두 제거한다. 디버그에서도 인증 헤더는 마스킹.
+        // BODY 로깅은 디버그 빌드에서만 장착한다. 디버그에서도 인증 헤더는 마스킹.
         if (debugLogging) {
             val loggingInterceptor =
                 HttpLoggingInterceptor { message -> Timber.tag("HttpClient").d(message) }

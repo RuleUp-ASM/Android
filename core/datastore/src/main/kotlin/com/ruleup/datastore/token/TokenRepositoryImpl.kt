@@ -16,7 +16,7 @@ class TokenRepositoryImpl
     constructor(
         private val dataStore: DataStore<Preferences>,
     ) : TokenRepository {
-        // 인터셉터의 동기 조회용 accessToken 스냅샷. 저장/조회/삭제 시 갱신한다(@Volatile: 스레드 간 가시성).
+        // 인터셉터의 동기 조회용 accessToken 스냅샷. 저장/조회/삭제 시 갱신한다.
         @Volatile
         private var cachedAccess: String? = null
 
