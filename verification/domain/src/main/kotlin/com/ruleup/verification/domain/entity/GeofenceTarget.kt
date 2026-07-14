@@ -18,8 +18,8 @@ enum class LocationBinding {
 }
 
 /**
- * OS 에 사전 등록할 지오펜스 1개 (명세 §2.1). [requestId] = challengeMemberId.
- * 반경은 50~1000m 로 클램프된다(명세 §5.3).
+ * OS 에 사전 등록할 지오펜스 1개 (명세 §2.1). [requestId] = "{challengeMemberId}#{anchorIndex}" —
+ * GEOFENCE 이벤트의 anchorId 로 서버에 보고된다. 반경은 아래 범위로 클램프된다.
  */
 data class GeofenceTarget(
     val requestId: String,
@@ -29,8 +29,9 @@ data class GeofenceTarget(
     val dwellMinutes: Int,
 ) {
     companion object {
-        const val MIN_RADIUS_M: Float = 50f
-        const val MAX_RADIUS_M: Float = 1000f
+        // 명세 setup·my-location 앵커 반경 범위(500~5000m)와 동일 — 서버 판정 반경과 OS 트리거 반경을 일치시킨다.
+        const val MIN_RADIUS_M: Float = 500f
+        const val MAX_RADIUS_M: Float = 5000f
     }
 }
 

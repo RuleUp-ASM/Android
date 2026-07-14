@@ -9,6 +9,7 @@ import com.kakao.vectormap.KakaoMapSdk
 import com.ruleup.android_ruleup.debug.DebugLogTree
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.verification.domain.repository.SyncScheduler
+import com.ruleup.verification.domain.usecase.RegisterGeofencesUseCase
 import com.ruleup.verification.domain.usecase.SubmitDeviceIntroUseCase
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +40,10 @@ class App :
     @Inject
     lateinit var tokenRepository: TokenRepository
 
+    // 콜드스타트 지오펜스 reconcile(명세 §2.3): 로컬 보존 목표를 OS 에 재등록해 등록 실패·휘발을 보정한다.
+    @Inject
+    lateinit var registerGeofences: RegisterGeofencesUseCase
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -65,6 +70,12 @@ class App :
             .onFailure { Timber.w(it, "KakaoMapSdk init 실패(미지원 ABI 가능성) — 지도 비활성") }
         // 30분 주기 자동인증 sync 예약(이미 예약돼 있으면 유지). WorkManager 를 여기서 처음 깨운다.
         syncScheduler.ensureScheduled()
+
+        // 콜드스타트 지오펜스 reconcile — OS 등록 실패/휘발분을 앱 시작마다 재등록한다. 실패는 다음 시작이 보정.
+        appScope.launch {
+            runCatching { registerGeofences() }
+                .onFailure { Timber.tag("GeofenceReconcile").w(it, "콜드스타트 지오펜스 reconcile 실패") }
+        }
 
         // 로그인 상태면 Phase 0 인트로 1회 전송(전송 스펙 §0.3). 실패는 무시 — 다음 시작/주기 sync 가 정책을 보정.
         appScope.launch {

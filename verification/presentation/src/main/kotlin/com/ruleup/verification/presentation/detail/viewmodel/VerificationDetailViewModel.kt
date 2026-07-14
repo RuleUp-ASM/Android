@@ -64,7 +64,7 @@ class VerificationDetailViewModel
                     // POC: challengeId 를 멤버 식별자로 사용(실제 플로우는 challengeMemberId 전달).
                     challengeId?.let {
                         navigationHelper.navigateTo(
-                            VerificationLocationPage(challengeMemberId = it, defaultRadiusM = 100f, dwellMinutes = 60),
+                            VerificationLocationPage(challengeMemberId = it, defaultRadiusM = 500f, dwellMinutes = 60),
                         )
                     }
 

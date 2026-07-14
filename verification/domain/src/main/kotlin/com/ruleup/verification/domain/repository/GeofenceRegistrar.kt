@@ -14,11 +14,20 @@ interface GeofenceRegistrar {
      */
     suspend fun reconcile(targets: List<GeofenceTarget>)
 
-    /** 단일 목표를 등록/갱신한다(다른 목표는 유지). 지도 핀 확정 시 호출(명세 §5). */
-    suspend fun bind(target: GeofenceTarget)
+    /** 로컬에 보존된 목표 전체를 [reconcile] 로 재등록한다. BOOT_COMPLETED·콜드스타트에서 호출한다. */
+    suspend fun reconcilePersisted()
 
-    /** 단일 목표를 해제한다(챌린지 탈퇴 등). */
-    suspend fun unbind(requestId: String)
+    /**
+     * 한 멤버([requestIdPrefix] 로 시작하는 requestId 묶음)의 목표 전체를 등록/갱신한다.
+     * 새 [targets] 에 없는 기존 목표는 해제하고, 다른 멤버의 목표는 유지한다. 지도 핀 확정 시 호출(명세 §5).
+     */
+    suspend fun bind(
+        requestIdPrefix: String,
+        targets: List<GeofenceTarget>,
+    )
+
+    /** [requestIdPrefix] 로 시작하는 목표 묶음을 해제한다(챌린지 탈퇴 등). */
+    suspend fun unbind(requestIdPrefix: String)
 
     /** 등록된 모든 펜스를 해제한다(로그아웃 등). */
     suspend fun clear()
