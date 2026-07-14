@@ -36,10 +36,11 @@ data class GeofenceTarget(
     }
 }
 
-/** 지도 핀 결과 페이로드 (명세 §5.3). [label] 은 표시용("우리 동네 헬스장"). */
+/** 지도 핀 결과 페이로드 (명세 §5.3). [label]·[address] 는 표시용("우리 동네 헬스장"). */
 data class LocationPin(
     val lat: Double,
     val lng: Double,
     val radiusM: Float,
     val label: String?,
+    val address: String? = null,
 )

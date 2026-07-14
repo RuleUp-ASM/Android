@@ -34,6 +34,8 @@ import com.kakao.vectormap.label.Label
 import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelStyles
+import com.kakao.vectormap.label.LabelTextBuilder
+import com.kakao.vectormap.label.LabelTextStyle
 import com.kakao.vectormap.shape.DotPoints
 import com.kakao.vectormap.shape.Polygon
 import com.kakao.vectormap.shape.PolygonOptions
@@ -46,6 +48,7 @@ import timber.log.Timber
  * 카카오 지도 기반 위치 선택(명세 §5.3). 지도를 탭하면 그 좌표를 [onMapTap] 으로 올려보내고(확인 대기),
  * 외부에서 [pin] 이 정해지면(탭 역지오코딩·검색 결과) 그 자리에 핀 + 반경 원을 그리고 카메라가 따라간다.
  * [pin] 이 null 이면 핀/원을 지운다(아직 선택 전·취소).
+ * [anchors] 는 이미 담아둔 앵커들 — 각각 번호(1부터) 핀 + 반경 원으로 고정 표시된다.
  *
  * Kakao [MapView] 는 GLSurfaceView 기반 네이티브 뷰라 [AndroidView] 로 감싸고, 호스트의
  * resume/pause 를 전달해야 한다(카카오 가이드, 미전달 시 렌더링 크래시).
@@ -57,6 +60,7 @@ fun GeofenceMap(
     radiusM: Float,
     onMapTap: (MapLatLng) -> Unit,
     modifier: Modifier = Modifier,
+    anchors: List<MapAnchor> = emptyList(),
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -94,9 +98,10 @@ fun GeofenceMap(
                         kakaoMap.setOnMapClickListener { _, position, _, _ ->
                             currentOnMapTap(MapLatLng(position.latitude, position.longitude))
                         }
-                        // 진입 시 이미 핀이 정해져 있으면(편집 등) 그려둔다.
+                        // 진입 시 이미 핀/앵커가 정해져 있으면(편집 등) 그려둔다.
                         objects.drawPin(pin)
                         objects.drawCircle(pin, radiusM)
+                        objects.drawAnchors(anchors)
                     }
 
                     override fun getPosition(): LatLng {
@@ -127,14 +132,15 @@ fun GeofenceMap(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // 외부 pin/radius 변경 → 카메라·핀·원 동기화. pin 이 null 이면 핀/원을 지운다.
-    LaunchedEffect(pin, radiusM) {
+    // 외부 pin/radius/anchors 변경 → 카메라·핀·원 동기화. pin 이 null 이면 핀/원을 지운다.
+    LaunchedEffect(pin, radiusM, anchors) {
         val kakaoMap = objects.kakaoMap ?: return@LaunchedEffect
         if (pin != null) {
             kakaoMap.moveCamera(CameraUpdateFactory.newCenterPosition(LatLng.from(pin.lat, pin.lng)))
         }
         objects.drawPin(pin)
         objects.drawCircle(pin, radiusM)
+        objects.drawAnchors(anchors)
     }
 
     AndroidView(factory = { mapView }, modifier = modifier)
@@ -144,12 +150,17 @@ fun GeofenceMap(
  * KakaoMap·핀·원 참조를 recomposition/콜백 간 보관한다(컴포지션 밖 SDK 호출용).
  * 핀은 생성 후 [Label.moveTo] 로 이동, 원은 반경이 바뀔 수 있으니 매번 지우고 다시 그린다.
  * [pin] 이 null 이면 둘 다 레이어에서 제거한다(선택 전·취소).
+ * 앵커(등록된 인증 장소)는 번호 텍스트 핀 + 반경 원 묶음으로, 목록이 바뀌면 전체를 다시 그린다.
  */
 private class GeofenceMapObjects {
     var kakaoMap: KakaoMap? = null
     private var label: Label? = null
     private var circle: Polygon? = null
     private var styles: LabelStyles? = null
+    private var anchorStyles: LabelStyles? = null
+    private var anchorLabels: List<Label> = emptyList()
+    private var anchorCircles: List<Polygon> = emptyList()
+    private var drawnAnchors: List<MapAnchor> = emptyList()
 
     fun drawPin(pin: MapLatLng?) {
         val manager = kakaoMap?.labelManager ?: return
@@ -180,14 +191,66 @@ private class GeofenceMapObjects {
         circle?.let { manager.layer?.remove(it) }
         circle = null
         if (pin == null) return
-        val dots = DotPoints.fromCircle(LatLng.from(pin.lat, pin.lng), radiusM)
+        circle = addCircle(pin.lat, pin.lng, radiusM)
+    }
+
+    fun drawAnchors(anchors: List<MapAnchor>) {
+        val kakaoMap = kakaoMap ?: return
+        if (anchors == drawnAnchors) return
+        anchorLabels.forEach { kakaoMap.labelManager?.layer?.remove(it) }
+        anchorCircles.forEach { kakaoMap.shapeManager?.layer?.remove(it) }
+        anchorLabels = emptyList()
+        anchorCircles = emptyList()
+        drawnAnchors = anchors
+        if (anchors.isEmpty()) return
+
+        var style = anchorStyles
+        if (style == null) {
+            val textStyle =
+                LabelTextStyle.from(
+                    ANCHOR_TEXT_SIZE,
+                    ANCHOR_TEXT_ARGB,
+                    ANCHOR_TEXT_STROKE,
+                    ANCHOR_TEXT_STROKE_ARGB,
+                )
+            style =
+                kakaoMap.labelManager?.addLabelStyles(
+                    LabelStyles.from(LabelStyle.from(R.drawable.ic_map_pin).setTextStyles(textStyle)),
+                ) ?: return
+            anchorStyles = style
+        }
+        anchorLabels =
+            anchors.mapIndexedNotNull { index, anchor ->
+                kakaoMap.labelManager?.layer?.addLabel(
+                    LabelOptions
+                        .from(LatLng.from(anchor.lat, anchor.lng))
+                        .setStyles(style)
+                        .setTexts(LabelTextBuilder().setTexts("${index + 1}")),
+                )
+            }
+        anchorCircles = anchors.mapNotNull { addCircle(it.lat, it.lng, it.radiusM) }
+    }
+
+    private fun addCircle(
+        lat: Double,
+        lng: Double,
+        radiusM: Float,
+    ): Polygon? {
+        val manager = kakaoMap?.shapeManager ?: return null
+        val dots = DotPoints.fromCircle(LatLng.from(lat, lng), radiusM)
         val stylesSet = PolygonStylesSet.from(PolygonStyles.from(CIRCLE_FILL_ARGB))
-        circle = manager.layer?.addPolygon(PolygonOptions.from(dots, stylesSet))
+        return manager.layer?.addPolygon(PolygonOptions.from(dots, stylesSet))
     }
 
     companion object {
-        // 반경 원 채움색(반투명 파랑). Compose Color → ARGB Int.
-        private val CIRCLE_FILL_ARGB = Color(0x333D5AFE).toArgb()
+        // 반경 원 채움색(반투명 인디고, Design System v2.0 brand). Compose Color → ARGB Int.
+        private val CIRCLE_FILL_ARGB = Color(0x246366F1).toArgb()
+
+        // 앵커 번호 텍스트: 인디고 본문 + 흰색 외곽선(밝은 지도 위 가독성).
+        private const val ANCHOR_TEXT_SIZE = 28
+        private val ANCHOR_TEXT_ARGB = Color(0xFF4F46E5).toArgb()
+        private const val ANCHOR_TEXT_STROKE = 3
+        private val ANCHOR_TEXT_STROKE_ARGB = Color(0xFFFFFFFF).toArgb()
     }
 }
 

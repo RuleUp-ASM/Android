@@ -1,24 +1,27 @@
 package com.ruleup.verification.presentation.location
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,18 +33,26 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.map.GeofenceMap
+import com.ruleup.map.MapAnchor
 import com.ruleup.map.MapLatLng
 import com.ruleup.map.rememberLocationLocator
 import com.ruleup.map.rememberLocationPermissionGranted
+import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.ui.helper.singleClickable
+import com.ruleup.ui.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.SetupAnchors
@@ -53,10 +64,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * 지도 위치 선택 화면(명세 §5). 네이버 지도식 — 전체화면 지도에서 가게/지점을 탭하거나 검색 결과를 고르면
- * 그 지점에 핀이 뜨고, 하단 카드에서 "이 위치를 선택하시겠습니까?" 로 확정한다. 확정 시 멤버 좌표 지오펜스를
- * 등록하고 화면을 닫는다(뒤로가기). 브랜드/지점 키워드는 카카오 로컬로 자동완성(§5.2)된다.
- * 초기 카메라는 서울 시청 — 사용자가 검색/탭/현재위치로 옮긴다.
+ * 지도 위치 선택 화면(명세 §5, 피그마 "01 · 인증 셋업 UX 시안" ①②). 네이버·카카오 지도식 —
+ * 뒤로가기를 품은 플로팅 검색 필에서 검색하거나 지도를 탭하면 핀 + 인증 반경이 그려지고,
+ * 하단 바텀시트에서 장소를 확인해 [이 위치 추가]로 담는다. 담아둔 앵커는 지도에 번호 핀 +
+ * 반경 원으로 표시되고, 앵커 목록 시트에서 삭제·제출한다. 브랜드/지점 키워드는 카카오 로컬로
+ * 자동완성(§5.2)된다. 초기 카메라는 서울 시청 — 사용자가 검색/탭/현재위치로 옮긴다.
  */
 @Composable
 fun VerificationLocationScreen(
@@ -93,7 +105,7 @@ fun VerificationLocationScreen(
     // 확인 전에는 지도 대신 로딩만 노출.
     if (state.isChecking) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = RuleUpTheme.colors.brand)
         }
         return
     }
@@ -117,169 +129,241 @@ fun VerificationLocationScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         // 전체화면 지도. 탭하면 그 좌표가 확인 대기 핀으로(역지오코딩 후 주소 채움).
+        // 담아둔 앵커는 번호 핀 + 반경 원으로 함께 표시된다.
         GeofenceMap(
             initialCenter = MapLatLng(DEFAULT_LAT, DEFAULT_LNG),
             pin = pin,
             radiusM = defaultRadiusM,
             onMapTap = { viewModel.onIntent(VerificationLocationIntent.TapMap(lat = it.lat, lng = it.lng)) },
             modifier = Modifier.fillMaxSize(),
+            anchors = state.anchors.map { MapAnchor(lat = it.lat, lng = it.lng, radiusM = it.radiusM) },
         )
 
-        // 상단 검색 오버레이(검색창 + 자동완성 목록).
-        SearchOverlay(
-            query = query,
-            isSearching = state.isSearching,
-            places = state.places,
-            onQueryChange = { query = it },
-            onPlaceClick = { place ->
-                // 결과 선택: 디바운스 재검색 1회 건너뛰고 입력칸을 이름으로 채운 뒤 핀 요청.
-                suppressSearch = true
-                query = place.name
-                viewModel.onIntent(VerificationLocationIntent.SelectPlace(place))
-            },
+        // 상단: 플로팅 검색 필 + 자동완성 목록.
+        Column(
             modifier =
                 Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .padding(16.dp),
-        )
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FloatingSearchPill(
+                query = query,
+                isSearching = state.isSearching,
+                onQueryChange = { query = it },
+                onClear = {
+                    query = ""
+                    viewModel.onIntent(VerificationLocationIntent.ClearSearch)
+                },
+                onBack = { viewModel.onIntent(VerificationLocationIntent.Back) },
+            )
+            if (state.places.isNotEmpty()) {
+                SearchResults(
+                    places = state.places,
+                    onPlaceClick = { place ->
+                        // 결과 선택: 디바운스 재검색 1회 건너뛰고 입력칸을 이름으로 채운 뒤 핀 요청.
+                        suppressSearch = true
+                        query = place.name
+                        viewModel.onIntent(VerificationLocationIntent.SelectPlace(place))
+                    },
+                )
+            }
+        }
 
-        // 현재 위치 — 확인 카드·앵커 목록이 없을 때만 노출(겹침 방지). 권한 거부 시 숨김(명세 §5.4.2).
-        if (state.pending == null && state.anchors.isEmpty() && permissionGranted) {
-            FilledTonalButton(
-                onClick =
-                    rememberSingleClick {
+        // 하단: 현재 위치 FAB + 상태별 바텀시트. FAB 는 시트에 가리지 않게 시트 위에 얹는다.
+        Column(
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+        ) {
+            if (permissionGranted) {
+                CurrentLocationFab(
+                    onClick = {
                         scope.launch {
                             locator.locate()?.let {
                                 viewModel.onIntent(VerificationLocationIntent.TapMap(lat = it.lat, lng = it.lng))
                             }
                         }
                     },
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp),
-            ) {
-                Text("현재 위치")
+                    modifier =
+                        Modifier
+                            .align(Alignment.End)
+                            .padding(end = 16.dp, bottom = 12.dp),
+                )
             }
-        }
-
-        // 하단 영역: 확인 핀이 있으면 추가 카드, 없으면 누적 앵커 + 제출 바.
-        val pending = state.pending
-        if (pending != null) {
-            // 핀이 찍히면 올라오는 확인 카드. [이 위치 추가] 로 앵커 목록에 담는다.
-            SelectionCard(
-                pending = pending,
-                isResolving = state.isResolving,
-                canAdd = state.anchors.size < SetupAnchors.MAX_COUNT,
-                onCancel = { viewModel.onIntent(VerificationLocationIntent.CancelSelection) },
-                onAdd = { viewModel.onIntent(VerificationLocationIntent.AddAnchor(radiusM = defaultRadiusM)) },
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth(),
-            )
-        } else if (state.anchors.isNotEmpty()) {
-            // 누적된 앵커 목록 + 제출(setup 송신).
-            AnchorsBar(
-                anchors = state.anchors,
-                isSubmitting = state.isSubmitting,
-                onRemove = { viewModel.onIntent(VerificationLocationIntent.RemoveAnchor(it)) },
-                onSubmit = {
-                    viewModel.onIntent(
-                        VerificationLocationIntent.Submit(
-                            challengeId = challengeId,
-                            dwellMinutes = dwellMinutes,
-                            targetPackages = targetPackages,
-                        ),
+            val pending = state.pending
+            when {
+                pending != null ->
+                    SelectionSheet(
+                        pending = pending,
+                        isResolving = state.isResolving,
+                        canAdd = state.anchors.size < SetupAnchors.MAX_COUNT,
+                        radiusM = defaultRadiusM,
+                        onCancel = { viewModel.onIntent(VerificationLocationIntent.CancelSelection) },
+                        onAdd = { viewModel.onIntent(VerificationLocationIntent.AddAnchor(radiusM = defaultRadiusM)) },
                     )
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth(),
-            )
+
+                state.anchors.isNotEmpty() ->
+                    AnchorListSheet(
+                        anchors = state.anchors,
+                        isSubmitting = state.isSubmitting,
+                        onRemove = { viewModel.onIntent(VerificationLocationIntent.RemoveAnchor(it)) },
+                        onSubmit = {
+                            viewModel.onIntent(
+                                VerificationLocationIntent.Submit(
+                                    challengeId = challengeId,
+                                    dwellMinutes = dwellMinutes,
+                                    targetPackages = targetPackages,
+                                ),
+                            )
+                        },
+                    )
+            }
         }
     }
 }
 
 /**
- * 상단 검색 오버레이(명세 §5.2). 검색창 + 카카오 로컬 자동완성 목록(상한 15개)을 그린다.
- * 결과를 고르면 [onPlaceClick] 으로 올려보낸다(핀 요청은 호스트가 처리).
+ * 뒤로가기를 품은 플로팅 검색 필(시안 ①, 네이버 지도식). 입력 중엔 지우기 버튼,
+ * 검색 중엔 스피너, 그 외엔 검색 아이콘을 트레일링으로 보여준다.
  */
 @Composable
-private fun SearchOverlay(
+private fun FloatingSearchPill(
     query: String,
     isSearching: Boolean,
-    places: List<Place>,
     onQueryChange: (String) -> Unit,
+    onClear: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(26.dp),
+        shadowElevation = 8.dp,
+        color = RuleUpTheme.colors.surface,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .height(52.dp)
+                    .padding(start = 6.dp, end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .singleClickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                    contentDescription = "뒤로",
+                    tint = RuleUpTheme.colors.textPrimary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Box(modifier = Modifier.weight(1f).padding(horizontal = 6.dp)) {
+                if (query.isEmpty()) {
+                    Text(
+                        text = "장소·주소 검색 (예: 스포애니)",
+                        color = RuleUpTheme.colors.textMuted,
+                        fontSize = 15.sp,
+                    )
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    singleLine = true,
+                    textStyle =
+                        TextStyle(
+                            color = RuleUpTheme.colors.textPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                        ),
+                    cursorBrush = SolidColor(RuleUpTheme.colors.brand),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            when {
+                isSearching ->
+                    CircularProgressIndicator(
+                        color = RuleUpTheme.colors.brand,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp),
+                    )
+
+                query.isNotEmpty() ->
+                    Icon(
+                        painter = painterResource(com.ruleup.ui.R.drawable.ic_close),
+                        contentDescription = "지우기",
+                        tint = RuleUpTheme.colors.textMuted,
+                        modifier =
+                            Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .singleClickable(onClick = onClear),
+                    )
+
+                else ->
+                    Icon(
+                        painter = painterResource(com.ruleup.ui.R.drawable.ic_search),
+                        contentDescription = null,
+                        tint = RuleUpTheme.colors.textSecondary,
+                        modifier = Modifier.size(20.dp),
+                    )
+            }
+        }
+    }
+}
+
+/** 카카오 로컬 자동완성 목록(상한 15개, 명세 §5.2). 선택 시 핀이 찍히고 목록이 닫힌다. */
+@Composable
+private fun SearchResults(
+    places: List<Place>,
     onPlaceClick: (Place) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        shadowElevation = 8.dp,
+        color = RuleUpTheme.colors.surface,
+        modifier = modifier.fillMaxWidth(),
     ) {
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            shadowElevation = 4.dp,
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.fillMaxWidth(),
+        Column(
+            modifier =
+                Modifier
+                    .heightIn(max = 280.dp)
+                    .verticalScroll(rememberScrollState()),
         ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                placeholder = { Text("브랜드·지점 검색 (예: 스포애니)") },
-                singleLine = true,
-                trailingIcon =
-                    if (isSearching) {
-                        { CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp) }
-                    } else {
-                        null
-                    },
-                // 컨테이너(Surface)가 배경을 그리므로 테두리는 지운다.
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color.Transparent,
-                        unfocusedBorderColor = Color.Transparent,
-                    ),
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        // 자동완성 결과(상한 15개, 명세 §5.2). 선택 시 핀이 찍히고 목록이 닫힌다.
-        if (places.isNotEmpty()) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                shadowElevation = 4.dp,
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            places.forEach { place ->
                 Column(
                     modifier =
                         Modifier
-                            .heightIn(max = 280.dp)
-                            .verticalScroll(rememberScrollState()),
+                            .fillMaxWidth()
+                            .singleClickable { onPlaceClick(place) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
-                    places.forEach { place ->
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .singleClickable { onPlaceClick(place) }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                        ) {
-                            Text(place.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            place.address?.let {
-                                Text(
-                                    it,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
+                    Text(
+                        text = place.name,
+                        color = RuleUpTheme.colors.textPrimary,
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    place.address?.let {
+                        Text(
+                            text = it,
+                            color = RuleUpTheme.colors.textSecondary,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }
@@ -287,145 +371,300 @@ private fun SearchOverlay(
     }
 }
 
-/**
- * 핀 위치 확인 카드(명세 §5.3·setup). 장소명·주소를 보여주고 "이 위치 추가" 로 앵커 목록에 담는다.
- * 역지오코딩 중([isResolving])이거나 앵커가 가득 차([canAdd]=false) 추가할 수 없으면 추가 버튼을 잠근다.
- */
+/** 현재 위치 원형 FAB(시안 ①). 시트 위 우측에 얹혀 시트에 가리지 않는다. */
 @Composable
-private fun SelectionCard(
-    pending: PendingSelection,
-    isResolving: Boolean,
-    canAdd: Boolean,
-    onCancel: () -> Unit,
-    onAdd: () -> Unit,
+private fun CurrentLocationFab(
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
+        shape = CircleShape,
+        shadowElevation = 6.dp,
+        color = RuleUpTheme.colors.surface,
+        modifier = modifier.size(48.dp),
+    ) {
+        Box(
+            modifier = Modifier.singleClickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(com.ruleup.ui.R.drawable.ic_my_location),
+                contentDescription = "현재 위치",
+                tint = RuleUpTheme.colors.textSlate,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+    }
+}
+
+/** 바텀시트 공통 컨테이너(핸들 포함, 시안 ①②). */
+@Composable
+private fun SheetContainer(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Surface(
         shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surface,
-        modifier = modifier,
+        shadowElevation = 12.dp,
+        color = RuleUpTheme.colors.surface,
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(20.dp),
+                    .navigationBarsPadding()
+                    .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("이 위치를 앵커로 추가할까요?", style = MaterialTheme.typography.titleMedium)
-            Text(
-                pending.name,
-                style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .width(36.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(RuleUpTheme.colors.border),
             )
-            pending.address?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedButton(
-                    onClick = rememberSingleClick { onCancel() },
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("취소")
-                }
-                Button(
-                    onClick = rememberSingleClick { onAdd() },
-                    // 주소 확인 전(resolving)·앵커 가득 차면 추가 차단.
-                    enabled = !isResolving && canAdd,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text("이 위치 추가")
-                }
-            }
+            content()
         }
     }
 }
 
 /**
- * 누적 앵커 목록 + 제출 바(명세 setup). 추가한 앵커를 보여주고(개별 삭제 가능) "제출" 로 setup 을 송신한다.
- * 제출 중([isSubmitting])엔 버튼에 스피너를 띄우고 입력을 막는다.
+ * 핀 위치 확인 시트(시안 ①·명세 §5.3). 장소명·카테고리·주소와 인증 반경 안내를 보여주고
+ * [이 위치 추가]로 앵커 목록에 담는다. 역지오코딩 중([isResolving])이거나 앵커가 가득 차면
+ * ([canAdd]=false) 추가 버튼을 잠근다.
  */
 @Composable
-private fun AnchorsBar(
+private fun SelectionSheet(
+    pending: PendingSelection,
+    isResolving: Boolean,
+    canAdd: Boolean,
+    radiusM: Float,
+    onCancel: () -> Unit,
+    onAdd: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SheetContainer(modifier = modifier) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = pending.name,
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            // 카카오 로컬 카테고리의 마지막 단계만(예: "스포츠,레저 > 헬스장" → "헬스장").
+            pending.category
+                ?.substringAfterLast('>')
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { category ->
+                    Text(
+                        text = category,
+                        color = RuleUpTheme.colors.brandStrong,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier =
+                            Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(RuleUpTheme.colors.brandSoft)
+                                .padding(horizontal = 8.dp, vertical = 3.dp),
+                    )
+                }
+        }
+        Text(
+            text = pending.address ?: if (isResolving) "주소 확인 중…" else "좌표로 선택한 위치",
+            color = RuleUpTheme.colors.textSecondary,
+            fontSize = 13.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(RuleUpTheme.colors.background)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+        ) {
+            Icon(
+                painter = painterResource(com.ruleup.ui.R.drawable.ic_my_location),
+                contentDescription = null,
+                tint = RuleUpTheme.colors.brand,
+                modifier = Modifier.size(20.dp),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = "인증 반경 ${radiusM.toInt()}m",
+                    color = RuleUpTheme.colors.textPrimary,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+                Text(
+                    text = "이 반경 안에 들어오면 자동으로 인증돼요",
+                    color = RuleUpTheme.colors.textSecondary,
+                    fontSize = 12.sp,
+                )
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(
+                modifier =
+                    Modifier
+                        .width(104.dp)
+                        .height(50.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .border(1.2.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp))
+                        .singleClickable(onClick = onCancel),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "취소",
+                    color = RuleUpTheme.colors.textSlate,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            // 주소 확인 전(resolving)·앵커 가득 차면 추가 차단.
+            val enabled = !isResolving && canAdd
+            PrimaryGradientButton(
+                text = "이 위치 추가",
+                height = 50,
+                onClick = { if (enabled) onAdd() },
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .alpha(if (enabled) 1f else 0.5f),
+            )
+        }
+    }
+}
+
+/**
+ * 앵커 목록 시트(시안 ②·명세 setup). 담아둔 앵커를 번호 뱃지 + 이름/주소로 보여주고(개별 삭제),
+ * [등록 완료]로 setup 을 송신한다. 제출 중([isSubmitting])엔 삭제·재제출을 막는다.
+ */
+@Composable
+private fun AnchorListSheet(
     anchors: List<LocationPin>,
     isSubmitting: Boolean,
     onRemove: (Int) -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-        shadowElevation = 8.dp,
-        color = MaterialTheme.colorScheme.surface,
-        modifier = modifier,
-    ) {
+    SheetContainer(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "등록한 인증 장소",
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "${anchors.size} / ${SetupAnchors.MAX_COUNT}",
+                color = RuleUpTheme.colors.brandStrong,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
         Column(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                    .heightIn(max = 220.dp)
+                    .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                "추가한 앵커 ${anchors.size}/${SetupAnchors.MAX_COUNT}",
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Column(
-                modifier = Modifier.heightIn(max = 200.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                anchors.forEachIndexed { index, anchor ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            anchor.label ?: "선택한 위치",
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        // 제출 중엔 삭제를 막는다(목록 고정).
-                        Text(
-                            "삭제",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier =
-                                if (isSubmitting) {
-                                    Modifier
-                                } else {
-                                    Modifier.singleClickable { onRemove(index) }
-                                },
-                        )
-                    }
-                }
-            }
-            Button(
-                onClick = rememberSingleClick { onSubmit() },
-                enabled = !isSubmitting,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("제출")
-                }
+            anchors.forEachIndexed { index, anchor ->
+                AnchorRow(
+                    number = index + 1,
+                    anchor = anchor,
+                    // 제출 중엔 삭제를 막는다(목록 고정).
+                    onRemove = if (isSubmitting) null else ({ onRemove(index) }),
+                )
             }
         }
+        PrimaryGradientButton(
+            text = if (isSubmitting) "등록 중…" else "등록 완료 (${anchors.size})",
+            onClick = { if (!isSubmitting) onSubmit() },
+        )
+    }
+}
+
+/** 앵커 1행(시안 ②): 번호 뱃지 + 이름/주소·반경 + 삭제. [onRemove] 가 null 이면 삭제 비활성. */
+@Composable
+private fun AnchorRow(
+    number: Int,
+    anchor: LocationPin,
+    onRemove: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(RuleUpTheme.colors.background)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(RuleUpTheme.colors.brandSoft),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "$number",
+                color = RuleUpTheme.colors.brandStrong,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.weight(1f),
+        ) {
+            Text(
+                text = anchor.label ?: "선택한 위치",
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 14.5.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "${anchor.address ?: "지도에서 선택한 위치"} · 반경 ${anchor.radiusM.toInt()}m",
+                color = RuleUpTheme.colors.textSecondary,
+                fontSize = 12.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Icon(
+            painter = painterResource(com.ruleup.ui.R.drawable.ic_close),
+            contentDescription = "삭제",
+            tint = RuleUpTheme.colors.textMuted,
+            modifier =
+                Modifier
+                    .size(18.dp)
+                    .clip(CircleShape)
+                    .let { m -> if (onRemove != null) m.singleClickable(onClick = onRemove) else m },
+        )
     }
 }
 

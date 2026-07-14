@@ -55,6 +55,7 @@ class VerificationLocationViewModel
                 is VerificationLocationIntent.TapMap -> tapMap(intent)
                 is VerificationLocationIntent.SelectPlace -> selectPlace(intent)
                 is VerificationLocationIntent.CancelSelection -> cancelSelection()
+                is VerificationLocationIntent.Back -> navigationHelper.navigateToBack()
             }
         }
 
@@ -116,6 +117,7 @@ class VerificationLocationViewModel
                                 lng = intent.lng,
                                 name = place?.name?.ifBlank { null } ?: FALLBACK_NAME,
                                 address = place?.address,
+                                category = place?.category,
                             ),
                             resolving = false,
                         ),
@@ -135,6 +137,7 @@ class VerificationLocationViewModel
                         lng = place.lng,
                         name = place.name.ifBlank { FALLBACK_NAME },
                         address = place.address,
+                        category = place.category,
                     ),
                     resolving = false,
                 ),
@@ -155,7 +158,13 @@ class VerificationLocationViewModel
             }
             dispatch(
                 VerificationLocationReducerEvent.AnchorAdded(
-                    LocationPin(lat = pending.lat, lng = pending.lng, radiusM = intent.radiusM, label = pending.name),
+                    LocationPin(
+                        lat = pending.lat,
+                        lng = pending.lng,
+                        radiusM = intent.radiusM,
+                        label = pending.name,
+                        address = pending.address,
+                    ),
                 ),
             )
         }
