@@ -50,4 +50,6 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     // 지도 인증/렌더 에러를 디버그 오버레이·Logcat 으로 노출(onMapError).
     implementation(libs.timber)
+
+    testImplementation(kotlin("test-junit"))
 }
