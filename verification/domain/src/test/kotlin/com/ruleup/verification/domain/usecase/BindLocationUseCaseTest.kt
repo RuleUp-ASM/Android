@@ -35,6 +35,8 @@ class BindLocationUseCaseTest {
 
         override suspend fun reconcile(targets: List<GeofenceTarget>) = Unit
 
+        override suspend fun reconcilePersisted() = Unit
+
         override suspend fun bind(target: GeofenceTarget) {
             bound = target
         }

@@ -5,8 +5,12 @@ import android.content.Context
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
+import com.ruleup.verification.data.db.common.toDomain
 import com.ruleup.verification.data.db.common.toEntity
 import com.ruleup.verification.data.db.geofence.GeofenceTargetDao
+import com.ruleup.verification.data.settings.VerificationSettingsStore
+import com.ruleup.verification.data.signal.common.GapRecorder
+import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.repository.GeofenceRegistrar
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -26,13 +30,16 @@ class GeofenceRegistrarImpl
     constructor(
         @ApplicationContext private val context: Context,
         private val geofenceTargetDao: GeofenceTargetDao,
+        private val gapRecorder: GapRecorder,
+        private val settingsStore: VerificationSettingsStore,
     ) : GeofenceRegistrar {
         private val client by lazy { LocationServices.getGeofencingClient(context.applicationContext) }
 
         override suspend fun reconcile(targets: List<GeofenceTarget>) {
-            // 권한 없으면 OS 등록 불가 → 목표만 보존하고 종료(허용 후 콜드스타트 reconcile 이 재시도).
+            // 권한 없으면 OS 등록 불가 → 목표만 보존하고 종료(허용 후 reconcile 이 재시도).
             if (!context.hasFineLocation()) {
                 persist(targets)
+                if (targets.isNotEmpty()) recordNotRegistered()
                 return
             }
 
@@ -42,16 +49,21 @@ class GeofenceRegistrarImpl
                 runCatching { client.removeGeofences(toRemove).await() }
             }
             if (targets.isNotEmpty()) {
-                // SecurityException(BACKGROUND 미허용 등)은 삼키고 목표 보존 — 다음 reconcile 이 재시도.
-                runCatching { client.addGeofences(buildRequest(targets), geofencePendingIntent(context)).await() }
+                registerAll(targets)
             }
             persist(targets)
+        }
+
+        override suspend fun reconcilePersisted() {
+            reconcile(geofenceTargetDao.all().map { it.toDomain() })
         }
 
         override suspend fun bind(target: GeofenceTarget) {
             // 다른 목표는 유지하고 이 requestId 만 멱등 등록/갱신(변경 시 재등록 포함, 명세 §5.4.3).
             if (context.hasFineLocation()) {
-                runCatching { client.addGeofences(buildRequest(listOf(target)), geofencePendingIntent(context)).await() }
+                registerAll(listOf(target))
+            } else {
+                recordNotRegistered()
             }
             geofenceTargetDao.upsertAll(listOf(target.toEntity()))
         }
@@ -67,6 +79,25 @@ class GeofenceRegistrarImpl
                 runCatching { client.removeGeofences(ids).await() }
             }
             geofenceTargetDao.clear()
+        }
+
+        // OS 등록 성공 시 재등록 시각을 남기고(§0.7 heartbeat), 실패(SecurityException: BACKGROUND 미허용 등)는
+        // 삼키되 GEOFENCE_NOT_REGISTERED gap 으로 보고한다(전송 스펙 §0.5) — 다음 reconcile 이 재시도.
+        private suspend fun registerAll(targets: List<GeofenceTarget>) {
+            runCatching { client.addGeofences(buildRequest(targets), geofencePendingIntent(context)).await() }
+                .onSuccess { settingsStore.setLastGeofenceReregisterAt(System.currentTimeMillis()) }
+                .onFailure { recordNotRegistered() }
+        }
+
+        private suspend fun recordNotRegistered() {
+            val now = System.currentTimeMillis()
+            gapRecorder.record(
+                signalType = SIGNAL_TYPE_GEOFENCE,
+                reason = GapReason.GEOFENCE_NOT_REGISTERED,
+                fromMillis = now,
+                toMillis = now,
+                recoverable = true,
+            )
         }
 
         private suspend fun persist(targets: List<GeofenceTarget>) {
@@ -100,5 +131,6 @@ class GeofenceRegistrarImpl
 
         companion object {
             private const val MILLIS_PER_MINUTE = 60_000
+            private const val SIGNAL_TYPE_GEOFENCE = "GEOFENCE"
         }
     }
