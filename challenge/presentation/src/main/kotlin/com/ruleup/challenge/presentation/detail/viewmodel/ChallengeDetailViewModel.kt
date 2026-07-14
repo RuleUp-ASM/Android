@@ -195,7 +195,7 @@ class ChallengeDetailViewModel
                     AppRoutes.VERIFICATION_LOCATION,
                     mapOf(
                         "challengeMemberId" to id,
-                        "defaultRadiusM" to "100.0",
+                        "defaultRadiusM" to "500.0",
                         "dwellMinutes" to "60",
                         "targetPackages" to targetAppStore.registered(id).joinToString(","),
                     ),

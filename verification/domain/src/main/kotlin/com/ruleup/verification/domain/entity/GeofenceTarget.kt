@@ -29,8 +29,9 @@ data class GeofenceTarget(
     val dwellMinutes: Int,
 ) {
     companion object {
-        const val MIN_RADIUS_M: Float = 50f
-        const val MAX_RADIUS_M: Float = 1000f
+        // 명세 setup·my-location 앵커 반경 범위(500~5000m)와 동일 — 서버 판정 반경과 OS 트리거 반경을 일치시킨다.
+        const val MIN_RADIUS_M: Float = 500f
+        const val MAX_RADIUS_M: Float = 5000f
     }
 }
 
