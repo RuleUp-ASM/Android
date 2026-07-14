@@ -60,7 +60,7 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun VerificationLocationScreen(
-    challengeMemberId: String,
+    challengeId: String,
     defaultRadiusM: Float,
     dwellMinutes: Int,
     modifier: Modifier = Modifier,
@@ -87,7 +87,7 @@ fun VerificationLocationScreen(
 
     // 진입 시 앵커 조회로 등록 여부 확인. 이미 등록돼 있으면 재등록 없이 종료된다.
     LaunchedEffect(Unit) {
-        viewModel.onIntent(VerificationLocationIntent.Init(challengeMemberId))
+        viewModel.onIntent(VerificationLocationIntent.Init(challengeId))
     }
 
     // 확인 전에는 지도 대신 로딩만 노출.
@@ -188,7 +188,7 @@ fun VerificationLocationScreen(
                 onSubmit = {
                     viewModel.onIntent(
                         VerificationLocationIntent.Submit(
-                            challengeId = challengeMemberId,
+                            challengeId = challengeId,
                             dwellMinutes = dwellMinutes,
                             targetPackages = targetPackages,
                         ),

@@ -42,6 +42,12 @@ class TokenRepositoryImpl
 
         override suspend fun getRefreshToken(): String? = dataStore.data.map { it[KEY_REFRESH] }.first()
 
+        override suspend fun saveUserId(userId: String) {
+            dataStore.edit { prefs -> prefs[KEY_USER_ID] = userId }
+        }
+
+        override suspend fun getUserId(): String? = dataStore.data.map { it[KEY_USER_ID] }.first()
+
         override suspend fun clear() {
             cachedAccess = null
             dataStore.edit { it.clear() }
@@ -50,5 +56,6 @@ class TokenRepositoryImpl
         companion object {
             private val KEY_ACCESS = stringPreferencesKey("access_token")
             private val KEY_REFRESH = stringPreferencesKey("refresh_token")
+            private val KEY_USER_ID = stringPreferencesKey("user_id")
         }
     }

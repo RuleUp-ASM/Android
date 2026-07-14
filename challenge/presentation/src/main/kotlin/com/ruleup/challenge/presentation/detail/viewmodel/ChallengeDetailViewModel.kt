@@ -187,14 +187,14 @@ class ChallengeDetailViewModel
         private fun registerAnchor() {
             val id = currentState.detail?.challengeId ?: currentState.challengeId
             if (id.isBlank()) return
-            // GPS 루틴 좌표 바인딩(verification/location) 으로 이동. 참여 API 가 memberId 를 돌려주지 않아
-            // verification 의 기존 POC 관례대로 challengeMemberId 자리에 challengeId 를 넣는다.
+            // GPS 루틴 좌표 바인딩(verification/location) 으로 이동. 멤버 키(지오펜스 requestId)는
+            // verification 이 세션 userId 와 challengeId 로 파생한다.
             // 로컬 등록한 대상 앱을 함께 실어보내, 앵커 등록 화면이 setup 제출 시 앵커와 같이 전송하게 한다.
             navigationHelper.navigateByRoute(
                 NavRoute(
                     AppRoutes.VERIFICATION_LOCATION,
                     mapOf(
-                        "challengeMemberId" to id,
+                        "challengeId" to id,
                         "defaultRadiusM" to "500.0",
                         "dwellMinutes" to "60",
                         "targetPackages" to targetAppStore.registered(id).joinToString(","),

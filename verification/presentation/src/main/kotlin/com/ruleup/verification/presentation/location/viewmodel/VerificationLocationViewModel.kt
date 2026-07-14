@@ -182,7 +182,7 @@ class VerificationLocationViewModel
                         // 앵커 전체를 OS 지오펜스로 등록. 등록 실패는 gap 으로 보고되고 다음 reconcile 이 재시도.
                         runCatching {
                             bindLocationUseCase(
-                                challengeMemberId = intent.challengeId,
+                                challengeId = intent.challengeId,
                                 anchors = anchors,
                                 dwellMinutes = intent.dwellMinutes,
                             )

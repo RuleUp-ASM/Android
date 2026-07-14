@@ -61,10 +61,9 @@ class VerificationDetailViewModel
             val reason = currentState.detail?.today?.failureReason ?: return
             when (failureReasonCta(reason)) {
                 CtaTarget.OPEN_LOCATION_PIN ->
-                    // POC: challengeId 를 멤버 식별자로 사용(실제 플로우는 challengeMemberId 전달).
                     challengeId?.let {
                         navigationHelper.navigateTo(
-                            VerificationLocationPage(challengeMemberId = it, defaultRadiusM = 500f, dwellMinutes = 60),
+                            VerificationLocationPage(challengeId = it, defaultRadiusM = 500f, dwellMinutes = 60),
                         )
                     }
 

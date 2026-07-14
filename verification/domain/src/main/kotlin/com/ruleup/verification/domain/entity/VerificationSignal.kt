@@ -25,7 +25,7 @@ enum class ScreenEventType {
  * [isMock] 은 처음부터 수집·전송한다(패널티 런칭의 하드 디펜던시, 명세 §7).
  */
 data class GeofenceTransitionEvent(
-    // requestId = challengeMemberId
+    // 등록 시 부여한 지오펜스 requestId ("{userId}#{challengeId}#{index}")
     val requestId: String,
     val transition: GeofenceTransitionType,
     val at: Long,
@@ -182,7 +182,7 @@ data class HealthTarget(
  */
 data class SignalScope(
     val targetPackages: Set<String>,
-    // 활성 challengeMemberId(지오펜스 requestId) 집합
+    // 등록된 지오펜스 requestId 집합
     val activeRequestIds: Set<String>,
     // 활성 챌린지가 요구하는 Health Connect 지표(명세 §8). 비면 HEALTH 수집 생략.
     val healthTargets: Set<HealthTarget> = emptySet(),

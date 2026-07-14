@@ -21,6 +21,7 @@ class FakeTokenRepository(
     private var refreshToken: String? = null,
 ) : TokenRepository {
     var savedToken: Token? = null
+    var savedUserId: String? = null
     var saveCount = 0
     var cleared = false
 
@@ -35,9 +36,16 @@ class FakeTokenRepository(
 
     override suspend fun getRefreshToken(): String? = refreshToken
 
+    override suspend fun saveUserId(userId: String) {
+        savedUserId = userId
+    }
+
+    override suspend fun getUserId(): String? = savedUserId
+
     override suspend fun clear() {
         cleared = true
         savedToken = null
+        savedUserId = null
         refreshToken = null
     }
 
