@@ -26,7 +26,7 @@ import com.ruleup.verification.data.db.usage.UsageTargetEntity
 
 /**
  * 자동인증 로컬 버퍼 DB (단일 진실원, 명세 §2.4).
- * POC 단계라 마이그레이션 대신 파괴적 재생성으로 둔다(스키마 변동 잦음).
+ * 마이그레이션 대신 파괴적 재생성으로 둔다.
  */
 @Database(
     entities = [

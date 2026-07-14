@@ -181,7 +181,6 @@ private fun MethodResponse.toDomain(): MethodEvaluation =
                     sleepHours = it.sleepHours,
                 )
             },
-        // Android 은 스크린타임 지원이라 기본 true(iOS 대비 응답값 우선).
         supported = supported ?: true,
     )
 

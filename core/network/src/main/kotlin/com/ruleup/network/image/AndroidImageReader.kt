@@ -15,7 +15,6 @@ import javax.inject.Inject
 /**
  * content URI 의 이미지를 업로드용 바이트로 읽는다.
  *
- * 원본을 통째로 올리면 카메라 원본(수 MB~십수 MB) 때문에 low-RAM 기기 OOM·대역폭 낭비가 나므로,
  * 긴 변을 [MAX_DIMENSION] 이하로 다운샘플하고 EXIF 회전을 보정한 뒤 JPEG([JPEG_QUALITY])로 압축한다.
  */
 class AndroidImageReader

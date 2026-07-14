@@ -24,8 +24,8 @@ import com.ruleup.verification.presentation.manual.viewmodel.VerificationManualI
 import com.ruleup.verification.presentation.manual.viewmodel.VerificationManualViewModel
 
 /**
- * 수동 인증 제출 화면(명세 §6.5, VF-04). SELF_CHECK 가 주(强), PHOTO 는 비강조(포렌식 없는 단순 업로드라
- * 그룹 리뷰 붙기 전까지 신뢰도 낮음). 이미지 업로드는 기존 챌린지 이미지 패턴 재사용(후속).
+ * 수동 인증 제출 화면(명세 §6.5, VF-04). SELF_CHECK 가 주(强), PHOTO 는 비강조.
+ * 이미지 업로드는 기존 챌린지 이미지 패턴 재사용(후속).
  */
 @Composable
 fun VerificationManualScreen(
@@ -65,7 +65,7 @@ fun VerificationManualScreen(
             Text("자가 체크로 인증")
         }
 
-        // PHOTO 는 비강조(포렌식 없는 단순 업로드라 신뢰도 낮음). 이미지 업로드(기존 챌린지 패턴) 연동 후
+        // PHOTO 는 비강조. 이미지 업로드(기존 챌린지 패턴) 연동 후
         // viewModel.onIntent(Submit(challengeId, ManualMethod.PHOTO, imageUrl)) 로 활성화.
         OutlinedButton(
             onClick = {},

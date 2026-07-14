@@ -106,7 +106,7 @@ fun IntroContent(
             )
         }
 
-        // 하단: 인디케이터 + 버튼 (버튼이 화면 맨 아래에 붙지 않도록 하단 여백을 넉넉히 준다)
+        // 하단: 인디케이터 + 버튼
         BottomBar(
             padding =
                 PaddingValues(

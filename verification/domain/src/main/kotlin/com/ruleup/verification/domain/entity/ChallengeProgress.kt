@@ -20,7 +20,7 @@ data class ChallengeProgress(
     val challengeId: String,
     val title: String,
     val category: InterestCategory?,
-    // SOLO / GROUP (challenge 도메인 소유 값이라 결합을 피해 String 으로 둔다)
+    // SOLO / GROUP
     val participationType: String?,
     val status: String,
     val progressRate: Double,

@@ -38,7 +38,7 @@ enum class RuleUpBottomTab(
 }
 
 /**
- * 화면 하단 고정 탭 바. 홈/탐색이 같은 규칙을 쓰므로 core:ui 로 모은다.
+ * 화면 하단 고정 탭 바.
  * [onTabClick] 은 현재 선택된 탭이 아닌 탭을 눌렀을 때만 호출된다.
  */
 @Composable

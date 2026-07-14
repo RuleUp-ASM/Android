@@ -23,7 +23,7 @@ object NickNameUtil {
             else -> NicknameValidation.VALID
         }
 
-    /** 검증 결과에 맞는 안내 문구. 인라인 메시지와 스낵바가 같은 문구를 쓰도록 한곳에 둔다. */
+    /** 검증 결과에 맞는 안내 문구. */
     fun message(validation: NicknameValidation): String =
         when (validation) {
             NicknameValidation.VALID -> "사용 가능한 닉네임이에요"

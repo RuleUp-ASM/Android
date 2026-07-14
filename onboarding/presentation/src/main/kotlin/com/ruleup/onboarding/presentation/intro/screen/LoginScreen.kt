@@ -41,7 +41,7 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
     val launcher =
         rememberOAuthLauncher { result ->
             result
-                .onSuccess { viewModel.onIntent(LoginIntent.AuthorizationReceived(it)) } // code를 ViewModel로
+                .onSuccess { viewModel.onIntent(LoginIntent.AuthorizationReceived(it)) }
                 .onFailure { viewModel.onIntent(LoginIntent.AuthFailed(it)) }
         }
 

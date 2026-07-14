@@ -6,7 +6,6 @@ import com.ruleup.entity.user.InterestCategory
 import com.ruleup.ui.R
 
 // 카테고리 → 표시용 색/아이콘 매핑 단일 소스.
-// 홈 카드·챌린지 상세 등 여러 화면이 같은 규칙을 쓰므로 core:ui 로 모아 중복(카테고리 추가 시 한쪽 누락)을 막는다.
 
 /** 카테고리별 강조색(Figma 카드 아이콘 톤). */
 fun categoryAccentColor(category: InterestCategory?): Color =

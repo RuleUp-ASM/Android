@@ -120,11 +120,9 @@ internal fun HealthTarget.toEntity(): HealthTargetEntity =
         exerciseType = exerciseType,
     )
 
-// 저장값은 항상 enum.name 이므로 안전하나, 미인식은 보수적으로 ENTER 로 떨군다.
 private fun String.toGeofenceTransitionType(): GeofenceTransitionType =
     GeofenceTransitionType.entries.find { it.name == this } ?: GeofenceTransitionType.ENTER
 
-// 저장값은 enum.name. 미인식 metric 은 보수적으로 STEPS 로(가장 흔한 무해 기본).
 private fun String.toHealthMetric(): HealthMetric = HealthMetric.entries.find { it.name == this } ?: HealthMetric.STEPS
 
 private fun String.toRecordingMethod(): RecordingMethod = RecordingMethod.entries.find { it.name == this } ?: RecordingMethod.UNKNOWN

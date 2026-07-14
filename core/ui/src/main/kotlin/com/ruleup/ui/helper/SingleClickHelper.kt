@@ -13,14 +13,10 @@ import kotlinx.coroutines.launch
 /**
  * 앱 전역 클릭 가드. 컴포넌트별 throttle 과 별개로, "서로 다른 위젯"이라도 아주 짧은 시간 안에
  * 연속 실행되는 것을 막는다(예: 서로 다른 두 내비 버튼을 순간 연타 → 이중 네비게이션 방지).
- *
- * Compose 클릭 콜백은 main thread 에서만 호출되므로 별도 동기화 없이 단순 비교로 충분하다.
+ * main-thread 전용.
  */
 object SingleClickGuard {
-    /**
-     * 전역 가드 기본 창(ms). 컴포넌트별 기본값(500)보다 짧게 둬서, 의도적인 교차-위젯 조작의 반응성은
-     * 유지하면서 같은 순간의 우발적 이중 실행만 걸러낸다.
-     */
+    /** 전역 가드 기본 창(ms). */
     const val DEFAULT_THROTTLE_MILLIS = 300L
 
     // 모든 SingleClickHelper 가 공유하는 마지막 '실행 승인' 시각(monotonic, main-thread 전용).

@@ -69,7 +69,6 @@ fun ChallengeTargetsScreen(
     val messageHelper = LocalMessageHelper.current
 
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
-    // Map state 로 두어 항목 토글 시 해당 키를 읽는 행만 리컴포지션되게 한다(List 는 전체 무효화).
     val selected = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {

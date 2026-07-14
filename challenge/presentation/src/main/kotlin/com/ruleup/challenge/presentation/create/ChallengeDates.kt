@@ -66,7 +66,7 @@ internal object ChallengeDates {
 
     /**
      * 캘린더 한 페이지(6주 = 42칸). 표시 월 밖의 날짜는 inMonth=false.
-     * @param month 0-based(0=1월 ~ 11=12월). java.util.Calendar 시절 호출부 계약을 유지한다.
+     * @param month 0-based(0=1월 ~ 11=12월).
      */
     fun monthCells(
         year: Int,

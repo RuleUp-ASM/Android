@@ -38,7 +38,7 @@ import com.ruleup.ui.theme.RuleUpTheme
  * 04 · 챌린지 필터 시트. 유형(그룹/솔로)·인증(자동/수동)·매너 온도 컷을 편집하고
  * "결과 보기 · N개" 로 확정한다. 조건 변경 시마다 [onPreview] 로 카운트를 미리 집계한다.
  * 매너 온도 컷은 API 정의대로 on/off(joinableOnly) — 온도 값은 서버가 토큰 사용자 기준으로 계산한다.
- * 카테고리 필터는 탐색 메인 그리드 진입 컨텍스트라 시트에서 다루지 않는다(초기화에서도 유지).
+ * 카테고리 필터는 시트에서 다루지 않는다(초기화에서도 유지).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

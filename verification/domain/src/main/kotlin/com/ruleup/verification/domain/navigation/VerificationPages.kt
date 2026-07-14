@@ -66,7 +66,6 @@ data class VerificationLocationPage(
         const val ARG_DWELL = "dwellMinutes"
         const val ARG_TARGET_PACKAGES = "targetPackages"
 
-        // 패키지명엔 콤마가 없어 콤마로 안전하게 직렬화한다.
         const val TARGET_PACKAGES_DELIMITER = ","
     }
 }

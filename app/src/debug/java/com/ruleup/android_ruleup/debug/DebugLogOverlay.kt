@@ -28,7 +28,7 @@ private const val VISIBLE_LINES = 12
  * 디버그 빌드 전용 로그 오버레이. 우측 상단에 반투명 패널로 최근 [VISIBLE_LINES] 줄을 띄운다.
  *
  * 포인터 입력(clickable/pointerInput/scroll) 모디파이어를 일절 두지 않으므로 hit-test 대상이 아니다 →
- * 터치가 뒤 컨텐츠로 그대로 통과한다(click-through). 그래서 스크롤 없이 최신 N줄만 tail 한다.
+ * 터치가 뒤 컨텐츠로 그대로 통과한다(click-through).
  */
 @Composable
 fun DebugLogOverlay(modifier: Modifier = Modifier) {

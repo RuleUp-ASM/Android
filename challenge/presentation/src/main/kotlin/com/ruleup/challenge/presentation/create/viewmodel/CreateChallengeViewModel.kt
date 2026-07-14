@@ -196,7 +196,7 @@ class CreateChallengeViewModel
                 }
 
                 is CreateChallengeReducerEvent.MethodSelected -> {
-                    // 인증 방식을 바꾸면 이전 권한 요청 이력은 의미가 없어지므로 초기화.
+                    // 인증 방식을 바꾸면 권한 요청 이력을 초기화한다.
                     state.copy(
                         selectedMethod = event.method,
                         permissionRequested = false,

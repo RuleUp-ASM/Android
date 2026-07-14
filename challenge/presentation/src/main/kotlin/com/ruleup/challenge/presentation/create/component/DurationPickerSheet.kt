@@ -285,7 +285,7 @@ private fun CalendarGrid(
     modifier: Modifier = Modifier,
 ) {
     val cells = ChallengeDates.monthCells(year, month)
-    // 셀 index → window 좌표 Rect. 제스처 콜백에서만 읽으므로 snapshot 상태가 아닌 일반 맵으로 둔다.
+    // 셀 index → window 좌표 Rect.
     val cellBounds = remember(cells) { mutableMapOf<Int, Rect>() }
     var gridOrigin by remember { mutableStateOf(Offset.Zero) }
     var dragAnchorIso by remember { mutableStateOf<String?>(null) }
