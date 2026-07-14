@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.targets
 
+import android.annotation.SuppressLint
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
@@ -237,8 +238,10 @@ fun ChallengeTargetsScreen(
 
 /**
  * 설치된 실행 가능한 앱 + 카테고리(현지화 제목) + 최근 1주 사용 시간을 모은다. 시스템/자기 자신 제외.
- * 사용 시간 조회는 권한 회수 등으로 실패할 수 있으므로 실패 시 0(캡션 숨김)으로 둔다.
+ * queryAndAggregateUsageStats(PACKAGE_USAGE_STATS)는 상세 CTA 의 권한 게이팅 뒤에서만 도달하므로
+ * lint 를 억제하고, 중도 회수 등 실패 시 0(캡션 숨김)으로 둔다.
  */
+@SuppressLint("MissingPermission")
 private fun loadApps(context: Context): List<AppEntry> {
     val pm = context.packageManager
     val intent = Intent(Intent.ACTION_MAIN, null).addCategory(Intent.CATEGORY_LAUNCHER)
