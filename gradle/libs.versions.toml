@@ -61,6 +61,12 @@ playIntegrity = "1.4.0"
 # image
 coil = "3.4.0"
 
+# calendar (마이 탭 활동 캘린더)
+calendarCompose = "2.7.0"
+
+# QR (친구 초대 코드 렌더링 — 클라 생성, 서버 생성 미채택)
+zxing = "3.5.3"
+
 # firebase
 googleservice = "4.4.4"
 firebaseCrashlyticsPlugin = "3.0.6"
@@ -166,6 +172,12 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 # image
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
+
+# calendar (마이 탭 활동 캘린더)
+kizitonwose-calendar-compose = { module = "com.kizitonwose.calendar:compose", version.ref = "calendarCompose" }
+
+# QR (친구 초대 코드 렌더링)
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 # firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

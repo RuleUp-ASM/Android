@@ -2,6 +2,7 @@ package com.ruleup.onboarding.domain.fake
 
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
+import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.entity.user.Agreement
 import com.ruleup.entity.user.AuthSession
@@ -12,7 +13,6 @@ import com.ruleup.onboarding.domain.entity.AppVersionGate
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
-import com.ruleup.onboarding.domain.profile.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 

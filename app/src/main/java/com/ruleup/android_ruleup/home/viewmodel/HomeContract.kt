@@ -22,6 +22,9 @@ sealed interface HomeIntent : MviIntent {
     /** 하단 탭 "챌린지" → 탐색 메인. */
     data object OpenExplore : HomeIntent
 
+    /** 하단 탭 "마이" → 마이 홈. */
+    data object OpenMy : HomeIntent
+
     data class OpenChallenge(
         val challengeId: String,
     ) : HomeIntent
