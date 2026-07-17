@@ -1,5 +1,7 @@
 package com.ruleup.profile.domain.repository
 
+import com.ruleup.profile.domain.entity.ActivityCalendar
+import com.ruleup.profile.domain.entity.CalendarDayDetail
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.ReputationDetail
@@ -18,4 +20,10 @@ interface MyPageRepository {
     suspend fun getReputation(): ReputationDetail
 
     suspend fun getReputationHistory(): ReputationHistory
+
+    /** [month] = YYYY-MM. */
+    suspend fun getCalendar(month: String): ActivityCalendar
+
+    /** [date] = YYYY-MM-DD. */
+    suspend fun getCalendarDay(date: String): CalendarDayDetail
 }

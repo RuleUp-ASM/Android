@@ -1,11 +1,14 @@
 package com.ruleup.profile.data.api
 
 import com.ruleup.network.dto.BaseResponse
+import com.ruleup.profile.data.dto.ActivityCalendarResponse
+import com.ruleup.profile.data.dto.CalendarDayDetailResponse
 import com.ruleup.profile.data.dto.MyChallengesSliceResponse
 import com.ruleup.profile.data.dto.MyHomeResponse
 import com.ruleup.profile.data.dto.ReputationHistoryResponse
 import com.ruleup.profile.data.dto.ReputationResponse
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface MyPageApi {
@@ -26,4 +29,16 @@ interface MyPageApi {
     // 평판 히스토리 (전체 반환 — 서버 상한 50건)
     @GET("v1/me/reputation/history")
     suspend fun getReputationHistory(): BaseResponse<ReputationHistoryResponse>
+
+    // 활동 캘린더 월 조회 (판정 대상일만 내려옴)
+    @GET("v1/me/calendar")
+    suspend fun getCalendar(
+        @Query("month") month: String,
+    ): BaseResponse<ActivityCalendarResponse>
+
+    // 캘린더 일자 상세 (VerificationDaily 조회)
+    @GET("v1/me/calendar/{date}")
+    suspend fun getCalendarDay(
+        @Path("date") date: String,
+    ): BaseResponse<CalendarDayDetailResponse>
 }
