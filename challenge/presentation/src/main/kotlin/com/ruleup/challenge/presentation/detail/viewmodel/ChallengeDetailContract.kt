@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -37,6 +38,17 @@ sealed interface ChallengeDetailIntent : MviIntent {
     data class RemoveWatcher(
         val watcherId: String,
     ) : ChallengeDetailIntent
+
+    /** (방 홈) 공지 목록으로 이동. */
+    data object OpenNotices : ChallengeDetailIntent
+
+    /** (방 홈) 고정 공지 배너 탭 → 공지 상세로 이동. */
+    data class OpenNotice(
+        val noticeId: String,
+    ) : ChallengeDetailIntent
+
+    /** (방 홈) 그룹 랭킹으로 이동. */
+    data object OpenRanking : ChallengeDetailIntent
 
     data object Back : ChallengeDetailIntent
 }
@@ -82,6 +94,9 @@ data class ChallengeDetailState(
     val watchers: ChallengeWatchers? = null,
     // 초대 생성 요청 중(버튼 중복 탭 방지).
     val isInvitingWatcher: Boolean = false,
+    // 방 홈 일괄 조회 결과. 그룹 챌린지의 ACTIVE 멤버만 조회에 성공하며(비멤버 403 흡수 → null),
+    // 값이 있으면 상세를 방 홈(요약·공지·랭킹·오늘 상태)으로 확장 렌더링한다.
+    val room: ChallengeRoom? = null,
 ) : UiState {
     companion object {
         val initial =
@@ -123,5 +138,10 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     /** 초대 생성 요청 시작/종료. */
     data class InvitingWatcher(
         val inviting: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 방 홈 조회 성공 (그룹 챌린지 ACTIVE 멤버) — 재진입 시 미읽음 수 갱신 포함. */
+    data class RoomLoaded(
+        val room: ChallengeRoom,
     ) : ChallengeDetailReducerEvent
 }
