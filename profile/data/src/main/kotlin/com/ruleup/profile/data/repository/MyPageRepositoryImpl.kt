@@ -6,6 +6,7 @@ import com.ruleup.profile.data.dto.toDomain
 import com.ruleup.profile.data.dto.toGroupChallenges
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDayDetail
+import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.ReputationDetail
@@ -61,4 +62,10 @@ class MyPageRepositoryImpl
                 .getStats(period.value)
                 .getOrThrow()
                 .toDomain(requested = period)
+
+        override suspend fun getInvitation(): FriendInvitation =
+            api
+                .getInvitation()
+                .getOrThrow()
+                .toDomain()
     }

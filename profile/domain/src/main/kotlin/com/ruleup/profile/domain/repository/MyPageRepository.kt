@@ -2,6 +2,7 @@ package com.ruleup.profile.domain.repository
 
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDayDetail
+import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.ReputationDetail
@@ -30,4 +31,7 @@ interface MyPageRepository {
     suspend fun getCalendarDay(date: String): CalendarDayDetail
 
     suspend fun getStats(period: StatsPeriod): StatsReport
+
+    /** 코드/링크가 없으면 서버가 생성 후 반환한다 (멱등). */
+    suspend fun getInvitation(): FriendInvitation
 }

@@ -57,6 +57,10 @@ dependencies {
     // 활동 캘린더 월 그리드
     implementation(libs.kizitonwose.calendar.compose)
 
+    // 친구 초대: QR 렌더링(클라 생성) + 카카오톡 공유(사용자 본인 발신)
+    implementation(libs.zxing.core)
+    implementation(libs.kakao.share)
+
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.compiler)

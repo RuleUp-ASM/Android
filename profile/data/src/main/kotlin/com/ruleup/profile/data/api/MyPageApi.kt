@@ -3,6 +3,7 @@ package com.ruleup.profile.data.api
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.profile.data.dto.ActivityCalendarResponse
 import com.ruleup.profile.data.dto.CalendarDayDetailResponse
+import com.ruleup.profile.data.dto.FriendInvitationResponse
 import com.ruleup.profile.data.dto.MyChallengesSliceResponse
 import com.ruleup.profile.data.dto.MyHomeResponse
 import com.ruleup.profile.data.dto.ReputationHistoryResponse
@@ -48,4 +49,8 @@ interface MyPageApi {
     suspend fun getStats(
         @Query("period") period: String,
     ): BaseResponse<StatsResponse>
+
+    // 친구 초대 정보 (유저당 1개 — 없으면 서버가 생성 후 반환, 멱등)
+    @GET("v1/me/invitation")
+    suspend fun getInvitation(): BaseResponse<FriendInvitationResponse>
 }
