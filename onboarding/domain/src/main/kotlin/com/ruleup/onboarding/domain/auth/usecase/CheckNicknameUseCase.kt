@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.onboarding.domain.profile.repository.ProfileRepository
+import com.ruleup.domain.profile.ProfileRepository
 import javax.inject.Inject
 
 /**

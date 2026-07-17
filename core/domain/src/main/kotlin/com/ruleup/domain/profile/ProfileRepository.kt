@@ -1,10 +1,14 @@
-package com.ruleup.onboarding.domain.profile.repository
+package com.ruleup.domain.profile
 
 import com.ruleup.entity.user.CategoryCatalog
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.entity.user.NicknameCheck
 import com.ruleup.entity.user.Profile
 
+/**
+ * 프로필 계약 (온보딩 명세 4.6~4.11, 구현은 :onboarding:data).
+ * 온보딩(최초 설정)과 마이(재편집)가 함께 쓰는 횡단 계약이라 core 에 둔다 (feature 간 직접 의존 금지).
+ */
 interface ProfileRepository {
     /** 닉네임 형식/중복 검사 (명세 4.6). */
     suspend fun checkNickname(nickname: String): NicknameCheck

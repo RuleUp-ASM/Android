@@ -1,0 +1,234 @@
+package com.ruleup.profile.presentation.edit.viewmodel
+
+import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.entity.user.InterestCategory
+import com.ruleup.entity.user.NicknameCheckReason
+import com.ruleup.profile.domain.usecase.CheckNicknameUseCase
+import com.ruleup.profile.domain.usecase.DeleteProfileImageUseCase
+import com.ruleup.profile.domain.usecase.GetCategoryCatalogUseCase
+import com.ruleup.profile.domain.usecase.GetProfileUseCase
+import com.ruleup.profile.domain.usecase.UpdateProfileUseCase
+import com.ruleup.profile.domain.usecase.UploadProfileImageUseCase
+import com.ruleup.ui.mvi.MviViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.temporal.ChronoUnit
+import javax.inject.Inject
+
+/**
+ * 프로필 편집 ViewModel (마이 홈 → 재편집).
+ * 닉네임 30일 제한(nicknameChangeableAfter)·LLM 검수·이미지 모더레이션은 서버 파이프라인이 담당 —
+ * 화면은 선검사(4.6)와 변경 필드만 PATCH 한다. 이미지는 선택 즉시 업로드/제거로 반영한다.
+ */
+@HiltViewModel
+class ProfileEditViewModel
+    @Inject
+    constructor(
+        private val getProfileUseCase: GetProfileUseCase,
+        private val getCategoryCatalogUseCase: GetCategoryCatalogUseCase,
+        private val checkNicknameUseCase: CheckNicknameUseCase,
+        private val updateProfileUseCase: UpdateProfileUseCase,
+        private val uploadProfileImageUseCase: UploadProfileImageUseCase,
+        private val deleteProfileImageUseCase: DeleteProfileImageUseCase,
+        private val navigationHelper: NavigationHelper,
+    ) : MviViewModel<ProfileEditIntent, ProfileEditState, ProfileEditReducerEvent, ProfileEditEffect>(
+            ProfileEditState.initial,
+        ) {
+        override fun onIntent(intent: ProfileEditIntent) {
+            when (intent) {
+                ProfileEditIntent.Load -> load()
+                is ProfileEditIntent.ChangeNickname ->
+                    dispatch(
+                        ProfileEditReducerEvent.NicknameChanged(
+                            intent.nickname.take(ProfileEditState.NICKNAME_MAX_LENGTH),
+                        ),
+                    )
+
+                is ProfileEditIntent.ToggleCategory -> toggleCategory(intent.category)
+                is ProfileEditIntent.PickImage -> uploadImage(intent.uri)
+                ProfileEditIntent.RemoveImage -> removeImage()
+                ProfileEditIntent.Save -> save()
+                ProfileEditIntent.Back -> navigationHelper.navigateToBack()
+            }
+        }
+
+        override fun reduce(
+            state: ProfileEditState,
+            event: ProfileEditReducerEvent,
+        ): ProfileEditState =
+            when (event) {
+                ProfileEditReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
+
+                is ProfileEditReducerEvent.Loaded ->
+                    state.copy(
+                        isLoading = false,
+                        profile = event.profile,
+                        nickname = event.profile.nickname,
+                        selectedCategories = event.profile.interestCategories,
+                        maxSelectable = event.maxSelectable,
+                        nicknameLockedDays = event.nicknameLockedDays,
+                        errorMessage = null,
+                    )
+
+                is ProfileEditReducerEvent.Failed -> state.copy(isLoading = false, errorMessage = event.message)
+
+                is ProfileEditReducerEvent.NicknameChanged -> state.copy(nickname = event.nickname)
+
+                is ProfileEditReducerEvent.CategoriesChanged -> state.copy(selectedCategories = event.categories)
+
+                is ProfileEditReducerEvent.ImageBusy -> state.copy(isImageBusy = event.busy)
+
+                is ProfileEditReducerEvent.ImageChanged ->
+                    state.copy(profile = state.profile?.copy(profileImageUrl = event.profileImageUrl))
+
+                is ProfileEditReducerEvent.Saving -> state.copy(isSaving = event.saving)
+
+                is ProfileEditReducerEvent.Saved ->
+                    state.copy(
+                        profile = event.profile,
+                        nickname = event.profile.nickname,
+                        selectedCategories = event.profile.interestCategories,
+                    )
+            }
+
+        private fun load() {
+            if (currentState.profile != null) return
+            dispatch(ProfileEditReducerEvent.Loading)
+            viewModelScope.launch {
+                runCatching {
+                    val profileDeferred = async { getProfileUseCase() }
+                    // 마스터 조회 실패는 기본 상한(6)으로 흡수한다.
+                    val catalogDeferred = async { runCatching { getCategoryCatalogUseCase() }.getOrNull() }
+                    profileDeferred.await() to catalogDeferred.await()
+                }.onSuccess { (profile, catalog) ->
+                    dispatch(
+                        ProfileEditReducerEvent.Loaded(
+                            profile = profile,
+                            maxSelectable = catalog?.maxSelectable ?: 6,
+                            nicknameLockedDays = profile.nicknameChangeableAfter.remainingDays(),
+                        ),
+                    )
+                }.onFailure {
+                    dispatch(ProfileEditReducerEvent.Failed(it.message ?: "프로필을 불러오지 못했어요"))
+                }
+            }
+        }
+
+        private fun toggleCategory(category: InterestCategory) {
+            val current = currentState.selectedCategories
+            val next =
+                if (category in current) {
+                    current - category
+                } else {
+                    if (current.size >= currentState.maxSelectable) {
+                        emitEffect(
+                            ProfileEditEffect.ShowMessage("관심 분야는 최대 ${currentState.maxSelectable}개까지 고를 수 있어요"),
+                        )
+                        return
+                    }
+                    current + category
+                }
+            dispatch(ProfileEditReducerEvent.CategoriesChanged(next))
+        }
+
+        private fun uploadImage(uri: String) {
+            if (currentState.isImageBusy) return
+            viewModelScope.launch {
+                dispatch(ProfileEditReducerEvent.ImageBusy(true))
+                runCatching { uploadProfileImageUseCase(uri) }
+                    .onSuccess { url ->
+                        dispatch(ProfileEditReducerEvent.ImageChanged(url))
+                        emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 변경했어요"))
+                    }.onFailure {
+                        emitEffect(ProfileEditEffect.ShowMessage(it.message ?: "사진을 올리지 못했어요"))
+                    }
+                dispatch(ProfileEditReducerEvent.ImageBusy(false))
+            }
+        }
+
+        private fun removeImage() {
+            if (currentState.isImageBusy) return
+            if (currentState.profile?.profileImageUrl == null) return
+            viewModelScope.launch {
+                dispatch(ProfileEditReducerEvent.ImageBusy(true))
+                runCatching { deleteProfileImageUseCase() }
+                    .onSuccess {
+                        dispatch(ProfileEditReducerEvent.ImageChanged(null))
+                        emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 제거했어요"))
+                    }.onFailure {
+                        emitEffect(ProfileEditEffect.ShowMessage(it.message ?: "사진을 제거하지 못했어요"))
+                    }
+                dispatch(ProfileEditReducerEvent.ImageBusy(false))
+            }
+        }
+
+        private fun save() {
+            val state = currentState
+            val profile = state.profile ?: return
+            if (state.isSaving) return
+
+            val trimmed = state.nickname.trim()
+            val nicknameChanged = !state.nicknameLocked && trimmed != profile.nickname
+            val categoriesChanged = state.selectedCategories.toSet() != profile.interestCategories.toSet()
+
+            if (!nicknameChanged && !categoriesChanged) {
+                emitEffect(ProfileEditEffect.ShowMessage("변경된 내용이 없어요"))
+                return
+            }
+            if (nicknameChanged && trimmed.length < 2) {
+                emitEffect(ProfileEditEffect.ShowMessage("닉네임은 2~12자로 입력해주세요"))
+                return
+            }
+            if (categoriesChanged && state.selectedCategories.isEmpty()) {
+                emitEffect(ProfileEditEffect.ShowMessage("관심 분야를 1개 이상 골라주세요"))
+                return
+            }
+
+            viewModelScope
+                .launch {
+                    dispatch(ProfileEditReducerEvent.Saving(true))
+                    runCatching {
+                        if (nicknameChanged) {
+                            val check = checkNicknameUseCase(trimmed)
+                            if (!check.valid || !check.available) {
+                                val message =
+                                    when (check.reason) {
+                                        NicknameCheckReason.DUPLICATED -> "이미 사용 중인 닉네임이에요"
+                                        NicknameCheckReason.FORMAT -> "닉네임은 2~12자 한글·영문·숫자만 쓸 수 있어요"
+                                        null -> "사용할 수 없는 닉네임이에요"
+                                    }
+                                emitEffect(ProfileEditEffect.ShowMessage(message))
+                                return@launch
+                            }
+                        }
+                        updateProfileUseCase(
+                            nickname = trimmed.takeIf { nicknameChanged },
+                            interestCategories = state.selectedCategories.takeIf { categoriesChanged },
+                        )
+                    }.onSuccess { updated ->
+                        dispatch(ProfileEditReducerEvent.Saved(updated))
+                        emitEffect(ProfileEditEffect.ShowMessage("프로필을 저장했어요"))
+                        navigationHelper.navigateToBack()
+                    }.onFailure {
+                        emitEffect(ProfileEditEffect.ShowMessage(it.message ?: "프로필을 저장하지 못했어요"))
+                    }
+                }.invokeOnCompletion { dispatch(ProfileEditReducerEvent.Saving(false)) }
+        }
+    }
+
+// nicknameChangeableAfter(ISO 8601, null = 즉시 가능) → 남은 일수 (지났으면 0)
+private fun String?.remainingDays(): Int {
+    if (this == null) return 0
+    val date =
+        runCatching { OffsetDateTime.parse(this).toLocalDate() }
+            .recoverCatching { LocalDate.parse(this.substringBefore('T')) }
+            .getOrNull() ?: return 0
+    return ChronoUnit.DAYS
+        .between(LocalDate.now(), date)
+        .coerceAtLeast(0)
+        .toInt()
+}
