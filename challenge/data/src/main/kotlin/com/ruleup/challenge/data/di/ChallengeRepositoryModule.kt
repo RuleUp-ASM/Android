@@ -4,11 +4,13 @@ import com.ruleup.challenge.data.notification.SetupNotifierImpl
 import com.ruleup.challenge.data.repository.ChallengeRepositoryImpl
 import com.ruleup.challenge.data.repository.ExploreRepositoryImpl
 import com.ruleup.challenge.data.repository.MyChallengeStoreImpl
+import com.ruleup.challenge.data.repository.RoomRepositoryImpl
 import com.ruleup.challenge.data.repository.TargetAppStoreImpl
 import com.ruleup.challenge.data.repository.WatcherRepositoryImpl
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
+import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.challenge.domain.repository.SetupNotifier
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.repository.WatcherRepository
@@ -44,4 +46,8 @@ abstract class ChallengeRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSetupNotifier(impl: SetupNotifierImpl): SetupNotifier
+
+    @Binds
+    @Singleton
+    abstract fun bindRoomRepository(impl: RoomRepositoryImpl): RoomRepository
 }

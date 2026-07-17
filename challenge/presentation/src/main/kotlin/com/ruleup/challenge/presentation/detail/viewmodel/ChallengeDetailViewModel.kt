@@ -3,14 +3,20 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
+import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
+import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
+import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
+import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.usecase.CreateWatcherInvitationUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
+import com.ruleup.challenge.domain.usecase.GetChallengeRoomUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
 import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
 import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
@@ -35,6 +41,7 @@ class ChallengeDetailViewModel
     constructor(
         private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
         private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
+        private val getChallengeRoomUseCase: GetChallengeRoomUseCase,
         private val getWatchersUseCase: GetWatchersUseCase,
         private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
         private val removeWatcherUseCase: RemoveWatcherUseCase,
@@ -54,6 +61,9 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.Proceed -> navigationHelper.navigateToBack()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
                 is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
+                ChallengeDetailIntent.OpenNotices -> openNotices()
+                is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
+                ChallengeDetailIntent.OpenRanking -> openRanking()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -84,6 +94,8 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.WatchersLoaded -> state.copy(watchers = event.watchers)
 
                 is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
+
+                is ChallengeDetailReducerEvent.RoomLoaded -> state.copy(room = event.room)
             }
 
         private fun load(challengeId: String) {
@@ -104,6 +116,8 @@ class ChallengeDetailViewModel
                         // 감시자는 챌린지 × 참여자 단위 — 항상 조회를 시도하고, 성공하면(=참여자)
                         // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
                         loadWatchers(challengeId)
+                        // 방 홈은 그룹 챌린지의 ACTIVE 멤버만 — 조회 성공 시 방 홈으로 확장 렌더링.
+                        if (detail.participationType == ParticipationType.GROUP) loadRoom(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }
@@ -120,6 +134,44 @@ class ChallengeDetailViewModel
                     ),
                 )
             }
+            // 공지 상세를 읽고 돌아오면 미읽음 수가 바뀌므로 방 홈도 함께 재조회한다.
+            if (currentState.room != null) loadRoom(id)
+        }
+
+        // 비멤버/솔로의 403 등 실패는 흡수 — room 이 null 이면 기존 공개 상세 그대로 렌더링된다.
+        private fun loadRoom(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { getChallengeRoomUseCase(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+            }
+        }
+
+        private fun openNotices() {
+            val room = currentState.room ?: return
+            val id = currentState.detail?.challengeId ?: return
+            navigationHelper.navigateByRoute(
+                ChallengeNoticesPage(
+                    challengeId = id,
+                    canManage = room.myRole == MemberRole.OWNER,
+                ).toRoute(),
+            )
+        }
+
+        private fun openNotice(noticeId: String) {
+            val room = currentState.room ?: return
+            val id = currentState.detail?.challengeId ?: return
+            navigationHelper.navigateByRoute(
+                ChallengeNoticeDetailPage(
+                    challengeId = id,
+                    noticeId = noticeId,
+                    canManage = room.myRole == MemberRole.OWNER,
+                ).toRoute(),
+            )
+        }
+
+        private fun openRanking() {
+            val id = currentState.detail?.challengeId ?: return
+            navigationHelper.navigateByRoute(ChallengeRankingPage(challengeId = id).toRoute())
         }
 
         private fun registerApps() {

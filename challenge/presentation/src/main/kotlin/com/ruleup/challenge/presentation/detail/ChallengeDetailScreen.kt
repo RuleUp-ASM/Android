@@ -49,6 +49,10 @@ import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.RoomNoticeSection
+import com.ruleup.challenge.presentation.detail.component.RoomRankingSection
+import com.ruleup.challenge.presentation.detail.component.RoomSummaryRow
+import com.ruleup.challenge.presentation.detail.component.RoomTodayStatusCard
 import com.ruleup.challenge.presentation.detail.component.WatcherSection
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
@@ -222,6 +226,25 @@ private fun ChallengeDetailContent(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         DetailHero(state.detail)
+
+                        // 방 홈 (그룹 챌린지 ACTIVE 멤버): 요약·공지·랭킹·오늘 상태를 확장 렌더링.
+                        // room == null(비멤버·솔로)이면 기존 공개 상세 그대로.
+                        val room = state.room
+                        if (room != null) {
+                            RoomSummaryRow(summary = room.summary)
+                            RoomNoticeSection(
+                                pinnedNotice = room.pinnedNotice,
+                                unreadCount = room.unreadNoticeCount,
+                                onOpenNotices = { onIntent(ChallengeDetailIntent.OpenNotices) },
+                                onOpenNotice = { onIntent(ChallengeDetailIntent.OpenNotice(it)) },
+                            )
+                            RoomRankingSection(
+                                topRanking = room.topRanking,
+                                onOpenRanking = { onIntent(ChallengeDetailIntent.OpenRanking) },
+                            )
+                            RoomTodayStatusCard(status = room.myTodayStatus)
+                        }
+
                         DetailInfoCard(state.detail)
                         // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
                         val myWatchers = state.watchers
@@ -238,8 +261,8 @@ private fun ChallengeDetailContent(
             }
         }
 
-        // 하단 고정 CTA. 상세 로딩 완료 후에만 활성화한다.
-        if (state.detail != null) {
+        // 하단 고정 CTA. 상세 로딩 완료 후에만 활성화하고, 이미 참여 중인 방(멤버)에서는 숨긴다.
+        if (state.detail != null && state.room == null) {
             Box(
                 modifier =
                     Modifier
