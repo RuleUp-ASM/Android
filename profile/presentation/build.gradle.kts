@@ -56,8 +56,6 @@ dependencies {
 
     // 활동 캘린더 월 그리드
     implementation(libs.kizitonwose.calendar.compose)
-    // 통계 완주율 시리즈 차트
-    implementation(libs.vico.compose.m3)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)

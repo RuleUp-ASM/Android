@@ -6,6 +6,8 @@ import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.ReputationDetail
 import com.ruleup.profile.domain.entity.ReputationHistory
+import com.ruleup.profile.domain.entity.StatsPeriod
+import com.ruleup.profile.domain.entity.StatsReport
 
 /**
  * 마이 탭 조회 계층 (마이프로필·캘린더 스펙).
@@ -26,4 +28,6 @@ interface MyPageRepository {
 
     /** [date] = YYYY-MM-DD. */
     suspend fun getCalendarDay(date: String): CalendarDayDetail
+
+    suspend fun getStats(period: StatsPeriod): StatsReport
 }

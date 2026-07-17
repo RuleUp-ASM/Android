@@ -10,6 +10,8 @@ import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.ReputationDetail
 import com.ruleup.profile.domain.entity.ReputationHistory
+import com.ruleup.profile.domain.entity.StatsPeriod
+import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.domain.repository.MyPageRepository
 import javax.inject.Inject
 
@@ -53,4 +55,10 @@ class MyPageRepositoryImpl
                 .getCalendarDay(date)
                 .getOrThrow()
                 .toDomain()
+
+        override suspend fun getStats(period: StatsPeriod): StatsReport =
+            api
+                .getStats(period.value)
+                .getOrThrow()
+                .toDomain(requested = period)
     }

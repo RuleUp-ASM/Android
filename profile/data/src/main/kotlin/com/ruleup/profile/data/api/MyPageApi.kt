@@ -7,6 +7,7 @@ import com.ruleup.profile.data.dto.MyChallengesSliceResponse
 import com.ruleup.profile.data.dto.MyHomeResponse
 import com.ruleup.profile.data.dto.ReputationHistoryResponse
 import com.ruleup.profile.data.dto.ReputationResponse
+import com.ruleup.profile.data.dto.StatsResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -41,4 +42,10 @@ interface MyPageApi {
     suspend fun getCalendarDay(
         @Path("date") date: String,
     ): BaseResponse<CalendarDayDetailResponse>
+
+    // 통계 리포트 (anchor 생략 = 오늘 KST 기준)
+    @GET("v1/me/stats")
+    suspend fun getStats(
+        @Query("period") period: String,
+    ): BaseResponse<StatsResponse>
 }

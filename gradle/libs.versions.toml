@@ -61,9 +61,8 @@ playIntegrity = "1.4.0"
 # image
 coil = "3.4.0"
 
-# chart / calendar (마이 탭 통계·활동 캘린더)
+# calendar (마이 탭 활동 캘린더)
 calendarCompose = "2.7.0"
-vico = "2.1.3"
 
 # firebase
 googleservice = "4.4.4"
@@ -171,9 +170,8 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 
-# chart / calendar (마이 탭 통계·활동 캘린더)
+# calendar (마이 탭 활동 캘린더)
 kizitonwose-calendar-compose = { module = "com.kizitonwose.calendar:compose", version.ref = "calendarCompose" }
-vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
 
 # firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

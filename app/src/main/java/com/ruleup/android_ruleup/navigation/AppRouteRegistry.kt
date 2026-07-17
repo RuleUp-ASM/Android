@@ -47,11 +47,13 @@ import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyHomePage
+import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTemperaturePage
 import com.ruleup.profile.domain.navigation.ReputationHistoryPage
 import com.ruleup.profile.presentation.calendar.MyCalendarScreen
 import com.ruleup.profile.presentation.history.ReputationHistoryScreen
 import com.ruleup.profile.presentation.home.MyHomeScreen
+import com.ruleup.profile.presentation.stats.MyStatsScreen
 import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
 import com.ruleup.verification.domain.navigation.VerificationDetailPage
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
@@ -145,6 +147,10 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = MyCalendarPage.PATH,
             render = { MyCalendarScreen() },
+        ),
+        AppRoute(
+            path = MyStatsPage.PATH,
+            render = { MyStatsScreen() },
         ),
         AppRoute(
             path = ChallengeExploreListPage.PATH,
