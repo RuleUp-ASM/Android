@@ -7,6 +7,10 @@ import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
+import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
+import com.ruleup.challenge.domain.navigation.ChallengeNoticeEditPage
+import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
+import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.navigation.WatcherInvitationPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
@@ -14,6 +18,10 @@ import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
 import com.ruleup.challenge.presentation.explore.ExploreScreen
 import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
+import com.ruleup.challenge.presentation.notice.NoticeDetailScreen
+import com.ruleup.challenge.presentation.notice.NoticeEditScreen
+import com.ruleup.challenge.presentation.notice.NoticeListScreen
+import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.challenge.presentation.watcher.invitation.WatcherInvitationScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
@@ -139,6 +147,40 @@ val appRoutes: List<AppRoute> =
             path = ChallengeTargetsPage.PATH,
             render = { args ->
                 ChallengeTargetsScreen(challengeId = args[ChallengeTargetsPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeNoticesPage.PATH,
+            render = { args ->
+                NoticeListScreen(
+                    challengeId = args[ChallengeNoticesPage.ARG_CHALLENGE_ID].orEmpty(),
+                    canManage = args[ChallengeNoticesPage.ARG_CAN_MANAGE].toBoolean(),
+                )
+            },
+        ),
+        AppRoute(
+            path = ChallengeNoticeDetailPage.PATH,
+            render = { args ->
+                NoticeDetailScreen(
+                    challengeId = args[ChallengeNoticeDetailPage.ARG_CHALLENGE_ID].orEmpty(),
+                    noticeId = args[ChallengeNoticeDetailPage.ARG_NOTICE_ID].orEmpty(),
+                    canManage = args[ChallengeNoticeDetailPage.ARG_CAN_MANAGE].toBoolean(),
+                )
+            },
+        ),
+        AppRoute(
+            path = ChallengeNoticeEditPage.PATH,
+            render = { args ->
+                NoticeEditScreen(
+                    challengeId = args[ChallengeNoticeEditPage.ARG_CHALLENGE_ID].orEmpty(),
+                    noticeId = args[ChallengeNoticeEditPage.ARG_NOTICE_ID],
+                )
+            },
+        ),
+        AppRoute(
+            path = ChallengeRankingPage.PATH,
+            render = { args ->
+                RankingScreen(challengeId = args[ChallengeRankingPage.ARG_CHALLENGE_ID].orEmpty())
             },
         ),
         AppRoute(
