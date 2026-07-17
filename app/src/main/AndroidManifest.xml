@@ -55,6 +55,21 @@
                     android:host="app" />
             </intent-filter>
 
+            <!-- App Links: 감시자 초대 링크 https://android.ruleup.co.kr/inv/{code}.
+                 autoVerify 검증은 설치 시점에 /.well-known/assetlinks.json 으로 수행된다.
+                 앱 미설치 유저는 같은 URL이 웹 랜딩(스토어 안내)으로 열린다. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="android.ruleup.co.kr"
+                    android:pathPrefix="/inv" />
+            </intent-filter>
+
             <!-- Health Connect 권한 사용 이유(개인정보 처리방침) 안내 — Android 13 이하.
                  HC 가 권한 부여 화면에서 본 액션으로 앱을 호출한다(명세 §8 셋업). -->
             <intent-filter>
