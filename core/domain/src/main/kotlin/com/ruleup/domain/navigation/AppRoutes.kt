@@ -36,6 +36,15 @@ object AppRoutes {
     const val CHALLENGE_NOTICE_EDIT = "challenge/notices/edit" // 공지 작성/수정(방장 전용)
     const val CHALLENGE_RANKING = "challenge/ranking" // 그룹 랭킹(방 홈 → 랭킹)
 
+    // profile (마이)
+    const val MY_HOME = "my/home" // 진입점 (하단 MY 탭 → 마이 홈)
+    const val MY_TEMPERATURE = "my/temperature" // 매너 온도 상세
+    const val MY_REPUTATION_HISTORY = "my/reputation/history" // 평판 히스토리
+    const val MY_CALENDAR = "my/calendar" // 활동 캘린더
+    const val MY_STATS = "my/stats" // 통계 리포트
+    const val MY_INVITE = "my/invite" // 친구 초대
+    const val MY_PROFILE_EDIT = "my/profile/edit" // 프로필 편집(마이 → 재편집)
+
     // verification
     const val VERIFICATION_PROGRESS = "verification/progress" // 진입점 (내 챌린지 진행률 일괄)
     const val VERIFICATION_DETAIL = "verification/detail" // 진입점 (홈 카드 → 검증 결과/실패)

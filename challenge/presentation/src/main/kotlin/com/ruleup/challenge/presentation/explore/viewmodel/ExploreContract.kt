@@ -29,6 +29,9 @@ sealed interface ExploreIntent : MviIntent {
 
     /** 하단 탭 "홈". */
     data object OpenHome : ExploreIntent
+
+    /** 하단 탭 "마이". */
+    data object OpenMy : ExploreIntent
 }
 
 data class ExploreState(

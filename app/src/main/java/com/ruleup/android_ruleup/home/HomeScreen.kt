@@ -115,7 +115,11 @@ private fun HomeContent(
             selected = RuleUpBottomTab.HOME,
             selectedColor = FigmaBrand,
             onTabClick = { tab ->
-                if (tab == RuleUpBottomTab.CHALLENGE) onIntent(HomeIntent.OpenExplore)
+                when (tab) {
+                    RuleUpBottomTab.CHALLENGE -> onIntent(HomeIntent.OpenExplore)
+                    RuleUpBottomTab.MY -> onIntent(HomeIntent.OpenMy)
+                    else -> Unit
+                }
             },
             modifier = Modifier.align(Alignment.BottomCenter),
         )

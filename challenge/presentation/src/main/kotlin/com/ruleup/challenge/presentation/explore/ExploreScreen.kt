@@ -113,7 +113,11 @@ private fun ExploreContent(
         RuleUpBottomTabBar(
             selected = RuleUpBottomTab.CHALLENGE,
             onTabClick = { tab ->
-                if (tab == RuleUpBottomTab.HOME) onIntent(ExploreIntent.OpenHome)
+                when (tab) {
+                    RuleUpBottomTab.HOME -> onIntent(ExploreIntent.OpenHome)
+                    RuleUpBottomTab.MY -> onIntent(ExploreIntent.OpenMy)
+                    else -> Unit
+                }
             },
         )
     }

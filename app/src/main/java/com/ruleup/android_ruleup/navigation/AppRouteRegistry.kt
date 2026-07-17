@@ -45,6 +45,8 @@ import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
 import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
 import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
+import com.ruleup.profile.domain.navigation.MyHomePage
+import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.verification.domain.navigation.VerificationDetailPage
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.navigation.VerificationManualPage
@@ -113,6 +115,18 @@ val appRoutes: List<AppRoute> =
                 )
             },
             render = { ExploreScreen() },
+        ),
+        AppRoute(
+            path = MyHomePage.PATH,
+            isBottomTab = true,
+            // 마이는 홈 위에 쌓인 탭 화면: 뒤로가기 시 홈으로 돌아간다(탐색 탭과 동일 규칙).
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(MyHomePage.PATH),
+                )
+            },
+            render = { MyHomeScreen() },
         ),
         AppRoute(
             path = ChallengeExploreListPage.PATH,
