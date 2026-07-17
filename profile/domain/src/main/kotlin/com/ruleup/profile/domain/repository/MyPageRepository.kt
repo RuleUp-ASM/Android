@@ -2,6 +2,8 @@ package com.ruleup.profile.domain.repository
 
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
+import com.ruleup.profile.domain.entity.ReputationDetail
+import com.ruleup.profile.domain.entity.ReputationHistory
 
 /**
  * 마이 탭 조회 계층 (마이프로필·캘린더 스펙).
@@ -12,4 +14,8 @@ interface MyPageRepository {
 
     /** 참여 중(ACTIVE)인 그룹 챌린지만 — 그룹 랭킹 진입용. */
     suspend fun getMyGroupChallenges(): List<GroupChallengeSummary>
+
+    suspend fun getReputation(): ReputationDetail
+
+    suspend fun getReputationHistory(): ReputationHistory
 }

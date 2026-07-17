@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.NicknameStatus
+import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeEffect
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeViewModel
@@ -52,7 +53,6 @@ import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpPalette
 import com.ruleup.ui.theme.RuleUpTheme
-import java.util.Locale
 
 // 히어로 그라데이션 (피그마 434:257 — amber → rose → violet)
 private val HeroGradient = listOf(Color(0xFFF59E0B), Color(0xFFF43F5E), Color(0xFF8B5CF6))
@@ -267,7 +267,7 @@ private fun MyHomeHero(
                     .padding(horizontal = 14.dp, vertical = 5.dp),
         ) {
             Text(
-                text = "🌡️ 매너 온도 ${home.mannerTemperature.temperatureLabel()}℃",
+                text = "🌡️ 매너 온도 ${home.mannerTemperature.trimLabel()}℃",
                 color = RuleUpPalette.White,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -282,14 +282,6 @@ private fun nicknameBadgeLabel(status: NicknameStatus): String? =
         NicknameStatus.PENDING -> "검수 중"
         NicknameStatus.REJECTED -> "반려됨"
         NicknameStatus.APPROVED -> null
-    }
-
-// 78.0 → "78", 78.4 → "78.4"
-internal fun Double.temperatureLabel(): String =
-    if (this % 1.0 == 0.0) {
-        toInt().toString()
-    } else {
-        String.format(Locale.US, "%.1f", this)
     }
 
 @Composable

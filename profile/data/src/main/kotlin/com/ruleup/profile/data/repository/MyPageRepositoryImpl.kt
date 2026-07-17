@@ -6,6 +6,8 @@ import com.ruleup.profile.data.dto.toDomain
 import com.ruleup.profile.data.dto.toGroupChallenges
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
+import com.ruleup.profile.domain.entity.ReputationDetail
+import com.ruleup.profile.domain.entity.ReputationHistory
 import com.ruleup.profile.domain.repository.MyPageRepository
 import javax.inject.Inject
 
@@ -25,4 +27,16 @@ class MyPageRepositoryImpl
                 .getMyChallenges()
                 .getOrThrow()
                 .toGroupChallenges()
+
+        override suspend fun getReputation(): ReputationDetail =
+            api
+                .getReputation()
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getReputationHistory(): ReputationHistory =
+            api
+                .getReputationHistory()
+                .getOrThrow()
+                .toDomain()
     }
