@@ -1,27 +1,26 @@
 package com.ruleup.android_ruleup.push
 
+import com.ruleup.network.dto.BaseResponse
+import com.ruleup.network.dto.EmptyData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 
 @Serializable
-data class RegisterFcmTokenRequest(
-    @SerialName("fcmToken")
-    val fcmToken: String,
-    // uuid or ssaid — 기기 1대 = 토큰 1개 upsert 키
-    @SerialName("deviceIdentifier")
-    val deviceIdentifier: String,
+data class RegisterDeviceRequest(
+    // FCM 등록 토큰 (필수, 공백 불가) — 토큰 자체가 upsert 키(같은 토큰은 현재 유저로 재바인딩)
+    @SerialName("token")
+    val token: String,
+    // 생략 시 서버 기본 ANDROID — 명시해 iOS 확장에 대비
+    @SerialName("platform")
+    val platform: String = "ANDROID",
 )
 
 interface PushApi {
-    /**
-     * FCM 토큰 저장 (명세: POST /users/fcm-token — 201, 본문 없음).
-     * 응답이 공통 BaseResponse 래퍼가 아니라(빈 본문) Response 로 받아 상태 코드만 본다.
-     */
-    @POST("v1/users/fcm-token")
-    suspend fun registerFcmToken(
-        @Body request: RegisterFcmTokenRequest,
-    ): Response<Unit>
+    // FCM 디바이스 토큰 등록 (명세: POST /api/v1/devices — 멱등 upsert, 죽은 토큰은 서버가 자동 정리)
+    @POST("v1/devices")
+    suspend fun registerDevice(
+        @Body request: RegisterDeviceRequest,
+    ): BaseResponse<EmptyData>
 }

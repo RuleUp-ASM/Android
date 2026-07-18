@@ -3,6 +3,7 @@ package com.ruleup.android_ruleup.push
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.ruleup.domain.helper.PushNotificationHelper
+import com.ruleup.domain.navigation.AppRoutes
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,12 +15,16 @@ import javax.inject.Inject
 
 private const val TAG = "[Push]"
 
+// 페이로드 명세("서버 FCM 푸시 페이로드 명세")의 type 딱지. 서버는 항상 데이터 전용 메시지를 보낸다.
+private const val TYPE_NOTICE_CREATED = "NOTICE_CREATED"
+private const val TYPE_SETUP_REQUIRED = "SETUP_REQUIRED"
+private const val TYPE_PERMISSION_REQUIRED = "PERMISSION_REQUIRED"
+
 /**
- * FCM 수신 진입점. 서버 Push Outbox(공지 NOTICE_CREATED 등)가 보낸 메시지를
- * 시스템 알림으로 올리고, 탭 시 deepLink(ruleup://app/…)로 진입시킨다.
- *
- * 데이터 메시지 우선(title/body/deepLink 키), notification 페이로드는 폴백으로 읽는다 —
- * 백그라운드에서도 항상 이 경로를 타도록 서버는 데이터 메시지 발송이 기본이다.
+ * FCM 수신 진입점. 페이로드 명세의 type 기반으로 분기한다:
+ * - [TYPE_NOTICE_CREATED]: 알림 표시(title=챌린지명, body=공지 제목) → 탭 시 공지 상세 진입
+ * - 무음 쪽지(셋업/권한): 알림 없음 — 상태 재확인은 해당 화면 재진입 시 수행된다
+ * - 미지 type: 조용히 폐기 (명세 규칙 3 — 서버·앱 독립 배포 보장)
  */
 @AndroidEntryPoint
 class RuleUpMessagingService : FirebaseMessagingService() {
@@ -40,14 +45,35 @@ class RuleUpMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
-        val title = data["title"] ?: message.notification?.title ?: "RuleUp"
-        val body = data["body"] ?: message.notification?.body ?: return
-        // 딥링크가 없으면 홈으로 진입시킨다 (미등록 path 는 NavRouteUriParser 가 무시).
-        val deepLink = data["deepLink"] ?: "ruleup://app/home"
+        when (val type = data["type"]) {
+            TYPE_NOTICE_CREATED -> showNoticeNotification(data)
+
+            // 무음 쪽지(인증 스펙 관할): 알림을 띄우지 않는다. 셋업/권한 재확인은
+            // 상세 화면 ON_RESUME 재조회가 이미 담당 — 백그라운드 선반영은 후속 고도화 여지.
+            TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
+
+            // 명세 규칙 3: 모르는 type 은 조용히 버린다.
+            else -> Timber.tag(TAG).d("미지 푸시 type 무시: %s", type)
+        }
+    }
+
+    private fun showNoticeNotification(data: Map<String, String>) {
+        val title = data["title"] ?: return
+        val body = data["body"] ?: return
+        val challengeId = data["challengeId"]
+        val noticeId = data["noticeId"]
+        // 서버 deepLink 문자열 형식에 의존하지 않고, ID 키로 앱 내부 주소 규칙(NavRouteUriParser)에
+        // 맞춰 조립한다 — 페이로드 명세 §4 "앱 파서 규칙을 따르는 걸로 확정" 합의.
+        val deepLink =
+            if (challengeId != null && noticeId != null) {
+                "ruleup://app/${AppRoutes.CHALLENGE_NOTICE_DETAIL}?challengeId=$challengeId&noticeId=$noticeId"
+            } else {
+                "ruleup://app/${AppRoutes.HOME}"
+            }
 
         pushNotificationHelper.show(
-            // 같은 딥링크(같은 공지) 재발송은 같은 알림을 갱신한다.
-            id = deepLink.hashCode(),
+            // 같은 챌린지의 공지 알림은 하나로 묶어 갱신한다 (명세 권장).
+            id = (challengeId ?: deepLink).hashCode(),
             title = title,
             message = body,
             deepLink = deepLink,

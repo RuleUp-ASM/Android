@@ -1,11 +1,8 @@
 package com.ruleup.android_ruleup.push
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.provider.Settings
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ruleup.domain.token.TokenRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.ruleup.network.dto.throwOnError
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
@@ -17,15 +14,14 @@ import kotlin.coroutines.resumeWithException
 private const val TAG = "[Push]"
 
 /**
- * FCM 토큰 서버 등록 (명세: POST /users/fcm-token — 기기 1대 = 토큰 1개 upsert).
+ * FCM 토큰 서버 등록 (명세: POST /api/v1/devices — 토큰이 upsert 키, 멱등이라 중복 호출 안전).
  * 앱 시작(로그인 상태)과 onNewToken 시점에 호출한다. 실패는 로그만 남기고 흡수 —
- * 다음 앱 시작 또는 토큰 갱신이 재등록을 보정한다.
+ * 다음 앱 시작 또는 토큰 갱신이 재등록을 보정한다. 죽은 토큰 정리는 서버가 담당한다.
  */
 @Singleton
 class PushTokenRegistrar
     @Inject
     constructor(
-        @ApplicationContext private val context: Context,
         private val pushApi: PushApi,
         private val tokenRepository: TokenRepository,
     ) {
@@ -39,15 +35,8 @@ class PushTokenRegistrar
         suspend fun register(fcmToken: String) {
             // 미로그인 상태면 서버가 유저를 특정할 수 없다 — 로그인 후 앱 시작 경로가 재등록한다.
             if (!tokenRepository.isLoggedIn.first()) return
-            val response =
-                pushApi.registerFcmToken(
-                    RegisterFcmTokenRequest(fcmToken = fcmToken, deviceIdentifier = deviceIdentifier()),
-                )
-            if (response.isSuccessful) {
-                Timber.tag(TAG).i("FCM 토큰 등록 완료")
-            } else {
-                Timber.tag(TAG).w("FCM 토큰 등록 실패: HTTP %d", response.code())
-            }
+            pushApi.registerDevice(RegisterDeviceRequest(token = fcmToken)).throwOnError()
+            Timber.tag(TAG).i("FCM 토큰 등록 완료")
         }
 
         private suspend fun fetchToken(): String =
@@ -63,8 +52,4 @@ class PushTokenRegistrar
                     }
                 }
             }
-
-        // SSAID — 명세의 deviceIdentifier(uuid or ssaid). 재설치 간 안정적이라 기기 upsert 키로 충분하다.
-        @SuppressLint("HardwareIds")
-        private fun deviceIdentifier(): String = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
     }
