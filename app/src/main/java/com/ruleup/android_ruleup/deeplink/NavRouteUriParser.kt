@@ -33,18 +33,22 @@ private val EXTERNAL_ALLOWED_PATHS =
         AppRoutes.CHALLENGE_NOTICE_DETAIL,
     )
 
-/** App Links 초대 링크(https://android.ruleup.co.kr/inv/{token})의 첫 path 세그먼트. */
-private const val INVITE_PATH_SEGMENT = "inv"
+// App Links 초대 경로 분리 합의: 감시자 = /w/{token}, 친구 초대 = /inv/{code}.
+private const val WATCHER_INVITE_SEGMENT = "w"
+private const val FRIEND_INVITE_SEGMENT = "inv"
+
+/** 친구 초대 링크(/inv/{code}) 여부. 라우팅이 아니라 "앱 실행"으로만 처리한다. */
+private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEND_INVITE_SEGMENT
 
 /**
  * App Link 의 [Uri] 를 [NavRoute] 로 변환한다.
- * - `/inv/{token}` (감시자 초대 App Links)은 감시자 초대 수락 화면으로 매핑한다.
+ * - `/w/{token}` (감시자 초대 App Links)은 감시자 초대 수락 화면으로 매핑한다.
  * - path: pathSegments 를 슬래시로 합쳐 등록된 PATH 와 동일한 형식으로 만든다 (앞 슬래시 없음, 예: "profile/icon").
  * - args: 모든 query parameter 를 그대로 String 맵으로 옮긴다 (복합 타입은 호출부의 Args.from 이 디코딩).
  */
 fun Uri.toNavRoute(): NavRoute {
     val segments = pathSegments?.takeIf { it.isNotEmpty() } ?: return NavRoute(IntroPromisePage.PATH)
-    if (segments.first() == INVITE_PATH_SEGMENT && segments.size >= 2) {
+    if (segments.first() == WATCHER_INVITE_SEGMENT && segments.size >= 2) {
         return NavRoute(
             AppRoutes.WATCHER_INVITATION,
             mapOf(WatcherInvitationPage.ARG_TOKEN to segments[1]),
@@ -66,6 +70,9 @@ fun Uri.toNavRoute(): NavRoute {
 fun resolveStartStack(uri: Uri?): List<NavKey> {
     // 일반 실행(딥링크 없음)은 스플래시에서 시작해 자동 로그인 여부로 홈/인트로를 분기한다.
     if (uri == null) return listOf(GenericNavKey(SplashPage.PATH))
+    // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다 — 스플래시가 로그인 여부로
+    // 홈/온보딩을 분기한다. 가입 시 inviteCode 서버 전달은 auth 스펙(inviteCode 필드) 개정 후 후속.
+    if (uri.isFriendInvite()) return listOf(GenericNavKey(SplashPage.PATH))
     val route = uri.toNavRoute()
     if (route.path !in EXTERNAL_ALLOWED_PATHS || appRouteByPath[route.path] == null) {
         // URI 전체(쿼리 포함)는 남기지 않고 path 만 남긴다(민감 인자 로깅 방지).
@@ -80,6 +87,8 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
  * 미등록/미허용 path 면 null 반환 (호출부가 무시 결정).
  */
 fun resolveNewIntentRoute(uri: Uri): NavRoute? {
+    // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태) — 무시.
+    if (uri.isFriendInvite()) return null
     val route = uri.toNavRoute()
     if (route.path !in EXTERNAL_ALLOWED_PATHS || appRouteByPath[route.path] == null) {
         Timber.tag(TAG).w("허용되지 않은 딥링크 무시: path=%s", route.path)

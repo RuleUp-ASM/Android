@@ -55,7 +55,7 @@
                     android:host="app" />
             </intent-filter>
 
-            <!-- App Links: 감시자 초대 링크 https://android.ruleup.co.kr/inv/{code}.
+            <!-- App Links: 감시자 초대 /w/{token} · 친구 초대 /inv/{code} (경로 분리 합의).
                  autoVerify 검증은 설치 시점에 /.well-known/assetlinks.json 으로 수행된다.
                  앱 미설치 유저는 같은 URL이 웹 랜딩(스토어 안내)으로 열린다. -->
             <intent-filter android:autoVerify="true">
@@ -64,6 +64,10 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
+                <data
+                    android:scheme="https"
+                    android:host="android.ruleup.co.kr"
+                    android:pathPrefix="/w" />
                 <data
                     android:scheme="https"
                     android:host="android.ruleup.co.kr"
