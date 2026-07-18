@@ -7,6 +7,7 @@ import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
 import com.ruleup.android_ruleup.debug.DebugLogTree
+import com.ruleup.android_ruleup.push.PushTokenRegistrar
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.verification.domain.repository.SyncScheduler
 import com.ruleup.verification.domain.usecase.RegisterGeofencesUseCase
@@ -43,6 +44,10 @@ class App :
     // 콜드스타트 지오펜스 reconcile(명세 §2.3): 로컬 보존 목표를 OS 에 재등록해 등록 실패·휘발을 보정한다.
     @Inject
     lateinit var registerGeofences: RegisterGeofencesUseCase
+
+    // FCM 토큰 서버 등록(기기 1대 = 토큰 1개 upsert). 앱 시작 + onNewToken 경로가 공유한다.
+    @Inject
+    lateinit var pushTokenRegistrar: PushTokenRegistrar
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -83,6 +88,11 @@ class App :
                 runCatching { submitDeviceIntro() }
                     .onFailure { Timber.tag("VerificationIntro").w(it, "Phase 0 인트로 전송 실패") }
             }
+        }
+
+        // FCM 토큰 등록(로그인 상태 upsert — PushTokenRegistrar 내부에서 판단). 실패는 다음 시작/onNewToken 이 보정.
+        appScope.launch {
+            pushTokenRegistrar.registerCurrentToken()
         }
     }
 }

@@ -135,6 +135,10 @@ dependencies {
     // KakaoMapSdk.init(앱키) 호출용. 지도 렌더링은 :core:map.
     implementation(libs.kakao.map)
 
+    // FCM 수신(공지 fan-out 등) + 토큰 등록. google-services 설정은 위 조건부 플러그인과 공유한다.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+
     implementation(libs.timber)
     // 프레임 jank 측정(JankStats). 디버그 빌드에서만 트래킹 → Timber 로 로깅(디버그 오버레이 표시).
     implementation(libs.androidx.metrics.performance)

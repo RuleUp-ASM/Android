@@ -90,6 +90,15 @@
             </intent-filter>
         </activity-alias>
 
+        <!-- FCM 수신(공지 fan-out 등 Push Outbox 메시지) → 시스템 알림 + 딥링크 진입. -->
+        <service
+            android:name=".push.RuleUpMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
         <!-- WorkManager 기본 이니셜라이저 제거 → App(Configuration.Provider)로 on-demand 초기화.
              Metro 주입 WorkerFactory 를 쓰기 위함(명세 §3). -->
         <provider
