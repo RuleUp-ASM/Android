@@ -29,6 +29,8 @@ private val EXTERNAL_ALLOWED_PATHS =
         AppRoutes.VERIFICATION_PROGRESS,
         // 감시자 초대 수락(카카오톡 초대 카드 링크). 토큰 검증·상태 변경은 서버가 담당한다.
         AppRoutes.WATCHER_INVITATION,
+        // 공지 푸시(NOTICE_CREATED) 탭 진입. 조회 화면이며 멤버 여부·읽음 처리는 서버가 판정한다.
+        AppRoutes.CHALLENGE_NOTICE_DETAIL,
     )
 
 /** App Links 초대 링크(https://android.ruleup.co.kr/inv/{token})의 첫 path 세그먼트. */

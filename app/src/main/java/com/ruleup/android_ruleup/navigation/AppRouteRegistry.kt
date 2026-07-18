@@ -210,6 +210,20 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = ChallengeNoticeDetailPage.PATH,
+            // 공지 푸시(NOTICE_CREATED) 콜드스타트 진입: 뒤로가기가 방 홈 → 홈으로 흐르게 스택을 구성한다.
+            syntheticStack = { args ->
+                listOf(
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(
+                        ChallengeDetailPage.PATH,
+                        mapOf(
+                            ChallengeDetailPage.ARG_CHALLENGE_ID to
+                                args[ChallengeNoticeDetailPage.ARG_CHALLENGE_ID].orEmpty(),
+                        ),
+                    ),
+                    GenericNavKey(ChallengeNoticeDetailPage.PATH, args),
+                )
+            },
             render = { args ->
                 NoticeDetailScreen(
                     challengeId = args[ChallengeNoticeDetailPage.ARG_CHALLENGE_ID].orEmpty(),
