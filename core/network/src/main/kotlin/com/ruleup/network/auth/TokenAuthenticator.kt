@@ -60,6 +60,14 @@ class TokenAuthenticator
                     }
 
                 if (newToken == null) {
+                    // 동시 갱신 레이스: 다른 경로(예: 콜드스타트 AutoLogin)가 이미 refreshToken 을 회전시켜
+                    // 성공했다면, 이 요청이 쓴 refreshToken 은 낡아 401 이 된다. 저장된 refreshToken 이
+                    // 바뀌었으면 세션은 유효하므로 정리하지 않고 최신 accessToken 으로 재시도한다.
+                    val latestAccess = tokenRepository.cachedAccessToken()
+                    val latestRefresh = runBlocking { tokenRepository.getRefreshToken() }
+                    if (!latestAccess.isNullOrBlank() && latestRefresh != null && latestRefresh != refreshToken) {
+                        return response.retryWith(latestAccess)
+                    }
                     // 세션 만료: 토큰 정리 → isLoggedIn Flow 가 false 로 전이 → 로그인 화면으로 라우팅.
                     Timber.tag(TAG).i("세션 만료 — 로컬 토큰 정리")
                     runBlocking { tokenRepository.clear() }

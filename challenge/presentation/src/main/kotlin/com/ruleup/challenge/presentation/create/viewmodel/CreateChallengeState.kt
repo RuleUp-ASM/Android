@@ -72,7 +72,9 @@ data class CreateChallengeState(
                 coverImageUri = null,
                 category = null,
                 participationType = ParticipationType.SOLO,
-                minMannerTemperature = 65,
+                // 최저값(MANNER_MIN)은 "제한 없음"으로 취급해 서버로 null 을 보낸다(생성 시).
+                // 기본을 최저로 두어, 생성자 본인 온도보다 높은 기준이 기본값으로 강제돼 생성이 막히던 문제를 피한다.
+                minMannerTemperature = MANNER_MIN,
                 repeatDays = emptyList(),
                 startDate = "",
                 durationDays = 14,
