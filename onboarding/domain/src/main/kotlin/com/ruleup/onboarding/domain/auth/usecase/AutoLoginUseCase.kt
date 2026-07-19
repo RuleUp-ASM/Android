@@ -20,8 +20,19 @@ class AutoLoginUseCase
         suspend operator fun invoke(): Boolean {
             val refreshToken = tokenRepository.getRefreshToken() ?: return false
             return runCatching { authRepository.refreshToken(refreshToken) }
-                .onSuccess { tokenRepository.saveTokens(it) }
-                .onFailure { tokenRepository.clear() }
-                .isSuccess
+                .fold(
+                    onSuccess = { tokenRepository.saveTokens(it); true },
+                    onFailure = {
+                        // 콜드스타트 동시 갱신 레이스: 인터셉터(TokenAuthenticator)가 이미 refreshToken 을
+                        // 회전시켰다면 이쪽 요청은 낡은 토큰이라 실패한다. 이때 세션은 유효하므로 정리하지 않는다.
+                        val latest = tokenRepository.getRefreshToken()
+                        if (latest != null && latest != refreshToken) {
+                            true
+                        } else {
+                            tokenRepository.clear()
+                            false
+                        }
+                    },
+                )
         }
     }

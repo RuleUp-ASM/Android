@@ -99,8 +99,10 @@ fun challengePermissionsGranted(
 private fun androidPermission(token: String): String? =
     when (token.uppercase()) {
         "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> Manifest.permission.ACCESS_FINE_LOCATION
+        "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> Manifest.permission.ACCESS_BACKGROUND_LOCATION
         "ACTIVITY_RECOGNITION", "PHYSICAL_ACTIVITY" -> Manifest.permission.ACTIVITY_RECOGNITION
         "CAMERA", "PHOTO" -> Manifest.permission.CAMERA
+        // PACKAGE_USAGE_STATS 등 특수 접근(런타임 권한 아님)은 여기서 매핑하지 않는다(별도 설정 화면 필요).
         else -> null
     }
 

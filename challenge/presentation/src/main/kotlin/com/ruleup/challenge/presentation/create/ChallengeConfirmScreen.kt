@@ -540,25 +540,29 @@ private fun MannerTemperatureSection(
                     )
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
+                    // 최저값은 "제한 없음"(기준 미설정)을 의미한다 — 생성 시 서버로 null 이 전송된다.
+                    val noLimit = shown <= CreateChallengeState.MANNER_MIN
                     Text(
-                        "$shown",
+                        if (noLimit) "제한 없음" else "$shown",
                         style =
                             TextStyle(
                                 brush =
                                     Brush.horizontalGradient(
                                         listOf(RuleUpPalette.Indigo500, RuleUpPalette.Violet500),
                                     ),
-                                fontSize = 30.sp,
+                                fontSize = if (noLimit) 20.sp else 30.sp,
                                 fontWeight = FontWeight.Bold,
                             ),
                     )
-                    Text(
-                        "℃",
-                        color = RuleUpTheme.colors.brand,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 3.dp),
-                    )
+                    if (!noLimit) {
+                        Text(
+                            "℃",
+                            color = RuleUpTheme.colors.brand,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 3.dp),
+                        )
+                    }
                 }
             }
 

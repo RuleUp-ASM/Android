@@ -305,7 +305,14 @@ class CreateChallengeViewModel
                     imageUrl = null,
                     category = category,
                     participationType = state.participationType,
-                    minMannerTemperature = if (isGroup) state.minMannerTemperature.toDouble() else null,
+                    // 그룹이라도 최저값(제한 없음)이면 null 을 보낸다. 서버는 기준을 생성자 본인 온도 이하로만
+                    // 허용하므로, 최저값을 실제 온도로 보내면(예: 37 > 신규 유저 36.5) 항상 400 이 된다.
+                    minMannerTemperature =
+                        if (isGroup && state.minMannerTemperature > CreateChallengeState.MANNER_MIN) {
+                            state.minMannerTemperature.toDouble()
+                        } else {
+                            null
+                        },
                     repeatDays = state.repeatDays,
                     durationDays = state.durationDays,
                     startDate = state.startDate,
