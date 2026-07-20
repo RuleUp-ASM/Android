@@ -1,7 +1,6 @@
 package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
-import com.ruleup.challenge.data.dto.MemberDecisionRequest
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
@@ -13,11 +12,8 @@ import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
-import com.ruleup.challenge.domain.entity.MemberAction
-import com.ruleup.challenge.domain.entity.MemberStatus
-import com.ruleup.challenge.domain.entity.MemberStatusFilter
+import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MyChallenge
-import com.ruleup.challenge.domain.entity.MyChallengeScope
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
@@ -103,39 +99,21 @@ class ChallengeRepositoryImpl
             api.delete(challengeId).throwOnError()
         }
 
-        override suspend fun join(challengeId: String): MemberStatus =
+        override suspend fun join(challengeId: String): JoinResult =
             api
                 .join(challengeId)
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun decideMember(
-            challengeId: String,
-            userId: String,
-            action: MemberAction,
-        ): MemberStatus =
+        override suspend fun getMembers(challengeId: String): ChallengeMembers =
             api
-                .decideMember(
-                    challengeId = challengeId,
-                    userId = userId,
-                    request = MemberDecisionRequest(action = action.value),
-                ).getOrThrow()
+                .getMembers(challengeId)
+                .getOrThrow()
                 .toDomain()
 
-        override suspend fun getMembers(
-            challengeId: String,
-            status: MemberStatusFilter,
-        ): ChallengeMembers =
+        override suspend fun getMyChallenges(): List<MyChallenge> =
             api
-                .getMembers(
-                    challengeId = challengeId,
-                    status = status.value,
-                ).getOrThrow()
-                .toDomain()
-
-        override suspend fun getMyChallenges(scope: MyChallengeScope): List<MyChallenge> =
-            api
-                .getMyChallenges(scope.value)
+                .getMyChallenges()
                 .getOrThrow()
                 .toDomain()
     }

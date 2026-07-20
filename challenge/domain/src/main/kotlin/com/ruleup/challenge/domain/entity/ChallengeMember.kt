@@ -1,24 +1,5 @@
 package com.ruleup.challenge.domain.entity
 
-/** 멤버 상태 (명세 memberStatus). */
-enum class MemberStatus(
-    val value: String,
-) {
-    // 운영자 승인 대기
-    PENDING("PENDING"),
-
-    // 참여 확정
-    ACTIVE("ACTIVE"),
-
-    // 거절/탈퇴
-    REMOVED("REMOVED"),
-    ;
-
-    companion object {
-        fun fromValue(value: String?): MemberStatus? = entries.find { it.value == value }
-    }
-}
-
 /** 멤버 역할 (명세 role). OWNER(방장) / MANAGER(공동 관리자) / MEMBER(일반) / NONE(비멤버). */
 enum class MemberRole(
     val value: String,
@@ -38,24 +19,7 @@ enum class MemberRole(
     }
 }
 
-/** 참여 승인/거절 액션 (명세 3.7 action). */
-enum class MemberAction(
-    val value: String,
-) {
-    APPROVE("APPROVE"),
-    REJECT("REJECT"),
-}
-
-/** 멤버 목록 조회 필터 (명세 3.8 status 쿼리). PENDING/ALL 은 OWNER만. */
-enum class MemberStatusFilter(
-    val value: String,
-) {
-    ACTIVE("ACTIVE"),
-    PENDING("PENDING"),
-    ALL("ALL"),
-}
-
-/** 챌린지 멤버 (명세 3.8 members[]). */
+/** 챌린지 멤버 (명세 GET members[]). 승인제 폐기로 목록엔 확정 멤버만 — 상태 필드 없음. */
 data class ChallengeMember(
     val userId: String,
     // 익명이면 마스킹
@@ -63,15 +27,24 @@ data class ChallengeMember(
     // 익명이면 null
     val profileImageUrl: String?,
     val role: MemberRole,
-    val status: MemberStatus,
     val mannerTemperature: Double,
-    // ISO datetime, 참여(또는 신청) 시각
+    // ISO datetime, 참여 시각
     val joinedAt: String,
 )
 
-/** 챌린지 멤버 목록 (명세 3.8 response). */
+/** 챌린지 멤버 목록 (명세 GET members response). */
 data class ChallengeMembers(
     val challengeId: String,
     val participantCount: Int,
+    // 최대 참여 인원
+    val maxParticipants: Int,
     val members: List<ChallengeMember>,
+)
+
+/**
+ * 챌린지 가입 결과 (명세 POST members). 승인제 폐기로 성공 시 항상 ACTIVE 이므로 상태는 생략하고,
+ * 자동 인증 챌린지의 가입 직후 권한 요청 플로우를 위해 [requiredPermissions] 만 전달한다(수동이면 빈 목록).
+ */
+data class JoinResult(
+    val requiredPermissions: List<String>,
 )

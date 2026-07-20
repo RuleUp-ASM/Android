@@ -11,8 +11,8 @@ import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
+import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MemberRole
-import com.ruleup.challenge.domain.entity.MemberStatus
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
@@ -248,16 +248,19 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
             ),
     )
 
-// ---------- 3.6 / 3.7 멤버 상태 ----------
+// ---------- 챌린지 참여 신청 (POST members) ----------
 @Serializable
-data class MemberStatusResponse(
+data class JoinResponse(
+    // 승인제 폐기로 항상 ACTIVE — 앱은 분기하지 않으므로 참고용으로만 둔다.
     @SerialName("memberStatus")
     val memberStatus: String? = null,
+    @SerialName("requiredPermissions")
+    val requiredPermissions: List<String>? = null,
 )
 
-internal fun MemberStatusResponse.toDomain(): MemberStatus = MemberStatus.fromValue(memberStatus).requireField("memberStatus")
+internal fun JoinResponse.toDomain(): JoinResult = JoinResult(requiredPermissions = requiredPermissions.orEmpty())
 
-// ---------- 3.8 멤버 목록 ----------
+// ---------- 멤버 목록 (GET members) ----------
 @Serializable
 data class ChallengeMemberResponse(
     @SerialName("userId")
@@ -268,8 +271,6 @@ data class ChallengeMemberResponse(
     val profileImageUrl: String? = null,
     @SerialName("role")
     val role: String? = null,
-    @SerialName("status")
-    val status: String? = null,
     @SerialName("mannerTemperature")
     val mannerTemperature: Double? = null,
     @SerialName("joinedAt")
@@ -282,7 +283,6 @@ internal fun ChallengeMemberResponse.toDomain(): ChallengeMember =
         nickname = nickname.requireField("nickname"),
         profileImageUrl = profileImageUrl,
         role = MemberRole.fromValue(role) ?: MemberRole.MEMBER,
-        status = MemberStatus.fromValue(status) ?: MemberStatus.ACTIVE,
         mannerTemperature = mannerTemperature ?: 36.5,
         joinedAt = joinedAt.requireField("joinedAt"),
     )
@@ -293,6 +293,8 @@ data class ChallengeMembersResponse(
     val challengeId: String? = null,
     @SerialName("participantCount")
     val participantCount: Int? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
     @SerialName("members")
     val members: List<ChallengeMemberResponse>? = null,
 )
@@ -301,6 +303,7 @@ internal fun ChallengeMembersResponse.toDomain(): ChallengeMembers =
     ChallengeMembers(
         challengeId = challengeId.requireField("challengeId"),
         participantCount = participantCount ?: 0,
+        maxParticipants = maxParticipants ?: 0,
         members = members?.map { it.toDomain() }.orEmpty(),
     )
 
@@ -332,6 +335,8 @@ data class MyChallengeResponse(
     val anonymity: String? = null,
     @SerialName("participantCount")
     val participantCount: Int? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
     @SerialName("minMannerTemperature")
     val minMannerTemperature: Double? = null,
     @SerialName("repeatDays")
@@ -342,8 +347,8 @@ data class MyChallengeResponse(
     val startDate: String? = null,
     @SerialName("endDate")
     val endDate: String? = null,
-    @SerialName("memberStatus")
-    val memberStatus: String? = null,
+    @SerialName("myRole")
+    val myRole: String? = null,
 )
 
 internal fun MyChallengeResponse.toDomain(): MyChallenge =
@@ -357,12 +362,13 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         anonymity = Anonymity.fromValue(anonymity) ?: Anonymity.REAL,
         participantCount = participantCount ?: 0,
+        maxParticipants = maxParticipants ?: 0,
         minMannerTemperature = minMannerTemperature,
         repeatDays = repeatDays.toRepeatDays(),
         durationDays = durationDays ?: 0,
         startDate = startDate.requireField("startDate"),
         endDate = endDate.requireField("endDate"),
-        memberStatus = MemberStatus.fromValue(memberStatus) ?: MemberStatus.ACTIVE,
+        myRole = MemberRole.fromValue(myRole) ?: MemberRole.MEMBER,
     )
 
 @Serializable
