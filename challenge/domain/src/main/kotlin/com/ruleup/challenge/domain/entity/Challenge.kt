@@ -34,11 +34,11 @@ enum class RepeatDay(
     }
 }
 
-/** 챌린지 상태 (명세 status). 생성 직후 RECRUITING, 시작 시 ACTIVE. */
+/** 챌린지 상태 (명세 status). 시작 전 UPCOMING, 시작 시 ACTIVE, 종료 시 COMPLETED. */
 enum class ChallengeStatus(
     val value: String,
 ) {
-    RECRUITING("RECRUITING"),
+    UPCOMING("UPCOMING"),
     ACTIVE("ACTIVE"),
     COMPLETED("COMPLETED"),
     ;

@@ -19,13 +19,19 @@ enum class MemberStatus(
     }
 }
 
-/** 멤버 역할 (명세 3.8 role). */
+/** 멤버 역할 (명세 role). OWNER(방장) / MANAGER(공동 관리자) / MEMBER(일반) / NONE(비멤버). */
 enum class MemberRole(
     val value: String,
 ) {
     OWNER("OWNER"),
+    MANAGER("MANAGER"),
     MEMBER("MEMBER"),
+    NONE("NONE"),
     ;
+
+    /** 방 관리 권한(공지 작성·수정·고정 등) 보유 여부. 방장·공동 관리자만 true. */
+    val canManage: Boolean
+        get() = this == OWNER || this == MANAGER
 
     companion object {
         fun fromValue(value: String?): MemberRole? = entries.find { it.value == value }

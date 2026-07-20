@@ -87,7 +87,7 @@ class CreateChallengeUseCaseTest {
         verification: VerificationConfig?,
     ) = Challenge(
         challengeId = challengeId,
-        status = ChallengeStatus.RECRUITING,
+        status = ChallengeStatus.UPCOMING,
         title = title,
         description = null,
         imageUrl = null,
