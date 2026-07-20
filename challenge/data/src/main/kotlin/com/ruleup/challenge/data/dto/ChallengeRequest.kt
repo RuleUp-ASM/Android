@@ -119,10 +119,3 @@ internal fun ChallengeUpdate.toRequest(): UpdateChallengeRequest =
         reward = reward?.toDto(),
         minMannerTemperature = minMannerTemperature,
     )
-
-// ---------- 3.7 참여 승인/거절 ----------
-@Serializable
-data class MemberDecisionRequest(
-    @SerialName("action")
-    val action: String? = null,
-)

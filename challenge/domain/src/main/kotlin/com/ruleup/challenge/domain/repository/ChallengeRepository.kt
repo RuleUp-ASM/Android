@@ -7,11 +7,8 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
-import com.ruleup.challenge.domain.entity.MemberAction
-import com.ruleup.challenge.domain.entity.MemberStatus
-import com.ruleup.challenge.domain.entity.MemberStatusFilter
+import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MyChallenge
-import com.ruleup.challenge.domain.entity.MyChallengeScope
 
 interface ChallengeRepository {
     /**
@@ -51,29 +48,18 @@ interface ChallengeRepository {
     suspend fun delete(challengeId: String)
 
     /**
-     * 챌린지 참여 신청(명세 3.6). 그룹/기준 미충족은 PENDING, 솔로/기준 미설정은 ACTIVE.
+     * 챌린지 참여 신청(명세 POST members). 승인 없이 검증 통과 시 즉시 ACTIVE.
+     * 자동 인증 챌린지면 [JoinResult.requiredPermissions] 로 가입 직후 권한 요청을 유도한다.
      */
-    suspend fun join(challengeId: String): MemberStatus
-
-    /** 참여 승인/거절(운영자, 명세 3.7). */
-    suspend fun decideMember(
-        challengeId: String,
-        userId: String,
-        action: MemberAction,
-    ): MemberStatus
+    suspend fun join(challengeId: String): JoinResult
 
     /**
-     * 챌린지 멤버 목록 조회(명세 3.8). 기본 ACTIVE, PENDING/ALL 은 OWNER만.
+     * 챌린지 멤버 목록 조회(명세 GET members). 승인제 폐기로 status 필터 없이 확정 멤버만 반환한다.
      */
-    suspend fun getMembers(
-        challengeId: String,
-        status: MemberStatusFilter = MemberStatusFilter.ACTIVE,
-    ): ChallengeMembers
+    suspend fun getMembers(challengeId: String): ChallengeMembers
 
     /**
-     * 내가 참여 중인 챌린지 목록 조회(명세: GET /challenges). 페이지네이션 없이 전량 반환하며,
-     * 항목마다 내 멤버십 상태(memberStatus)를 포함한다. 기본 [MyChallengeScope.ACTIVE],
-     * [MyChallengeScope.ALL] 은 승인 대기(PENDING) 멤버십까지 포함한다.
+     * 내가 참여 중인 챌린지 목록 조회(명세: GET /challenges). 승인제 폐기로 scope 없이 전량 반환한다.
      */
-    suspend fun getMyChallenges(scope: MyChallengeScope = MyChallengeScope.ACTIVE): List<MyChallenge>
+    suspend fun getMyChallenges(): List<MyChallenge>
 }

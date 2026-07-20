@@ -150,18 +150,9 @@ class CreateChallengeUseCaseTest {
 
         override suspend fun join(challengeId: String) = throw NotImplementedError()
 
-        override suspend fun decideMember(
-            challengeId: String,
-            userId: String,
-            action: com.ruleup.challenge.domain.entity.MemberAction,
-        ) = throw NotImplementedError()
+        override suspend fun getMembers(challengeId: String) = throw NotImplementedError()
 
-        override suspend fun getMembers(
-            challengeId: String,
-            status: com.ruleup.challenge.domain.entity.MemberStatusFilter,
-        ) = throw NotImplementedError()
-
-        override suspend fun getMyChallenges(scope: com.ruleup.challenge.domain.entity.MyChallengeScope) = throw NotImplementedError()
+        override suspend fun getMyChallenges() = throw NotImplementedError()
     }
 
     private class RecordingAnalyticsLogger : AnalyticsLogger {

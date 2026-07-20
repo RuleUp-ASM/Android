@@ -10,8 +10,7 @@ import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeResponse
 import com.ruleup.challenge.data.dto.ExploreChallengesResponse
-import com.ruleup.challenge.data.dto.MemberDecisionRequest
-import com.ruleup.challenge.data.dto.MemberStatusResponse
+import com.ruleup.challenge.data.dto.JoinResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
 import com.ruleup.challenge.data.dto.NoticeDetailResponse
 import com.ruleup.challenge.data.dto.NoticesResponse
@@ -80,25 +79,16 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<EmptyData>
 
-    // 3.6 챌린지 참여 신청
+    // 챌린지 참여 신청 (승인제 폐기 — 성공 시 즉시 ACTIVE, requiredPermissions 반환)
     @POST("v1/challenges/{challengeId}/members")
     suspend fun join(
         @Path("challengeId") challengeId: String,
-    ): BaseResponse<MemberStatusResponse>
+    ): BaseResponse<JoinResponse>
 
-    // 3.7 참여 승인/거절 (운영자)
-    @PATCH("v1/challenges/{challengeId}/members/{userId}")
-    suspend fun decideMember(
-        @Path("challengeId") challengeId: String,
-        @Path("userId") userId: String,
-        @Body request: MemberDecisionRequest,
-    ): BaseResponse<MemberStatusResponse>
-
-    // 3.8 멤버 목록 조회
+    // 멤버 목록 조회 (승인제 폐기 — status 필터 없음)
     @GET("v1/challenges/{challengeId}/members")
     suspend fun getMembers(
         @Path("challengeId") challengeId: String,
-        @Query("status") status: String? = null,
     ): BaseResponse<ChallengeMembersResponse>
 
     // 3.9 챌린지 대표 이미지 업로드 (생성/수정 전 호출, challengeId 불필요)
@@ -108,11 +98,9 @@ interface ChallengeApi {
         @Part image: MultipartBody.Part,
     ): BaseResponse<ChallengeImageResponse>
 
-    // 내 챌린지 목록 조회 (GET /challenges): scope 기본 ACTIVE, ALL 은 PENDING 포함
+    // 내 챌린지 목록 조회 (GET /challenges): 승인제 폐기로 scope 없이 전량 반환
     @GET("v1/challenges")
-    suspend fun getMyChallenges(
-        @Query("scope") scope: String? = null,
-    ): BaseResponse<MyChallengesResponse>
+    suspend fun getMyChallenges(): BaseResponse<MyChallengesResponse>
 
     // 탐색: 실시간 인기 챌린지 조회 (파라미터 없음, 서버가 Top 20 반환 · 홈은 상위 일부 사용)
     @GET("v1/challenges/trending")
