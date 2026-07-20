@@ -13,9 +13,12 @@ import com.ruleup.verification.data.dto.KakaoKeywordResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
 import com.ruleup.verification.data.dto.MyLocationResponse
+import com.ruleup.verification.data.dto.MyScreenAppsResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
+import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
+import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
 import com.ruleup.verification.data.dto.VerificationDetailResponse
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.FallbackLimitExceededException
@@ -127,6 +130,13 @@ class VerificationRepositoryImplTest {
         ): BaseResponse<ChallengeSetupResponse> = error("unused")
 
         override suspend fun getMyLocation(challengeId: String): BaseResponse<MyLocationResponse> = error("unused")
+
+        override suspend fun getMyScreenApps(challengeId: String): BaseResponse<MyScreenAppsResponse> = error("unused")
+
+        override suspend fun updateMyScreenApps(
+            challengeId: String,
+            request: UpdateScreenAppsRequest,
+        ): BaseResponse<UpdateScreenAppsResponse> = error("unused")
     }
 
     private class FakeKakaoLocalApi : KakaoLocalApi {

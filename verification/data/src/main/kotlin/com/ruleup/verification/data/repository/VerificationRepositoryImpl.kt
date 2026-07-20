@@ -5,8 +5,10 @@ import com.ruleup.network.dto.getOrThrow
 import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.ManualSubmitRequest
+import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.buildChallengeSetupRequest
 import com.ruleup.verification.data.dto.toDomain
+import com.ruleup.verification.data.dto.toDto
 import com.ruleup.verification.data.dto.toPlaceOrNull
 import com.ruleup.verification.data.dto.toRequest
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
@@ -16,14 +18,19 @@ import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.FallbackLimitExceededException
 import com.ruleup.verification.domain.entity.ImageRequiredException
 import com.ruleup.verification.domain.entity.InvalidAnchorException
+import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
+import com.ruleup.verification.domain.entity.MyScreenApps
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
+import com.ruleup.verification.domain.entity.ScreenApp
+import com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException
+import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
@@ -110,6 +117,39 @@ class VerificationRepositoryImpl
                 if (e.code == CODE_GEOFENCE_NOT_CONFIGURED) null else throw e
             }
 
+        override suspend fun getMyScreenApps(challengeId: String): MyScreenApps? =
+            try {
+                api
+                    .getMyScreenApps(challengeId)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 대상 앱 미설정(400)은 정상 상태이므로 null 로 내려 호출자가 "등록 안 됨"으로 분기한다.
+                // 401/403 등은 그대로 전파해 화면이 메시지를 노출한다.
+                if (e.code == CODE_SCREENTIME_NOT_CONFIGURED) null else throw e
+            }
+
+        override suspend fun updateMyScreenApps(
+            challengeId: String,
+            apps: List<ScreenApp>,
+        ): ScreenAppsUpdate =
+            try {
+                api
+                    .updateMyScreenApps(
+                        challengeId = challengeId,
+                        request = UpdateScreenAppsRequest(apps.map { it.toDto() }),
+                    ).getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 429 쿨다운·400 형식 위반은 화면이 안내로 분기하도록 도메인 예외로 변환(명세 my-screen-apps).
+                // 그 외(403/401 등)는 그대로 전파한다.
+                when (e.code) {
+                    CODE_SCREENTIME_CHANGE_COOLDOWN -> throw ScreenAppChangeCooldownException()
+                    CODE_INVALID_APP -> throw InvalidScreenAppException()
+                    else -> throw e
+                }
+            }
+
         override suspend fun submitManual(
             challengeId: String,
             method: ManualMethod,
@@ -172,5 +212,8 @@ class VerificationRepositoryImpl
             private const val CODE_FALLBACK_LIMIT_EXCEEDED = "FALLBACK_LIMIT_EXCEEDED"
             private const val CODE_INVALID_ANCHOR = "INVALID_ANCHOR"
             private const val CODE_GEOFENCE_NOT_CONFIGURED = "GEOFENCE_NOT_CONFIGURED"
+            private const val CODE_SCREENTIME_NOT_CONFIGURED = "SCREENTIME_NOT_CONFIGURED"
+            private const val CODE_SCREENTIME_CHANGE_COOLDOWN = "SCREENTIME_CHANGE_COOLDOWN"
+            private const val CODE_INVALID_APP = "INVALID_APP"
         }
     }
