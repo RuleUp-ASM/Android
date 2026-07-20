@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Slider
@@ -93,6 +94,12 @@ fun ChallengeConfirmContent(
             item { CategorySection(state = state) }
             item { ParticipationSection(selected = state.participationType, onIntent = onIntent) }
             if (state.participationType == ParticipationType.GROUP) {
+                item {
+                    MaxParticipantsSection(
+                        count = state.maxParticipants,
+                        onIntent = onIntent,
+                    )
+                }
                 item {
                     MannerTemperatureSection(
                         temperature = state.minMannerTemperature,
@@ -480,6 +487,82 @@ private val mannerLevels =
         MannerLevel("높음", 65..79, 65, RuleUpPalette.Indigo500.copy(alpha = 0.15f), RuleUpPalette.Indigo500),
         MannerLevel("최고", 80..99, 85, RuleUpPalette.Green500.copy(alpha = 0.15f), RuleUpPalette.Green500),
     )
+
+/** 그룹 전용 최대 참여 인원 스텝퍼(− n +). 범위는 [CreateChallengeState] 상수로 클램프한다. */
+@Composable
+private fun MaxParticipantsSection(
+    count: Int,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionLabel(text = "최대 참여 인원") {
+            SmallBadge(
+                text = "그룹 전용",
+                background = RuleUpTheme.colors.brandSoft,
+                textColor = RuleUpTheme.colors.brandStrong,
+            )
+        }
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RuleUpTheme.shapes.large)
+                    .background(RuleUpTheme.colors.surface)
+                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "방장 포함 인원",
+                color = RuleUpTheme.colors.textSecondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                StepperButton(symbol = "−", enabled = count > CreateChallengeState.GROUP_PARTICIPANTS_MIN) {
+                    onIntent(CreateChallengeIntent.SetMaxParticipants(count - 1))
+                }
+                Text(
+                    "$count",
+                    color = RuleUpTheme.colors.textPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                StepperButton(symbol = "+", enabled = count < CreateChallengeState.GROUP_PARTICIPANTS_MAX) {
+                    onIntent(CreateChallengeIntent.SetMaxParticipants(count + 1))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepperButton(
+    symbol: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .size(32.dp)
+                .clip(CircleShape)
+                .background(if (enabled) RuleUpTheme.colors.brandSoft else RuleUpTheme.colors.surfaceVariant)
+                .then(if (enabled) Modifier.singleClickable(onClick = onClick) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            symbol,
+            color = if (enabled) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textMuted,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
 
 @Composable
 private fun MannerTemperatureSection(

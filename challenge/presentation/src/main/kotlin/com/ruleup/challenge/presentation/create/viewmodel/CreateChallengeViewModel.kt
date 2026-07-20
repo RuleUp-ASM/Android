@@ -67,6 +67,10 @@ class CreateChallengeViewModel
                     dispatch(CreateChallengeReducerEvent.MinMannerChanged(intent.temperature))
                 }
 
+                is CreateChallengeIntent.SetMaxParticipants -> {
+                    dispatch(CreateChallengeReducerEvent.MaxParticipantsChanged(intent.count))
+                }
+
                 is CreateChallengeIntent.ToggleRepeatDay -> {
                     dispatch(CreateChallengeReducerEvent.RepeatDayToggled(intent.day))
                 }
@@ -179,6 +183,16 @@ class CreateChallengeViewModel
                             event.temperature.coerceIn(
                                 CreateChallengeState.MANNER_MIN,
                                 CreateChallengeState.MANNER_MAX,
+                            ),
+                    )
+                }
+
+                is CreateChallengeReducerEvent.MaxParticipantsChanged -> {
+                    state.copy(
+                        maxParticipants =
+                            event.count.coerceIn(
+                                CreateChallengeState.GROUP_PARTICIPANTS_MIN,
+                                CreateChallengeState.GROUP_PARTICIPANTS_MAX,
                             ),
                     )
                 }
@@ -305,6 +319,8 @@ class CreateChallengeViewModel
                     imageUrl = null,
                     category = category,
                     participationType = state.participationType,
+                    // GROUP 필수, SOLO 는 1 고정(명세 MAX_PARTICIPANTS_REQUIRED 예방).
+                    maxParticipants = if (isGroup) state.maxParticipants else 1,
                     // 그룹이라도 최저값(제한 없음)이면 null 을 보낸다. 서버는 기준을 생성자 본인 온도 이하로만
                     // 허용하므로, 최저값을 실제 온도로 보내면(예: 37 > 신규 유저 36.5) 항상 400 이 된다.
                     minMannerTemperature =
@@ -346,14 +362,15 @@ class CreateChallengeViewModel
                     val imageUrl = coverImageUri?.let { uploadChallengeImageUseCase(it) }
                     createChallengeUseCase(form.copy(imageUrl = imageUrl))
                 }.onSuccess { challenge ->
+                    // 생성 응답은 슬림(title·category 생략 가능)하므로 요약은 폼/상태 값으로 채운다.
                     // 진행률 API 반영 전이라도 홈에 즉시 노출되도록 로컬 스토어에 반영한다.
                     myChallengeStore.add(
                         MyChallengeSummary(
                             challengeId = challenge.challengeId,
-                            title = challenge.title,
-                            category = challenge.category,
-                            participationType = challenge.participationType,
-                            durationDays = challenge.durationDays,
+                            title = state.title.trim(),
+                            category = category,
+                            participationType = state.participationType,
+                            durationDays = state.durationDays,
                         ),
                     )
                     // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.

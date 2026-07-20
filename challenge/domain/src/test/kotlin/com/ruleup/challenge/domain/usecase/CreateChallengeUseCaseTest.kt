@@ -7,6 +7,7 @@ import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.ModerationStatus
 import com.ruleup.challenge.domain.entity.ParamValue
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.Penalty
@@ -93,12 +94,14 @@ class CreateChallengeUseCaseTest {
         imageUrl = null,
         category = InterestCategory.EXERCISE,
         participationType = ParticipationType.SOLO,
+        maxParticipants = 1,
         minMannerTemperature = null,
         repeatDays = emptyList(),
         durationDays = durationDays,
         startDate = "2026-07-06",
         endDate = "2026-07-13",
         templateId = null,
+        moderationStatus = ModerationStatus.NONE,
         verification = verification,
         params = emptyMap(),
         penalty = Penalty(mannerDeduction = 1.0, snsShare = SnsShare(enabled = false, phone = null), groupShare = false),
@@ -112,6 +115,7 @@ class CreateChallengeUseCaseTest {
             imageUrl = null,
             category = InterestCategory.EXERCISE,
             participationType = ParticipationType.SOLO,
+            maxParticipants = 1,
             minMannerTemperature = null,
             repeatDays = emptyList(),
             durationDays = 7,

@@ -48,6 +48,28 @@ enum class ChallengeStatus(
     }
 }
 
+/**
+ * 이미지 모더레이션 상태 (명세 moderationStatus). 이름 모더레이션은 폐기, 이미지 전용.
+ * NONE(이미지 없음·즉시 모집) / PENDING_REVIEW(검수 중·모집 차단) / APPROVED / REJECTED.
+ */
+enum class ModerationStatus(
+    val value: String,
+) {
+    NONE("NONE"),
+    PENDING_REVIEW("PENDING_REVIEW"),
+    APPROVED("APPROVED"),
+    REJECTED("REJECTED"),
+    ;
+
+    /** 모집 차단 여부 — 검수 중이거나 거부됨. */
+    val blocksRecruit: Boolean
+        get() = this == PENDING_REVIEW || this == REJECTED
+
+    companion object {
+        fun fromValue(value: String?): ModerationStatus? = entries.find { it.value == value }
+    }
+}
+
 /** 익명/실명 (명세 CH-10 anonymity). */
 enum class Anonymity(
     val value: String,
@@ -129,6 +151,8 @@ data class Challenge(
     val imageUrl: String?,
     val category: InterestCategory?,
     val participationType: ParticipationType,
+    // 최대 참여 인원 (SOLO 는 1)
+    val maxParticipants: Int,
     // 그룹만
     val minMannerTemperature: Double?,
     val repeatDays: List<RepeatDay>,
@@ -139,6 +163,8 @@ data class Challenge(
     val endDate: String,
     // 매칭된 루틴 (직접 입력이면 null)
     val templateId: Int?,
+    // 이미지 모더레이션 상태 (모집 차단 판정용)
+    val moderationStatus: ModerationStatus,
     // 인증 스냅샷 (생성 시점 고정)
     val verification: VerificationConfig?,
     // 목표값 (예: {"distance_km": 5})
@@ -158,6 +184,8 @@ data class ChallengeForm(
     val imageUrl: String?,
     val category: InterestCategory,
     val participationType: ParticipationType,
+    // 최대 참여 인원 (GROUP 필수, SOLO 는 1)
+    val maxParticipants: Int,
     // 그룹 참여 기준
     val minMannerTemperature: Double?,
     val repeatDays: List<RepeatDay>,
@@ -182,6 +210,8 @@ data class ChallengeForm(
 data class ChallengeUpdate(
     val title: String? = null,
     val description: String? = null,
+    // 명시적 null = 이미지 제거, 생략(미전달) = 미변경. 변경 시 서버가 재모더레이션.
+    val imageUrl: String? = null,
     val category: InterestCategory? = null,
     val repeatDays: List<RepeatDay>? = null,
     val durationDays: Int? = null,
@@ -191,4 +221,6 @@ data class ChallengeUpdate(
     val penalty: Penalty? = null,
     val reward: Reward? = null,
     val minMannerTemperature: Double? = null,
+    // 언제든(시작 전·진행 중) 수정 가능. 현재 인원 미만 축소 불가(서버 400).
+    val maxParticipants: Int? = null,
 )

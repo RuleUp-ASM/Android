@@ -32,6 +32,10 @@ sealed interface CreateChallengeIntent : MviIntent {
         val temperature: Int,
     ) : CreateChallengeIntent
 
+    data class SetMaxParticipants(
+        val count: Int,
+    ) : CreateChallengeIntent
+
     data class ToggleRepeatDay(
         val day: RepeatDay,
     ) : CreateChallengeIntent

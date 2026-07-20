@@ -133,12 +133,18 @@ fun ChallengeDetailScreen(
             setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
             else -> DetailSetupAction.JOIN
         }
+    // 이미지 모더레이션 미통과(검수 중·거부)면 모집 차단 — CTA 를 안내로 바꾸고 진행을 막는다(명세).
+    val recruitBlocked = state.detail?.moderationStatus?.blocksRecruit == true
     val ctaLabel =
-        when (action) {
-            DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
-            DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
-            DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
-            DetailSetupAction.JOIN -> "참여하기"
+        if (recruitBlocked) {
+            "이미지 검수 중 · 모집 준비 중"
+        } else {
+            when (action) {
+                DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
+                DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
+                DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
+                DetailSetupAction.JOIN -> "참여하기"
+            }
         }
 
     ChallengeDetailContent(
@@ -148,11 +154,15 @@ fun ChallengeDetailScreen(
         onIntent = viewModel::onIntent,
         onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
         onCta = {
-            when (action) {
-                DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
-                DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
-                DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
-                DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            if (recruitBlocked) {
+                messageHelper.showToast("이미지 검수가 끝나면 모집이 시작돼요")
+            } else {
+                when (action) {
+                    DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
+                    DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
+                    DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
+                    DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
+                }
             }
         },
     )

@@ -36,6 +36,8 @@ data class CreateChallengeRequest(
     val category: String? = null,
     @SerialName("participationType")
     val participationType: String? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
     @SerialName("minMannerTemperature")
     val minMannerTemperature: Double? = null,
     @SerialName("repeatDays")
@@ -68,6 +70,7 @@ internal fun ChallengeForm.toRequest(): CreateChallengeRequest =
         imageUrl = imageUrl,
         category = category.value,
         participationType = participationType.value,
+        maxParticipants = maxParticipants,
         minMannerTemperature = minMannerTemperature,
         repeatDays = repeatDays.map { it.value },
         durationDays = durationDays,
@@ -88,6 +91,8 @@ data class UpdateChallengeRequest(
     val title: String? = null,
     @SerialName("description")
     val description: String? = null,
+    @SerialName("imageUrl")
+    val imageUrl: String? = null,
     @SerialName("category")
     val category: String? = null,
     @SerialName("repeatDays")
@@ -104,12 +109,15 @@ data class UpdateChallengeRequest(
     val reward: RewardDto? = null,
     @SerialName("minMannerTemperature")
     val minMannerTemperature: Double? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
 )
 
 internal fun ChallengeUpdate.toRequest(): UpdateChallengeRequest =
     UpdateChallengeRequest(
         title = title,
         description = description,
+        imageUrl = imageUrl,
         category = category?.value,
         repeatDays = repeatDays?.map { it.value },
         durationDays = durationDays,
@@ -118,4 +126,5 @@ internal fun ChallengeUpdate.toRequest(): UpdateChallengeRequest =
         penalty = penalty?.toDto(),
         reward = reward?.toDto(),
         minMannerTemperature = minMannerTemperature,
+        maxParticipants = maxParticipants,
     )
