@@ -3,7 +3,6 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
-import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
@@ -152,7 +151,7 @@ class ChallengeDetailViewModel
             navigationHelper.navigateByRoute(
                 ChallengeNoticesPage(
                     challengeId = id,
-                    canManage = room.myRole == MemberRole.OWNER,
+                    canManage = room.myRole.canManage,
                 ).toRoute(),
             )
         }
@@ -164,7 +163,7 @@ class ChallengeDetailViewModel
                 ChallengeNoticeDetailPage(
                     challengeId = id,
                     noticeId = noticeId,
-                    canManage = room.myRole == MemberRole.OWNER,
+                    canManage = room.myRole.canManage,
                 ).toRoute(),
             )
         }

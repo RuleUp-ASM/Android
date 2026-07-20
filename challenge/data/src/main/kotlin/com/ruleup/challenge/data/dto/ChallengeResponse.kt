@@ -125,7 +125,7 @@ data class ChallengeResponse(
 internal fun ChallengeResponse.toDomain(): Challenge =
     Challenge(
         challengeId = challengeId.requireField("challengeId"),
-        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.RECRUITING,
+        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         title = title.requireField("title"),
         description = description,
         imageUrl = imageUrl,
@@ -220,7 +220,7 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         imageUrl = imageUrl,
         category = InterestCategory.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
-        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.RECRUITING,
+        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         owner =
             ChallengeOwner(
                 nickname = owner?.nickname.requireField("owner.nickname"),
@@ -354,7 +354,7 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         imageUrl = imageUrl,
         category = InterestCategory.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
-        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.RECRUITING,
+        status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         anonymity = Anonymity.fromValue(anonymity) ?: Anonymity.REAL,
         participantCount = participantCount ?: 0,
         minMannerTemperature = minMannerTemperature,
