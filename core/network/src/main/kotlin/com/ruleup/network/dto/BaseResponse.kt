@@ -23,6 +23,9 @@ data class ErrorBody(
     val code: String,
     @SerialName("message")
     val message: String,
+    // rate limit(429) 등에서 재시도까지 남은 초. 없으면 null.
+    @SerialName("retryAfterSeconds")
+    val retryAfterSeconds: Int? = null,
 )
 
 fun <T> BaseResponse<T>.getOrThrow(): T =
@@ -32,6 +35,7 @@ fun <T> BaseResponse<T>.getOrThrow(): T =
         throw ApiException(
             code = error?.code ?: "UNKNOWN",
             message = error?.message ?: "Unknown Error",
+            retryAfterSeconds = error?.retryAfterSeconds,
         )
     }
 
@@ -40,6 +44,7 @@ fun BaseResponse<*>.throwOnError() {
         throw ApiException(
             code = error?.code ?: "UNKNOWN",
             message = error?.message ?: "Unknown Error",
+            retryAfterSeconds = error?.retryAfterSeconds,
         )
     }
 }
@@ -47,6 +52,7 @@ fun BaseResponse<*>.throwOnError() {
 class ApiException(
     val code: String,
     message: String,
+    val retryAfterSeconds: Int? = null,
 ) : Exception(message)
 
 fun <T> T?.requireField(field: String): T =

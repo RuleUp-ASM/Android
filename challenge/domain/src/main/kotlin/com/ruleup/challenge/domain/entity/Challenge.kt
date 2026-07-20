@@ -109,6 +109,9 @@ data class Reward(
  * LLM 기본값 추천 결과 (명세 3.1). 구속력 없는 초안이며 사용자가 자유롭게 수정한다.
  */
 data class ChallengeRecommendation(
+    // Step 1·2(입력 적합성·콘텐츠 검수) 차단 신호. true 면 나머지 필드는 무의미하며
+    // 화면은 최초 생성 화면으로 복귀한다(오류 아님, 200).
+    val fallback: Boolean,
     // 템플릿 매칭 성공 여부. false 면 수동(MANUAL) 추천만 내려온다.
     val matched: Boolean,
     // 매칭된 루틴 템플릿 id (직접 입력/무매칭이면 null)
@@ -127,8 +130,12 @@ data class ChallengeRecommendation(
     // 자동 인증 동작 한 줄 설명
     val rationale: String?,
     val participationType: ParticipationType,
-    // 그룹만, 참여 기준 매너 온도
+    // 그룹만, 참여 기준 매너 온도 초안
     val minMannerTemperature: Double?,
+    // 기준 온도 입력 상한 (= 생성자 현재 온도). 폼 슬라이더 상한으로 사용.
+    val maxMannerTemperature: Double?,
+    // 최대 참여 인원 초안
+    val maxParticipants: Int?,
     val repeatDays: List<RepeatDay>,
     val durationDays: Int,
     // ISO date
