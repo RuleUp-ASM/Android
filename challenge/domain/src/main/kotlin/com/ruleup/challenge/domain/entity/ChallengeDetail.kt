@@ -36,6 +36,10 @@ data class ChallengeDetail(
     val category: InterestCategory?,
     val participationType: ParticipationType,
     val status: ChallengeStatus,
+    // 최대 참여 인원 (SOLO 는 1)
+    val maxParticipants: Int,
+    // 이미지 모더레이션 상태 (모집 차단 판정용)
+    val moderationStatus: ModerationStatus,
     val owner: ChallengeOwner,
     val repeatDays: List<RepeatDay>,
     val durationDays: Int,

@@ -36,6 +36,10 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
         val temperature: Int,
     ) : CreateChallengeReducerEvent
 
+    data class MaxParticipantsChanged(
+        val count: Int,
+    ) : CreateChallengeReducerEvent
+
     data class RepeatDayToggled(
         val day: RepeatDay,
     ) : CreateChallengeReducerEvent

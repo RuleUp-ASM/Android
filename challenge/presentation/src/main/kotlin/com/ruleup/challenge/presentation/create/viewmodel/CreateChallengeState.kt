@@ -25,6 +25,8 @@ data class CreateChallengeState(
     val coverImageUri: String?,
     val category: InterestCategory?,
     val participationType: ParticipationType,
+    // 그룹 전용 최대 참여 인원 (SOLO 는 1 로 전송)
+    val maxParticipants: Int,
     // 그룹 전용 참여 기준 (37~99℃)
     val minMannerTemperature: Int,
     val repeatDays: List<RepeatDay>,
@@ -61,6 +63,11 @@ data class CreateChallengeState(
         const val MANNER_MIN = 37
         const val MANNER_MAX = 99
 
+        // 그룹 최대 인원 범위·기본값 (명세: GROUP 필수, 최소 2)
+        const val GROUP_PARTICIPANTS_MIN = 2
+        const val GROUP_PARTICIPANTS_MAX = 100
+        const val GROUP_MAX_PARTICIPANTS_DEFAULT = 10
+
         val initial =
             CreateChallengeState(
                 title = "",
@@ -72,6 +79,7 @@ data class CreateChallengeState(
                 coverImageUri = null,
                 category = null,
                 participationType = ParticipationType.SOLO,
+                maxParticipants = GROUP_MAX_PARTICIPANTS_DEFAULT,
                 // 최저값(MANNER_MIN)은 "제한 없음"으로 취급해 서버로 null 을 보낸다(생성 시).
                 // 기본을 최저로 두어, 생성자 본인 온도보다 높은 기준이 기본값으로 강제돼 생성이 막히던 문제를 피한다.
                 minMannerTemperature = MANNER_MIN,

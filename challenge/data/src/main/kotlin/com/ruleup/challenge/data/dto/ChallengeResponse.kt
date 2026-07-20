@@ -13,9 +13,13 @@ import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.domain.entity.ModerationStatus
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.ParticipationType
+import com.ruleup.challenge.domain.entity.Penalty
+import com.ruleup.challenge.domain.entity.Reward
 import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.entity.toRepeatDays
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.network.dto.requireField
@@ -100,6 +104,10 @@ data class ChallengeResponse(
     val category: String? = null,
     @SerialName("participationType")
     val participationType: String? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
+    @SerialName("moderationStatus")
+    val moderationStatus: String? = null,
     @SerialName("minMannerTemperature")
     val minMannerTemperature: Double? = null,
     @SerialName("repeatDays")
@@ -122,25 +130,30 @@ data class ChallengeResponse(
     val reward: RewardDto? = null,
 )
 
+// 생성/수정 응답은 슬림(challengeId·status·moderationStatus·templateId·verification·params 중심)이라
+// title·기간·penalty 등은 생략될 수 있다. 호출자는 폼 값을 쓰므로 누락 필드는 안전한 기본값으로 채운다.
 internal fun ChallengeResponse.toDomain(): Challenge =
     Challenge(
         challengeId = challengeId.requireField("challengeId"),
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
-        title = title.requireField("title"),
+        title = title.orEmpty(),
         description = description,
         imageUrl = imageUrl,
         category = InterestCategory.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
+        maxParticipants = maxParticipants ?: 1,
         minMannerTemperature = minMannerTemperature,
         repeatDays = repeatDays.toRepeatDays(),
         durationDays = durationDays ?: 0,
-        startDate = startDate.requireField("startDate"),
-        endDate = endDate.requireField("endDate"),
+        startDate = startDate.orEmpty(),
+        endDate = endDate.orEmpty(),
         templateId = templateId,
+        moderationStatus = ModerationStatus.fromValue(moderationStatus) ?: ModerationStatus.NONE,
         verification = verification?.toDomain(),
         params = params.toParamValueMap(),
-        penalty = penalty.requireField("penalty").toDomain(),
-        reward = reward.requireField("reward").toDomain(),
+        penalty =
+            penalty?.toDomain() ?: Penalty(mannerDeduction = 0.0, snsShare = SnsShare(enabled = false, phone = null), groupShare = false),
+        reward = reward?.toDomain() ?: Reward(mannerGain = 0.0),
     )
 
 // ---------- 3.3 챌린지 상세 + 참여 자격 ----------
@@ -186,6 +199,10 @@ data class ChallengeDetailResponse(
     val participationType: String? = null,
     @SerialName("status")
     val status: String? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
+    @SerialName("moderationStatus")
+    val moderationStatus: String? = null,
     @SerialName("owner")
     val owner: ChallengeOwnerResponse? = null,
     @SerialName("repeatDays")
@@ -221,6 +238,8 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         category = InterestCategory.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
+        maxParticipants = maxParticipants ?: 1,
+        moderationStatus = ModerationStatus.fromValue(moderationStatus) ?: ModerationStatus.NONE,
         owner =
             ChallengeOwner(
                 nickname = owner?.nickname.requireField("owner.nickname"),
