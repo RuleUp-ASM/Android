@@ -212,6 +212,14 @@ data class ChallengeForm(
 )
 
 /**
+ * 챌린지 삭제 결과 (명세 DELETE 응답). 진행 중 + 챌린지 내 success 이력이 있으면 탈퇴 패널티가
+ * 트리거된다([penaltyApplied]=true). 시작 전이거나 이력이 없으면 false.
+ */
+data class DeleteResult(
+    val penaltyApplied: Boolean,
+)
+
+/**
  * 챌린지 수정 입력 (명세 3.4 request). 변경할 필드만 전달한다(전부 선택).
  */
 data class ChallengeUpdate(

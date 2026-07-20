@@ -7,6 +7,7 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MyChallenge
 
@@ -44,8 +45,11 @@ interface ChallengeRepository {
         update: ChallengeUpdate,
     ): Challenge
 
-    /** 챌린지 소프트 삭제(생성자만, 명세 3.5). */
-    suspend fun delete(challengeId: String)
+    /**
+     * 챌린지 삭제(생성자만, 명세 DELETE). 참여자(방장 제외) 0명일 때만 가능.
+     * 진행 중 + success 이력이 있으면 탈퇴 패널티가 트리거된다([DeleteResult.penaltyApplied]).
+     */
+    suspend fun delete(challengeId: String): DeleteResult
 
     /**
      * 챌린지 참여 신청(명세 POST members). 승인 없이 검증 통과 시 즉시 ACTIVE.

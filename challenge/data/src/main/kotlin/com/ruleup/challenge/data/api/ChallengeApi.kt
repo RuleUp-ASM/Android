@@ -9,6 +9,7 @@ import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeResponse
+import com.ruleup.challenge.data.dto.DeleteChallengeResponse
 import com.ruleup.challenge.data.dto.ExploreChallengesResponse
 import com.ruleup.challenge.data.dto.JoinResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
@@ -73,11 +74,11 @@ interface ChallengeApi {
         @Body request: UpdateChallengeRequest,
     ): BaseResponse<ChallengeResponse>
 
-    // 3.5 챌린지 삭제 (소프트)
+    // 챌린지 삭제 — 응답에 penaltyApplied(탈퇴 패널티 트리거 여부)
     @DELETE("v1/challenges/{challengeId}")
     suspend fun delete(
         @Path("challengeId") challengeId: String,
-    ): BaseResponse<EmptyData>
+    ): BaseResponse<DeleteChallengeResponse>
 
     // 챌린지 참여 신청 (승인제 폐기 — 성공 시 즉시 ACTIVE, requiredPermissions 반환)
     @POST("v1/challenges/{challengeId}/members")

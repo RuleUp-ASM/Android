@@ -12,6 +12,7 @@ import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
@@ -19,7 +20,6 @@ import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
-import com.ruleup.network.dto.throwOnError
 import com.ruleup.network.image.ImageReader
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -104,9 +104,11 @@ class ChallengeRepositoryImpl
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun delete(challengeId: String) {
-            api.delete(challengeId).throwOnError()
-        }
+        override suspend fun delete(challengeId: String): DeleteResult =
+            api
+                .delete(challengeId)
+                .getOrThrow()
+                .toDomain()
 
         override suspend fun join(challengeId: String): JoinResult =
             api
