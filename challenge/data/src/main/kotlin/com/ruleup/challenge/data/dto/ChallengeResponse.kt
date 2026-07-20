@@ -30,6 +30,8 @@ import kotlinx.serialization.json.JsonObject
 // ---------- 3.1 LLM 기본값 추천 ----------
 @Serializable
 data class RecommendationResponse(
+    @SerialName("fallback")
+    val fallback: Boolean? = null,
     @SerialName("matched")
     val matched: Boolean? = null,
     @SerialName("templateId")
@@ -52,6 +54,10 @@ data class RecommendationResponse(
     val participationType: String? = null,
     @SerialName("minMannerTemperature")
     val minMannerTemperature: Double? = null,
+    @SerialName("maxMannerTemperature")
+    val maxMannerTemperature: Double? = null,
+    @SerialName("maxParticipants")
+    val maxParticipants: Int? = null,
     @SerialName("repeatDays")
     val repeatDays: List<String>? = null,
     @SerialName("durationDays")
@@ -66,11 +72,13 @@ data class RecommendationResponse(
     val reward: RewardDto? = null,
 )
 
+// fallback=true 면 나머지 필드가 전부 null 이므로(명세) 관대하게 파싱한다 — 호출자가 fallback 을 보고 분기.
 internal fun RecommendationResponse.toDomain(): ChallengeRecommendation =
     ChallengeRecommendation(
+        fallback = fallback ?: false,
         matched = matched ?: false,
         templateId = templateId,
-        title = title.requireField("title"),
+        title = title.orEmpty(),
         description = description,
         category = InterestCategory.fromValue(category.orEmpty()),
         recommendedMethod = SelectedMethod.fromValue(recommendedMethod) ?: SelectedMethod.MANUAL,
@@ -79,12 +87,15 @@ internal fun RecommendationResponse.toDomain(): ChallengeRecommendation =
         rationale = rationale,
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         minMannerTemperature = minMannerTemperature,
+        maxMannerTemperature = maxMannerTemperature,
+        maxParticipants = maxParticipants,
         repeatDays = repeatDays.toRepeatDays(),
         durationDays = durationDays ?: 0,
-        startDate = startDate.requireField("startDate"),
-        endDate = endDate.requireField("endDate"),
-        penalty = penalty.requireField("penalty").toDomain(),
-        reward = reward.requireField("reward").toDomain(),
+        startDate = startDate.orEmpty(),
+        endDate = endDate.orEmpty(),
+        penalty =
+            penalty?.toDomain() ?: Penalty(mannerDeduction = 0.0, snsShare = SnsShare(enabled = false, phone = null), groupShare = false),
+        reward = reward?.toDomain() ?: Reward(mannerGain = 0.0),
     )
 
 // ---------- 3.2 / 3.4 챌린지 ----------

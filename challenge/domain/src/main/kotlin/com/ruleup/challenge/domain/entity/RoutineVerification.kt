@@ -138,3 +138,11 @@ class ChallengePermissionRequiredException(
     // 서버가 부족 권한 목록을 주면 담고, 없으면 null (호출자가 옵션 전체를 재요청).
     val requiredPermissions: List<String>? = null,
 ) : Exception("자동 인증에 필요한 권한이 부족합니다.")
+
+/**
+ * 추천 rate limit 초과 (명세 recommendation, HTTP 429 RECOMMENDATION_RATE_LIMITED).
+ * 화면은 최초 생성 화면으로 복귀하고 [retryAfterSeconds] 후 재시도 안내한다.
+ */
+class RecommendationRateLimitedException(
+    val retryAfterSeconds: Int? = null,
+) : Exception("추천 요청이 너무 잦습니다.")

@@ -103,6 +103,7 @@ fun ChallengeConfirmContent(
                 item {
                     MannerTemperatureSection(
                         temperature = state.minMannerTemperature,
+                        maxTemperature = state.maxMannerTemperature,
                         onIntent = onIntent,
                     )
                 }
@@ -567,6 +568,7 @@ private fun StepperButton(
 @Composable
 private fun MannerTemperatureSection(
     temperature: Int,
+    maxTemperature: Int,
     onIntent: (CreateChallengeIntent) -> Unit,
 ) {
     // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 커밋한다.
@@ -657,7 +659,7 @@ private fun MannerTemperatureSection(
                         onIntent(CreateChallengeIntent.SetMinMannerTemperature(shown))
                     },
                     valueRange =
-                        CreateChallengeState.MANNER_MIN.toFloat()..CreateChallengeState.MANNER_MAX.toFloat(),
+                        CreateChallengeState.MANNER_MIN.toFloat()..maxTemperature.toFloat(),
                     colors =
                         SliderDefaults.colors(
                             thumbColor = RuleUpTheme.colors.brand,
@@ -676,7 +678,7 @@ private fun MannerTemperatureSection(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        "${CreateChallengeState.MANNER_MAX}℃ (최고)",
+                        "$maxTemperature℃ (최고)",
                         color = RuleUpTheme.colors.textMuted,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,

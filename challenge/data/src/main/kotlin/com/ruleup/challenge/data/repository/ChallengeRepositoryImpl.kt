@@ -14,6 +14,7 @@ import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
@@ -35,14 +36,22 @@ class ChallengeRepositoryImpl
             title: String,
             description: String?,
         ): ChallengeRecommendation =
-            api
-                .recommend(
-                    RecommendationRequest(
-                        title = title,
-                        description = description,
-                    ),
-                ).getOrThrow()
-                .toDomain()
+            try {
+                api
+                    .recommend(
+                        RecommendationRequest(
+                            title = title,
+                            description = description,
+                        ),
+                    ).getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 429 rate limit 은 화면이 최초 생성 화면 복귀 + 재시도 안내로 분기하도록 도메인 예외로 변환.
+                if (e.code == "RECOMMENDATION_RATE_LIMITED") {
+                    throw RecommendationRateLimitedException(retryAfterSeconds = e.retryAfterSeconds)
+                }
+                throw e
+            }
 
         override suspend fun create(form: ChallengeForm): Challenge =
             try {

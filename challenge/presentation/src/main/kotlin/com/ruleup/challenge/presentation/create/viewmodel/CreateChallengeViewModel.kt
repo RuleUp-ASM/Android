@@ -7,6 +7,7 @@ import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.Penalty
+import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.Reward
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.SnsShare
@@ -144,11 +145,24 @@ class CreateChallengeViewModel
                         coverImageUri = null,
                         category = reco.category,
                         participationType = reco.participationType,
+                        // 기준 온도 상한 = 생성자 현재 온도(없으면 MANNER_MAX).
+                        maxMannerTemperature =
+                            reco.maxMannerTemperature
+                                ?.toInt()
+                                ?.coerceIn(CreateChallengeState.MANNER_MIN, CreateChallengeState.MANNER_MAX)
+                                ?: CreateChallengeState.MANNER_MAX,
                         minMannerTemperature =
                             reco.minMannerTemperature
                                 ?.toInt()
                                 ?.coerceIn(CreateChallengeState.MANNER_MIN, CreateChallengeState.MANNER_MAX)
                                 ?: state.minMannerTemperature,
+                        maxParticipants =
+                            reco.maxParticipants
+                                ?.coerceIn(
+                                    CreateChallengeState.GROUP_PARTICIPANTS_MIN,
+                                    CreateChallengeState.GROUP_PARTICIPANTS_MAX,
+                                )
+                                ?: state.maxParticipants,
                         repeatDays = reco.repeatDays,
                         startDate = reco.startDate,
                         durationDays = reco.durationDays,
@@ -179,10 +193,11 @@ class CreateChallengeViewModel
 
                 is CreateChallengeReducerEvent.MinMannerChanged -> {
                     state.copy(
+                        // 상한은 생성자 온도(maxMannerTemperature) — 초과 값은 서버가 거부(MIN_TEMP_EXCEEDS_OWNER).
                         minMannerTemperature =
                             event.temperature.coerceIn(
                                 CreateChallengeState.MANNER_MIN,
-                                CreateChallengeState.MANNER_MAX,
+                                state.maxMannerTemperature,
                             ),
                     )
                 }
@@ -270,13 +285,34 @@ class CreateChallengeViewModel
                         description = state.description.trim().ifBlank { null },
                     )
                 }.onSuccess { recommendation ->
-                    dispatch(CreateChallengeReducerEvent.RecommendationReceived(recommendation))
-                    // 입력 화면에서는 확인 페이지로 전진, 확인 화면의 "다시 추천" 은
-                    // 동일 키 중복 push 가 무시되므로 그대로 머문다.
-                    navigationHelper.navigateTo(ChallengeConfirmPage)
-                }.onFailure {
+                    if (recommendation.fallback) {
+                        // Step 1·2 차단(200) — 확인 화면으로 넘어가지 않고 최초 생성 화면에 머문다(명세).
+                        dispatch(CreateChallengeReducerEvent.RecommendFailed)
+                        emitEffect(
+                            CreateChallengeEffect.ShowError("추천을 만들지 못했어요. 제목·설명을 다시 확인해 주세요"),
+                        )
+                    } else {
+                        dispatch(CreateChallengeReducerEvent.RecommendationReceived(recommendation))
+                        // 입력 화면에서는 확인 페이지로 전진, 확인 화면의 "다시 추천" 은
+                        // 동일 키 중복 push 가 무시되므로 그대로 머문다.
+                        navigationHelper.navigateTo(ChallengeConfirmPage)
+                    }
+                }.onFailure { error ->
                     dispatch(CreateChallengeReducerEvent.RecommendFailed)
-                    emitEffect(CreateChallengeEffect.ShowError(it.message ?: "AI 추천에 실패했어요"))
+                    val message =
+                        when (error) {
+                            is RecommendationRateLimitedException -> {
+                                val minutes = error.retryAfterSeconds?.let { (it + 59) / 60 }
+                                if (minutes != null) {
+                                    "추천 요청이 많아요. ${minutes}분 후에 다시 시도해 주세요"
+                                } else {
+                                    "추천 요청이 많아요. 잠시 후 다시 시도해 주세요"
+                                }
+                            }
+
+                            else -> error.message ?: "AI 추천에 실패했어요"
+                        }
+                    emitEffect(CreateChallengeEffect.ShowError(message))
                 }
             }
         }
