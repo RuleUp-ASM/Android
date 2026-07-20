@@ -8,13 +8,17 @@ import com.ruleup.verification.data.dto.IntroResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
 import com.ruleup.verification.data.dto.MyLocationResponse
+import com.ruleup.verification.data.dto.MyScreenAppsResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
+import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
+import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
 import com.ruleup.verification.data.dto.VerificationDetailResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -63,4 +67,17 @@ interface VerificationApi {
     suspend fun getMyLocation(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<MyLocationResponse>
+
+    // 스크린타임 대상 앱 조회 (GET /my-screen-apps): 셋업/수정 재진입 시 이전 선택 복원
+    @GET("v1/challenges/{challengeId}/my-screen-apps")
+    suspend fun getMyScreenApps(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<MyScreenAppsResponse>
+
+    // 스크린타임 대상 앱 세트 교체 (PUT /my-screen-apps): 익일 00:00 부터 적용
+    @PUT("v1/challenges/{challengeId}/my-screen-apps")
+    suspend fun updateMyScreenApps(
+        @Path("challengeId") challengeId: String,
+        @Body request: UpdateScreenAppsRequest,
+    ): BaseResponse<UpdateScreenAppsResponse>
 }

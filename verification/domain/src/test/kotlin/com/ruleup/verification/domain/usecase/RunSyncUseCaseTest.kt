@@ -14,12 +14,15 @@ import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
+import com.ruleup.verification.domain.entity.MyScreenApps
 import com.ruleup.verification.domain.entity.NetworkState
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
+import com.ruleup.verification.domain.entity.ScreenApp
+import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SignalScope
@@ -250,6 +253,13 @@ class RunSyncUseCaseTest {
         ): ChallengeSetupResult = error("unused")
 
         override suspend fun getMyLocation(challengeId: String): MyLocation? = error("unused")
+
+        override suspend fun getMyScreenApps(challengeId: String): MyScreenApps? = error("unused")
+
+        override suspend fun updateMyScreenApps(
+            challengeId: String,
+            apps: List<ScreenApp>,
+        ): ScreenAppsUpdate = error("unused")
 
         override suspend fun submitManual(
             challengeId: String,

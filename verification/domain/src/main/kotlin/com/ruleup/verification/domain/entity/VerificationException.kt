@@ -36,3 +36,15 @@ class FallbackLimitExceededException : Exception("이번 주 수동 인증 횟�
  * 반경 범위(500~5000m)·개수(최대 10) 위반 등 — 화면은 입력 수정 안내.
  */
 class InvalidAnchorException : Exception("앵커 위치가 유효하지 않습니다.")
+
+/**
+ * 스크린타임 대상 앱 변경 쿨다운 (명세 my-screen-apps PUT, HTTP 429 SCREENTIME_CHANGE_COOLDOWN).
+ * 최근 변경 직후 재변경 제한 — 화면은 "잠시 후 다시 시도" 안내.
+ */
+class ScreenAppChangeCooldownException : Exception("대상 앱을 방금 변경해 잠시 후 다시 시도할 수 있어요.")
+
+/**
+ * 대상 앱 세트가 유효하지 않음 (명세 my-screen-apps PUT, HTTP 400 INVALID_APP).
+ * 패키지명 형식 오류·중복·개수(1~10) 초과 — 화면은 선택 수정 안내.
+ */
+class InvalidScreenAppException : Exception("대상 앱 선택이 유효하지 않습니다.")
