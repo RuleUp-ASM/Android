@@ -51,6 +51,7 @@ import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.RoomManageEntry
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomNoticeSection
 import com.ruleup.challenge.presentation.detail.component.RoomRankingSection
@@ -258,6 +259,14 @@ private fun ChallengeDetailContent(
                                 onOpenRanking = { onIntent(ChallengeDetailIntent.OpenRanking) },
                             )
                             RoomTodayStatusCard(status = room.myTodayStatus)
+
+                            // 방장·공동 관리자만: 확인 대기함(폴백 인증·이의 제기) 진입.
+                            if (room.myRole.canManage) {
+                                RoomManageEntry(
+                                    label = "확인 대기함",
+                                    onClick = { onIntent(ChallengeDetailIntent.OpenPendingReviews) },
+                                )
+                            }
 
                             val members = state.members
                             if (members != null) {
