@@ -17,12 +17,14 @@ data class ChallengeStats(
     val completionRate: Double?,
 )
 
-/** 참여 자격 (명세 3.3 eligibility, CH-04). */
+/** 참여 자격 (명세 eligibility). canJoin 은 정원·기준온도·재참여·모더레이션·상태 종합 판정. */
 data class ChallengeEligibility(
     val canJoin: Boolean,
     val myMannerTemperature: Double,
     // 그룹만
     val minMannerTemperature: Double?,
+    // 재참여 차단 여부(탈퇴 이력). canJoin=false 사유 구분·안내용.
+    val rejoinBlocked: Boolean,
 )
 
 /**
@@ -40,6 +42,8 @@ data class ChallengeDetail(
     val maxParticipants: Int,
     // 이미지 모더레이션 상태 (모집 차단 판정용)
     val moderationStatus: ModerationStatus,
+    // REJECTED 이미지 수정 기한(거부+1시간, OWNER 전용, ISO-8601). 그 외 null.
+    val fixDeadline: String?,
     val owner: ChallengeOwner,
     val repeatDays: List<RepeatDay>,
     val durationDays: Int,

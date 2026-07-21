@@ -193,6 +193,8 @@ data class ChallengeEligibilityResponse(
     val myMannerTemperature: Double? = null,
     @SerialName("minMannerTemperature")
     val minMannerTemperature: Double? = null,
+    @SerialName("rejoinBlocked")
+    val rejoinBlocked: Boolean? = null,
 )
 
 @Serializable
@@ -215,6 +217,8 @@ data class ChallengeDetailResponse(
     val maxParticipants: Int? = null,
     @SerialName("moderationStatus")
     val moderationStatus: String? = null,
+    @SerialName("fixDeadline")
+    val fixDeadline: String? = null,
     @SerialName("owner")
     val owner: ChallengeOwnerResponse? = null,
     @SerialName("repeatDays")
@@ -252,6 +256,7 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         maxParticipants = maxParticipants ?: 1,
         moderationStatus = ModerationStatus.fromValue(moderationStatus) ?: ModerationStatus.NONE,
+        fixDeadline = fixDeadline,
         owner =
             ChallengeOwner(
                 nickname = owner?.nickname.requireField("owner.nickname"),
@@ -276,6 +281,7 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
                 canJoin = eligibility?.canJoin ?: false,
                 myMannerTemperature = eligibility?.myMannerTemperature ?: 36.5,
                 minMannerTemperature = eligibility?.minMannerTemperature,
+                rejoinBlocked = eligibility?.rejoinBlocked ?: false,
             ),
     )
 
