@@ -5,6 +5,7 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
+import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
@@ -57,6 +58,24 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈, 방장·참여자 0명) 챌린지 삭제. 성공 시 이전 화면으로. */
     data object DeleteChallenge : ChallengeDetailIntent
 
+    /** (방장) 멤버를 공동 관리자로 임명. */
+    data class PromoteMember(
+        val userId: String,
+    ) : ChallengeDetailIntent
+
+    /** (방장) 공동 관리자를 일반 멤버로 해제. */
+    data class DemoteMember(
+        val userId: String,
+    ) : ChallengeDetailIntent
+
+    /** (방장) 공동 관리자에게 방장 위임 요청. */
+    data class RequestDelegation(
+        val targetUserId: String,
+    ) : ChallengeDetailIntent
+
+    /** (방장) 대기 중인 방장 위임 요청 취소. */
+    data object CancelDelegation : ChallengeDetailIntent
+
     data object Back : ChallengeDetailIntent
 }
 
@@ -106,8 +125,12 @@ data class ChallengeDetailState(
     val room: ChallengeRoom? = null,
     // 방 홈 멤버 목록(GET members). 방 홈일 때만 조회하며, 멤버 섹션·삭제 가능 여부 판정에 쓴다.
     val members: ChallengeMembers? = null,
-    // 탈퇴/삭제 요청 중(버튼 중복 탭 방지).
+    // 탈퇴/삭제/권한 변경/위임 요청 중(버튼 중복 탭 방지).
     val isMemberActionLoading: Boolean = false,
+    // 방금 생성한 방장 위임 요청(PENDING). 취소(CANCEL)의 delegationId 출처 — 배너로 노출한다.
+    val pendingDelegation: DelegationTicket? = null,
+    // 위임 요청 대상 닉네임(배너 문구용).
+    val pendingDelegationNickname: String? = null,
 ) : UiState {
     companion object {
         val initial =
@@ -161,8 +184,17 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val members: ChallengeMembers,
     ) : ChallengeDetailReducerEvent
 
-    /** 탈퇴/삭제 요청 시작/종료. */
+    /** 탈퇴/삭제/권한 변경/위임 요청 시작/종료. */
     data class MemberActionLoading(
         val loading: Boolean,
     ) : ChallengeDetailReducerEvent
+
+    /** 방장 위임 요청 생성됨(배너 노출). */
+    data class DelegationRequested(
+        val ticket: DelegationTicket,
+        val targetNickname: String?,
+    ) : ChallengeDetailReducerEvent
+
+    /** 방장 위임 요청 배너 해제(취소·응답 후). */
+    data object DelegationCleared : ChallengeDetailReducerEvent
 }

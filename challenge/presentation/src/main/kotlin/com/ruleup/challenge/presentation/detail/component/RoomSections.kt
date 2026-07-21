@@ -13,8 +13,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -304,7 +310,8 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
  * 디자인 시안 부재 — 방 홈 섹션 카드 컨벤션을 따른다.
  *
  * 탈퇴는 비방장만, 삭제는 방장 + 참여자(방장 제외) 0명일 때만 노출한다(서버 규칙과 동일).
- * 실제 실행은 확인 다이얼로그를 거쳐 [onLeave]/[onDelete] 로 올려보낸다.
+ * 방장은 각 멤버 행의 관리 메뉴로 공동 관리자 임명/해제·방장 위임을 수행한다.
+ * 실제 실행은 확인 다이얼로그를 거쳐 콜백으로 올려보낸다.
  */
 @Composable
 internal fun RoomMemberSection(
@@ -313,8 +320,13 @@ internal fun RoomMemberSection(
     maxParticipants: Int,
     myRole: MemberRole,
     actionEnabled: Boolean,
+    delegationBanner: String?,
     onLeave: () -> Unit,
     onDelete: () -> Unit,
+    onPromote: (String) -> Unit,
+    onDemote: (String) -> Unit,
+    onRequestDelegation: (String) -> Unit,
+    onCancelDelegation: () -> Unit,
 ) {
     Column(
         modifier =
@@ -337,7 +349,21 @@ internal fun RoomMemberSection(
             )
         }
 
-        members.forEach { member -> MemberRow(member) }
+        if (delegationBanner != null) {
+            DelegationBanner(text = delegationBanner, enabled = actionEnabled, onCancel = onCancelDelegation)
+        }
+
+        members.forEach { member ->
+            MemberRow(
+                member = member,
+                // 방장만 관리 가능하고, 방장 자신(OWNER)은 대상에서 제외.
+                manageable = myRole == MemberRole.OWNER && member.role != MemberRole.OWNER,
+                actionEnabled = actionEnabled,
+                onPromote = { onPromote(member.userId) },
+                onDemote = { onDemote(member.userId) },
+                onRequestDelegation = { onRequestDelegation(member.userId) },
+            )
+        }
 
         when {
             myRole != MemberRole.OWNER ->
@@ -364,7 +390,14 @@ internal fun RoomMemberSection(
 }
 
 @Composable
-private fun MemberRow(member: ChallengeMember) {
+private fun MemberRow(
+    member: ChallengeMember,
+    manageable: Boolean,
+    actionEnabled: Boolean,
+    onPromote: () -> Unit,
+    onDemote: () -> Unit,
+    onRequestDelegation: () -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -402,6 +435,107 @@ private fun MemberRow(member: ChallengeMember) {
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
         )
+        if (manageable) {
+            Spacer(Modifier.width(4.dp))
+            MemberManageMenu(
+                role = member.role,
+                enabled = actionEnabled,
+                onPromote = onPromote,
+                onDemote = onDemote,
+                onRequestDelegation = onRequestDelegation,
+            )
+        }
+    }
+}
+
+/** 방장 전용 멤버 관리 메뉴("⋯"): 대상 역할에 따라 임명/해제·방장 위임 항목을 노출한다. */
+@Composable
+private fun MemberManageMenu(
+    role: MemberRole,
+    enabled: Boolean,
+    onPromote: () -> Unit,
+    onDemote: () -> Unit,
+    onRequestDelegation: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Box(
+            modifier =
+                Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .then(if (enabled) Modifier.singleClickable(globalGuard = false) { expanded = true } else Modifier),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("⋯", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            when (role) {
+                MemberRole.MEMBER ->
+                    DropdownMenuItem(
+                        text = { Text("공동 관리자 임명") },
+                        onClick = {
+                            expanded = false
+                            onPromote()
+                        },
+                    )
+
+                MemberRole.MANAGER -> {
+                    DropdownMenuItem(
+                        text = { Text("공동 관리자 해제") },
+                        onClick = {
+                            expanded = false
+                            onDemote()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("방장 위임") },
+                        onClick = {
+                            expanded = false
+                            onRequestDelegation()
+                        },
+                    )
+                }
+
+                else -> Unit
+            }
+        }
+    }
+}
+
+/** 대기 중인 방장 위임 요청 배너 + 취소. */
+@Composable
+private fun DelegationBanner(
+    text: String,
+    enabled: Boolean,
+    onCancel: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(RuleUpTheme.colors.brandSoft)
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            color = RuleUpTheme.colors.brandStrong,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f),
+        )
+        if (enabled) {
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "취소",
+                color = RuleUpTheme.colors.danger,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.singleClickable(globalGuard = false) { onCancel() },
+            )
+        }
     }
 }
 

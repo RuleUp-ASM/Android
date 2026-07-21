@@ -261,14 +261,23 @@ private fun ChallengeDetailContent(
 
                             val members = state.members
                             if (members != null) {
+                                val delegationBanner =
+                                    state.pendingDelegation?.let {
+                                        "${state.pendingDelegationNickname ?: "선택한 멤버"}님에게 방장 위임을 요청했어요"
+                                    }
                                 RoomMemberSection(
                                     members = members.members,
                                     participantCount = members.participantCount,
                                     maxParticipants = members.maxParticipants,
                                     myRole = room.myRole,
                                     actionEnabled = !state.isMemberActionLoading,
+                                    delegationBanner = delegationBanner,
                                     onLeave = { confirmAction = MemberConfirm.LEAVE },
                                     onDelete = { confirmAction = MemberConfirm.DELETE },
+                                    onPromote = { onIntent(ChallengeDetailIntent.PromoteMember(it)) },
+                                    onDemote = { onIntent(ChallengeDetailIntent.DemoteMember(it)) },
+                                    onRequestDelegation = { onIntent(ChallengeDetailIntent.RequestDelegation(it)) },
+                                    onCancelDelegation = { onIntent(ChallengeDetailIntent.CancelDelegation) },
                                 )
                             }
                         }

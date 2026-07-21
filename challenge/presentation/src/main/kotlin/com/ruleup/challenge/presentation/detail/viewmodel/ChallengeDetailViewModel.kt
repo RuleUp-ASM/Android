@@ -3,7 +3,9 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.analytics.domain.AnalyticsLogger
+import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.ParticipationType
+import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -13,6 +15,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
+import com.ruleup.challenge.domain.usecase.ChangeMemberRoleUseCase
 import com.ruleup.challenge.domain.usecase.CreateWatcherInvitationUseCase
 import com.ruleup.challenge.domain.usecase.DeleteChallengeUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
@@ -22,6 +25,8 @@ import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
 import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
 import com.ruleup.challenge.domain.usecase.LeaveChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
+import com.ruleup.challenge.domain.usecase.RequestDelegationUseCase
+import com.ruleup.challenge.domain.usecase.RespondDelegationUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -47,6 +52,9 @@ class ChallengeDetailViewModel
         private val getChallengeMembersUseCase: GetChallengeMembersUseCase,
         private val leaveChallengeUseCase: LeaveChallengeUseCase,
         private val deleteChallengeUseCase: DeleteChallengeUseCase,
+        private val changeMemberRoleUseCase: ChangeMemberRoleUseCase,
+        private val requestDelegationUseCase: RequestDelegationUseCase,
+        private val respondDelegationUseCase: RespondDelegationUseCase,
         private val getWatchersUseCase: GetWatchersUseCase,
         private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
         private val removeWatcherUseCase: RemoveWatcherUseCase,
@@ -71,6 +79,10 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
                 ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
+                is ChallengeDetailIntent.PromoteMember -> changeRole(intent.userId, RoleAction.PROMOTE)
+                is ChallengeDetailIntent.DemoteMember -> changeRole(intent.userId, RoleAction.DEMOTE)
+                is ChallengeDetailIntent.RequestDelegation -> requestDelegation(intent.targetUserId)
+                ChallengeDetailIntent.CancelDelegation -> cancelDelegation()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -107,6 +119,12 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.MembersLoaded -> state.copy(members = event.members)
 
                 is ChallengeDetailReducerEvent.MemberActionLoading -> state.copy(isMemberActionLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.DelegationRequested ->
+                    state.copy(pendingDelegation = event.ticket, pendingDelegationNickname = event.targetNickname)
+
+                ChallengeDetailReducerEvent.DelegationCleared ->
+                    state.copy(pendingDelegation = null, pendingDelegationNickname = null)
             }
 
         private fun load(challengeId: String) {
@@ -203,6 +221,67 @@ class ChallengeDetailViewModel
                         navigationHelper.navigateToBack()
                     }.onFailure {
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "삭제에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 공동 관리자 임명/해제(방장). 성공 시 멤버 목록을 재조회한다. */
+        private fun changeRole(
+            userId: String,
+            action: RoleAction,
+        ) {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { changeMemberRoleUseCase(id, userId, action) }
+                    .onSuccess {
+                        val message = if (action == RoleAction.PROMOTE) "공동 관리자로 임명했어요" else "공동 관리자를 해제했어요"
+                        emitEffect(ChallengeDetailEffect.ShowMessage(message))
+                        loadMembers(id)
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "권한 변경에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 방장 위임 요청(방장 → 공동 관리자). 생성된 티켓을 배너로 노출한다. */
+        private fun requestDelegation(targetUserId: String) {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            val nickname =
+                currentState.members
+                    ?.members
+                    ?.firstOrNull { it.userId == targetUserId }
+                    ?.nickname
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { requestDelegationUseCase(id, targetUserId) }
+                    .onSuccess { ticket ->
+                        dispatch(ChallengeDetailReducerEvent.DelegationRequested(ticket, nickname))
+                        emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임을 요청했어요. 상대가 수락하면 방장이 넘어가요"))
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "방장 위임 요청에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 대기 중인 방장 위임 요청 취소(요청 OWNER). */
+        private fun cancelDelegation() {
+            val id = currentState.detail?.challengeId ?: return
+            val delegationId = currentState.pendingDelegation?.delegationId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { respondDelegationUseCase(id, delegationId, DelegationAction.CANCEL) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.DelegationCleared)
+                        emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임 요청을 취소했어요"))
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "위임 요청 취소에 실패했어요"))
                     }
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
             }
