@@ -31,4 +31,13 @@ interface ProfileRepository {
 
     /** 프로필 사진 제거 (명세 4.11). */
     suspend fun deleteProfileImage()
+
+    /**
+     * 가입 기본정보 입력 (명세 PUT /onboarding/me). 추천 세그먼트용 생년월일·성별(둘 다 선택).
+     * 원치 않는 값은 null 로 전달(전송 생략). 가입 완료 후(토큰 확보) 호출한다.
+     */
+    suspend fun updateOnboardingInfo(
+        birthDate: String? = null,
+        gender: String? = null,
+    )
 }

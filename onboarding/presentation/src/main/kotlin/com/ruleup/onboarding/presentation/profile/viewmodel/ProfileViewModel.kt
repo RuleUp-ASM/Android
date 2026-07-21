@@ -6,17 +6,19 @@ import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
+import com.ruleup.onboarding.domain.auth.usecase.SubmitOnboardingInfoUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.ProfileInterestPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.time.Year
 import javax.inject.Inject
 
 /**
  * 프로필 설정 플로우 공유 ViewModel.
  *
- * 5개 페이지(아이콘→닉네임→관심사→권한→약관)가 같은 인스턴스를 공유해 입력값을 누적한다.
+ * 6개 페이지(아이콘→닉네임→관심사→권한→나이·성별→약관)가 같은 인스턴스를 공유해 입력값을 누적한다.
  * 페이지 간 단순 전진/후진은 화면이 [NavigationHelper] 로 직접 처리하고,
  * 비동기 분기(닉네임 중복검사, 가입 제출)만 본 ViewModel 이 담당한다.
  */
@@ -26,6 +28,7 @@ class ProfileViewModel
     constructor(
         private val signupUseCase: SignupUseCase,
         private val checkNicknameUseCase: CheckNicknameUseCase,
+        private val submitOnboardingInfoUseCase: SubmitOnboardingInfoUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ProfileIntent, ProfileState, ProfileReducerEvent, ProfileEffect>(ProfileState.initial) {
         override fun onIntent(intent: ProfileIntent) {
@@ -58,6 +61,18 @@ class ProfileViewModel
                     dispatch(ProfileReducerEvent.AgreementsUpdated(intent.agreements))
                 }
 
+                is ProfileIntent.SetAge -> {
+                    dispatch(ProfileReducerEvent.AgeEntered(intent.age))
+                }
+
+                is ProfileIntent.SetGender -> {
+                    dispatch(ProfileReducerEvent.GenderSelected(intent.gender))
+                }
+
+                ProfileIntent.DeclineGender -> {
+                    dispatch(ProfileReducerEvent.GenderDeclined)
+                }
+
                 ProfileIntent.CheckNickname -> {
                     checkNickname(currentState.nickname)
                 }
@@ -83,6 +98,24 @@ class ProfileViewModel
 
                 is ProfileReducerEvent.AgreementsUpdated -> {
                     state.copy(agreements = event.agreements)
+                }
+
+                is ProfileReducerEvent.AgeEntered -> {
+                    state.copy(age = event.age)
+                }
+
+                is ProfileReducerEvent.GenderSelected -> {
+                    // 같은 카드 재선택은 해제. 카드 선택 시 "응답 안 함" 은 자동 해제.
+                    if (state.gender == event.gender) {
+                        state.copy(gender = null)
+                    } else {
+                        state.copy(gender = event.gender, genderDeclined = false)
+                    }
+                }
+
+                ProfileReducerEvent.GenderDeclined -> {
+                    val declined = !state.genderDeclined
+                    state.copy(genderDeclined = declined, gender = if (declined) null else state.gender)
                 }
 
                 is ProfileReducerEvent.ProfileImageSelected -> {
@@ -155,6 +188,14 @@ class ProfileViewModel
                         ),
                     )
                 }.onSuccess {
+                    // 가입 성공(토큰 확보) 후 선택 입력한 나이·성별을 전송한다.
+                    // 추천 개인화 보조 정보라 실패해도 홈 진입을 막지 않는다.
+                    runCatching {
+                        submitOnboardingInfoUseCase(
+                            birthDate = state.age?.let { age -> "${Year.now().value - age}-01-01" },
+                            gender = if (state.genderDeclined) null else state.gender?.value,
+                        )
+                    }
                     navigationHelper.navigateTo(HomePage)
                 }.onFailure {
                     dispatch(ProfileReducerEvent.SubmitFailed)

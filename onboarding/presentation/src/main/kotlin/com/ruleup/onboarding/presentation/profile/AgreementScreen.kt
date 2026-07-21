@@ -34,7 +34,7 @@ import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
 
-/** 05 · 약관 동의 (5/5). 필수 약관(이용약관·개인정보)에 모두 동의해야 가입을 진행할 수 있다. */
+/** 06 · 약관 동의 (6/6). 필수 약관(이용약관·개인정보)에 모두 동의해야 가입을 진행할 수 있다. */
 @Composable
 fun AgreementsContent(
     onIntent: (ProfileIntent) -> Unit,
@@ -43,7 +43,7 @@ fun AgreementsContent(
 ) {
     val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
-        step = 4,
+        step = 5,
         buttonText = "RuleUp 시작하기",
         modifier = modifier,
         onNext = { onIntent(ProfileIntent.Submit) },

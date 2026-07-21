@@ -30,6 +30,7 @@ import com.ruleup.onboarding.domain.navigation.IntroTrustPage
 import com.ruleup.onboarding.domain.navigation.IntroVerifyPage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.ProfileAgreementPage
+import com.ruleup.onboarding.domain.navigation.ProfileBasicInfoPage
 import com.ruleup.onboarding.domain.navigation.ProfileIconPage
 import com.ruleup.onboarding.domain.navigation.ProfileInterestPage
 import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
@@ -40,6 +41,7 @@ import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
 import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.profile.ProfileAgreementScreen
+import com.ruleup.onboarding.presentation.profile.ProfileBasicInfoScreen
 import com.ruleup.onboarding.presentation.profile.ProfileIconScreen
 import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
 import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
@@ -329,6 +331,19 @@ val appRoutes: List<AppRoute> =
             render = { ProfilePermissionScreen() },
         ),
         AppRoute(
+            path = ProfileBasicInfoPage.PATH,
+            syntheticStack = { args ->
+                listOf(
+                    GenericNavKey(ProfileIconPage.PATH, args),
+                    GenericNavKey(ProfileNicknamePage.PATH),
+                    GenericNavKey(ProfileInterestPage.PATH),
+                    GenericNavKey(ProfilePermissionPage.PATH),
+                    GenericNavKey(ProfileBasicInfoPage.PATH),
+                )
+            },
+            render = { ProfileBasicInfoScreen() },
+        ),
+        AppRoute(
             path = ProfileAgreementPage.PATH,
             syntheticStack = { args ->
                 listOf(
@@ -336,6 +351,7 @@ val appRoutes: List<AppRoute> =
                     GenericNavKey(ProfileNicknamePage.PATH),
                     GenericNavKey(ProfileInterestPage.PATH),
                     GenericNavKey(ProfilePermissionPage.PATH),
+                    GenericNavKey(ProfileBasicInfoPage.PATH),
                     GenericNavKey(ProfileAgreementPage.PATH),
                 )
             },

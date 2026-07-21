@@ -14,6 +14,11 @@ data class ProfileState(
     val interests: List<InterestCategory> = emptyList(),
     val profileImageUrl: String? = null,
     val agreements: Agreement = Agreement(terms = false, privacy = false, marketing = false),
+    // 가입 기본정보(선택) — 만 나이, 성별. 미입력/건너뛰기면 null.
+    val age: Int? = null,
+    val gender: OnboardingGender? = null,
+    // "응답하지 않을래요" 명시적 선택. gender 는 null 이지만 미선택과 구분해 UI 라디오를 채운다.
+    val genderDeclined: Boolean = false,
     val isSubmitting: Boolean = false,
 ) : UiState {
     companion object {

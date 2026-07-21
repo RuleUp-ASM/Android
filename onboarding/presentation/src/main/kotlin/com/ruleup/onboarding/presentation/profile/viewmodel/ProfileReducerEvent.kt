@@ -25,6 +25,16 @@ sealed interface ProfileReducerEvent : ReducerEvent {
         val agreements: Agreement,
     ) : ProfileReducerEvent
 
+    data class AgeEntered(
+        val age: Int?,
+    ) : ProfileReducerEvent
+
+    data class GenderSelected(
+        val gender: OnboardingGender,
+    ) : ProfileReducerEvent
+
+    data object GenderDeclined : ProfileReducerEvent
+
     data object Submitting : ProfileReducerEvent
 
     data object SubmitFailed : ProfileReducerEvent
