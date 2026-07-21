@@ -157,6 +157,25 @@ class CreateChallengeUseCaseTest {
         override suspend fun getMembers(challengeId: String) = throw NotImplementedError()
 
         override suspend fun getMyChallenges() = throw NotImplementedError()
+
+        override suspend fun leaveChallenge(challengeId: String) = throw NotImplementedError()
+
+        override suspend fun changeMemberRole(
+            challengeId: String,
+            userId: String,
+            action: com.ruleup.challenge.domain.entity.RoleAction,
+        ) = throw NotImplementedError()
+
+        override suspend fun requestDelegation(
+            challengeId: String,
+            targetUserId: String,
+        ) = throw NotImplementedError()
+
+        override suspend fun respondDelegation(
+            challengeId: String,
+            delegationId: String,
+            action: com.ruleup.challenge.domain.entity.DelegationAction,
+        ) = throw NotImplementedError()
     }
 
     private class RecordingAnalyticsLogger : AnalyticsLogger {

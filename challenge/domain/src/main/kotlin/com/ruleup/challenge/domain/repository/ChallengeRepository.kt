@@ -7,9 +7,15 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.DelegationAction
+import com.ruleup.challenge.domain.entity.DelegationResolution
+import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.JoinResult
+import com.ruleup.challenge.domain.entity.LeaveResult
+import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.RoleAction
 
 interface ChallengeRepository {
     /**
@@ -66,4 +72,36 @@ interface ChallengeRepository {
      * 내가 참여 중인 챌린지 목록 조회(명세: GET /challenges). 승인제 폐기로 scope 없이 전량 반환한다.
      */
     suspend fun getMyChallenges(): List<MyChallenge>
+
+    /**
+     * 챌린지 탈퇴(본인, 명세 DELETE members/me). 본인 success 이력이 있으면 탈퇴 패널티가 트리거된다.
+     * OWNER 는 탈퇴 불가(위임 또는 삭제로 안내) — 서버가 403 OWNER_CANNOT_LEAVE 로 분기 사유를 준다.
+     */
+    suspend fun leaveChallenge(challengeId: String): LeaveResult
+
+    /**
+     * 공동 관리자 임명/해제(명세 PATCH members/{userId}/role). 임명·해제는 OWNER, 본인 DEMOTE 는 MANAGER 본인만.
+     */
+    suspend fun changeMemberRole(
+        challengeId: String,
+        userId: String,
+        action: RoleAction,
+    ): MemberRoleChange
+
+    /**
+     * 방장 위임 요청 생성(OWNER, 명세 POST delegation). 대상은 MANAGER, 7일 후 자동 만료.
+     */
+    suspend fun requestDelegation(
+        challengeId: String,
+        targetUserId: String,
+    ): DelegationTicket
+
+    /**
+     * 방장 위임 요청 응답(명세 PATCH delegation/{id}). ACCEPT/REJECT 는 대상자, CANCEL 은 요청 OWNER.
+     */
+    suspend fun respondDelegation(
+        challengeId: String,
+        delegationId: String,
+        action: DelegationAction,
+    ): DelegationResolution
 }

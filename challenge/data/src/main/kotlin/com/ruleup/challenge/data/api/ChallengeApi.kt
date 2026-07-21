@@ -9,9 +9,16 @@ import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeResponse
+import com.ruleup.challenge.data.dto.DelegationActionRequest
+import com.ruleup.challenge.data.dto.DelegationRequestBody
+import com.ruleup.challenge.data.dto.DelegationResolutionResponse
+import com.ruleup.challenge.data.dto.DelegationResponse
 import com.ruleup.challenge.data.dto.DeleteChallengeResponse
 import com.ruleup.challenge.data.dto.ExploreChallengesResponse
 import com.ruleup.challenge.data.dto.JoinResponse
+import com.ruleup.challenge.data.dto.LeaveChallengeResponse
+import com.ruleup.challenge.data.dto.MemberRoleActionRequest
+import com.ruleup.challenge.data.dto.MemberRoleResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
 import com.ruleup.challenge.data.dto.NoticeDetailResponse
 import com.ruleup.challenge.data.dto.NoticesResponse
@@ -91,6 +98,35 @@ interface ChallengeApi {
     suspend fun getMembers(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<ChallengeMembersResponse>
+
+    // 챌린지 탈퇴 (본인) — 응답 penaltyApplied
+    @DELETE("v1/challenges/{challengeId}/members/me")
+    suspend fun leaveChallenge(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<LeaveChallengeResponse>
+
+    // 공동 관리자 임명/해제 — { action: PROMOTE/DEMOTE }
+    @PATCH("v1/challenges/{challengeId}/members/{userId}/role")
+    suspend fun changeMemberRole(
+        @Path("challengeId") challengeId: String,
+        @Path("userId") userId: String,
+        @Body request: MemberRoleActionRequest,
+    ): BaseResponse<MemberRoleResponse>
+
+    // 방장 위임 요청 생성 — { targetUserId }
+    @POST("v1/challenges/{challengeId}/delegation")
+    suspend fun requestDelegation(
+        @Path("challengeId") challengeId: String,
+        @Body request: DelegationRequestBody,
+    ): BaseResponse<DelegationResponse>
+
+    // 방장 위임 요청 응답 — { action: ACCEPT/REJECT/CANCEL }
+    @PATCH("v1/challenges/{challengeId}/delegation/{delegationId}")
+    suspend fun respondDelegation(
+        @Path("challengeId") challengeId: String,
+        @Path("delegationId") delegationId: String,
+        @Body request: DelegationActionRequest,
+    ): BaseResponse<DelegationResolutionResponse>
 
     // 3.9 챌린지 대표 이미지 업로드 (생성/수정 전 호출, challengeId 불필요)
     @Multipart

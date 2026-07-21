@@ -1,6 +1,9 @@
 package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
+import com.ruleup.challenge.data.dto.DelegationActionRequest
+import com.ruleup.challenge.data.dto.DelegationRequestBody
+import com.ruleup.challenge.data.dto.MemberRoleActionRequest
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
@@ -12,10 +15,16 @@ import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
 import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.DelegationAction
+import com.ruleup.challenge.domain.entity.DelegationResolution
+import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.JoinResult
+import com.ruleup.challenge.domain.entity.LeaveResult
+import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
+import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
@@ -126,5 +135,48 @@ class ChallengeRepositoryImpl
             api
                 .getMyChallenges()
                 .getOrThrow()
+                .toDomain()
+
+        override suspend fun leaveChallenge(challengeId: String): LeaveResult =
+            api
+                .leaveChallenge(challengeId)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun changeMemberRole(
+            challengeId: String,
+            userId: String,
+            action: RoleAction,
+        ): MemberRoleChange =
+            api
+                .changeMemberRole(
+                    challengeId = challengeId,
+                    userId = userId,
+                    request = MemberRoleActionRequest(action = action.value),
+                ).getOrThrow()
+                .toDomain()
+
+        override suspend fun requestDelegation(
+            challengeId: String,
+            targetUserId: String,
+        ): DelegationTicket =
+            api
+                .requestDelegation(
+                    challengeId = challengeId,
+                    request = DelegationRequestBody(targetUserId = targetUserId),
+                ).getOrThrow()
+                .toDomain()
+
+        override suspend fun respondDelegation(
+            challengeId: String,
+            delegationId: String,
+            action: DelegationAction,
+        ): DelegationResolution =
+            api
+                .respondDelegation(
+                    challengeId = challengeId,
+                    delegationId = delegationId,
+                    request = DelegationActionRequest(action = action.value),
+                ).getOrThrow()
                 .toDomain()
     }
