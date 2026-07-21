@@ -5,6 +5,7 @@ import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.usecase.GetChallengeCategoriesUseCase
+import com.ruleup.challenge.domain.usecase.GetRoutineRecommendationsUseCase
 import com.ruleup.challenge.domain.usecase.GetTrendingChallengesUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -31,6 +32,7 @@ class ExploreViewModel
     constructor(
         private val getTrendingChallengesUseCase: GetTrendingChallengesUseCase,
         private val getChallengeCategoriesUseCase: GetChallengeCategoriesUseCase,
+        private val getRoutineRecommendationsUseCase: GetRoutineRecommendationsUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ExploreIntent, ExploreState, ExploreReducerEvent, NoEffect>(
             ExploreState.initial,
@@ -65,6 +67,7 @@ class ExploreViewModel
                         isLoading = false,
                         trending = event.trending,
                         categories = event.categories,
+                        recommendedRoutines = event.recommendedRoutines,
                         errorMessage = null,
                     )
 
@@ -78,14 +81,17 @@ class ExploreViewModel
                     coroutineScope {
                         val trending = async { getTrendingChallengesUseCase() }
                         val categories = async { getChallengeCategoriesUseCase() }
-                        trending.await() to categories.await()
+                        // 추천 루틴은 부가 섹션 — 실패해도 탐색 로드를 막지 않도록 흡수(빈 목록 → 섹션 숨김).
+                        val routines = async { runCatching { getRoutineRecommendationsUseCase() }.getOrDefault(emptyList()) }
+                        Triple(trending.await(), categories.await(), routines.await())
                     }
-                }.onSuccess { (trending, categories) ->
+                }.onSuccess { (trending, categories, routines) ->
                     dispatch(
                         ExploreReducerEvent.Loaded(
                             // 서버는 Top 20 을 내려주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
                             trending = trending.take(TRENDING_MAIN_COUNT),
                             categories = categories,
+                            recommendedRoutines = routines,
                         ),
                     )
                 }.onFailure { dispatch(ExploreReducerEvent.Failed(it.message ?: "탐색 정보를 불러오지 못했어요")) }

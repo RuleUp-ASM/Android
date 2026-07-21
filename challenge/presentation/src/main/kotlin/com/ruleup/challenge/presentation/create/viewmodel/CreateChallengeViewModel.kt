@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
+import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.Penalty
@@ -14,6 +15,7 @@ import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
+import com.ruleup.challenge.domain.usecase.RecommendChallengeByTemplateUseCase
 import com.ruleup.challenge.domain.usecase.RecommendChallengeUseCase
 import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase
 import com.ruleup.domain.helper.NavigationHelper
@@ -35,6 +37,7 @@ class CreateChallengeViewModel
     @Inject
     constructor(
         private val recommendChallengeUseCase: RecommendChallengeUseCase,
+        private val recommendChallengeByTemplateUseCase: RecommendChallengeByTemplateUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,
         private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
         private val myChallengeStore: MyChallengeStore,
@@ -54,6 +57,10 @@ class CreateChallengeViewModel
 
                 CreateChallengeIntent.Recommend -> {
                     recommend()
+                }
+
+                is CreateChallengeIntent.RecommendByTemplate -> {
+                    recommendByTemplate(intent.templateId)
                 }
 
                 is CreateChallengeIntent.SetCoverImage -> {
@@ -285,18 +292,7 @@ class CreateChallengeViewModel
                         description = state.description.trim().ifBlank { null },
                     )
                 }.onSuccess { recommendation ->
-                    if (recommendation.fallback) {
-                        // Step 1·2 차단(200) — 확인 화면으로 넘어가지 않고 최초 생성 화면에 머문다(명세).
-                        dispatch(CreateChallengeReducerEvent.RecommendFailed)
-                        emitEffect(
-                            CreateChallengeEffect.ShowError("추천을 만들지 못했어요. 제목·설명을 다시 확인해 주세요"),
-                        )
-                    } else {
-                        dispatch(CreateChallengeReducerEvent.RecommendationReceived(recommendation))
-                        // 입력 화면에서는 확인 페이지로 전진, 확인 화면의 "다시 추천" 은
-                        // 동일 키 중복 push 가 무시되므로 그대로 머문다.
-                        navigationHelper.navigateTo(ChallengeConfirmPage)
-                    }
+                    applyRecommendation(recommendation)
                 }.onFailure { error ->
                     dispatch(CreateChallengeReducerEvent.RecommendFailed)
                     val message =
@@ -314,6 +310,37 @@ class CreateChallengeViewModel
                         }
                     emitEffect(CreateChallengeEffect.ShowError(message))
                 }
+            }
+        }
+
+        /**
+         * 탐색 "추천 루틴" 선택 → 템플릿 초안 생성 후 확인 화면으로. by-template 은 LLM 미호출이라
+         * fallback·rate-limit 이 없다(matched 항상 true). 실패(TEMPLATE_NOT_FOUND 등)는 안내한다.
+         */
+        private fun recommendByTemplate(templateId: Long) {
+            if (currentState.isRecommending) return
+            viewModelScope.launch {
+                dispatch(CreateChallengeReducerEvent.Recommending)
+                runCatching { recommendChallengeByTemplateUseCase(templateId) }
+                    .onSuccess { recommendation -> applyRecommendation(recommendation) }
+                    .onFailure { error ->
+                        dispatch(CreateChallengeReducerEvent.RecommendFailed)
+                        emitEffect(CreateChallengeEffect.ShowError(error.message ?: "루틴 초안을 불러오지 못했어요"))
+                    }
+            }
+        }
+
+        /** 추천/템플릿 초안 수신 공통 처리: fallback 이면 머무르고, 아니면 확인 화면으로 전진. */
+        private fun applyRecommendation(recommendation: ChallengeRecommendation) {
+            if (recommendation.fallback) {
+                // Step 1·2 차단(200) — 확인 화면으로 넘어가지 않고 최초 생성 화면에 머문다(명세).
+                dispatch(CreateChallengeReducerEvent.RecommendFailed)
+                emitEffect(CreateChallengeEffect.ShowError("추천을 만들지 못했어요. 제목·설명을 다시 확인해 주세요"))
+            } else {
+                dispatch(CreateChallengeReducerEvent.RecommendationReceived(recommendation))
+                // 입력 화면에서는 확인 페이지로 전진, 확인 화면의 "다시 추천" 은
+                // 동일 키 중복 push 가 무시되므로 그대로 머문다.
+                navigationHelper.navigateTo(ChallengeConfirmPage)
             }
         }
 

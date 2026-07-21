@@ -19,6 +19,11 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** AI 추천 요청. 확인 화면의 "다시 추천" 도 같은 intent 를 쓴다. */
     data object Recommend : CreateChallengeIntent
 
+    /** 탐색 "추천 루틴" 선택 → 템플릿 기반 초안 생성 후 확인 화면으로(LLM 호출 X). */
+    data class RecommendByTemplate(
+        val templateId: Long,
+    ) : CreateChallengeIntent
+
     // 02 · 추천 확인(수정)
     data class SetCoverImage(
         val uri: String?,

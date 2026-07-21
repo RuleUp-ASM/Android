@@ -25,9 +25,11 @@ import com.ruleup.challenge.data.dto.NoticesResponse
 import com.ruleup.challenge.data.dto.PinNoticeRequest
 import com.ruleup.challenge.data.dto.PinNoticeResponse
 import com.ruleup.challenge.data.dto.RankingResponse
+import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.RecommendationResponse
 import com.ruleup.challenge.data.dto.RoomResponse
+import com.ruleup.challenge.data.dto.RoutineRecommendationResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeRequest
 import com.ruleup.challenge.data.dto.UpdateNoticeRequest
@@ -54,6 +56,18 @@ interface ChallengeApi {
     @POST("v1/challenges/recommendation")
     suspend fun recommend(
         @Body request: RecommendationRequest,
+    ): BaseResponse<RecommendationResponse>
+
+    // 루틴 발견 추천 (관심사+세그먼트 인기도 기반, 최대 limit건)
+    @GET("v1/recommendations/routines")
+    suspend fun recommendRoutines(
+        @Query("limit") limit: Int?,
+    ): BaseResponse<List<RoutineRecommendationResponse>>
+
+    // 루틴 템플릿 선택 초안 (LLM 호출 X, recommend 와 동일 응답 스키마)
+    @POST("v1/challenges/recommendation/by-template")
+    suspend fun recommendByTemplate(
+        @Body request: RecommendByTemplateRequest,
     ): BaseResponse<RecommendationResponse>
 
     // 3.2 챌린지 생성
