@@ -113,6 +113,26 @@ data class UpdateChallengeRequest(
     val maxParticipants: Int? = null,
 )
 
+// ---------- 공동 관리자 임명/해제 (PATCH members/{userId}/role) ----------
+@Serializable
+data class MemberRoleActionRequest(
+    @SerialName("action")
+    val action: String,
+)
+
+// ---------- 방장 위임 (POST·PATCH delegation) ----------
+@Serializable
+data class DelegationRequestBody(
+    @SerialName("targetUserId")
+    val targetUserId: String,
+)
+
+@Serializable
+data class DelegationActionRequest(
+    @SerialName("action")
+    val action: String,
+)
+
 internal fun ChallengeUpdate.toRequest(): UpdateChallengeRequest =
     UpdateChallengeRequest(
         title = title,

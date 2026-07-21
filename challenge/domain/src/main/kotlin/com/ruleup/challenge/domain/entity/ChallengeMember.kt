@@ -48,3 +48,25 @@ data class ChallengeMembers(
 data class JoinResult(
     val requiredPermissions: List<String>,
 )
+
+/**
+ * 챌린지 탈퇴 결과 (명세 DELETE members/me). 본인 success 이력이 있으면 탈퇴 패널티가 트리거된다.
+ * 탈퇴 시 해당 챌린지 재참여는 영구 불가.
+ */
+data class LeaveResult(
+    val penaltyApplied: Boolean,
+)
+
+/** 공동 관리자 임명/해제 액션 (명세 PATCH members/{userId}/role). */
+enum class RoleAction(
+    val value: String,
+) {
+    PROMOTE("PROMOTE"),
+    DEMOTE("DEMOTE"),
+}
+
+/** 역할 변경 결과 (명세 PATCH members/{userId}/role response). */
+data class MemberRoleChange(
+    val userId: String,
+    val role: MemberRole,
+)

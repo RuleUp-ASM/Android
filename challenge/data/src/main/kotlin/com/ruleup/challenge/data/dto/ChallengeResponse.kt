@@ -11,9 +11,14 @@ import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
+import com.ruleup.challenge.domain.entity.DelegationResolution
+import com.ruleup.challenge.domain.entity.DelegationStatus
+import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.JoinResult
+import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationStatus
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.ParticipationType
@@ -293,6 +298,62 @@ data class DeleteChallengeResponse(
 )
 
 internal fun DeleteChallengeResponse.toDomain(): DeleteResult = DeleteResult(penaltyApplied = penaltyApplied ?: false)
+
+// ---------- 탈퇴 (DELETE members/me) ----------
+@Serializable
+data class LeaveChallengeResponse(
+    @SerialName("penaltyApplied")
+    val penaltyApplied: Boolean? = null,
+)
+
+internal fun LeaveChallengeResponse.toDomain(): LeaveResult = LeaveResult(penaltyApplied = penaltyApplied ?: false)
+
+// ---------- 공동 관리자 임명/해제 (PATCH members/{userId}/role) ----------
+@Serializable
+data class MemberRoleResponse(
+    @SerialName("userId")
+    val userId: String? = null,
+    @SerialName("role")
+    val role: String? = null,
+)
+
+internal fun MemberRoleResponse.toDomain(): MemberRoleChange =
+    MemberRoleChange(
+        userId = userId.requireField("userId"),
+        role = MemberRole.fromValue(role) ?: MemberRole.MEMBER,
+    )
+
+// ---------- 방장 위임 (POST·PATCH delegation) ----------
+@Serializable
+data class DelegationResponse(
+    @SerialName("delegationId")
+    val delegationId: String? = null,
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("expiresAt")
+    val expiresAt: String? = null,
+)
+
+internal fun DelegationResponse.toDomain(): DelegationTicket =
+    DelegationTicket(
+        delegationId = delegationId.requireField("delegationId"),
+        status = DelegationStatus.fromValue(status) ?: DelegationStatus.PENDING,
+        expiresAt = expiresAt.orEmpty(),
+    )
+
+@Serializable
+data class DelegationResolutionResponse(
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("newOwnerUserId")
+    val newOwnerUserId: String? = null,
+)
+
+internal fun DelegationResolutionResponse.toDomain(): DelegationResolution =
+    DelegationResolution(
+        status = DelegationStatus.fromValue(status) ?: DelegationStatus.PENDING,
+        newOwnerUserId = newOwnerUserId,
+    )
 
 // ---------- 챌린지 참여 신청 (POST members) ----------
 @Serializable
