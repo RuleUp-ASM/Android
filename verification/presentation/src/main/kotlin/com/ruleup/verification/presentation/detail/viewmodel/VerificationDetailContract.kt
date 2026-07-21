@@ -12,12 +12,20 @@ sealed interface VerificationDetailIntent : MviIntent {
     ) : VerificationDetailIntent
 
     data object CtaClicked : VerificationDetailIntent
+
+    /** 이의 제기 제출(실패 일자에 대한 재검토 요청). */
+    data class SubmitObjection(
+        val targetDate: String,
+        val content: String,
+    ) : VerificationDetailIntent
 }
 
 data class VerificationDetailState(
     val isLoading: Boolean = false,
     val detail: VerificationDetail? = null,
     val error: String? = null,
+    // 이의 제기 제출 중(버튼 중복 탭 방지).
+    val isSubmittingObjection: Boolean = false,
 ) : UiState {
     companion object {
         val initial = VerificationDetailState()
@@ -34,9 +42,19 @@ sealed interface VerificationDetailReducerEvent : ReducerEvent {
     data class Failed(
         val message: String,
     ) : VerificationDetailReducerEvent
+
+    /** 이의 제기 제출 시작/종료. */
+    data class SubmittingObjection(
+        val submitting: Boolean,
+    ) : VerificationDetailReducerEvent
 }
 
 sealed interface VerificationDetailEffect : MviEffect {
     /** 권한 설정 화면 열기(명세 §6.4 CTA). */
     data object OpenPermissionSettings : VerificationDetailEffect
+
+    /** 이의 제기 접수/실패 등 안내 메시지. */
+    data class ShowMessage(
+        val message: String,
+    ) : VerificationDetailEffect
 }

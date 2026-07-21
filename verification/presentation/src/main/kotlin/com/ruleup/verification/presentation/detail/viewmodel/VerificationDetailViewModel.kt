@@ -5,6 +5,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.usecase.GetVerificationDetailUseCase
+import com.ruleup.verification.domain.usecase.SubmitObjectionUseCase
 import com.ruleup.verification.presentation.render.CtaTarget
 import com.ruleup.verification.presentation.render.failureReasonCta
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,6 +21,7 @@ class VerificationDetailViewModel
     @Inject
     constructor(
         private val getVerificationDetailUseCase: GetVerificationDetailUseCase,
+        private val submitObjectionUseCase: SubmitObjectionUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationDetailIntent, VerificationDetailState, VerificationDetailReducerEvent, VerificationDetailEffect>(
             VerificationDetailState.initial,
@@ -34,6 +36,8 @@ class VerificationDetailViewModel
                 }
 
                 VerificationDetailIntent.CtaClicked -> handleCta()
+
+                is VerificationDetailIntent.SubmitObjection -> submitObjection(intent.targetDate, intent.content)
             }
         }
 
@@ -45,6 +49,7 @@ class VerificationDetailViewModel
                 VerificationDetailReducerEvent.Loading -> state.copy(isLoading = true, error = null)
                 is VerificationDetailReducerEvent.Loaded -> state.copy(isLoading = false, detail = event.detail, error = null)
                 is VerificationDetailReducerEvent.Failed -> state.copy(isLoading = false, error = event.message)
+                is VerificationDetailReducerEvent.SubmittingObjection -> state.copy(isSubmittingObjection = event.submitting)
             }
 
         private fun load(id: String) {
@@ -69,6 +74,26 @@ class VerificationDetailViewModel
 
                 CtaTarget.OPEN_PERMISSION_SETTINGS -> emitEffect(VerificationDetailEffect.OpenPermissionSettings)
                 CtaTarget.NONE -> Unit
+            }
+        }
+
+        /** 실패 일자에 대한 이의 제기 제출. 성공/실패 모두 안내 메시지로 노출하고 상세를 재조회한다. */
+        private fun submitObjection(
+            targetDate: String,
+            content: String,
+        ) {
+            val id = challengeId ?: return
+            if (currentState.isSubmittingObjection) return
+            viewModelScope.launch {
+                dispatch(VerificationDetailReducerEvent.SubmittingObjection(true))
+                runCatching { submitObjectionUseCase(challengeId = id, targetDate = targetDate, content = content) }
+                    .onSuccess {
+                        emitEffect(VerificationDetailEffect.ShowMessage("이의를 접수했어요. 검토 후 결과를 알려드려요"))
+                        load(id)
+                    }.onFailure {
+                        emitEffect(VerificationDetailEffect.ShowMessage(it.message ?: "이의 제기에 실패했어요"))
+                    }
+                dispatch(VerificationDetailReducerEvent.SubmittingObjection(false))
             }
         }
     }
