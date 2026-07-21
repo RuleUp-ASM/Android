@@ -23,6 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.challenge.domain.entity.ChallengeMember
+import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.domain.entity.RoomSummary
@@ -294,6 +296,155 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
         )
+    }
+}
+
+/**
+ * 멤버 섹션: 인원/정원 + 멤버 목록(닉네임·역할 뱃지·매너온도) + 하단 탈퇴/삭제 액션.
+ * 디자인 시안 부재 — 방 홈 섹션 카드 컨벤션을 따른다.
+ *
+ * 탈퇴는 비방장만, 삭제는 방장 + 참여자(방장 제외) 0명일 때만 노출한다(서버 규칙과 동일).
+ * 실제 실행은 확인 다이얼로그를 거쳐 [onLeave]/[onDelete] 로 올려보낸다.
+ */
+@Composable
+internal fun RoomMemberSection(
+    members: List<ChallengeMember>,
+    participantCount: Int,
+    maxParticipants: Int,
+    myRole: MemberRole,
+    actionEnabled: Boolean,
+    onLeave: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            SectionTitle("멤버")
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = "$participantCount / $maxParticipants",
+                color = RuleUpTheme.colors.textSecondary,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+
+        members.forEach { member -> MemberRow(member) }
+
+        when {
+            myRole != MemberRole.OWNER ->
+                DangerActionButton(
+                    text = "챌린지 나가기",
+                    enabled = actionEnabled,
+                    onClick = onLeave,
+                )
+            // 방장: 참여자(본인 제외)가 없을 때만 삭제 가능.
+            participantCount <= 1 ->
+                DangerActionButton(
+                    text = "챌린지 삭제",
+                    enabled = actionEnabled,
+                    onClick = onDelete,
+                )
+            else ->
+                Text(
+                    text = "참여자가 있는 동안에는 삭제할 수 없어요. 방장 위임 후 나갈 수 있어요",
+                    color = RuleUpTheme.colors.textMuted,
+                    fontSize = 11.sp,
+                )
+        }
+    }
+}
+
+@Composable
+private fun MemberRow(member: ChallengeMember) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .background(RuleUpTheme.colors.brandSoft),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = member.nickname.take(1),
+                color = RuleUpTheme.colors.brand,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = member.nickname,
+            color = RuleUpTheme.colors.textPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        RoleBadge(member.role)
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "${member.mannerTemperature.trimPercent()}℃",
+            color = RuleUpPalette.Amber500,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+/** 방장/관리자만 뱃지를 노출하고, 일반 멤버는 뱃지를 생략한다. */
+@Composable
+private fun RoleBadge(role: MemberRole) {
+    val label =
+        when (role) {
+            MemberRole.OWNER -> "방장"
+            MemberRole.MANAGER -> "관리자"
+            else -> return
+        }
+    val color = if (role == MemberRole.OWNER) RuleUpTheme.colors.brand else RuleUpTheme.colors.textSlate
+    Box(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(color.copy(alpha = 0.12f))
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun DangerActionButton(
+    text: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val color = if (enabled) RuleUpTheme.colors.danger else RuleUpTheme.colors.textMuted
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .border(1.dp, color, RoundedCornerShape(12.dp))
+                .then(if (enabled) Modifier.singleClickable(onClick = onClick) else Modifier)
+                .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = text, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 

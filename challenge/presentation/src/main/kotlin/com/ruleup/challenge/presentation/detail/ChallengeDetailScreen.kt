@@ -19,12 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +51,7 @@ import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomNoticeSection
 import com.ruleup.challenge.presentation.detail.component.RoomRankingSection
 import com.ruleup.challenge.presentation.detail.component.RoomSummaryRow
@@ -196,6 +199,8 @@ private fun ChallengeDetailContent(
     onCta: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var confirmAction by remember { mutableStateOf<MemberConfirm?>(null) }
+
     Box(
         modifier =
             modifier
@@ -253,6 +258,19 @@ private fun ChallengeDetailContent(
                                 onOpenRanking = { onIntent(ChallengeDetailIntent.OpenRanking) },
                             )
                             RoomTodayStatusCard(status = room.myTodayStatus)
+
+                            val members = state.members
+                            if (members != null) {
+                                RoomMemberSection(
+                                    members = members.members,
+                                    participantCount = members.participantCount,
+                                    maxParticipants = members.maxParticipants,
+                                    myRole = room.myRole,
+                                    actionEnabled = !state.isMemberActionLoading,
+                                    onLeave = { confirmAction = MemberConfirm.LEAVE },
+                                    onDelete = { confirmAction = MemberConfirm.DELETE },
+                                )
+                            }
                         }
 
                         DetailInfoCard(state.detail)
@@ -289,6 +307,63 @@ private fun ChallengeDetailContent(
             }
         }
     }
+
+    when (confirmAction) {
+        MemberConfirm.LEAVE ->
+            MemberConfirmDialog(
+                title = "챌린지에서 나갈까요?",
+                body = "나가면 이 챌린지에 다시 참여할 수 없어요. 진행 이력이 있으면 탈퇴 패널티가 적용될 수 있어요.",
+                confirmLabel = "나가기",
+                onConfirm = {
+                    confirmAction = null
+                    onIntent(ChallengeDetailIntent.LeaveChallenge)
+                },
+                onDismiss = { confirmAction = null },
+            )
+
+        MemberConfirm.DELETE ->
+            MemberConfirmDialog(
+                title = "챌린지를 삭제할까요?",
+                body = "삭제하면 되돌릴 수 없어요. 진행 이력이 있으면 패널티가 적용될 수 있어요.",
+                confirmLabel = "삭제",
+                onConfirm = {
+                    confirmAction = null
+                    onIntent(ChallengeDetailIntent.DeleteChallenge)
+                },
+                onDismiss = { confirmAction = null },
+            )
+
+        null -> Unit
+    }
+}
+
+/** 방 홈 멤버 섹션의 파괴적 액션 확인 대상. */
+private enum class MemberConfirm { LEAVE, DELETE }
+
+@Composable
+private fun MemberConfirmDialog(
+    title: String,
+    body: String,
+    confirmLabel: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = RuleUpTheme.colors.surface,
+        title = { Text(title, color = RuleUpTheme.colors.textPrimary, fontWeight = FontWeight.Bold) },
+        text = { Text(body, color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(confirmLabel, color = RuleUpTheme.colors.danger, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소", color = RuleUpTheme.colors.textSecondary)
+            }
+        },
+    )
 }
 
 @Composable
