@@ -23,6 +23,13 @@ data class RecommendationRequest(
     val description: String? = null,
 )
 
+// ---------- 루틴 템플릿 선택 초안(LLM 호출 X) ----------
+@Serializable
+data class RecommendByTemplateRequest(
+    @SerialName("templateId")
+    val templateId: Long,
+)
+
 // ---------- 3.2 챌린지 생성 ----------
 @Serializable
 data class CreateChallengeRequest(

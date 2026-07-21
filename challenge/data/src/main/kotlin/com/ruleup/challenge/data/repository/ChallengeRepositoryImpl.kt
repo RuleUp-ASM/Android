@@ -4,6 +4,7 @@ import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.DelegationActionRequest
 import com.ruleup.challenge.data.dto.DelegationRequestBody
 import com.ruleup.challenge.data.dto.MemberRoleActionRequest
+import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
@@ -25,6 +26,7 @@ import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
@@ -61,6 +63,18 @@ class ChallengeRepositoryImpl
                 }
                 throw e
             }
+
+        override suspend fun recommendRoutines(limit: Int?): List<RoutineRecommendation> =
+            api
+                .recommendRoutines(limit)
+                .getOrThrow()
+                .map { it.toDomain() }
+
+        override suspend fun recommendByTemplate(templateId: Long): ChallengeRecommendation =
+            api
+                .recommendByTemplate(RecommendByTemplateRequest(templateId = templateId))
+                .getOrThrow()
+                .toDomain()
 
         override suspend fun create(form: ChallengeForm): Challenge =
             try {

@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.explore.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeCategoryCount
+import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.entity.user.InterestCategory
 import com.ruleup.ui.mvi.MviIntent
@@ -40,6 +41,8 @@ data class ExploreState(
     val trending: List<TrendingChallenge>,
     val categories: List<ChallengeCategoryCount>,
     val errorMessage: String?,
+    // 관심사+세그먼트 기반 추천 루틴(최대 3). 비어 있으면 섹션을 숨긴다.
+    val recommendedRoutines: List<RoutineRecommendation> = emptyList(),
 ) : UiState {
     companion object {
         val initial =
@@ -58,6 +61,7 @@ sealed interface ExploreReducerEvent : ReducerEvent {
     data class Loaded(
         val trending: List<TrendingChallenge>,
         val categories: List<ChallengeCategoryCount>,
+        val recommendedRoutines: List<RoutineRecommendation>,
     ) : ExploreReducerEvent
 
     data class Failed(

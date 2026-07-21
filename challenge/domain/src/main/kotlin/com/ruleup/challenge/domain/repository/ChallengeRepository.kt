@@ -16,6 +16,7 @@ import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.RoutineRecommendation
 
 interface ChallengeRepository {
     /**
@@ -25,6 +26,18 @@ interface ChallengeRepository {
         title: String,
         description: String? = null,
     ): ChallengeRecommendation
+
+    /**
+     * 관심사 + 세그먼트 인기도 기반 루틴 템플릿 추천(명세 GET /recommendations/routines).
+     * 진행 중 템플릿 제외, 최대 [limit]건(기본 서버값 3). 상태 저장 없음.
+     */
+    suspend fun recommendRoutines(limit: Int? = null): List<RoutineRecommendation>
+
+    /**
+     * 선택한 루틴 템플릿 기반 설정 초안 반환(명세 POST /challenges/recommendation/by-template).
+     * LLM 호출 없이 템플릿 카탈로그에서 초안을 구성한다. 응답 스키마는 [recommend] 와 동일하다.
+     */
+    suspend fun recommendByTemplate(templateId: Long): ChallengeRecommendation
 
     /** 확정값으로 챌린지를 생성한다(명세 3.2). */
     suspend fun create(form: ChallengeForm): Challenge

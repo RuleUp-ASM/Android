@@ -24,6 +24,7 @@ import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.Penalty
 import com.ruleup.challenge.domain.entity.Reward
+import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.entity.toRepeatDays
@@ -102,6 +103,30 @@ internal fun RecommendationResponse.toDomain(): ChallengeRecommendation =
         penalty =
             penalty?.toDomain() ?: Penalty(mannerDeduction = 0.0, snsShare = SnsShare(enabled = false, phone = null), groupShare = false),
         reward = reward?.toDomain() ?: Reward(mannerGain = 0.0),
+    )
+
+// ---------- 루틴 발견 추천 (GET /recommendations/routines) ----------
+@Serializable
+data class RoutineRecommendationResponse(
+    @SerialName("templateId")
+    val templateId: Long? = null,
+    @SerialName("title")
+    val title: String? = null,
+    @SerialName("description")
+    val description: String? = null,
+    @SerialName("category")
+    val category: String? = null,
+    @SerialName("reason")
+    val reason: String? = null,
+)
+
+internal fun RoutineRecommendationResponse.toDomain(): RoutineRecommendation =
+    RoutineRecommendation(
+        templateId = templateId ?: 0L,
+        title = title.orEmpty(),
+        description = description,
+        category = InterestCategory.fromValue(category.orEmpty()),
+        reason = reason.orEmpty(),
     )
 
 // ---------- 3.2 / 3.4 챌린지 ----------

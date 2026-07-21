@@ -139,6 +139,10 @@ class CreateChallengeUseCaseTest {
             description: String?,
         ) = throw NotImplementedError()
 
+        override suspend fun recommendRoutines(limit: Int?) = throw NotImplementedError()
+
+        override suspend fun recommendByTemplate(templateId: Long) = throw NotImplementedError()
+
         override suspend fun uploadImage(imageUri: String) = throw NotImplementedError()
 
         override suspend fun getChallenge(challengeId: String) = throw NotImplementedError()
