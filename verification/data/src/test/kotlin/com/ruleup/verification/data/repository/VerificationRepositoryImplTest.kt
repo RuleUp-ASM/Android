@@ -137,6 +137,21 @@ class VerificationRepositoryImplTest {
             challengeId: String,
             request: UpdateScreenAppsRequest,
         ): BaseResponse<UpdateScreenAppsResponse> = error("unused")
+
+        override suspend fun submitObjection(
+            challengeId: String,
+            request: com.ruleup.verification.data.dto.SubmitObjectionRequest,
+        ): BaseResponse<com.ruleup.verification.data.dto.ObjectionResponse> = error("unused")
+
+        override suspend fun decideObjection(
+            challengeId: String,
+            objectionId: String,
+            request: com.ruleup.verification.data.dto.ObjectionDecisionRequest,
+        ): BaseResponse<com.ruleup.verification.data.dto.ObjectionDecisionResponse> = error("unused")
+
+        override suspend fun getPendingReviews(
+            challengeId: String,
+        ): BaseResponse<com.ruleup.verification.data.dto.PendingReviewsResponse> = error("unused")
     }
 
     private class FakeKakaoLocalApi : KakaoLocalApi {

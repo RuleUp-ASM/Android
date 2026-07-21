@@ -8,6 +8,11 @@ import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.MyScreenApps
+import com.ruleup.verification.domain.entity.ObjectionDecision
+import com.ruleup.verification.domain.entity.ObjectionDecisionResult
+import com.ruleup.verification.domain.entity.ObjectionTicket
+import com.ruleup.verification.domain.entity.ObjectionType
+import com.ruleup.verification.domain.entity.PendingReviews
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -83,6 +88,33 @@ interface VerificationRepository {
         challengeId: String,
         apps: List<ScreenApp>,
     ): ScreenAppsUpdate
+
+    /**
+     * 이의 제기 제출(명세 POST objections). 잠정 실패 일자에 대해 본인이 3일 이내 제출한다.
+     * 창 경과·비대상 상태 등은 [com.ruleup.network.dto.ApiException] 으로 전파된다.
+     */
+    suspend fun submitObjection(
+        challengeId: String,
+        type: ObjectionType,
+        targetDate: String,
+        content: String,
+        imageUrl: String? = null,
+    ): ObjectionTicket
+
+    /**
+     * 이의 제기 승인/기각(방장·공동 관리자, 명세 POST objections/{id}/decision).
+     */
+    suspend fun decideObjection(
+        challengeId: String,
+        objectionId: String,
+        decision: ObjectionDecision,
+        reason: String? = null,
+    ): ObjectionDecisionResult
+
+    /**
+     * 방장/공동 관리자 확인 대기함 조회(명세 GET pending-reviews). 폴백 수동 인증·이의 제기 통합 목록.
+     */
+    suspend fun getPendingReviews(challengeId: String): PendingReviews
 
     /** 수동 인증 제출(명세 3.4·§9). PHOTO 는 [imageUrl] 필수. [asFallback]=true 면 예비 폴백(§9.2). */
     suspend fun submitManual(

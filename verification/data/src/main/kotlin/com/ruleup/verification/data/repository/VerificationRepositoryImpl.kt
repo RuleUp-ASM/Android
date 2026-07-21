@@ -5,6 +5,8 @@ import com.ruleup.network.dto.getOrThrow
 import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.ManualSubmitRequest
+import com.ruleup.verification.data.dto.ObjectionDecisionRequest
+import com.ruleup.verification.data.dto.SubmitObjectionRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.buildChallengeSetupRequest
 import com.ruleup.verification.data.dto.toDomain
@@ -25,6 +27,11 @@ import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.MyScreenApps
+import com.ruleup.verification.domain.entity.ObjectionDecision
+import com.ruleup.verification.domain.entity.ObjectionDecisionResult
+import com.ruleup.verification.domain.entity.ObjectionTicket
+import com.ruleup.verification.domain.entity.ObjectionType
+import com.ruleup.verification.domain.entity.PendingReviews
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -149,6 +156,46 @@ class VerificationRepositoryImpl
                     else -> throw e
                 }
             }
+
+        override suspend fun submitObjection(
+            challengeId: String,
+            type: ObjectionType,
+            targetDate: String,
+            content: String,
+            imageUrl: String?,
+        ): ObjectionTicket =
+            api
+                .submitObjection(
+                    challengeId = challengeId,
+                    request =
+                        SubmitObjectionRequest(
+                            type = type.value,
+                            targetDate = targetDate,
+                            content = content,
+                            imageUrl = imageUrl,
+                        ),
+                ).getOrThrow()
+                .toDomain()
+
+        override suspend fun decideObjection(
+            challengeId: String,
+            objectionId: String,
+            decision: ObjectionDecision,
+            reason: String?,
+        ): ObjectionDecisionResult =
+            api
+                .decideObjection(
+                    challengeId = challengeId,
+                    objectionId = objectionId,
+                    request = ObjectionDecisionRequest(decision = decision.value, reason = reason),
+                ).getOrThrow()
+                .toDomain()
+
+        override suspend fun getPendingReviews(challengeId: String): PendingReviews =
+            api
+                .getPendingReviews(challengeId)
+                .getOrThrow()
+                .toDomain()
 
         override suspend fun submitManual(
             challengeId: String,
