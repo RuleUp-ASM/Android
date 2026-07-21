@@ -14,10 +14,13 @@ import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.usecase.CreateWatcherInvitationUseCase
+import com.ruleup.challenge.domain.usecase.DeleteChallengeUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
+import com.ruleup.challenge.domain.usecase.GetChallengeMembersUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeRoomUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
 import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
+import com.ruleup.challenge.domain.usecase.LeaveChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -41,6 +44,9 @@ class ChallengeDetailViewModel
         private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
         private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
         private val getChallengeRoomUseCase: GetChallengeRoomUseCase,
+        private val getChallengeMembersUseCase: GetChallengeMembersUseCase,
+        private val leaveChallengeUseCase: LeaveChallengeUseCase,
+        private val deleteChallengeUseCase: DeleteChallengeUseCase,
         private val getWatchersUseCase: GetWatchersUseCase,
         private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
         private val removeWatcherUseCase: RemoveWatcherUseCase,
@@ -63,6 +69,8 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.OpenNotices -> openNotices()
                 is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
                 ChallengeDetailIntent.OpenRanking -> openRanking()
+                ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
+                ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -95,6 +103,10 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
 
                 is ChallengeDetailReducerEvent.RoomLoaded -> state.copy(room = event.room)
+
+                is ChallengeDetailReducerEvent.MembersLoaded -> state.copy(members = event.members)
+
+                is ChallengeDetailReducerEvent.MemberActionLoading -> state.copy(isMemberActionLoading = event.loading)
             }
 
         private fun load(challengeId: String) {
@@ -142,6 +154,57 @@ class ChallengeDetailViewModel
             viewModelScope.launch {
                 runCatching { getChallengeRoomUseCase(challengeId) }
                     .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+            }
+            loadMembers(challengeId)
+        }
+
+        // 멤버 목록은 방 홈 부가 정보 — 실패해도(권한 등) 방 홈 렌더를 막지 않도록 흡수한다.
+        private fun loadMembers(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { getChallengeMembersUseCase(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MembersLoaded(it)) }
+            }
+        }
+
+        /** 탈퇴(본인). 성공 시 안내 후 이전 화면으로. OWNER 등 실패 사유는 서버 메시지로 노출. */
+        private fun leaveChallenge() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { leaveChallengeUseCase(id) }
+                    .onSuccess { result ->
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                if (result.penaltyApplied) "탈퇴했어요. 진행 이력이 있어 탈퇴 패널티가 적용됐어요" else "챌린지에서 나갔어요",
+                            ),
+                        )
+                        navigationHelper.navigateToBack()
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "탈퇴에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 삭제(방장). 참여자 0명일 때만 가능 — 실패 사유는 서버 메시지로 노출. */
+        private fun deleteChallenge() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { deleteChallengeUseCase(id) }
+                    .onSuccess { result ->
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                if (result.penaltyApplied) "챌린지를 삭제했어요. 진행 이력이 있어 패널티가 적용됐어요" else "챌린지를 삭제했어요",
+                            ),
+                        )
+                        navigationHelper.navigateToBack()
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "삭제에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
             }
         }
 

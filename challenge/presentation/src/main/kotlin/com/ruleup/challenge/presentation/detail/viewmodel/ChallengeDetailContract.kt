@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
@@ -50,6 +51,12 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
+    /** (방 홈, 비방장) 챌린지 탈퇴. 성공 시 이전 화면으로. */
+    data object LeaveChallenge : ChallengeDetailIntent
+
+    /** (방 홈, 방장·참여자 0명) 챌린지 삭제. 성공 시 이전 화면으로. */
+    data object DeleteChallenge : ChallengeDetailIntent
+
     data object Back : ChallengeDetailIntent
 }
 
@@ -97,6 +104,10 @@ data class ChallengeDetailState(
     // 방 홈 일괄 조회 결과. 그룹 챌린지의 ACTIVE 멤버만 조회에 성공하며(비멤버 403 흡수 → null),
     // 값이 있으면 상세를 방 홈(요약·공지·랭킹·오늘 상태)으로 확장 렌더링한다.
     val room: ChallengeRoom? = null,
+    // 방 홈 멤버 목록(GET members). 방 홈일 때만 조회하며, 멤버 섹션·삭제 가능 여부 판정에 쓴다.
+    val members: ChallengeMembers? = null,
+    // 탈퇴/삭제 요청 중(버튼 중복 탭 방지).
+    val isMemberActionLoading: Boolean = false,
 ) : UiState {
     companion object {
         val initial =
@@ -143,5 +154,15 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     /** 방 홈 조회 성공 (그룹 챌린지 ACTIVE 멤버) — 재진입 시 미읽음 수 갱신 포함. */
     data class RoomLoaded(
         val room: ChallengeRoom,
+    ) : ChallengeDetailReducerEvent
+
+    /** 멤버 목록 갱신(방 홈 조회 시). */
+    data class MembersLoaded(
+        val members: ChallengeMembers,
+    ) : ChallengeDetailReducerEvent
+
+    /** 탈퇴/삭제 요청 시작/종료. */
+    data class MemberActionLoading(
+        val loading: Boolean,
     ) : ChallengeDetailReducerEvent
 }
