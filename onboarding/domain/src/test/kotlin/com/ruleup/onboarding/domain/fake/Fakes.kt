@@ -99,10 +99,18 @@ class FakeAuthRepository : AuthRepository {
 class FakeProfileRepository : ProfileRepository {
     var uploadResult: String = ""
     var uploadCalledWith: String? = null
+    var onboardingInfoCalledWith: Pair<String?, String?>? = null
 
     override suspend fun uploadProfileImage(imageUri: String): String {
         uploadCalledWith = imageUri
         return uploadResult
+    }
+
+    override suspend fun updateOnboardingInfo(
+        birthDate: String?,
+        gender: String?,
+    ) {
+        onboardingInfoCalledWith = birthDate to gender
     }
 
     override suspend fun checkNickname(nickname: String) = throw NotImplementedError()

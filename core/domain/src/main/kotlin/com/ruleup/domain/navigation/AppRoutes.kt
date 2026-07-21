@@ -20,6 +20,7 @@ object AppRoutes {
     const val PROFILE_NICKNAME = "profile/nickname"
     const val PROFILE_INTEREST = "profile/interest"
     const val PROFILE_PERMISSION = "profile/permission"
+    const val PROFILE_BASIC_INFO = "profile/basic-info"
     const val PROFILE_AGREEMENT = "profile/agreement"
     const val HOME = "home" // 진입점
 

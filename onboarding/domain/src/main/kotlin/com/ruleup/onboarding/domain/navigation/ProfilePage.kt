@@ -6,7 +6,7 @@ import com.ruleup.domain.navigation.Page
 
 /**
  * 프로필 설정(신규 가입) 각 단계 페이지.
- * 단계 순서: 아이콘 → 닉네임 → 관심사 → 권한 → 약관동의.
+ * 단계 순서: 아이콘 → 닉네임 → 관심사 → 권한 → 나이·성별 → 약관동의.
  */
 object ProfileIconPage : Page {
     const val PATH = AppRoutes.PROFILE_ICON
@@ -34,6 +34,12 @@ object ProfileInterestPage : Page {
 
 object ProfilePermissionPage : Page {
     const val PATH = AppRoutes.PROFILE_PERMISSION
+
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+}
+
+object ProfileBasicInfoPage : Page {
+    const val PATH = AppRoutes.PROFILE_BASIC_INFO
 
     override fun toRoute(): NavRoute = NavRoute(PATH)
 }

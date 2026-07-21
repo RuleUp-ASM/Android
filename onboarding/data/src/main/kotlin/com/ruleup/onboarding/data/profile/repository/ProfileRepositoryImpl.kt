@@ -11,6 +11,7 @@ import com.ruleup.network.dto.throwOnError
 import com.ruleup.network.image.ImageReader
 import com.ruleup.onboarding.data.profile.api.ProfileApi
 import com.ruleup.onboarding.data.profile.dto.NicknameCheckRequest
+import com.ruleup.onboarding.data.profile.dto.OnboardingMeRequest
 import com.ruleup.onboarding.data.profile.dto.UpdateProfileRequest
 import com.ruleup.onboarding.data.profile.dto.toDomain
 import okhttp3.MediaType.Companion.toMediaType
@@ -66,5 +67,14 @@ class ProfileRepositoryImpl
 
         override suspend fun deleteProfileImage() {
             api.deleteProfileImage().throwOnError()
+        }
+
+        override suspend fun updateOnboardingInfo(
+            birthDate: String?,
+            gender: String?,
+        ) {
+            api
+                .updateOnboardingMe(OnboardingMeRequest(birthDate = birthDate, gender = gender))
+                .throwOnError()
         }
     }

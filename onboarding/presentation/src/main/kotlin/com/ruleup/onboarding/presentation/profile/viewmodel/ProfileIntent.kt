@@ -25,6 +25,19 @@ sealed interface ProfileIntent : MviIntent {
         val agreements: Agreement,
     ) : ProfileIntent
 
+    /** 가입 기본정보 — 만 나이 입력. 비우면 null. */
+    data class SetAge(
+        val age: Int?,
+    ) : ProfileIntent
+
+    /** 가입 기본정보 — 성별 카드 선택(같은 값 재선택 시 해제). */
+    data class SetGender(
+        val gender: OnboardingGender,
+    ) : ProfileIntent
+
+    /** 가입 기본정보 — "응답하지 않을래요" 토글. */
+    data object DeclineGender : ProfileIntent
+
     /** 닉네임 페이지 "다음" — 형식·중복 검사 후 통과하면 관심사 페이지로 이동한다. */
     data object CheckNickname : ProfileIntent
 
