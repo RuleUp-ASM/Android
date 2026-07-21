@@ -11,6 +11,7 @@ import com.ruleup.challenge.domain.entity.ChallengeRecommendation
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
+import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.ModerationStatus
@@ -277,6 +278,15 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
                 minMannerTemperature = eligibility?.minMannerTemperature,
             ),
     )
+
+// ---------- 챌린지 삭제 (DELETE) ----------
+@Serializable
+data class DeleteChallengeResponse(
+    @SerialName("penaltyApplied")
+    val penaltyApplied: Boolean? = null,
+)
+
+internal fun DeleteChallengeResponse.toDomain(): DeleteResult = DeleteResult(penaltyApplied = penaltyApplied ?: false)
 
 // ---------- 챌린지 참여 신청 (POST members) ----------
 @Serializable
