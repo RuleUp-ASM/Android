@@ -342,6 +342,7 @@ internal fun RoomMemberSection(
     participantCount: Int,
     maxParticipants: Int,
     myRole: MemberRole,
+    myUserId: String?,
     actionEnabled: Boolean,
     delegationBanner: String?,
     onLeave: () -> Unit,
@@ -379,8 +380,10 @@ internal fun RoomMemberSection(
         members.forEach { member ->
             MemberRow(
                 member = member,
-                // 방장만 관리 가능하고, 방장 자신(OWNER)은 대상에서 제외.
-                manageable = myRole == MemberRole.OWNER && member.role != MemberRole.OWNER,
+                // 방장은 방장 자신(OWNER)을 제외한 멤버를 관리한다.
+                ownerManage = myRole == MemberRole.OWNER && member.role != MemberRole.OWNER,
+                // 관리자는 본인 행에서만 스스로 관리자 해제(self-DEMOTE)할 수 있다.
+                selfDemote = myRole == MemberRole.MANAGER && member.role == MemberRole.MANAGER && member.userId == myUserId,
                 actionEnabled = actionEnabled,
                 onPromote = { onPromote(member.userId) },
                 onDemote = { onDemote(member.userId) },
@@ -415,7 +418,8 @@ internal fun RoomMemberSection(
 @Composable
 private fun MemberRow(
     member: ChallengeMember,
-    manageable: Boolean,
+    ownerManage: Boolean,
+    selfDemote: Boolean,
     actionEnabled: Boolean,
     onPromote: () -> Unit,
     onDemote: () -> Unit,
@@ -458,10 +462,11 @@ private fun MemberRow(
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
         )
-        if (manageable) {
+        if (ownerManage || selfDemote) {
             Spacer(Modifier.width(4.dp))
             MemberManageMenu(
                 role = member.role,
+                selfDemote = selfDemote,
                 enabled = actionEnabled,
                 onPromote = onPromote,
                 onDemote = onDemote,
@@ -471,10 +476,14 @@ private fun MemberRow(
     }
 }
 
-/** 방장 전용 멤버 관리 메뉴("⋯"): 대상 역할에 따라 임명/해제·방장 위임 항목을 노출한다. */
+/**
+ * 멤버 관리 메뉴("⋯"). [selfDemote] 면 관리자 본인의 "관리자 그만두기"만,
+ * 아니면 방장이 대상 역할에 따라 임명/해제·방장 위임 항목을 노출한다.
+ */
 @Composable
 private fun MemberManageMenu(
     role: MemberRole,
+    selfDemote: Boolean,
     enabled: Boolean,
     onPromote: () -> Unit,
     onDemote: () -> Unit,
@@ -493,34 +502,44 @@ private fun MemberManageMenu(
             Text("⋯", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            when (role) {
-                MemberRole.MEMBER ->
-                    DropdownMenuItem(
-                        text = { Text("공동 관리자 임명") },
-                        onClick = {
-                            expanded = false
-                            onPromote()
-                        },
-                    )
+            if (selfDemote) {
+                DropdownMenuItem(
+                    text = { Text("관리자 그만두기") },
+                    onClick = {
+                        expanded = false
+                        onDemote()
+                    },
+                )
+            } else {
+                when (role) {
+                    MemberRole.MEMBER ->
+                        DropdownMenuItem(
+                            text = { Text("공동 관리자 임명") },
+                            onClick = {
+                                expanded = false
+                                onPromote()
+                            },
+                        )
 
-                MemberRole.MANAGER -> {
-                    DropdownMenuItem(
-                        text = { Text("공동 관리자 해제") },
-                        onClick = {
-                            expanded = false
-                            onDemote()
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("방장 위임") },
-                        onClick = {
-                            expanded = false
-                            onRequestDelegation()
-                        },
-                    )
+                    MemberRole.MANAGER -> {
+                        DropdownMenuItem(
+                            text = { Text("공동 관리자 해제") },
+                            onClick = {
+                                expanded = false
+                                onDemote()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("방장 위임") },
+                            onClick = {
+                                expanded = false
+                                onRequestDelegation()
+                            },
+                        )
+                    }
+
+                    else -> Unit
                 }
-
-                else -> Unit
             }
         }
     }
