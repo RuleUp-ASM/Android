@@ -39,6 +39,18 @@ class PushTokenRegistrar
             Timber.tag(TAG).i("FCM 토큰 등록 완료")
         }
 
+        /**
+         * 현재 토큰을 서버에서 폐기한다 (로그아웃 경로). 로컬 토큰을 지우기 전에 호출해야 한다
+         * (서버가 요청자를 식별해야 하므로). 실패는 로그만 남기고 흡수 — 죽은 토큰은 서버가 정리한다.
+         */
+        suspend fun unregisterCurrentToken() {
+            if (!tokenRepository.isLoggedIn.first()) return
+            runCatching {
+                pushApi.unregisterDevice(UnregisterDeviceRequest(token = fetchToken())).throwOnError()
+                Timber.tag(TAG).i("FCM 토큰 폐기 완료")
+            }.onFailure { Timber.tag(TAG).w(it, "FCM 토큰 폐기 실패") }
+        }
+
         private suspend fun fetchToken(): String =
             suspendCancellableCoroutine { continuation ->
                 FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
