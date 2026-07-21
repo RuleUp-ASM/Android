@@ -22,6 +22,7 @@ import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeMembersUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeRoomUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
+import com.ruleup.challenge.domain.usecase.GetCurrentUserIdUseCase
 import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
 import com.ruleup.challenge.domain.usecase.LeaveChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
@@ -55,6 +56,7 @@ class ChallengeDetailViewModel
         private val changeMemberRoleUseCase: ChangeMemberRoleUseCase,
         private val requestDelegationUseCase: RequestDelegationUseCase,
         private val respondDelegationUseCase: RespondDelegationUseCase,
+        private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
         private val getWatchersUseCase: GetWatchersUseCase,
         private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
         private val removeWatcherUseCase: RemoveWatcherUseCase,
@@ -126,10 +128,19 @@ class ChallengeDetailViewModel
 
                 ChallengeDetailReducerEvent.DelegationCleared ->
                     state.copy(pendingDelegation = null, pendingDelegationNickname = null)
+
+                is ChallengeDetailReducerEvent.MyUserIdLoaded -> state.copy(myUserId = event.userId)
             }
 
         private fun load(challengeId: String) {
             if (currentState.detail?.challengeId == challengeId) return
+            // 현재 사용자 ID 는 멤버 목록의 "내 행" 식별용 — 실패해도 흡수(본인 한정 액션만 숨겨진다).
+            if (currentState.myUserId == null) {
+                viewModelScope.launch {
+                    val userId = runCatching { getCurrentUserIdUseCase() }.getOrNull()
+                    dispatch(ChallengeDetailReducerEvent.MyUserIdLoaded(userId))
+                }
+            }
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
                 runCatching { getChallengeDetailUseCase(challengeId) }

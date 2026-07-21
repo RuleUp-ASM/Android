@@ -279,6 +279,7 @@ private fun ChallengeDetailContent(
                                     participantCount = members.participantCount,
                                     maxParticipants = members.maxParticipants,
                                     myRole = room.myRole,
+                                    myUserId = state.myUserId,
                                     actionEnabled = !state.isMemberActionLoading,
                                     delegationBanner = delegationBanner,
                                     onLeave = { confirmAction = MemberConfirm.LEAVE },

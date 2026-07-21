@@ -134,6 +134,8 @@ data class ChallengeDetailState(
     val pendingDelegation: DelegationTicket? = null,
     // 위임 요청 대상 닉네임(배너 문구용).
     val pendingDelegationNickname: String? = null,
+    // 현재 사용자 ID. 멤버 목록에서 "내 행"을 식별해 관리자 본인 해제(self-DEMOTE)를 노출하는 데 쓴다.
+    val myUserId: String? = null,
 ) : UiState {
     companion object {
         val initial =
@@ -200,4 +202,9 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
 
     /** 방장 위임 요청 배너 해제(취소·응답 후). */
     data object DelegationCleared : ChallengeDetailReducerEvent
+
+    /** 현재 사용자 ID 로드됨(진입 시 1회). */
+    data class MyUserIdLoaded(
+        val userId: String?,
+    ) : ChallengeDetailReducerEvent
 }
