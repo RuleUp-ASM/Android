@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsEffect
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsIntent
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsViewModel
+import com.ruleup.entity.challenge.BoundScreenApp
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.singleClickable
@@ -105,6 +106,14 @@ fun ChallengeTargetsScreen(
     // 설치된 실행 가능한 앱 목록 + 카테고리 + 최근 1주 사용 시간 조회(메인 스레드 밖에서).
     LaunchedEffect(Unit) {
         apps = withContext(Dispatchers.IO) { loadApps(context) }
+    }
+
+    // 진입 시 서버에 바인딩된 대상 앱 조회 → 복원되면 선택 상태를 시드한다.
+    LaunchedEffect(Unit) {
+        viewModel.onIntent(ChallengeTargetsIntent.Load(challengeId))
+    }
+    LaunchedEffect(state.restoredPackages) {
+        state.restoredPackages.forEach { selected[it] = true }
     }
 
     val loaded = apps
@@ -227,7 +236,7 @@ fun ChallengeTargetsScreen(
                     viewModel.onIntent(
                         ChallengeTargetsIntent.Save(
                             challengeId = challengeId,
-                            packages = selectedApps.map { it.packageName },
+                            apps = selectedApps.map { BoundScreenApp(packageName = it.packageName, appName = it.label) },
                         ),
                     )
                 },

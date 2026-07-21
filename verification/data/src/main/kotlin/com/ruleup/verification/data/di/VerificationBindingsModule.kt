@@ -1,6 +1,8 @@
 package com.ruleup.verification.data.di
 
+import com.ruleup.domain.challenge.ScreenAppBindingPort
 import com.ruleup.verification.data.repository.HealthTargetStoreImpl
+import com.ruleup.verification.data.repository.ScreenAppBindingAdapter
 import com.ruleup.verification.data.repository.SignalRepositoryImpl
 import com.ruleup.verification.data.repository.UsageTargetStoreImpl
 import com.ruleup.verification.data.repository.VerificationRepositoryImpl
@@ -80,4 +82,8 @@ abstract class VerificationBindingsModule {
     @Binds
     @Singleton
     abstract fun bindUsageTargetStore(impl: UsageTargetStoreImpl): UsageTargetStore
+
+    @Binds
+    @Singleton
+    abstract fun bindScreenAppBindingPort(impl: ScreenAppBindingAdapter): ScreenAppBindingPort
 }
