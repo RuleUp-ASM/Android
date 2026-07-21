@@ -77,6 +77,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.OpenNotices -> openNotices()
                 is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
                 ChallengeDetailIntent.OpenRanking -> openRanking()
+                ChallengeDetailIntent.OpenPendingReviews -> openPendingReviews()
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
                 ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
                 is ChallengeDetailIntent.PromoteMember -> changeRole(intent.userId, RoleAction.PROMOTE)
@@ -313,6 +314,14 @@ class ChallengeDetailViewModel
         private fun openRanking() {
             val id = currentState.detail?.challengeId ?: return
             navigationHelper.navigateByRoute(ChallengeRankingPage(challengeId = id).toRoute())
+        }
+
+        // 확인 대기함(verification)으로 이동. feature 간 직접 의존 없이 AppRoutes 경로로 라우팅한다.
+        private fun openPendingReviews() {
+            val id = currentState.detail?.challengeId ?: return
+            navigationHelper.navigateByRoute(
+                NavRoute(AppRoutes.VERIFICATION_PENDING_REVIEWS, mapOf("challengeId" to id)),
+            )
         }
 
         private fun registerApps() {

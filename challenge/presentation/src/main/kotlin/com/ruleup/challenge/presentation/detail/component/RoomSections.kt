@@ -305,6 +305,29 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
     }
 }
 
+/** 방장·관리자 전용 관리 진입 행(확인 대기함 등). 카드 우측 "›" 로 이동을 표시한다. */
+@Composable
+internal fun RoomManageEntry(
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
+                .singleClickable(onClick = onClick)
+                .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SectionTitle(label)
+        Spacer(Modifier.weight(1f))
+        Text(text = "›", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
 /**
  * 멤버 섹션: 인원/정원 + 멤버 목록(닉네임·역할 뱃지·매너온도) + 하단 탈퇴/삭제 액션.
  * 디자인 시안 부재 — 방 홈 섹션 카드 컨벤션을 따른다.
