@@ -25,6 +25,7 @@ enum class VerifiedVia(
     AUTO("AUTO"),
     MANUAL("MANUAL"),
     MANUAL_FALLBACK("MANUAL_FALLBACK"),
+    OBJECTION("OBJECTION"),
     ;
 
     companion object {

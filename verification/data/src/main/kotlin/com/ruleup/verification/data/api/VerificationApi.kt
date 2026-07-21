@@ -9,7 +9,12 @@ import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
 import com.ruleup.verification.data.dto.MyLocationResponse
 import com.ruleup.verification.data.dto.MyScreenAppsResponse
+import com.ruleup.verification.data.dto.ObjectionDecisionRequest
+import com.ruleup.verification.data.dto.ObjectionDecisionResponse
+import com.ruleup.verification.data.dto.ObjectionResponse
+import com.ruleup.verification.data.dto.PendingReviewsResponse
 import com.ruleup.verification.data.dto.ProgressResponse
+import com.ruleup.verification.data.dto.SubmitObjectionRequest
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
@@ -80,4 +85,25 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
         @Body request: UpdateScreenAppsRequest,
     ): BaseResponse<UpdateScreenAppsResponse>
+
+    // 이의 제기 제출 (POST objections)
+    @POST("v1/challenges/{challengeId}/objections")
+    suspend fun submitObjection(
+        @Path("challengeId") challengeId: String,
+        @Body request: SubmitObjectionRequest,
+    ): BaseResponse<ObjectionResponse>
+
+    // 이의 제기 승인/기각 (POST objections/{id}/decision)
+    @POST("v1/challenges/{challengeId}/objections/{objectionId}/decision")
+    suspend fun decideObjection(
+        @Path("challengeId") challengeId: String,
+        @Path("objectionId") objectionId: String,
+        @Body request: ObjectionDecisionRequest,
+    ): BaseResponse<ObjectionDecisionResponse>
+
+    // 확인 대기함 조회 (GET pending-reviews): 폴백 수동 인증·이의 제기 통합
+    @GET("v1/challenges/{challengeId}/pending-reviews")
+    suspend fun getPendingReviews(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<PendingReviewsResponse>
 }
