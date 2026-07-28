@@ -1,7 +1,5 @@
 package com.ruleup.onboarding.domain.fake
 
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.entity.user.Agreement
@@ -50,6 +48,8 @@ class FakeTokenRepository(
     }
 
     override val isLoggedIn: Flow<Boolean> = flowOf(false)
+
+    override val userId: Flow<String?> get() = flowOf(savedUserId)
 }
 
 /** 각 API 의 성공 결과/예외를 주입할 수 있는 인증 저장소 테스트 더블. */
@@ -137,20 +137,4 @@ class FakeIntroRepository : IntroRepository {
         error?.let { throw it }
         return result!!
     }
-}
-
-/** 로깅된 이벤트를 기록하는 애널리틱스 테스트 더블. */
-class FakeAnalyticsLogger : AnalyticsLogger {
-    val events = mutableListOf<AnalyticsEvent>()
-
-    override fun log(event: AnalyticsEvent) {
-        events += event
-    }
-
-    override fun setUserId(id: String?) = Unit
-
-    override fun setUserProperty(
-        key: String,
-        value: String,
-    ) = Unit
 }

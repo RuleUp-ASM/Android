@@ -35,6 +35,7 @@ kotlin {
 dependencies {
     // 공용 UI 헬퍼(SingleClickHelper 등) 재사용.
     implementation(project(":core:ui"))
+    implementation(project(":observability:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)
@@ -49,5 +50,4 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.activity.compose)
     // 지도 인증/렌더 에러를 디버그 오버레이·Logcat 으로 노출(onMapError).
-    implementation(libs.timber)
 }

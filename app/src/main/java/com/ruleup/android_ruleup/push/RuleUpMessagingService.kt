@@ -4,13 +4,15 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.ruleup.domain.helper.PushNotificationHelper
 import com.ruleup.domain.navigation.AppRoutes
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.d
+import com.ruleup.observability.domain.api.w
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 private const val TAG = "[Push]"
@@ -34,12 +36,15 @@ class RuleUpMessagingService : FirebaseMessagingService() {
     @Inject
     lateinit var pushTokenRegistrar: PushTokenRegistrar
 
+    @Inject
+    lateinit var observability: Observability
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onNewToken(token: String) {
         serviceScope.launch {
             runCatching { pushTokenRegistrar.register(token) }
-                .onFailure { Timber.tag(TAG).w(it, "onNewToken 등록 실패 — 다음 앱 시작이 보정") }
+                .onFailure { observability.w(TAG, it) { "onNewToken 등록 실패 — 다음 앱 시작이 보정" } }
         }
     }
 
@@ -53,7 +58,7 @@ class RuleUpMessagingService : FirebaseMessagingService() {
             TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
 
             // 명세 규칙 3: 모르는 type 은 조용히 버린다.
-            else -> Timber.tag(TAG).d("미지 푸시 type 무시: %s", type)
+            else -> observability.d(TAG) { "미지 푸시 type 무시: $type" }
         }
     }
 

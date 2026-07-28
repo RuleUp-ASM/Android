@@ -1,8 +1,6 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RoleAction
@@ -28,9 +26,13 @@ import com.ruleup.challenge.domain.usecase.LeaveChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
 import com.ruleup.challenge.domain.usecase.RequestDelegationUseCase
 import com.ruleup.challenge.domain.usecase.RespondDelegationUseCase
+import com.ruleup.challenge.presentation.observability.ChallengeDetailTtiPage
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.observability.domain.api.TtiTracker
+import com.ruleup.observability.domain.model.ScreenKey
+import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -61,8 +63,8 @@ class ChallengeDetailViewModel
         private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
         private val removeWatcherUseCase: RemoveWatcherUseCase,
         private val targetAppStore: TargetAppStore,
-        private val analyticsLogger: AnalyticsLogger,
         private val navigationHelper: NavigationHelper,
+        private val ttiTracker: TtiTracker,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
             ChallengeDetailState.initial,
         ) {
@@ -72,7 +74,6 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RefreshSetup -> refreshSetup()
                 ChallengeDetailIntent.RegisterApps -> registerApps()
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
-                ChallengeDetailIntent.PermissionGranted -> logSetupStep(AnalyticsEvent.SetupStepCompleted.STEP_PERMISSION)
                 ChallengeDetailIntent.Proceed -> navigationHelper.navigateToBack()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
                 is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
@@ -142,9 +143,14 @@ class ChallengeDetailViewModel
                 }
             }
             viewModelScope.launch {
+                // 화면 진입 → 사용 가능 상태까지의 TTI. 네비게이션 시 이전 세션은 ScreenTracker 가 정리한다.
+                ttiTracker.start(ChallengeDetailTtiPage, ScreenKey(AppRoutes.CHALLENGE_DETAIL))
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
+                ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
                 runCatching { getChallengeDetailUseCase(challengeId) }
                     .onSuccess { detail ->
+                        ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
+                        ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
                         // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
                         val setup = runCatching { getChallengeSetupUseCase(challengeId) }.getOrNull()
                         dispatch(
@@ -154,6 +160,9 @@ class ChallengeDetailViewModel
                                 targetAppsRegistered = targetAppStore.isRegistered(challengeId),
                             ),
                         )
+                        // 상세가 화면 상태로 반영된 시점 = 사용 가능. 감시자·방 홈은 부가 섹션이라 기다리지 않는다.
+                        ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
+                        ttiTracker.complete(ChallengeDetailTtiPage)
                         // 감시자는 챌린지 × 참여자 단위 — 항상 조회를 시도하고, 성공하면(=참여자)
                         // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
                         loadWatchers(challengeId)
@@ -339,13 +348,6 @@ class ChallengeDetailViewModel
             val id = currentState.detail?.challengeId ?: currentState.challengeId
             if (id.isBlank()) return
             navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
-        }
-
-        // 셋업 퍼널 단계 완료 이벤트(권한/앱/앵커). 어느 단계에서 이탈하는지 관측한다.
-        private fun logSetupStep(step: String) {
-            val id = currentState.detail?.challengeId ?: currentState.challengeId
-            if (id.isBlank()) return
-            analyticsLogger.log(AnalyticsEvent.SetupStepCompleted(step = step, challengeId = id))
         }
 
         private fun loadWatchers(challengeId: String) {

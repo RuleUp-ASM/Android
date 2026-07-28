@@ -29,6 +29,7 @@ kotlin {
 
 dependencies {
     implementation(project(":core:domain"))
+    implementation(project(":observability:domain"))
     // TokenAuthenticator 가 갱신 토큰(Token)을 직접 다룬다.
     implementation(project(":core:entity"))
 
@@ -40,7 +41,6 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.timber)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

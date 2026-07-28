@@ -76,8 +76,6 @@ runtime = "1.11.2"
 # architecture test
 konsist = "0.17.3"
 
-# logging (Android 단일 플랫폼 표준)
-timber = "5.0.1"
 
 # 성능(프레임 jank 측정) — 디버그 오버레이 로깅용
 jankstats = "1.0.0-beta01"
@@ -167,7 +165,6 @@ kakao-map = { module = "com.kakao.maps.open:android", version.ref = "kakaoMap" }
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 
 # logging
-timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 
 # image
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }

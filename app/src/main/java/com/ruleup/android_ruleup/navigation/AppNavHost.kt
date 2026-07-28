@@ -5,8 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.android_ruleup.LocalAnalyticsLogger
+import com.ruleup.android_ruleup.LocalScreenTracker
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.NavSignal
 import com.ruleup.ui.helper.LocalNavigationHelper
@@ -21,15 +20,15 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
 ) {
     val navigationHelper = LocalNavigationHelper.current
-    val analyticsLogger = LocalAnalyticsLogger.current
+    val screenTracker = LocalScreenTracker.current
 
     LaunchedEffect(Unit) {
         navigationHelper.navigationFlow.collect { signal ->
             when (signal) {
                 is NavSignal.GoToDestPage -> {
                     handleNavRoute(signal.route, backStack)
-                    // 목적지 페이지 이동마다 화면 진입을 기록한다(path 를 화면 이름으로 사용).
-                    analyticsLogger.log(AnalyticsEvent.ScreenView(screen = signal.route.path))
+                    // 목적지 페이지 이동마다 관측 컨텍스트를 갱신하고 화면 진입을 기록한다.
+                    screenTracker.onScreenEntered(signal.route.path)
                 }
                 NavSignal.Back -> backStack.removeLastOrNull()
             }

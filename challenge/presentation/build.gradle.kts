@@ -36,7 +36,7 @@ dependencies {
     implementation(project(":core:entity"))
     implementation(project(":core:domain"))
     implementation(project(":core:ui"))
-    implementation(project(":analytics:domain"))
+    implementation(project(":observability:domain"))
     implementation(project(":challenge:domain"))
 
     implementation(platform(libs.androidx.compose.bom))

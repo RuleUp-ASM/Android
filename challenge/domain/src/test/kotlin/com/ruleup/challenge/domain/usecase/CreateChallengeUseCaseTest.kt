@@ -1,7 +1,5 @@
 package com.ruleup.challenge.domain.usecase
 
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.challenge.domain.entity.Anonymity
 import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeForm
@@ -28,20 +26,15 @@ import kotlin.test.assertTrue
 
 class CreateChallengeUseCaseTest {
     @Test
-    fun `생성 성공 시 챌린지 생성 이벤트를 기록한다`() =
+    fun `생성 성공 시 생성된 챌린지를 반환한다`() =
         runBlocking {
             val challenge = challenge(challengeId = "c1", durationDays = 21, verification = null)
             val repo = FakeChallengeRepository(challenge)
-            val analytics = RecordingAnalyticsLogger()
             val notifier = RecordingSetupNotifier()
 
-            val result = CreateChallengeUseCase(repo, analytics, notifier)(form())
+            val result = CreateChallengeUseCase(repo, notifier)(form())
 
             assertEquals(challenge, result)
-            assertEquals<AnalyticsEvent>(
-                AnalyticsEvent.ChallengeCreated(challengeId = "c1", durationDays = 21),
-                analytics.events.single(),
-            )
         }
 
     @Test
@@ -59,7 +52,7 @@ class CreateChallengeUseCaseTest {
             val challenge = challenge(challengeId = "c1", title = "달리기", verification = verification)
             val notifier = RecordingSetupNotifier()
 
-            CreateChallengeUseCase(FakeChallengeRepository(challenge), RecordingAnalyticsLogger(), notifier)(form())
+            CreateChallengeUseCase(FakeChallengeRepository(challenge), notifier)(form())
 
             val call = notifier.lastCall!!
             assertEquals("c1", call.challengeId)
@@ -74,7 +67,7 @@ class CreateChallengeUseCaseTest {
             val challenge = challenge(challengeId = "c2", verification = null)
             val notifier = RecordingSetupNotifier()
 
-            CreateChallengeUseCase(FakeChallengeRepository(challenge), RecordingAnalyticsLogger(), notifier)(form())
+            CreateChallengeUseCase(FakeChallengeRepository(challenge), notifier)(form())
 
             val call = notifier.lastCall!!
             assertFalse(call.isAuto)
@@ -180,21 +173,6 @@ class CreateChallengeUseCaseTest {
             delegationId: String,
             action: com.ruleup.challenge.domain.entity.DelegationAction,
         ) = throw NotImplementedError()
-    }
-
-    private class RecordingAnalyticsLogger : AnalyticsLogger {
-        val events = mutableListOf<AnalyticsEvent>()
-
-        override fun log(event: AnalyticsEvent) {
-            events += event
-        }
-
-        override fun setUserId(id: String?) = Unit
-
-        override fun setUserProperty(
-            key: String,
-            value: String,
-        ) = Unit
     }
 
     private class RecordingSetupNotifier : SetupNotifier {

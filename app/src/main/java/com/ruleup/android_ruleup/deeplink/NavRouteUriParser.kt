@@ -7,9 +7,10 @@ import com.ruleup.android_ruleup.navigation.appRouteByPath
 import com.ruleup.challenge.domain.navigation.WatcherInvitationPage
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.navigation.IntroPromisePage
 import com.ruleup.onboarding.domain.navigation.SplashPage
-import timber.log.Timber
 
 private const val TAG = "[DeepLink]"
 
@@ -67,7 +68,10 @@ fun Uri.toNavRoute(): NavRoute {
  * - URI 가 없거나 미등록/미허용 path 면 Intro 단일 스택으로 fallback.
  * - 허용된 path 면 해당 [com.ruleup.android_ruleup.navigation.AppRoute] 의 syntheticStack 을 사용한다.
  */
-fun resolveStartStack(uri: Uri?): List<NavKey> {
+fun resolveStartStack(
+    uri: Uri?,
+    observability: Observability,
+): List<NavKey> {
     // 일반 실행(딥링크 없음)은 스플래시에서 시작해 자동 로그인 여부로 홈/인트로를 분기한다.
     if (uri == null) return listOf(GenericNavKey(SplashPage.PATH))
     // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다 — 스플래시가 로그인 여부로
@@ -76,7 +80,7 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
     val route = uri.toNavRoute()
     if (route.path !in EXTERNAL_ALLOWED_PATHS || appRouteByPath[route.path] == null) {
         // URI 전체(쿼리 포함)는 남기지 않고 path 만 남긴다(민감 인자 로깅 방지).
-        Timber.tag(TAG).w("허용되지 않은 딥링크 진입 차단: path=%s", route.path)
+        observability.w(TAG) { "허용되지 않은 딥링크 진입 차단: path=${route.path}" }
         return listOf(GenericNavKey(IntroPromisePage.PATH))
     }
     return appRouteByPath.getValue(route.path).syntheticStack(route.args)
@@ -86,12 +90,15 @@ fun resolveStartStack(uri: Uri?): List<NavKey> {
  * 앱 실행 중 들어온 새 deep-link 를 처리할 [NavRoute] 로 변환.
  * 미등록/미허용 path 면 null 반환 (호출부가 무시 결정).
  */
-fun resolveNewIntentRoute(uri: Uri): NavRoute? {
+fun resolveNewIntentRoute(
+    uri: Uri,
+    observability: Observability,
+): NavRoute? {
     // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태) — 무시.
     if (uri.isFriendInvite()) return null
     val route = uri.toNavRoute()
     if (route.path !in EXTERNAL_ALLOWED_PATHS || appRouteByPath[route.path] == null) {
-        Timber.tag(TAG).w("허용되지 않은 딥링크 무시: path=%s", route.path)
+        observability.w(TAG) { "허용되지 않은 딥링크 무시: path=${route.path}" }
         return null
     }
     return route

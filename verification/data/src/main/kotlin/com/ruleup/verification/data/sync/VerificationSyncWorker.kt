@@ -10,9 +10,13 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
-import com.ruleup.analytics.domain.CrashReporter
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.i
+import com.ruleup.observability.domain.event.Channel
+import com.ruleup.observability.domain.event.DiagnosticPayload
+import com.ruleup.observability.domain.model.ErrorInfo
+import com.ruleup.observability.domain.model.Severity
+import com.ruleup.observability.domain.model.attributes
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.domain.repository.ProgressCacheStore
 import com.ruleup.verification.domain.repository.SyncScheduler
@@ -20,7 +24,6 @@ import com.ruleup.verification.domain.repository.SyncScopeProvider
 import com.ruleup.verification.domain.usecase.RunSyncUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import timber.log.Timber
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -40,19 +43,16 @@ class VerificationSyncWorker
         private val progressCacheStore: ProgressCacheStore,
         private val syncScheduler: SyncScheduler,
         private val settingsStore: VerificationSettingsStore,
-        private val analyticsLogger: AnalyticsLogger,
-        private val crashReporter: CrashReporter,
+        private val observability: Observability,
     ) : CoroutineWorker(appContext, params) {
         override suspend fun doWork(): Result {
             val scope = syncScopeProvider.currentScope()
             // 디버그 가시화: 이번 sync 의 수집 스코프(타깃이 비면 수집기가 전부 생략됨).
-            Timber.tag(LOG_TAG).i(
-                "sync 시작 — scope: geofence=%d, usage=%d, health=%d, sleep=%b",
-                scope.activeRequestIds.size,
-                scope.targetPackages.size,
-                scope.healthTargets.size,
-                scope.sleepRequested,
-            )
+            observability.i(LOG_TAG) {
+                "sync 시작 — scope: geofence=${scope.activeRequestIds.size}, " +
+                    "usage=${scope.targetPackages.size}, health=${scope.healthTargets.size}, " +
+                    "sleep=${scope.sleepRequested}"
+            }
             val collectedAt = Instant.now().toString()
             return try {
                 val result = runSyncUseCase(scope, collectedAt)
@@ -62,31 +62,29 @@ class VerificationSyncWorker
                     syncScheduler.reschedule(result.nextSyncAfterSec)
                     // 진단 heartbeat 앵커(전송 스펙 §0.7) — 다음 envelope 에 마지막 성공 flush 시각으로 동봉.
                     settingsStore.setLastSuccessfulFlushAt(System.currentTimeMillis())
-                    Timber.tag(LOG_TAG).i(
-                        "sync 성공 — 갱신=%d, 무시타입=%s, next=%ds",
-                        result.updatedChallenges.size,
-                        result.ignoredSignalTypes,
-                        result.nextSyncAfterSec,
-                    )
-                    analyticsLogger.log(
-                        AnalyticsEvent.VerificationSynced(
-                            updatedCount = result.updatedChallenges.size,
-                            ignoredCount = result.ignoredSignalTypes.size,
-                        ),
-                    )
+                    observability.i(LOG_TAG) {
+                        "sync 성공 — 갱신=${result.updatedChallenges.size}, " +
+                            "무시타입=${result.ignoredSignalTypes}, next=${result.nextSyncAfterSec}s"
+                    }
                 } else {
                     // 활성 챌린지도 신호·gap 도 없어 전송 생략.
-                    Timber.tag(LOG_TAG).i("sync 전송 생략 — 활성 챌린지·신호·gap 0")
+                    observability.i(LOG_TAG) { "sync 전송 생략 — 활성 챌린지·신호·gap 0" }
                 }
                 Result.success()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 val outcome = syncOutcomeFor(e)
-                Timber.tag(LOG_TAG).w(e, "sync 실패 — outcome=%s", outcome)
-                // 처리된 실패도 기기별 원인 파악을 위해 관측: non-fatal 스택 + 분류 이벤트(비식별).
-                crashReporter.recordException(e, mapOf("sync_outcome" to outcome.name))
-                analyticsLogger.log(AnalyticsEvent.VerificationSyncFailed(reason = outcome.name))
+                // 처리된 실패도 기기별 원인 파악을 위해 관측한다. 진단 채널 → CrashlyticsSink 로 non-fatal 기록.
+                observability.log(Channel.DIAGNOSTIC, Severity.ERROR, LOG_TAG) {
+                    DiagnosticPayload(
+                        severity = Severity.ERROR,
+                        tag = LOG_TAG,
+                        message = "sync 실패",
+                        cause = ErrorInfo.from(e),
+                        attrs = attributes { put("sync_outcome", outcome.name) },
+                    )
+                }
                 when (outcome) {
                     SyncOutcome.SUCCESS, SyncOutcome.DISCARD -> Result.success()
                     SyncOutcome.RETRY -> Result.retry()
