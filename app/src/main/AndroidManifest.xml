@@ -43,24 +43,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- 커스텀 스킴 딥링크: ruleup://app/{path}?{args} (예: ruleup://app/profile/icon?signupToken=...) -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="ruleup"
-                    android:host="app" />
-            </intent-filter>
-
             <!-- App Links: 친구 초대 /inv/{code}.
                  autoVerify 검증은 설치 시점에 /.well-known/assetlinks.json 으로 수행된다.
                  앱 미설치 유저는 같은 URL이 웹 랜딩(스토어 안내)으로 열린다.
 
                  감시자 초대 /w/{token} 은 여기 없다 — 비유저 감시자를 포함해 웹 동의 페이지가
-                 수락을 담당하므로, 앱 설치 여부와 무관하게 브라우저로 열려야 한다. -->
+                 수락을 담당하므로, 앱 설치 여부와 무관하게 브라우저로 열려야 한다.
+
+                 /app/{path}?{args} 는 앱 화면으로 직결되는 경로다(푸시 알림 등). 화면이 늘어도
+                 prefix 를 추가하지 않도록 접두사 하나로 묶는다 — 화면별로 prefix 를 늘리면
+                 매니페스트가 곧 화이트리스트가 되고, 빠뜨리면 링크가 브라우저로 새어 나간다. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 
@@ -71,6 +63,10 @@
                     android:scheme="https"
                     android:host="android.ruleup.co.kr"
                     android:pathPrefix="/inv" />
+                <data
+                    android:scheme="https"
+                    android:host="android.ruleup.co.kr"
+                    android:pathPrefix="/app" />
             </intent-filter>
 
             <!-- Health Connect 권한 사용 이유(개인정보 처리방침) 안내 — Android 13 이하.
