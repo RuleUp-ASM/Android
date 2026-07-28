@@ -24,6 +24,11 @@ class TokenRepositoryImpl
         override val isLoggedIn: Flow<Boolean> =
             dataStore.data.map { prefs -> prefs[KEY_REFRESH] != null }
 
+        // userId 자체를 관찰한다. isLoggedIn 은 saveTokens 시점에 true 가 되지만 userId 는
+        // 그 다음 edit 에서 써지므로, 사용자 귀속이 필요한 쪽은 이 Flow 를 봐야 한다.
+        override val userId: Flow<String?> =
+            dataStore.data.map { prefs -> prefs[KEY_USER_ID] }
+
         override suspend fun saveTokens(token: Token) {
             cachedAccess = token.accessToken
             dataStore.edit { prefs ->
