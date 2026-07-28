@@ -12,7 +12,6 @@ import com.ruleup.challenge.domain.navigation.ChallengeNoticeEditPage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
-import com.ruleup.challenge.domain.navigation.WatcherInvitationPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
@@ -23,7 +22,6 @@ import com.ruleup.challenge.presentation.notice.NoticeEditScreen
 import com.ruleup.challenge.presentation.notice.NoticeListScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
-import com.ruleup.challenge.presentation.watcher.invitation.WatcherInvitationScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.IntroPromisePage
 import com.ruleup.onboarding.domain.navigation.IntroTrustPage
@@ -249,19 +247,6 @@ val appRoutes: List<AppRoute> =
             path = ChallengeRankingPage.PATH,
             render = { args ->
                 RankingScreen(challengeId = args[ChallengeRankingPage.ARG_CHALLENGE_ID].orEmpty())
-            },
-        ),
-        AppRoute(
-            path = WatcherInvitationPage.PATH,
-            // 카카오톡 초대 카드 링크(딥링크)로 진입 — 뒤로가기 시 홈으로.
-            syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(HomePage.PATH),
-                    GenericNavKey(WatcherInvitationPage.PATH, args),
-                )
-            },
-            render = { args ->
-                WatcherInvitationScreen(token = args[WatcherInvitationPage.ARG_TOKEN].orEmpty())
             },
         ),
         AppRoute(

@@ -8,6 +8,9 @@ package com.ruleup.domain.navigation
  *
  * 주석의 "진입점" 표시는 다른 feature 가 직접 이동해 들어오는 cross-feature 공개 경로다
  * (예: 챌린지 생성 완료 → [HOME], 홈의 챌린지 생성 버튼 → [CHALLENGE_CREATE]).
+ *
+ * 감시자 초대 수락(`/w/{token}`)은 여기 없다 — 비유저 감시자를 포함해 웹 동의 페이지가 담당하므로
+ * 앱에는 대응하는 화면도 경로도 두지 않는다.
  */
 object AppRoutes {
     // onboarding
@@ -31,7 +34,6 @@ object AppRoutes {
     const val CHALLENGE_TARGETS = "challenge/targets" // 대상 앱 등록(상세 → 앱 등록하기)
     const val CHALLENGE_EXPLORE = "challenge/explore" // 진입점 (하단 탭 → 탐색 메인)
     const val CHALLENGE_EXPLORE_LIST = "challenge/explore/list" // 챌린지 둘러보기(필터+정렬 목록)
-    const val WATCHER_INVITATION = "watchers/invitation" // 진입점 (감시자 초대 링크 → 인앱 수락)
     const val CHALLENGE_NOTICES = "challenge/notices" // 공지 목록(방 홈 → 공지)
     const val CHALLENGE_NOTICE_DETAIL = "challenge/notices/detail" // 공지 상세(조회 = 읽음)
     const val CHALLENGE_NOTICE_EDIT = "challenge/notices/edit" // 공지 작성/수정(방장 전용)

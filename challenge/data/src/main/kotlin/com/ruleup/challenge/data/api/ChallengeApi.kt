@@ -34,7 +34,6 @@ import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeRequest
 import com.ruleup.challenge.data.dto.UpdateNoticeRequest
 import com.ruleup.challenge.data.dto.UpdateNoticeResponse
-import com.ruleup.challenge.data.dto.WatcherInvitationInfoResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.network.dto.BaseResponse
@@ -192,18 +191,6 @@ interface ChallengeApi {
     suspend fun removeWatcher(
         @Path("challengeId") challengeId: String,
         @Path("watcherId") watcherId: String,
-    ): BaseResponse<EmptyData>
-
-    // 감시자: 초대 링크 진입 (토큰 검증 + 초대 정보)
-    @GET("v1/watchers/invitations/{token}")
-    suspend fun getWatcherInvitation(
-        @Path("token") token: String,
-    ): BaseResponse<WatcherInvitationInfoResponse>
-
-    // 감시자: 인앱 수락 (= 수신동의, 채널 = 인앱 푸시)
-    @POST("v1/watchers/invitations/{token}/accept")
-    suspend fun acceptWatcherInvitation(
-        @Path("token") token: String,
     ): BaseResponse<EmptyData>
 
     // 방 홈 일괄 조회 (ACTIVE 멤버 전용 — 비멤버 403 NOT_A_MEMBER)

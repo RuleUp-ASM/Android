@@ -106,35 +106,5 @@ data class WatcherInvitation(
     val kakaoShare: WatcherInviteCard?,
 )
 
-/**
- * 초대 링크 진입 결과의 수락 가능 상태. 서버 응답의 status(INVITED/CONSENTED/EXPIRED/REVOKED)와
- * blocked(생성자–감시자 30일 차단)를 화면 분기용 단일 상태로 환원한 값.
- */
-enum class WatcherInvitationState {
-    // 수락 가능(status=INVITED, 차단 아님)
-    PENDING,
-
-    // 이미 수락됨(status=CONSENTED)
-    ALREADY_ACCEPTED,
-
-    // 7일 경과 만료 — 재초대 필요
-    EXPIRED,
-
-    // 해제/수신거부된 초대
-    REVOKED,
-
-    // 수신거부 후 동일 생성자 30일 재초대 차단 기간
-    BLOCKED,
-}
-
-/** 초대 정보(수락 화면 렌더용, 명세: GET /watchers/invitations/{token}). */
-data class WatcherInvitationInfo(
-    val challengeTitle: String,
-    val inviterNickname: String,
-    val state: WatcherInvitationState,
-    // BLOCKED 일 때 차단 해제 시각(ISO datetime)
-    val blockedUntil: String?,
-)
-
 /** 무료 3명 초과 초대 시도(명세: 409 WATCHER_LIMIT_EXCEEDED). 프레젠테이션이 구독 안내로 분기한다. */
 class WatcherLimitExceededException : RuntimeException("감시자는 챌린지당 무료 $WATCHER_FREE_LIMIT 명까지예요")

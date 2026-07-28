@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
-import com.ruleup.challenge.domain.navigation.WatcherInvitationPage
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
@@ -28,14 +27,12 @@ private val EXTERNAL_ALLOWED_PATHS =
         AppRoutes.CHALLENGE_DETAIL,
         AppRoutes.VERIFICATION_DETAIL,
         AppRoutes.VERIFICATION_PROGRESS,
-        // 감시자 초대 수락(카카오톡 초대 카드 링크). 토큰 검증·상태 변경은 서버가 담당한다.
-        AppRoutes.WATCHER_INVITATION,
         // 공지 푸시(NOTICE_CREATED) 탭 진입. 조회 화면이며 멤버 여부·읽음 처리는 서버가 판정한다.
         AppRoutes.CHALLENGE_NOTICE_DETAIL,
     )
 
 // App Links 초대 경로 분리 합의: 감시자 = /w/{token}, 친구 초대 = /inv/{code}.
-private const val WATCHER_INVITE_SEGMENT = "w"
+// 감시자 수락은 앱이 처리하지 않는다 — /w 는 매니페스트에서 빠져 있어 브라우저(웹 동의 페이지)로 열린다.
 private const val FRIEND_INVITE_SEGMENT = "inv"
 
 /** 친구 초대 링크(/inv/{code}) 여부. 라우팅이 아니라 "앱 실행"으로만 처리한다. */
@@ -43,18 +40,11 @@ private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEN
 
 /**
  * App Link 의 [Uri] 를 [NavRoute] 로 변환한다.
- * - `/w/{token}` (감시자 초대 App Links)은 감시자 초대 수락 화면으로 매핑한다.
  * - path: pathSegments 를 슬래시로 합쳐 등록된 PATH 와 동일한 형식으로 만든다 (앞 슬래시 없음, 예: "profile/icon").
  * - args: 모든 query parameter 를 그대로 String 맵으로 옮긴다 (복합 타입은 호출부의 Args.from 이 디코딩).
  */
 fun Uri.toNavRoute(): NavRoute {
     val segments = pathSegments?.takeIf { it.isNotEmpty() } ?: return NavRoute(IntroPromisePage.PATH)
-    if (segments.first() == WATCHER_INVITE_SEGMENT && segments.size >= 2) {
-        return NavRoute(
-            AppRoutes.WATCHER_INVITATION,
-            mapOf(WatcherInvitationPage.ARG_TOKEN to segments[1]),
-        )
-    }
     val path = segments.joinToString("/")
     val args =
         queryParameterNames
