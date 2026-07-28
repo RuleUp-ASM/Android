@@ -41,8 +41,9 @@ import com.kakao.vectormap.shape.Polygon
 import com.kakao.vectormap.shape.PolygonOptions
 import com.kakao.vectormap.shape.PolygonStyles
 import com.kakao.vectormap.shape.PolygonStylesSet
+import com.ruleup.observability.domain.api.w
+import com.ruleup.ui.helper.LocalObservability
 import kotlinx.coroutines.tasks.await
-import timber.log.Timber
 
 /**
  * 카카오 지도 기반 위치 선택(명세 §5.3). 지도를 탭하면 그 좌표를 [onMapTap] 으로 올려보내고(확인 대기),
@@ -63,6 +64,7 @@ fun GeofenceMap(
     anchors: List<MapAnchor> = emptyList(),
 ) {
     val context = LocalContext.current
+    val observability = LocalObservability.current
     val lifecycleOwner = LocalLifecycleOwner.current
     // 지도 콜백은 컴포지션 밖에서 호출되므로 항상 최신 람다를 가리키게 한다.
     val currentOnMapTap by rememberUpdatedState(onMapTap)
@@ -88,7 +90,7 @@ fun GeofenceMap(
                     // 인증 실패(키해시·패키지명·앱키 불일치)·렌더 오류는 여기로만 온다. 삼키면 "빈 지도"로만 보이므로
                     // 'KakaoMap' 태그로 남겨 디버그 오버레이/Logcat 에서 실제 사유를 확인한다.
                     override fun onMapError(error: Exception) {
-                        Timber.tag("KakaoMap").w(error, "지도 인증/렌더 실패 — 키해시·패키지명·네이티브앱키 확인")
+                        observability.w("KakaoMap", error) { "지도 인증/렌더 실패 — 키해시·패키지명·네이티브앱키 확인" }
                     }
                 },
                 object : KakaoMapReadyCallback() {
@@ -257,12 +259,14 @@ private class GeofenceMapObjects {
 @Composable
 fun rememberLocationLocator(): LocationLocator {
     val context = LocalContext.current
+    val observability = LocalObservability.current
     return remember(context) { FusedLocationLocator(context) }
 }
 
 @Composable
 fun rememberLocationPermissionGranted(): Boolean {
     val context = LocalContext.current
+    val observability = LocalObservability.current
     return context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
 }
 

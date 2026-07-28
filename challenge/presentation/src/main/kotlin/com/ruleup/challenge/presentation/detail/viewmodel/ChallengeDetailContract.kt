@@ -27,9 +27,6 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** "인증 장소 등록하기" → 지도(앵커) 등록 화면으로 이동. */
     data object RegisterAnchor : ChallengeDetailIntent
 
-    /** 권한 허용 모달에서 권한을 모두 확보함(셋업 퍼널: 권한 단계 완료). */
-    data object PermissionGranted : ChallengeDetailIntent
-
     /** 필요한 등록이 모두 끝난(또는 불필요한) 뒤 시작. */
     data object Proceed : ChallengeDetailIntent
 

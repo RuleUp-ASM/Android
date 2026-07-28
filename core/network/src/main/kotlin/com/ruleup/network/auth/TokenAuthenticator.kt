@@ -2,13 +2,15 @@ package com.ruleup.network.auth
 
 import com.ruleup.domain.token.TokenRefresher
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.i
+import com.ruleup.observability.domain.api.w
 import dagger.Lazy
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -29,6 +31,7 @@ class TokenAuthenticator
     constructor(
         private val tokenRepository: TokenRepository,
         private val tokenRefresher: Lazy<TokenRefresher>,
+        private val observability: Observability,
     ) : Authenticator {
         override fun authenticate(
             route: Route?,
@@ -55,7 +58,7 @@ class TokenAuthenticator
                         runBlocking { tokenRefresher.get().refresh(refreshToken) }
                     } catch (e: Exception) {
                         // 일시 오류(네트워크·5xx 등): 세션 유지, 재시도만 포기.
-                        Timber.tag(TAG).w(e, "토큰 갱신 일시 실패 — 재시도 포기")
+                        observability.w(TAG, e) { "토큰 갱신 일시 실패 — 재시도 포기" }
                         return null
                     }
 
@@ -69,7 +72,7 @@ class TokenAuthenticator
                         return response.retryWith(latestAccess)
                     }
                     // 세션 만료: 토큰 정리 → isLoggedIn Flow 가 false 로 전이 → 로그인 화면으로 라우팅.
-                    Timber.tag(TAG).i("세션 만료 — 로컬 토큰 정리")
+                    observability.i(TAG) { "세션 만료 — 로컬 토큰 정리" }
                     runBlocking { tokenRepository.clear() }
                     return null
                 }

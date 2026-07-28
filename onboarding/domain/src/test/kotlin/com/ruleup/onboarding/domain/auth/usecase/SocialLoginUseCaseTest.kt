@@ -1,6 +1,5 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.analytics.domain.AnalyticsEvent
 import com.ruleup.entity.user.AuthSession
 import com.ruleup.entity.user.Token
 import com.ruleup.entity.user.User
@@ -9,14 +8,12 @@ import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthProfile
 import com.ruleup.onboarding.domain.entity.OAuthProvider
 import com.ruleup.onboarding.domain.entity.OAuthResult
-import com.ruleup.onboarding.domain.fake.FakeAnalyticsLogger
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 class SocialLoginUseCaseTest {
     private val authorization =
@@ -34,13 +31,11 @@ class SocialLoginUseCaseTest {
             val session = AuthSession(token, user())
             val auth = FakeAuthRepository().apply { exchangeResult = OAuthResult.ExistingUser(session) }
             val tokens = FakeTokenRepository()
-            val analytics = FakeAnalyticsLogger()
 
-            val result = SocialLoginUseCase(auth, tokens, analytics)(authorization)
+            val result = SocialLoginUseCase(auth, tokens)(authorization)
 
             assertEquals(LoginResult.GoMain, result)
             assertEquals(token, tokens.savedToken)
-            assertEquals<AnalyticsEvent>(AnalyticsEvent.Login(provider = "kakao"), analytics.events.single())
         }
 
     @Test
@@ -56,13 +51,11 @@ class SocialLoginUseCaseTest {
                         )
                 }
             val tokens = FakeTokenRepository()
-            val analytics = FakeAnalyticsLogger()
 
-            val result = SocialLoginUseCase(auth, tokens, analytics)(authorization)
+            val result = SocialLoginUseCase(auth, tokens)(authorization)
 
             assertEquals(LoginResult.GoSignup("signup-token"), result)
             assertNull(tokens.savedToken)
-            assertTrue(analytics.events.isEmpty())
         }
 
     private fun user() =

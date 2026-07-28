@@ -95,7 +95,9 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:network"))
     implementation(project(":core:datastore"))
-    implementation(project(":analytics:data"))
+    implementation(project(":observability:data"))
+    // 인스펙터 싱크는 디버그 변형에만 물린다 — 릴리스 APK 에 포함되지 않는다.
+    debugImplementation(project(":observability:debug"))
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
     implementation(project(":onboarding:presentation"))
@@ -139,8 +141,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 
-    implementation(libs.timber)
-    // 프레임 jank 측정(JankStats). 디버그 빌드에서만 트래킹 → Timber 로 로깅(디버그 오버레이 표시).
+    // 프레임 jank 측정(JankStats). 디버그 빌드에서만 트래킹 → 관측 파이프라인으로 기록.
     implementation(libs.androidx.metrics.performance)
 
     testImplementation(libs.junit)

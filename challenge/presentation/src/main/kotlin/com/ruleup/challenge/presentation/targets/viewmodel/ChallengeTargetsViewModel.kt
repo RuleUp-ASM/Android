@@ -1,8 +1,6 @@
 package com.ruleup.challenge.presentation.targets.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.domain.challenge.ScreenAppBindingPort
 import com.ruleup.domain.helper.NavigationHelper
@@ -22,7 +20,6 @@ class ChallengeTargetsViewModel
     constructor(
         private val screenAppBindingPort: ScreenAppBindingPort,
         private val targetAppStore: TargetAppStore,
-        private val analyticsLogger: AnalyticsLogger,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeTargetsIntent, ChallengeTargetsState, ChallengeTargetsReducerEvent, ChallengeTargetsEffect>(
             ChallengeTargetsState.initial,
@@ -68,12 +65,6 @@ class ChallengeTargetsViewModel
                     .onSuccess {
                         // 상세 화면의 "등록됨" 게이트 판정용 로컬 반영(서버 성공 시에만).
                         targetAppStore.save(intent.challengeId, apps.map { it.packageName })
-                        analyticsLogger.log(
-                            AnalyticsEvent.SetupStepCompleted(
-                                step = AnalyticsEvent.SetupStepCompleted.STEP_TARGET_APPS,
-                                challengeId = intent.challengeId,
-                            ),
-                        )
                         emitEffect(ChallengeTargetsEffect.ShowMessage("대상 앱이 등록됐어요"))
                         navigationHelper.navigateToBack()
                     }.onFailure {

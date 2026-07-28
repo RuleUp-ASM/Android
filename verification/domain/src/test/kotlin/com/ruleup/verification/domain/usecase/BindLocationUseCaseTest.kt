@@ -17,7 +17,7 @@ class BindLocationUseCaseTest {
         runBlocking {
             val registrar = FakeRegistrar()
 
-            BindLocationUseCase(registrar, FakeTokenRepository(userId = "u1"))(
+            BindLocationUseCase(registrar, FakeTokenRepository(storedUserId = "u1"))(
                 challengeId = "c1",
                 anchors =
                     listOf(
@@ -38,7 +38,7 @@ class BindLocationUseCaseTest {
         runBlocking {
             val registrar = FakeRegistrar()
 
-            BindLocationUseCase(registrar, FakeTokenRepository(userId = null))(
+            BindLocationUseCase(registrar, FakeTokenRepository(storedUserId = null))(
                 challengeId = "c1",
                 anchors = listOf(LocationPin(lat = 37.0, lng = 127.0, radiusM = 600f, label = null)),
                 dwellMinutes = 60,
@@ -53,7 +53,7 @@ class BindLocationUseCaseTest {
         runBlocking {
             val registrar = FakeRegistrar()
 
-            BindLocationUseCase(registrar, FakeTokenRepository(userId = "u2"))(
+            BindLocationUseCase(registrar, FakeTokenRepository(storedUserId = "u2"))(
                 challengeId = "c2",
                 anchors =
                     listOf(
@@ -89,7 +89,7 @@ class BindLocationUseCaseTest {
     }
 
     private class FakeTokenRepository(
-        private val userId: String?,
+        private val storedUserId: String?,
     ) : TokenRepository {
         override suspend fun saveTokens(token: Token) = Unit
 
@@ -101,10 +101,12 @@ class BindLocationUseCaseTest {
 
         override suspend fun saveUserId(userId: String) = Unit
 
-        override suspend fun getUserId(): String? = userId
+        override suspend fun getUserId(): String? = storedUserId
 
         override suspend fun clear() = Unit
 
-        override val isLoggedIn: Flow<Boolean> = flowOf(userId != null)
+        override val isLoggedIn: Flow<Boolean> = flowOf(storedUserId != null)
+
+        override val userId: Flow<String?> = flowOf(storedUserId)
     }
 }

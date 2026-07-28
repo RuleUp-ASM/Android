@@ -1,7 +1,5 @@
 package com.ruleup.verification.domain.usecase
 
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
@@ -58,7 +56,6 @@ class RunSyncUseCaseTest {
                     signalRepo,
                     FakeEnvelopeMetadataProvider(),
                     verificationRepo,
-                    FakeAnalyticsLogger(),
                 )
 
             val result = useCase(scope, collectedAt)
@@ -79,7 +76,6 @@ class RunSyncUseCaseTest {
                     signalRepo,
                     FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
                     verificationRepo,
-                    FakeAnalyticsLogger(),
                 )
 
             val result = useCase(scope, collectedAt)
@@ -100,7 +96,6 @@ class RunSyncUseCaseTest {
                     signalRepo,
                     FakeEnvelopeMetadataProvider(),
                     verificationRepo,
-                    FakeAnalyticsLogger(),
                 )
 
             val result = useCase(scope, collectedAt)
@@ -122,7 +117,6 @@ class RunSyncUseCaseTest {
                     signalRepo,
                     FakeEnvelopeMetadataProvider(),
                     verificationRepo,
-                    FakeAnalyticsLogger(),
                 )
 
             assertFailsWith<InvalidSignalPayloadException> { useCase(scope, collectedAt) }
@@ -141,7 +135,6 @@ class RunSyncUseCaseTest {
                     signalRepo,
                     FakeEnvelopeMetadataProvider(),
                     verificationRepo,
-                    FakeAnalyticsLogger(),
                 )
 
             assertFailsWith<SyncTooFrequentException> { useCase(scope, collectedAt) }
@@ -297,16 +290,5 @@ class RunSyncUseCaseTest {
             lat: Double,
             lng: Double,
         ): Place? = error("unused")
-    }
-
-    private class FakeAnalyticsLogger : AnalyticsLogger {
-        override fun log(event: AnalyticsEvent) = Unit
-
-        override fun setUserId(id: String?) = Unit
-
-        override fun setUserProperty(
-            key: String,
-            value: String,
-        ) = Unit
     }
 }

@@ -29,7 +29,7 @@ dependencies {
     api(project(":core:domain"))
     api(project(":core:entity"))
     // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
-    implementation(project(":analytics:domain"))
+    implementation(project(":observability:domain"))
     implementation(libs.kotlinx.coroutines.core)
     // UseCase 의 @Inject 생성자(런타임 Hilt 컴포넌트에서 제공). 도메인은 hilt 런타임 없이 annotation 만.
     implementation(libs.javax.inject)

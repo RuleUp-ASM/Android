@@ -6,4 +6,4 @@ ktlint_standard_package-name = disabled
 # Compose 함수는 PascalCase 가 관례이므로 @Composable 은 function-naming 검사에서 제외한다.
 ktlint_function_naming_ignore_when_annotated_with = Composable
 # 앱 차원에서 의도적으로 쓰는 CompositionLocal 들은 compose-rules allowlist 에 등록한다.
-compose_allowed_composition_locals = LocalNavigationHelper,LocalMessageHelper,LocalAnalyticsLogger
+compose_allowed_composition_locals = LocalNavigationHelper,LocalMessageHelper,LocalObservability,LocalScreenTracker

@@ -1,5 +1,7 @@
 package com.ruleup.verification.data.repository
 
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.i
 import com.ruleup.verification.data.db.common.SignalGapDao
 import com.ruleup.verification.data.db.common.toAppEvent
 import com.ruleup.verification.data.db.common.toDomain
@@ -13,7 +15,6 @@ import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.VerificationSignal
 import com.ruleup.verification.domain.repository.SignalRepository
-import timber.log.Timber
 import javax.inject.Inject
 
 // 수집·동기화 경로 공통 로그 태그(Worker 와 동일). 디버그 오버레이/Logcat 에서 'VerifySync' 로 필터.
@@ -22,16 +23,17 @@ private const val SYNC_LOG_TAG = "VerifySync"
 // 상세 로그 폭주 방지: 타입별 최대 이만큼만 값까지 찍고 나머지는 "…외 N건" 으로 줄인다.
 private const val MAX_DETAIL_PER_TYPE = 30
 
-// 드레인된 행의 실제 값을 한 줄씩 'VerifySync' 로 남긴다(디버그 오버레이/Logcat). 릴리스는 트리 미식재라 무시된다.
+// 드레인된 행의 실제 값을 한 줄씩 'VerifySync' 로 남긴다(디버그 오버레이/Logcat).
+// line(it) 은 게이트를 통과한 뒤에만 평가된다 — Timber 시절의 treeCount 가드가 필요 없어졌다.
 private fun <T> List<T>.logSignalDetail(
+    observability: Observability,
     type: String,
     line: (T) -> String,
 ) {
-    // line(it) 는 String.format 을 포함해 즉시 평가되므로, 심을 트리가 없으면(릴리스) 아예 만들지 않는다.
-    if (isEmpty() || Timber.treeCount == 0) return
-    take(MAX_DETAIL_PER_TYPE).forEach { Timber.tag(SYNC_LOG_TAG).i("  · %s", line(it)) }
+    if (isEmpty()) return
+    take(MAX_DETAIL_PER_TYPE).forEach { observability.i(SYNC_LOG_TAG) { "  · ${line(it)}" } }
     if (size > MAX_DETAIL_PER_TYPE) {
-        Timber.tag(SYNC_LOG_TAG).i("  · %s …외 %d건", type, size - MAX_DETAIL_PER_TYPE)
+        observability.i(SYNC_LOG_TAG) { "  · $type …외 ${size - MAX_DETAIL_PER_TYPE}건" }
     }
 }
 
@@ -48,6 +50,7 @@ class SignalRepositoryImpl
         private val healthReadingDao: HealthReadingDao,
         private val sleepSegmentDao: SleepSegmentDao,
         private val signalGapDao: SignalGapDao,
+        private val observability: Observability,
     ) : SignalRepository {
         override suspend fun drainPending(collectedAt: String): SignalBatch? {
             // 미드레인 행에 배치키를 부여(드레인 도중 새로 들어온 행은 null 로 남아 다음 배치로).
@@ -63,29 +66,25 @@ class SignalRepositoryImpl
             val healthReadings = healthReadingDao.byBatch(collectedAt)
             val sleepSegments = sleepSegmentDao.byBatch(collectedAt)
             // 디버그 가시화(수집 경로): 이번 배치로 드레인된 신호 건수를 타입별로 남긴다(0이면 스코프/권한 미충족).
-            Timber.tag(SYNC_LOG_TAG).i(
-                "수집 드레인 — geofence=%d, location=%d, usage=%d, health=%d, sleep=%d",
-                transitions.size,
-                locations.size,
-                usage.size,
-                healthReadings.size,
-                sleepSegments.size,
-            )
+            observability.i(SYNC_LOG_TAG) {
+                "수집 드레인 — geofence=${transitions.size}, location=${locations.size}, " +
+                    "usage=${usage.size}, health=${healthReadings.size}, sleep=${sleepSegments.size}"
+            }
             // 건수 다음으로 실제 값까지 한 줄씩(타입별 최대 30건). 어느 패키지·좌표·헬스 수치·전이인지 눈으로 확인.
-            transitions.logSignalDetail("geofence") {
+            transitions.logSignalDetail(observability, "geofence") {
                 "geofence ${it.transition} req=${it.requestId} " +
                     "(${"%.5f".format(it.lat)}, ${"%.5f".format(it.lng)}) acc=${it.accuracy}m mock=${it.isMock}"
             }
-            locations.logSignalDetail("location") {
+            locations.logSignalDetail(observability, "location") {
                 "location (${"%.5f".format(it.lat)}, ${"%.5f".format(it.lng)}) acc=${it.accuracy}m mock=${it.isMock}"
             }
-            usage.logSignalDetail("usage") { "usage ${it.kind}/${it.eventType} ${it.packageName}" }
-            healthReadings.logSignalDetail("health") {
+            usage.logSignalDetail(observability, "usage") { "usage ${it.kind}/${it.eventType} ${it.packageName}" }
+            healthReadings.logSignalDetail(observability, "health") {
                 "health ${it.metric}=${it.value}${it.unit}" +
                     (it.exerciseType?.let { e -> " ($e)" }.orEmpty()) +
                     " ${it.date} via ${it.dataOrigin}"
             }
-            sleepSegments.logSignalDetail("sleep") {
+            sleepSegments.logSignalDetail(observability, "sleep") {
                 "sleep ${it.status} ${(it.endAt - it.startAt) / 60_000}m"
             }
             if (transitions.isEmpty() &&

@@ -6,13 +6,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.metrics.performance.JankStats
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.android_ruleup.deeplink.resolveNewIntentRoute
 import com.ruleup.android_ruleup.deeplink.resolveStartStack
+import com.ruleup.android_ruleup.navigation.GenericNavKey
+import com.ruleup.android_ruleup.observability.JankTracker
+import com.ruleup.android_ruleup.observability.ScreenTracker
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.observability.domain.api.Observability
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -24,38 +26,42 @@ class MainActivity : ComponentActivity() {
     lateinit var messageHelper: MessageHelper
 
     @Inject
-    lateinit var analyticsLogger: AnalyticsLogger
+    lateinit var screenTracker: ScreenTracker
 
-    // 프레임 jank 측정(디버그 빌드만). janky 프레임을 Timber 로 남기면 디버그 오버레이([DebugLogOverlay])에도 뜬다.
+    @Inject
+    lateinit var observability: Observability
+
+    @Inject
+    lateinit var jankTracker: JankTracker
+
+    // 프레임 jank 측정. 창 단위로 묶어 성능 채널로 내보낸다([JankTracker]).
     private var jankStats: JankStats? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val startStack = resolveStartStack(intent?.data)
+        // @AndroidEntryPoint 의 필드 주입은 super.onCreate() 에서 일어난다.
+        // 주입된 의존을 쓰는 코드는 반드시 그 뒤에 와야 한다.
         super.onCreate(savedInstanceState)
+        val startStack = resolveStartStack(intent?.data, observability)
+        // 시작 화면은 네비게이션 신호 없이 백스택으로 직접 세팅되므로 ScreenTracker 를 거치지 않는다.
+        // 그대로 두면 스플래시·딥링크 진입 화면의 ScreenView 가 누락되고, 그 구간 jank 가
+        // 'unknown' 에 귀속된다.
+        (startStack.lastOrNull() as? GenericNavKey)?.let { screenTracker.onScreenEntered(it.path) }
         enableEdgeToEdge()
         setContent {
             AppRoot(
                 navigationHelper = navigationHelper,
                 messageHelper = messageHelper,
-                analyticsLogger = analyticsLogger,
+                screenTracker = screenTracker,
+                observability = observability,
                 startStack = startStack,
             )
         }
-        if (BuildConfig.DEBUG) {
-            jankStats =
-                JankStats.createAndTrack(window) { frameData ->
-                    if (frameData.isJank) {
-                        val ms = frameData.frameDurationUiNanos / 1_000_000.0
-                        val states = frameData.states.joinToString { "${it.key}=${it.value}" }
-                        Timber
-                            .tag("Jank")
-                            .w("느린 프레임 %.1fms%s".format(ms, if (states.isEmpty()) "" else " [$states]"))
-                    }
-                }
-        }
+        // 성능 채널로 집계해 내보낸다. 릴리스에서도 켠다 — 실사용 기기의 jank 가 정작 필요한 데이터이고,
+        // 프레임마다가 아니라 창 단위로 묶여 나가므로 이벤트 양이 통제된다.
+        jankStats = JankStats.createAndTrack(window, jankTracker::onFrame)
     }
 
-    // 화면이 보일 때만 측정(JankStats 권장). 디버그가 아니면 jankStats == null 이라 no-op.
+    // 화면이 보일 때만 측정(JankStats 권장).
     override fun onResume() {
         super.onResume()
         jankStats?.isTrackingEnabled = true
@@ -71,7 +77,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         intent.data
-            ?.let { resolveNewIntentRoute(it) }
+            ?.let { resolveNewIntentRoute(it, observability) }
             ?.let { navigationHelper.navigateByRoute(it) }
     }
 }

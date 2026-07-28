@@ -1,7 +1,5 @@
 package com.ruleup.verification.domain.usecase
 
-import com.ruleup.analytics.domain.AnalyticsEvent
-import com.ruleup.analytics.domain.AnalyticsLogger
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalScope
@@ -31,7 +29,6 @@ class RunSyncUseCase
         private val signalRepository: SignalRepository,
         private val envelopeMetadataProvider: EnvelopeMetadataProvider,
         private val verificationRepository: VerificationRepository,
-        private val analyticsLogger: AnalyticsLogger,
     ) {
         suspend operator fun invoke(
             scope: SignalScope,
@@ -60,30 +57,20 @@ class RunSyncUseCase
                 } catch (e: InvalidSignalPayloadException) {
                     // 잘못된 배치는 폐기해 무한 재전송을 막는다.
                     signalRepository.markSynced(collectedAt)
-                    analyticsLogger.log(AnalyticsEvent.VerificationSyncFailed(REASON_INVALID_PAYLOAD))
                     throw e
                 } catch (e: SyncTooFrequentException) {
                     // 429 는 markSynced 없이 전파 → Worker 가 백오프 재시도(전송분 유지).
-                    analyticsLogger.log(AnalyticsEvent.VerificationSyncFailed(REASON_TOO_FREQUENT))
                     throw e
                 }
 
             // 5) 성공분 synced 표시 + TTL 정리.
             signalRepository.markSynced(collectedAt)
             signalRepository.purgeExpired(BUFFER_TTL_MILLIS)
-            analyticsLogger.log(
-                AnalyticsEvent.VerificationSynced(
-                    updatedCount = result.updatedChallenges.size,
-                    ignoredCount = result.ignoredSignalTypes.size,
-                ),
-            )
             return result
         }
 
         companion object {
             // 전송 스펙 §0.2: 로컬 버퍼는 15일 보존 후 정리(서버 30일과의 간극은 BUFFER_EVICTED 로 표기).
             private const val BUFFER_TTL_MILLIS: Long = 15L * 24 * 60 * 60 * 1000
-            private const val REASON_INVALID_PAYLOAD = "INVALID_SIGNAL_PAYLOAD"
-            private const val REASON_TOO_FREQUENT = "SYNC_TOO_FREQUENT"
         }
     }

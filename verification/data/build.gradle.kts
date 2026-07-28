@@ -53,7 +53,7 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:entity"))
     // sync 결과 관측: Analytics 이벤트 방출 + 실패 시 non-fatal 기록.
-    implementation(project(":analytics:domain"))
+    implementation(project(":observability:domain"))
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
@@ -81,7 +81,6 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     // 수집·동기화 경로 가시화 로그(디버그 오버레이/Logcat). Tree 는 :app 디버그 빌드에서 심는다.
-    implementation(libs.timber)
 
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.kotlinx.serialization.json)

@@ -2,6 +2,8 @@ package com.ruleup.network.di
 
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.network.auth.TokenAuthenticator
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.d
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,7 +16,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
-import timber.log.Timber
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -48,6 +49,7 @@ object NetworkModule {
         tokenRepository: TokenRepository,
         tokenAuthenticator: TokenAuthenticator,
         @Named(DEBUG_LOGGING) debugLogging: Boolean,
+        observability: Observability,
     ): OkHttpClient {
         // 저장된 accessToken 이 있으면 매 요청마다 Authorization 헤더로 주입한다.
         // 단, 로그인/가입/토큰갱신 같은 공개(비인증) 엔드포인트에는 헤더를 붙이지 않는다.
@@ -80,7 +82,7 @@ object NetworkModule {
         // BODY 로깅은 디버그 빌드에서만 장착한다. 디버그에서도 인증 헤더는 마스킹.
         if (debugLogging) {
             val loggingInterceptor =
-                HttpLoggingInterceptor { message -> Timber.tag("HttpClient").d(message) }
+                HttpLoggingInterceptor { message -> observability.d("HttpClient") { message } }
                     .apply {
                         level = HttpLoggingInterceptor.Level.BODY
                         redactHeader("Authorization")
