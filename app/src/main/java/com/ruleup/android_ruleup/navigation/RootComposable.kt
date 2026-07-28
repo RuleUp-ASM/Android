@@ -26,7 +26,6 @@ import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.BuildConfig
 import com.ruleup.android_ruleup.debug.DebugLogOverlay
 import com.ruleup.android_ruleup.debug.DebugSyncButton
-import com.ruleup.android_ruleup.debug.TrackJankScreen
 import com.ruleup.android_ruleup.session.SessionViewModel
 import com.ruleup.domain.message.MessageEffect
 import com.ruleup.onboarding.domain.navigation.LoginPage
@@ -62,12 +61,6 @@ fun RootComposable(
                     navigationHelper.navigateTo(LoginPage)
                 }
             }
-        }
-
-        // 디버그 빌드: 현재 화면(네비 경로)을 JankStats 상태로 주입 → jank 로그에 화면 이름이 함께 찍힌다.
-        if (BuildConfig.DEBUG) {
-            val currentScreen = (backStack.lastOrNull() as? GenericNavKey)?.path ?: "unknown"
-            TrackJankScreen(currentScreen)
         }
 
         val onShowOneButtonDialog =
