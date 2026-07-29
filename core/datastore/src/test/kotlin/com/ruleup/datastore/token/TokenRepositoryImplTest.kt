@@ -55,6 +55,33 @@ class TokenRepositoryImplTest {
         }
 
     @Test
+    fun `saveSession 은 토큰과 userId 를 한 번에 저장한다`() =
+        runTest {
+            val store = CountingDataStore()
+            val repo = repo(store)
+
+            repo.saveSession(token(), userId = "u-1")
+
+            assertEquals("r1", repo.getRefreshToken())
+            assertEquals("u-1", repo.getUserId())
+            // 쓰기가 나뉘면 그 사이에 isLoggedIn 만 true 인 구간이 생긴다.
+            assertEquals(1, store.writeCount)
+        }
+
+    @Test
+    fun `saveTokens 는 저장된 userId 를 지우지 않는다`() =
+        runTest {
+            val repo = repo(FakeDataStore())
+            repo.saveSession(token(), userId = "u-1")
+
+            // 갱신 응답에는 userId 가 없다 — 토큰만 회전시킨다.
+            repo.saveTokens(token(access = "a2", refresh = "r2"))
+
+            assertEquals("r2", repo.getRefreshToken())
+            assertEquals("u-1", repo.getUserId())
+        }
+
+    @Test
     fun `clear 는 저장값과 캐시를 함께 비운다`() =
         runTest {
             val repo = repo(FakeDataStore())
@@ -150,6 +177,22 @@ private class FakeDataStore(
 
     override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences {
         failWritesWith?.let { throw it }
+        val updated = transform(state.value)
+        state.value = updated
+        return updated
+    }
+}
+
+/** 쓰기 횟수를 세는 대역. 원자성(한 번의 edit) 검증용. */
+private class CountingDataStore : DataStore<Preferences> {
+    private val state = MutableStateFlow<Preferences>(emptyPreferences())
+    var writeCount = 0
+        private set
+
+    override val data: Flow<Preferences> get() = state
+
+    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences {
+        writeCount++
         val updated = transform(state.value)
         state.value = updated
         return updated

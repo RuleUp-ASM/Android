@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.auth
 
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
+import com.ruleup.onboarding.domain.auth.usecase.BackfillUserIdUseCase
 import com.ruleup.onboarding.domain.intro.usecase.CheckAppVersionUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +46,7 @@ class SessionBootstrap
     constructor(
         private val checkAppVersionUseCase: CheckAppVersionUseCase,
         private val autoLoginUseCase: AutoLoginUseCase,
+        private val backfillUserIdUseCase: BackfillUserIdUseCase,
     ) {
         private val _state = MutableStateFlow<SessionBootstrapState>(SessionBootstrapState.Running)
         val state: StateFlow<SessionBootstrapState> = _state.asStateFlow()
@@ -61,7 +63,10 @@ class SessionBootstrap
                     _state.value = SessionBootstrapState.ForceUpdate(gate.devTestMsg)
                     return@launch
                 }
-                _state.value = SessionBootstrapState.Resolved(autoLoginUseCase())
+                val authenticated = autoLoginUseCase()
+                // 판정을 먼저 방출한다 — 백필을 기다리면 모든 콜드스타트에 왕복 한 번이 얹힌다.
+                _state.value = SessionBootstrapState.Resolved(authenticated)
+                if (authenticated) backfillUserIdUseCase()
             }
         }
     }

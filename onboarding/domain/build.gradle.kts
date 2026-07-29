@@ -35,4 +35,5 @@ dependencies {
     implementation(libs.javax.inject)
 
     testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":observability:domain")))
 }

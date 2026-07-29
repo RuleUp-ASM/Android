@@ -91,6 +91,11 @@ class BindLocationUseCaseTest {
     private class FakeTokenRepository(
         private val storedUserId: String?,
     ) : TokenRepository {
+        override suspend fun saveSession(
+            token: Token,
+            userId: String,
+        ) = Unit
+
         override suspend fun saveTokens(token: Token) = Unit
 
         override suspend fun getAccessToken(): String? = null

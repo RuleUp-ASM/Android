@@ -65,8 +65,21 @@ class TokenRepositoryImpl
         override val userId: Flow<String?> =
             preferences.map { prefs -> prefs[KEY_USER_ID] }
 
-        override suspend fun saveTokens(token: Token) {
+        override suspend fun saveSession(
+            token: Token,
+            userId: String,
+        ) {
             // 캐시를 먼저 채운다 — 디스크 쓰기가 실패해도 이번 실행 동안의 세션은 살아 있다.
+            cachedAccess = token.accessToken
+            // 한 번의 edit 이라 원자적이다. 나눠 쓰면 그 사이에 isLoggedIn 만 true 인 구간이 생긴다.
+            write("saveSession") { prefs ->
+                prefs[KEY_ACCESS] = token.accessToken
+                prefs[KEY_REFRESH] = token.refreshToken
+                prefs[KEY_USER_ID] = userId
+            }
+        }
+
+        override suspend fun saveTokens(token: Token) {
             cachedAccess = token.accessToken
             write("saveTokens") { prefs ->
                 prefs[KEY_ACCESS] = token.accessToken
