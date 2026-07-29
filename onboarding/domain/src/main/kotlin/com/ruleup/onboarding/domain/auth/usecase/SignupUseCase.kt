@@ -32,8 +32,7 @@ class SignupUseCase
                     agreements = form.agreements,
                 )
 
-            tokenRepository.saveTokens(session.token)
-            tokenRepository.saveUserId(session.user.id)
+            tokenRepository.saveSession(session.token, session.user.id)
 
             val profileImageUrl =
                 form.localImageUri

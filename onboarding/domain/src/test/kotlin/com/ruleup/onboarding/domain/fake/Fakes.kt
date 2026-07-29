@@ -5,6 +5,7 @@ import com.ruleup.domain.token.TokenRepository
 import com.ruleup.entity.user.Agreement
 import com.ruleup.entity.user.AuthSession
 import com.ruleup.entity.user.InterestCategory
+import com.ruleup.entity.user.Profile
 import com.ruleup.entity.user.Token
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.entity.AppVersionGate
@@ -22,6 +23,15 @@ class FakeTokenRepository(
     var savedUserId: String? = null
     var saveCount = 0
     var cleared = false
+
+    override suspend fun saveSession(
+        token: Token,
+        userId: String,
+    ) {
+        savedToken = token
+        savedUserId = userId
+        saveCount++
+    }
 
     override suspend fun saveTokens(token: Token) {
         savedToken = token
@@ -95,11 +105,16 @@ class FakeAuthRepository : AuthRepository {
     }
 }
 
-/** 프로필 이미지 업로드만 사용하는 테스트 더블. 나머지는 미사용. */
+/** 프로필 업로드·조회를 주입하는 테스트 더블. 나머지는 미사용. */
 class FakeProfileRepository : ProfileRepository {
     var uploadResult: String = ""
     var uploadCalledWith: String? = null
     var onboardingInfoCalledWith: Pair<String?, String?>? = null
+
+    /** [getProfile] 이 돌려줄 값. null 이면 [profileError] 를 던진다. */
+    var profile: Profile? = null
+    var profileError: Throwable = NotImplementedError()
+    var getProfileCallCount = 0
 
     override suspend fun uploadProfileImage(imageUri: String): String {
         uploadCalledWith = imageUri
@@ -117,7 +132,10 @@ class FakeProfileRepository : ProfileRepository {
 
     override suspend fun getCategories() = throw NotImplementedError()
 
-    override suspend fun getProfile() = throw NotImplementedError()
+    override suspend fun getProfile(): Profile {
+        getProfileCallCount++
+        return profile ?: throw profileError
+    }
 
     override suspend fun updateProfile(
         nickname: String?,
