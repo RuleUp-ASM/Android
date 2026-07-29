@@ -4,6 +4,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.ruleup.domain.helper.PushNotificationHelper
 import com.ruleup.domain.navigation.AppRoutes
+import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.d
 import com.ruleup.observability.domain.api.w
@@ -16,10 +17,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TAG = "[Push]"
-
-// 앱 화면으로 직결되는 App Link 접두사. 커스텀 스킴(ruleup://)은 검증이 불가능해 폐기했다 —
-// 임의 앱·웹페이지가 같은 형식으로 임의 화면에 진입시킬 수 있었기 때문이다.
-private const val APP_LINK_PREFIX = "https://android.ruleup.co.kr/app/"
 
 // 페이로드 명세("서버 FCM 푸시 페이로드 명세")의 type 딱지. 서버는 항상 데이터 전용 메시지를 보낸다.
 private const val TYPE_NOTICE_CREATED = "NOTICE_CREATED"
@@ -73,19 +70,24 @@ class RuleUpMessagingService : FirebaseMessagingService() {
         val noticeId = data["noticeId"]
         // 서버 deepLink 문자열 형식에 의존하지 않고, ID 키로 앱 내부 주소 규칙(NavRouteUriParser)에
         // 맞춰 조립한다 — 페이로드 명세 §4 "앱 파서 규칙을 따르는 걸로 확정" 합의.
-        val deepLink =
+        // 목적지는 NavRoute 로 넘긴다 — 알림은 앱이 직접 만들어 자기 액티비티를 여는 것이라
+        // URL 을 경유할 이유가 없다(#179).
+        val route =
             if (challengeId != null && noticeId != null) {
-                "$APP_LINK_PREFIX${AppRoutes.CHALLENGE_NOTICE_DETAIL}?challengeId=$challengeId&noticeId=$noticeId"
+                NavRoute(
+                    AppRoutes.CHALLENGE_NOTICE_DETAIL,
+                    mapOf("challengeId" to challengeId, "noticeId" to noticeId),
+                )
             } else {
-                "$APP_LINK_PREFIX${AppRoutes.HOME}"
+                NavRoute(AppRoutes.HOME)
             }
 
         pushNotificationHelper.show(
             // 같은 챌린지의 공지 알림은 하나로 묶어 갱신한다 (명세 권장).
-            id = (challengeId ?: deepLink).hashCode(),
+            id = (challengeId ?: route.path).hashCode(),
             title = title,
             message = body,
-            deepLink = deepLink,
+            route = route,
         )
     }
 
