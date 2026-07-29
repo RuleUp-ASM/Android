@@ -1,10 +1,10 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.domain.entity.user.Agreement
-import com.ruleup.domain.entity.user.AuthSession
 import com.ruleup.domain.entity.user.Token
-import com.ruleup.domain.entity.user.User
 import com.ruleup.onboarding.domain.auth.model.SignupForm
+import com.ruleup.onboarding.domain.entity.Agreement
+import com.ruleup.onboarding.domain.entity.AuthSession
+import com.ruleup.onboarding.domain.entity.User
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository

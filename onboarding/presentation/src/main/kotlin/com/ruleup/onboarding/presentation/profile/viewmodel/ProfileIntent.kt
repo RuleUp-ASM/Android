@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
-import com.ruleup.domain.entity.user.Agreement
 import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.onboarding.domain.entity.Agreement
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface ProfileIntent : MviIntent {
