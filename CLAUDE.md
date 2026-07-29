@@ -9,8 +9,11 @@
 
 ## 모듈 구조
 - **feature 모듈**: `:<feature>:data`, `:<feature>:domain`, `:<feature>:presentation` 세 레이어로 분리한다.
-- **core 모듈**: 여러 feature가 공유하는 횡단 관심사.
-- 의존 방향: `presentation → domain ← data`. domain은 다른 레이어에 의존하지 않는다. feature 간 직접 의존 금지(공유는 core 경유).
+- **core 모듈**: 여러 feature가 공유하는 횡단 관심사. core에는 **(a) 둘 이상의 feature가 쓰거나 (b) core 계약 시그니처에 등장하는 것**만 둔다. 소비자가 하나뿐이면 그 feature로 내린다.
+- 의존 방향: `presentation → domain ← data`. domain은 다른 레이어에 의존하지 않는다.
+- **feature 간 의존은 `domain` 레이어까지만 허용한다.** `data`·`presentation`을 가로질러 의존하지 않는다. 다른 feature의 능력이 필요하면 그쪽 `domain`의 계약을 직접 쓴다.
+  - 타입을 core에 베껴 포트로 감싸지 않는다. 결합은 그대로 남는데 예외 타입·반환값 같은 표현력만 잃는다. (`ScreenAppBindingPort`가 그 사례였다 — `BoundScreenApp`은 `ScreenApp`을 이름만 바꾼 복제였고, 어댑터는 순수 통과였으며, 쿨다운 예외를 구분할 수 없게 만들었다.)
+  - 순환은 Gradle이 빌드 단계에서 막으므로 엉킬 여지는 기계적으로 차단된다.
 - 패키지 루트: `com.ruleup.<feature>.<layer>` (예: `com.ruleup.challenge.domain`).
 
 ## DDD (domain 레이어)
