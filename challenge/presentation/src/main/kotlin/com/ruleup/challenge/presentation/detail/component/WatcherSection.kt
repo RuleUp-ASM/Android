@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.Watcher
 import com.ruleup.challenge.domain.entity.WatcherStatus
-import com.ruleup.ui.R
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.R
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
  * 챌린지 상세의 "내 감시자" 관리 섹션(참여자 본인 전용 — 감시자는 챌린지 × 참여자 단위).

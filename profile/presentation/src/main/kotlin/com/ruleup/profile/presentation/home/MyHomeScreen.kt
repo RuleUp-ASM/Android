@@ -41,18 +41,18 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.ruleup.designsystem.component.RuleUpBottomTab
+import com.ruleup.designsystem.component.RuleUpBottomTabBar
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.NicknameStatus
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeEffect
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeViewModel
-import com.ruleup.ui.component.RuleUpBottomTab
-import com.ruleup.ui.component.RuleUpBottomTabBar
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 // 히어로 그라데이션 (피그마 434:257 — amber → rose → violet)
 private val HeroGradient = listOf(Color(0xFFF59E0B), Color(0xFFF43F5E), Color(0xFF8B5CF6))

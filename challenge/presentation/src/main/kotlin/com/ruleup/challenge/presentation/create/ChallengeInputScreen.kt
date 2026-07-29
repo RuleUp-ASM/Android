@@ -34,11 +34,11 @@ import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
 import com.ruleup.challenge.presentation.create.component.SmallBadge
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 /** 예시 챌린지 칩. 탭하면 제목으로 채워진다. */
 private data class ExampleChallenge(

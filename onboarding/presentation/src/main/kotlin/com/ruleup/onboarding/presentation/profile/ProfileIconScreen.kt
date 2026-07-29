@@ -28,6 +28,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
@@ -35,9 +38,6 @@ import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.component.rememberProfileImagePicker
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
 
 /** 01 · 프로필 아이콘 (1/5). 갤러리/카메라 런처를 직접 띄우고 결과를 [ProfileIntent.SetProfileIcon] 으로 보낸다. */
 @Composable
@@ -75,7 +75,7 @@ fun ProfileIconContent(
             ) {
                 if (imageUri.isNullOrEmpty()) {
                     Image(
-                        painter = painterResource(com.ruleup.ui.R.drawable.ic_person),
+                        painter = painterResource(com.ruleup.designsystem.R.drawable.ic_person),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(Color.White),
                         modifier = Modifier.size(61.dp),
@@ -102,7 +102,7 @@ fun ProfileIconContent(
                     contentAlignment = Alignment.Center,
                 ) {
                     Image(
-                        painter = painterResource(com.ruleup.ui.R.drawable.ic_edit),
+                        painter = painterResource(com.ruleup.designsystem.R.drawable.ic_edit),
                         contentDescription = null,
                         colorFilter = ColorFilter.tint(RuleUpTheme.colors.brand),
                         modifier = Modifier.size(17.dp),
@@ -119,7 +119,7 @@ fun ProfileIconContent(
             SourceCard(
                 modifier = Modifier.weight(1f),
                 iconBackground = RuleUpGradients.Brand,
-                icon = com.ruleup.ui.R.drawable.ic_camera,
+                icon = com.ruleup.designsystem.R.drawable.ic_camera,
                 title = "카메라로 촬영",
                 caption = "바로 찍어 올리기",
                 onClick = { imagePicker.launchCamera() },
@@ -127,7 +127,7 @@ fun ProfileIconContent(
             SourceCard(
                 modifier = Modifier.weight(1f),
                 iconBackground = RuleUpGradients.Warm,
-                icon = com.ruleup.ui.R.drawable.ic_gallery,
+                icon = com.ruleup.designsystem.R.drawable.ic_gallery,
                 title = "갤러리에서 선택",
                 caption = "앨범에서 고르기",
                 onClick = { imagePicker.launchGallery() },

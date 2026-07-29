@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashIntent
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashViewModel
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
 
 @Composable
 fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {

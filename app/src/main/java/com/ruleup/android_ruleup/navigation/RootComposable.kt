@@ -27,13 +27,13 @@ import com.ruleup.android_ruleup.BuildConfig
 import com.ruleup.android_ruleup.debug.DebugLogOverlay
 import com.ruleup.android_ruleup.debug.DebugSyncButton
 import com.ruleup.android_ruleup.session.SessionViewModel
+import com.ruleup.designsystem.rememberSingleClick
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.message.MessageEffect
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.rememberSingleClick
-import com.ruleup.ui.theme.RuleUpTheme
 import kotlinx.coroutines.flow.Flow
 
 @Composable

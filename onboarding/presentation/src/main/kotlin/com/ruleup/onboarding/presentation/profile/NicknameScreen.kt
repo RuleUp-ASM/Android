@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.NicknameValidation
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
@@ -36,8 +38,6 @@ import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
 
 /** 02 · 닉네임 (2/5). "다음" 은 ViewModel 의 닉네임 검사를 거쳐 통과 시 ViewModel 이 이동시킨다. */
 @Composable
@@ -107,7 +107,7 @@ private fun NicknamePreviewCard(
                 )
             } else {
                 Image(
-                    painter = painterResource(com.ruleup.ui.R.drawable.ic_person),
+                    painter = painterResource(com.ruleup.designsystem.R.drawable.ic_person),
                     contentDescription = null,
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier.size(29.dp),

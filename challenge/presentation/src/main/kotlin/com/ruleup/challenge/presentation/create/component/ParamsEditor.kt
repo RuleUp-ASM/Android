@@ -31,7 +31,7 @@ import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.ParamValue
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.theme.RuleUpTheme
 import kotlin.math.roundToInt
 
 /** 목표값 편집기. NUMBER(범위 有)는 슬라이더, TIME·범위 없는 값은 텍스트로 "얼만큼 할지"를 입력받는다. */

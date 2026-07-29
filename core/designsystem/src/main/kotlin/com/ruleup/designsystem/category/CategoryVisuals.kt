@@ -1,9 +1,9 @@
-package com.ruleup.ui.category
+package com.ruleup.designsystem.category
 
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
+import com.ruleup.designsystem.R
 import com.ruleup.domain.entity.user.InterestCategory
-import com.ruleup.ui.R
 
 // 카테고리 → 표시용 색/아이콘 매핑 단일 소스.
 

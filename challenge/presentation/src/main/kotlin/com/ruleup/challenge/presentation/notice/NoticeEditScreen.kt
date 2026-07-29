@@ -44,10 +44,10 @@ import com.ruleup.challenge.domain.entity.NoticePolicy
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditViewModel
-import com.ruleup.ui.component.PrimaryGradientButton
+import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 
 /**
  * 공지 작성/수정 화면 (방장 전용 진입). noticeId 유무로 모드가 갈린다.
@@ -225,7 +225,7 @@ private fun NoticeEditTopBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

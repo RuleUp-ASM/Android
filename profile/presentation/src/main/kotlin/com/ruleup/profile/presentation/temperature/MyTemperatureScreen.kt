@@ -33,6 +33,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.NextTier
 import com.ruleup.profile.domain.entity.ReputationChange
 import com.ruleup.profile.domain.entity.ReputationDetail
@@ -41,9 +44,6 @@ import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.temperature.viewmodel.MyTemperatureIntent
 import com.ruleup.profile.presentation.temperature.viewmodel.MyTemperatureViewModel
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 // 온도 히어로/진행 바 그라데이션 (피그마 434:311 — amber → rose)
 private val TemperatureGradient = listOf(Color(0xFFF59E0B), Color(0xFFF43F5E))

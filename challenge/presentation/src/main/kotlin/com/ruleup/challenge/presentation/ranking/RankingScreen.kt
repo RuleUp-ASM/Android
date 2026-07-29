@@ -42,9 +42,9 @@ import com.ruleup.challenge.domain.entity.MyRank
 import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingIntent
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingViewModel
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import java.util.Locale
 
 // 포디움 순위별 색 (피그마 434:545~557 — #1 Amber, #2 Slate, #3 Orange)
@@ -116,7 +116,7 @@ private fun RankingTopBar(onBack: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

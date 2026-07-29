@@ -48,11 +48,11 @@ import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListIntent
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListState
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListViewModel
-import com.ruleup.ui.R
-import com.ruleup.ui.category.categoryAccentColor
-import com.ruleup.ui.category.categoryIconRes
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.R
+import com.ruleup.designsystem.category.categoryAccentColor
+import com.ruleup.designsystem.category.categoryIconRes
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 

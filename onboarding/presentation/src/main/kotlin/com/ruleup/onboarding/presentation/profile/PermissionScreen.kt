@@ -8,13 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.ProfileBasicInfoPage
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.theme.RuleUpTheme
 
 /** 04 · 권한 안내 (4/6). 알림 등 권한 허용을 안내하는 단계. */
 @Composable

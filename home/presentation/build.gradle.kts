@@ -34,6 +34,7 @@ kotlin {
 
 dependencies {
     implementation(project(":core:domain"))
+    implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
 
     // 홈은 집계 화면이라 두 feature 의 domain 을 함께 읽는다(내 챌린지 + 진행률).

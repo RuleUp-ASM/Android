@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.FriendInvitee
 import com.ruleup.profile.presentation.common.MyTopBar
@@ -44,9 +47,6 @@ import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteEffect
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteIntent
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 /**
  * 친구 초대 (피그마 435:332). 초대 코드/링크(카카오톡·복사·QR — 사용자 본인 발신) + 초대 현황.

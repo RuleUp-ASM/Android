@@ -3,12 +3,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "com.ruleup.ui"
+    namespace = "com.ruleup.designsystem"
     compileSdk = 37
 
     defaultConfig {
@@ -28,24 +26,21 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
+        // RuleUpColor 등 테마가 explicit backing fields(실험 기능)를 쓴다.
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
     }
 }
 
 dependencies {
+    // 카테고리 → 색/아이콘 매핑(CategoryVisuals)이 InterestCategory 를 공개 시그니처로 노출한다.
     api(project(":core:domain"))
-    api(project(":observability:domain"))
 
-    // MVI 기반 클래스와 CompositionLocal 이 Compose/ViewModel 을 공개 시그니처로 노출한다.
+    // 디자인 시스템이므로 Compose 를 api 로 전파한다.
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.runtime)
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.material3)
     api(libs.androidx.compose.ui)
-    api(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.kotlinx.coroutines.core)
-
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
 }
