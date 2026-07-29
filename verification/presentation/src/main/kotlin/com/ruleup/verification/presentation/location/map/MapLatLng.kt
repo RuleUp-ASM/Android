@@ -1,4 +1,4 @@
-package com.ruleup.map
+package com.ruleup.verification.presentation.location.map
 
 /** 지도 좌표(플랫폼 SDK 비의존). :core:map 추상화 경계 타입. */
 data class MapLatLng(

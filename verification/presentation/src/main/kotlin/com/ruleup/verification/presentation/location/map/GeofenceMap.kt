@@ -1,4 +1,4 @@
-package com.ruleup.map
+package com.ruleup.verification.presentation.location.map
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -43,6 +43,7 @@ import com.kakao.vectormap.shape.PolygonStyles
 import com.kakao.vectormap.shape.PolygonStylesSet
 import com.ruleup.observability.domain.api.w
 import com.ruleup.ui.helper.LocalObservability
+import com.ruleup.verification.presentation.R
 import kotlinx.coroutines.tasks.await
 
 /**
