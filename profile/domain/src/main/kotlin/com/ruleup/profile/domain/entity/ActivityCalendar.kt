@@ -1,6 +1,6 @@
 package com.ruleup.profile.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /** 일자 종합 상태 (명세 days[].status — 서버 판정, 클라 재계산 없음). */
 enum class CalendarDayStatus(
@@ -63,7 +63,7 @@ data class CalendarDayItem(
     val challengeId: String,
     val title: String,
     // RoutineOutcome 카테고리 스냅샷 (인식 불가 값은 null)
-    val category: InterestCategory?,
+    val category: Category?,
     val status: DayItemStatus,
     // AUTO / MANUAL / MANUAL_FALLBACK (확정 전 null)
     val verifiedVia: String?,

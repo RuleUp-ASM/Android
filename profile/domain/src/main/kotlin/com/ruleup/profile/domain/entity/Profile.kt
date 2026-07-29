@@ -1,6 +1,6 @@
 package com.ruleup.profile.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /** 내 프로필 (명세 4.8/4.9). */
 data class Profile(
@@ -13,14 +13,14 @@ data class Profile(
     // ISO 8601, null 이면 즉시 변경 가능
     val nicknameChangeableAfter: String?,
     val mannerTemperature: Double,
-    val interestCategories: List<InterestCategory>,
+    val interestCategories: List<Category>,
     val createdAt: String,
 )
 
 /** 관심 카테고리 마스터 (명세 4.7). */
 data class CategoryCatalog(
     val maxSelectable: Int,
-    val categories: List<InterestCategory>,
+    val categories: List<Category>,
 )
 
 /** 닉네임 검사 결과 (명세 4.6). */

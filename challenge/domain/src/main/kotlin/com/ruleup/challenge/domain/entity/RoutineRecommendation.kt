@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 루틴 발견 추천 항목 (명세: GET /recommendations/routines).
@@ -12,7 +12,7 @@ data class RoutineRecommendation(
     val title: String,
     val description: String?,
     // 서버 카테고리 코드를 앱 카테고리로 매핑(미매칭이면 null).
-    val category: InterestCategory?,
+    val category: Category?,
     // 추천 사유(예: "20대 인기 루틴").
     val reason: String,
 )

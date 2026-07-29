@@ -44,10 +44,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditEffect
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditIntent
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState
@@ -331,7 +332,7 @@ private fun EditBody(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                InterestCategory.entries.forEach { category ->
+                Category.entries.forEach { category ->
                     CategoryChip(
                         category = category,
                         selected = category in state.selectedCategories,
@@ -387,7 +388,7 @@ private fun ImageActionChip(
 
 @Composable
 private fun CategoryChip(
-    category: InterestCategory,
+    category: Category,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
@@ -407,7 +408,7 @@ private fun CategoryChip(
                 .padding(horizontal = 15.dp, vertical = 9.dp),
     ) {
         Text(
-            text = "${category.emoji} ${category.label}",
+            text = "${categoryEmoji(category)} ${category.label}",
             color = if (selected) RuleUpPalette.White else RuleUpTheme.colors.textPrimary,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold,

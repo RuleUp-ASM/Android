@@ -1,6 +1,6 @@
 package com.ruleup.profile.data.dto
 
-import com.ruleup.domain.entity.user.toInterestCategories
+import com.ruleup.domain.entity.category.toCategories
 import com.ruleup.network.dto.requireField
 import com.ruleup.profile.domain.entity.CategoryCatalog
 import com.ruleup.profile.domain.entity.NicknameCheck
@@ -49,7 +49,7 @@ data class CategoryResponse(
 internal fun CategoriesResponse.toDomain(): CategoryCatalog =
     CategoryCatalog(
         maxSelectable = maxSelectable ?: 6,
-        categories = categories?.mapNotNull { it.code }.toInterestCategories(),
+        categories = categories?.mapNotNull { it.code }.toCategories(),
     )
 
 // ---------- 4.8 / 4.9 프로필 ----------
@@ -84,7 +84,7 @@ internal fun ProfileResponse.toDomain(): Profile =
         nicknameChangedAt = nicknameChangedAt,
         nicknameChangeableAfter = nicknameChangeableAfter,
         mannerTemperature = mannerTemperature ?: 36.5,
-        interestCategories = interestCategories.toInterestCategories(),
+        interestCategories = interestCategories.toCategories(),
         createdAt = createdAt.requireField("createdAt"),
     )
 

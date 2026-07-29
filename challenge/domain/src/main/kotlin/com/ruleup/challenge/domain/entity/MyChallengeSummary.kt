@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 홈 화면 즉시 반영용 "내 챌린지" 로컬 요약.
@@ -11,7 +11,7 @@ import com.ruleup.domain.entity.user.InterestCategory
 data class MyChallengeSummary(
     val challengeId: String,
     val title: String,
-    val category: InterestCategory?,
+    val category: Category?,
     val participationType: ParticipationType,
     val durationDays: Int,
 )

@@ -17,7 +17,7 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.WearableRequirement
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.SetupNotifier
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -85,7 +85,7 @@ class CreateChallengeUseCaseTest {
         title = title,
         description = null,
         imageUrl = null,
-        category = InterestCategory.EXERCISE,
+        category = Category.EXERCISE,
         participationType = ParticipationType.SOLO,
         maxParticipants = 1,
         minMannerTemperature = null,
@@ -106,7 +106,7 @@ class CreateChallengeUseCaseTest {
             title = "챌린지",
             description = null,
             imageUrl = null,
-            category = InterestCategory.EXERCISE,
+            category = Category.EXERCISE,
             participationType = ParticipationType.SOLO,
             maxParticipants = 1,
             minMannerTemperature = null,

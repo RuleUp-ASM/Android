@@ -5,7 +5,7 @@ import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.usecase.ExploreChallengesUseCase
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -93,7 +93,7 @@ class ExploreListViewModel
             if (loaded) return
             loaded = true
             fetchFirstPage(
-                filter = ExploreFilter(category = InterestCategory.fromValue(category.orEmpty())),
+                filter = ExploreFilter(category = Category.fromValue(category.orEmpty())),
                 // 라우트 인자가 없으면 API 기본 정렬(인기순)
                 sort = ExploreSort.fromValue(sort) ?: ExploreSort.TRENDING,
             )

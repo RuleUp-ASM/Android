@@ -28,7 +28,7 @@ import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.entity.toRepeatDays
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -87,7 +87,7 @@ internal fun RecommendationResponse.toDomain(): ChallengeRecommendation =
         templateId = templateId,
         title = title.orEmpty(),
         description = description,
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         recommendedMethod = SelectedMethod.fromValue(recommendedMethod) ?: SelectedMethod.MANUAL,
         options = options.orEmpty().map { it.toDomain() },
         params = params.orEmpty().map { it.toDomain() },
@@ -125,7 +125,7 @@ internal fun RoutineRecommendationResponse.toDomain(): RoutineRecommendation =
         templateId = templateId ?: 0L,
         title = title.orEmpty(),
         description = description,
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         reason = reason.orEmpty(),
     )
 
@@ -181,7 +181,7 @@ internal fun ChallengeResponse.toDomain(): Challenge =
         title = title.orEmpty(),
         description = description,
         imageUrl = imageUrl,
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         maxParticipants = maxParticipants ?: 1,
         minMannerTemperature = minMannerTemperature,
@@ -281,7 +281,7 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         title = title.requireField("title"),
         description = description,
         imageUrl = imageUrl,
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         maxParticipants = maxParticipants ?: 1,
@@ -489,7 +489,7 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         title = title.requireField("title"),
         description = description,
         imageUrl = imageUrl,
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         anonymity = Anonymity.fromValue(anonymity) ?: Anonymity.REAL,

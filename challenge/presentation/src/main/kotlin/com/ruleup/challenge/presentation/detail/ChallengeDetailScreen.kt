@@ -65,6 +65,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewMod
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
+import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.component.PrimaryGradientButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -438,7 +439,7 @@ private fun DetailHero(detail: ChallengeDetail) {
                     .background(accent),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = detail.category?.emoji ?: "🎯", fontSize = 26.sp)
+            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
         }
         Text(
             text = detail.title,

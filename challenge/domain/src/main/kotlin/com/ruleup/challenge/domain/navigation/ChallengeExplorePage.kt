@@ -1,7 +1,7 @@
 package com.ruleup.challenge.domain.navigation
 
 import com.ruleup.challenge.domain.entity.ExploreSort
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
@@ -20,7 +20,7 @@ object ChallengeExplorePage : Page {
  * [category] 는 카테고리 그리드에서 진입할 때의 초기 필터, [sort] 는 초기 정렬이다.
  */
 data class ChallengeExploreListPage(
-    val category: InterestCategory? = null,
+    val category: Category? = null,
     val sort: ExploreSort? = null,
 ) : Page {
     override fun toRoute(): NavRoute =

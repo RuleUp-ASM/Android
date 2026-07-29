@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.onboarding.domain.entity.Agreement
 import com.ruleup.ui.mvi.UiState
 
@@ -11,7 +11,7 @@ import com.ruleup.ui.mvi.UiState
 data class ProfileState(
     val signupToken: String? = null,
     val nickname: String = "",
-    val interests: List<InterestCategory> = emptyList(),
+    val interests: List<Category> = emptyList(),
     val profileImageUrl: String? = null,
     val agreements: Agreement = Agreement(terms = false, privacy = false, marketing = false),
     // 가입 기본정보(선택) — 만 나이, 성별. 미입력/건너뛰기면 null.

@@ -3,7 +3,7 @@ package com.ruleup.challenge.presentation.explore.viewmodel
 import com.ruleup.challenge.domain.entity.ChallengeCategoryCount
 import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.TrendingChallenge
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
@@ -25,7 +25,7 @@ sealed interface ExploreIntent : MviIntent {
 
     /** 카테고리 카드 → 둘러보기(카테고리 필터). */
     data class OpenCategory(
-        val category: InterestCategory,
+        val category: Category,
     ) : ExploreIntent
 
     /** 하단 탭 "홈". */

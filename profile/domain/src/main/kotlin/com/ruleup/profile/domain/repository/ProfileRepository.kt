@@ -1,6 +1,6 @@
 package com.ruleup.profile.domain.repository
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.domain.entity.CategoryCatalog
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
@@ -25,7 +25,7 @@ interface ProfileRepository {
     /** 프로필 수정. 변경할 필드만 전달한다 (명세 4.9). */
     suspend fun updateProfile(
         nickname: String? = null,
-        interestCategories: List<InterestCategory>? = null,
+        interestCategories: List<Category>? = null,
         profileImageUrl: String? = null,
     ): Profile
 

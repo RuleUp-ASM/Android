@@ -1,6 +1,6 @@
 package com.ruleup.profile.domain.usecase
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.domain.entity.CategoryCatalog
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
@@ -45,7 +45,7 @@ class UpdateProfileUseCase
     ) {
         suspend operator fun invoke(
             nickname: String? = null,
-            interestCategories: List<InterestCategory>? = null,
+            interestCategories: List<Category>? = null,
         ): Profile = profileRepository.updateProfile(nickname = nickname, interestCategories = interestCategories)
     }
 

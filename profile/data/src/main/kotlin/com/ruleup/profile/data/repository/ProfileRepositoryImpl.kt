@@ -1,6 +1,6 @@
 package com.ruleup.profile.data.repository
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError
@@ -36,7 +36,7 @@ class ProfileRepositoryImpl
 
         override suspend fun updateProfile(
             nickname: String?,
-            interestCategories: List<InterestCategory>?,
+            interestCategories: List<Category>?,
             profileImageUrl: String?,
         ): Profile =
             api

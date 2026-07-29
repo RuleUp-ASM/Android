@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.onboarding.domain.entity.Agreement
 import com.ruleup.ui.mvi.ReducerEvent
 
@@ -14,7 +14,7 @@ sealed interface ProfileReducerEvent : ReducerEvent {
     ) : ProfileReducerEvent
 
     data class InterestsSelected(
-        val interest: InterestCategory,
+        val interest: Category,
     ) : ProfileReducerEvent
 
     data class ProfileImageSelected(
