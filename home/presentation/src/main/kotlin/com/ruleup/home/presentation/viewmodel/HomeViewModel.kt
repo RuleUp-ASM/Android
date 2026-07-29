@@ -1,13 +1,13 @@
-package com.ruleup.android_ruleup.home.viewmodel
+package com.ruleup.home.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.android_ruleup.home.mergeHomeChallenges
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.GetMyChallengesUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.home.presentation.mergeHomeChallenges
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import com.ruleup.verification.domain.usecase.ObserveProgressUseCase

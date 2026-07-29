@@ -103,6 +103,7 @@ dependencies {
     implementation(project(":challenge:domain"))
     implementation(project(":challenge:data"))
     implementation(project(":challenge:presentation"))
+    implementation(project(":home:presentation"))
     implementation(project(":profile:domain"))
     implementation(project(":profile:data"))
     implementation(project(":profile:presentation"))
