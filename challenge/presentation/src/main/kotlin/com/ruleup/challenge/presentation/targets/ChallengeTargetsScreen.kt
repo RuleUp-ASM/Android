@@ -55,11 +55,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsEffect
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsIntent
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsViewModel
-import com.ruleup.domain.entity.challenge.BoundScreenApp
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.verification.domain.entity.ScreenApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -236,7 +236,7 @@ fun ChallengeTargetsScreen(
                     viewModel.onIntent(
                         ChallengeTargetsIntent.Save(
                             challengeId = challengeId,
-                            apps = selectedApps.map { BoundScreenApp(packageName = it.packageName, appName = it.label) },
+                            apps = selectedApps.map { ScreenApp(packageName = it.packageName, appName = it.label) },
                         ),
                     )
                 },

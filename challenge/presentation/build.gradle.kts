@@ -37,6 +37,8 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":observability:domain"))
     implementation(project(":challenge:domain"))
+    // 대상 앱 설정은 verification 소관 — 그쪽 domain 계약을 직접 쓴다(core 포트 복제 제거).
+    implementation(project(":verification:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)

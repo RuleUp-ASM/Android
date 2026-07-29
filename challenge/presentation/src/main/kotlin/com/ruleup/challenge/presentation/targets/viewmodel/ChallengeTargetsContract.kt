@@ -1,10 +1,10 @@
 package com.ruleup.challenge.presentation.targets.viewmodel
 
-import com.ruleup.domain.entity.challenge.BoundScreenApp
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
+import com.ruleup.verification.domain.entity.ScreenApp
 
 sealed interface ChallengeTargetsIntent : MviIntent {
     /** 진입 시 서버에 바인딩된 대상 앱을 조회해 이전 선택을 복원한다. */
@@ -15,7 +15,7 @@ sealed interface ChallengeTargetsIntent : MviIntent {
     /** 선택한 대상 앱({packageName, appName})을 서버에 저장하고 종료. */
     data class Save(
         val challengeId: String,
-        val apps: List<BoundScreenApp>,
+        val apps: List<ScreenApp>,
     ) : ChallengeTargetsIntent
 
     data object Back : ChallengeTargetsIntent
