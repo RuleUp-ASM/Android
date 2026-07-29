@@ -36,7 +36,6 @@ kotlin {
 dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
-    implementation(project(":core:map"))
     implementation(project(":observability:domain"))
     implementation(project(":verification:domain"))
 
@@ -52,6 +51,12 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
+
+    // 지도(Kakao Map SDK v2). 네이티브 앱키는 :app 의 KakaoMapSdk.init 에서 1회 주입.
+    implementation(libs.kakao.map)
+    // "현재 위치" 단발 측위(FusedLocation)
+    implementation(libs.play.services.location)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
