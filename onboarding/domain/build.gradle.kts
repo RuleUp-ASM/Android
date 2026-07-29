@@ -27,6 +27,8 @@ kotlin {
 dependencies {
     // Page/NavRoute·TokenRepository, User 등 공유 커널이 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
     api(project(":core:domain"))
+    // 계정 정보는 profile 소유 — 온보딩은 최초 설정 때 그 계약을 빌려 쓴다(#175).
+    api(project(":profile:domain"))
     // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
     implementation(project(":observability:domain"))
     implementation(libs.kotlinx.coroutines.core)

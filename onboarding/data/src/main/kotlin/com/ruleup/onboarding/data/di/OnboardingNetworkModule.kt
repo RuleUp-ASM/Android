@@ -2,7 +2,7 @@ package com.ruleup.onboarding.data.di
 
 import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.intro.api.IntroApi
-import com.ruleup.onboarding.data.profile.api.ProfileApi
+import com.ruleup.onboarding.data.profile.api.OnboardingProfileApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,7 +23,7 @@ object OnboardingNetworkModule {
 
     @Provides
     @Singleton
-    fun provideProfileApi(retrofit: Retrofit): ProfileApi = retrofit.create()
+    fun provideOnboardingProfileApi(retrofit: Retrofit): OnboardingProfileApi = retrofit.create()
 
     @Provides
     @Singleton

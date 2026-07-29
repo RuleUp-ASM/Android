@@ -1,6 +1,7 @@
 package com.ruleup.profile.data.di
 
 import com.ruleup.profile.data.api.MyPageApi
+import com.ruleup.profile.data.api.ProfileApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,4 +17,8 @@ object ProfileNetworkModule {
     @Provides
     @Singleton
     fun provideMyPageApi(retrofit: Retrofit): MyPageApi = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun provideProfileApi(retrofit: Retrofit): ProfileApi = retrofit.create()
 }

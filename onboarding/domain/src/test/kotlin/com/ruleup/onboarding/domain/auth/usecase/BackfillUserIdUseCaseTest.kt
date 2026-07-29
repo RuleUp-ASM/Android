@@ -1,9 +1,9 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.domain.entity.user.Profile
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
+import com.ruleup.profile.domain.entity.Profile
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import kotlin.test.Test
