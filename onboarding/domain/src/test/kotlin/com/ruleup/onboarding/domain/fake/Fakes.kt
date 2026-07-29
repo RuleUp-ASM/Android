@@ -1,14 +1,14 @@
 package com.ruleup.onboarding.domain.fake
 
-import com.ruleup.domain.entity.user.Agreement
-import com.ruleup.domain.entity.user.AuthSession
 import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.domain.entity.user.Profile
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
+import com.ruleup.onboarding.domain.entity.Agreement
 import com.ruleup.onboarding.domain.entity.AppVersionGate
+import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository

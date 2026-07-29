@@ -3,8 +3,6 @@ package com.ruleup.onboarding.data.auth.repository
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
-import com.ruleup.domain.entity.user.Agreement
-import com.ruleup.domain.entity.user.AuthSession
 import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.network.dto.getOrThrow
@@ -21,6 +19,8 @@ import com.ruleup.onboarding.data.auth.dto.toAuthSession
 import com.ruleup.onboarding.data.auth.dto.toOAuthResult
 import com.ruleup.onboarding.data.auth.dto.toToken
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
+import com.ruleup.onboarding.domain.entity.Agreement
+import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 import dagger.hilt.android.qualifiers.ApplicationContext

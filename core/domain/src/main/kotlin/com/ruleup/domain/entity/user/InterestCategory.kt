@@ -1,14 +1,5 @@
 package com.ruleup.domain.entity.user
 
-data class User(
-    val id: String,
-    val nickname: String,
-    val email: String?,
-    val profileImageUrl: String?,
-    val mannerTemperature: Double,
-    val interestCategories: List<InterestCategory>,
-)
-
 enum class InterestCategory(
     val value: String,
     val label: String,
@@ -37,9 +28,3 @@ enum class InterestCategory(
 }
 
 fun List<String>?.toInterestCategories(): List<InterestCategory> = this.orEmpty().mapNotNull(InterestCategory::fromValue)
-
-data class Agreement(
-    val terms: Boolean,
-    val privacy: Boolean,
-    val marketing: Boolean,
-)

@@ -23,10 +23,10 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.onboarding.domain.navigation.IntroTrustPage
 import com.ruleup.onboarding.domain.navigation.IntroVerifyPage
 import com.ruleup.onboarding.domain.navigation.LoginPage
+import com.ruleup.onboarding.presentation.component.BottomBar
+import com.ruleup.onboarding.presentation.component.PageDots
 import com.ruleup.onboarding.presentation.intro.screen.OnboardingPage
 import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
-import com.ruleup.ui.component.BottomBar
-import com.ruleup.ui.component.PageDots
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.singleClickable

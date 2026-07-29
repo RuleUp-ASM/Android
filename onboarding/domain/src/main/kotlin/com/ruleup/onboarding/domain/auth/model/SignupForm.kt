@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.auth.model
 
-import com.ruleup.domain.entity.user.Agreement
 import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.onboarding.domain.entity.Agreement
 
 /**
  * 신규 가입 입력값 (명세 4.3).
