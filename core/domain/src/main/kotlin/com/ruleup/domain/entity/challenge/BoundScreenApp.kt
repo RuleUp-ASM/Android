@@ -1,4 +1,4 @@
-package com.ruleup.entity.challenge
+package com.ruleup.domain.entity.challenge
 
 /**
  * 스크린타임 측정 대상 앱 1개(모듈 중립 타입).

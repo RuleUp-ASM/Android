@@ -31,7 +31,6 @@ dependencies {
     implementation(project(":onboarding:domain"))
     implementation(project(":core:network"))
     implementation(project(":core:domain"))
-    implementation(project(":core:entity"))
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)

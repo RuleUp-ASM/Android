@@ -25,7 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.onboarding.domain.navigation.ProfilePermissionPage
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader

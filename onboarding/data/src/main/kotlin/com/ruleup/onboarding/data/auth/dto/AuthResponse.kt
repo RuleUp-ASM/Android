@@ -1,9 +1,9 @@
 package com.ruleup.onboarding.data.auth.dto
 
-import com.ruleup.entity.user.AuthSession
-import com.ruleup.entity.user.Token
-import com.ruleup.entity.user.User
-import com.ruleup.entity.user.toInterestCategories
+import com.ruleup.domain.entity.user.AuthSession
+import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.toInterestCategories
 import com.ruleup.network.dto.requireField
 import com.ruleup.onboarding.domain.entity.OAuthProfile
 import com.ruleup.onboarding.domain.entity.OAuthResult

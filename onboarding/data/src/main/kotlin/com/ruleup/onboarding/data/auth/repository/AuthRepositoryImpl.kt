@@ -3,10 +3,10 @@ package com.ruleup.onboarding.data.auth.repository
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
-import com.ruleup.entity.user.Agreement
-import com.ruleup.entity.user.AuthSession
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.entity.user.Token
+import com.ruleup.domain.entity.user.Agreement
+import com.ruleup.domain.entity.user.AuthSession
+import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
 import com.ruleup.onboarding.data.auth.api.AuthApi

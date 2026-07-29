@@ -1,10 +1,10 @@
 package com.ruleup.onboarding.data.profile.repository
 
+import com.ruleup.domain.entity.user.CategoryCatalog
+import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.NicknameCheck
+import com.ruleup.domain.entity.user.Profile
 import com.ruleup.domain.profile.ProfileRepository
-import com.ruleup.entity.user.CategoryCatalog
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.entity.user.NicknameCheck
-import com.ruleup.entity.user.Profile
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError

@@ -1,6 +1,6 @@
 package com.ruleup.challenge.presentation.targets.viewmodel
 
-import com.ruleup.entity.challenge.BoundScreenApp
+import com.ruleup.domain.entity.challenge.BoundScreenApp
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent

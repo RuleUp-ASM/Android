@@ -1,9 +1,9 @@
 package com.ruleup.onboarding.domain.auth.repository
 
-import com.ruleup.entity.user.Agreement
-import com.ruleup.entity.user.AuthSession
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.entity.user.Token
+import com.ruleup.domain.entity.user.Agreement
+import com.ruleup.domain.entity.user.AuthSession
+import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 

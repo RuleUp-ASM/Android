@@ -6,8 +6,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.TokenRepository
-import com.ruleup.entity.user.Token
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.e
 import com.ruleup.observability.domain.api.w

@@ -1,9 +1,9 @@
 package com.ruleup.profile.presentation.edit.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.NicknameCheckReason
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.entity.user.NicknameCheckReason
 import com.ruleup.profile.domain.usecase.CheckNicknameUseCase
 import com.ruleup.profile.domain.usecase.DeleteProfileImageUseCase
 import com.ruleup.profile.domain.usecase.GetCategoryCatalogUseCase

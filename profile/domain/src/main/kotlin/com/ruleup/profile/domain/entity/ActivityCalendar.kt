@@ -1,6 +1,6 @@
 package com.ruleup.profile.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /** 일자 종합 상태 (명세 days[].status — 서버 판정, 클라 재계산 없음). */
 enum class CalendarDayStatus(

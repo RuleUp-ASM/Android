@@ -3,7 +3,7 @@ package com.ruleup.challenge.presentation.explore.viewmodel
 import com.ruleup.challenge.domain.entity.ChallengeCategoryCount
 import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.TrendingChallenge
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState

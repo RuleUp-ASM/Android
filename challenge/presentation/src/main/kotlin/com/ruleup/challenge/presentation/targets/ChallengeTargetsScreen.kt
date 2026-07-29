@@ -55,7 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsEffect
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsIntent
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsViewModel
-import com.ruleup.entity.challenge.BoundScreenApp
+import com.ruleup.domain.entity.challenge.BoundScreenApp
 import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.singleClickable

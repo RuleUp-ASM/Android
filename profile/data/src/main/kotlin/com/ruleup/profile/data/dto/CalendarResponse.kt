@@ -1,6 +1,6 @@
 package com.ruleup.profile.data.dto
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayDetail

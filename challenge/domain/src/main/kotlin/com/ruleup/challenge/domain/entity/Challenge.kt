@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /** 참여 방식 (명세 3.x participationType). */
 enum class ParticipationType(

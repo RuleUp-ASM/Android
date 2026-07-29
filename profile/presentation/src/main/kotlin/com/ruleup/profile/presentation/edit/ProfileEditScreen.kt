@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditEffect
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditIntent
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState

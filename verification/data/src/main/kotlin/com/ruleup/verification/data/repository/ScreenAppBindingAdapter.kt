@@ -1,7 +1,7 @@
 package com.ruleup.verification.data.repository
 
 import com.ruleup.domain.challenge.ScreenAppBindingPort
-import com.ruleup.entity.challenge.BoundScreenApp
+import com.ruleup.domain.entity.challenge.BoundScreenApp
 import com.ruleup.verification.domain.entity.ScreenApp
 import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject

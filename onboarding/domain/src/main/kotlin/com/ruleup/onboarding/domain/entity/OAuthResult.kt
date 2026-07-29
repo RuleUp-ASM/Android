@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.entity
 
-import com.ruleup.entity.user.AuthSession
+import com.ruleup.domain.entity.user.AuthSession
 
 sealed interface OAuthResult {
     data class ExistingUser(

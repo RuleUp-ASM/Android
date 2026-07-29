@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /**
  * 내가 참여 중인 챌린지 목록 항목(명세: GET /challenges challenges[]).

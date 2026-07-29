@@ -1,9 +1,9 @@
 package com.ruleup.domain.profile
 
-import com.ruleup.entity.user.CategoryCatalog
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.entity.user.NicknameCheck
-import com.ruleup.entity.user.Profile
+import com.ruleup.domain.entity.user.CategoryCatalog
+import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.NicknameCheck
+import com.ruleup.domain.entity.user.Profile
 
 /**
  * 프로필 계약 (온보딩 명세 4.6~4.11, 구현은 :onboarding:data).

@@ -28,7 +28,7 @@ import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.SnsShare
 import com.ruleup.challenge.domain.entity.toRepeatDays
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

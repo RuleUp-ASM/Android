@@ -1,8 +1,8 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.entity.user.AuthSession
-import com.ruleup.entity.user.Token
-import com.ruleup.entity.user.User
+import com.ruleup.domain.entity.user.AuthSession
+import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.entity.user.User
 import com.ruleup.onboarding.domain.entity.LoginResult
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthProfile

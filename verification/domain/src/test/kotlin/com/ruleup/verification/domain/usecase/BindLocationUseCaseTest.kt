@@ -1,7 +1,7 @@
 package com.ruleup.verification.domain.usecase
 
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.TokenRepository
-import com.ruleup.entity.user.Token
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.repository.GeofenceRegistrar

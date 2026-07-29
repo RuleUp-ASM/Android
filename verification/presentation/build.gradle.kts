@@ -34,7 +34,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":core:entity"))
     implementation(project(":core:ui"))
     implementation(project(":core:map"))
     implementation(project(":observability:domain"))
