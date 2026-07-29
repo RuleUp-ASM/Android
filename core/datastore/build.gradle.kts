@@ -29,6 +29,7 @@ kotlin {
 dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:entity"))
+    implementation(project(":observability:domain"))
 
     // DataStore<Preferences> 는 TokenRepositoryImpl 생성자와 DataStoreModule @Provides 에 노출되므로 api.
     api(libs.androidx.datastore.preferences)
@@ -36,4 +37,8 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(testFixtures(project(":observability:domain")))
 }
