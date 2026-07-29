@@ -1,6 +1,6 @@
-package com.ruleup.android_ruleup.home.viewmodel
+package com.ruleup.home.presentation.viewmodel
 
-import com.ruleup.android_ruleup.home.HomeChallengeUi
+import com.ruleup.home.presentation.HomeChallengeUi
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState

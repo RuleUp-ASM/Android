@@ -1,4 +1,4 @@
-package com.ruleup.android_ruleup.home
+package com.ruleup.home.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color

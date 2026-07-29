@@ -1,7 +1,6 @@
 package com.ruleup.android_ruleup.navigation
 
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.ruleup.android_ruleup.home.HomeScreen
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
@@ -22,6 +21,7 @@ import com.ruleup.challenge.presentation.notice.NoticeEditScreen
 import com.ruleup.challenge.presentation.notice.NoticeListScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
+import com.ruleup.home.presentation.HomeScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.IntroPromisePage
 import com.ruleup.onboarding.domain.navigation.IntroTrustPage

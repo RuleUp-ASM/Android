@@ -1,4 +1,4 @@
-package com.ruleup.android_ruleup.home
+package com.ruleup.home.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -38,10 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruleup.android_ruleup.home.viewmodel.HomeFilter
-import com.ruleup.android_ruleup.home.viewmodel.HomeIntent
-import com.ruleup.android_ruleup.home.viewmodel.HomeState
-import com.ruleup.android_ruleup.home.viewmodel.HomeViewModel
+import com.ruleup.home.presentation.viewmodel.HomeFilter
+import com.ruleup.home.presentation.viewmodel.HomeIntent
+import com.ruleup.home.presentation.viewmodel.HomeState
+import com.ruleup.home.presentation.viewmodel.HomeViewModel
 import com.ruleup.ui.R
 import com.ruleup.ui.component.RuleUpBottomTab
 import com.ruleup.ui.component.RuleUpBottomTabBar
