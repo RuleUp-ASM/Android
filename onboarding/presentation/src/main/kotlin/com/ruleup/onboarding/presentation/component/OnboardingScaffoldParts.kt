@@ -1,4 +1,4 @@
-package com.ruleup.ui.component
+package com.ruleup.onboarding.presentation.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,45 +11,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.ui.theme.RuleUpGradients
 import com.ruleup.ui.theme.RuleUpTheme
-
-/** 상단 모의 상태바(9:41 · 5G · 100%). 프로토타입 화면 상단에 쓰인다. */
-@Composable
-fun PhoneStatusBar(
-    modifier: Modifier = Modifier,
-    contentColor: Color = RuleUpTheme.colors.textPrimary,
-) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .height(44.dp)
-                .padding(horizontal = RuleUpTheme.spacing.xxl),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("9:41", color = contentColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("●●●●", color = contentColor, fontSize = 10.sp)
-            Text("5G", color = contentColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-            Text("100%", color = contentColor, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-        }
-    }
-}
 
 /** 페이지 진행 인디케이터. [current] 만 길쭉한 그라데이션 바로 강조. */
 @Composable

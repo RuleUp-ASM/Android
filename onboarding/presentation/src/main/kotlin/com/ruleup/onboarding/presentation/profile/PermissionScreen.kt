@@ -9,10 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.ruleup.onboarding.domain.navigation.ProfileBasicInfoPage
+import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
-import com.ruleup.ui.component.ProfileSetupScaffold
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.theme.RuleUpTheme
 

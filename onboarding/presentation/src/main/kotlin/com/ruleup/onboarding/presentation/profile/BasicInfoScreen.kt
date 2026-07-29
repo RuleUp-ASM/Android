@@ -27,12 +27,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.onboarding.domain.navigation.ProfileAgreementPage
+import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.OnboardingGender
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
-import com.ruleup.ui.component.ProfileSetupScaffold
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.singleClickable
 import com.ruleup.ui.theme.RuleUpGradients
