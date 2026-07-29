@@ -1,4 +1,4 @@
-package com.ruleup.ui.component
+package com.ruleup.designsystem.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
@@ -22,9 +22,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.ui.R
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.R
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 /** 하단 탭 항목. 홈·탐색 등 루트 화면이 공유한다(미구현 탭은 자리만 차지). */
 enum class RuleUpBottomTab(

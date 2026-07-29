@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruleup.ui.helper.singleClickable
+import com.ruleup.designsystem.singleClickable
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.presentation.progress.viewmodel.VerificationProgressIntent
 import com.ruleup.verification.presentation.progress.viewmodel.VerificationProgressViewModel

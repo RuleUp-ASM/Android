@@ -22,10 +22,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.ui.component.PrimaryGradientButton
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 /** 프로필 설정 온보딩 상단 내비게이션: 뒤로(‹) · N단계 진행 dot · 건너뛰기. */
 @Composable

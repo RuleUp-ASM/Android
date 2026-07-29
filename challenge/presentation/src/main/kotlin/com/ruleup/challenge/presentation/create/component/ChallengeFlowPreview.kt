@@ -2,9 +2,9 @@ package com.ruleup.challenge.presentation.create.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.NavigationHelperImpl
-import com.ruleup.ui.theme.RuleUpTheme
 
 /**
  * 챌린지 생성 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 를 더미로 제공한다.

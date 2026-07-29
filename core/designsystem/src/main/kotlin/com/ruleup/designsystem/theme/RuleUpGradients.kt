@@ -1,4 +1,4 @@
-package com.ruleup.ui.theme
+package com.ruleup.designsystem.theme
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush

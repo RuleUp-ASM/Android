@@ -46,13 +46,13 @@ import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeViewMod
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreIntent
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreState
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreViewModel
-import com.ruleup.ui.R
-import com.ruleup.ui.category.categoryIconRes
-import com.ruleup.ui.component.RuleUpBottomTab
-import com.ruleup.ui.component.RuleUpBottomTabBar
+import com.ruleup.designsystem.R
+import com.ruleup.designsystem.category.categoryIconRes
+import com.ruleup.designsystem.component.RuleUpBottomTab
+import com.ruleup.designsystem.component.RuleUpBottomTabBar
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 
 // 인기 1~3위 랭크 배지 그라데이션(Figma 탐색 메인).
 private val TopRankGradient = listOf(Color(0xFFF97316), Color(0xFFEF4444))

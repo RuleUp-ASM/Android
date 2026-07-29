@@ -17,8 +17,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 /** 마이 탭 하위 화면 공용 상단 바 (뒤로가기 + 제목). */
 @Composable
@@ -43,7 +43,7 @@ internal fun MyTopBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

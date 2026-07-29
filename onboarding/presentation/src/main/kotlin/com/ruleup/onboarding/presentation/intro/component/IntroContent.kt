@@ -20,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.IntroTrustPage
 import com.ruleup.onboarding.domain.navigation.IntroVerifyPage
 import com.ruleup.onboarding.domain.navigation.LoginPage
@@ -27,10 +30,7 @@ import com.ruleup.onboarding.presentation.component.BottomBar
 import com.ruleup.onboarding.presentation.component.PageDots
 import com.ruleup.onboarding.presentation.intro.screen.OnboardingPage
 import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
-import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 
 /** 02 · 03 · 04 온보딩 화면. */
 @Composable

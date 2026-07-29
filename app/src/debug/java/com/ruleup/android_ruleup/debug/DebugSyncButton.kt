@@ -17,11 +17,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
+import com.ruleup.designsystem.rememberSingleClick
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.api.w
 import com.ruleup.ui.helper.LocalObservability
-import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.verification.data.signal.health.HealthPermissions
 import com.ruleup.verification.data.signal.usage.hasUsageAccess
 import com.ruleup.verification.data.signal.usage.usageAccessSettingsIntent

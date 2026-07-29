@@ -44,15 +44,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditEffect
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditIntent
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 private val AvatarGradient = listOf(RuleUpPalette.Indigo500, RuleUpPalette.Violet500)
 
@@ -149,7 +149,7 @@ private fun EditTopBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

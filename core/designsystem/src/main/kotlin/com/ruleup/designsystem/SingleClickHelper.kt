@@ -1,4 +1,4 @@
-package com.ruleup.ui.helper
+package com.ruleup.designsystem
 
 import android.os.SystemClock
 import androidx.compose.foundation.clickable

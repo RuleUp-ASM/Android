@@ -1,4 +1,4 @@
-package com.ruleup.ui.theme
+package com.ruleup.designsystem.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle

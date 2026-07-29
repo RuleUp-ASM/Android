@@ -1,4 +1,4 @@
-package com.ruleup.ui.theme
+package com.ruleup.designsystem.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Immutable

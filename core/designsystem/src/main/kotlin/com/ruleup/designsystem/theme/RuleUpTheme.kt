@@ -1,6 +1,6 @@
 @file:Suppress("ktlint:compose:compositionlocal-allowlist")
 
-package com.ruleup.ui.theme
+package com.ruleup.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable

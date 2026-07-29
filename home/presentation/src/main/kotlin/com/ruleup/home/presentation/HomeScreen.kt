@@ -38,15 +38,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.R
+import com.ruleup.designsystem.component.RuleUpBottomTab
+import com.ruleup.designsystem.component.RuleUpBottomTabBar
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.home.presentation.viewmodel.HomeFilter
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
-import com.ruleup.ui.R
-import com.ruleup.ui.component.RuleUpBottomTab
-import com.ruleup.ui.component.RuleUpBottomTabBar
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 import java.time.LocalDate
 
 private val FigmaBrand = Color(0xFF6C5CE7)

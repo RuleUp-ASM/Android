@@ -26,8 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ExploreSort
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 // 정렬 시트 노출 순서·라벨(Figma 05 · 챌린지 정렬 + 탐색 스펙 §3.2 7종).
 private val sortOptions =

@@ -40,8 +40,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeListIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeListViewModel
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
  * 공지 목록 화면. 방 홈의 "공지 전체 보기"로 진입한다.
@@ -147,7 +147,7 @@ private fun NoticeListTopBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

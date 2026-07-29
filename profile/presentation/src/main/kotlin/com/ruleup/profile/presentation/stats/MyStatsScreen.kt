@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.StatsPeriod
 import com.ruleup.profile.domain.entity.StatsPoint
 import com.ruleup.profile.domain.entity.StatsReport
@@ -39,9 +42,6 @@ import com.ruleup.profile.presentation.common.MyTopBar
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 // 막대 그라데이션 (피그마 435:250 — violet 계열)
 private val BarGradient = listOf(RuleUpPalette.Violet400, RuleUpPalette.Indigo500)

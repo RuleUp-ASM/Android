@@ -44,15 +44,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.map.GeofenceMap
 import com.ruleup.map.MapAnchor
 import com.ruleup.map.MapLatLng
 import com.ruleup.map.rememberLocationLocator
 import com.ruleup.map.rememberLocationPermissionGranted
-import com.ruleup.ui.component.PrimaryGradientButton
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.SetupAnchors
@@ -261,7 +261,7 @@ private fun FloatingSearchPill(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                    painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                     contentDescription = "뒤로",
                     tint = RuleUpTheme.colors.textPrimary,
                     modifier = Modifier.size(22.dp),
@@ -299,7 +299,7 @@ private fun FloatingSearchPill(
 
                 query.isNotEmpty() ->
                     Icon(
-                        painter = painterResource(com.ruleup.ui.R.drawable.ic_close),
+                        painter = painterResource(com.ruleup.designsystem.R.drawable.ic_close),
                         contentDescription = "지우기",
                         tint = RuleUpTheme.colors.textMuted,
                         modifier =
@@ -311,7 +311,7 @@ private fun FloatingSearchPill(
 
                 else ->
                     Icon(
-                        painter = painterResource(com.ruleup.ui.R.drawable.ic_search),
+                        painter = painterResource(com.ruleup.designsystem.R.drawable.ic_search),
                         contentDescription = null,
                         tint = RuleUpTheme.colors.textSecondary,
                         modifier = Modifier.size(20.dp),
@@ -388,7 +388,7 @@ private fun CurrentLocationFab(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_my_location),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_my_location),
                 contentDescription = "현재 위치",
                 tint = RuleUpTheme.colors.textSlate,
                 modifier = Modifier.size(22.dp),
@@ -498,7 +498,7 @@ private fun SelectionSheet(
                     .padding(horizontal = 14.dp, vertical = 12.dp),
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_my_location),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_my_location),
                 contentDescription = null,
                 tint = RuleUpTheme.colors.brand,
                 modifier = Modifier.size(20.dp),
@@ -656,7 +656,7 @@ private fun AnchorRow(
             )
         }
         Icon(
-            painter = painterResource(com.ruleup.ui.R.drawable.ic_close),
+            painter = painterResource(com.ruleup.designsystem.R.drawable.ic_close),
             contentDescription = "삭제",
             tint = RuleUpTheme.colors.textMuted,
             modifier =

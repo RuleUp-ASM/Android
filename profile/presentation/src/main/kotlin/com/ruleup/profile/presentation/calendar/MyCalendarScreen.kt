@@ -38,6 +38,9 @@ import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayDetail
 import com.ruleup.profile.domain.entity.CalendarDayItem
@@ -46,9 +49,6 @@ import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarIntent
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarViewModel
 import com.ruleup.profile.presentation.common.MyTopBar
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth

@@ -5,8 +5,8 @@ import androidx.compose.ui.graphics.Color
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.ui.category.categoryAccentColor
-import com.ruleup.ui.category.categoryIconRes
+import com.ruleup.designsystem.category.categoryAccentColor
+import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 

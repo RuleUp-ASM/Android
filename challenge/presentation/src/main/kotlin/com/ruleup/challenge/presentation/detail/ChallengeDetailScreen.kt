@@ -64,11 +64,11 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
-import com.ruleup.ui.category.categoryAccentColor
-import com.ruleup.ui.component.PrimaryGradientButton
+import com.ruleup.designsystem.category.categoryAccentColor
+import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 import kotlinx.coroutines.launch
 
 /**
@@ -403,7 +403,7 @@ private fun DetailTopBar(onBack: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

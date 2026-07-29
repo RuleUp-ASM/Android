@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.MilestoneType
 import com.ruleup.profile.domain.entity.ReputationHistory
 import com.ruleup.profile.domain.entity.ReputationMilestone
@@ -41,8 +43,6 @@ import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.history.viewmodel.ReputationHistoryIntent
 import com.ruleup.profile.presentation.history.viewmodel.ReputationHistoryViewModel
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
 
 // 히어로 그라데이션 (피그마 435:395 — rose → amber)
 private val PeakGradient = listOf(Color(0xFFF43F5E), Color(0xFFF59E0B))

@@ -16,8 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.rememberSingleClick
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.rememberSingleClick
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.presentation.manual.viewmodel.VerificationManualEffect
 import com.ruleup.verification.presentation.manual.viewmodel.VerificationManualIntent

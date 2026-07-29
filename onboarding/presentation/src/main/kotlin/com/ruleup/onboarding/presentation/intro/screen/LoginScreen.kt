@@ -26,15 +26,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpColors
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.oauth.rememberOAuthLauncher
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpColors
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {

@@ -18,8 +18,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 /** 페이지 진행 인디케이터. [current] 만 길쭉한 그라데이션 바로 강조. */
 @Composable

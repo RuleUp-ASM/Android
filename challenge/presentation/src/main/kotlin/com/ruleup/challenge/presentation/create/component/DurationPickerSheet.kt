@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.presentation.create.CalendarCell
 import com.ruleup.challenge.presentation.create.ChallengeDates
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 
 private val durationPresets = listOf(7, 14, 28, 90)
 

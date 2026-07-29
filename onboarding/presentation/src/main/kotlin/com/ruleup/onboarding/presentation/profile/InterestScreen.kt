@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpGradients
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.onboarding.domain.navigation.ProfilePermissionPage
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
@@ -32,28 +35,25 @@ import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpGradients
-import com.ruleup.ui.theme.RuleUpTheme
 
 /** 카테고리별 Figma 라인 아이콘. 학습(STUDY)은 Figma 에서 독서와 동일 아이콘을 공유한다. */
 private fun InterestCategory.icon(): Int =
     when (this) {
-        InterestCategory.EXERCISE -> com.ruleup.ui.R.drawable.ic_cat_exercise
-        InterestCategory.READING -> com.ruleup.ui.R.drawable.ic_cat_reading
-        InterestCategory.MEDITATION -> com.ruleup.ui.R.drawable.ic_cat_meditation
-        InterestCategory.HEALTH -> com.ruleup.ui.R.drawable.ic_cat_health
-        InterestCategory.WAKE_UP -> com.ruleup.ui.R.drawable.ic_cat_wakeup
-        InterestCategory.WORK -> com.ruleup.ui.R.drawable.ic_cat_work
-        InterestCategory.STUDY -> com.ruleup.ui.R.drawable.ic_cat_reading
-        InterestCategory.HOBBY -> com.ruleup.ui.R.drawable.ic_cat_hobby
-        InterestCategory.COOKING -> com.ruleup.ui.R.drawable.ic_cat_cooking
-        InterestCategory.FINANCE -> com.ruleup.ui.R.drawable.ic_cat_finance
-        InterestCategory.ENVIRONMENT -> com.ruleup.ui.R.drawable.ic_cat_environment
-        InterestCategory.RELATIONSHIP -> com.ruleup.ui.R.drawable.ic_cat_relationship
-        InterestCategory.MUSIC -> com.ruleup.ui.R.drawable.ic_cat_music
-        InterestCategory.WRITING -> com.ruleup.ui.R.drawable.ic_cat_writing
-        InterestCategory.CODING -> com.ruleup.ui.R.drawable.ic_cat_coding
+        InterestCategory.EXERCISE -> com.ruleup.designsystem.R.drawable.ic_cat_exercise
+        InterestCategory.READING -> com.ruleup.designsystem.R.drawable.ic_cat_reading
+        InterestCategory.MEDITATION -> com.ruleup.designsystem.R.drawable.ic_cat_meditation
+        InterestCategory.HEALTH -> com.ruleup.designsystem.R.drawable.ic_cat_health
+        InterestCategory.WAKE_UP -> com.ruleup.designsystem.R.drawable.ic_cat_wakeup
+        InterestCategory.WORK -> com.ruleup.designsystem.R.drawable.ic_cat_work
+        InterestCategory.STUDY -> com.ruleup.designsystem.R.drawable.ic_cat_reading
+        InterestCategory.HOBBY -> com.ruleup.designsystem.R.drawable.ic_cat_hobby
+        InterestCategory.COOKING -> com.ruleup.designsystem.R.drawable.ic_cat_cooking
+        InterestCategory.FINANCE -> com.ruleup.designsystem.R.drawable.ic_cat_finance
+        InterestCategory.ENVIRONMENT -> com.ruleup.designsystem.R.drawable.ic_cat_environment
+        InterestCategory.RELATIONSHIP -> com.ruleup.designsystem.R.drawable.ic_cat_relationship
+        InterestCategory.MUSIC -> com.ruleup.designsystem.R.drawable.ic_cat_music
+        InterestCategory.WRITING -> com.ruleup.designsystem.R.drawable.ic_cat_writing
+        InterestCategory.CODING -> com.ruleup.designsystem.R.drawable.ic_cat_coding
     }
 
 /** 03 · 관심 분야 (3/5). */
@@ -117,7 +117,7 @@ private fun SelectionCounter(count: Int) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_info),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_info),
                 contentDescription = null,
                 colorFilter = ColorFilter.tint(Color(0xFF5A47D6)),
                 modifier = Modifier.size(16.dp),
@@ -186,7 +186,7 @@ private fun InfoRow(text: String) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(com.ruleup.ui.R.drawable.ic_info),
+            painter = painterResource(com.ruleup.designsystem.R.drawable.ic_info),
             contentDescription = null,
             colorFilter = ColorFilter.tint(RuleUpTheme.colors.textSlate),
             modifier = Modifier.size(16.dp),

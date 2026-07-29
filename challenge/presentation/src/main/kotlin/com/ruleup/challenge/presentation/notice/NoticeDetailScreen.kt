@@ -45,9 +45,9 @@ import com.ruleup.challenge.domain.entity.NoticeDetail
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailViewModel
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpTheme
 
 /**
  * 공지 상세 화면. 진입(조회)만으로 서버가 읽음 처리한다 — 별도 읽음 버튼 없음.
@@ -175,7 +175,7 @@ private fun NoticeDetailTopBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(com.ruleup.ui.R.drawable.ic_arrow_back),
+                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
                 contentDescription = "뒤로",
                 tint = RuleUpTheme.colors.textPrimary,
                 modifier = Modifier.size(22.dp),

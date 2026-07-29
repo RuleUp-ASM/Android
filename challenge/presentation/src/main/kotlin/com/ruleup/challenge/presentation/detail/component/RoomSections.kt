@@ -35,9 +35,9 @@ import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.domain.entity.RoomSummary
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
-import com.ruleup.ui.helper.singleClickable
-import com.ruleup.ui.theme.RuleUpPalette
-import com.ruleup.ui.theme.RuleUpTheme
+import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import java.util.Locale
 
 // 방 홈 섹션 모음 (그룹 챌린지 ACTIVE 멤버 전용 — GET room 성공 시 상세에 확장 렌더링).
