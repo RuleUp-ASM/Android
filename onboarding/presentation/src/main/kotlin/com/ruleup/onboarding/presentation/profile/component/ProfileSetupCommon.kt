@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.NavigationHelperImpl
+import com.ruleup.ui.helper.NoOpNavigationHelper
 
 /**
  * 프로필 설정 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 를 더미로 제공한다.
@@ -33,7 +33,7 @@ internal fun ProfileFlowPreview(
 ) {
     RuleUpTheme(darkTheme = darkTheme) {
         CompositionLocalProvider(
-            LocalNavigationHelper provides NavigationHelperImpl(),
+            LocalNavigationHelper provides NoOpNavigationHelper,
         ) {
             content()
         }

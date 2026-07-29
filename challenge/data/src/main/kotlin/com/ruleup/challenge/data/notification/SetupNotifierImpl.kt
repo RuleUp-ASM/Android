@@ -7,6 +7,7 @@ import com.ruleup.challenge.domain.repository.SetupNotifier
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.domain.helper.PushNotificationHelper
 import com.ruleup.domain.navigation.AppRoutes
+import com.ruleup.domain.navigation.NavRoute
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -50,7 +51,7 @@ class SetupNotifierImpl
                 id = challengeId.hashCode(),
                 title = kind.title,
                 message = kind.bodyFormat.format(title),
-                deepLink = "$DEEP_LINK_PREFIX/${AppRoutes.CHALLENGE_DETAIL}?challengeId=$challengeId",
+                route = NavRoute(AppRoutes.CHALLENGE_DETAIL, mapOf("challengeId" to challengeId)),
             )
         }
 
@@ -70,6 +71,5 @@ class SetupNotifierImpl
             }
 
         private companion object {
-            const val DEEP_LINK_PREFIX = "ruleup://app"
         }
     }

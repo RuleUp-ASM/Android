@@ -1,4 +1,4 @@
-package com.ruleup.ui.helper
+package com.ruleup.android_ruleup.helper
 
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
@@ -11,7 +11,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class UiBindingsModule {
+abstract class HelperBindingsModule {
     @Binds
     @Singleton
     abstract fun bindNavigationHelper(impl: NavigationHelperImpl): NavigationHelper
