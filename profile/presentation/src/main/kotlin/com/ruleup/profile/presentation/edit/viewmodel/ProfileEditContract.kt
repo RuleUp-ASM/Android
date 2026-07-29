@@ -1,7 +1,7 @@
 package com.ruleup.profile.presentation.edit.viewmodel
 
-import com.ruleup.entity.user.InterestCategory
-import com.ruleup.entity.user.Profile
+import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.Profile
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent

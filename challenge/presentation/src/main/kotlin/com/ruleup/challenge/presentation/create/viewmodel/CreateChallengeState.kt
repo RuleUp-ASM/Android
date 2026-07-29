@@ -5,7 +5,7 @@ import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RepeatDay
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.VerificationOption
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.ui.mvi.UiState
 
 /**

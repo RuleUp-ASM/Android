@@ -1,6 +1,6 @@
 package com.ruleup.verification.data.dto
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.network.dto.requireField
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot

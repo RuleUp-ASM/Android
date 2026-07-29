@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.entity.user.Token
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import kotlinx.coroutines.runBlocking

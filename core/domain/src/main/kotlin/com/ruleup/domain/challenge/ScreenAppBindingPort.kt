@@ -1,6 +1,6 @@
 package com.ruleup.domain.challenge
 
-import com.ruleup.entity.challenge.BoundScreenApp
+import com.ruleup.domain.entity.challenge.BoundScreenApp
 
 /**
  * 스크린타임 대상 앱 바인딩 포트(feature 간 공유용 core 경계).

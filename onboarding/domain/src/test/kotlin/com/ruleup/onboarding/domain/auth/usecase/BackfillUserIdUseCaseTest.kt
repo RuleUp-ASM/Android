@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.entity.user.Profile
+import com.ruleup.domain.entity.user.Profile
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository

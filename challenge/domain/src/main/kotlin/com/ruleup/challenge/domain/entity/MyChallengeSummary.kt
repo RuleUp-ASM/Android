@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /**
  * 홈 화면 즉시 반영용 "내 챌린지" 로컬 요약.

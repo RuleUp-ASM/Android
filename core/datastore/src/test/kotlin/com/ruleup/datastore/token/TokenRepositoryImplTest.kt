@@ -4,7 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.mutablePreferencesOf
-import com.ruleup.entity.user.Token
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.observability.domain.event.DiagnosticPayload
 import com.ruleup.observability.domain.model.Severity
 import com.ruleup.observability.domain.test.RecordingSink

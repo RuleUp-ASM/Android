@@ -7,10 +7,10 @@ import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.usecase.GetChallengeCategoriesUseCase
 import com.ruleup.challenge.domain.usecase.GetRoutineRecommendationsUseCase
 import com.ruleup.challenge.domain.usecase.GetTrendingChallengesUseCase
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
-import com.ruleup.entity.user.InterestCategory
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel

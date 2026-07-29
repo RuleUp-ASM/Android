@@ -17,7 +17,7 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.WearableRequirement
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.SetupNotifier
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals

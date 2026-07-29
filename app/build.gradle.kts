@@ -91,7 +91,6 @@ dependencies {
     // :app 이 컴포지션 루트(AppRoot/내비게이션) + 전 feature·core 모듈 집계점.
     // Hilt 컴포넌트가 모든 모듈의 @Module/@HiltViewModel 바인딩을 한곳에서 모은다.
     implementation(project(":core:domain"))
-    implementation(project(":core:entity"))
     implementation(project(":core:ui"))
     implementation(project(":core:network"))
     implementation(project(":core:datastore"))

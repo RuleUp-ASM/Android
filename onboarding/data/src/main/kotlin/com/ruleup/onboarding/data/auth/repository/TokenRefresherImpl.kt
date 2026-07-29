@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.data.auth.repository
 
+import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.TokenRefresher
-import com.ruleup.entity.user.Token
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.onboarding.data.auth.api.AuthApi

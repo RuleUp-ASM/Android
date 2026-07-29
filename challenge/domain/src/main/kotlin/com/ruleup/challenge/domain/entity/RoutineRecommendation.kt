@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /**
  * 루틴 발견 추천 항목 (명세: GET /recommendations/routines).

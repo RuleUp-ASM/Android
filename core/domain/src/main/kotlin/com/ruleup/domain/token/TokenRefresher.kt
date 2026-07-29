@@ -1,6 +1,6 @@
 package com.ruleup.domain.token
 
-import com.ruleup.entity.user.Token
+import com.ruleup.domain.entity.user.Token
 
 /**
  * accessToken 만료(401) 시 refreshToken 으로 토큰을 재발급하는 포트.

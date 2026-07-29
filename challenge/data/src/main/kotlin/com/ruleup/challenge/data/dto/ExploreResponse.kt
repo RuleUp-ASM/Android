@@ -6,7 +6,7 @@ import com.ruleup.challenge.domain.entity.ExploreResult
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.TrendingChallenge
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

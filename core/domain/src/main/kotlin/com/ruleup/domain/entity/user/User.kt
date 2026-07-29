@@ -1,4 +1,4 @@
-package com.ruleup.entity.user
+package com.ruleup.domain.entity.user
 
 data class User(
     val id: String,

@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /** 챌린지 생성자 정보 (명세 3.3 owner). 익명 챌린지면 닉네임 마스킹. */
 data class ChallengeOwner(

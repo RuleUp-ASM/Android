@@ -1,6 +1,6 @@
 package com.ruleup.domain.token
 
-import com.ruleup.entity.user.Token
+import com.ruleup.domain.entity.user.Token
 import kotlinx.coroutines.flow.Flow
 
 interface TokenRepository {

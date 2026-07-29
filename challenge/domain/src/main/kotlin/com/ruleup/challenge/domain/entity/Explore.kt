@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.entity.user.InterestCategory
+import com.ruleup.domain.entity.user.InterestCategory
 
 /**
  * 탐색 목록 정렬 기준(탐색 스펙 §3.2, 7종). 방향은 정의로 고정되어 사용자에게 노출하지 않는다.

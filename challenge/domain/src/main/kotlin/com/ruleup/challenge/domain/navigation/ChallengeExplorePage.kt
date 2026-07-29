@@ -1,10 +1,10 @@
 package com.ruleup.challenge.domain.navigation
 
 import com.ruleup.challenge.domain.entity.ExploreSort
+import com.ruleup.domain.entity.user.InterestCategory
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
-import com.ruleup.entity.user.InterestCategory
 
 /**
  * 탐색 메인 페이지(실시간 인기 + 카테고리 그리드). 하단 탭 "챌린지" 로 진입한다.
