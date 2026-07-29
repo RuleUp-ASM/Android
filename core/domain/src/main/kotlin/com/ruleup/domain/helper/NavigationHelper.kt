@@ -20,5 +20,11 @@ interface NavigationHelper {
 
     fun navigateTo(page: Page)
 
+    /**
+     * 백스택을 [route] 의 시작 스택으로 교체한다. 스플래시가 인증 후 딥링크 목적지로 보낼 때 쓴다.
+     * 일반 화면 이동에는 쓰지 않는다 — 되돌아갈 곳이 사라진다.
+     */
+    fun replaceStackWith(route: NavRoute)
+
     fun navigateToBack()
 }

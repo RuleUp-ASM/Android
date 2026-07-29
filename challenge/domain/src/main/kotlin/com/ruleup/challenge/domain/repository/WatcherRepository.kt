@@ -2,10 +2,12 @@ package com.ruleup.challenge.domain.repository
 
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherInvitation
-import com.ruleup.challenge.domain.entity.WatcherInvitationInfo
 
 /**
- * 루틴 실패 패널티 — 감시자 통지(감시자 초대·수락·관리).
+ * 루틴 실패 패널티 — 감시자 통지(감시자 초대 생성·관리).
+ *
+ * 초대 **수락**은 앱이 하지 않는다 — 비유저 감시자를 포함해 웹 동의 페이지가 담당한다.
+ * 앱은 초대를 만들어 사용자 본인 채널로 공유하는 데까지만 관여한다.
  * 감시자는 챌린지 × 참여자 단위로 붙는다(발송 대상 = (챌린지, 실패 사용자)의 ACTIVE 감시자).
  * 초대 전달은 사용자 본인 채널(카카오톡 공유)로만 하고, 실패 통지 발송은 서버가 담당한다.
  */
@@ -24,13 +26,4 @@ interface WatcherRepository {
         challengeId: String,
         watcherId: String,
     )
-
-    /** 초대 링크 진입 — 토큰 검증 + 초대 정보 조회(명세: GET /watchers/invitations/{token}). */
-    suspend fun getInvitation(token: String): WatcherInvitationInfo
-
-    /**
-     * 감시자 수락(명세: POST /watchers/invitations/{token}/accept).
-     * 룰업 유저의 인앱 수락 = 수신동의. 채널은 인앱 푸시로 등록된다.
-     */
-    suspend fun acceptInvitation(token: String)
 }

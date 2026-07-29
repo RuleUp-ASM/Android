@@ -4,7 +4,6 @@ import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherInvitation
-import com.ruleup.challenge.domain.entity.WatcherInvitationInfo
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.repository.WatcherRepository
 import com.ruleup.network.dto.ApiException
@@ -43,15 +42,5 @@ class WatcherRepositoryImpl
             watcherId: String,
         ) {
             api.removeWatcher(challengeId, watcherId).throwOnError()
-        }
-
-        override suspend fun getInvitation(token: String): WatcherInvitationInfo =
-            api
-                .getWatcherInvitation(token)
-                .getOrThrow()
-                .toDomain()
-
-        override suspend fun acceptInvitation(token: String) {
-            api.acceptWatcherInvitation(token).throwOnError()
         }
     }

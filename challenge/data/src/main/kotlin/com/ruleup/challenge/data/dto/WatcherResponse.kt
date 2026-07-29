@@ -4,8 +4,6 @@ import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.Watcher
 import com.ruleup.challenge.domain.entity.WatcherChannel
 import com.ruleup.challenge.domain.entity.WatcherInvitation
-import com.ruleup.challenge.domain.entity.WatcherInvitationInfo
-import com.ruleup.challenge.domain.entity.WatcherInvitationState
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherStatus
 import com.ruleup.challenge.domain.entity.WatcherType
@@ -114,42 +112,4 @@ internal fun WatchersResponse.toDomain(): ChallengeWatchers =
         watchers = watchers.orEmpty().map { it.toDomain() },
     )
 
-// ---------- 감시자: 초대 링크 진입 (GET /watchers/invitations/{token}) ----------
-@Serializable
-data class WatcherInvitationInfoResponse(
-    @SerialName("invitationId")
-    val invitationId: String? = null,
-    // INVITED / CONSENTED / EXPIRED / REVOKED
-    @SerialName("status")
-    val status: String? = null,
-    @SerialName("challengeTitle")
-    val challengeTitle: String? = null,
-    @SerialName("inviterNickname")
-    val inviterNickname: String? = null,
-    // 현재 로그인 사용자가 룰업 유저인지(웹 분기용 — 앱에서는 항상 로그인 유저)
-    @SerialName("viewerIsUser")
-    val viewerIsUser: Boolean? = null,
-    // 생성자–감시자 30일 재초대 차단
-    @SerialName("blocked")
-    val blocked: Boolean? = null,
-    @SerialName("blockedUntil")
-    val blockedUntil: String? = null,
-    @SerialName("expiresAt")
-    val expiresAt: String? = null,
-)
-
-internal fun WatcherInvitationInfoResponse.toDomain(): WatcherInvitationInfo =
-    WatcherInvitationInfo(
-        challengeTitle = challengeTitle.requireField("challengeTitle"),
-        inviterNickname = inviterNickname.requireField("inviterNickname"),
-        // status + blocked 를 화면 분기용 단일 상태로 환원한다(차단은 200 정상 응답으로 온다).
-        state =
-            when {
-                blocked == true -> WatcherInvitationState.BLOCKED
-                status == WatcherStatus.CONSENTED.value -> WatcherInvitationState.ALREADY_ACCEPTED
-                status == WatcherStatus.EXPIRED.value -> WatcherInvitationState.EXPIRED
-                status == WatcherStatus.REVOKED.value -> WatcherInvitationState.REVOKED
-                else -> WatcherInvitationState.PENDING
-            },
-        blockedUntil = blockedUntil,
-    )
+// 초대 링크 진입(GET /watchers/invitations/{token})과 수락은 웹 동의 페이지가 담당한다 — 앱 DTO 없음.

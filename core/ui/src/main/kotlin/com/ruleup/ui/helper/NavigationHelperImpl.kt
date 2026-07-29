@@ -24,6 +24,10 @@ class NavigationHelperImpl
             emit(NavSignal.GoToDestPage(route))
         }
 
+        override fun replaceStackWith(route: NavRoute) {
+            emit(NavSignal.ReplaceStack(route))
+        }
+
         override fun navigateToBack() {
             emit(NavSignal.Back)
         }
