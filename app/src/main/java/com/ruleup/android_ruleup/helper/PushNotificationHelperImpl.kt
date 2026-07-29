@@ -1,4 +1,4 @@
-package com.ruleup.ui.helper
+package com.ruleup.android_ruleup.helper
 
 import android.Manifest
 import android.annotation.SuppressLint

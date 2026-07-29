@@ -1,6 +1,5 @@
-package com.ruleup.ui.helper
+package com.ruleup.android_ruleup.helper
 
-import androidx.compose.runtime.compositionLocalOf
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.NavSignal
@@ -37,5 +36,3 @@ class NavigationHelperImpl
             if (result.isFailure) println("NavigationHelper dropped: $navSignal")
         }
     }
-
-val LocalNavigationHelper = compositionLocalOf<NavigationHelper> { error("No user found!") }
