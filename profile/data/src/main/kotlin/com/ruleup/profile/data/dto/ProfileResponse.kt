@@ -1,11 +1,11 @@
-package com.ruleup.onboarding.data.profile.dto
+package com.ruleup.profile.data.dto
 
-import com.ruleup.domain.entity.user.CategoryCatalog
-import com.ruleup.domain.entity.user.NicknameCheck
-import com.ruleup.domain.entity.user.NicknameCheckReason
-import com.ruleup.domain.entity.user.Profile
 import com.ruleup.domain.entity.user.toInterestCategories
 import com.ruleup.network.dto.requireField
+import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.NicknameCheck
+import com.ruleup.profile.domain.entity.NicknameCheckReason
+import com.ruleup.profile.domain.entity.Profile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

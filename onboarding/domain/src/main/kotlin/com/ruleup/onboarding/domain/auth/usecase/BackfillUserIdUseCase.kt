@@ -1,9 +1,9 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
+import com.ruleup.profile.domain.repository.ProfileRepository
 import javax.inject.Inject
 
 private const val TAG = "SessionBootstrap"

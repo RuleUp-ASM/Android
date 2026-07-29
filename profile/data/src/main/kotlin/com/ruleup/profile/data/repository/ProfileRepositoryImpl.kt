@@ -1,19 +1,18 @@
-package com.ruleup.onboarding.data.profile.repository
+package com.ruleup.profile.data.repository
 
-import com.ruleup.domain.entity.user.CategoryCatalog
 import com.ruleup.domain.entity.user.InterestCategory
-import com.ruleup.domain.entity.user.NicknameCheck
-import com.ruleup.domain.entity.user.Profile
-import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError
 import com.ruleup.network.image.ImageReader
-import com.ruleup.onboarding.data.profile.api.ProfileApi
-import com.ruleup.onboarding.data.profile.dto.NicknameCheckRequest
-import com.ruleup.onboarding.data.profile.dto.OnboardingMeRequest
-import com.ruleup.onboarding.data.profile.dto.UpdateProfileRequest
-import com.ruleup.onboarding.data.profile.dto.toDomain
+import com.ruleup.profile.data.api.ProfileApi
+import com.ruleup.profile.data.dto.NicknameCheckRequest
+import com.ruleup.profile.data.dto.UpdateProfileRequest
+import com.ruleup.profile.data.dto.toDomain
+import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.NicknameCheck
+import com.ruleup.profile.domain.entity.Profile
+import com.ruleup.profile.domain.repository.ProfileRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -67,14 +66,5 @@ class ProfileRepositoryImpl
 
         override suspend fun deleteProfileImage() {
             api.deleteProfileImage().throwOnError()
-        }
-
-        override suspend fun updateOnboardingInfo(
-            birthDate: String?,
-            gender: String?,
-        ) {
-            api
-                .updateOnboardingMe(OnboardingMeRequest(birthDate = birthDate, gender = gender))
-                .throwOnError()
         }
     }

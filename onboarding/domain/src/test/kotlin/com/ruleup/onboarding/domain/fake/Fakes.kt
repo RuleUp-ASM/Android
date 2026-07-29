@@ -1,9 +1,7 @@
 package com.ruleup.onboarding.domain.fake
 
 import com.ruleup.domain.entity.user.InterestCategory
-import com.ruleup.domain.entity.user.Profile
 import com.ruleup.domain.entity.user.Token
-import com.ruleup.domain.profile.ProfileRepository
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.entity.Agreement
@@ -12,6 +10,8 @@ import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
+import com.ruleup.profile.domain.entity.Profile
+import com.ruleup.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -109,7 +109,6 @@ class FakeAuthRepository : AuthRepository {
 class FakeProfileRepository : ProfileRepository {
     var uploadResult: String = ""
     var uploadCalledWith: String? = null
-    var onboardingInfoCalledWith: Pair<String?, String?>? = null
 
     /** [getProfile] 이 돌려줄 값. null 이면 [profileError] 를 던진다. */
     var profile: Profile? = null
@@ -119,13 +118,6 @@ class FakeProfileRepository : ProfileRepository {
     override suspend fun uploadProfileImage(imageUri: String): String {
         uploadCalledWith = imageUri
         return uploadResult
-    }
-
-    override suspend fun updateOnboardingInfo(
-        birthDate: String?,
-        gender: String?,
-    ) {
-        onboardingInfoCalledWith = birthDate to gender
     }
 
     override suspend fun checkNickname(nickname: String) = throw NotImplementedError()

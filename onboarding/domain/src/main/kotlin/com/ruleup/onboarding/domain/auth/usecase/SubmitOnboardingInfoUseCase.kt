@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
-import com.ruleup.domain.profile.ProfileRepository
+import com.ruleup.onboarding.domain.profile.OnboardingProfileRepository
 import javax.inject.Inject
 
 /**
@@ -12,13 +12,13 @@ import javax.inject.Inject
 class SubmitOnboardingInfoUseCase
     @Inject
     constructor(
-        private val profileRepository: ProfileRepository,
+        private val onboardingProfileRepository: OnboardingProfileRepository,
     ) {
         suspend operator fun invoke(
             birthDate: String?,
             gender: String?,
         ) {
             if (birthDate == null && gender == null) return
-            profileRepository.updateOnboardingInfo(birthDate = birthDate, gender = gender)
+            onboardingProfileRepository.updateOnboardingInfo(birthDate = birthDate, gender = gender)
         }
     }

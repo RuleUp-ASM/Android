@@ -1,4 +1,6 @@
-package com.ruleup.domain.entity.user
+package com.ruleup.profile.domain.entity
+
+import com.ruleup.domain.entity.user.InterestCategory
 
 /** 내 프로필 (명세 4.8/4.9). */
 data class Profile(

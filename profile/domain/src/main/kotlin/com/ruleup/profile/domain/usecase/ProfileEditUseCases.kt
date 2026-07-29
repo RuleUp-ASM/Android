@@ -1,10 +1,10 @@
 package com.ruleup.profile.domain.usecase
 
-import com.ruleup.domain.entity.user.CategoryCatalog
 import com.ruleup.domain.entity.user.InterestCategory
-import com.ruleup.domain.entity.user.NicknameCheck
-import com.ruleup.domain.entity.user.Profile
-import com.ruleup.domain.profile.ProfileRepository
+import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.NicknameCheck
+import com.ruleup.profile.domain.entity.Profile
+import com.ruleup.profile.domain.repository.ProfileRepository
 import javax.inject.Inject
 
 // 프로필 편집(마이 → 재편집) 유스케이스 모음. 계약은 core 의 ProfileRepository(구현 :onboarding:data) 재사용 —
