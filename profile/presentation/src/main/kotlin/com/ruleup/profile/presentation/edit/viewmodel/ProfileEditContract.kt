@@ -1,6 +1,6 @@
 package com.ruleup.profile.presentation.edit.viewmodel
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
@@ -16,7 +16,7 @@ sealed interface ProfileEditIntent : MviIntent {
     ) : ProfileEditIntent
 
     data class ToggleCategory(
-        val category: InterestCategory,
+        val category: Category,
     ) : ProfileEditIntent
 
     /** 갤러리에서 고른 이미지 업로드 (업로드 즉시 반영). */
@@ -44,7 +44,7 @@ data class ProfileEditState(
     // 서버 프로필 원본 (저장 시 변경 여부 비교 기준)
     val profile: Profile?,
     val nickname: String,
-    val selectedCategories: List<InterestCategory>,
+    val selectedCategories: List<Category>,
     // 카테고리 선택 상한 (마스터 조회, 기본 6)
     val maxSelectable: Int,
     // 닉네임 30일 제한 — 변경 가능일까지 남은 일수 (0 = 변경 가능)
@@ -92,7 +92,7 @@ sealed interface ProfileEditReducerEvent : ReducerEvent {
     ) : ProfileEditReducerEvent
 
     data class CategoriesChanged(
-        val categories: List<InterestCategory>,
+        val categories: List<Category>,
     ) : ProfileEditReducerEvent
 
     data class ImageBusy(

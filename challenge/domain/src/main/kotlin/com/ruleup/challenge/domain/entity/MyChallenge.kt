@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 내가 참여 중인 챌린지 목록 항목(명세: GET /challenges challenges[]).
@@ -13,7 +13,7 @@ data class MyChallenge(
     // 대표 이미지 (없으면 null)
     val imageUrl: String?,
     // 제목 기반 분류 (인식 불가 시 null)
-    val category: InterestCategory?,
+    val category: Category?,
     val participationType: ParticipationType,
     val status: ChallengeStatus,
     val anonymity: Anonymity,

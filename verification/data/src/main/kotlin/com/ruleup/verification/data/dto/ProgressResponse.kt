@@ -1,6 +1,6 @@
 package com.ruleup.verification.data.dto
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.network.dto.requireField
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -49,7 +49,7 @@ internal fun ChallengeProgressResponse.toDomain(): ChallengeProgress =
     ChallengeProgress(
         challengeId = challengeId.requireField("challengeId"),
         title = title.orEmpty(),
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         participationType = participationType,
         status = status.orEmpty(),
         progressRate = progressRate ?: 0.0,

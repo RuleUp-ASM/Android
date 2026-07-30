@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.data.auth.dto
 
+import com.ruleup.domain.entity.category.toCategories
 import com.ruleup.domain.entity.user.Token
-import com.ruleup.domain.entity.user.toInterestCategories
 import com.ruleup.network.dto.requireField
 import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.OAuthProfile
@@ -123,7 +123,7 @@ internal fun UserResponse.toDomain(): User =
         email = email,
         profileImageUrl = profileImageUrl,
         mannerTemperature = mannerTemperature ?: 36.5,
-        interestCategories = interestCategories.toInterestCategories(),
+        interestCategories = interestCategories.toCategories(),
     )
 
 internal fun SignUpResponse.toAuthSession(): AuthSession =

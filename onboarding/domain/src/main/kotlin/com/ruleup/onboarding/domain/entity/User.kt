@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 로그인·가입 응답이 싣고 오는 사용자. onboarding 밖에서는 쓰지 않는다 —
@@ -12,7 +12,7 @@ data class User(
     val email: String?,
     val profileImageUrl: String?,
     val mannerTemperature: Double,
-    val interestCategories: List<InterestCategory>,
+    val interestCategories: List<Category>,
 )
 
 /** 가입 시 동의 항목. */

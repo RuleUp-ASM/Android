@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 탐색 목록 정렬 기준(탐색 스펙 §3.2, 7종). 방향은 정의로 고정되어 사용자에게 노출하지 않는다.
@@ -41,7 +41,7 @@ enum class ExploreSort(
  * 홈 인기 섹션에는 적용하지 않는다.
  */
 data class ExploreFilter(
-    val category: InterestCategory? = null,
+    val category: Category? = null,
     val participationType: ParticipationType? = null,
     val verificationMethod: SelectedMethod? = null,
     // 매너 온도 컷: 클라이언트가 온도 값을 보내지 않고, true 면 서버가 토큰 사용자 기준으로
@@ -74,14 +74,14 @@ data class ChallengeCategoryCount(
     val name: String,
     val activeChallengeCount: Int,
     // [name] 라벨로 매칭한 앱 카테고리(아이콘·목록 필터 연결용). 매칭 실패 시 null
-    val category: InterestCategory?,
+    val category: Category?,
 )
 
 /** 둘러보기 목록 카드 항목(명세: GET /challenges/explore challenges[]). */
 data class ExploreChallenge(
     val challengeId: String,
     val title: String,
-    val category: InterestCategory?,
+    val category: Category?,
     val participationType: ParticipationType,
     val verificationMethod: SelectedMethod,
     // 이 방의 현재 참여자 수

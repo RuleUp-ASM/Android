@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.model
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.onboarding.domain.entity.Agreement
 
 /**
@@ -12,7 +12,7 @@ import com.ruleup.onboarding.domain.entity.Agreement
 data class SignupForm(
     val signupToken: String,
     val nickname: String,
-    val interestCategories: List<InterestCategory>,
+    val interestCategories: List<Category>,
     val agreements: Agreement,
     val localImageUri: String? = null,
 )

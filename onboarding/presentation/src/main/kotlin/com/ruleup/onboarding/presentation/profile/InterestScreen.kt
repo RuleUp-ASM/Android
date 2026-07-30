@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.onboarding.domain.navigation.ProfilePermissionPage
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
@@ -37,23 +37,23 @@ import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 /** 카테고리별 Figma 라인 아이콘. 학습(STUDY)은 Figma 에서 독서와 동일 아이콘을 공유한다. */
-private fun InterestCategory.icon(): Int =
+private fun Category.icon(): Int =
     when (this) {
-        InterestCategory.EXERCISE -> com.ruleup.designsystem.R.drawable.ic_cat_exercise
-        InterestCategory.READING -> com.ruleup.designsystem.R.drawable.ic_cat_reading
-        InterestCategory.MEDITATION -> com.ruleup.designsystem.R.drawable.ic_cat_meditation
-        InterestCategory.HEALTH -> com.ruleup.designsystem.R.drawable.ic_cat_health
-        InterestCategory.WAKE_UP -> com.ruleup.designsystem.R.drawable.ic_cat_wakeup
-        InterestCategory.WORK -> com.ruleup.designsystem.R.drawable.ic_cat_work
-        InterestCategory.STUDY -> com.ruleup.designsystem.R.drawable.ic_cat_reading
-        InterestCategory.HOBBY -> com.ruleup.designsystem.R.drawable.ic_cat_hobby
-        InterestCategory.COOKING -> com.ruleup.designsystem.R.drawable.ic_cat_cooking
-        InterestCategory.FINANCE -> com.ruleup.designsystem.R.drawable.ic_cat_finance
-        InterestCategory.ENVIRONMENT -> com.ruleup.designsystem.R.drawable.ic_cat_environment
-        InterestCategory.RELATIONSHIP -> com.ruleup.designsystem.R.drawable.ic_cat_relationship
-        InterestCategory.MUSIC -> com.ruleup.designsystem.R.drawable.ic_cat_music
-        InterestCategory.WRITING -> com.ruleup.designsystem.R.drawable.ic_cat_writing
-        InterestCategory.CODING -> com.ruleup.designsystem.R.drawable.ic_cat_coding
+        Category.EXERCISE -> com.ruleup.designsystem.R.drawable.ic_cat_exercise
+        Category.READING -> com.ruleup.designsystem.R.drawable.ic_cat_reading
+        Category.MEDITATION -> com.ruleup.designsystem.R.drawable.ic_cat_meditation
+        Category.HEALTH -> com.ruleup.designsystem.R.drawable.ic_cat_health
+        Category.WAKE_UP -> com.ruleup.designsystem.R.drawable.ic_cat_wakeup
+        Category.WORK -> com.ruleup.designsystem.R.drawable.ic_cat_work
+        Category.STUDY -> com.ruleup.designsystem.R.drawable.ic_cat_reading
+        Category.HOBBY -> com.ruleup.designsystem.R.drawable.ic_cat_hobby
+        Category.COOKING -> com.ruleup.designsystem.R.drawable.ic_cat_cooking
+        Category.FINANCE -> com.ruleup.designsystem.R.drawable.ic_cat_finance
+        Category.ENVIRONMENT -> com.ruleup.designsystem.R.drawable.ic_cat_environment
+        Category.RELATIONSHIP -> com.ruleup.designsystem.R.drawable.ic_cat_relationship
+        Category.MUSIC -> com.ruleup.designsystem.R.drawable.ic_cat_music
+        Category.WRITING -> com.ruleup.designsystem.R.drawable.ic_cat_writing
+        Category.CODING -> com.ruleup.designsystem.R.drawable.ic_cat_coding
     }
 
 /** 03 · 관심 분야 (3/5). */
@@ -62,7 +62,7 @@ private fun InterestCategory.icon(): Int =
 fun InterestContent(
     onIntent: (ProfileIntent) -> Unit,
     modifier: Modifier = Modifier,
-    selected: List<InterestCategory> = listOf(InterestCategory.EXERCISE),
+    selected: List<Category> = listOf(Category.EXERCISE),
 ) {
     val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
@@ -85,7 +85,7 @@ fun InterestContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            InterestCategory.entries.forEach { interest ->
+            Category.entries.forEach { interest ->
                 InterestChip(
                     interest = interest,
                     selected = interest in selected,
@@ -135,9 +135,9 @@ private fun SelectionCounter(count: Int) {
 
 @Composable
 private fun InterestChip(
-    interest: InterestCategory,
+    interest: Category,
     selected: Boolean,
-    onClick: (InterestCategory) -> Unit,
+    onClick: (Category) -> Unit,
 ) {
     Row(
         modifier =

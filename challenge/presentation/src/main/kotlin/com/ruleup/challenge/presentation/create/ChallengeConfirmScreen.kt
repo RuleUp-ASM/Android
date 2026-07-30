@@ -58,6 +58,7 @@ import com.ruleup.challenge.presentation.create.component.SmallBadge
 import com.ruleup.challenge.presentation.create.component.rememberChallengeImagePicker
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
+import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpPalette
@@ -391,7 +392,7 @@ private fun CategorySection(state: CreateChallengeState) {
                         ),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(state.category?.emoji ?: "❓", fontSize = 22.sp)
+                Text(state.category?.let(::categoryEmoji) ?: "❓", fontSize = 22.sp)
             }
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(

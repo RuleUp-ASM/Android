@@ -5,7 +5,7 @@ import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RepeatDay
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.VerificationOption
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.ui.mvi.UiState
 
 /**
@@ -23,7 +23,7 @@ data class CreateChallengeState(
     val matched: Boolean,
     val templateId: Int?,
     val coverImageUri: String?,
-    val category: InterestCategory?,
+    val category: Category?,
     val participationType: ParticipationType,
     // 그룹 전용 최대 참여 인원 (SOLO 는 1 로 전송)
     val maxParticipants: Int,

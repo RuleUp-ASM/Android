@@ -38,6 +38,7 @@ import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
+import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -406,7 +407,7 @@ private fun DayItemRow(item: CalendarDayItem) {
             DayItemStatus.NOT_REQUIRED -> "인증 불필요" to RuleUpTheme.colors.textMuted
         }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = item.category?.emoji ?: "🎯", fontSize = 16.sp)
+        Text(text = item.category?.let(::categoryEmoji) ?: "🎯", fontSize = 16.sp)
         Spacer(Modifier.width(10.dp))
         Column {
             Text(

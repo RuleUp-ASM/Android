@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.onboarding.domain.entity.Agreement
 import com.ruleup.ui.mvi.MviIntent
 
@@ -18,7 +18,7 @@ sealed interface ProfileIntent : MviIntent {
     ) : ProfileIntent
 
     data class SetProfileInterest(
-        val interestCategory: InterestCategory,
+        val interestCategory: Category,
     ) : ProfileIntent
 
     data class SetAgreements(

@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /** 챌린지 생성자 정보 (명세 3.3 owner). 익명 챌린지면 닉네임 마스킹. */
 data class ChallengeOwner(
@@ -35,7 +35,7 @@ data class ChallengeDetail(
     val title: String,
     val description: String?,
     val imageUrl: String?,
-    val category: InterestCategory?,
+    val category: Category?,
     val participationType: ParticipationType,
     val status: ChallengeStatus,
     // 최대 참여 인원 (SOLO 는 1)

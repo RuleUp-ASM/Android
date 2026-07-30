@@ -1,6 +1,6 @@
 package com.ruleup.profile.data.dto
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayDetail
@@ -87,7 +87,7 @@ internal fun CalendarDayDetailResponse.toDomain(): CalendarDayDetail =
                 CalendarDayItem(
                     challengeId = id,
                     title = item.title.orEmpty(),
-                    category = item.category?.let(InterestCategory::fromValue),
+                    category = item.category?.let(Category::fromValue),
                     status = DayItemStatus.fromValue(item.status),
                     verifiedVia = item.verifiedVia,
                     verifiedAt = item.verifiedAt,

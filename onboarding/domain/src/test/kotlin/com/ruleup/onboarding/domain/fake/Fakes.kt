@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.fake
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
@@ -85,7 +85,7 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun signup(
         signupToken: String,
         nickname: String,
-        interestCategories: List<InterestCategory>,
+        interestCategories: List<Category>,
         profileImageUrl: String?,
         agreements: Agreement,
     ): AuthSession {
@@ -131,7 +131,7 @@ class FakeProfileRepository : ProfileRepository {
 
     override suspend fun updateProfile(
         nickname: String?,
-        interestCategories: List<InterestCategory>?,
+        interestCategories: List<Category>?,
         profileImageUrl: String?,
     ) = throw NotImplementedError()
 

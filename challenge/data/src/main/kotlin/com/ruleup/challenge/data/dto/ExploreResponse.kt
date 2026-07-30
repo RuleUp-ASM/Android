@@ -6,7 +6,7 @@ import com.ruleup.challenge.domain.entity.ExploreResult
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.TrendingChallenge
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -76,7 +76,7 @@ internal fun ChallengeCategoryCountResponse.toDomain(): ChallengeCategoryCount {
         name = displayName,
         activeChallengeCount = activeChallengeCount ?: 0,
         // 서버는 표시명만 주므로 앱 카테고리(아이콘·필터)는 라벨로 매칭한다. 실패 시 null(기본 아이콘).
-        category = InterestCategory.entries.find { it.label == displayName },
+        category = Category.entries.find { it.label == displayName },
     )
 }
 
@@ -151,7 +151,7 @@ internal fun ExploreChallengeResponse.toDomain(): ExploreChallenge =
     ExploreChallenge(
         challengeId = challengeId.requireField("challengeId"),
         title = title.requireField("title"),
-        category = InterestCategory.fromValue(category.orEmpty()),
+        category = Category.fromValue(category.orEmpty()),
         participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
         verificationMethod = SelectedMethod.fromValue(verificationType) ?: SelectedMethod.MANUAL,
         participantCount = participantCount ?: 0,

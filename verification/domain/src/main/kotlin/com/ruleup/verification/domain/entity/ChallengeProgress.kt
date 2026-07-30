@@ -1,6 +1,6 @@
 package com.ruleup.verification.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 내 챌린지 진행률 일괄 조회 결과 (명세 3.2). 백그라운드 sync 가 이미 갱신한 값을 한 번에 렌더링한다.
@@ -19,7 +19,7 @@ data class ProgressSnapshot(
 data class ChallengeProgress(
     val challengeId: String,
     val title: String,
-    val category: InterestCategory?,
+    val category: Category?,
     // SOLO / GROUP
     val participationType: String?,
     val status: String,

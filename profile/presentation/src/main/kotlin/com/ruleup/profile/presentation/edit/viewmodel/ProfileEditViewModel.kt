@@ -1,7 +1,7 @@
 package com.ruleup.profile.presentation.edit.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.entity.NicknameCheckReason
 import com.ruleup.profile.domain.usecase.CheckNicknameUseCase
@@ -118,7 +118,7 @@ class ProfileEditViewModel
             }
         }
 
-        private fun toggleCategory(category: InterestCategory) {
+        private fun toggleCategory(category: Category) {
             val current = currentState.selectedCategories
             val next =
                 if (category in current) {

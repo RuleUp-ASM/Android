@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.repository
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.onboarding.domain.entity.Agreement
 import com.ruleup.onboarding.domain.entity.AuthSession
@@ -17,7 +17,7 @@ interface AuthRepository {
     suspend fun signup(
         signupToken: String,
         nickname: String,
-        interestCategories: List<InterestCategory>,
+        interestCategories: List<Category>,
         profileImageUrl: String?,
         agreements: Agreement,
     ): AuthSession

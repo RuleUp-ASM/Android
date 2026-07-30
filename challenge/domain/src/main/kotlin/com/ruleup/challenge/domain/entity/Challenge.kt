@@ -1,6 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 
 /** 참여 방식 (명세 3.x participationType). */
 enum class ParticipationType(
@@ -120,7 +120,7 @@ data class ChallengeRecommendation(
     val title: String,
     val description: String?,
     // 제목 기반 자동 분류 (인식 불가 시 null)
-    val category: InterestCategory?,
+    val category: Category?,
     // 기본 인증 방식 (options 중 recommended)
     val recommendedMethod: SelectedMethod,
     // 선택 가능한 인증 옵션 (AUTO/MANUAL)
@@ -156,7 +156,7 @@ data class Challenge(
     val description: String?,
     // 미설정 시 null
     val imageUrl: String?,
-    val category: InterestCategory?,
+    val category: Category?,
     val participationType: ParticipationType,
     // 최대 참여 인원 (SOLO 는 1)
     val maxParticipants: Int,
@@ -189,7 +189,7 @@ data class ChallengeForm(
     val description: String?,
     // 대표 이미지 (선택)
     val imageUrl: String?,
-    val category: InterestCategory,
+    val category: Category,
     val participationType: ParticipationType,
     // 최대 참여 인원 (GROUP 필수, SOLO 는 1)
     val maxParticipants: Int,
@@ -227,7 +227,7 @@ data class ChallengeUpdate(
     val description: String? = null,
     // 명시적 null = 이미지 제거, 생략(미전달) = 미변경. 변경 시 서버가 재모더레이션.
     val imageUrl: String? = null,
-    val category: InterestCategory? = null,
+    val category: Category? = null,
     val repeatDays: List<RepeatDay>? = null,
     val durationDays: Int? = null,
     val startDate: String? = null,

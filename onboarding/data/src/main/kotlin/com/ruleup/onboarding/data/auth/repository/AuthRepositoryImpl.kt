@@ -3,7 +3,7 @@ package com.ruleup.onboarding.data.auth.repository
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
-import com.ruleup.domain.entity.user.InterestCategory
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
@@ -49,7 +49,7 @@ class AuthRepositoryImpl
         override suspend fun signup(
             signupToken: String,
             nickname: String,
-            interestCategories: List<InterestCategory>,
+            interestCategories: List<Category>,
             profileImageUrl: String?,
             agreements: Agreement,
         ): AuthSession =
