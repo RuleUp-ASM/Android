@@ -8,7 +8,9 @@ import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.entity.user.User
 import com.ruleup.domain.token.RefreshedSession
+import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.requireField
+import com.ruleup.onboarding.domain.entity.AuthFailure
 import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.OAuthProfile
 import com.ruleup.onboarding.domain.entity.OAuthResult
@@ -197,6 +199,38 @@ internal fun TokenRefreshResponse.toRefreshedSession(): RefreshedSession =
                 expiresInSeconds = expiresIn.requireField("expiresIn"),
             ),
         userId = userId?.takeIf { it.isNotBlank() },
+    )
+
+/**
+ * 실패 응답의 `error.code` 를 [AuthFailure] 로 옮긴다.
+ *
+ * 모르는 코드는 [AuthFailure.UNKNOWN] 이다 — 서버가 코드를 추가해도 앱이 터지지 않고 일반 안내로
+ * 떨어진다.
+ */
+internal fun ApiException.toAuthFailure(): AuthFailure = AUTH_FAILURE_CODES[code] ?: AuthFailure.UNKNOWN
+
+private val AUTH_FAILURE_CODES: Map<String, AuthFailure> =
+    mapOf(
+        "LOGIN_FAILED" to AuthFailure.LOGIN_FAILED,
+        "INVALID_REDIRECT_URI" to AuthFailure.INVALID_REDIRECT_URI,
+        "INVALID_DEVICE_INFO" to AuthFailure.INVALID_DEVICE_INFO,
+        "LOGIN_PROVIDER_UNAVAILABLE" to AuthFailure.PROVIDER_UNAVAILABLE,
+        "ACCOUNT_BANNED" to AuthFailure.ACCOUNT_BANNED,
+        "INSTALLATION_ALREADY_REGISTERED" to AuthFailure.INSTALLATION_ALREADY_REGISTERED,
+        "INVALID_SIGNUP_TOKEN" to AuthFailure.INVALID_SIGNUP_TOKEN,
+        "NICKNAME_FORMAT_INVALID" to AuthFailure.NICKNAME_FORMAT_INVALID,
+        "NICKNAME_DUPLICATED" to AuthFailure.NICKNAME_DUPLICATED,
+        "NICKNAME_RECENTLY_RELEASED" to AuthFailure.NICKNAME_RECENTLY_RELEASED,
+        "BIRTHDATE_INVALID" to AuthFailure.BIRTHDATE_INVALID,
+        "BIRTHDATE_UNDERAGE" to AuthFailure.BIRTHDATE_UNDERAGE,
+        "GENDER_REQUIRED" to AuthFailure.GENDER_REQUIRED,
+        "INTEREST_LIMIT_EXCEEDED" to AuthFailure.INTEREST_LIMIT_EXCEEDED,
+        "REQUIRED_AGREEMENT_MISSING" to AuthFailure.REQUIRED_AGREEMENT_MISSING,
+        "IMAGE_TOO_LARGE" to AuthFailure.IMAGE_TOO_LARGE,
+        "IMAGE_INVALID_TYPE" to AuthFailure.IMAGE_INVALID_TYPE,
+        "IMAGE_CORRUPTED" to AuthFailure.IMAGE_CORRUPTED,
+        "SESSION_EXPIRED" to AuthFailure.SESSION_EXPIRED,
+        "ACCOUNT_LOCKED" to AuthFailure.ACCOUNT_LOCKED,
     )
 
 private const val DEFAULT_TOKEN_TYPE = "Bearer"
