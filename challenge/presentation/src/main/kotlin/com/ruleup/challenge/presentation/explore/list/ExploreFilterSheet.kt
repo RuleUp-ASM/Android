@@ -31,7 +31,6 @@ import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
@@ -197,7 +196,7 @@ private fun FilterToggleButton(
                 .clip(RoundedCornerShape(12.dp))
                 .let { base ->
                     if (selected) {
-                        base.background(RuleUpGradients.Button)
+                        base.background(RuleUpTheme.colors.brand)
                     } else {
                         base
                             .background(RuleUpTheme.colors.surface)
@@ -270,7 +269,7 @@ private fun ApplyButton(
                 .fillMaxWidth()
                 .height(52.dp)
                 .clip(RuleUpTheme.shapes.large)
-                .background(RuleUpGradients.Button)
+                .background(RuleUpTheme.colors.brand)
                 .singleClickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

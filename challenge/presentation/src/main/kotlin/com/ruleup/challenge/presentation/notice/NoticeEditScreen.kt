@@ -44,7 +44,7 @@ import com.ruleup.challenge.domain.entity.NoticePolicy
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditViewModel
-import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -190,7 +190,7 @@ fun NoticeEditScreen(
                     .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            PrimaryGradientButton(
+            RuleUpPrimaryButton(
                 text =
                     when {
                         state.isSaving -> "저장 중…"

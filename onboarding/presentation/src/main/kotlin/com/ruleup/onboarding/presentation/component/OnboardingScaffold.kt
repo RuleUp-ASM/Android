@@ -26,7 +26,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -88,12 +88,11 @@ fun OnboardingScaffold(
             content()
         }
         BottomBar {
-            PrimaryGradientButton(
+            RuleUpPrimaryButton(
                 text = buttonText,
                 modifier = Modifier.alpha(if (nextEnabled) 1f else DISABLED_ALPHA),
-                height = 56,
                 onClick = {
-                    if (!nextEnabled) return@PrimaryGradientButton
+                    if (!nextEnabled) return@RuleUpPrimaryButton
                     observability.log(Channel.BUSINESS) { OnboardingEvents.stepComplete(step, skipped) }
                     onNext()
                 },

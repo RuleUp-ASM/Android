@@ -852,7 +852,7 @@ private fun RepeatDayChip(
                 .clip(RoundedCornerShape(19.dp))
                 .then(
                     if (selected) {
-                        Modifier.background(RuleUpGradients.Button)
+                        Modifier.background(RuleUpTheme.colors.brand)
                     } else {
                         Modifier
                             .background(RuleUpTheme.colors.surface)
@@ -1319,7 +1319,7 @@ private fun ConfirmBottomBar(
                     .weight(2f)
                     .height(56.dp)
                     .clip(RuleUpTheme.shapes.card)
-                    .background(RuleUpGradients.Button)
+                    .background(RuleUpTheme.colors.brand)
                     .singleClickable(enabled = !isRecommending && !isCreating) {
                         onIntent(CreateChallengeIntent.Create)
                     },

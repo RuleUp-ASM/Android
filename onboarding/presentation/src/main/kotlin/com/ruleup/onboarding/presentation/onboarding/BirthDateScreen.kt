@@ -16,13 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.OnboardingGenderPage
 import com.ruleup.onboarding.domain.observability.OnboardingStep
@@ -122,7 +122,7 @@ private fun BirthDateSection(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                     ),
-                cursorBrush = RuleUpGradients.Button,
+                cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 decorationBox = { inner ->
                     if (digits.isEmpty()) {
                         Text("1999 / 03 / 15", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp)

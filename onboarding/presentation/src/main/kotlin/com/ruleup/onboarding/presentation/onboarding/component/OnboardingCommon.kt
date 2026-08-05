@@ -27,11 +27,8 @@ import com.ruleup.ui.helper.NoOpNavigationHelper
  * 프로필 설정 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 를 더미로 제공한다.
  */
 @Composable
-internal fun OnboardingFlowPreview(
-    darkTheme: Boolean = false,
-    content: @Composable () -> Unit,
-) {
-    RuleUpTheme(darkTheme = darkTheme) {
+internal fun OnboardingFlowPreview(content: @Composable () -> Unit) {
+    RuleUpTheme {
         CompositionLocalProvider(
             LocalNavigationHelper provides NoOpNavigationHelper,
         ) {
@@ -61,7 +58,7 @@ fun SectionHeader(
         Text(
             subtitle,
             color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.label,
+            style = RuleUpTheme.typography.bodyMedium,
             fontWeight = FontWeight.Normal,
         )
     }

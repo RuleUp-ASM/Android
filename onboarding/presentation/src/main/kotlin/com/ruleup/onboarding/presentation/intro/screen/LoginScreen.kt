@@ -114,12 +114,12 @@ fun LoginContent(
                 Text(
                     "RuleUp에 오신 것을 환영해요",
                     color = RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.headline,
+                    style = RuleUpTheme.typography.title,
                 )
                 Text(
                     "1초 만에 시작할 수 있어요",
                     color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.label,
+                    style = RuleUpTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Normal,
                 )
             }
@@ -238,5 +238,5 @@ private fun LoginScreenPreview() {
 @Preview
 @Composable
 private fun LoginScreenDarkPreview() {
-    RuleUpTheme(darkTheme = true) { LoginContent(onIntent = {}) }
+    RuleUpTheme { LoginContent(onIntent = {}) }
 }

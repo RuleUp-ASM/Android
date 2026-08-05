@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -538,9 +538,8 @@ private fun SelectionSheet(
             }
             // 주소 확인 전(resolving)·앵커 가득 차면 추가 차단.
             val enabled = !isResolving && canAdd
-            PrimaryGradientButton(
+            RuleUpPrimaryButton(
                 text = "이 위치 추가",
-                height = 50,
                 onClick = { if (enabled) onAdd() },
                 modifier =
                     Modifier
@@ -595,7 +594,7 @@ private fun AnchorListSheet(
                 )
             }
         }
-        PrimaryGradientButton(
+        RuleUpPrimaryButton(
             text = if (isSubmitting) "등록 중…" else "등록 완료 (${anchors.size})",
             onClick = { if (!isSubmitting) onSubmit() },
         )

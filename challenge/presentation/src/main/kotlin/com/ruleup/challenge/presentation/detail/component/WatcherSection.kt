@@ -27,7 +27,6 @@ import com.ruleup.challenge.domain.entity.Watcher
 import com.ruleup.challenge.domain.entity.WatcherStatus
 import com.ruleup.designsystem.R
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
@@ -176,7 +175,7 @@ private fun InviteButton(
                 .fillMaxWidth()
                 .height(44.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(RuleUpGradients.Button)
+                .background(RuleUpTheme.colors.brand)
                 .singleClickable(enabled = !isInviting, onClick = onClick),
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,

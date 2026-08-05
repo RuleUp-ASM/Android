@@ -171,7 +171,7 @@ private fun NicknameField(
                 value = nickname,
                 onValueChange = onNickNameChange,
                 singleLine = true,
-                textStyle = RuleUpTheme.typography.bodyLarge.copy(color = RuleUpTheme.colors.textPrimary),
+                textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
@@ -179,7 +179,7 @@ private fun NicknameField(
                         Text(
                             "닉네임을 입력하세요",
                             color = RuleUpTheme.colors.textMuted,
-                            style = RuleUpTheme.typography.bodyLarge,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
                     inner()
@@ -254,7 +254,7 @@ private fun NicknameRules(nickname: String) {
         Text(
             "닉네임 규칙",
             color = RuleUpTheme.colors.brandStrong,
-            style = RuleUpTheme.typography.overline,
+            style = RuleUpTheme.typography.captionBold,
         )
         RuleRow(ok = inRange, "2 ~ 12자 사이")
         RuleRow(ok = validType, "한글, 영문, 숫자 사용 가능")

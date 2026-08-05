@@ -322,7 +322,7 @@ private fun BottomCta(
                     .fillMaxWidth()
                     .height(56.dp)
                     .clip(RuleUpTheme.shapes.card)
-                    .background(RuleUpGradients.Button)
+                    .background(RuleUpTheme.colors.brand)
                     .singleClickable(enabled = !isRecommending) { onIntent(CreateChallengeIntent.Recommend) },
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
