@@ -69,11 +69,10 @@ data class TrendingChallenge(
 
 /** 카테고리 그리드 항목(명세: GET /challenge-categories items[]). */
 data class ChallengeCategoryCount(
-    val categoryId: Long,
     // 서버가 내려주는 표시명(예: "운동")
     val name: String,
     val activeChallengeCount: Int,
-    // [name] 라벨로 매칭한 앱 카테고리(아이콘·목록 필터 연결용). 매칭 실패 시 null
+    // code 로 매칭한 앱 카테고리(아이콘·목록 필터 연결용). 매칭 실패 시 null
     val category: Category?,
 )
 

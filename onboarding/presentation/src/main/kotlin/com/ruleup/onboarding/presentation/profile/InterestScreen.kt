@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -35,26 +36,6 @@ import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
-
-/** 카테고리별 Figma 라인 아이콘. 학습(STUDY)은 Figma 에서 독서와 동일 아이콘을 공유한다. */
-private fun Category.icon(): Int =
-    when (this) {
-        Category.EXERCISE -> com.ruleup.designsystem.R.drawable.ic_cat_exercise
-        Category.READING -> com.ruleup.designsystem.R.drawable.ic_cat_reading
-        Category.MEDITATION -> com.ruleup.designsystem.R.drawable.ic_cat_meditation
-        Category.HEALTH -> com.ruleup.designsystem.R.drawable.ic_cat_health
-        Category.WAKE_UP -> com.ruleup.designsystem.R.drawable.ic_cat_wakeup
-        Category.WORK -> com.ruleup.designsystem.R.drawable.ic_cat_work
-        Category.STUDY -> com.ruleup.designsystem.R.drawable.ic_cat_reading
-        Category.HOBBY -> com.ruleup.designsystem.R.drawable.ic_cat_hobby
-        Category.COOKING -> com.ruleup.designsystem.R.drawable.ic_cat_cooking
-        Category.FINANCE -> com.ruleup.designsystem.R.drawable.ic_cat_finance
-        Category.ENVIRONMENT -> com.ruleup.designsystem.R.drawable.ic_cat_environment
-        Category.RELATIONSHIP -> com.ruleup.designsystem.R.drawable.ic_cat_relationship
-        Category.MUSIC -> com.ruleup.designsystem.R.drawable.ic_cat_music
-        Category.WRITING -> com.ruleup.designsystem.R.drawable.ic_cat_writing
-        Category.CODING -> com.ruleup.designsystem.R.drawable.ic_cat_coding
-    }
 
 /** 03 · 관심 분야 (3/5). */
 @OptIn(ExperimentalLayoutApi::class)
@@ -158,7 +139,7 @@ private fun InterestChip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Image(
-            painter = painterResource(interest.icon()),
+            painter = painterResource(categoryIconRes(interest)),
             contentDescription = null,
             colorFilter = if (selected) ColorFilter.tint(Color.White) else null,
             modifier = Modifier.size(16.dp),

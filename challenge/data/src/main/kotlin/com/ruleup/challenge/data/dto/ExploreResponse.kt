@@ -60,8 +60,9 @@ internal fun TrendingChallengesResponse.toDomain(): List<TrendingChallenge> =
 // ---------- 탐색: 카테고리별 챌린지 수 (GET /challenge-categories) ----------
 @Serializable
 data class ChallengeCategoryCountResponse(
-    @SerialName("categoryId")
-    val categoryId: Long? = null,
+    // 12종 enum code. 표시명 매칭을 대체한 식별자다.
+    @SerialName("code")
+    val code: String? = null,
     // 표시명(예: "운동")
     @SerialName("name")
     val name: String? = null,
@@ -72,11 +73,12 @@ data class ChallengeCategoryCountResponse(
 internal fun ChallengeCategoryCountResponse.toDomain(): ChallengeCategoryCount {
     val displayName = name.requireField("name")
     return ChallengeCategoryCount(
-        categoryId = categoryId.requireField("categoryId"),
         name = displayName,
         activeChallengeCount = activeChallengeCount ?: 0,
-        // 서버는 표시명만 주므로 앱 카테고리(아이콘·필터)는 라벨로 매칭한다. 실패 시 null(기본 아이콘).
-        category = Category.entries.find { it.label == displayName },
+        // code 로 매칭한다. 아직 code 를 안 내려주는 배포본을 위해 표시명 폴백을 남긴다(전환 후 제거).
+        category =
+            code?.let(Category::fromValue)
+                ?: Category.entries.find { it.label == displayName },
     )
 }
 
