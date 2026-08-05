@@ -36,9 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ExploreChallenge
@@ -151,8 +149,7 @@ private fun ListHeader(onBack: () -> Unit) {
         Text(
             text = "챌린지 둘러보기",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -164,14 +161,13 @@ private fun TotalCountLabel(totalCount: Int) {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "전체", color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp)
+        Text(text = "전체", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
         Text(
             text = "%,d".format(totalCount),
             color = RuleUpTheme.colors.brand,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.bodyBold,
         )
-        Text(text = "개", color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp)
+        Text(text = "개", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
     }
 }
 
@@ -206,8 +202,7 @@ private fun FilterSortRow(
             Text(
                 text = "필터",
                 color = RuleUpTheme.colors.brandStrong,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             if (filterCount > 0) {
                 Box(
@@ -221,8 +216,7 @@ private fun FilterSortRow(
                     Text(
                         text = filterCount.toString(),
                         color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.tinyBold,
                     )
                 }
             }
@@ -243,10 +237,9 @@ private fun FilterSortRow(
             Text(
                 text = sortLabel,
                 color = RuleUpTheme.colors.textSlate,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.bodyMedium,
             )
-            Text(text = "⌄", color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp)
+            Text(text = "⌄", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
         }
     }
 }
@@ -279,12 +272,11 @@ private fun ChallengeList(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(text = state.errorMessage, color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp)
+                    Text(text = state.errorMessage, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
                     Text(
                         text = "다시 시도",
                         color = RuleUpTheme.colors.brand,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.bodyBold,
                         modifier =
                             Modifier.singleClickable {
                                 onIntent(ExploreListIntent.ApplyFilter(state.filter))
@@ -298,7 +290,7 @@ private fun ChallengeList(
                 Text(
                     text = "조건에 맞는 챌린지가 없어요",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 13.sp,
+                    style = RuleUpTheme.typography.body,
                 )
             }
 
@@ -390,8 +382,7 @@ private fun ExploreChallengeCard(
                 Text(
                     text = item.title,
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.cardTitle,
                     modifier = Modifier.weight(1f),
                 )
                 DdayBadge(endDate = item.endDate)
@@ -405,6 +396,7 @@ private fun ExploreChallengeCard(
                 if (item.verificationMethod == SelectedMethod.AUTO) {
                     TagChip(
                         text = "자동인증",
+                        // 자동인증 표식의 파랑은 Figma 팔레트 15색에 없다. 화면 디자인에서 온 값이라 남긴다.
                         background = Color(0xFF3B82F6).copy(alpha = 0.12f),
                         textColor = Color(0xFF2563EB),
                     )
@@ -440,7 +432,7 @@ private fun CardStats(
             Text(
                 text = "아직 참여자가 적어 값을 낼 수 없어요",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }
@@ -458,8 +450,7 @@ private fun StatsLine(
         Text(
             text = "참여자 %,d".format(item.participantCount),
             color = RuleUpTheme.colors.brand,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.smallBold,
         )
         val successRate = item.successRate
         val completionRate = item.completionRate
@@ -468,9 +459,8 @@ private fun StatsLine(
                 Dot()
                 Text(
                     text = "성공률 ${(successRate * 100).toInt()}%",
-                    color = Color(0xFFF59E0B),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    color = RuleUpTheme.colors.warning,
+                    style = RuleUpTheme.typography.smallBold,
                 )
             }
 
@@ -478,9 +468,8 @@ private fun StatsLine(
                 Dot()
                 Text(
                     text = "완주 ${(completionRate * 100).toInt()}%",
-                    color = Color(0xFFF59E0B),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    color = RuleUpTheme.colors.warning,
+                    style = RuleUpTheme.typography.smallBold,
                 )
             }
         }
@@ -488,14 +477,14 @@ private fun StatsLine(
         Text(
             text = "템플릿 ${compactCount(item.templateUsageCount)}",
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 12.sp,
+            style = RuleUpTheme.typography.small,
         )
     }
 }
 
 @Composable
 private fun Dot() {
-    Text(text = "·", color = RuleUpTheme.colors.textMuted, fontSize = 12.sp)
+    Text(text = "·", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.small)
 }
 
 @Composable
@@ -505,7 +494,7 @@ private fun DdayBadge(endDate: String?) {
         when {
             dday == null -> "상시" to RuleUpTheme.colors.textSlate
             dday <= DDAY_URGENT_THRESHOLD -> "D-$dday" to RuleUpTheme.colors.danger
-            else -> "D-$dday" to Color(0xFFF59E0B)
+            else -> "D-$dday" to RuleUpTheme.colors.warning
         }
     Box(
         modifier =
@@ -518,8 +507,7 @@ private fun DdayBadge(endDate: String?) {
         Text(
             text = text,
             color = color,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.tinyBold,
         )
     }
 }
@@ -540,8 +528,7 @@ private fun TagChip(
         Text(
             text = text,
             color = textColor,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.tinyBold,
         )
     }
 }

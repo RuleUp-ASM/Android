@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -154,7 +153,7 @@ fun ChallengeTargetsScreen(
             Text(
                 text = "선택한 앱의 사용 시간을 측정해 자동으로 인증해요",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 13.sp,
+                style = RuleUpTheme.typography.body,
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
 
@@ -191,7 +190,7 @@ fun ChallengeTargetsScreen(
                         Text(
                             text = "조건에 맞는 앱이 없어요",
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 14.sp,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
 
@@ -322,16 +321,14 @@ private fun TargetsTopBar(
         Text(
             text = "대상 앱 선택",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
             modifier = Modifier.weight(1f),
         )
         if (selectedCount > 0) {
             Text(
                 text = "${selectedCount}개 선택",
                 color = RuleUpTheme.colors.brandStrong,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.smallBold,
                 modifier =
                     Modifier
                         .padding(end = 8.dp)
@@ -372,18 +369,14 @@ private fun SearchField(
                 Text(
                     text = "앱 이름 검색",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 14.5.sp,
+                    style = RuleUpTheme.typography.labelMedium,
                 )
             }
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                textStyle =
-                    TextStyle(
-                        color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 14.5.sp,
-                    ),
+                textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -443,8 +436,7 @@ private fun CategoryChip(
     Text(
         text = label,
         color = if (isSelected) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textSlate,
-        fontSize = 13.sp,
-        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+        style = if (isSelected) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
         modifier =
             Modifier
                 .clip(shape)
@@ -485,8 +477,7 @@ private fun SelectedAppChips(
                 Text(
                     text = app.label,
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 12.5.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.smallMedium,
                     maxLines = 1,
                 )
                 Icon(
@@ -529,8 +520,7 @@ private fun AppRow(
             Text(
                 text = app.label,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -538,7 +528,7 @@ private fun AppRow(
                 Text(
                     text = usage,
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                     maxLines = 1,
                 )
             }
@@ -599,6 +589,7 @@ private fun AppIcon(
             Text(
                 text = app.label.take(1),
                 color = RuleUpTheme.colors.brandStrong,
+                // 타일 크기에 비례하는 이니셜이라 스케일 값이 아니다.
                 fontSize = (size * 0.4).sp,
                 fontWeight = FontWeight.Bold,
             )

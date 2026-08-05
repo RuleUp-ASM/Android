@@ -22,9 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -104,14 +102,12 @@ internal fun ExploreSortSheet(
                 Text(
                     text = "정렬 기준",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.section,
                 )
                 Text(
                     text = "✕",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.section,
                     modifier = Modifier.singleClickable(onClick = onDismiss),
                 )
             }
@@ -173,13 +169,12 @@ private fun SortRow(
             Text(
                 text = option.title,
                 color = if (selected) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                style = if (selected) RuleUpTheme.typography.cardTitle else RuleUpTheme.typography.cardTitle,
             )
             Text(
                 text = option.description,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         RadioMark(selected = selected)
@@ -197,7 +192,7 @@ private fun RadioMark(selected: Boolean) {
                     .background(RuleUpTheme.colors.brand),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text = "✓", color = Color.White, style = RuleUpTheme.typography.smallBold)
         }
     } else {
         Box(
