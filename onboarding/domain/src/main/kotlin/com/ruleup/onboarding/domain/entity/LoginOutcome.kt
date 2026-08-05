@@ -9,7 +9,15 @@ import com.ruleup.domain.entity.user.LockInfo
  * 403 이라 응답 본문이 오지 않으므로 예외로 전파돼 화면이 분기한다.
  */
 sealed interface LoginOutcome {
-    data object GoHome : LoginOutcome
+    /**
+     * 홈으로.
+     *
+     * @property restored 탈퇴 1년 내 재가입으로 계정이 복원됐는지. 기능 스펙의 복원 건수 지표가
+     *   이 값을 센다.
+     */
+    data class GoHome(
+        val restored: Boolean,
+    ) : LoginOutcome
 
     /**
      * 열람 전용 홈. 계정이 잠겼지만 로그인 자체는 허용된다.
