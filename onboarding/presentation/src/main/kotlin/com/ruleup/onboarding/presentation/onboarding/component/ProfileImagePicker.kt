@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile.component
+package com.ruleup.onboarding.presentation.onboarding.component
 
 import android.content.Context
 import android.net.Uri

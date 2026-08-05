@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile
+package com.ruleup.onboarding.presentation.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,28 +33,34 @@ import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.NicknameValidation
-import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
-import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
-import com.ruleup.onboarding.presentation.profile.component.SectionHeader
-import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
+import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
+import com.ruleup.onboarding.presentation.component.OnboardingScaffold
+import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
+import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
+import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/** 02 · 닉네임 (2/5). "다음" 은 ViewModel 의 닉네임 검사를 거쳐 통과 시 ViewModel 이 이동시킨다. */
+/** 01 · 닉네임. "다음" 은 ViewModel 의 닉네임 검사를 거쳐 통과 시 ViewModel 이 이동시킨다. */
 @Composable
 fun NicknameContent(
-    onIntent: (ProfileIntent) -> Unit,
+    onIntent: (OnboardingIntent) -> Unit,
     modifier: Modifier = Modifier,
-    nickname: String = "준혁이의 도전",
-    maxLength: Int = 12,
+    nickname: String = "",
+    nicknameMessage: String? = null,
+    nicknameAvailable: Boolean? = null,
+    maxLength: Int = NickNameUtil.MAX_LENGTH,
     imageUri: String? = null,
 ) {
     val nav = LocalNavigationHelper.current
-    ProfileSetupScaffold(
+    OnboardingScaffold(
         step = 1,
         buttonText = "다음",
         modifier = modifier,
-        onNext = { onIntent(ProfileIntent.CheckNickname) },
-        onBack = { nav.navigateToBack() },
+        // 서버 확인까지 통과해야 넘어간다. 통과 전에 전진시키면 마지막 제출에서 1단계로 되돌아온다.
+        nextEnabled = nicknameAvailable == true,
+        onNext = { nav.navigateTo(OnboardingInterestPage) },
+        // 1단계 뒤로가기는 곧 이탈이다. signupToken 은 5분이라 되돌아올 수 없다.
+        onBack = { onIntent(OnboardingIntent.BackFromFirstStep) },
     ) {
         SectionHeader(
             title = "어떻게 불러드릴까요?",
@@ -65,8 +71,15 @@ fun NicknameContent(
         NicknameField(
             nickname = nickname,
             maxLength = maxLength,
-            onNickNameChange = { onIntent(ProfileIntent.SetNickName(it)) },
+            onNickNameChange = { onIntent(OnboardingIntent.SetNickName(it)) },
         )
+        if (nicknameMessage != null) {
+            Text(
+                nicknameMessage,
+                color = if (nicknameAvailable == true) RuleUpTheme.colors.brand else RuleUpTheme.colors.danger,
+                fontSize = 13.sp,
+            )
+        }
         NicknameRules(nickname = nickname)
     }
 }
@@ -270,5 +283,5 @@ private fun RuleRow(
 @Preview
 @Composable
 private fun NicknameScreenPreview() {
-    ProfileFlowPreview { NicknameContent(onIntent = {}) }
+    OnboardingFlowPreview { NicknameContent(onIntent = {}) }
 }

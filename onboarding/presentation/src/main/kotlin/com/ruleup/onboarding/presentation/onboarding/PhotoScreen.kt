@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile
+package com.ruleup.onboarding.presentation.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,35 +31,39 @@ import coil3.compose.AsyncImage
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
-import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
-import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
-import com.ruleup.onboarding.presentation.profile.component.SectionHeader
-import com.ruleup.onboarding.presentation.profile.component.rememberProfileImagePicker
-import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
+import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
+import com.ruleup.onboarding.presentation.component.OnboardingScaffold
+import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
+import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
+import com.ruleup.onboarding.presentation.onboarding.component.rememberProfileImagePicker
+import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/** 01 · 프로필 아이콘 (1/5). 갤러리/카메라 런처를 직접 띄우고 결과를 [ProfileIntent.SetProfileIcon] 으로 보낸다. */
+/**
+ * 05 · 프로필 사진. 선택이라 고르지 않고 넘어가도 된다 — 건너뛰면 닉네임 첫 글자 아바타로 시작한다.
+ *
+ * 사진은 가입 요청에 실리지 않는다. 가입을 마치고 발급받은 accessToken 으로 따로 올린다.
+ */
 @Composable
-fun ProfileIconContent(
-    onIntent: (ProfileIntent) -> Unit,
+fun PhotoContent(
+    onIntent: (OnboardingIntent) -> Unit,
     modifier: Modifier = Modifier,
     imageUri: String? = null,
 ) {
     val nav = LocalNavigationHelper.current
     val imagePicker =
-        rememberProfileImagePicker { uri -> onIntent(ProfileIntent.SetProfileIcon(uri)) }
+        rememberProfileImagePicker { uri -> onIntent(OnboardingIntent.SetProfileIcon(uri)) }
 
-    ProfileSetupScaffold(
-        step = 0,
+    OnboardingScaffold(
+        step = 5,
         buttonText = "다음",
         modifier = modifier,
-        onNext = { nav.navigateTo(ProfileNicknamePage) },
+        onNext = { nav.navigateTo(OnboardingTermsPage) },
         onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
-            title = "프로필 아이콘을 골라주세요",
-            subtitle = "사진을 올리거나 기본 아이콘을 사용할 수 있어요",
+            title = "프로필 사진을 등록할까요?",
+            subtitle = "그룹 멤버들에게 보여요",
         )
 
         // 메인 아바타 + 카메라 뱃지
@@ -184,6 +188,6 @@ private fun SourceCard(
 
 @Preview
 @Composable
-private fun ProfileIconScreenPreview() {
-    ProfileFlowPreview { ProfileIconContent(onIntent = {}) }
+private fun PhotoScreenPreview() {
+    OnboardingFlowPreview { PhotoContent(onIntent = {}) }
 }

@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile.component
+package com.ruleup.onboarding.presentation.onboarding.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +27,7 @@ import com.ruleup.ui.helper.NoOpNavigationHelper
  * 프로필 설정 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 를 더미로 제공한다.
  */
 @Composable
-internal fun ProfileFlowPreview(
+internal fun OnboardingFlowPreview(
     darkTheme: Boolean = false,
     content: @Composable () -> Unit,
 ) {
