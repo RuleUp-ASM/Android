@@ -10,6 +10,7 @@ import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
+import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
@@ -49,6 +50,7 @@ class OnboardingViewModel
         private val checkNicknameUseCase: CheckNicknameUseCase,
         private val validateBirthDateUseCase: ValidateBirthDateUseCase,
         private val sessionBootstrap: SessionBootstrap,
+        private val signupSession: SignupSession,
         private val signupTimer: SignupTimer,
         private val observability: Observability,
         private val navigationHelper: NavigationHelper,
@@ -72,7 +74,6 @@ class OnboardingViewModel
 
         override fun onIntent(intent: OnboardingIntent) {
             when (intent) {
-                is OnboardingIntent.SetSignupToken -> dispatch(OnboardingReducerEvent.SetSignupToken(intent.token))
                 is OnboardingIntent.SetNickName -> enterNickname(intent.name)
                 is OnboardingIntent.SetProfileIcon -> dispatch(OnboardingReducerEvent.ProfileImageSelected(intent.img))
                 is OnboardingIntent.SetProfileInterest -> dispatch(OnboardingReducerEvent.InterestsSelected(intent.interestCategory))
@@ -90,8 +91,6 @@ class OnboardingViewModel
             event: OnboardingReducerEvent,
         ): OnboardingState =
             when (event) {
-                is OnboardingReducerEvent.SetSignupToken -> state.copy(signupToken = event.token)
-
                 // 입력이 바뀌면 직전 확인 결과는 무효다. 남겨 두면 이전 닉네임의 "사용 가능"으로 통과한다.
                 is OnboardingReducerEvent.NicknameEntered ->
                     state.copy(nickname = event.nickname, nicknameAvailable = null, nicknameMessage = null)
@@ -223,7 +222,7 @@ class OnboardingViewModel
             val state = currentState
             if (state.isSubmitting) return
 
-            val token = state.signupToken
+            val token = signupSession.token()
             if (token == null) {
                 restartFromLogin("가입 정보가 만료됐어요. 로그인부터 다시 해주세요")
                 return
@@ -257,6 +256,8 @@ class OnboardingViewModel
                         ),
                     )
                 }.onSuccess { user ->
+                    // 가입이 끝났다. 남겨 두면 다음 시도가 만료된 토큰을 물고 시작한다.
+                    signupSession.clear()
                     observability.log(Channel.BUSINESS) {
                         OnboardingEvents.signupComplete(
                             interestCount = state.interests.size,
@@ -288,6 +289,7 @@ class OnboardingViewModel
         }
 
         private fun restartFromLogin(message: String) {
+            signupSession.clear()
             emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Dialog(message, restartFromLogin = true)))
             navigationHelper.navigateTo(LoginPage)
         }

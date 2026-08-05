@@ -33,11 +33,13 @@ class NavRouteUriParserTest {
     }
 
     @Test
-    fun `signupToken_은_외부에서_주입될_수_없다`() {
-        val route = parse("https://android.ruleup.co.kr/app/profile/icon?signupToken=forged")
+    fun `가입_토큰은_인자로_전달되지_않으므로_주입할_표면이_없다`() {
+        // signupToken 은 SignupSession 이 메모리로만 들고 있어 네비게이션 인자가 아니다.
+        // 링크에 실어 보내도 화면은 이 값을 읽지 않는다 — 필터가 아니라 구조로 막힌다.
+        val route = parse("https://android.ruleup.co.kr/app/onboarding/nickname?signupToken=forged")
 
-        assertEquals("profile/icon", route?.path)
-        assertEquals(emptyMap<String, String>(), route?.args)
+        assertEquals("onboarding/nickname", route?.path)
+        assertEquals(mapOf("signupToken" to "forged"), route?.args)
     }
 
     @Test

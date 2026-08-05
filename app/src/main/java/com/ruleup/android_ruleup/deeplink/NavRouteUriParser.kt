@@ -21,13 +21,11 @@ private const val TAG = "[DeepLink]"
  * 도메인 검증(App Links)은 이걸 대신하지 못한다. 검증이 보장하는 건 *"이 도메인이 이 앱을
  * 인정한다"* 뿐이라, **아무 웹페이지나 검증된 도메인의 URL 을 링크로 걸 수 있다.**
  *
- * - `signupToken`: 가입 플로우의 신원. 앱 내부 로그인 흐름에서만 정당하게 생긴다.
  * - `canManage`: 관리 UI 노출 스위치. 서버 판정으로 옮기기 전까지의 임시 방어다(#161 후속).
  * - `defaultRadiusM`·`dwellMinutes`·`targetPackages`: 지오펜스 설정값. 지도 화면이 정해 넘긴다.
  */
 private val UNTRUSTED_ARGS =
     setOf(
-        "signupToken",
         "canManage",
         "defaultRadiusM",
         "dwellMinutes",
