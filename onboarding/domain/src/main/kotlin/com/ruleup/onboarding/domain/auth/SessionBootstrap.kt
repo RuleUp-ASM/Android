@@ -2,7 +2,8 @@ package com.ruleup.onboarding.domain.auth
 
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.auth.usecase.BackfillUserIdUseCase
-import com.ruleup.onboarding.domain.intro.usecase.CheckAppVersionUseCase
+import com.ruleup.onboarding.domain.entity.TermsVersions
+import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -44,12 +45,22 @@ sealed interface SessionBootstrapState {
 class SessionBootstrap
     @Inject
     constructor(
-        private val checkAppVersionUseCase: CheckAppVersionUseCase,
+        private val loadIntroUseCase: LoadIntroUseCase,
         private val autoLoginUseCase: AutoLoginUseCase,
         private val backfillUserIdUseCase: BackfillUserIdUseCase,
     ) {
         private val _state = MutableStateFlow<SessionBootstrapState>(SessionBootstrapState.Running)
         val state: StateFlow<SessionBootstrapState> = _state.asStateFlow()
+
+        /**
+         * 현행 약관 버전. 가입 화면이 동의 기록에 실어 보낸다.
+         *
+         * 인트로 응답에 딸려 오는데 정작 쓰는 건 온보딩 마지막 단계라, 여기서 받아 두고 그때 꺼낸다.
+         * 인트로 호출이 실패하면(페일오픈) null 이고, 가입 화면은 폴백 버전으로 진행한다.
+         */
+        @Volatile
+        var termsVersions: TermsVersions? = null
+            private set
 
         private val started = AtomicBoolean(false)
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -58,7 +69,9 @@ class SessionBootstrap
             if (!started.compareAndSet(false, true)) return
             scope.launch {
                 // 버전 게이트 먼저. 페일오픈(null)이면 정상 흐름을 그대로 진행한다.
-                val gate = checkAppVersionUseCase()
+                val intro = loadIntroUseCase()
+                termsVersions = intro?.termsVersions
+                val gate = intro?.versionGate
                 if (gate?.forceUpdate == true) {
                     _state.value = SessionBootstrapState.ForceUpdate(gate.devTestMsg)
                     return@launch
