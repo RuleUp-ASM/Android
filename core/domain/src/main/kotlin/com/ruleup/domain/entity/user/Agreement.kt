@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.domain.entity.user
 
 /**
  * 약관 6종. 개인정보보호법상 "누가 어떤 버전에 동의했는지"를 추적해야 해서 **항목별로 버전을 함께**
@@ -59,5 +59,21 @@ data class AgreementConsents(
                     AgreementConsent(agreed = type in checked, version = versions.of(type))
                 },
             )
+    }
+}
+
+/**
+ * 현행 약관 버전 6종. 가입 시 동의 기록에 그대로 실어 보낸다.
+ *
+ * 클라가 버전을 하드코딩하지 않게 하려고 서버가 내려준다. 값이 비어 오면 [FALLBACK_VERSION] 으로
+ * 채운다 — 버전을 몰라 가입을 막는 것보다, 기록을 남기고 서버가 재검증하는 편이 낫다.
+ */
+data class TermsVersions(
+    val versions: Map<AgreementType, String>,
+) {
+    fun of(type: AgreementType): String = versions[type] ?: FALLBACK_VERSION
+
+    companion object {
+        const val FALLBACK_VERSION = "1.0"
     }
 }

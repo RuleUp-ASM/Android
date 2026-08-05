@@ -199,6 +199,11 @@ class ProfileEditViewModel
                                     when (check.reason) {
                                         NicknameCheckReason.DUPLICATED -> "이미 사용 중인 닉네임이에요"
                                         NicknameCheckReason.FORMAT -> "닉네임은 2~12자 한글·영문·숫자만 쓸 수 있어요"
+                                        // 최근에 해제된 닉네임은 1주간 잠긴다. 언제부터 쓸 수 있는지 함께 알려 준다.
+                                        NicknameCheckReason.RECENTLY_RELEASED ->
+                                            check.availableAt
+                                                ?.let { "최근에 해제된 닉네임이에요. $it 부터 쓸 수 있어요" }
+                                                ?: "최근에 해제된 닉네임이라 잠시 쓸 수 없어요"
                                         null -> "사용할 수 없는 닉네임이에요"
                                     }
                                 emitEffect(ProfileEditEffect.ShowMessage(message))

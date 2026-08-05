@@ -1,9 +1,9 @@
 package com.ruleup.profile.data.dto
 
+import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.network.dto.requireField
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.MyHomeCounts
-import com.ruleup.profile.domain.entity.NicknameStatus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

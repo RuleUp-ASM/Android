@@ -3,7 +3,9 @@ package com.ruleup.onboarding.domain.auth.usecase
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
-import com.ruleup.profile.domain.entity.Profile
+import com.ruleup.onboarding.domain.fake.testUser
+import com.ruleup.profile.domain.entity.MyProfile
+import com.ruleup.profile.domain.usecase.GetMyProfileUseCase
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import kotlin.test.Test
@@ -17,27 +19,23 @@ class BackfillUserIdUseCaseTest {
     private val useCase =
         BackfillUserIdUseCase(
             tokenRepository = tokenRepository,
-            profileRepository = profileRepository,
+            getMyProfileUseCase = GetMyProfileUseCase(profileRepository),
             observability = testObservability(),
         )
 
     private fun profile(id: String) =
-        Profile(
-            id = id,
-            nickname = "n",
-            email = null,
-            profileImageUrl = null,
-            nicknameChangedAt = null,
-            nicknameChangeableAfter = null,
-            mannerTemperature = 36.5,
-            interestCategories = emptyList(),
-            createdAt = "2026-01-01T00:00:00Z",
+        MyProfile(
+            user = testUser(id = id),
+            profileImageStatus = null,
+            birthDate = null,
+            gender = null,
+            agreements = emptyMap(),
         )
 
     @Test
     fun `userId 가 비어 있으면 프로필 조회로 채운다`() =
         runBlocking {
-            profileRepository.profile = profile("u-1")
+            profileRepository.myProfile = profile("u-1")
 
             useCase()
 
@@ -48,7 +46,7 @@ class BackfillUserIdUseCaseTest {
     fun `userId 가 이미 있으면 조회하지 않는다`() =
         runBlocking {
             tokenRepository.savedUserId = "u-existing"
-            profileRepository.profile = profile("u-other")
+            profileRepository.myProfile = profile("u-other")
 
             useCase()
 

@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.domain.entity.user
 
 /**
  * 성별. **API 필수 필드**다.

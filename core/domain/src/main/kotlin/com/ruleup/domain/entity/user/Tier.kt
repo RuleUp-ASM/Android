@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.domain.entity.user
 
 /**
  * 계정 티어. 가입 시 [BRONZE] 10점으로 시작한다.

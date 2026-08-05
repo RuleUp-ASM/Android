@@ -13,6 +13,7 @@ import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
 import com.ruleup.onboarding.domain.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
+import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
@@ -130,8 +131,8 @@ class FakeProfileRepository : ProfileRepository {
     /** 값이 있으면 업로드가 이 예외를 던진다. 실패를 흡수하는지 확인할 때 쓴다. */
     var uploadError: Throwable? = null
 
-    /** [getProfile] 이 돌려줄 값. null 이면 [profileError] 를 던진다. */
-    var profile: Profile? = null
+    /** [getMyProfile] 이 돌려줄 값. null 이면 [profileError] 를 던진다. */
+    var myProfile: MyProfile? = null
     var profileError: Throwable = NotImplementedError()
     var getProfileCallCount = 0
 
@@ -145,10 +146,12 @@ class FakeProfileRepository : ProfileRepository {
 
     override suspend fun getCategories() = throw NotImplementedError()
 
-    override suspend fun getProfile(): Profile {
+    override suspend fun getMyProfile(): MyProfile {
         getProfileCallCount++
-        return profile ?: throw profileError
+        return myProfile ?: throw profileError
     }
+
+    override suspend fun getProfile(): Profile = throw NotImplementedError()
 
     override suspend fun updateProfile(
         nickname: String?,

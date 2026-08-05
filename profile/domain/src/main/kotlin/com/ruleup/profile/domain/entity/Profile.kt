@@ -23,18 +23,29 @@ data class CategoryCatalog(
     val categories: List<Category>,
 )
 
-/** 닉네임 검사 결과 (명세 4.6). */
+/**
+ * 닉네임 검사 결과(POST /nicknames/check).
+ *
+ * 형식 위반도 에러가 아니라 200 + `valid=false, reason=FORMAT` 으로 온다 — 실시간 확인 UX 에서
+ * 에러 봉투 분기를 없애려는 서버 결정이다.
+ *
+ * @property availableAt [NicknameCheckReason.RECENTLY_RELEASED] 일 때만 채워지는 잠금 해제 시각(ISO).
+ */
 data class NicknameCheck(
     // 형식 통과 여부(확인 전)
     val valid: Boolean,
     // 사용 가능 여부(확인 후)
     val available: Boolean,
     val reason: NicknameCheckReason?,
+    val availableAt: String? = null,
 )
 
 enum class NicknameCheckReason {
     FORMAT,
     DUPLICATED,
+
+    /** 누가 최근에 버린 닉네임. 사칭 방지로 1주간 아무도 못 쓴다. */
+    RECENTLY_RELEASED,
     ;
 
     companion object {
