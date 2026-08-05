@@ -10,12 +10,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,10 +29,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashIntent
@@ -44,13 +45,14 @@ fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
     LaunchedEffect(Unit) {
         viewModel.onIntent(SplashIntent.Check)
     }
+    // 스플래시는 항상 그린다. 강제 업데이트는 그 위에 얹는 다이얼로그다 — 화면을 갈아치우면
+    // 인트로 응답이 도착하는 순간 로고가 사라졌다 나타난다.
+    SplashContent()
     if (state.forceUpdate) {
-        ForceUpdateContent(
+        ForceUpdateDialog(
             message = updateMessage(state.minAppVersion),
             onUpdate = { context.openPlayStore() },
         )
-    } else {
-        SplashContent()
     }
 }
 
@@ -125,57 +127,47 @@ private fun SplashContent(modifier: Modifier = Modifier) {
     }
 }
 
-/** 강제 업데이트 게이트 화면. 진행을 막고 스토어로만 유도한다(닫기 없음). */
+/**
+ * 강제 업데이트 다이얼로그.
+ *
+ * **닫을 수 없다** — 뒤로가기·바깥 탭으로 닫히면 게이트를 우회해 구버전으로 앱을 계속 쓰게 된다.
+ * 그래서 `onDismissRequest` 를 비우고 [DialogProperties] 로 두 경로를 모두 막는다. 버튼도 스토어
+ * 이동 하나뿐이다.
+ */
 @Composable
-private fun ForceUpdateContent(
+private fun ForceUpdateDialog(
     message: String,
     onUpdate: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(RuleUpGradients.Splash),
-        contentAlignment = Alignment.Center,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+    AlertDialog(
+        onDismissRequest = {},
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+        title = {
             Text(
                 text = "업데이트가 필요해요",
-                color = Color.White,
-                fontSize = 22.sp,
+                color = RuleUpTheme.colors.textPrimary,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
             )
+        },
+        text = {
             Text(
                 text = message,
-                color = Color.White.copy(alpha = 0.9f),
+                color = RuleUpTheme.colors.textSecondary,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
             )
-            Box(
-                modifier =
-                    Modifier
-                        .padding(top = 8.dp)
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
-                        .singleClickable(onClick = onUpdate),
-                contentAlignment = Alignment.Center,
-            ) {
+        },
+        confirmButton = {
+            TextButton(onClick = onUpdate) {
                 Text(
                     text = "업데이트하기",
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
-        }
-    }
+        },
+        containerColor = RuleUpTheme.colors.surface,
+    )
 }
 
 /**
@@ -209,4 +201,13 @@ private fun Context.openPlayStore() {
 @Composable
 private fun SplashScreenPreview() {
     RuleUpTheme { SplashContent() }
+}
+
+@Preview
+@Composable
+private fun ForceUpdatePreview() {
+    RuleUpTheme {
+        SplashContent()
+        ForceUpdateDialog(message = updateMessage("1.2.0"), onUpdate = {})
+    }
 }
