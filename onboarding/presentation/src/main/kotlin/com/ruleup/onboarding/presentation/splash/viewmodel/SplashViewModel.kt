@@ -1,18 +1,12 @@
 package com.ruleup.onboarding.presentation.splash.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
-import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
 import com.ruleup.onboarding.domain.auth.SessionBootstrapState
-import com.ruleup.onboarding.domain.navigation.HomePage
-import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
-import com.ruleup.ui.navigation.PendingDeepLink
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,22 +17,15 @@ private const val TAG = "[Splash]"
  * 스플래시 ViewModel. 판정 자체는 하지 않고 [SessionBootstrap] 의 결과를 기다린다 —
  * 버전 게이트와 자동 로그인은 액티비티 `onCreate` 에서 이미 착수되어 컴포지션과 겹쳐 돌고 있다.
  *
- * 인증이 끝나면 목적지를 정한다:
- * - 보류된 딥링크가 있으면 그 화면의 시작 스택으로 **교체**한다. 전진 이동으로 처리하면 스플래시가
- *   스택에 남아, 뒤로 갔을 때 판정이 다시 돌아간다.
- * - 없으면 홈(루트).
- * - 인증 실패면 로그인(루트). 보류 딥링크는 버려진다 — 단 로그인이 필요 없는 화면이면 그대로 연다.
- *
- * 이동은 [NavigationHelper] 사이드 이펙트로 처리하므로 별도 MVI 이펙트는 두지 않는다([NoEffect]).
+ * **어디로 갈지는 여기서 정하지 않는다.** 진입 목적지는 [SessionBootstrap] 이 계산하고 네비게이션
+ * 호스트가 옮긴다 — 판정에 필요한 건 세션·보류 딥링크·경로 공개 여부뿐이라 이 화면과 무관하다.
+ * 스플래시가 갖는 건 버전 게이트 UI 상태 하나다.
  */
 @HiltViewModel
 class SplashViewModel
     @Inject
     constructor(
         private val sessionBootstrap: SessionBootstrap,
-        private val pendingDeepLink: PendingDeepLink,
-        private val routeAccessPolicy: RouteAccessPolicy,
-        private val navigationHelper: NavigationHelper,
         private val observability: Observability,
     ) : MviViewModel<SplashIntent, SplashState, SplashReducerEvent, NoEffect>(SplashState.initial) {
         override fun onIntent(intent: SplashIntent) {
@@ -79,37 +66,12 @@ class SplashViewModel
                         }
 
                         is SessionBootstrapState.Resolved -> {
+                            // 어디로 갈지는 SessionBootstrap 이 정하고 AppNavHost 가 옮긴다.
+                            // 스플래시는 판정이 끝났다는 것만 안다.
                             dispatch(SplashReducerEvent.CheckFinished)
-                            route(state.authenticated)
                             return@collect
                         }
                     }
-                }
-            }
-        }
-
-        private fun route(authenticated: Boolean) {
-            val pending = pendingDeepLink.consume()
-            when {
-                // 로그인이 필요 없는 화면이면 인증과 무관하게 목적지로 보낸다.
-                !authenticated && pending != null && !routeAccessPolicy.requiresLogin(pending.path) ->
-                    navigationHelper.replaceStackWith(pending)
-
-                !authenticated -> {
-                    if (pending != null) {
-                        // 초대 링크로 유입된 신규 사용자가 여기 걸린다. 가입을 마쳐도 목적지로 돌아가지
-                        // 않으므로, 잃어버린 진입을 집계해 이어가기 필요성을 판단할 근거를 남긴다.
-                        observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.path}" }
-                    }
-                    navigationHelper.navigateTo(LoginPage)
-                }
-
-                pending != null -> {
-                    navigationHelper.replaceStackWith(pending)
-                }
-
-                else -> {
-                    navigationHelper.navigateTo(HomePage)
                 }
             }
         }

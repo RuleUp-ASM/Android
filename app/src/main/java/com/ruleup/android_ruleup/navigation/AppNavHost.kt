@@ -3,6 +3,7 @@ package com.ruleup.android_ruleup.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.LocalScreenTracker
@@ -10,6 +11,7 @@ import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.NavSignal
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
+import com.ruleup.onboarding.domain.auth.AppEntry
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
 
@@ -21,11 +23,27 @@ import com.ruleup.ui.helper.LocalObservability
 fun AppNavHost(
     backStack: NavBackStack<NavKey>,
     modifier: Modifier = Modifier,
+    appEntryViewModel: AppEntryViewModel = hiltViewModel(),
 ) {
     val navigationHelper = LocalNavigationHelper.current
     val screenTracker = LocalScreenTracker.current
 
     val observability = LocalObservability.current
+
+    // 앱 진입 목적지. 계산은 SessionBootstrap 이 하고 백스택 구성은 여기서 한다.
+    LaunchedEffect(Unit) {
+        appEntryViewModel.entry.collect { entry ->
+            val route =
+                when (entry) {
+                    // 딥링크는 부모 화면까지 깔아야 뒤로가기가 자연스럽다. 전진 이동으로 처리하면
+                    // 스플래시가 스택에 남아 뒤로 갔을 때 판정이 다시 돈다.
+                    is AppEntry.DeepLink -> entry.route.also { replaceStack(it, backStack, observability) }
+                    // 홈·로그인은 루트라 handleNavRoute 가 스택을 비우고 단독으로 세운다.
+                    is AppEntry.Start -> entry.route.also { handleNavRoute(it, backStack, observability) }
+                }
+            screenTracker.onScreenEntered(route.path)
+        }
+    }
 
     LaunchedEffect(Unit) {
         navigationHelper.navigationFlow.collect { signal ->

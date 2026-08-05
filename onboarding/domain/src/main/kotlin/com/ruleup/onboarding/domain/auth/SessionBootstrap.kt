@@ -1,9 +1,16 @@
 package com.ruleup.onboarding.domain.auth
 
 import com.ruleup.domain.entity.user.TermsVersions
+import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.domain.navigation.PendingDeepLink
+import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
+import com.ruleup.onboarding.domain.navigation.HomePage
+import com.ruleup.onboarding.domain.navigation.LoginPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,6 +21,8 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private const val TAG = "[AppEntry]"
 
 /** [SessionBootstrap] 의 진행 상태. */
 sealed interface SessionBootstrapState {
@@ -31,10 +40,32 @@ sealed interface SessionBootstrapState {
         val devTestMsg: String?,
     ) : SessionBootstrapState
 
-    /** 판정 완료. [authenticated] 가 false 면 로그인이 필요하다. */
+    /** 판정 완료. [entry] 로 이동하면 된다. */
     data class Resolved(
-        val authenticated: Boolean,
+        val entry: AppEntry,
     ) : SessionBootstrapState
+}
+
+/**
+ * 앱이 처음 열릴 곳.
+ *
+ * 계산은 도메인이 하고 실행(백스택 구성)은 호스트가 한다 — 판정에 필요한 건 세션 상태·보류
+ * 딥링크·경로 공개 여부뿐이라 화면과 무관하고, 반대로 백스택을 세우는 건 네비게이션 호스트의 일이다.
+ */
+sealed interface AppEntry {
+    /**
+     * 딥링크 목적지.
+     *
+     * 부모 화면까지 함께 깔아야 뒤로가기가 자연스럽다(공지 상세 → 방 홈 → 홈).
+     */
+    data class DeepLink(
+        val route: NavRoute,
+    ) : AppEntry
+
+    /** 시작 화면(홈 또는 로그인). 루트라 백스택을 비우고 단독으로 선다. */
+    data class Start(
+        val route: NavRoute,
+    ) : AppEntry
 }
 
 /**
@@ -52,6 +83,9 @@ class SessionBootstrap
     @Inject
     constructor(
         private val loadIntroUseCase: LoadIntroUseCase,
+        private val pendingDeepLink: PendingDeepLink,
+        private val routeAccessPolicy: RouteAccessPolicy,
+        private val observability: Observability,
         private val tokenRepository: TokenRepository,
         private val autoLoginUseCase: AutoLoginUseCase,
     ) {
@@ -81,6 +115,30 @@ class SessionBootstrap
         private val started = AtomicBoolean(false)
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+        /**
+         * 인증 판정과 보류 딥링크를 합쳐 진입 목적지를 정한다.
+         *
+         * 미인증이면 딥링크를 버리는 게 기본이다 — 세션 없이 목적지를 띄우면 API 가 401 을 받고
+         * 사용자는 목적지가 아니라 로그인 화면을 보게 된다. 다만 로그인이 필요 없는 화면이면 그대로 연다.
+         *
+         * [PendingDeepLink.consume] 은 1회성이라 여기서 한 번만 꺼낸다.
+         */
+        private fun entry(authenticated: Boolean): AppEntry {
+            val pending = pendingDeepLink.consume()
+            return when {
+                pending == null -> AppEntry.Start(if (authenticated) HomePage.toRoute() else LoginPage.toRoute())
+
+                authenticated || !routeAccessPolicy.requiresLogin(pending.path) -> AppEntry.DeepLink(pending)
+
+                else -> {
+                    // 초대 링크로 유입된 신규 사용자가 여기 걸린다. 가입을 마쳐도 목적지로 돌아가지
+                    // 않으므로, 잃어버린 진입을 집계해 이어가기 필요성을 판단할 근거를 남긴다.
+                    observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.path}" }
+                    AppEntry.Start(LoginPage.toRoute())
+                }
+            }
+        }
+
         fun start() {
             if (!started.compareAndSet(false, true)) return
             scope.launch {
@@ -94,7 +152,7 @@ class SessionBootstrap
                 }
                 hadStoredSession = tokenRepository.getRefreshToken() != null
                 val authenticated = autoLoginUseCase()
-                _state.value = SessionBootstrapState.Resolved(authenticated)
+                _state.value = SessionBootstrapState.Resolved(entry(authenticated))
             }
         }
     }
