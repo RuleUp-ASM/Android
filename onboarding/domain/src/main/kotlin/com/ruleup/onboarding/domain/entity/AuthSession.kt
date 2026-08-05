@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.entity
 
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.entity.user.User
 
 /**
  * 로그인·가입이 돌려주는 세션. 토큰은 core 계약([com.ruleup.domain.token.TokenRepository])이

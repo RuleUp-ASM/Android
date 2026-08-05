@@ -1,12 +1,12 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
+import com.ruleup.domain.entity.user.User
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
-import com.ruleup.onboarding.domain.entity.User
 import com.ruleup.profile.domain.repository.ProfileRepository
 import javax.inject.Inject
 

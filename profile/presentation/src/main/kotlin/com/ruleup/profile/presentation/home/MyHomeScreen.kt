@@ -46,8 +46,8 @@ import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.profile.domain.entity.MyHome
-import com.ruleup.profile.domain.entity.NicknameStatus
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeEffect
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent

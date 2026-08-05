@@ -1,5 +1,7 @@
 package com.ruleup.onboarding.domain.entity
 
+import com.ruleup.domain.entity.user.LockInfo
+
 /**
  * 소셜 로그인 후 화면이 가야 할 곳. [OAuthResult] 를 계정 상태까지 반영해 정규화한 값이다.
  *

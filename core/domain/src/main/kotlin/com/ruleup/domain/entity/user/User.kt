@@ -1,14 +1,12 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.domain.entity.user
 
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.profile.domain.entity.NicknameStatus
 
 /**
- * 로그인·가입 응답이 싣고 오는 사용자. 화면에 보이는 계정 정보는
- * [com.ruleup.profile.domain.entity.Profile] 쪽이다.
+ * 로그인·가입 응답과 `GET /api/v1/users/me` 가 **같은 스키마로** 싣고 오는 사용자.
  *
- * `GET /api/v1/users/me` 도 같은 스키마를 쓴다. 그 조회 경로가 붙는 시점에 두 feature 가 이 타입을
- * 공유하게 되므로, 그때 core 로 올린다(#186).
+ * onboarding(로그인·가입)과 profile(내 프로필 조회) 두 feature 가 쓰므로 core 에 둔다. 한쪽이
+ * 다른 쪽 domain 을 참조하면 Gradle 순환이고, 각자 정의하면 서버 스키마가 하나인 이상 곧 어긋난다.
  *
  * @property nickname 본인 화면용. 심사 중이면 입력값, 거부되면 직전 승인본(없으면 임시 닉네임)이다.
  * @property score 티어 내 점수 0~99.

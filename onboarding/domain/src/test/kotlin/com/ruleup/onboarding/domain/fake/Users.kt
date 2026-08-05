@@ -1,10 +1,10 @@
 package com.ruleup.onboarding.domain.fake
 
-import com.ruleup.onboarding.domain.entity.AccountStatus
-import com.ruleup.onboarding.domain.entity.LockInfo
-import com.ruleup.onboarding.domain.entity.Tier
-import com.ruleup.onboarding.domain.entity.User
-import com.ruleup.profile.domain.entity.NicknameStatus
+import com.ruleup.domain.entity.user.AccountStatus
+import com.ruleup.domain.entity.user.LockInfo
+import com.ruleup.domain.entity.user.NicknameStatus
+import com.ruleup.domain.entity.user.Tier
+import com.ruleup.domain.entity.user.User
 
 /** 테스트용 사용자. 관심 있는 필드만 덮어써서 쓴다. */
 fun testUser(

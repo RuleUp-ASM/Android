@@ -1,8 +1,8 @@
 package com.ruleup.onboarding.domain.auth
 
+import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.auth.usecase.BackfillUserIdUseCase
-import com.ruleup.onboarding.domain.entity.TermsVersions
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

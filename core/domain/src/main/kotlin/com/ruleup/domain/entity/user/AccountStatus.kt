@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.domain.entity.user
 
 /**
  * 계정 상태.

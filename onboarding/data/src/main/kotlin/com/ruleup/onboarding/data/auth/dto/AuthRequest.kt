@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.data.auth.dto
 
-import com.ruleup.onboarding.domain.entity.AgreementConsents
+import com.ruleup.domain.entity.user.AgreementConsents
 import com.ruleup.onboarding.domain.entity.PermissionSnapshot
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
