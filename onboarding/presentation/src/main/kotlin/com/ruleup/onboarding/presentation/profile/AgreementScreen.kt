@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.onboarding.domain.entity.Agreement
+import com.ruleup.onboarding.domain.entity.AgreementType
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
@@ -34,12 +34,17 @@ import com.ruleup.onboarding.presentation.profile.component.SectionHeader
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/** 06 · 약관 동의 (6/6). 필수 약관(이용약관·개인정보)에 모두 동의해야 가입을 진행할 수 있다. */
+/**
+ * 06 · 약관 동의 (6/6). 필수 3종(이용약관·개인정보·위치기반)에 모두 동의해야 가입할 수 있다.
+ *
+ * [checked] 에 없는 항목도 전송 시 `agreed=false` 로 기록된다 — 선택 약관의 "동의 안 함"까지
+ * 남겨야 약관이 개정됐을 때 재동의 판정을 할 수 있다.
+ */
 @Composable
 fun AgreementsContent(
     onIntent: (ProfileIntent) -> Unit,
     modifier: Modifier = Modifier,
-    agreements: Agreement = Agreement(terms = false, privacy = false, marketing = false),
+    checked: Set<AgreementType> = emptySet(),
 ) {
     val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
@@ -55,7 +60,7 @@ fun AgreementsContent(
             titleSize = 22,
         )
 
-        val allChecked = agreements.terms && agreements.privacy && agreements.marketing
+        val allChecked = checked.containsAll(AgreementType.entries)
 
         // 전체 동의
         Column(
@@ -65,15 +70,7 @@ fun AgreementsContent(
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpTheme.colors.brandSoft)
                     .singleClickable(globalGuard = false) {
-                        onIntent(
-                            ProfileIntent.SetAgreements(
-                                Agreement(
-                                    terms = !allChecked,
-                                    privacy = !allChecked,
-                                    marketing = !allChecked,
-                                ),
-                            ),
-                        )
+                        onIntent(ProfileIntent.ToggleAllAgreements)
                     }.padding(horizontal = 14.dp),
         ) {
             AgreementRow(
@@ -83,25 +80,7 @@ fun AgreementsContent(
             )
         }
 
-        // 개별 약관
-        val items =
-            listOf(
-                AgreementItem(
-                    "서비스 이용약관",
-                    required = true,
-                    checked = agreements.terms,
-                ) { agreements.copy(terms = it) },
-                AgreementItem(
-                    "개인정보 처리방침",
-                    required = true,
-                    checked = agreements.privacy,
-                ) { agreements.copy(privacy = it) },
-                AgreementItem(
-                    "마케팅 정보 수신",
-                    required = false,
-                    checked = agreements.marketing,
-                ) { agreements.copy(marketing = it) },
-            )
+        // 개별 약관 6종
         Column(
             modifier =
                 Modifier
@@ -110,24 +89,24 @@ fun AgreementsContent(
                     .background(RuleUpTheme.colors.surface)
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         ) {
-            items.forEachIndexed { index, item ->
+            AgreementType.entries.forEachIndexed { index, type ->
                 AgreementRow(
-                    checked = item.checked,
-                    label = item.label,
-                    required = item.required,
+                    checked = type in checked,
+                    label = type.label(),
+                    required = type.required,
                     modifier =
                         Modifier.singleClickable(globalGuard = false) {
-                            onIntent(ProfileIntent.SetAgreements(item.toggle(!item.checked)))
+                            onIntent(ProfileIntent.ToggleAgreement(type))
                         },
                 )
-                if (index != items.lastIndex) RowDivider()
+                if (index != AgreementType.entries.lastIndex) RowDivider()
             }
         }
 
         InfoBox(
             background = RuleUpTheme.colors.brandSoft,
             emoji = "📄",
-            text = "필수 항목에 동의해야 가입을 완료할 수 있어요. 마케팅 수신은 선택이에요",
+            text = "필수 항목에 동의해야 가입을 완료할 수 있어요. 선택 항목은 알림 설정 기본값이 돼요",
             textColor = RuleUpTheme.colors.brandStrong,
         )
     }
@@ -187,13 +166,16 @@ private fun CheckCircle(checked: Boolean) {
     }
 }
 
-/** 개별 약관 한 줄을 그리기 위한 데이터. [toggle] 은 체크 상태를 바꾼 새 [Agreements] 를 만든다. */
-private class AgreementItem(
-    val label: String,
-    val required: Boolean,
-    val checked: Boolean,
-    val toggle: (Boolean) -> Agreement,
-)
+/** 약관 표시명. 서버 키(`AgreementType.key`)와 달리 화면 문구라 여기서 정한다. */
+private fun AgreementType.label(): String =
+    when (this) {
+        AgreementType.TERMS_OF_SERVICE -> "서비스 이용약관"
+        AgreementType.PRIVACY_POLICY -> "개인정보 수집·이용"
+        AgreementType.LOCATION_SERVICE -> "위치·센서 정보 활용 (자동 인증)"
+        AgreementType.MARKETING -> "마케팅 정보 수신"
+        AgreementType.EVENT -> "이벤트 정보 수신"
+        AgreementType.NIGHT_PUSH -> "야간 푸시 알림 (21~08시)"
+    }
 
 @Preview
 @Composable

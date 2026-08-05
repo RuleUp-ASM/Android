@@ -34,7 +34,7 @@ fun ProfileIconScreen(
 
     ProfileIconContent(
         modifier = modifier,
-        imageUri = state.profileImageUrl,
+        imageUri = state.profileImageUri,
         onIntent = viewModel::onIntent,
     )
 }
@@ -57,7 +57,7 @@ fun ProfileNicknameScreen(modifier: Modifier = Modifier) {
     NicknameContent(
         modifier = modifier,
         nickname = state.nickname,
-        imageUri = state.profileImageUrl,
+        imageUri = state.profileImageUri,
         onIntent = viewModel::onIntent,
     )
 }
@@ -81,7 +81,7 @@ fun ProfilePermissionScreen(modifier: Modifier = Modifier) {
     PermissionContent(modifier = modifier)
 }
 
-/** 05 · 나이·성별. 선택 입력이며 값은 ViewModel 상태에 누적된다(가입 완료 후 전송). */
+/** 05 · 생일·성별. 생일은 필수라 유효할 때만 다음으로 넘어간다. */
 @Composable
 fun ProfileBasicInfoScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedProfileViewModel()
@@ -89,9 +89,10 @@ fun ProfileBasicInfoScreen(modifier: Modifier = Modifier) {
 
     BasicInfoContent(
         modifier = modifier,
-        age = state.age,
+        birthDateInput = state.birthDateInput,
+        birthDateError = state.birthDateError,
+        birthDateValid = state.birthDate != null,
         gender = state.gender,
-        genderDeclined = state.genderDeclined,
         onIntent = viewModel::onIntent,
     )
 }
@@ -113,7 +114,7 @@ fun ProfileAgreementScreen(modifier: Modifier = Modifier) {
 
     AgreementsContent(
         modifier = modifier,
-        agreements = state.agreements,
+        checked = state.agreements,
         onIntent = viewModel::onIntent,
     )
 }

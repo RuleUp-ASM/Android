@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -119,6 +120,8 @@ fun ProfileSetupScaffold(
     buttonText: String,
     modifier: Modifier = Modifier,
     totalSteps: Int = 6,
+    // 입력이 유효하지 않은 단계에서 전진을 막는다. 누를 수는 있게 두되 흐릿하게 보여 준다.
+    nextEnabled: Boolean = true,
     onBack: () -> Unit = {},
     onSkip: () -> Unit = {},
     onNext: () -> Unit = {},
@@ -144,7 +147,14 @@ fun ProfileSetupScaffold(
             content()
         }
         BottomBar {
-            PrimaryGradientButton(text = buttonText, height = 56, onClick = onNext)
+            PrimaryGradientButton(
+                text = buttonText,
+                modifier = Modifier.alpha(if (nextEnabled) 1f else DISABLED_ALPHA),
+                height = 56,
+                onClick = { if (nextEnabled) onNext() },
+            )
         }
     }
 }
+
+private const val DISABLED_ALPHA = 0.4f

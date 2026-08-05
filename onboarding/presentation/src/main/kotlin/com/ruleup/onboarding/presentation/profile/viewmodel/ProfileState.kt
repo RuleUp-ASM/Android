@@ -1,26 +1,35 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.onboarding.domain.entity.Agreement
+import com.ruleup.onboarding.domain.entity.AgreementType
+import com.ruleup.onboarding.domain.entity.Gender
 import com.ruleup.ui.mvi.UiState
+import java.time.LocalDate
 
 /**
- * 프로필 설정 플로우의 누적 상태. 페이지별 화면(아이콘→닉네임→관심사→권한→약관)이
- * 같은 ViewModel 을 공유하므로, step 없이 입력값만 누적한다.
+ * 프로필 설정 플로우의 누적 상태. 페이지별 화면이 같은 ViewModel 을 공유하므로 step 없이 입력값만
+ * 쌓는다.
+ *
+ * @property gender null 은 "아직 안 골랐다"이며 제출 시 [Gender.NON_BINARY] 로 보낸다 — 서버가
+ *   성별을 필수 필드로 받기 때문이다. 미전송이 아니라 논바이너리 저장이라는 게 계약의 핵심이다.
+ * @property agreements 체크된 항목만 담는다. 전송 시 6종 전체를 만들어 미체크는 `agreed=false` 로
+ *   기록한다 — 선택 약관도 "동의 안 함"을 남겨야 약관 개정 시 재동의 판정이 된다.
  */
 data class ProfileState(
     val signupToken: String? = null,
     val nickname: String = "",
     val interests: List<Category> = emptyList(),
-    val profileImageUrl: String? = null,
-    val agreements: Agreement = Agreement(terms = false, privacy = false, marketing = false),
-    // 가입 기본정보(선택) — 만 나이, 성별. 미입력/건너뛰기면 null.
-    val age: Int? = null,
-    val gender: OnboardingGender? = null,
-    // "응답하지 않을래요" 명시적 선택. gender 는 null 이지만 미선택과 구분해 UI 라디오를 채운다.
-    val genderDeclined: Boolean = false,
+    val profileImageUri: String? = null,
+    val birthDate: LocalDate? = null,
+    val birthDateInput: String = "",
+    val birthDateError: String? = null,
+    val gender: Gender? = null,
+    val agreements: Set<AgreementType> = emptySet(),
     val isSubmitting: Boolean = false,
 ) : UiState {
+    val requiredAgreementsSatisfied: Boolean
+        get() = AgreementType.REQUIRED.all { it in agreements }
+
     companion object {
         val initial = ProfileState()
     }
