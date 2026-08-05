@@ -31,9 +31,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeCategoryCount
@@ -163,8 +161,7 @@ private fun RoutineRecommendationSection(
         Text(
             text = "추천 루틴",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
         routines.forEach { routine ->
             RoutineCard(routine = routine, onClick = { onRoutineClick(routine.templateId) })
@@ -211,21 +208,18 @@ private fun RoutineCard(
             Text(
                 text = routine.title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.cardTitle,
             )
             Text(
                 text = routine.reason,
                 color = RuleUpTheme.colors.brandStrong,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
         Text(
             text = "›",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -239,15 +233,13 @@ private fun SectionHeader(
         Text(
             text = title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
         Spacer(Modifier.size(6.dp))
         Text(
             text = "전체 ›",
             color = RuleUpTheme.colors.brand,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.smallMedium,
             modifier = Modifier.singleClickable(onClick = onSeeAll),
         )
     }
@@ -270,7 +262,7 @@ private fun TrendingCard(
             Text(
                 text = "아직 인기 챌린지가 없어요",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
                 modifier = Modifier.padding(16.dp),
             )
         }
@@ -300,8 +292,7 @@ private fun TrendingRow(
         Text(
             text = item.title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.cardTitle,
             modifier = Modifier.weight(1f),
         )
         Row(
@@ -317,8 +308,7 @@ private fun TrendingRow(
             Text(
                 text = "%,d명".format(item.participantCount),
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
     }
@@ -344,8 +334,7 @@ private fun RankBadge(rank: Int) {
         Text(
             text = rank.toString(),
             color = if (isTop) Color.White else RuleUpTheme.colors.textMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }
@@ -359,7 +348,7 @@ private fun CategoryGrid(
         Text(
             text = "표시할 카테고리가 없어요",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
+            style = RuleUpTheme.typography.small,
         )
         return
     }
@@ -415,13 +404,12 @@ private fun CategoryCard(
             Text(
                 text = item.name,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.cardTitle,
             )
             Text(
                 text = "%,d개 챌린지".format(item.activeChallengeCount),
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }
@@ -456,13 +444,12 @@ private fun ErrorBox(
         Text(
             text = message,
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 13.sp,
+            style = RuleUpTheme.typography.body,
         )
         Text(
             text = "다시 시도",
             color = RuleUpTheme.colors.brand,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.bodyBold,
             modifier = Modifier.singleClickable(onClick = onRetry),
         )
     }

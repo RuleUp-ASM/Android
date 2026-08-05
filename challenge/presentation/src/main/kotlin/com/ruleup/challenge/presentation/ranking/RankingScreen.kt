@@ -31,10 +31,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeRanking
@@ -48,8 +46,10 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import java.util.Locale
 
 // 포디움 순위별 색 (피그마 434:545~557 — #1 Amber, #2 Slate, #3 Orange)
-private val PodiumFirst = RuleUpPalette.Amber500
-private val PodiumSecond = RuleUpPalette.Slate400
+private val PodiumFirst = RuleUpPalette.StatusWarn
+private val PodiumSecond = RuleUpPalette.TextFaint
+
+// 3위 주황은 Figma 팔레트 15색에 없다. 화면 디자인에서 온 값이라 남긴다.
 private val PodiumThird = Color(0xFFEA580C)
 
 /**
@@ -88,7 +88,7 @@ fun RankingScreen(
                     Text(
                         text = state.errorMessage ?: "랭킹을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -125,8 +125,7 @@ private fun RankingTopBar(onBack: () -> Unit) {
         Text(
             text = "그룹 랭킹",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -148,8 +147,7 @@ private fun RankingBody(ranking: ChallengeRanking) {
                 Text(
                     text = "전체 순위",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.smallBold,
                 )
             }
             items(ranking.rankings, key = { it.userId + it.rank }) { entry ->
@@ -167,7 +165,7 @@ private fun RankingBody(ranking: ChallengeRanking) {
                     Text(
                         text = "아직 랭킹이 집계되지 않았어요",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 13.sp,
+                        style = RuleUpTheme.typography.body,
                     )
                 }
             }
@@ -205,12 +203,11 @@ private fun PodiumColumn(
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         if (entry != null) {
-            Text(text = rankMedal(entry.rank), fontSize = 20.sp)
+            Text(text = rankMedal(entry.rank), style = RuleUpTheme.typography.title)
             Text(
                 text = entry.nickname,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -227,15 +224,13 @@ private fun PodiumColumn(
                 Text(
                     text = "${entry.progressRate.rateLabel()}%",
                     color = RuleUpPalette.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.title,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = "#${entry.rank}",
                     color = RuleUpPalette.White,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.captionBold,
                 )
             }
         }
@@ -273,8 +268,7 @@ private fun MyRankCard(myRank: MyRank) {
             Text(
                 text = "${myRank.rank}",
                 color = RuleUpPalette.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.cardTitle,
             )
         }
         Spacer(Modifier.width(12.dp))
@@ -282,14 +276,13 @@ private fun MyRankCard(myRank: MyRank) {
             Text(
                 text = "내 순위 #${myRank.rank}",
                 color = RuleUpPalette.Slate900,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = "완주율 ${myRank.progressRate.rateLabel()}% · $gapLabel",
                 color = RuleUpPalette.Slate500,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }
@@ -309,15 +302,14 @@ private fun RankingRow(entry: RankingEntry) {
     ) {
         Text(
             text = rankMedal(entry.rank),
-            fontSize = 14.sp,
+            style = RuleUpTheme.typography.labelMedium,
             modifier = Modifier.width(34.dp),
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = entry.nickname,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -326,15 +318,14 @@ private fun RankingRow(entry: RankingEntry) {
                 Text(
                     text = "${it}일 성공",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
             }
         }
         Text(
             text = "${entry.progressRate.rateLabel()}%",
             color = RuleUpTheme.colors.brand,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.cardTitle,
         )
     }
 }

@@ -24,9 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.SelectedMethod
@@ -153,20 +151,18 @@ private fun FilterSheetHeader(onReset: () -> Unit) {
         Text(
             text = "필터",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
         Row(
             modifier = Modifier.singleClickable(onClick = onReset),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = "⟲", color = RuleUpTheme.colors.textSecondary, fontSize = 14.sp)
+            Text(text = "⟲", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.labelMedium)
             Text(
                 text = "초기화",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.bodyMedium,
             )
         }
     }
@@ -177,8 +173,7 @@ private fun FilterSectionLabel(text: String) {
     Text(
         text = text,
         color = RuleUpTheme.colors.textPrimary,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
+        style = RuleUpTheme.typography.cardTitle,
     )
 }
 
@@ -208,8 +203,7 @@ private fun FilterToggleButton(
         Text(
             text = text,
             color = if (selected) Color.White else RuleUpTheme.colors.textSlate,
-            fontSize = 14.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            style = if (selected) RuleUpTheme.typography.cardTitle else RuleUpTheme.typography.labelMedium,
         )
     }
 }
@@ -229,8 +223,7 @@ private fun MannerCutSection(
             Text(
                 text = if (joinableOnly) "참여 가능만" else "제한 없음",
                 color = RuleUpTheme.colors.brand,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Spacer(Modifier.height(6.dp))
@@ -238,7 +231,7 @@ private fun MannerCutSection(
         Text(
             text = "내 매너 온도로 들어갈 수 있는 챌린지만 보여요",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -276,8 +269,7 @@ private fun ApplyButton(
         Text(
             text = previewCount?.let { "결과 보기 · %,d개".format(it) } ?: "결과 보기",
             color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.cardTitle,
         )
     }
 }
