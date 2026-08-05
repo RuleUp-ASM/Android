@@ -12,9 +12,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
@@ -64,8 +62,7 @@ fun AuthFailureHost(
                     Text(
                         text = ui.message,
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.section,
                     )
                     if (ui.contactSupport) {
                         TextButton(onClick = onContactSupport) {

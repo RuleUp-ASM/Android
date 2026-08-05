@@ -17,10 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
@@ -60,7 +58,6 @@ fun TermsContent(
         SectionHeader(
             title = "마지막이에요",
             subtitle = "서비스 이용을 위해 동의가 필요해요",
-            titleSize = 22,
         )
 
         val allChecked = checked.containsAll(AgreementType.entries)
@@ -137,8 +134,7 @@ private fun AgreementRow(
         Text(
             label,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = if (emphasize) 15.sp else 14.sp,
-            fontWeight = if (emphasize) FontWeight.Bold else FontWeight.Medium,
+            style = if (emphasize) RuleUpTheme.typography.section else RuleUpTheme.typography.labelMedium,
         )
         if (required != null) {
             RequirementBadge(required = required)
@@ -164,7 +160,7 @@ private fun CheckCircle(checked: Boolean) {
         contentAlignment = Alignment.Center,
     ) {
         if (checked) {
-            Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text("✓", color = Color.White, style = RuleUpTheme.typography.smallBold)
         }
     }
 }

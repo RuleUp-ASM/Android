@@ -21,10 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -89,7 +87,7 @@ private fun SelectionCounter(count: Int) {
                 .fillMaxWidth()
                 .height(40.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF2F0FE))
+                .background(RuleUpTheme.colors.brandSoft)
                 .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -101,17 +99,16 @@ private fun SelectionCounter(count: Int) {
             Image(
                 painter = painterResource(com.ruleup.designsystem.R.drawable.ic_info),
                 contentDescription = null,
-                colorFilter = ColorFilter.tint(Color(0xFF5A47D6)),
+                colorFilter = ColorFilter.tint(RuleUpTheme.colors.brand),
                 modifier = Modifier.size(16.dp),
             )
             Text(
                 "최소 3개 이상 선택해주세요",
-                color = Color(0xFF5A47D6),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
-        Text("$count / 10", color = RuleUpTheme.colors.brand, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Text("$count / 10", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.smallBold)
     }
 }
 
@@ -148,8 +145,7 @@ private fun InterestChip(
         Text(
             interest.label,
             color = if (selected) Color.White else RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            style = if (selected) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
         )
     }
 }
@@ -162,7 +158,7 @@ private fun InfoRow(text: String) {
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFF5F3FF))
+                .background(RuleUpTheme.colors.brandSoft)
                 .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -176,8 +172,7 @@ private fun InfoRow(text: String) {
         Text(
             text,
             color = RuleUpTheme.colors.textSlate,
-            fontSize = 11.sp,
-            lineHeight = 16.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }

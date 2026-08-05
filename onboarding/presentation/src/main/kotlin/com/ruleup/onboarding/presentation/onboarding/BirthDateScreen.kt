@@ -17,12 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.OnboardingGenderPage
 import com.ruleup.onboarding.domain.observability.OnboardingStep
@@ -60,7 +57,6 @@ fun BirthDateContent(
         SectionHeader(
             title = "생일이 언제예요?",
             subtitle = "가입 조건 확인에만 사용해요",
-            titleSize = 22,
         )
 
         BirthDateSection(
@@ -94,8 +90,8 @@ private fun BirthDateSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("생일", color = RuleUpTheme.colors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text("YYYY / MM / DD", color = RuleUpTheme.colors.textSecondary, fontSize = 12.sp)
+            Text("생일", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
+            Text("YYYY / MM / DD", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.small)
         }
         Row(
             modifier =
@@ -117,22 +113,18 @@ private fun BirthDateSection(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 textStyle =
-                    TextStyle(
-                        color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
+                    RuleUpTheme.typography.numberS.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 decorationBox = { inner ->
                     if (digits.isEmpty()) {
-                        Text("1999 / 03 / 15", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp)
+                        Text("1999 / 03 / 15", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.numberS)
                     }
                     inner()
                 },
             )
         }
         if (error != null) {
-            Text(error, color = RuleUpTheme.colors.danger, fontSize = 12.sp)
+            Text(error, color = RuleUpTheme.colors.danger, style = RuleUpTheme.typography.small)
         }
     }
 }

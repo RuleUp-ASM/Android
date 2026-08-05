@@ -23,10 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
@@ -181,10 +179,9 @@ private fun SourceCard(
             title,
             modifier = Modifier.padding(top = RuleUpTheme.spacing.sm),
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.bodyBold,
         )
-        Text(caption, color = RuleUpTheme.colors.textSecondary, fontSize = 10.sp)
+        Text(caption, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.tiny)
     }
 }
 

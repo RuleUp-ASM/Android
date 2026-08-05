@@ -83,6 +83,7 @@ private fun SplashContent(modifier: Modifier = Modifier) {
                 Text(
                     text = "R",
                     color = RuleUpTheme.colors.brand,
+                    // 로고 글자. 타입이 아니라 그림이라 스케일 밖이다.
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -96,6 +97,7 @@ private fun SplashContent(modifier: Modifier = Modifier) {
                 Text(
                     text = "RuleUp",
                     color = Color.White,
+                    // 브랜드 로크업. Figma 타입 스케일(최대 44)에 없는 크기라 리터럴로 둔다.
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = (-0.8).sp,
@@ -103,8 +105,7 @@ private fun SplashContent(modifier: Modifier = Modifier) {
                 Text(
                     text = "함께 약속, 함께 성장",
                     color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.labelMedium,
                 )
             }
 
@@ -146,15 +147,14 @@ private fun ForceUpdateDialog(
             Text(
                 text = "업데이트가 필요해요",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
         },
         text = {
             Text(
                 text = message,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 14.sp,
+                style = RuleUpTheme.typography.labelMedium,
             )
         },
         confirmButton = {
@@ -162,7 +162,7 @@ private fun ForceUpdateDialog(
                 Text(
                     text = "업데이트하기",
                     color = RuleUpTheme.colors.brand,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.cardTitle,
                 )
             }
         },
