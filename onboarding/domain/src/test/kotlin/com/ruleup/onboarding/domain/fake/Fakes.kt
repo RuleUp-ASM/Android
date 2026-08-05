@@ -34,6 +34,7 @@ class FakeTokenRepository(
     var savedUserId: String? = null
     var saveCount = 0
     var cleared = false
+    private var everLoggedIn = refreshToken != null
 
     override suspend fun saveSession(
         token: Token,
@@ -43,6 +44,7 @@ class FakeTokenRepository(
         savedUserId = userId
         refreshToken = token.refreshToken
         loggedIn.value = true
+        everLoggedIn = true
         saveCount++
     }
 
@@ -54,6 +56,7 @@ class FakeTokenRepository(
         userId?.let { savedUserId = it }
         refreshToken = token.refreshToken
         loggedIn.value = true
+        everLoggedIn = true
         saveCount++
     }
 
@@ -64,6 +67,9 @@ class FakeTokenRepository(
     override suspend fun getRefreshToken(): String? = refreshToken
 
     override suspend fun getUserId(): String? = savedUserId
+
+    // 실제 구현처럼 로그인 이력은 clear() 로 지워지지 않는다.
+    override suspend fun hasEverLoggedIn(): Boolean = everLoggedIn
 
     override suspend fun clear() {
         cleared = true

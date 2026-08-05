@@ -55,6 +55,26 @@ class TokenRepositoryImplTest {
         }
 
     @Test
+    fun `로그아웃해도 로그인 이력은 남는다`() =
+        runTest {
+            // 로그인 화면이 첫 설치와 재로그인을 가르는 근거다. 지워지면 재로그인이 첫 설치로
+            // 집계돼 완주율의 분모가 뒤섞인다.
+            val repo = repo(FakeDataStore())
+            repo.saveSession(token(), userId = "u-1")
+
+            repo.clear()
+
+            assertNull(repo.getRefreshToken())
+            assertTrue(repo.hasEverLoggedIn())
+        }
+
+    @Test
+    fun `한 번도 로그인한 적이 없으면 이력이 없다`() =
+        runTest {
+            assertFalse(repo(FakeDataStore()).hasEverLoggedIn())
+        }
+
+    @Test
     fun `saveSession 은 토큰과 userId 를 한 번에 저장한다`() =
         runTest {
             val store = CountingDataStore()
@@ -148,7 +168,7 @@ class TokenRepositoryImplTest {
         runTest {
             val repo = repo(FakeDataStore(failWritesWith = IOException("no space")))
 
-            // 전파되면 SessionBootstrap 판정이 끝나지 않아 스플래시에서 멈춘다.
+            // 전파되면 진입 판정이 끝나지 않아 스플래시에서 멈춘다.
             repo.saveTokens(token())
             repo.clear()
         }

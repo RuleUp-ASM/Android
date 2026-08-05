@@ -109,6 +109,8 @@ class BindLocationUseCaseTest {
 
         override suspend fun getUserId(): String? = storedUserId
 
+        override suspend fun hasEverLoggedIn(): Boolean = storedUserId != null
+
         override suspend fun clear() = Unit
 
         override val isLoggedIn: Flow<Boolean> = flowOf(storedUserId != null)
