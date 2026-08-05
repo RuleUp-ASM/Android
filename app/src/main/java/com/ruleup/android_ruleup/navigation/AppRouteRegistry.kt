@@ -21,6 +21,7 @@ import com.ruleup.challenge.presentation.notice.NoticeEditScreen
 import com.ruleup.challenge.presentation.notice.NoticeListScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
+import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.home.presentation.HomeScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
@@ -64,6 +65,8 @@ import com.ruleup.verification.presentation.location.VerificationLocationScreen
 import com.ruleup.verification.presentation.manual.VerificationManualScreen
 import com.ruleup.verification.presentation.pending.PendingReviewsScreen
 import com.ruleup.verification.presentation.progress.VerificationProgressScreen
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -314,5 +317,18 @@ private fun onboardingStack(
 ): List<GenericNavKey> = listOf(GenericNavKey(OnboardingNicknamePage.PATH, args)) + paths.map { GenericNavKey(it) }
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
+
+/**
+ * [appRoutes] 를 그대로 읽는 [RouteAccessPolicy] 구현.
+ *
+ * 모르는 경로는 로그인 요구로 떨어뜨린다 — 딥링크는 외부 입력이라, 등록되지 않은 경로를 공개로
+ * 보면 오타 하나가 인증 우회 통로가 된다.
+ */
+@Singleton
+class AppRouteAccessPolicy
+    @Inject
+    constructor() : RouteAccessPolicy {
+        override fun requiresLogin(path: String): Boolean = appRouteByPath[path]?.isLoginRequired ?: true
+    }
 
 val bottomTabRoutes: List<AppRoute> = appRoutes.filter { it.isBottomTab }
