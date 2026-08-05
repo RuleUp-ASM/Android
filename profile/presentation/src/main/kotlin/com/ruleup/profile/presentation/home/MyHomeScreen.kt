@@ -281,6 +281,9 @@ private fun nicknameBadgeLabel(status: NicknameStatus): String? =
     when (status) {
         NicknameStatus.PENDING -> "검수 중"
         NicknameStatus.REJECTED -> "반려됨"
+        // 복원 중 선점 충돌. 로그인 직후 재설정을 강제하므로 마이 홈까지 오는 경우는 없지만,
+        // 상태값이 존재하는 이상 뱃지로 이유를 알려 준다.
+        NicknameStatus.CONFLICT -> "변경 필요"
         NicknameStatus.APPROVED -> null
     }
 

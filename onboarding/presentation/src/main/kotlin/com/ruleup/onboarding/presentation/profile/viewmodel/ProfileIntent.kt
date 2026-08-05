@@ -1,7 +1,8 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.onboarding.domain.entity.Agreement
+import com.ruleup.onboarding.domain.entity.AgreementType
+import com.ruleup.onboarding.domain.entity.Gender
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface ProfileIntent : MviIntent {
@@ -21,24 +22,24 @@ sealed interface ProfileIntent : MviIntent {
         val interestCategory: Category,
     ) : ProfileIntent
 
-    data class SetAgreements(
-        val agreements: Agreement,
+    /** 생일 입력. 숫자만 8자리(YYYYMMDD)로 누적되며 검증은 8자리가 찼을 때 돈다. */
+    data class SetBirthDate(
+        val digits: String,
     ) : ProfileIntent
 
-    /** 가입 기본정보 — 만 나이 입력. 비우면 null. */
-    data class SetAge(
-        val age: Int?,
-    ) : ProfileIntent
-
-    /** 가입 기본정보 — 성별 카드 선택(같은 값 재선택 시 해제). */
+    /** 성별 선택. 같은 값을 다시 고르면 해제된다(= 건너뛴 것과 같은 상태). */
     data class SetGender(
-        val gender: OnboardingGender,
+        val gender: Gender,
     ) : ProfileIntent
 
-    /** 가입 기본정보 — "응답하지 않을래요" 토글. */
-    data object DeclineGender : ProfileIntent
+    data class ToggleAgreement(
+        val type: AgreementType,
+    ) : ProfileIntent
 
-    /** 닉네임 페이지 "다음" — 형식·중복 검사 후 통과하면 관심사 페이지로 이동한다. */
+    /** 전체 동의 토글. 하나라도 빠져 있으면 모두 체크하고, 다 차 있으면 모두 해제한다. */
+    data object ToggleAllAgreements : ProfileIntent
+
+    /** 닉네임 페이지 "다음" — 형식·중복 검사를 통과하면 다음 단계로 이동한다. */
     data object CheckNickname : ProfileIntent
 
     /** 약관 페이지 "시작하기" — 가입을 제출하고 성공 시 홈으로 이동한다. */

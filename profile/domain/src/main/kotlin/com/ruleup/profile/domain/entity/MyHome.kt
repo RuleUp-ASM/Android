@@ -10,6 +10,12 @@ enum class NicknameStatus(
     PENDING("PENDING"),
     APPROVED("APPROVED"),
     REJECTED("REJECTED"),
+
+    /**
+     * 탈퇴 후 복원 중 기존 닉네임을 남이 선점했다. 검수 결과가 아니라 **복원에서만 나오는 상태**다.
+     * 클라는 닉네임을 바꾸기 전까지 홈 진입을 막는다.
+     */
+    CONFLICT("CONFLICT"),
     ;
 
     companion object {

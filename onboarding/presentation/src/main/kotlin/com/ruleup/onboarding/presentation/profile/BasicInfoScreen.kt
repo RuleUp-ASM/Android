@@ -3,14 +3,11 @@ package com.ruleup.onboarding.presentation.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -29,65 +26,72 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.onboarding.domain.entity.Gender
 import com.ruleup.onboarding.domain.navigation.ProfileAgreementPage
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.InfoBox
 import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
 import com.ruleup.onboarding.presentation.profile.component.SectionHeader
-import com.ruleup.onboarding.presentation.profile.viewmodel.OnboardingGender
 import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 /**
- * 05 · 나이·성별 (5/6). 맞춤 추천용 선택 입력이라 "건너뛰기"로 넘어갈 수 있고,
- * 입력값은 가입 완료 후 PUT /onboarding/me 로 전송된다(ViewModel 이 처리).
+ * 05 · 생일·성별. 생일은 **필수**이고 만 14세 미만은 가입할 수 없다(법적 요구사항). 성별은 화면에서
+ * 건너뛸 수 있지만 API 필드는 필수라, 안 고르면 논바이너리로 저장된다.
+ *
+ * 생일이 유효해야 "다음"으로 넘어간다 — 여기서 막지 않으면 약관까지 다 채운 뒤 마지막 제출에서
+ * `BIRTHDATE_UNDERAGE` 로 튕긴다.
  */
 @Composable
 fun BasicInfoContent(
     onIntent: (ProfileIntent) -> Unit,
     modifier: Modifier = Modifier,
-    age: Int? = null,
-    gender: OnboardingGender? = null,
-    genderDeclined: Boolean = false,
+    birthDateInput: String = "",
+    birthDateError: String? = null,
+    birthDateValid: Boolean = false,
+    gender: Gender? = null,
 ) {
     val nav = LocalNavigationHelper.current
     ProfileSetupScaffold(
         step = 4,
         buttonText = "다음",
         modifier = modifier,
+        nextEnabled = birthDateValid,
         onNext = { nav.navigateTo(ProfileAgreementPage) },
         onBack = { nav.navigateToBack() },
-        onSkip = { nav.navigateTo(ProfileAgreementPage) },
     ) {
         SectionHeader(
-            title = "나이와 성별을 알려주세요",
-            subtitle = "비슷한 또래의 챌린지를 추천해드려요",
+            title = "생일과 성별을 알려주세요",
+            subtitle = "생일은 가입 조건 확인에만 사용해요",
             titleSize = 22,
         )
 
-        AgeSection(age = age, onAgeChange = { onIntent(ProfileIntent.SetAge(it)) })
+        BirthDateSection(
+            digits = birthDateInput,
+            error = birthDateError,
+            onChange = { onIntent(ProfileIntent.SetBirthDate(it)) },
+        )
 
         GenderSection(
             gender = gender,
-            declined = genderDeclined,
             onSelect = { onIntent(ProfileIntent.SetGender(it)) },
-            onDecline = { onIntent(ProfileIntent.DeclineGender) },
         )
 
         InfoBox(
             background = RuleUpTheme.colors.brandSoft,
             emoji = "ℹ️",
-            text = "나이·성별은 맞춤 추천에만 사용되고 다른 사용자에게 공개되지 않아요",
+            text = "생일은 가입 후 수정할 수 없어요. 성별은 통계에만 쓰이고 다른 사용자에게 공개되지 않아요",
             textColor = RuleUpTheme.colors.brandStrong,
         )
     }
 }
 
-/** 나이 입력: 라벨("만 나이 기준" 힌트) + 숫자 입력 박스("세" 접미). */
+/** 생일 입력: YYYY/MM/DD 자동 포맷 + 검증 실패 사유 인라인 표시. */
 @Composable
-private fun AgeSection(
-    age: Int?,
-    onAgeChange: (Int?) -> Unit,
+private fun BirthDateSection(
+    digits: String,
+    error: String?,
+    onChange: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -98,8 +102,8 @@ private fun AgeSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("나이", color = RuleUpTheme.colors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text("만 나이 기준", color = RuleUpTheme.colors.textSecondary, fontSize = 12.sp)
+            Text("생일", color = RuleUpTheme.colors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("YYYY / MM / DD", color = RuleUpTheme.colors.textSecondary, fontSize = 12.sp)
         }
         Row(
             modifier =
@@ -108,17 +112,16 @@ private fun AgeSection(
                     .height(56.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(12.dp))
-                    .padding(horizontal = 18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                    .border(
+                        1.dp,
+                        if (error != null) RuleUpTheme.colors.danger else RuleUpTheme.colors.border,
+                        RoundedCornerShape(12.dp),
+                    ).padding(horizontal = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicTextField(
-                value = age?.toString().orEmpty(),
-                onValueChange = { input ->
-                    val digits = input.filter { it.isDigit() }.take(3)
-                    onAgeChange(digits.toIntOrNull())
-                },
+                value = digits,
+                onValueChange = { input -> onChange(input.filter { it.isDigit() }.take(8)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 textStyle =
@@ -129,24 +132,27 @@ private fun AgeSection(
                     ),
                 cursorBrush = RuleUpGradients.Button,
                 decorationBox = { inner ->
-                    if (age == null) {
-                        Text("나이 입력", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp)
+                    if (digits.isEmpty()) {
+                        Text("1999 / 03 / 15", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp)
                     }
                     inner()
                 },
             )
-            Text("세", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp)
+        }
+        if (error != null) {
+            Text(error, color = RuleUpTheme.colors.danger, fontSize = 12.sp)
         }
     }
 }
 
-/** 성별 선택: 남성/여성 카드 + "응답하지 않을래요" 라디오. */
+/**
+ * 성별 선택: 남성/여성 카드. 같은 카드를 다시 누르면 해제되고, 해제 상태로 넘어가면 서버에는
+ * 논바이너리로 저장된다 — 화면에 "응답 안 함" 항목을 따로 두지 않는 이유다.
+ */
 @Composable
 private fun GenderSection(
-    gender: OnboardingGender?,
-    declined: Boolean,
-    onSelect: (OnboardingGender) -> Unit,
-    onDecline: () -> Unit,
+    gender: Gender?,
+    onSelect: (Gender) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -160,33 +166,16 @@ private fun GenderSection(
             GenderCard(
                 glyph = "♂",
                 label = "남성",
-                selected = gender == OnboardingGender.MALE,
+                selected = gender == Gender.MALE,
                 modifier = Modifier.weight(1f),
-                onClick = { onSelect(OnboardingGender.MALE) },
+                onClick = { onSelect(Gender.MALE) },
             )
             GenderCard(
                 glyph = "♀",
                 label = "여성",
-                selected = gender == OnboardingGender.FEMALE,
+                selected = gender == Gender.FEMALE,
                 modifier = Modifier.weight(1f),
-                onClick = { onSelect(OnboardingGender.FEMALE) },
-            )
-        }
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .singleClickable(globalGuard = false) { onDecline() },
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioDot(selected = declined)
-            Text(
-                "응답하지 않을래요",
-                color = RuleUpTheme.colors.textSecondary,
-                fontSize = 14.sp,
+                onClick = { onSelect(Gender.FEMALE) },
             )
         }
     }
@@ -229,37 +218,10 @@ private fun GenderCard(
     }
 }
 
-@Composable
-private fun RadioDot(selected: Boolean) {
-    Box(
-        modifier =
-            Modifier
-                .size(16.dp)
-                .clip(CircleShape)
-                .then(
-                    if (selected) {
-                        Modifier.background(RuleUpGradients.Button)
-                    } else {
-                        Modifier.border(1.dp, RuleUpTheme.colors.borderStrong, CircleShape)
-                    },
-                ),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (selected) {
-            Box(
-                Modifier
-                    .size(6.dp)
-                    .clip(CircleShape)
-                    .background(Color.White),
-            )
-        }
-    }
-}
-
 @Preview
 @Composable
 private fun BasicInfoScreenPreview() {
     ProfileFlowPreview {
-        BasicInfoContent(onIntent = {}, age = 28, gender = OnboardingGender.MALE)
+        BasicInfoContent(onIntent = {}, birthDateInput = "19990315", birthDateValid = true, gender = Gender.MALE)
     }
 }

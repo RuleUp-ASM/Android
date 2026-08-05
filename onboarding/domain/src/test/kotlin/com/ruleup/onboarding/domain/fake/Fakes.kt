@@ -3,12 +3,15 @@ package com.ruleup.onboarding.domain.fake
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
-import com.ruleup.onboarding.domain.entity.Agreement
-import com.ruleup.onboarding.domain.entity.AppVersionGate
+import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
 import com.ruleup.onboarding.domain.entity.AuthSession
+import com.ruleup.onboarding.domain.entity.DeviceIdentity
+import com.ruleup.onboarding.domain.entity.IntroInfo
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
+import com.ruleup.onboarding.domain.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.profile.domain.repository.ProfileRepository
@@ -66,6 +69,7 @@ class FakeTokenRepository(
 class FakeAuthRepository : AuthRepository {
     var exchangeResult: OAuthResult? = null
     var exchangeError: Throwable? = null
+    var exchangedWithDevice: DeviceIdentity? = null
 
     var refreshResult: Token? = null
     var refreshError: Throwable? = null
@@ -73,22 +77,28 @@ class FakeAuthRepository : AuthRepository {
 
     var signupResult: AuthSession? = null
     var signupError: Throwable? = null
+    var signedUpForm: SignupForm? = null
+    var signedUpWithDevice: DeviceIdentity? = null
 
     var logoutError: Throwable? = null
     var loggedOutWith: String? = null
 
-    override suspend fun exchangeToken(authorization: OAuthAuthorization): OAuthResult {
+    override suspend fun exchangeToken(
+        authorization: OAuthAuthorization,
+        device: DeviceIdentity,
+        permissions: PermissionSnapshot?,
+    ): OAuthResult {
+        exchangedWithDevice = device
         exchangeError?.let { throw it }
         return exchangeResult!!
     }
 
     override suspend fun signup(
-        signupToken: String,
-        nickname: String,
-        interestCategories: List<Category>,
-        profileImageUrl: String?,
-        agreements: Agreement,
+        form: SignupForm,
+        device: DeviceIdentity,
     ): AuthSession {
+        signedUpForm = form
+        signedUpWithDevice = device
         signupError?.let { throw it }
         return signupResult!!
     }
@@ -105,10 +115,20 @@ class FakeAuthRepository : AuthRepository {
     }
 }
 
+/** 고정 식별자를 돌려주는 기기 식별자 테스트 더블. */
+class FakeDeviceIdentityRepository(
+    private val identity: DeviceIdentity = DeviceIdentity(deviceId = "device-1", installationId = "install-1"),
+) : DeviceIdentityRepository {
+    override suspend fun current(): DeviceIdentity = identity
+}
+
 /** 프로필 업로드·조회를 주입하는 테스트 더블. 나머지는 미사용. */
 class FakeProfileRepository : ProfileRepository {
     var uploadResult: String = ""
     var uploadCalledWith: String? = null
+
+    /** 값이 있으면 업로드가 이 예외를 던진다. 실패를 흡수하는지 확인할 때 쓴다. */
+    var uploadError: Throwable? = null
 
     /** [getProfile] 이 돌려줄 값. null 이면 [profileError] 를 던진다. */
     var profile: Profile? = null
@@ -117,6 +137,7 @@ class FakeProfileRepository : ProfileRepository {
 
     override suspend fun uploadProfileImage(imageUri: String): String {
         uploadCalledWith = imageUri
+        uploadError?.let { throw it }
         return uploadResult
     }
 
@@ -138,12 +159,12 @@ class FakeProfileRepository : ProfileRepository {
     override suspend fun deleteProfileImage() = throw NotImplementedError()
 }
 
-/** 버전 게이트 조회 결과/예외를 주입하는 테스트 더블. */
+/** 인트로 조회 결과/예외를 주입하는 테스트 더블. */
 class FakeIntroRepository : IntroRepository {
-    var result: AppVersionGate? = null
+    var result: IntroInfo? = null
     var error: Throwable? = null
 
-    override suspend fun getVersionGate(): AppVersionGate {
+    override suspend fun getIntro(): IntroInfo {
         error?.let { throw it }
         return result!!
     }

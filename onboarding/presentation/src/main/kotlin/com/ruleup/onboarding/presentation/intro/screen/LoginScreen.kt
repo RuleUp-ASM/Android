@@ -183,8 +183,11 @@ private data class SocialProvider(
 )
 
 /**
- * 소셜 로그인 버튼 목록. 카카오/네이버/Apple 은 브랜드 고정색이라 상수지만,
- * Google 버튼은 surface/text/border 를 쓰므로 테마에 따라 라이트·다크로 바뀐다.
+ * 소셜 로그인 버튼 목록. 카카오는 브랜드 고정색이라 상수지만, Google 버튼은 surface/text/border 를
+ * 쓰므로 테마에 따라 라이트·다크로 바뀐다.
+ *
+ * 네이버·Apple 은 MVP 범위 밖이라 뺐다. OAuthActivity 가 구현한 건 카카오·구글뿐이라 눌러도
+ * "미지원 provider" 로 끝나던 버튼들이다.
  */
 @Composable
 private fun socialProviders(): List<SocialProvider> =
@@ -195,21 +198,6 @@ private fun socialProviders(): List<SocialProvider> =
             RuleUpColors.Kakao,
             RuleUpColors.KakaoText,
             provider = OAuthProvider.KAKAO,
-        ),
-        SocialProvider(
-            "N",
-            "네이버로 시작하기",
-            RuleUpColors.Naver,
-            Color.White,
-            markBold = true,
-            provider = OAuthProvider.NAVER,
-        ),
-        SocialProvider(
-            "🍎",
-            "Apple로 시작하기",
-            RuleUpColors.Apple,
-            Color.White,
-            provider = OAuthProvider.APPLE,
         ),
         SocialProvider(
             "G",

@@ -1,30 +1,39 @@
 package com.ruleup.onboarding.domain.auth.repository
 
-import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Token
-import com.ruleup.onboarding.domain.entity.Agreement
+import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.entity.AuthSession
+import com.ruleup.onboarding.domain.entity.DeviceIdentity
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthResult
+import com.ruleup.onboarding.domain.entity.PermissionSnapshot
 
 interface AuthRepository {
-    /** 소셜 로그인. 기존/신규 분기를 반환한다(명세 4.1/4.2). */
-    suspend fun exchangeToken(authorization: OAuthAuthorization): OAuthResult
+    /**
+     * 소셜 로그인. 기존/신규를 갈라 반환한다.
+     *
+     * [device] 는 단일 활성 기기 판정과 동일 설치 다계정 차단에 쓰이므로 필수다.
+     * [permissions] 는 참고용 스냅샷이라 없어도 된다.
+     */
+    suspend fun exchangeToken(
+        authorization: OAuthAuthorization,
+        device: DeviceIdentity,
+        permissions: PermissionSnapshot? = null,
+    ): OAuthResult
 
     /**
-     * 신규 가입 완료. 약관 동의([agreements])를 clientProperties 로 함께 전달한다(명세 4.3).
+     * 신규 가입 완료. 닉네임·관심사·생일·성별·약관 6종을 한 번에 제출한다.
+     *
+     * 프로필 사진은 여기서 받지 않는다 — 가입 후 별도 API 로 올린다.
      */
     suspend fun signup(
-        signupToken: String,
-        nickname: String,
-        interestCategories: List<Category>,
-        profileImageUrl: String?,
-        agreements: Agreement,
+        form: SignupForm,
+        device: DeviceIdentity,
     ): AuthSession
 
-    /** 앱 토큰 재발급(명세 4.4). */
+    /** 앱 토큰 재발급(회전). */
     suspend fun refreshToken(refreshToken: String): Token
 
-    /** 현재 기기 refreshToken revoke(명세 4.5). */
+    /** 현재 기기 refreshToken revoke. */
     suspend fun logout(refreshToken: String)
 }

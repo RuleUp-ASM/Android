@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   데이터 추출 규칙 (API 31+). 인증 토큰 DataStore 는 클라우드 백업·기기 이전(D2D) 모두에서 제외한다.
+   데이터 추출 규칙 (API 31+). 인증 토큰과 기기·설치 식별자 DataStore 를 클라우드 백업·기기
+   이전(D2D) 모두에서 제외한다. 식별자가 복원되면 installationId 의 "재설치 시 재생성"이 깨지고
+   deviceId 폴백이 새 기기로 넘어가 단일 활성 기기 판정이 무력화된다.
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="file" path="datastore/token.preferences_pb" />
+        <exclude domain="file" path="datastore/device.preferences_pb" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="datastore/token.preferences_pb" />
+        <exclude domain="file" path="datastore/device.preferences_pb" />
     </device-transfer>
 </data-extraction-rules>

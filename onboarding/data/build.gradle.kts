@@ -34,6 +34,8 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
+    // 기기·설치 식별자 영속(DeviceIdentityRepositoryImpl). 토큰 저장소와 파일을 분리해 쓴다.
+    implementation(libs.androidx.datastore.preferences)
     // 멀티파트 프로필 이미지 업로드(MultipartBody.Part). Retrofit 이 transitively 제공하나 명시한다.
     implementation(libs.okhttp)
 
