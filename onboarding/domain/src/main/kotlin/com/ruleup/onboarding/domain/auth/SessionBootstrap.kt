@@ -21,9 +21,15 @@ sealed interface SessionBootstrapState {
     /** 아직 판정 전. 화면은 대기 상태를 보여준다. */
     data object Running : SessionBootstrapState
 
-    /** 강제 업데이트 — 더 진행하지 않는다. */
+    /**
+     * 강제 업데이트 — 더 진행하지 않는다.
+     *
+     * @property minAppVersion 안내 문구에 넣을 최소 버전. 없으면 화면이 일반 문구로 떨어진다.
+     * @property devTestMsg 개발·점검용 문구. **사용자에게 보여주는 값이 아니다** — 진단으로만 쓴다.
+     */
     data class ForceUpdate(
-        val message: String?,
+        val minAppVersion: String?,
+        val devTestMsg: String?,
     ) : SessionBootstrapState
 
     /** 판정 완료. [authenticated] 가 false 면 로그인이 필요하다. */
@@ -85,7 +91,7 @@ class SessionBootstrap
                 termsVersions = intro?.termsVersions
                 val gate = intro?.versionGate
                 if (gate?.forceUpdate == true) {
-                    _state.value = SessionBootstrapState.ForceUpdate(gate.devTestMsg)
+                    _state.value = SessionBootstrapState.ForceUpdate(gate.minAppVersion, gate.devTestMsg)
                     return@launch
                 }
                 hadStoredSession = tokenRepository.getRefreshToken() != null

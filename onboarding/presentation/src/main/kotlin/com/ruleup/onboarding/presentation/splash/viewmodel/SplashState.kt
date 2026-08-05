@@ -7,8 +7,8 @@ data class SplashState(
     val isChecking: Boolean = true,
     // 강제 업데이트 필요 여부. true 면 더 진행하지 않고 강제 업데이트 화면을 띄운다.
     val forceUpdate: Boolean = false,
-    // 강제 업데이트 화면에 노출할 안내 메시지(서버 devTestMsg, 없으면 null → 기본 문구).
-    val updateMessage: String? = null,
+    // 안내 문구에 넣을 최소 지원 버전. 없으면 화면이 일반 문구로 떨어진다.
+    val minAppVersion: String? = null,
 ) : UiState {
     companion object {
         val initial = SplashState()
