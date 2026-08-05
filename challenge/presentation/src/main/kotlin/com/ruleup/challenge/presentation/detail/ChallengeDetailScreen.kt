@@ -41,7 +41,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -227,7 +226,7 @@ private fun ChallengeDetailContent(
                         Text(
                             text = state.errorMessage ?: "챌린지를 불러오지 못했어요",
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 14.sp,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
 
@@ -371,7 +370,7 @@ private fun MemberConfirmDialog(
         onDismissRequest = onDismiss,
         containerColor = RuleUpTheme.colors.surface,
         title = { Text(title, color = RuleUpTheme.colors.textPrimary, fontWeight = FontWeight.Bold) },
-        text = { Text(body, color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp) },
+        text = { Text(body, color = RuleUpTheme.colors.textSecondary) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(confirmLabel, color = RuleUpTheme.colors.danger, fontWeight = FontWeight.Bold)
@@ -413,8 +412,7 @@ private fun DetailTopBar(onBack: () -> Unit) {
         Text(
             text = "챌린지",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -439,24 +437,23 @@ private fun DetailHero(detail: ChallengeDetail) {
                     .background(accent),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
+            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", style = RuleUpTheme.typography.title)
         }
         Text(
             text = detail.title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Text(
             text = "${detail.owner.nickname} · ${detail.stats.participantCount}명 참여 중",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
+            style = RuleUpTheme.typography.small,
         )
         detail.description?.takeIf { it.isNotBlank() }?.let {
             Text(
                 text = it,
                 color = RuleUpTheme.colors.textSlate,
-                fontSize = 13.sp,
+                style = RuleUpTheme.typography.body,
             )
         }
     }
@@ -499,14 +496,13 @@ private fun InfoRow(
         Text(
             text = label,
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 13.sp,
+            style = RuleUpTheme.typography.body,
             modifier = Modifier.width(80.dp),
         )
         Text(
             text = value,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.bodyMedium,
         )
     }
 }
@@ -535,14 +531,13 @@ private fun PermissionBottomSheet(
             Text(
                 text = "권한 허용이 필요해요",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "이 챌린지는 자동 인증을 위해 아래 권한이 필요해요.\n허용하면 참여를 이어갈 수 있어요.",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 13.sp,
+                style = RuleUpTheme.typography.body,
             )
             Spacer(Modifier.height(16.dp))
             tokens.distinct().forEach { token ->
@@ -565,8 +560,7 @@ private fun PermissionBottomSheet(
                 Text(
                     text = "다음에",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.labelMedium,
                 )
             }
         }
@@ -590,7 +584,7 @@ private fun PermissionRow(label: String) {
         Text(
             text = label,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
+            style = RuleUpTheme.typography.labelMedium,
         )
     }
 }

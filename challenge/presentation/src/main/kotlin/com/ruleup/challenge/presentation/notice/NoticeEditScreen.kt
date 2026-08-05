@@ -34,10 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.NoticePolicy
@@ -114,12 +111,7 @@ fun NoticeEditScreen(
                         value = state.title,
                         onValueChange = { viewModel.onIntent(NoticeEditIntent.ChangeTitle(it)) },
                         singleLine = true,
-                        textStyle =
-                            TextStyle(
-                                color = RuleUpTheme.colors.textPrimary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            ),
+                        textStyle = RuleUpTheme.typography.section.copy(color = RuleUpTheme.colors.textPrimary),
                         cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                         modifier = Modifier.fillMaxWidth(),
                         decorationBox = { inner ->
@@ -127,7 +119,7 @@ fun NoticeEditScreen(
                                 Text(
                                     text = "예) 이번 주 인증 시간 변경 안내",
                                     color = RuleUpTheme.colors.textMuted,
-                                    fontSize = 15.sp,
+                                    style = RuleUpTheme.typography.labelMedium,
                                 )
                             }
                             inner()
@@ -139,12 +131,7 @@ fun NoticeEditScreen(
                     BasicTextField(
                         value = state.content,
                         onValueChange = { viewModel.onIntent(NoticeEditIntent.ChangeContent(it)) },
-                        textStyle =
-                            TextStyle(
-                                color = RuleUpTheme.colors.textPrimary,
-                                fontSize = 14.sp,
-                                lineHeight = 22.sp,
-                            ),
+                        textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),
                         cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                         modifier =
                             Modifier
@@ -155,7 +142,7 @@ fun NoticeEditScreen(
                                 Text(
                                     text = "멤버에게 전할 내용을 적어주세요",
                                     color = RuleUpTheme.colors.textMuted,
-                                    fontSize = 14.sp,
+                                    style = RuleUpTheme.typography.labelMedium,
                                 )
                             }
                             inner()
@@ -234,8 +221,7 @@ private fun NoticeEditTopBar(
         Text(
             text = title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -260,14 +246,13 @@ private fun EditFieldCard(
             Text(
                 text = label,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
             )
             Spacer(Modifier.weight(1f))
             Text(
                 text = counter,
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         content()
@@ -295,14 +280,13 @@ private fun OptionRow(
             Text(
                 text = title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.cardTitle,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = description,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
             )
         }
         Spacer(Modifier.width(12.dp))

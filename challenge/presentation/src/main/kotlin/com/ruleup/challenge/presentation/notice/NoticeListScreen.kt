@@ -29,10 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -89,20 +87,19 @@ fun NoticeListScreen(
                     Text(
                         text = state.errorMessage.orEmpty(),
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
             state.notices.isEmpty() ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "📭", fontSize = 34.sp)
+                        Text(text = "📭", style = RuleUpTheme.typography.title)
                         Spacer(Modifier.height(10.dp))
                         Text(
                             text = "아직 공지가 없어요",
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
                 }
@@ -156,8 +153,7 @@ private fun NoticeListTopBar(
         Text(
             text = "공지",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
         Spacer(Modifier.weight(1f))
         if (canManage) {
@@ -172,8 +168,7 @@ private fun NoticeListTopBar(
                 Text(
                     text = "+ 작성",
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.bodyBold,
                 )
             }
             Spacer(Modifier.width(8.dp))
@@ -199,14 +194,13 @@ private fun NoticeCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (notice.pinned) {
-                Text(text = "📌", fontSize = 12.sp)
+                Text(text = "📌", style = RuleUpTheme.typography.small)
                 Spacer(Modifier.width(6.dp))
             }
             Text(
                 text = notice.title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = if (notice.isRead) FontWeight.Medium else FontWeight.Bold,
+                style = if (notice.isRead) RuleUpTheme.typography.labelMedium else RuleUpTheme.typography.cardTitle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -226,7 +220,7 @@ private fun NoticeCard(
             Text(
                 text = notice.preview,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -234,7 +228,7 @@ private fun NoticeCard(
         Text(
             text = noticeDateLabel(notice.createdAt),
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }
