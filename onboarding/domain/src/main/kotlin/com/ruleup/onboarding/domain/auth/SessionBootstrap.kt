@@ -1,6 +1,5 @@
 package com.ruleup.onboarding.domain.auth
 
-import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.navigation.RouteAccessPolicy
@@ -8,6 +7,7 @@ import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
+import com.ruleup.onboarding.domain.intro.usecase.IntroGate
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
@@ -96,16 +96,6 @@ class SessionBootstrap
         val state: StateFlow<SessionBootstrapState> = _state.asStateFlow()
 
         /**
-         * 현행 약관 버전. 가입 화면이 동의 기록에 실어 보낸다.
-         *
-         * 인트로 응답에 딸려 오는데 정작 쓰는 건 온보딩 마지막 단계라, 여기서 받아 두고 그때 꺼낸다.
-         * 인트로 호출이 실패하면(페일오픈) null 이고, 가입 화면은 폴백 버전으로 진행한다.
-         */
-        @Volatile
-        var termsVersions: TermsVersions? = null
-            private set
-
-        /**
          * 부팅 시점에 저장된 세션이 있었는지.
          *
          * 로그인 화면에 왔을 때 "첫 설치"와 "세션이 끊겨 돌아옴"을 가르는 근거다. 완주율의 분모가
@@ -187,11 +177,9 @@ class SessionBootstrap
 
         private fun run() {
             scope.launch {
-                // 버전 게이트 먼저. 페일오픈(null)이면 정상 흐름을 그대로 진행한다.
-                val intro = loadIntroUseCase()
-                termsVersions = intro?.termsVersions
-                val gate = intro?.versionGate
-                if (gate?.forceUpdate == true) {
+                // 버전 게이트 먼저. 판정은 유스케이스가 하고 여기선 결과만 옮긴다.
+                val gate = loadIntroUseCase()
+                if (gate is IntroGate.ForceUpdate) {
                     _state.value = SessionBootstrapState.ForceUpdate(gate.minAppVersion, gate.devTestMsg)
                     return@launch
                 }
