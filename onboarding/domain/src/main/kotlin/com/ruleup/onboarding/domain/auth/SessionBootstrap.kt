@@ -17,6 +17,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -141,6 +144,48 @@ class SessionBootstrap
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
+            observeSessionEnd()
+            run()
+        }
+
+        /**
+         * 세션이 끊기면 스스로 판정을 다시 돌린다.
+         *
+         * 이 경로가 필요한 건 **아무도 시작하지 않은 종료**가 있어서다 — 다른 기기 로그인이나
+         * refreshToken 만료는 `TokenAuthenticator` 가 OkHttp 스레드에서 토큰을 지우는 것으로만
+         * 드러난다. 거기엔 화면도 ViewModel 도 없고, `core:network` 가 네비게이션을 알 수도 없다.
+         *
+         * 판정이 끝난 뒤([SessionBootstrapState.Resolved])의 전이만 본다. 자동 로그인 실패도 토큰
+         * 정리를 거치므로, 판정 중에 반응하면 자기 자신을 재시작한다.
+         *
+         * 첫 방출은 건너뛴다 — 앱 시작 시점의 로그인 여부는 전이가 아니다.
+         */
+        private fun observeSessionEnd() {
+            scope.launch {
+                tokenRepository.isLoggedIn
+                    .distinctUntilChanged()
+                    .drop(1)
+                    .filter { loggedIn -> !loggedIn }
+                    .filter { _state.value is SessionBootstrapState.Resolved }
+                    .collect { restart() }
+            }
+        }
+
+        /**
+         * 세션이 끊겨 진입 판정을 다시 한다.
+         *
+         * 로그인 화면을 콕 집지 않는 이유는, 어디서 시작할지가 이미 이 클래스의 일이기 때문이다.
+         * 토큰이 없으니 자동 로그인이 실패하고 결국 로그인으로 가지만 경로가 하나로 유지된다.
+         *
+         * [hadStoredSession] 은 되돌리지 않는다 — 재진입 시점엔 토큰이 이미 지워져 있어, 다시
+         * 계산하면 재로그인이 첫 설치로 집계된다.
+         */
+        private fun restart() {
+            _state.value = SessionBootstrapState.Running
+            run()
+        }
+
+        private fun run() {
             scope.launch {
                 // 버전 게이트 먼저. 페일오픈(null)이면 정상 흐름을 그대로 진행한다.
                 val intro = loadIntroUseCase()
@@ -150,7 +195,8 @@ class SessionBootstrap
                     _state.value = SessionBootstrapState.ForceUpdate(gate.minAppVersion, gate.devTestMsg)
                     return@launch
                 }
-                hadStoredSession = tokenRepository.getRefreshToken() != null
+                // 한 번이라도 세션이 있었으면 그대로 둔다. 재진입에서 다시 계산하면 뒤집힌다.
+                hadStoredSession = hadStoredSession || tokenRepository.getRefreshToken() != null
                 val authenticated = autoLoginUseCase()
                 _state.value = SessionBootstrapState.Resolved(entry(authenticated))
             }
