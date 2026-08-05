@@ -169,7 +169,7 @@ private fun SortRow(
             Text(
                 text = option.title,
                 color = if (selected) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textPrimary,
-                style = if (selected) RuleUpTheme.typography.cardTitle else RuleUpTheme.typography.cardTitle,
+                style = if (selected) RuleUpTheme.typography.cardTitle else RuleUpTheme.typography.labelMedium,
             )
             Text(
                 text = option.description,
