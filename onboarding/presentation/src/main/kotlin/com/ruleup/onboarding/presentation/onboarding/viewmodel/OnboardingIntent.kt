@@ -6,10 +6,6 @@ import com.ruleup.domain.entity.user.Gender
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface OnboardingIntent : MviIntent {
-    data class SetSignupToken(
-        val token: String,
-    ) : OnboardingIntent
-
     data class SetNickName(
         val name: String,
     ) : OnboardingIntent

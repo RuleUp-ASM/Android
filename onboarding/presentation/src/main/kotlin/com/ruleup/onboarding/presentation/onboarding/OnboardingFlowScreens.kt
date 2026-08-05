@@ -16,7 +16,6 @@ import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.presentation.common.AuthFailureHost
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingEffect
-import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
@@ -78,18 +77,11 @@ private fun OnboardingFailureHost(viewModel: OnboardingViewModel) {
     }
 }
 
-/** 1/6 · 닉네임. signupToken 은 진입 시 args 로 받아 ViewModel 에 저장한다. */
+/** 1/6 · 닉네임. 가입 토큰은 SignupSession 이 들고 있어 화면이 넘겨받지 않는다. */
 @Composable
-fun OnboardingNicknameScreen(
-    signupToken: String,
-    modifier: Modifier = Modifier,
-) {
+fun OnboardingNicknameScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(signupToken) {
-        viewModel.onIntent(OnboardingIntent.SetSignupToken(signupToken))
-    }
 
     NicknameContent(
         modifier = modifier,

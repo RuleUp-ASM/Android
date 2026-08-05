@@ -262,30 +262,29 @@ val appRoutes: List<AppRoute> =
         // 뒤로가기가 앞 단계를 거치도록 스택을 세워 준다.
         AppRoute(
             path = OnboardingNicknamePage.PATH,
-            render = { args -> OnboardingNicknameScreen(signupToken = args[OnboardingNicknamePage.ARG_SIGNUP_TOKEN].orEmpty()) },
+            render = { OnboardingNicknameScreen() },
         ),
         AppRoute(
             path = OnboardingInterestPage.PATH,
-            syntheticStack = { args -> onboardingStack(args, OnboardingInterestPage.PATH) },
+            syntheticStack = { onboardingStack(OnboardingInterestPage.PATH) },
             render = { OnboardingInterestScreen() },
         ),
         AppRoute(
             path = OnboardingBirthPage.PATH,
-            syntheticStack = { args -> onboardingStack(args, OnboardingInterestPage.PATH, OnboardingBirthPage.PATH) },
+            syntheticStack = { onboardingStack(OnboardingInterestPage.PATH, OnboardingBirthPage.PATH) },
             render = { OnboardingBirthScreen() },
         ),
         AppRoute(
             path = OnboardingGenderPage.PATH,
-            syntheticStack = { args ->
-                onboardingStack(args, OnboardingInterestPage.PATH, OnboardingBirthPage.PATH, OnboardingGenderPage.PATH)
+            syntheticStack = {
+                onboardingStack(OnboardingInterestPage.PATH, OnboardingBirthPage.PATH, OnboardingGenderPage.PATH)
             },
             render = { OnboardingGenderScreen() },
         ),
         AppRoute(
             path = OnboardingPhotoPage.PATH,
-            syntheticStack = { args ->
+            syntheticStack = {
                 onboardingStack(
-                    args,
                     OnboardingInterestPage.PATH,
                     OnboardingBirthPage.PATH,
                     OnboardingGenderPage.PATH,
@@ -296,9 +295,8 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = OnboardingTermsPage.PATH,
-            syntheticStack = { args ->
+            syntheticStack = {
                 onboardingStack(
-                    args,
                     OnboardingInterestPage.PATH,
                     OnboardingBirthPage.PATH,
                     OnboardingGenderPage.PATH,
@@ -310,11 +308,9 @@ val appRoutes: List<AppRoute> =
         ),
     )
 
-/** 1단계(가입 토큰을 실은 닉네임)를 뿌리로, 뒤이은 단계를 순서대로 쌓는다. */
-private fun onboardingStack(
-    args: Map<String, String>,
-    vararg paths: String,
-): List<GenericNavKey> = listOf(GenericNavKey(OnboardingNicknamePage.PATH, args)) + paths.map { GenericNavKey(it) }
+/** 1단계(닉네임)를 뿌리로, 뒤이은 단계를 순서대로 쌓는다. */
+private fun onboardingStack(vararg paths: String): List<GenericNavKey> =
+    listOf(GenericNavKey(OnboardingNicknamePage.PATH)) + paths.map { GenericNavKey(it) }
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 

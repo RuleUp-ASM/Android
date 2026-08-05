@@ -35,12 +35,16 @@ fun AppNavHost(
                     // 목적지 페이지 이동마다 관측 컨텍스트를 갱신하고 화면 진입을 기록한다.
                     screenTracker.onScreenEntered(signal.route.path)
                 }
+
                 is NavSignal.ReplaceStack -> {
                     if (replaceStack(signal.route, backStack, observability)) {
                         screenTracker.onScreenEntered(signal.route.path)
                     }
                 }
-                NavSignal.Back -> backStack.removeLastOrNull()
+
+                NavSignal.Back -> {
+                    backStack.removeLastOrNull()
+                }
             }
         }
     }

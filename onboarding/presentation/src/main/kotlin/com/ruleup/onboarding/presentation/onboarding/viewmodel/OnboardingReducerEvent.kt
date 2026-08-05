@@ -7,10 +7,6 @@ import com.ruleup.ui.mvi.ReducerEvent
 import java.time.LocalDate
 
 sealed interface OnboardingReducerEvent : ReducerEvent {
-    data class SetSignupToken(
-        val token: String,
-    ) : OnboardingReducerEvent
-
     data class NicknameEntered(
         val nickname: String,
     ) : OnboardingReducerEvent

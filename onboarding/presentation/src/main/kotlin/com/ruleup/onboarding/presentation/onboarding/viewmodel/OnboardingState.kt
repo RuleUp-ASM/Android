@@ -16,7 +16,6 @@ import java.time.LocalDate
  *   기록한다 — 선택 약관도 "동의 안 함"을 남겨야 약관 개정 시 재동의 판정이 된다.
  */
 data class OnboardingState(
-    val signupToken: String? = null,
     val nickname: String = "",
     // 실시간 확인 결과. null 은 아직 확인 전(입력 중)이다.
     val nicknameAvailable: Boolean? = null,

@@ -8,6 +8,7 @@ import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
+import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.entity.AuthException
 import com.ruleup.onboarding.domain.entity.LoginOutcome
@@ -35,6 +36,7 @@ class LoginViewModel
         private val observability: Observability,
         private val signupTimer: SignupTimer,
         private val sessionBootstrap: SessionBootstrap,
+        private val signupSession: SignupSession,
     ) : MviViewModel<LoginIntent, LoginState, LoginReducerEvent, LoginEffect>(LoginState.initial) {
         override fun onIntent(intent: LoginIntent) {
             when (intent) {
@@ -124,8 +126,11 @@ class LoginViewModel
                             navigationHelper.navigateTo(OnboardingNicknamePage)
                         }
 
-                        is LoginOutcome.GoSignup ->
-                            navigationHelper.navigateByRoute(OnboardingNicknamePage.routeWithToken(result.signupToken))
+                        is LoginOutcome.GoSignup -> {
+                            // 토큰은 백스택에 실지 않는다 — 직렬화되어 saved state 에 남는다.
+                            signupSession.start(result.signupToken)
+                            navigationHelper.navigateTo(OnboardingNicknamePage)
+                        }
                     }
                 }.onFailure { error ->
                     dispatch(LoginReducerEvent.LoginFinished)
