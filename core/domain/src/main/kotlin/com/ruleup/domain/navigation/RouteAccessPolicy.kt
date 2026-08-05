@@ -6,7 +6,7 @@ package com.ruleup.domain.navigation
  * 라우트 목록은 호스트(`:app`)가 갖고 있는데 그 값이 필요한 쪽(스플래시의 딥링크 분기)은 feature
  * 다. `NavigationHelper`·`MessageHelper` 와 같은 방식으로 계약만 여기 두고 구현은 호스트가 한다.
  */
-interface RouteAccessPolicy {
+fun interface RouteAccessPolicy {
     /**
      * [path] 화면을 열려면 로그인이 필요한가.
      *

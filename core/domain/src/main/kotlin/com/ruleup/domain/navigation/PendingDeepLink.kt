@@ -1,6 +1,5 @@
-package com.ruleup.ui.navigation
+package com.ruleup.domain.navigation
 
-import com.ruleup.domain.navigation.NavRoute
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -14,9 +14,9 @@ import com.ruleup.android_ruleup.observability.JankTracker
 import com.ruleup.android_ruleup.observability.ScreenTracker
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
-import com.ruleup.ui.navigation.PendingDeepLink
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 

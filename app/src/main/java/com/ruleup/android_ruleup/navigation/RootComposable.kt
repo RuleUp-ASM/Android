@@ -53,7 +53,8 @@ fun RootComposable(
         val navigationHelper = LocalNavigationHelper.current
 
         // 세션 만료(토큰 정리)·로그아웃으로 로그인 상태가 풀리면 로그인 화면(root)으로 리셋한다.
-        // Splash 는 자동 로그인 실패 시 자체적으로 라우팅하므로 제외해 중복 이동을 막는다.
+        // 스플래시가 떠 있는 동안은 제외한다 — 자동 로그인 실패도 토큰 정리를 거치므로, 진입
+        // 라우팅과 겹쳐 로그인 화면으로 두 번 이동한다.
         LaunchedEffect(Unit) {
             sessionViewModel.sessionEnded.collect {
                 val topPath = (backStack.lastOrNull() as? GenericNavKey)?.path
