@@ -4,16 +4,21 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.message.IconType
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.entity.LoginOutcome
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.ProfileIconPage
 import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
+import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TAG = "[Login]"
 
 @HiltViewModel
 class LoginViewModel
@@ -22,6 +27,7 @@ class LoginViewModel
         private val socialLoginUseCase: SocialLoginUseCase,
         private val navigationHelper: NavigationHelper,
         private val messageHelper: MessageHelper,
+        private val observability: Observability,
     ) : MviViewModel<LoginIntent, LoginState, LoginReducerEvent, LoginEffect>(LoginState.initial) {
         override fun onIntent(intent: LoginIntent) {
             when (intent) {
@@ -39,8 +45,8 @@ class LoginViewModel
                 }
 
                 is LoginIntent.AuthFailed -> {
+                    // IdP 화면에서 사용자가 취소한 경우가 대부분이라 조용히 되돌린다.
                     dispatch(LoginReducerEvent.LoginFinished)
-                    messageHelper.showSnackBar(IconType.ERROR, intent.error.message ?: "로그인 취소")
                 }
             }
         }
@@ -98,10 +104,10 @@ class LoginViewModel
                     }
                 }.onFailure { error ->
                     dispatch(LoginReducerEvent.LoginFinished)
-                    messageHelper.showSnackBar(
-                        iconType = IconType.ERROR,
-                        messageText = error.message ?: "로그인 오류",
-                    )
+                    // 원인은 로그로만 남긴다 — 사용자가 고칠 수 없는 코드(redirectUri·deviceInfo)까지
+                    // 화면에 드러내면 안내만 어지러워진다.
+                    observability.w(TAG, error) { "소셜 로그인 실패" }
+                    emitEffect(LoginEffect.ShowFailure(error.toAuthFailureUi()))
                 }
             }
         }

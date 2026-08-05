@@ -57,6 +57,8 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":onboarding:domain"))
+    // 진단 로깅(사용자에게 노출하지 않는 실패 원인).
+    implementation(project(":observability:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)

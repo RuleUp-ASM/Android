@@ -12,6 +12,7 @@ import com.ruleup.onboarding.data.auth.dto.toAuthSession
 import com.ruleup.onboarding.data.auth.dto.toOAuthResult
 import com.ruleup.onboarding.data.auth.dto.toRequest
 import com.ruleup.onboarding.data.auth.dto.toToken
+import com.ruleup.onboarding.data.auth.mapAuthFailure
 import com.ruleup.onboarding.data.device.DeviceInfoProvider
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
@@ -34,42 +35,46 @@ class AuthRepositoryImpl
             device: DeviceIdentity,
             permissions: PermissionSnapshot?,
         ): OAuthResult =
-            api
-                .socialLogin(
-                    provider = authorization.provider.provider,
-                    request =
-                        SocialLoginAuthRequest(
-                            code = authorization.code,
-                            codeVerifier = authorization.codeVerifier,
-                            redirectUri = authorization.redirectUri,
-                            deviceId = device.deviceId,
-                            installationId = device.installationId,
-                            deviceInfo = deviceInfoProvider.current(),
-                            permissions = permissions?.toRequest(),
-                        ),
-                ).getOrThrow()
-                .toOAuthResult()
+            mapAuthFailure {
+                api
+                    .socialLogin(
+                        provider = authorization.provider.provider,
+                        request =
+                            SocialLoginAuthRequest(
+                                code = authorization.code,
+                                codeVerifier = authorization.codeVerifier,
+                                redirectUri = authorization.redirectUri,
+                                deviceId = device.deviceId,
+                                installationId = device.installationId,
+                                deviceInfo = deviceInfoProvider.current(),
+                                permissions = permissions?.toRequest(),
+                            ),
+                    ).getOrThrow()
+                    .toOAuthResult()
+            }
 
         override suspend fun signup(
             form: SignupForm,
             device: DeviceIdentity,
         ): AuthSession =
-            api
-                .signup(
-                    request =
-                        SignUpRequest(
-                            signupToken = form.signupToken,
-                            nickname = form.nickname,
-                            interestCategories = form.interestCategories.map { it.value },
-                            birthDate = form.birthDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                            gender = form.gender.value,
-                            agreements = form.agreements.toRequest(),
-                            deviceId = device.deviceId,
-                            installationId = device.installationId,
-                            deviceInfo = deviceInfoProvider.current(),
-                        ),
-                ).getOrThrow()
-                .toAuthSession()
+            mapAuthFailure {
+                api
+                    .signup(
+                        request =
+                            SignUpRequest(
+                                signupToken = form.signupToken,
+                                nickname = form.nickname,
+                                interestCategories = form.interestCategories.map { it.value },
+                                birthDate = form.birthDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                                gender = form.gender.value,
+                                agreements = form.agreements.toRequest(),
+                                deviceId = device.deviceId,
+                                installationId = device.installationId,
+                                deviceInfo = deviceInfoProvider.current(),
+                            ),
+                    ).getOrThrow()
+                    .toAuthSession()
+            }
 
         override suspend fun refreshToken(refreshToken: String): Token =
             api

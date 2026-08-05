@@ -16,6 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,13 +35,18 @@ import com.ruleup.designsystem.theme.RuleUpColors
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.entity.OAuthProvider
+import com.ruleup.onboarding.presentation.common.AuthFailureHost
+import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.oauth.rememberOAuthLauncher
+import com.ruleup.ui.helper.LocalMessageHelper
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
+    val messageHelper = LocalMessageHelper.current
+    var failure by remember { mutableStateOf<AuthFailureUi?>(null) }
     val launcher =
         rememberOAuthLauncher { result ->
             result
@@ -49,12 +58,18 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.LaunchOAuth -> launcher.launch(effect.provider)
+                is LoginEffect.ShowFailure ->
+                    when (val ui = effect.ui) {
+                        is AuthFailureUi.Toast -> messageHelper.showToast(ui.message)
+                        else -> failure = ui
+                    }
             }
         }
     }
     LoginContent(
         onIntent = viewModel::onIntent,
     )
+    AuthFailureHost(ui = failure, onDismiss = { failure = null })
 }
 
 @Composable

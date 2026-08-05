@@ -15,9 +15,6 @@ package com.ruleup.domain.navigation
 object AppRoutes {
     // onboarding
     const val SPLASH = "splash"
-    const val INTRO_PROMISE = "intro/promise"
-    const val INTRO_VERIFY = "intro/verify"
-    const val INTRO_TRUST = "intro/trust"
     const val LOGIN = "login"
     const val PROFILE_ICON = "profile/icon"
     const val PROFILE_NICKNAME = "profile/nickname"
