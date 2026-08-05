@@ -6,12 +6,14 @@ import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -55,6 +57,48 @@ class AppEntryTest {
                 resolve(authenticated = false, pending = deepLink, requiresLogin = false),
             )
         }
+
+    @Test
+    fun `세션이 끊기면 판정을 다시 돌린다`() =
+        runBlocking {
+            // 다른 기기 로그인·refreshToken 만료는 TokenAuthenticator 가 토큰을 지우는 것으로만
+            // 드러난다. 그 순간 진입 판정으로 되돌아가야 사용자가 빈 세션으로 화면에 남지 않는다.
+            val tokens = FakeTokenRepository(refreshToken = "r1")
+            val auth =
+                FakeAuthRepository().apply {
+                    refreshResult = RefreshedSession(Token("a", "r2", "Bearer", 3600), userId = "u-1")
+                }
+            val bootstrap = bootstrap(tokens, auth, pending = null, requiresLogin = true)
+            bootstrap.start()
+            assertEquals(
+                AppEntry.Start(HomePage.toRoute()),
+                (bootstrap.state.first { it is SessionBootstrapState.Resolved } as SessionBootstrapState.Resolved).entry,
+            )
+
+            tokens.clear()
+
+            assertEquals(
+                AppEntry.Start(LoginPage.toRoute()),
+                bootstrap.state
+                    .filterIsInstance<SessionBootstrapState.Resolved>()
+                    .first { it.entry == AppEntry.Start(LoginPage.toRoute()) }
+                    .entry,
+            )
+        }
+
+    private fun bootstrap(
+        tokens: FakeTokenRepository,
+        auth: FakeAuthRepository,
+        pending: NavRoute?,
+        requiresLogin: Boolean,
+    ) = SessionBootstrap(
+        loadIntroUseCase = LoadIntroUseCase(FakeIntroRepository().apply { error = RuntimeException("skip") }),
+        pendingDeepLink = PendingDeepLink().apply { set(pending) },
+        routeAccessPolicy = RouteAccessPolicy { requiresLogin },
+        observability = testObservability(),
+        tokenRepository = tokens,
+        autoLoginUseCase = AutoLoginUseCase(auth, tokens),
+    )
 
     private suspend fun resolve(
         authenticated: Boolean,

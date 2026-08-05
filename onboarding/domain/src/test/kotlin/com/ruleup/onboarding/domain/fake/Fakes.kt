@@ -18,12 +18,17 @@ import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.profile.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 
 /** 저장/삭제 호출을 기록하는 토큰 저장소 테스트 더블. */
 class FakeTokenRepository(
     private var refreshToken: String? = null,
 ) : TokenRepository {
+    // 실제 구현처럼 refreshToken 유무를 반영해 흘려보낸다. 정적 값으로 두면 세션 종료 전이를
+    // 관찰하는 코드를 테스트할 수 없다.
+    private val loggedIn = MutableStateFlow(refreshToken != null)
+
     var savedToken: Token? = null
     var savedUserId: String? = null
     var saveCount = 0
@@ -35,6 +40,8 @@ class FakeTokenRepository(
     ) {
         savedToken = token
         savedUserId = userId
+        refreshToken = token.refreshToken
+        loggedIn.value = true
         saveCount++
     }
 
@@ -44,6 +51,8 @@ class FakeTokenRepository(
     ) {
         savedToken = token
         userId?.let { savedUserId = it }
+        refreshToken = token.refreshToken
+        loggedIn.value = true
         saveCount++
     }
 
@@ -60,9 +69,10 @@ class FakeTokenRepository(
         savedToken = null
         savedUserId = null
         refreshToken = null
+        loggedIn.value = false
     }
 
-    override val isLoggedIn: Flow<Boolean> = flowOf(false)
+    override val isLoggedIn: Flow<Boolean> = loggedIn
 
     override val userId: Flow<String?> get() = flowOf(savedUserId)
 }

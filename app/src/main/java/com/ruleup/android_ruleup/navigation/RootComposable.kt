@@ -21,16 +21,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.BuildConfig
 import com.ruleup.android_ruleup.debug.DebugLogOverlay
 import com.ruleup.android_ruleup.debug.DebugSyncButton
-import com.ruleup.android_ruleup.session.SessionViewModel
 import com.ruleup.designsystem.rememberSingleClick
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.message.MessageEffect
-import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
@@ -40,7 +37,6 @@ import kotlinx.coroutines.flow.Flow
 fun RootComposable(
     modifier: Modifier = Modifier,
     startStack: List<NavKey> = listOf(GenericNavKey(SplashPage.PATH)),
-    sessionViewModel: SessionViewModel = hiltViewModel(),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {
@@ -51,18 +47,6 @@ fun RootComposable(
         val backStack = rememberAppBackStack(startStack)
         val messageHelper = LocalMessageHelper.current
         val navigationHelper = LocalNavigationHelper.current
-
-        // 세션 만료(토큰 정리)·로그아웃으로 로그인 상태가 풀리면 로그인 화면(root)으로 리셋한다.
-        // 스플래시가 떠 있는 동안은 제외한다 — 자동 로그인 실패도 토큰 정리를 거치므로, 진입
-        // 라우팅과 겹쳐 로그인 화면으로 두 번 이동한다.
-        LaunchedEffect(Unit) {
-            sessionViewModel.sessionEnded.collect {
-                val topPath = (backStack.lastOrNull() as? GenericNavKey)?.path
-                if (topPath != SplashPage.PATH) {
-                    navigationHelper.navigateTo(LoginPage)
-                }
-            }
-        }
 
         val onShowOneButtonDialog =
             remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
