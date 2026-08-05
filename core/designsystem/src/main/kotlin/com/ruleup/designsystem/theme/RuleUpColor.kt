@@ -3,54 +3,63 @@ package com.ruleup.designsystem.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * RuleUp Design System v2.0 — "Modern Minimal · Indigo Brand · Cool Slate Neutrals".
+ * Figma `🎨 00 · 디자인 시스템 · 컬러 토큰`(node `1177:9`)의 변수 15개.
  *
- * 01 · Brand Identity 섹션의 원시(raw) 팔레트. 화면에서 직접 쓰기보다
- * [RuleUpColorScheme] / [RuleUpTheme] 의 시맨틱 토큰을 통해 접근하는 것을 권장한다.
+ * **이름과 값 모두 Figma 를 따른다.** 중간에 이름을 바꾸면 다음 갱신 때 무엇이 무엇에 대응하는지
+ * 다시 찾아야 한다. 화면에서 직접 쓰지 말고 [RuleUpTheme] 의 시맨틱 토큰을 통해 접근한다.
  */
 object RuleUpPalette {
-    // Brand · Indigo
-    val Indigo50 = Color(0xFFEEF2FF)
-    val Indigo100 = Color(0xFFE0E7FF)
-    val Indigo500 = Color(0xFF6366F1)
-    val Indigo600 = Color(0xFF4F46E5)
-    val Indigo700 = Color(0xFF4338CA)
+    // primary
+    val Primary600 = Color(0xFF6C5CE7)
+    val Primary300 = Color(0xFFA89DF0)
+    val Primary50 = Color(0xFFF2F0FE)
 
-    // Brand · Violet
-    val Violet100 = Color(0xFFF5F3FF)
-    val Violet400 = Color(0xFFA78BFA)
-    val Violet500 = Color(0xFF8B5CF6)
+    // text
+    val TextInk = Color(0xFF101422)
+    val TextSub = Color(0xFF4E5666)
+    val TextFaint = Color(0xFF8B93A5)
 
-    // Neutral · Cool Slate
-    val Slate900 = Color(0xFF0F172A)
-    val Slate700 = Color(0xFF334155)
-    val Slate600 = Color(0xFF475569)
-    val Slate500 = Color(0xFF64748B)
-    val Slate400 = Color(0xFF94A3B8)
-    val Slate300 = Color(0xFFCBD5E1)
-    val Slate200 = Color(0xFFE2E8F0)
-    val Slate100 = Color(0xFFF1F5F9)
-    val Slate50 = Color(0xFFF8FAFC)
-    val White = Color(0xFFFFFFFF)
+    // border · bg
+    val BorderLine = Color(0xFFE6E9EF)
+    val BgCanvas = Color(0xFFF3F5F8)
+    val BgSurface = Color(0xFFFFFFFF)
 
-    // Semantic
-    val Green500 = Color(0xFF10B981)
-    val Green700 = Color(0xFF047857)
-    val GreenTint = Color(0xFFF0FDF4)
-    val Amber500 = Color(0xFFF59E0B)
-    val AmberTint = Color(0xFFFFFBEB)
-    val Rose500 = Color(0xFFF43F5E)
-    val Rose700 = Color(0xFFBE123C)
-    val Cyan500 = Color(0xFF06B6D4)
-    val Blue500 = Color(0xFF3B82F6)
+    // status
+    val StatusSuccess = Color(0xFF22C55E)
+    val StatusSuccessBg = Color(0xFFE7F7EF)
+    val StatusDanger = Color(0xFFEF4444)
+    val StatusDangerBg = Color(0xFFFDECEC)
+    val StatusWarn = Color(0xFFF59E0B)
+    val StatusWarnBg = Color(0xFFFFF4E2)
 
-    // Brand · Social
+    /** 카카오 브랜드 색. 카카오가 정한 값이라 팔레트 교체와 무관하게 고정이다. */
     val Kakao = Color(0xFFFEE500)
     val KakaoLabel = Color(0xFF191919)
+
+    // ---- 이전 팔레트(Tailwind 계열) ----
+    // challenge·profile 화면이 아직 81곳에서 직접 참조한다. 모듈별로 시맨틱 토큰 경유로 옮기면서
+    // 지운다(#233). 새 코드에서는 쓰지 않는다.
+    val Indigo500 = Color(0xFF6366F1)
+    val Indigo50 = Color(0xFFEEF2FF)
+    val Violet500 = Color(0xFF8B5CF6)
+    val Violet400 = Color(0xFFA78BFA)
+    val Violet100 = Color(0xFFF5F3FF)
+    val Slate900 = Color(0xFF0F172A)
+    val Slate700 = Color(0xFF334155)
+    val Slate500 = Color(0xFF64748B)
+    val Slate400 = Color(0xFF94A3B8)
+    val Green500 = Color(0xFF10B981)
+    val Amber500 = Color(0xFFF59E0B)
+    val Rose500 = Color(0xFFF43F5E)
+    val Blue500 = Color(0xFF3B82F6)
+    val White = Color(0xFFFFFFFF)
 }
 
 /**
- * 시맨틱 컬러 토큰. Light / Dark 두 스킴을 모두 제공한다(Design System v2.0 "Light + Dark Ready").
+ * 시맨틱 컬러 토큰.
+ *
+ * 라이트 한 벌뿐이다 — Figma 에 다크 토큰이 없다. 예전엔 다크 스킴을 따로 들고 있었는데 근거 없는
+ * 값이라, 다크모드 기기에서 디자인과 다른 화면이 나갔다.
  */
 data class RuleUpColorScheme(
     val brand: Color,
@@ -70,88 +79,53 @@ data class RuleUpColorScheme(
     val onSuccess: Color,
     val successContainer: Color,
     val danger: Color,
+    val dangerContainer: Color,
+    val warning: Color,
     val warningContainer: Color,
-    val isDark: Boolean,
 )
 
+/**
+ * Figma 변수 → 시맨틱 토큰 매핑.
+ *
+ * [brandStrong]·[surfaceVariant]·[borderStrong]·[textSlate]·[onSuccess] 는 Figma 에 대응하는
+ * 변수가 없다. 화면 84곳이 쓰고 있어 지우면 한 번에 다 고쳐야 하므로 **가장 가까운 Figma 토큰으로
+ * 재지정**해 둔다. 강조 단계가 하나씩 줄지만, 디자인에 없는 색이 화면에 나가는 것보다 낫다.
+ */
 val LightRuleUpColors =
     RuleUpColorScheme(
-        brand = RuleUpPalette.Indigo500,
-        brandStrong = RuleUpPalette.Indigo600,
-        brandAccent = RuleUpPalette.Violet500,
-        brandSoft = RuleUpPalette.Indigo50,
-        background = RuleUpPalette.Slate50,
-        surface = RuleUpPalette.White,
-        surfaceVariant = RuleUpPalette.Slate100,
-        border = RuleUpPalette.Slate200,
-        borderStrong = RuleUpPalette.Slate300,
-        textPrimary = RuleUpPalette.Slate900,
-        textSecondary = RuleUpPalette.Slate500,
-        textMuted = RuleUpPalette.Slate400,
-        textSlate = RuleUpPalette.Slate600,
-        success = RuleUpPalette.Green500,
-        onSuccess = RuleUpPalette.Green700,
-        successContainer = RuleUpPalette.GreenTint,
-        danger = RuleUpPalette.Rose500,
-        warningContainer = RuleUpPalette.AmberTint,
-        isDark = false,
+        brand = RuleUpPalette.Primary600,
+        // Figma 에 별도 강조 단계가 없다.
+        brandStrong = RuleUpPalette.Primary600,
+        brandAccent = RuleUpPalette.Primary300,
+        brandSoft = RuleUpPalette.Primary50,
+        background = RuleUpPalette.BgCanvas,
+        surface = RuleUpPalette.BgSurface,
+        // Figma 에 surface 변형이 없어 캔버스 색으로 떨어뜨린다.
+        surfaceVariant = RuleUpPalette.BgCanvas,
+        border = RuleUpPalette.BorderLine,
+        // Figma 에 선 굵기 구분이 없다.
+        borderStrong = RuleUpPalette.BorderLine,
+        textPrimary = RuleUpPalette.TextInk,
+        textSecondary = RuleUpPalette.TextSub,
+        textMuted = RuleUpPalette.TextFaint,
+        // Figma 는 본문 보조가 한 단계뿐이다.
+        textSlate = RuleUpPalette.TextSub,
+        success = RuleUpPalette.StatusSuccess,
+        // Figma 의 StatusChip/성공 은 성공 배경 위에 같은 성공색 텍스트를 얹는다.
+        onSuccess = RuleUpPalette.StatusSuccess,
+        successContainer = RuleUpPalette.StatusSuccessBg,
+        danger = RuleUpPalette.StatusDanger,
+        dangerContainer = RuleUpPalette.StatusDangerBg,
+        warning = RuleUpPalette.StatusWarn,
+        warningContainer = RuleUpPalette.StatusWarnBg,
     )
 
 /**
- * Light 스킴 시맨틱 색을 정적으로 노출하는 편의 객체.
+ * `@Composable` 컨텍스트가 아닌 곳(데이터 상수 등)에서 쓰는 정적 접근자.
  *
- * `@Composable` 컨텍스트가 아닌 곳(데이터 상수 등)이나 단순 화면에서 가볍게 쓰기 위한 용도.
- * 테마 전환(다크 모드)이 필요한 곳에서는 [RuleUpTheme.colors] 를 사용한다.
+ * 컴포저블 안에서는 [RuleUpTheme.colors] 를 쓴다.
  */
 object RuleUpColors {
-    val Indigo = RuleUpPalette.Indigo500
-    val Indigo700 = RuleUpPalette.Indigo600
-    val Purple = RuleUpPalette.Violet500
-    val PurpleLight = RuleUpPalette.Violet400
-
-    val Background = RuleUpPalette.Slate50
-    val Surface = RuleUpPalette.White
-
-    val TextPrimary = RuleUpPalette.Slate900
-    val TextSecondary = RuleUpPalette.Slate500
-    val TextMuted = RuleUpPalette.Slate400
-    val TextSlate = RuleUpPalette.Slate600
-
-    val Border = RuleUpPalette.Slate200
-    val BorderLight = RuleUpPalette.Slate300
-
-    val IndigoTint = RuleUpPalette.Indigo50
-    val PurpleTint = RuleUpPalette.Violet100
-    val GreenTint = RuleUpPalette.GreenTint
-    val AmberTint = RuleUpPalette.AmberTint
-
-    val Success = RuleUpPalette.Green500
-    val SuccessText = RuleUpPalette.Green700
-    val Danger = RuleUpPalette.Rose500
-
     val Kakao = RuleUpPalette.Kakao
     val KakaoText = RuleUpPalette.KakaoLabel
 }
-
-val DarkRuleUpColors =
-    RuleUpColorScheme(
-        brand = RuleUpPalette.Indigo500,
-        brandStrong = RuleUpPalette.Violet400,
-        brandAccent = RuleUpPalette.Violet400,
-        brandSoft = Color(0xFF1E1B4B),
-        background = Color(0xFF0B1120),
-        surface = Color(0xFF111827),
-        surfaceVariant = Color(0xFF1E293B),
-        border = Color(0xFF1E293B),
-        borderStrong = Color(0xFF334155),
-        textPrimary = Color(0xFFF8FAFC),
-        textSecondary = RuleUpPalette.Slate400,
-        textMuted = RuleUpPalette.Slate500,
-        textSlate = RuleUpPalette.Slate300,
-        success = RuleUpPalette.Green500,
-        onSuccess = Color(0xFF6EE7B7),
-        successContainer = Color(0xFF064E3B),
-        danger = RuleUpPalette.Rose500,
-        warningContainer = Color(0xFF422006),
-        isDark = true,
-    )

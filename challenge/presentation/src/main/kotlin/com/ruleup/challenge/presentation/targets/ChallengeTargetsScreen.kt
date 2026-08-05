@@ -55,7 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsEffect
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsIntent
 import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsViewModel
-import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -230,7 +230,7 @@ fun ChallengeTargetsScreen(
                     .navigationBarsPadding()
                     .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            PrimaryGradientButton(
+            RuleUpPrimaryButton(
                 text = if (state.isSaving) "등록 중…" else "등록 완료 (${selectedApps.size})",
                 onClick = {
                     viewModel.onIntent(

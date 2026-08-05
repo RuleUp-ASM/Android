@@ -20,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 /** 챌린지 생성 화면 상단 바: 뒤로(‹) + 제목 (+ 우측 보조 액션). */
@@ -138,7 +137,7 @@ fun GradientSwitch(
                 .clip(RoundedCornerShape(13.dp))
                 .let { base ->
                     if (checked) {
-                        base.background(RuleUpGradients.Button)
+                        base.background(RuleUpTheme.colors.brand)
                     } else {
                         base.background(RuleUpTheme.colors.borderStrong)
                     }

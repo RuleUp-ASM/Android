@@ -66,7 +66,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
-import com.ruleup.designsystem.component.PrimaryGradientButton
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -319,7 +319,7 @@ private fun ChallengeDetailContent(
                         .navigationBarsPadding()
                         .padding(horizontal = 20.dp, vertical = 12.dp),
             ) {
-                PrimaryGradientButton(
+                RuleUpPrimaryButton(
                     text = ctaLabel,
                     onClick = onCta,
                 )
@@ -549,7 +549,7 @@ private fun PermissionBottomSheet(
                 PermissionRow(label = permissionLabel(token))
             }
             Spacer(Modifier.height(20.dp))
-            PrimaryGradientButton(
+            RuleUpPrimaryButton(
                 text = "허용하기",
                 onClick = onAllow,
             )

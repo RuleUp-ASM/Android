@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.presentation.create.CalendarCell
 import com.ruleup.challenge.presentation.create.ChallengeDates
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 private val durationPresets = listOf(7, 14, 28, 90)
@@ -179,7 +178,7 @@ private fun PresetChips(
                         .clip(RoundedCornerShape(16.dp))
                         .let { base ->
                             if (selected) {
-                                base.background(RuleUpGradients.Button)
+                                base.background(RuleUpTheme.colors.brand)
                             } else {
                                 base
                                     .background(RuleUpTheme.colors.surface)
@@ -390,7 +389,7 @@ private fun DayNumber(
                 Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(18.dp))
-                    .background(RuleUpGradients.Button),
+                    .background(RuleUpTheme.colors.brand),
             contentAlignment = Alignment.Center,
         ) {
             Text("${cell.day}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -437,7 +436,7 @@ private fun PeriodSummary(
                 Modifier
                     .height(28.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(RuleUpGradients.Button)
+                    .background(RuleUpTheme.colors.brand)
                     .padding(horizontal = 12.dp),
             contentAlignment = Alignment.Center,
         ) {
@@ -505,7 +504,7 @@ private fun SheetButtons(
                     .weight(2f)
                     .height(52.dp)
                     .clip(RuleUpTheme.shapes.large)
-                    .background(RuleUpGradients.Button)
+                    .background(RuleUpTheme.colors.brand)
                     .singleClickable(onClick = onConfirm),
             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,

@@ -22,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.onboarding.domain.observability.OnboardingStep
@@ -156,7 +155,7 @@ private fun CheckCircle(checked: Boolean) {
     Box(
         modifier =
             if (checked) {
-                base.background(RuleUpGradients.Button)
+                base.background(RuleUpTheme.colors.brand)
             } else {
                 base
                     .background(RuleUpTheme.colors.surfaceVariant)
@@ -192,5 +191,5 @@ private fun TermsScreenPreview() {
 @Preview
 @Composable
 private fun AgreementScreenDarkPreview() {
-    OnboardingFlowPreview(darkTheme = true) { TermsContent(onIntent = {}) }
+    OnboardingFlowPreview { TermsContent(onIntent = {}) }
 }
