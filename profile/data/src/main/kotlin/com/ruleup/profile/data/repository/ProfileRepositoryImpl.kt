@@ -10,6 +10,7 @@ import com.ruleup.profile.data.dto.NicknameCheckRequest
 import com.ruleup.profile.data.dto.UpdateProfileRequest
 import com.ruleup.profile.data.dto.toDomain
 import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.profile.domain.repository.ProfileRepository
@@ -24,6 +25,8 @@ class ProfileRepositoryImpl
         private val api: ProfileApi,
         private val imageReader: ImageReader,
     ) : ProfileRepository {
+        override suspend fun getMyProfile(): MyProfile = api.getMyProfile().getOrThrow().toDomain()
+
         override suspend fun checkNickname(nickname: String): NicknameCheck =
             api
                 .checkNickname(NicknameCheckRequest(nickname = nickname))
@@ -60,8 +63,8 @@ class ProfileRepositoryImpl
             return api
                 .uploadProfileImage(part)
                 .getOrThrow()
-                .profileImageUrl
-                .requireField("profileImageUrl")
+                .imageUrl
+                .requireField("imageUrl")
         }
 
         override suspend fun deleteProfileImage() {

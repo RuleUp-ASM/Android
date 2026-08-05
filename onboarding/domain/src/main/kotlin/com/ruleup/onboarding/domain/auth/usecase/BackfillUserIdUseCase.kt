@@ -3,13 +3,13 @@ package com.ruleup.onboarding.domain.auth.usecase
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
-import com.ruleup.profile.domain.repository.ProfileRepository
+import com.ruleup.profile.domain.usecase.GetMyProfileUseCase
 import javax.inject.Inject
 
 private const val TAG = "SessionBootstrap"
 
 /**
- * userId 가 비어 있는 세션을 프로필 조회로 메운다.
+ * userId 가 비어 있는 세션을 내 프로필 조회(GET /users/me)로 메운다.
  *
  * 토큰 갱신 응답(`TokenRefreshResponse`)에는 userId 가 없다. 그래서 userId 저장 이전에 만들어진
  * 세션은 자동 로그인으로 복구돼도 계속 비어 있고, 사용자 귀속이 필요한 쪽(관측 식별자 등)이
@@ -24,13 +24,13 @@ class BackfillUserIdUseCase
     @Inject
     constructor(
         private val tokenRepository: TokenRepository,
-        private val profileRepository: ProfileRepository,
+        private val getMyProfileUseCase: GetMyProfileUseCase,
         private val observability: Observability,
     ) {
         suspend operator fun invoke() {
             if (tokenRepository.getUserId() != null) return
-            runCatching { profileRepository.getProfile() }
-                .onSuccess { tokenRepository.saveUserId(it.id) }
+            runCatching { getMyProfileUseCase() }
+                .onSuccess { tokenRepository.saveUserId(it.user.id) }
                 .onFailure { observability.w(TAG, it) { "userId 백필 실패 — 다음 실행에서 재시도" } }
         }
     }

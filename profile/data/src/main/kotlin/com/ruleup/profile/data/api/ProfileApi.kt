@@ -3,6 +3,7 @@ package com.ruleup.profile.data.api
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import com.ruleup.profile.data.dto.CategoriesResponse
+import com.ruleup.profile.data.dto.MyProfileResponse
 import com.ruleup.profile.data.dto.NicknameCheckRequest
 import com.ruleup.profile.data.dto.NicknameCheckResponse
 import com.ruleup.profile.data.dto.ProfileImageResponse
@@ -28,7 +29,16 @@ interface ProfileApi {
     @GET("v1/categories")
     suspend fun getCategories(): BaseResponse<CategoriesResponse>
 
-    // 4.8 내 프로필 조회
+    /**
+     * 내 프로필 조회. 로그인 응답과 같은 user 스키마에 생일·성별·약관 동의가 더 붙는다.
+     *
+     * 아래 [getProfile] 은 구 엔드포인트라 응답 스키마가 다르다. 마이페이지가 아직 매너 온도·닉네임
+     * 변경 이력을 쓰고 있어 함께 남긴다.
+     */
+    @GET("v1/users/me")
+    suspend fun getMyProfile(): BaseResponse<MyProfileResponse>
+
+    // 4.8 내 프로필 조회 (레거시)
     @GET("v1/profile")
     suspend fun getProfile(): BaseResponse<ProfileResponse>
 
@@ -38,9 +48,9 @@ interface ProfileApi {
         @Body request: UpdateProfileRequest,
     ): BaseResponse<ProfileResponse>
 
-    // 4.10 프로필 사진 업로드 (multipart: image)
+    // 프로필 사진 업로드 + 등록. 가입 직후와 프로필 편집이 같이 쓴다(accessToken 필요).
     @Multipart
-    @POST("v1/profile/image")
+    @POST("v1/users/me/profile-image")
     suspend fun uploadProfileImage(
         @Part image: MultipartBody.Part,
     ): BaseResponse<ProfileImageResponse>
