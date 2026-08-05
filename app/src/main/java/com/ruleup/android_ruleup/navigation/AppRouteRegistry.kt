@@ -24,21 +24,21 @@ import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.home.presentation.HomeScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
-import com.ruleup.onboarding.domain.navigation.ProfileAgreementPage
-import com.ruleup.onboarding.domain.navigation.ProfileBasicInfoPage
-import com.ruleup.onboarding.domain.navigation.ProfileIconPage
-import com.ruleup.onboarding.domain.navigation.ProfileInterestPage
-import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
-import com.ruleup.onboarding.domain.navigation.ProfilePermissionPage
+import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
+import com.ruleup.onboarding.domain.navigation.OnboardingGenderPage
+import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
+import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
+import com.ruleup.onboarding.domain.navigation.OnboardingPhotoPage
+import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
-import com.ruleup.onboarding.presentation.profile.ProfileAgreementScreen
-import com.ruleup.onboarding.presentation.profile.ProfileBasicInfoScreen
-import com.ruleup.onboarding.presentation.profile.ProfileIconScreen
-import com.ruleup.onboarding.presentation.profile.ProfileInterestScreen
-import com.ruleup.onboarding.presentation.profile.ProfileNicknameScreen
-import com.ruleup.onboarding.presentation.profile.ProfilePermissionScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingBirthScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingGenderScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingInterestScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingNicknameScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
 import com.ruleup.profile.domain.navigation.FriendInvitePage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
@@ -255,71 +255,63 @@ val appRoutes: List<AppRoute> =
                 )
             },
         ),
+        // 온보딩 6단계. syntheticStack 은 딥링크·프로세스 복구로 중간 단계에 바로 들어왔을 때
+        // 뒤로가기가 앞 단계를 거치도록 스택을 세워 준다.
         AppRoute(
-            path = ProfileIconPage.PATH,
-            render = { args -> ProfileIconScreen(signupToken = args[ProfileIconPage.ARG_SIGNUP_TOKEN].orEmpty()) },
+            path = OnboardingNicknamePage.PATH,
+            render = { args -> OnboardingNicknameScreen(signupToken = args[OnboardingNicknamePage.ARG_SIGNUP_TOKEN].orEmpty()) },
         ),
         AppRoute(
-            path = ProfileNicknamePage.PATH,
-            syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                )
-            },
-            render = { ProfileNicknameScreen() },
+            path = OnboardingInterestPage.PATH,
+            syntheticStack = { args -> onboardingStack(args, OnboardingInterestPage.PATH) },
+            render = { OnboardingInterestScreen() },
         ),
         AppRoute(
-            path = ProfileInterestPage.PATH,
-            syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
-                )
-            },
-            render = { ProfileInterestScreen() },
+            path = OnboardingBirthPage.PATH,
+            syntheticStack = { args -> onboardingStack(args, OnboardingInterestPage.PATH, OnboardingBirthPage.PATH) },
+            render = { OnboardingBirthScreen() },
         ),
         AppRoute(
-            path = ProfilePermissionPage.PATH,
+            path = OnboardingGenderPage.PATH,
             syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
-                    GenericNavKey(ProfilePermissionPage.PATH),
-                )
+                onboardingStack(args, OnboardingInterestPage.PATH, OnboardingBirthPage.PATH, OnboardingGenderPage.PATH)
             },
-            render = { ProfilePermissionScreen() },
+            render = { OnboardingGenderScreen() },
         ),
         AppRoute(
-            path = ProfileBasicInfoPage.PATH,
+            path = OnboardingPhotoPage.PATH,
             syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
-                    GenericNavKey(ProfilePermissionPage.PATH),
-                    GenericNavKey(ProfileBasicInfoPage.PATH),
+                onboardingStack(
+                    args,
+                    OnboardingInterestPage.PATH,
+                    OnboardingBirthPage.PATH,
+                    OnboardingGenderPage.PATH,
+                    OnboardingPhotoPage.PATH,
                 )
             },
-            render = { ProfileBasicInfoScreen() },
+            render = { OnboardingPhotoScreen() },
         ),
         AppRoute(
-            path = ProfileAgreementPage.PATH,
+            path = OnboardingTermsPage.PATH,
             syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
-                    GenericNavKey(ProfilePermissionPage.PATH),
-                    GenericNavKey(ProfileBasicInfoPage.PATH),
-                    GenericNavKey(ProfileAgreementPage.PATH),
+                onboardingStack(
+                    args,
+                    OnboardingInterestPage.PATH,
+                    OnboardingBirthPage.PATH,
+                    OnboardingGenderPage.PATH,
+                    OnboardingPhotoPage.PATH,
+                    OnboardingTermsPage.PATH,
                 )
             },
-            render = { ProfileAgreementScreen() },
+            render = { OnboardingTermsScreen() },
         ),
     )
+
+/** 1단계(가입 토큰을 실은 닉네임)를 뿌리로, 뒤이은 단계를 순서대로 쌓는다. */
+private fun onboardingStack(
+    args: Map<String, String>,
+    vararg paths: String,
+): List<GenericNavKey> = listOf(GenericNavKey(OnboardingNicknamePage.PATH, args)) + paths.map { GenericNavKey(it) }
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 

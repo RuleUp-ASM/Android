@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile
+package com.ruleup.onboarding.presentation.onboarding
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity

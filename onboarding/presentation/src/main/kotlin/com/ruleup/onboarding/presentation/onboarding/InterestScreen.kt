@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile
+package com.ruleup.onboarding.presentation.onboarding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,27 +30,27 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.onboarding.domain.navigation.ProfilePermissionPage
-import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
-import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
-import com.ruleup.onboarding.presentation.profile.component.SectionHeader
-import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
+import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
+import com.ruleup.onboarding.presentation.component.OnboardingScaffold
+import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
+import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
+import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/** 03 · 관심 분야 (3/5). */
+/** 02 · 관심 분야. 0~6개이며 아무것도 안 고르고 넘어가는 것이 곧 건너뛰기다. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InterestContent(
-    onIntent: (ProfileIntent) -> Unit,
+    onIntent: (OnboardingIntent) -> Unit,
     modifier: Modifier = Modifier,
     selected: List<Category> = listOf(Category.EXERCISE),
 ) {
     val nav = LocalNavigationHelper.current
-    ProfileSetupScaffold(
+    OnboardingScaffold(
         step = 2,
         buttonText = "다음",
         modifier = modifier,
-        onNext = { nav.navigateTo(ProfilePermissionPage) },
+        onNext = { nav.navigateTo(OnboardingBirthPage) },
         onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
@@ -70,7 +70,7 @@ fun InterestContent(
                 InterestChip(
                     interest = interest,
                     selected = interest in selected,
-                    onClick = { onIntent(ProfileIntent.SetProfileInterest(it)) },
+                    onClick = { onIntent(OnboardingIntent.SetProfileInterest(it)) },
                 )
             }
         }
@@ -184,5 +184,5 @@ private fun InfoRow(text: String) {
 @Preview
 @Composable
 private fun InterestScreenPreview() {
-    ProfileFlowPreview { InterestContent(onIntent = {}) }
+    OnboardingFlowPreview { InterestContent(onIntent = {}) }
 }

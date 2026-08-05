@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile.viewmodel
+package com.ruleup.onboarding.presentation.onboarding.viewmodel
 
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.AgreementType
@@ -6,41 +6,47 @@ import com.ruleup.domain.entity.user.Gender
 import com.ruleup.ui.mvi.ReducerEvent
 import java.time.LocalDate
 
-sealed interface ProfileReducerEvent : ReducerEvent {
+sealed interface OnboardingReducerEvent : ReducerEvent {
     data class SetSignupToken(
         val token: String,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
 
     data class NicknameEntered(
         val nickname: String,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
+
+    /** 디바운스된 확인 결과. [available] 이 null 이면 확인 전 상태로 되돌린다. */
+    data class NicknameChecked(
+        val available: Boolean?,
+        val message: String?,
+    ) : OnboardingReducerEvent
 
     data class InterestsSelected(
         val interest: Category,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
 
     data class ProfileImageSelected(
         val uri: String?,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
 
     /** 검증까지 마친 생일 입력. [birthDate] 가 null 이면 아직 유효하지 않다. */
     data class BirthDateEntered(
         val digits: String,
         val birthDate: LocalDate?,
         val error: String?,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
 
     data class GenderSelected(
         val gender: Gender,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
 
     data class AgreementToggled(
         val type: AgreementType,
-    ) : ProfileReducerEvent
+    ) : OnboardingReducerEvent
 
-    data object AllAgreementsToggled : ProfileReducerEvent
+    data object AllAgreementsToggled : OnboardingReducerEvent
 
-    data object Submitting : ProfileReducerEvent
+    data object Submitting : OnboardingReducerEvent
 
-    data object SubmitFailed : ProfileReducerEvent
+    data object SubmitFailed : OnboardingReducerEvent
 }

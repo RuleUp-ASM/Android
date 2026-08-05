@@ -10,8 +10,7 @@ import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.entity.LoginOutcome
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.navigation.HomePage
-import com.ruleup.onboarding.domain.navigation.ProfileIconPage
-import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
+import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,11 +95,11 @@ class LoginViewModel
                                 iconType = IconType.ERROR,
                                 messageText = "'${result.currentNickname}' 을(를) 다른 분이 쓰고 있어요. 새 닉네임을 정해주세요",
                             )
-                            navigationHelper.navigateTo(ProfileNicknamePage)
+                            navigationHelper.navigateTo(OnboardingNicknamePage)
                         }
 
                         is LoginOutcome.GoSignup ->
-                            navigationHelper.navigateByRoute(ProfileIconPage.routeWithToken(result.signupToken))
+                            navigationHelper.navigateByRoute(OnboardingNicknamePage.routeWithToken(result.signupToken))
                     }
                 }.onFailure { error ->
                     dispatch(LoginReducerEvent.LoginFinished)

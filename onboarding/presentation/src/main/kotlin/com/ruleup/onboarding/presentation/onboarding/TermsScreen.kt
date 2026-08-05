@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.presentation.profile
+package com.ruleup.onboarding.presentation.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,13 +25,13 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
-import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
-import com.ruleup.onboarding.presentation.profile.component.InfoBox
-import com.ruleup.onboarding.presentation.profile.component.ProfileFlowPreview
-import com.ruleup.onboarding.presentation.profile.component.RequirementBadge
-import com.ruleup.onboarding.presentation.profile.component.RowDivider
-import com.ruleup.onboarding.presentation.profile.component.SectionHeader
-import com.ruleup.onboarding.presentation.profile.viewmodel.ProfileIntent
+import com.ruleup.onboarding.presentation.component.OnboardingScaffold
+import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
+import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
+import com.ruleup.onboarding.presentation.onboarding.component.RequirementBadge
+import com.ruleup.onboarding.presentation.onboarding.component.RowDivider
+import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
+import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 /**
@@ -41,21 +41,24 @@ import com.ruleup.ui.helper.LocalNavigationHelper
  * 남겨야 약관이 개정됐을 때 재동의 판정을 할 수 있다.
  */
 @Composable
-fun AgreementsContent(
-    onIntent: (ProfileIntent) -> Unit,
+fun TermsContent(
+    onIntent: (OnboardingIntent) -> Unit,
     modifier: Modifier = Modifier,
     checked: Set<AgreementType> = emptySet(),
+    submitting: Boolean = false,
 ) {
     val nav = LocalNavigationHelper.current
-    ProfileSetupScaffold(
-        step = 5,
-        buttonText = "RuleUp 시작하기",
+    OnboardingScaffold(
+        step = 6,
+        buttonText = "시작하기",
         modifier = modifier,
-        onNext = { onIntent(ProfileIntent.Submit) },
+        // 필수 3종을 다 채우기 전엔 눌러도 서버가 REQUIRED_AGREEMENT_MISSING 으로 튕긴다.
+        nextEnabled = AgreementType.REQUIRED.all { it in checked } && !submitting,
+        onNext = { onIntent(OnboardingIntent.Submit) },
         onBack = { nav.navigateToBack() },
     ) {
         SectionHeader(
-            title = "약관에 동의해주세요",
+            title = "마지막이에요",
             subtitle = "서비스 이용을 위해 동의가 필요해요",
             titleSize = 22,
         )
@@ -70,7 +73,7 @@ fun AgreementsContent(
                     .clip(RuleUpTheme.shapes.card)
                     .background(RuleUpTheme.colors.brandSoft)
                     .singleClickable(globalGuard = false) {
-                        onIntent(ProfileIntent.ToggleAllAgreements)
+                        onIntent(OnboardingIntent.ToggleAllAgreements)
                     }.padding(horizontal = 14.dp),
         ) {
             AgreementRow(
@@ -96,7 +99,7 @@ fun AgreementsContent(
                     required = type.required,
                     modifier =
                         Modifier.singleClickable(globalGuard = false) {
-                            onIntent(ProfileIntent.ToggleAgreement(type))
+                            onIntent(OnboardingIntent.ToggleAgreement(type))
                         },
                 )
                 if (index != AgreementType.entries.lastIndex) RowDivider()
@@ -179,14 +182,14 @@ private fun AgreementType.label(): String =
 
 @Preview
 @Composable
-private fun AgreementScreenPreview() {
-    ProfileFlowPreview {
-        AgreementsContent(onIntent = {})
+private fun TermsScreenPreview() {
+    OnboardingFlowPreview {
+        TermsContent(onIntent = {})
     }
 }
 
 @Preview
 @Composable
 private fun AgreementScreenDarkPreview() {
-    ProfileFlowPreview(darkTheme = true) { AgreementsContent(onIntent = {}) }
+    OnboardingFlowPreview(darkTheme = true) { TermsContent(onIntent = {}) }
 }

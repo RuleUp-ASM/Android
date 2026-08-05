@@ -16,12 +16,14 @@ object AppRoutes {
     // onboarding
     const val SPLASH = "splash"
     const val LOGIN = "login"
-    const val PROFILE_ICON = "profile/icon"
-    const val PROFILE_NICKNAME = "profile/nickname"
-    const val PROFILE_INTEREST = "profile/interest"
-    const val PROFILE_PERMISSION = "profile/permission"
-    const val PROFILE_BASIC_INFO = "profile/basic-info"
-    const val PROFILE_AGREEMENT = "profile/agreement"
+
+    // 가입 온보딩 6단계. 순서가 계약이다 — 서버가 생일·성별을 필수로 받고 약관이 마지막이다.
+    const val ONBOARDING_NICKNAME = "onboarding/nickname"
+    const val ONBOARDING_INTEREST = "onboarding/interest"
+    const val ONBOARDING_BIRTH = "onboarding/birth"
+    const val ONBOARDING_GENDER = "onboarding/gender"
+    const val ONBOARDING_PHOTO = "onboarding/photo"
+    const val ONBOARDING_TERMS = "onboarding/terms"
     const val HOME = "home" // 진입점
 
     // challenge
