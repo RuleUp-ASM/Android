@@ -22,7 +22,9 @@ class AutoLoginUseCase
             return runCatching { authRepository.refreshToken(refreshToken) }
                 .fold(
                     onSuccess = {
-                        tokenRepository.saveTokens(it)
+                        // 갱신 응답이 userId 를 함께 주므로 여기서 세션이 완성된다 — 예전엔 이 값이
+                        // 비어 프로필 조회로 따로 메워야 했다.
+                        tokenRepository.saveTokens(it.token, it.userId)
                         true
                     },
                     onFailure = {

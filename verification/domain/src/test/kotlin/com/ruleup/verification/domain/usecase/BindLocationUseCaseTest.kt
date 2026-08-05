@@ -96,15 +96,16 @@ class BindLocationUseCaseTest {
             userId: String,
         ) = Unit
 
-        override suspend fun saveTokens(token: Token) = Unit
+        override suspend fun saveTokens(
+            token: Token,
+            userId: String?,
+        ) = Unit
 
         override suspend fun getAccessToken(): String? = null
 
         override fun cachedAccessToken(): String? = null
 
         override suspend fun getRefreshToken(): String? = null
-
-        override suspend fun saveUserId(userId: String) = Unit
 
         override suspend fun getUserId(): String? = storedUserId
 

@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.data.auth.repository
 
-import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
 import com.ruleup.onboarding.data.auth.api.AuthApi
@@ -10,8 +10,8 @@ import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.toAuthSession
 import com.ruleup.onboarding.data.auth.dto.toOAuthResult
+import com.ruleup.onboarding.data.auth.dto.toRefreshedSession
 import com.ruleup.onboarding.data.auth.dto.toRequest
-import com.ruleup.onboarding.data.auth.dto.toToken
 import com.ruleup.onboarding.data.auth.mapAuthFailure
 import com.ruleup.onboarding.data.device.DeviceInfoProvider
 import com.ruleup.onboarding.domain.auth.model.SignupForm
@@ -76,11 +76,11 @@ class AuthRepositoryImpl
                     .toAuthSession()
             }
 
-        override suspend fun refreshToken(refreshToken: String): Token =
+        override suspend fun refreshToken(refreshToken: String): RefreshedSession =
             api
                 .refreshToken(TokenRefreshRequest(refreshToken = refreshToken))
                 .getOrThrow()
-                .toToken()
+                .toRefreshedSession()
 
         override suspend fun logout(refreshToken: String) {
             api.logout(LogoutRequest(refreshToken = refreshToken)).throwOnError()

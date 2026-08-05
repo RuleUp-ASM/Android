@@ -3,7 +3,6 @@ package com.ruleup.onboarding.presentation.splash
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.singleClickable
@@ -192,11 +192,14 @@ private fun updateMessage(minAppVersion: String?): String =
 
 /** Play 스토어 상세로 이동. 스토어 앱이 없으면 웹으로 폴백. */
 private fun Context.openPlayStore() {
-    val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName"))
+    val market = Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri())
     runCatching { startActivity(market) }.onFailure {
         if (it is ActivityNotFoundException) {
             startActivity(
-                Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName")),
+                Intent(
+                    Intent.ACTION_VIEW,
+                    "https://play.google.com/store/apps/details?id=$packageName".toUri(),
+                ),
             )
         }
     }

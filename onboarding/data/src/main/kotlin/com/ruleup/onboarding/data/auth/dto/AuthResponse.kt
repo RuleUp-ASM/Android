@@ -7,6 +7,7 @@ import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.network.dto.requireField
 import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.OAuthProfile
@@ -108,6 +109,9 @@ data class TokenRefreshResponse(
     val tokenType: String? = null,
     @SerialName("expiresIn")
     val expiresIn: Int? = null,
+    // 갱신 응답도 사용자 식별자를 함께 준다. 없으면 호출부가 기존 값을 유지한다.
+    @SerialName("userId")
+    val userId: String? = null,
 )
 
 internal fun SocialLoginAuthResponse.toOAuthResult(): OAuthResult {
@@ -183,12 +187,16 @@ internal fun SignUpResponse.toAuthSession(): AuthSession =
         user = user.requireField("user").toDomain(),
     )
 
-internal fun TokenRefreshResponse.toToken(): Token =
-    Token(
-        accessToken = accessToken.requireField("accessToken"),
-        refreshToken = refreshToken.requireField("refreshToken"),
-        tokenType = tokenType ?: DEFAULT_TOKEN_TYPE,
-        expiresInSeconds = expiresIn.requireField("expiresIn"),
+internal fun TokenRefreshResponse.toRefreshedSession(): RefreshedSession =
+    RefreshedSession(
+        token =
+            Token(
+                accessToken = accessToken.requireField("accessToken"),
+                refreshToken = refreshToken.requireField("refreshToken"),
+                tokenType = tokenType ?: DEFAULT_TOKEN_TYPE,
+                expiresInSeconds = expiresIn.requireField("expiresIn"),
+            ),
+        userId = userId?.takeIf { it.isNotBlank() },
     )
 
 private const val DEFAULT_TOKEN_TYPE = "Bearer"

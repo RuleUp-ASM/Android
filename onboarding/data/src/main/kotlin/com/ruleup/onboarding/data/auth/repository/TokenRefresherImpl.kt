@@ -1,12 +1,12 @@
 package com.ruleup.onboarding.data.auth.repository
 
-import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.domain.token.TokenRefresher
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
-import com.ruleup.onboarding.data.auth.dto.toToken
+import com.ruleup.onboarding.data.auth.dto.toRefreshedSession
 import retrofit2.HttpException
 import javax.inject.Inject
 
@@ -22,12 +22,12 @@ class TokenRefresherImpl
     constructor(
         private val api: AuthApi,
     ) : TokenRefresher {
-        override suspend fun refresh(refreshToken: String): Token? =
+        override suspend fun refresh(refreshToken: String): RefreshedSession? =
             try {
                 api
                     .refreshToken(TokenRefreshRequest(refreshToken = refreshToken))
                     .getOrThrow()
-                    .toToken()
+                    .toRefreshedSession()
             } catch (e: HttpException) {
                 if (e.code() == HTTP_UNAUTHORIZED) null else throw e
             } catch (e: ApiException) {

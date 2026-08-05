@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth.repository
 
-import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.DeviceIdentity
@@ -31,8 +31,13 @@ interface AuthRepository {
         device: DeviceIdentity,
     ): AuthSession
 
-    /** 앱 토큰 재발급(회전). */
-    suspend fun refreshToken(refreshToken: String): Token
+    /**
+     * 앱 토큰 재발급(회전).
+     *
+     * 응답에 userId 가 함께 오므로 갱신만으로 세션이 완성된다 - 예전엔 이 값이 없어 프로필 조회로
+     * 따로 메워야 했다.
+     */
+    suspend fun refreshToken(refreshToken: String): RefreshedSession
 
     /** 현재 기기 refreshToken revoke. */
     suspend fun logout(refreshToken: String)

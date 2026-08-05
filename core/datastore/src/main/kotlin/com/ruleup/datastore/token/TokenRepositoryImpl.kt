@@ -60,8 +60,8 @@ class TokenRepositoryImpl
         override val isLoggedIn: Flow<Boolean> =
             preferences.map { prefs -> prefs[KEY_REFRESH] != null }
 
-        // userId 자체를 관찰한다. isLoggedIn 은 saveTokens 시점에 true 가 되지만 userId 는
-        // 그 다음 edit 에서 써지므로, 사용자 귀속이 필요한 쪽은 이 Flow 를 봐야 한다.
+        // userId 자체를 관찰한다. 로그인·갱신 모두 한 번의 edit 으로 함께 쓰지만, 갱신 응답이
+        // userId 를 안 주는 배포본에서는 비어 있을 수 있어 사용자 귀속이 필요한 쪽은 이 Flow 를 본다.
         override val userId: Flow<String?> =
             preferences.map { prefs -> prefs[KEY_USER_ID] }
 
@@ -79,11 +79,17 @@ class TokenRepositoryImpl
             }
         }
 
-        override suspend fun saveTokens(token: Token) {
+        override suspend fun saveTokens(
+            token: Token,
+            userId: String?,
+        ) {
             cachedAccess = token.accessToken
             write("saveTokens") { prefs ->
                 prefs[KEY_ACCESS] = token.accessToken
                 prefs[KEY_REFRESH] = token.refreshToken
+                // null 이면 건드리지 않는다. 갱신 응답이 userId 를 안 주는 배포본에서 덮어 비우면
+                // 사용자 귀속이 끊긴다.
+                userId?.let { prefs[KEY_USER_ID] = it }
             }
         }
 
@@ -96,10 +102,6 @@ class TokenRepositoryImpl
         override fun cachedAccessToken(): String? = cachedAccess
 
         override suspend fun getRefreshToken(): String? = preferences.map { it[KEY_REFRESH] }.first()
-
-        override suspend fun saveUserId(userId: String) {
-            write("saveUserId") { prefs -> prefs[KEY_USER_ID] = userId }
-        }
 
         override suspend fun getUserId(): String? = preferences.map { it[KEY_USER_ID] }.first()
 

@@ -77,8 +77,8 @@ class TokenAuthenticator
                     return null
                 }
 
-                runBlocking { tokenRepository.saveTokens(newToken) }
-                return response.retryWith(newToken.accessToken)
+                runBlocking { tokenRepository.saveTokens(newToken.token, newToken.userId) }
+                return response.retryWith(newToken.token.accessToken)
             }
         }
 
