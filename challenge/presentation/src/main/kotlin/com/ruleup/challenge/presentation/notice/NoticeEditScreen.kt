@@ -13,16 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -33,11 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.NoticePolicy
@@ -45,7 +38,7 @@ import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditViewModel
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
-import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
 
@@ -114,12 +107,7 @@ fun NoticeEditScreen(
                         value = state.title,
                         onValueChange = { viewModel.onIntent(NoticeEditIntent.ChangeTitle(it)) },
                         singleLine = true,
-                        textStyle =
-                            TextStyle(
-                                color = RuleUpTheme.colors.textPrimary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold,
-                            ),
+                        textStyle = RuleUpTheme.typography.section.copy(color = RuleUpTheme.colors.textPrimary),
                         cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                         modifier = Modifier.fillMaxWidth(),
                         decorationBox = { inner ->
@@ -127,7 +115,7 @@ fun NoticeEditScreen(
                                 Text(
                                     text = "예) 이번 주 인증 시간 변경 안내",
                                     color = RuleUpTheme.colors.textMuted,
-                                    fontSize = 15.sp,
+                                    style = RuleUpTheme.typography.labelMedium,
                                 )
                             }
                             inner()
@@ -139,12 +127,7 @@ fun NoticeEditScreen(
                     BasicTextField(
                         value = state.content,
                         onValueChange = { viewModel.onIntent(NoticeEditIntent.ChangeContent(it)) },
-                        textStyle =
-                            TextStyle(
-                                color = RuleUpTheme.colors.textPrimary,
-                                fontSize = 14.sp,
-                                lineHeight = 22.sp,
-                            ),
+                        textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),
                         cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                         modifier =
                             Modifier
@@ -155,7 +138,7 @@ fun NoticeEditScreen(
                                 Text(
                                     text = "멤버에게 전할 내용을 적어주세요",
                                     color = RuleUpTheme.colors.textMuted,
-                                    fontSize = 14.sp,
+                                    style = RuleUpTheme.typography.labelMedium,
                                 )
                             }
                             inner()
@@ -208,36 +191,7 @@ private fun NoticeEditTopBar(
     title: String,
     onBack: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = title,
-            color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
+    RuleUpTopBar(title = title, onBack = onBack)
 }
 
 @Composable
@@ -260,14 +214,13 @@ private fun EditFieldCard(
             Text(
                 text = label,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
             )
             Spacer(Modifier.weight(1f))
             Text(
                 text = counter,
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         content()
@@ -295,14 +248,13 @@ private fun OptionRow(
             Text(
                 text = title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.cardTitle,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = description,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
             )
         }
         Spacer(Modifier.width(12.dp))

@@ -20,9 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.Watcher
 import com.ruleup.challenge.domain.entity.WatcherStatus
 import com.ruleup.designsystem.R
@@ -61,28 +59,26 @@ internal fun WatcherSection(
             Text(
                 text = "감시자",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.cardTitle,
             )
             val activeCount = watchers.count { it.status != WatcherStatus.EXPIRED && it.status != WatcherStatus.REVOKED }
             Text(
                 // 무료 한도 대비 현재 유효(만료·해제 제외) 감시자 수. 구독(limit=null)이면 무제한
                 text = limit?.let { "$activeCount/$it" } ?: "${activeCount}명",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
         Text(
             text = "내가 루틴 인증에 실패하면 감시자에게 알림이 가요. 초대는 내 카카오톡으로 직접 보내요.",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
         if (watchers.isEmpty()) {
             Text(
                 text = "아직 감시자가 없어요",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
                 modifier = Modifier.padding(vertical = 4.dp),
             )
         } else {
@@ -124,16 +120,14 @@ private fun WatcherRow(
         Text(
             text = watcher.shownName,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.bodyBold,
             modifier = Modifier.weight(1f),
         )
         WatcherStatusBadge(status = watcher.status)
         Text(
             text = "해제",
             color = RuleUpTheme.colors.danger,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.smallMedium,
             modifier = Modifier.singleClickable(onClick = onRemove),
         )
     }
@@ -143,7 +137,7 @@ private fun WatcherRow(
 private fun WatcherStatusBadge(status: WatcherStatus) {
     val (label, color) =
         when (status) {
-            WatcherStatus.INVITED -> "수락 대기" to Color(0xFFF59E0B)
+            WatcherStatus.INVITED -> "수락 대기" to RuleUpTheme.colors.warning
             WatcherStatus.CONSENTED, WatcherStatus.ACTIVE -> "감시 중" to RuleUpTheme.colors.success
             WatcherStatus.REVOKED -> "해제됨" to RuleUpTheme.colors.textMuted
             WatcherStatus.EXPIRED -> "만료" to RuleUpTheme.colors.textMuted
@@ -158,8 +152,7 @@ private fun WatcherStatusBadge(status: WatcherStatus) {
         Text(
             text = label,
             color = color,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.tinyBold,
         )
     }
 }
@@ -183,8 +176,7 @@ private fun InviteButton(
         Text(
             text = if (isInviting) "초대 만드는 중..." else "카카오톡으로 감시자 초대하기",
             color = Color.White,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.bodyBold,
         )
     }
 }

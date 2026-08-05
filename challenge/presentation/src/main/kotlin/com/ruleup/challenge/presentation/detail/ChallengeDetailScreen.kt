@@ -1,7 +1,6 @@
 package com.ruleup.challenge.presentation.detail
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,10 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -66,7 +62,9 @@ import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -227,7 +225,7 @@ private fun ChallengeDetailContent(
                         Text(
                             text = state.errorMessage ?: "챌린지를 불러오지 못했어요",
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 14.sp,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
 
@@ -371,7 +369,7 @@ private fun MemberConfirmDialog(
         onDismissRequest = onDismiss,
         containerColor = RuleUpTheme.colors.surface,
         title = { Text(title, color = RuleUpTheme.colors.textPrimary, fontWeight = FontWeight.Bold) },
-        text = { Text(body, color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp) },
+        text = { Text(body, color = RuleUpTheme.colors.textSecondary) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(confirmLabel, color = RuleUpTheme.colors.danger, fontWeight = FontWeight.Bold)
@@ -387,36 +385,7 @@ private fun MemberConfirmDialog(
 
 @Composable
 private fun DetailTopBar(onBack: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = "챌린지",
-            color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
+    RuleUpTopBar(title = "챌린지", onBack = onBack)
 }
 
 @Composable
@@ -439,24 +408,23 @@ private fun DetailHero(detail: ChallengeDetail) {
                     .background(accent),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
+            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", style = RuleUpTheme.typography.title)
         }
         Text(
             text = detail.title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Text(
             text = "${detail.owner.nickname} · ${detail.stats.participantCount}명 참여 중",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
+            style = RuleUpTheme.typography.small,
         )
         detail.description?.takeIf { it.isNotBlank() }?.let {
             Text(
                 text = it,
                 color = RuleUpTheme.colors.textSlate,
-                fontSize = 13.sp,
+                style = RuleUpTheme.typography.body,
             )
         }
     }
@@ -473,16 +441,7 @@ private fun DetailInfoCard(detail: ChallengeDetail) {
     val participation = if (detail.participationType == ParticipationType.GROUP) "그룹" else "솔로"
     val repeat = detail.repeatDays.joinToString(" · ") { it.label }.ifBlank { "—" }
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         InfoRow(label = "기간", value = "${detail.durationDays}일")
         InfoRow(label = "반복", value = repeat)
         InfoRow(label = "참여 형태", value = participation)
@@ -499,14 +458,13 @@ private fun InfoRow(
         Text(
             text = label,
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 13.sp,
+            style = RuleUpTheme.typography.body,
             modifier = Modifier.width(80.dp),
         )
         Text(
             text = value,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.bodyMedium,
         )
     }
 }
@@ -535,14 +493,13 @@ private fun PermissionBottomSheet(
             Text(
                 text = "권한 허용이 필요해요",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 text = "이 챌린지는 자동 인증을 위해 아래 권한이 필요해요.\n허용하면 참여를 이어갈 수 있어요.",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 13.sp,
+                style = RuleUpTheme.typography.body,
             )
             Spacer(Modifier.height(16.dp))
             tokens.distinct().forEach { token ->
@@ -565,8 +522,7 @@ private fun PermissionBottomSheet(
                 Text(
                     text = "다음에",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.labelMedium,
                 )
             }
         }
@@ -590,7 +546,7 @@ private fun PermissionRow(label: String) {
         Text(
             text = label,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
+            style = RuleUpTheme.typography.labelMedium,
         )
     }
 }

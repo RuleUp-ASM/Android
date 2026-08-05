@@ -25,16 +25,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.domain.entity.RoomSummary
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
+import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -100,14 +100,12 @@ private fun RoomStatCard(
         Text(
             text = value,
             color = valueColor,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Text(
             text = label,
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.captionMedium,
         )
     }
 }
@@ -123,16 +121,7 @@ internal fun RoomNoticeSection(
     onOpenNotices: () -> Unit,
     onOpenNotice: (String) -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Row(
             modifier =
                 Modifier
@@ -149,8 +138,7 @@ internal fun RoomNoticeSection(
             Text(
                 text = "전체 보기 ›",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
 
@@ -165,13 +153,12 @@ internal fun RoomNoticeSection(
                         .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "📌", fontSize = 13.sp)
+                Text(text = "📌", style = RuleUpTheme.typography.body)
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = pinnedNotice.title,
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = RuleUpTheme.typography.bodyBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
@@ -185,7 +172,7 @@ internal fun RoomNoticeSection(
             Text(
                 text = "등록된 고정 공지가 없어요",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
             )
         }
     }
@@ -197,16 +184,7 @@ internal fun RoomRankingSection(
     topRanking: List<RankingEntry>,
     onOpenRanking: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Row(
             modifier =
                 Modifier
@@ -219,8 +197,7 @@ internal fun RoomRankingSection(
             Text(
                 text = "전체 보기 ›",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
 
@@ -228,7 +205,7 @@ internal fun RoomRankingSection(
             Text(
                 text = "아직 랭킹이 집계되지 않았어요",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
             )
         } else {
             topRanking.forEach { entry ->
@@ -238,14 +215,13 @@ internal fun RoomRankingSection(
                 ) {
                     Text(
                         text = rankEmoji(entry.rank),
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                         modifier = Modifier.width(28.dp),
                     )
                     Text(
                         text = entry.nickname,
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
@@ -253,8 +229,7 @@ internal fun RoomRankingSection(
                     Text(
                         text = "${entry.progressRate.trimPercent()}%",
                         color = RuleUpTheme.colors.brand,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.bodyBold,
                     )
                 }
             }
@@ -283,13 +258,7 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
             -> "오늘은 인증 대상일이 아니에요" to RuleUpTheme.colors.textMuted
         }
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
+        modifier = Modifier.ruleUpCardSurface(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionTitle("오늘 내 상태")
@@ -299,8 +268,7 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
         Text(
             text = label,
             color = color,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.bodyBold,
         )
     }
 }
@@ -312,19 +280,12 @@ internal fun RoomManageEntry(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .singleClickable(onClick = onClick)
-                .padding(16.dp),
+        modifier = Modifier.singleClickable(onClick = onClick).ruleUpCardSurface(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionTitle(label)
         Spacer(Modifier.weight(1f))
-        Text(text = "›", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(text = "›", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.section)
     }
 }
 
@@ -352,24 +313,14 @@ internal fun RoomMemberSection(
     onRequestDelegation: (String) -> Unit,
     onCancelDelegation: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             SectionTitle("멤버")
             Spacer(Modifier.width(6.dp))
             Text(
                 text = "$participantCount / $maxParticipants",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
 
@@ -409,7 +360,7 @@ internal fun RoomMemberSection(
                 Text(
                     text = "참여자가 있는 동안에는 삭제할 수 없어요. 방장 위임 후 나갈 수 있어요",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
         }
     }
@@ -440,16 +391,14 @@ private fun MemberRow(
             Text(
                 text = member.nickname.take(1),
                 color = RuleUpTheme.colors.brand,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Spacer(Modifier.width(10.dp))
         Text(
             text = member.nickname,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -459,8 +408,7 @@ private fun MemberRow(
         Text(
             text = "${member.mannerTemperature.trimPercent()}℃",
             color = RuleUpPalette.Amber500,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
         if (ownerManage || selfDemote) {
             Spacer(Modifier.width(4.dp))
@@ -499,7 +447,7 @@ private fun MemberManageMenu(
                     .then(if (enabled) Modifier.singleClickable(globalGuard = false) { expanded = true } else Modifier),
             contentAlignment = Alignment.Center,
         ) {
-            Text("⋯", color = RuleUpTheme.colors.textSecondary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("⋯", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.section)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             if (selfDemote) {
@@ -564,8 +512,7 @@ private fun DelegationBanner(
         Text(
             text = text,
             color = RuleUpTheme.colors.brandStrong,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.smallMedium,
             modifier = Modifier.weight(1f),
         )
         if (enabled) {
@@ -573,8 +520,7 @@ private fun DelegationBanner(
             Text(
                 text = "취소",
                 color = RuleUpTheme.colors.danger,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
                 modifier = Modifier.singleClickable(globalGuard = false) { onCancel() },
             )
         }
@@ -599,7 +545,7 @@ private fun RoleBadge(role: MemberRole) {
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(text = label, color = color, style = RuleUpTheme.typography.tinyBold)
     }
 }
 
@@ -620,7 +566,7 @@ private fun DangerActionButton(
                 .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, color = color, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(text = text, color = color, style = RuleUpTheme.typography.bodyBold)
     }
 }
 
@@ -629,8 +575,7 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         color = RuleUpTheme.colors.textPrimary,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold,
+        style = RuleUpTheme.typography.cardTitle,
     )
 }
 
@@ -647,8 +592,7 @@ internal fun UnreadBadge(count: Int) {
         Text(
             text = if (count > 99) "99+" else "$count",
             color = RuleUpTheme.colors.surface,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.tinyBold,
         )
     }
 }

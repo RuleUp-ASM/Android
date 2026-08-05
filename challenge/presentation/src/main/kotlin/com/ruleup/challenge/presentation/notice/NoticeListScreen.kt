@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,11 +27,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -40,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeListIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeListViewModel
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -89,20 +86,19 @@ fun NoticeListScreen(
                     Text(
                         text = state.errorMessage.orEmpty(),
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
             state.notices.isEmpty() ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "📭", fontSize = 34.sp)
+                        Text(text = "📭", style = RuleUpTheme.typography.title)
                         Spacer(Modifier.height(10.dp))
                         Text(
                             text = "아직 공지가 없어요",
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
                 }
@@ -130,35 +126,10 @@ private fun NoticeListTopBar(
     onBack: () -> Unit,
     onCreate: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    RuleUpTopBar(
+        title = "공지",
+        onBack = onBack,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = "공지",
-            color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
         Spacer(Modifier.weight(1f))
         if (canManage) {
             Box(
@@ -172,8 +143,7 @@ private fun NoticeListTopBar(
                 Text(
                     text = "+ 작성",
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.bodyBold,
                 )
             }
             Spacer(Modifier.width(8.dp))
@@ -199,14 +169,13 @@ private fun NoticeCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (notice.pinned) {
-                Text(text = "📌", fontSize = 12.sp)
+                Text(text = "📌", style = RuleUpTheme.typography.small)
                 Spacer(Modifier.width(6.dp))
             }
             Text(
                 text = notice.title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = if (notice.isRead) FontWeight.Medium else FontWeight.Bold,
+                style = if (notice.isRead) RuleUpTheme.typography.labelMedium else RuleUpTheme.typography.cardTitle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -226,7 +195,7 @@ private fun NoticeCard(
             Text(
                 text = notice.preview,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -234,7 +203,7 @@ private fun NoticeCard(
         Text(
             text = noticeDateLabel(notice.createdAt),
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }

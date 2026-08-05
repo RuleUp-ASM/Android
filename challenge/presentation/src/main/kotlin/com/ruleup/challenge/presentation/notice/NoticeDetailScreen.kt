@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,10 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -45,6 +41,7 @@ import com.ruleup.challenge.domain.entity.NoticeDetail
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailViewModel
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -106,7 +103,7 @@ fun NoticeDetailScreen(
                     Text(
                         text = state.errorMessage ?: "공지를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -122,15 +119,14 @@ fun NoticeDetailScreen(
                 Text(
                     text = "공지를 삭제할까요?",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.section,
                 )
             },
             text = {
                 Text(
                     text = "삭제한 공지는 멤버에게 더 이상 보이지 않아요.",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 13.sp,
+                    style = RuleUpTheme.typography.body,
                 )
             },
             confirmButton = {
@@ -158,35 +154,10 @@ private fun NoticeDetailTopBar(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    RuleUpTopBar(
+        title = "공지",
+        onBack = onBack,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = "공지",
-            color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
         Spacer(Modifier.weight(1f))
         if (canManage) {
             Box {
@@ -201,8 +172,7 @@ private fun NoticeDetailTopBar(
                     Text(
                         text = "⋮",
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.title,
                     )
                 }
                 DropdownMenu(
@@ -258,8 +228,7 @@ private fun NoticeDetailBody(detail: NoticeDetail) {
                 Text(
                     text = "📌 고정됨",
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.captionBold,
                 )
             }
             Spacer(Modifier.height(10.dp))
@@ -267,29 +236,27 @@ private fun NoticeDetailBody(detail: NoticeDetail) {
         Text(
             text = detail.title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 19.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Spacer(Modifier.height(10.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = detail.authorNickname,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = noticeDateLabel(detail.createdAt),
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
             )
             if (detail.updatedAt != null) {
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = "(수정됨)",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
             }
         }
@@ -299,8 +266,7 @@ private fun NoticeDetailBody(detail: NoticeDetail) {
         Text(
             text = detail.content,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
-            lineHeight = 22.sp,
+            style = RuleUpTheme.typography.labelMedium,
         )
     }
 }
