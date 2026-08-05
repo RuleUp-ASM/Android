@@ -2,6 +2,7 @@ package com.ruleup.onboarding.domain.auth
 
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.PendingDeepLink
+import com.ruleup.domain.navigation.PendingDeepLinkEntry
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
@@ -109,28 +110,20 @@ class SessionBootstrap
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         /**
-         * 인증 판정과 보류 딥링크를 합쳐 진입 목적지를 정한다.
-         *
-         * 미인증이면 딥링크를 버리는 게 기본이다 — 세션 없이 목적지를 띄우면 API 가 401 을 받고
-         * 사용자는 목적지가 아니라 로그인 화면을 보게 된다. 다만 로그인이 필요 없는 화면이면 그대로 연다.
-         *
-         * [PendingDeepLink.consume] 은 1회성이라 여기서 한 번만 꺼낸다.
+         * 진입 목적지. 보류 딥링크를 열 수 있는지는 [PendingDeepLink.consumeFor] 가 판정한다.
          */
-        private fun entry(authenticated: Boolean): AppEntry {
-            val pending = pendingDeepLink.consume()
-            return when {
-                pending == null -> AppEntry.Start(if (authenticated) HomePage.toRoute() else LoginPage.toRoute())
+        private fun entry(authenticated: Boolean): AppEntry =
+            when (val pending = pendingDeepLink.consumeFor(authenticated, routeAccessPolicy)) {
+                is PendingDeepLinkEntry.Open -> AppEntry.DeepLink(pending.route)
 
-                authenticated || !routeAccessPolicy.requiresLogin(pending.path) -> AppEntry.DeepLink(pending)
-
-                else -> {
-                    // 초대 링크로 유입된 신규 사용자가 여기 걸린다. 가입을 마쳐도 목적지로 돌아가지
-                    // 않으므로, 잃어버린 진입을 집계해 이어가기 필요성을 판단할 근거를 남긴다.
-                    observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.path}" }
+                is PendingDeepLinkEntry.Dropped -> {
+                    observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.route.path}" }
                     AppEntry.Start(LoginPage.toRoute())
                 }
+
+                PendingDeepLinkEntry.None ->
+                    AppEntry.Start(if (authenticated) HomePage.toRoute() else LoginPage.toRoute())
             }
-        }
 
         fun start() {
             if (!started.compareAndSet(false, true)) return
