@@ -41,11 +41,26 @@ enum class Category(
          */
         fun fromValue(value: String): Category? = entries.find { it.value == value } ?: LEGACY_ALIASES[value]
 
-        // TODO(#185): 서버가 회원가입 API 기준 code 로 정렬하면 제거한다.
+        /**
+         * 서버가 아직 내려주는 옛 code.
+         *
+         * 두 갈래가 섞여 있다 — 챌린지 카테고리·탐색 API 의 `TIDYING`·`CAREER` 는 12종 확정 전
+         * 표기이고, 나머지는 15종 시절 값이다. 별칭이 없으면 해당 분류가 조용히 null 로 떨어져
+         * 탐색·홈 카드의 아이콘과 필터가 사라진다.
+         *
+         * TODO(#185): 서버가 회원가입 API 기준 code 로 정렬하면 통째로 제거한다.
+         */
         private val LEGACY_ALIASES =
             mapOf(
+                // 12종 확정 전 표기
                 "TIDYING" to HOUSEKEEPING,
                 "CAREER" to CAREER_PRODUCTIVITY,
+                // 15종 시절 값
+                "WAKE_UP" to WAKE_SLEEP,
+                "HEALTH" to DIET_HEALTH,
+                "MEDITATION" to MIND,
+                "COOKING" to HOUSEKEEPING,
+                "WORK" to CAREER_PRODUCTIVITY,
             )
     }
 }
