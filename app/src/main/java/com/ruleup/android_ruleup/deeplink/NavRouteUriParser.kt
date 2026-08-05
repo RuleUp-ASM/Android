@@ -11,33 +11,24 @@ import com.ruleup.onboarding.domain.navigation.SplashPage
 
 private const val TAG = "[DeepLink]"
 
-/**
- * 외부에서 값을 정해서는 안 되는 인자 이름.
- *
- * 방어의 축을 *"어느 화면이 열리는가"* 가 아니라 *"어떤 인자를 믿는가"* 로 둔다. 화면 목록은
- * 화면이 늘 때마다 자라고 빠뜨리면 **정상 딥링크가 조용히 죽지만**, 이 목록은 화면 수와 무관하고
- * 빠뜨리면 해당 인자가 사라져 화면 자신의 전제 검사에 걸린다 — 안전한 쪽으로 실패한다.
- *
- * 도메인 검증(App Links)은 이걸 대신하지 못한다. 검증이 보장하는 건 *"이 도메인이 이 앱을
- * 인정한다"* 뿐이라, **아무 웹페이지나 검증된 도메인의 URL 을 링크로 걸 수 있다.**
- *
- * - `canManage`: 관리 UI 노출 스위치. 서버 판정으로 옮기기 전까지의 임시 방어다(#161 후속).
- * - `defaultRadiusM`·`dwellMinutes`·`targetPackages`: 지오펜스 설정값. 지도 화면이 정해 넘긴다.
- */
-private val UNTRUSTED_ARGS =
-    setOf(
-        "canManage",
-        "defaultRadiusM",
-        "dwellMinutes",
-        "targetPackages",
-    )
-
 // App Links 경로 규약.
 // - /app/{path}?{args} : 앱 화면 직결(푸시 알림 등). 화면이 늘어도 매니페스트를 고치지 않도록 접두사 하나로 묶는다.
 // - /inv/{code}        : 친구 초대. 화면이 아니라 "앱 실행"으로만 받는다.
 // - /w/{token}         : 감시자 초대 — 매니페스트에 없다. 앱 설치 여부와 무관하게 웹 동의 페이지로 열린다.
 private const val APP_SEGMENT = "app"
 private const val FRIEND_INVITE_SEGMENT = "inv"
+
+/**
+ * 앱 화면 주소의 호스트. 알림이 자기 목적지를 조립할 때 쓴다.
+ *
+ * 이 호스트의 `/app/...` 은 **매니페스트 intent-filter 에 등록돼 있지 않다.** 등록된 App Link 는
+ * 친구 초대 `/inv` 뿐이라, 웹페이지가 이 URL 로 앱 화면을 여는 경로가 없다(#179).
+ *
+ * ⚠️ `/app` 필터를 추가하는 순간 그 경로가 열린다. 그때는 **외부가 정해서는 안 되는 인자**
+ * (`canManage` 같은 권한 스위치, 지오펜스 설정값)를 [toNavRoute] 에서 다시 걸러내야 한다.
+ * 지금 걸러내지 않는 유일한 근거가 "그 문이 닫혀 있다"이다.
+ */
+private const val APP_LINK_HOST = "android.ruleup.co.kr"
 
 /** 친구 초대 링크(/inv/{code}) 여부. 라우팅이 아니라 "앱 실행"으로만 처리한다. */
 private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEND_INVITE_SEGMENT
@@ -47,9 +38,8 @@ private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEN
  *
  * - path: `/app` 접두사를 떼고 남은 segment 를 슬래시로 합쳐 등록된 PATH 형식으로 만든다
  *   (앞 슬래시 없음, 예: "challenge/notices/detail").
- * - args: query parameter 를 String 맵으로 옮기되 [UNTRUSTED_ARGS] 는 **버린다.**
- *   이 함수는 외부 인텐트 전용 경계이므로, 앱 내부 네비게이션([com.ruleup.domain.helper.NavigationHelper])은
- *   이 경로를 타지 않아 영향받지 않는다.
+ * - args: query parameter 를 그대로 String 맵으로 옮긴다. 인자를 걸러내지 않는 근거는
+ *   [APP_LINK_HOST] 주석 참고 — `/app` 이 매니페스트에 없어 외부에서 이 경로로 들어올 수 없다.
  */
 fun Uri.toNavRoute(): NavRoute? {
     val segments = pathSegments?.takeIf { it.isNotEmpty() } ?: return null
@@ -57,10 +47,27 @@ fun Uri.toNavRoute(): NavRoute? {
     val path = segments.drop(1).joinToString("/").takeIf { it.isNotEmpty() } ?: return null
     val args =
         queryParameterNames
-            .filter { it.isNotEmpty() && it !in UNTRUSTED_ARGS }
+            .filter { it.isNotEmpty() }
             .associateWith { (getQueryParameter(it) ?: "") }
     return NavRoute(path, args)
 }
+
+/**
+ * 앱이 자기 화면을 가리키려고 만드는 URI. 알림의 PendingIntent 가 쓴다.
+ *
+ * 인텐트는 `MainActivity` 를 명시하므로 이 URI 가 매니페스트 필터를 타지 않는다 — 목적지를
+ * 실어 나르는 그릇일 뿐이다. 덕분에 진입 해석이 [toNavRoute] 한 곳으로 모이면서도 웹에서 앱
+ * 화면을 여는 경로는 생기지 않는다.
+ */
+fun NavRoute.toAppLinkUri(): Uri =
+    Uri
+        .Builder()
+        .scheme("https")
+        .authority(APP_LINK_HOST)
+        .appendPath(APP_SEGMENT)
+        .apply { path.split("/").forEach { appendPath(it) } }
+        .apply { args.forEach { (k, v) -> appendQueryParameter(k, v) } }
+        .build()
 
 /** 시작 백스택. 딥링크 유무와 무관하게 스플래시 한 장이다 — 인증 판정이 끝나야 목적지가 정해진다. */
 fun startStack(): List<NavKey> = listOf(GenericNavKey(SplashPage.PATH))
