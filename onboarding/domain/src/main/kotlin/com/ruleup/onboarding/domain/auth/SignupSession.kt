@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.domain.auth
 
+import com.ruleup.onboarding.domain.entity.OAuthProfile
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,15 +24,31 @@ class SignupSession
         @Volatile
         private var token: String? = null
 
-        fun start(signupToken: String) {
+        @Volatile
+        private var profile: OAuthProfile? = null
+
+        fun start(
+            signupToken: String,
+            oauthProfile: OAuthProfile,
+        ) {
             token = signupToken
+            profile = oauthProfile
         }
 
         /** 진행 중인 가입의 토큰. 없으면 null — 호출부는 로그인부터 다시 시작시킨다. */
         fun token(): String? = token
 
+        /**
+         * IdP 가 준 프로필 힌트. 닉네임 프리필에 쓴다.
+         *
+         * **자동 제출하지 않는다** — 프리필한 닉네임도 check API 를 통과해야 다음 단계로 간다.
+         * 남이 이미 쓰는 이름일 수 있다.
+         */
+        fun oauthProfile(): OAuthProfile? = profile
+
         /** 가입 완료·이탈 시 비운다. 남겨 두면 다음 가입 시도가 만료된 토큰을 물고 시작한다. */
         fun clear() {
             token = null
+            profile = null
         }
     }

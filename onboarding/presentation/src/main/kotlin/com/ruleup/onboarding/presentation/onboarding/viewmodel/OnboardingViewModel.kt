@@ -70,6 +70,13 @@ class OnboardingViewModel
                     .distinctUntilChanged()
                     .collect { checkNickname(it) }
             }
+            // IdP 닉네임을 채워 준다. 자동 제출은 하지 않는다 — 남이 이미 쓰는 이름일 수 있어
+            // check API 를 통과해야 다음 단계로 간다. 통과하면 사용자는 그냥 "다음"만 누르면 된다.
+            signupSession
+                .oauthProfile()
+                ?.nicknameHint
+                ?.takeIf { it.isNotBlank() }
+                ?.let { enterNickname(it) }
         }
 
         override fun onIntent(intent: OnboardingIntent) {

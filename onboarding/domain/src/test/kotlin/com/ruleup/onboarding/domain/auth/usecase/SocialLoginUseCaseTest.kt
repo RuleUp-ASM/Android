@@ -4,6 +4,7 @@ import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.LockInfo
 import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.entity.AuthSession
 import com.ruleup.onboarding.domain.entity.LoginOutcome
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
@@ -37,7 +38,7 @@ class SocialLoginUseCaseTest {
 
             val result = useCase(auth, tokens)(authorization)
 
-            assertEquals(LoginOutcome.GoHome, result)
+            assertEquals(LoginOutcome.GoHome(restored = false), result)
             assertEquals(token, tokens.savedToken)
         }
 
@@ -98,6 +99,17 @@ class SocialLoginUseCaseTest {
         }
 
     @Test
+    fun `복원된 계정이면 그 사실을 결과에 싣는다`() =
+        runBlocking {
+            // 기능 스펙의 복원 건수 지표가 이 값을 센다. 비면 복원 유입이 집계에서 사라진다.
+            val auth = existingUser(testUser(), restored = true)
+
+            val result = useCase(auth, FakeTokenRepository())(authorization)
+
+            assertEquals(LoginOutcome.GoHome(restored = true), result)
+        }
+
+    @Test
     fun `신규 회원이면 토큰을 저장하지 않고 가입으로 보낸다`() =
         runBlocking {
             val profile = OAuthProfile(email = null, nicknameHint = "도전왕", profileImageUrlHint = null)
@@ -118,13 +130,15 @@ class SocialLoginUseCaseTest {
             assertNull(tokens.savedToken)
         }
 
-    private fun existingUser(user: com.ruleup.domain.entity.user.User) =
-        FakeAuthRepository().apply {
-            exchangeResult = OAuthResult.ExistingUser(AuthSession(token, user), restored = false)
-        }
+    private fun existingUser(
+        user: com.ruleup.domain.entity.user.User,
+        restored: Boolean = false,
+    ) = FakeAuthRepository().apply {
+        exchangeResult = OAuthResult.ExistingUser(AuthSession(token, user), restored = restored)
+    }
 
     private fun useCase(
         auth: FakeAuthRepository,
         tokens: FakeTokenRepository,
-    ) = SocialLoginUseCase(auth, FakeDeviceIdentityRepository(), tokens)
+    ) = SocialLoginUseCase(auth, FakeDeviceIdentityRepository(), tokens, testObservability())
 }

@@ -100,10 +100,11 @@ class LoginViewModel
                             provider = authorization.provider.provider,
                             success = true,
                             isNewUser = result is LoginOutcome.GoSignup,
+                            restored = (result as? LoginOutcome.GoHome)?.restored,
                         )
                     }
                     when (result) {
-                        LoginOutcome.GoHome -> navigationHelper.navigateTo(HomePage)
+                        is LoginOutcome.GoHome -> navigationHelper.navigateTo(HomePage)
 
                         // 잠금 계정도 로그인은 된다. 홈은 열되 잠금 사유를 알려 준다 —
                         // 편집 등 막힌 기능은 각 화면이 ACCOUNT_LOCKED 로 안내한다.
@@ -128,7 +129,7 @@ class LoginViewModel
 
                         is LoginOutcome.GoSignup -> {
                             // 토큰은 백스택에 실지 않는다 — 직렬화되어 saved state 에 남는다.
-                            signupSession.start(result.signupToken)
+                            signupSession.start(result.signupToken, result.profile)
                             navigationHelper.navigateTo(OnboardingNicknamePage)
                         }
                     }
