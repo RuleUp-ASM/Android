@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -21,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -44,6 +41,7 @@ import com.ruleup.challenge.domain.entity.NoticeDetail
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeDetailViewModel
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -156,34 +154,10 @@ private fun NoticeDetailTopBar(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    RuleUpTopBar(
+        title = "공지",
+        onBack = onBack,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = "공지",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.section,
-        )
         Spacer(Modifier.weight(1f))
         if (canManage) {
             Box {

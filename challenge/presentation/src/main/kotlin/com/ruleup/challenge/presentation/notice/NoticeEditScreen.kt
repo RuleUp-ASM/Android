@@ -13,16 +13,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -33,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,7 +38,7 @@ import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditEffect
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeEditViewModel
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
-import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
 
@@ -195,35 +191,7 @@ private fun NoticeEditTopBar(
     title: String,
     onBack: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = title,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.section,
-        )
-    }
+    RuleUpTopBar(title = title, onBack = onBack)
 }
 
 @Composable

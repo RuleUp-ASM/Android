@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeListIntent
 import com.ruleup.challenge.presentation.notice.viewmodel.NoticeListViewModel
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -127,34 +126,10 @@ private fun NoticeListTopBar(
     onBack: () -> Unit,
     onCreate: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    RuleUpTopBar(
+        title = "공지",
+        onBack = onBack,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = "공지",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.section,
-        )
         Spacer(Modifier.weight(1f))
         if (canManage) {
             Box(

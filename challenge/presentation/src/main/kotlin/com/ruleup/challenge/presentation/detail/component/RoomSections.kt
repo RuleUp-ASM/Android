@@ -33,6 +33,8 @@ import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.domain.entity.RoomSummary
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
+import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -119,16 +121,7 @@ internal fun RoomNoticeSection(
     onOpenNotices: () -> Unit,
     onOpenNotice: (String) -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Row(
             modifier =
                 Modifier
@@ -191,16 +184,7 @@ internal fun RoomRankingSection(
     topRanking: List<RankingEntry>,
     onOpenRanking: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Row(
             modifier =
                 Modifier
@@ -274,13 +258,7 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
             -> "오늘은 인증 대상일이 아니에요" to RuleUpTheme.colors.textMuted
         }
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
+        modifier = Modifier.ruleUpCardSurface(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionTitle("오늘 내 상태")
@@ -302,14 +280,7 @@ internal fun RoomManageEntry(
     onClick: () -> Unit,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .singleClickable(onClick = onClick)
-                .padding(16.dp),
+        modifier = Modifier.singleClickable(onClick = onClick).ruleUpCardSurface(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionTitle(label)
@@ -342,16 +313,7 @@ internal fun RoomMemberSection(
     onRequestDelegation: (String) -> Unit,
     onCancelDelegation: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             SectionTitle("멤버")
             Spacer(Modifier.width(6.dp))
