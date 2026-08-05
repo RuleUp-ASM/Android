@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import kotlinx.coroutines.runBlocking
@@ -29,14 +30,31 @@ class AutoLoginUseCaseTest {
     fun `재발급에 성공하면 새 토큰을 저장하고 true 를 반환한다`() =
         runBlocking {
             val newToken = Token("a", "r2", "Bearer", 3600)
-            val auth = FakeAuthRepository().apply { refreshResult = newToken }
+            val auth = FakeAuthRepository().apply { refreshResult = RefreshedSession(newToken, userId = "u-1") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
             val result = AutoLoginUseCase(auth, tokens)()
 
             assertTrue(result)
             assertEquals(newToken, tokens.savedToken)
+            // 갱신 응답의 userId 로 세션이 완성된다. 비면 사용자 귀속이 끊긴 채 홈에 들어간다.
+            assertEquals("u-1", tokens.savedUserId)
             assertFalse(tokens.cleared)
+        }
+
+    @Test
+    fun `갱신 응답에 userId 가 없으면 기존 값을 유지한다`() =
+        runBlocking {
+            // 이 필드를 안 내려주는 서버 배포본. 덮어 비우면 사용자 귀속이 끊긴다.
+            val auth =
+                FakeAuthRepository().apply {
+                    refreshResult = RefreshedSession(Token("a", "r2", "Bearer", 3600), userId = null)
+                }
+            val tokens = FakeTokenRepository(refreshToken = "r1").apply { savedUserId = "u-old" }
+
+            AutoLoginUseCase(auth, tokens)()
+
+            assertEquals("u-old", tokens.savedUserId)
         }
 
     @Test

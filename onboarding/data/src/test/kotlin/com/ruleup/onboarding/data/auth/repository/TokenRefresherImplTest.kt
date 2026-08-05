@@ -32,15 +32,18 @@ class TokenRefresherImplTest {
                                 refreshToken = "new-refresh",
                                 tokenType = "Bearer",
                                 expiresIn = 1800,
+                                userId = "u-1",
                             ),
                     )
                 }
 
-            val token = TokenRefresherImpl(api).refresh("old-refresh")
+            val refreshed = TokenRefresherImpl(api).refresh("old-refresh")
 
-            assertEquals("new-access", token?.accessToken)
-            assertEquals("new-refresh", token?.refreshToken)
-            assertEquals(1800, token?.expiresInSeconds)
+            assertEquals("new-access", refreshed?.token?.accessToken)
+            assertEquals("new-refresh", refreshed?.token?.refreshToken)
+            assertEquals(1800, refreshed?.token?.expiresInSeconds)
+            // 갱신만으로 세션이 완성되는지가 핵심이다 — 이 값이 비면 별도 조회가 되살아난다.
+            assertEquals("u-1", refreshed?.userId)
         }
 
     @Test

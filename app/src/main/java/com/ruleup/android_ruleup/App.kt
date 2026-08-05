@@ -104,8 +104,8 @@ class App :
         }
 
         // 사용자 식별자를 분석 SDK 에 반영한다. isLoggedIn 이 아니라 userId 를 구독하는 이유는
-        // 로그인 경로가 saveTokens → saveUserId 순서라, isLoggedIn 이 true 가 되는 시점엔
-        // userId 가 아직 비어 있기 때문이다(TokenRepository.userId KDoc 참고).
+        // 갱신 응답이 userId 를 안 주는 서버 배포본에서 로그인 상태여도 이 값이 비어 있을 수 있기
+        // 때문이다(TokenRepository.userId KDoc 참고).
         appScope.launch {
             tokenRepository.userId.collect { userIdentitySync.setUser(it) }
         }

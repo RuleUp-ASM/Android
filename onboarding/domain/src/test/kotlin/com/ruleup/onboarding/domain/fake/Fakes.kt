@@ -2,6 +2,7 @@ package com.ruleup.onboarding.domain.fake
 
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
@@ -37,8 +38,12 @@ class FakeTokenRepository(
         saveCount++
     }
 
-    override suspend fun saveTokens(token: Token) {
+    override suspend fun saveTokens(
+        token: Token,
+        userId: String?,
+    ) {
         savedToken = token
+        userId?.let { savedUserId = it }
         saveCount++
     }
 
@@ -47,10 +52,6 @@ class FakeTokenRepository(
     override fun cachedAccessToken(): String? = savedToken?.accessToken
 
     override suspend fun getRefreshToken(): String? = refreshToken
-
-    override suspend fun saveUserId(userId: String) {
-        savedUserId = userId
-    }
 
     override suspend fun getUserId(): String? = savedUserId
 
@@ -72,7 +73,7 @@ class FakeAuthRepository : AuthRepository {
     var exchangeError: Throwable? = null
     var exchangedWithDevice: DeviceIdentity? = null
 
-    var refreshResult: Token? = null
+    var refreshResult: RefreshedSession? = null
     var refreshError: Throwable? = null
     var refreshCalledWith: String? = null
 
@@ -104,7 +105,7 @@ class FakeAuthRepository : AuthRepository {
         return signupResult!!
     }
 
-    override suspend fun refreshToken(refreshToken: String): Token {
+    override suspend fun refreshToken(refreshToken: String): RefreshedSession {
         refreshCalledWith = refreshToken
         refreshError?.let { throw it }
         return refreshResult!!

@@ -69,15 +69,26 @@ class TokenRepositoryImplTest {
         }
 
     @Test
-    fun `saveTokens 는 저장된 userId 를 지우지 않는다`() =
+    fun `saveTokens 는 userId 를 안 주면 저장된 값을 지우지 않는다`() =
         runTest {
             val repo = repo(FakeDataStore())
             repo.saveSession(token(), userId = "u-1")
 
-            // 갱신 응답에는 userId 가 없다 — 토큰만 회전시킨다.
+            // 서버가 userId 를 안 내려주는 배포본. 덮어 비우면 사용자 귀속이 끊긴다.
             repo.saveTokens(token(access = "a2", refresh = "r2"))
 
             assertEquals("r2", repo.getRefreshToken())
+            assertEquals("u-1", repo.getUserId())
+        }
+
+    @Test
+    fun `saveTokens 는 userId 를 주면 함께 저장한다`() =
+        runTest {
+            val repo = repo(FakeDataStore())
+
+            // 갱신 응답이 userId 를 함께 준다. 이것만으로 세션이 완성돼야 별도 조회가 필요 없다.
+            repo.saveTokens(token(), userId = "u-1")
+
             assertEquals("u-1", repo.getUserId())
         }
 
@@ -139,7 +150,6 @@ class TokenRepositoryImplTest {
 
             // 전파되면 SessionBootstrap 판정이 끝나지 않아 스플래시에서 멈춘다.
             repo.saveTokens(token())
-            repo.saveUserId("u1")
             repo.clear()
         }
 

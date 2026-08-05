@@ -16,10 +16,15 @@ interface TokenRepository {
     )
 
     /**
-     * 토큰만 회전시킨다. 갱신 응답(`TokenRefreshResponse`)에는 userId 가 없으므로 그쪽 전용이다.
-     * 로그인·가입은 [saveSession] 을 쓴다.
+     * 토큰을 회전시킨다. 갱신 경로 전용이다 — 로그인·가입은 [saveSession] 을 쓴다.
+     *
+     * [userId] 가 null 이면 **기존 값을 그대로 둔다.** 갱신 응답이 이 필드를 안 내려주는 배포본에서
+     * 덮어 비우면 사용자 귀속이 끊기기 때문이다.
      */
-    suspend fun saveTokens(token: Token)
+    suspend fun saveTokens(
+        token: Token,
+        userId: String? = null,
+    )
 
     suspend fun getAccessToken(): String?
 
@@ -31,23 +36,16 @@ interface TokenRepository {
 
     suspend fun getRefreshToken(): String?
 
-    /**
-     * userId 만 따로 채운다. **백필 전용이다.**
-     *
-     * 로그인·가입은 [saveSession] 을 쓴다. 이 함수가 남아 있는 건 갱신 응답에 userId 가 없어서,
-     * userId 없이 저장된 세션을 나중에 프로필 조회로 메워야 하기 때문이다.
-     */
-    suspend fun saveUserId(userId: String)
-
     /** 저장된 내 userId. 로그인/가입 전(또는 저장 이전 구버전 세션)이면 null. */
     suspend fun getUserId(): String?
 
     /**
      * 저장된 userId 를 reactive 로 관찰한다. 미저장이면 null 을 방출한다.
      *
-     * 로그인은 [saveSession] 으로 원자적이지만, **[isLoggedIn] 과 항상 일치하지는 않는다** —
-     * userId 없이 저장된 옛 세션이 갱신으로 복구되면 백필이 끝날 때까지 비어 있다. 사용자 귀속처럼
-     * "userId 가 실제로 존재할 때"가 필요하면 [isLoggedIn] 이 아니라 이쪽을 구독한다.
+     * 로그인은 [saveSession] 으로, 갱신은 [saveTokens] 로 userId 를 함께 저장하므로 보통은
+     * [isLoggedIn] 과 함께 채워진다. 다만 갱신 응답이 userId 를 안 주는 배포본에서는 비어 있을 수
+     * 있다 — 사용자 귀속처럼 "userId 가 실제로 존재할 때"가 필요하면 [isLoggedIn] 이 아니라 이쪽을
+     * 구독한다.
      */
     val userId: Flow<String?>
 
