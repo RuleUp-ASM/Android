@@ -13,7 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.ruleup.android_ruleup.MainActivity
-import com.ruleup.android_ruleup.deeplink.putNavRoute
+import com.ruleup.android_ruleup.deeplink.toAppLinkUri
 import com.ruleup.domain.helper.PushNotificationHelper
 import com.ruleup.domain.navigation.NavRoute
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -58,9 +58,11 @@ class PushNotificationHelperImpl
             id: Int,
             route: NavRoute,
         ): PendingIntent {
+            // 목적지는 data URI 로 싣되 인텐트는 MainActivity 를 명시한다 — 매니페스트에 /app 필터가
+            // 없으므로(#179) 이 URI 는 웹에서 열 수 없고, 진입 해석은 URI 한 갈래로 모인다.
             val intent =
                 Intent(context, MainActivity::class.java).apply {
-                    putNavRoute(route)
+                    data = route.toAppLinkUri()
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 }
             return PendingIntent.getActivity(

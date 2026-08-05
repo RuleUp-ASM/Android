@@ -2,16 +2,18 @@ package com.ruleup.android_ruleup.deeplink
 
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.ruleup.domain.navigation.NavRoute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * 딥링크 경계 파서. `android.net.Uri` 가 프레임워크 타입이라 계측 테스트로 둔다.
+ * 진입 URI 파서. `android.net.Uri` 가 프레임워크 타입이라 계측 테스트로 둔다.
  *
- * 여기서 고정하는 건 **화면 목록이 아니라 인자 신뢰 규칙**이다. 화면 허용 목록은 제거됐고,
- * 방어는 "외부가 정해서는 안 되는 인자를 버린다"로 옮겼다(#161).
+ * 인자 필터링은 없앴다(#208). 방어는 **매니페스트에 `/app` 필터가 없다**는 사실이 담당한다 —
+ * 웹페이지가 이 주소로 앱 화면을 열 수 없고, 알림은 MainActivity 를 명시한 인텐트로 들어온다.
+ * `/app` 필터가 생기면 필터링을 되살려야 한다.
  */
 @RunWith(AndroidJUnit4::class)
 class NavRouteUriParserTest {
@@ -26,31 +28,30 @@ class NavRouteUriParserTest {
     }
 
     @Test
-    fun `canManage_는_버리고_식별자_인자는_남긴다`() {
-        val route = parse("https://android.ruleup.co.kr/app/challenge/notices/detail?challengeId=ch1&canManage=true")
-
-        assertEquals(mapOf("challengeId" to "ch1"), route?.args)
-    }
-
-    @Test
-    fun `가입_토큰은_인자로_전달되지_않으므로_주입할_표면이_없다`() {
-        // signupToken 은 SignupSession 이 메모리로만 들고 있어 네비게이션 인자가 아니다.
-        // 링크에 실어 보내도 화면은 이 값을 읽지 않는다 — 필터가 아니라 구조로 막힌다.
-        val route = parse("https://android.ruleup.co.kr/app/onboarding/nickname?signupToken=forged")
-
-        assertEquals("onboarding/nickname", route?.path)
-        assertEquals(mapOf("signupToken" to "forged"), route?.args)
-    }
-
-    @Test
-    fun `지오펜스_설정_인자는_버리고_challengeId_만_남긴다`() {
+    fun `인자를_걸러내지_않는다`() {
+        // 필터링을 없앤 근거는 매니페스트에 /app 필터가 없다는 것이다. 이 테스트가 깨진다면
+        // 누군가 필터링을 되살린 것이고, 그건 /app 을 노출했다는 뜻이어야 한다.
         val route =
             parse(
                 "https://android.ruleup.co.kr/app/verification/location" +
-                    "?challengeId=ch1&defaultRadiusM=1&dwellMinutes=1&targetPackages=com.evil",
+                    "?challengeId=ch1&defaultRadiusM=1&dwellMinutes=1",
             )
 
-        assertEquals(mapOf("challengeId" to "ch1"), route?.args)
+        assertEquals(
+            mapOf("challengeId" to "ch1", "defaultRadiusM" to "1", "dwellMinutes" to "1"),
+            route?.args,
+        )
+    }
+
+    @Test
+    fun `앱이_만든_URI_는_그대로_되파싱된다`() {
+        // 알림이 조립한 목적지가 왕복해서 같은 NavRoute 로 돌아와야 한다.
+        val original = NavRoute("challenge/notices/detail", mapOf("challengeId" to "ch1", "noticeId" to "n1"))
+
+        val roundTrip = original.toAppLinkUri().toNavRoute()
+
+        assertEquals(original.path, roundTrip?.path)
+        assertEquals(original.args, roundTrip?.args)
     }
 
     @Test
