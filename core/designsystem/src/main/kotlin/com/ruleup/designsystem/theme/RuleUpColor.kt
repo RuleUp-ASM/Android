@@ -47,8 +47,6 @@ object RuleUpPalette {
     // Brand · Social
     val Kakao = Color(0xFFFEE500)
     val KakaoLabel = Color(0xFF191919)
-    val Naver = Color(0xFF03C75A)
-    val Apple = Color(0xFF000000)
 }
 
 /**
@@ -133,8 +131,6 @@ object RuleUpColors {
 
     val Kakao = RuleUpPalette.Kakao
     val KakaoText = RuleUpPalette.KakaoLabel
-    val Naver = RuleUpPalette.Naver
-    val Apple = RuleUpPalette.Apple
 }
 
 val DarkRuleUpColors =
