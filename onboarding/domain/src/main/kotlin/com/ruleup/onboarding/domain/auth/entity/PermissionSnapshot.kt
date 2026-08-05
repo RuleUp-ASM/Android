@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.onboarding.domain.auth.entity
 
 /**
  * 로그인 시 함께 보내는 초기 권한 스냅샷. **선택 필드이고 참고용이다.**

@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.onboarding.domain.auth.entity
 
 data class OAuthAuthorization(
     val provider: OAuthProvider,

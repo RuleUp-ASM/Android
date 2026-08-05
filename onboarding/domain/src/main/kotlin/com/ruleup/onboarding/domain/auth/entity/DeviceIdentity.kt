@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.onboarding.domain.auth.entity
 
 /**
  * 로그인·가입 요청에 함께 실리는 두 식별자. **서로 다른 질문에 답하므로 같은 값을 쓰면 안 된다.**

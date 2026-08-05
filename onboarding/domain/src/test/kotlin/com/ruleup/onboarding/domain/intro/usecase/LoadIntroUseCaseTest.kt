@@ -2,9 +2,9 @@ package com.ruleup.onboarding.domain.intro.usecase
 
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.TermsVersions
-import com.ruleup.onboarding.domain.entity.AppVersionGate
-import com.ruleup.onboarding.domain.entity.IntroInfo
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
+import com.ruleup.onboarding.domain.intro.entity.AppVersionGate
+import com.ruleup.onboarding.domain.intro.entity.IntroInfo
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals

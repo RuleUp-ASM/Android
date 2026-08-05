@@ -8,11 +8,11 @@ import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.SignupSession
+import com.ruleup.onboarding.domain.auth.entity.AuthException
+import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
+import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.usecase.HasEverLoggedInUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
-import com.ruleup.onboarding.domain.entity.AuthException
-import com.ruleup.onboarding.domain.entity.LoginOutcome
-import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
 import com.ruleup.onboarding.domain.observability.LoginEntryType

@@ -10,10 +10,10 @@ import com.ruleup.domain.entity.user.User
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.requireField
-import com.ruleup.onboarding.domain.entity.AuthFailure
-import com.ruleup.onboarding.domain.entity.AuthSession
-import com.ruleup.onboarding.domain.entity.OAuthProfile
-import com.ruleup.onboarding.domain.entity.OAuthResult
+import com.ruleup.onboarding.domain.auth.entity.AuthFailure
+import com.ruleup.onboarding.domain.auth.entity.AuthSession
+import com.ruleup.onboarding.domain.auth.entity.OAuthProfile
+import com.ruleup.onboarding.domain.auth.entity.OAuthResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

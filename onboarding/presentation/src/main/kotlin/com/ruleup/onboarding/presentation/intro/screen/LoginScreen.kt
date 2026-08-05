@@ -34,7 +34,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpColors
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.onboarding.domain.entity.OAuthProvider
+import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.common.AuthFailureHost
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect

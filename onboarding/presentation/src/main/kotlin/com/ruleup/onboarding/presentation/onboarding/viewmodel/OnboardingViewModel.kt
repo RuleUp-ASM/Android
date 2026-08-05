@@ -9,13 +9,13 @@ import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.SignupSession
-import com.ruleup.onboarding.domain.auth.model.SignupForm
+import com.ruleup.onboarding.domain.auth.entity.AuthException
+import com.ruleup.onboarding.domain.auth.entity.AuthFailure
+import com.ruleup.onboarding.domain.auth.entity.SignupForm
 import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
-import com.ruleup.onboarding.domain.entity.AuthException
-import com.ruleup.onboarding.domain.entity.AuthFailure
 import com.ruleup.onboarding.domain.intro.usecase.GetTermsVersionsUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage

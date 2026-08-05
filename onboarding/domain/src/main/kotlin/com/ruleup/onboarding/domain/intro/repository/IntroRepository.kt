@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.intro.repository
 
 import com.ruleup.domain.entity.user.TermsVersions
-import com.ruleup.onboarding.domain.entity.IntroInfo
+import com.ruleup.onboarding.domain.intro.entity.IntroInfo
 
 /**
  * 앱 진입 정보 조회(GET /v1/intro). 로그인 이전에 호출하는 공개 엔드포인트다.

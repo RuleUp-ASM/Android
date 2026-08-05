@@ -5,7 +5,7 @@ import com.ruleup.network.dto.getOrThrow
 import com.ruleup.onboarding.data.device.DeviceInfoProvider
 import com.ruleup.onboarding.data.intro.api.IntroApi
 import com.ruleup.onboarding.data.intro.dto.toDomain
-import com.ruleup.onboarding.domain.entity.IntroInfo
+import com.ruleup.onboarding.domain.intro.entity.IntroInfo
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject

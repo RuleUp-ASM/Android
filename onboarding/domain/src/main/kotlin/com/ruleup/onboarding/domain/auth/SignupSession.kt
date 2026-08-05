@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.auth
 
-import com.ruleup.onboarding.domain.entity.OAuthProfile
+import com.ruleup.onboarding.domain.auth.entity.OAuthProfile
 import javax.inject.Inject
 import javax.inject.Singleton
 
