@@ -4,17 +4,17 @@ import com.ruleup.network.dto.BaseResponse
 import com.ruleup.onboarding.data.intro.dto.IntroResponse
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.Query
 
 interface IntroApi {
     /**
-     * 앱 버전 게이트(공개, 토큰 불필요). 헤더 appVersionCode 로 강제/권장 업데이트를 판정한다.
-     * GET 이라 본문 대신 platform·versionName 은 쿼리로 보낸다(서버는 헤더만 검증).
+     * 앱 진입 정보(공개, 토큰 불필요).
+     *
+     * `platform` 은 **헤더 필수**다 — 플랫폼별로 버전 체계·최소 버전이 달라 이 값 없이는 강제
+     * 업데이트를 판정할 수 없고, 빠지면 400 `INVALID_REQUEST` 가 온다. 예전엔 쿼리로 보냈다.
      */
     @GET("v1/intro")
     suspend fun getIntro(
         @Header("appVersionCode") appVersionCode: Int,
-        @Query("platform") platform: String,
-        @Query("versionName") versionName: String,
+        @Header("platform") platform: String,
     ): BaseResponse<IntroResponse>
 }
