@@ -12,7 +12,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.ruleup.observability.domain.api.w
-import com.ruleup.onboarding.domain.navigation.IntroPromisePage
+import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
 
@@ -41,7 +41,7 @@ fun PlatformNavDisplay(
                     val route = appRouteByPath[navKey.path]
                     if (route == null) {
                         observability.w("[Navigation]") { "Unknown path on render: ${navKey.path}" }
-                        LocalNavigationHelper.current.navigateTo(IntroPromisePage)
+                        LocalNavigationHelper.current.navigateTo(LoginPage)
                         return@entry
                     }
                     route.render(navKey.args)

@@ -7,7 +7,7 @@ import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
 import com.ruleup.onboarding.domain.auth.SessionBootstrapState
 import com.ruleup.onboarding.domain.navigation.HomePage
-import com.ruleup.onboarding.domain.navigation.IntroPromisePage
+import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import com.ruleup.ui.navigation.PendingDeepLink
@@ -25,7 +25,7 @@ private const val TAG = "[Splash]"
  * - 보류된 딥링크가 있으면 그 화면의 시작 스택으로 **교체**한다. 전진 이동으로 처리하면 스플래시가
  *   스택에 남아, 뒤로 갔을 때 판정이 다시 돌아간다.
  * - 없으면 홈(루트).
- * - 인증 실패면 인트로(루트). 보류 딥링크는 버려진다.
+ * - 인증 실패면 로그인(루트). 보류 딥링크는 버려진다.
  *
  * 이동은 [NavigationHelper] 사이드 이펙트로 처리하므로 별도 MVI 이펙트는 두지 않는다([NoEffect]).
  */
@@ -83,7 +83,7 @@ class SplashViewModel
                         // 않으므로, 잃어버린 진입을 집계해 이어가기 필요성을 판단할 근거를 남긴다.
                         observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.path}" }
                     }
-                    navigationHelper.navigateTo(IntroPromisePage)
+                    navigationHelper.navigateTo(LoginPage)
                 }
                 pending != null -> navigationHelper.replaceStackWith(pending)
                 else -> navigationHelper.navigateTo(HomePage)

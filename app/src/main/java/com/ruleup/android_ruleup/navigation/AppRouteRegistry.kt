@@ -23,9 +23,6 @@ import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.home.presentation.HomeScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
-import com.ruleup.onboarding.domain.navigation.IntroPromisePage
-import com.ruleup.onboarding.domain.navigation.IntroTrustPage
-import com.ruleup.onboarding.domain.navigation.IntroVerifyPage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.ProfileAgreementPage
 import com.ruleup.onboarding.domain.navigation.ProfileBasicInfoPage
@@ -34,9 +31,7 @@ import com.ruleup.onboarding.domain.navigation.ProfileInterestPage
 import com.ruleup.onboarding.domain.navigation.ProfileNicknamePage
 import com.ruleup.onboarding.domain.navigation.ProfilePermissionPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
-import com.ruleup.onboarding.presentation.intro.component.IntroContent
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
-import com.ruleup.onboarding.presentation.intro.screen.onboardingPages
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.profile.ProfileAgreementScreen
 import com.ruleup.onboarding.presentation.profile.ProfileBasicInfoScreen
@@ -80,32 +75,6 @@ val appRoutes: List<AppRoute> =
             path = SplashPage.PATH,
             isRoot = true,
             render = { SplashScreen() },
-        ),
-        AppRoute(
-            path = IntroPromisePage.PATH,
-            isRoot = true,
-            render = { IntroContent(page = onboardingPages[0], pageIndex = 0) },
-        ),
-        AppRoute(
-            path = IntroVerifyPage.PATH,
-            syntheticStack = {
-                listOf(
-                    GenericNavKey(IntroPromisePage.PATH),
-                    GenericNavKey(IntroVerifyPage.PATH),
-                )
-            },
-            render = { IntroContent(page = onboardingPages[1], pageIndex = 1) },
-        ),
-        AppRoute(
-            path = IntroTrustPage.PATH,
-            syntheticStack = {
-                listOf(
-                    GenericNavKey(IntroPromisePage.PATH),
-                    GenericNavKey(IntroVerifyPage.PATH),
-                    GenericNavKey(IntroTrustPage.PATH),
-                )
-            },
-            render = { IntroContent(page = onboardingPages[2], pageIndex = 2) },
         ),
         AppRoute(
             path = LoginPage.PATH,
