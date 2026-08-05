@@ -24,11 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.presentation.create.component.ChallengeFlowPreview
 import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
 import com.ruleup.challenge.presentation.create.component.SmallBadge
@@ -110,19 +107,18 @@ private fun AiHelperBanner() {
                     .background(RuleUpGradients.Brand),
             contentAlignment = Alignment.Center,
         ) {
-            Text("🤖", fontSize = 22.sp)
+            Text("🤖", style = RuleUpTheme.typography.title)
         }
         Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(
                 "AI가 도와드릴게요",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
             Text(
                 "제목과 설명만 입력하면 나머지는 자동",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }
@@ -141,13 +137,12 @@ private fun TitleField(
             Text(
                 "챌린지 이름",
                 color = RuleUpTheme.colors.textSlate,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.smallBold,
             )
             Text(
                 "${title.length} / ${CreateChallengeState.TITLE_MAX}",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         Box(
@@ -165,12 +160,7 @@ private fun TitleField(
                 value = title,
                 onValueChange = { onIntent(CreateChallengeIntent.SetTitle(it)) },
                 singleLine = true,
-                textStyle =
-                    TextStyle(
-                        color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
+                textStyle = RuleUpTheme.typography.section.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 modifier = Modifier.fillMaxWidth(),
                 decorationBox = { inner ->
@@ -178,7 +168,7 @@ private fun TitleField(
                         Text(
                             "예) 매일 아침 6시 기상",
                             color = RuleUpTheme.colors.textMuted,
-                            fontSize = 15.sp,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
                     inner()
@@ -188,7 +178,7 @@ private fun TitleField(
         Text(
             "💡 구체적인 행동을 적을수록 정확한 추천을 받아요",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }
@@ -211,8 +201,7 @@ private fun DescriptionField(
                 Text(
                     "설명",
                     color = RuleUpTheme.colors.textSlate,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = RuleUpTheme.typography.smallBold,
                 )
                 SmallBadge(
                     text = "선택",
@@ -223,7 +212,7 @@ private fun DescriptionField(
             Text(
                 "${description.length} / ${CreateChallengeState.DESCRIPTION_MAX}",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         Box(
@@ -240,11 +229,7 @@ private fun DescriptionField(
                 value = description,
                 onValueChange = { onIntent(CreateChallengeIntent.SetDescription(it)) },
                 textStyle =
-                    TextStyle(
-                        color = RuleUpTheme.colors.textSlate,
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp,
-                    ),
+                    RuleUpTheme.typography.body.copy(color = RuleUpTheme.colors.textSlate),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 modifier = Modifier.fillMaxSize(),
                 decorationBox = { inner ->
@@ -252,7 +237,7 @@ private fun DescriptionField(
                         Text(
                             "어떤 습관을 만들고 싶은지 적어주세요",
                             color = RuleUpTheme.colors.textMuted,
-                            fontSize = 13.sp,
+                            style = RuleUpTheme.typography.body,
                         )
                     }
                     inner()
@@ -269,9 +254,7 @@ private fun ExampleChips(onIntent: (CreateChallengeIntent) -> Unit) {
         Text(
             "예시 챌린지",
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.66.sp,
+            style = RuleUpTheme.typography.captionBold,
         )
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
@@ -293,8 +276,7 @@ private fun ExampleChips(onIntent: (CreateChallengeIntent) -> Unit) {
                     Text(
                         "${example.emoji} ${example.title}",
                         color = RuleUpTheme.colors.textSlate,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.captionMedium,
                     )
                 }
             }
@@ -327,18 +309,17 @@ private fun BottomCta(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("✨", fontSize = 16.sp)
+            Text("✨", style = RuleUpTheme.typography.section)
             Text(
                 if (isRecommending) "추천 받는 중..." else "AI 추천 받기",
                 color = androidx.compose.ui.graphics.Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
         }
         Text(
             "평균 2초 안에 추천을 받을 수 있어요",
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 10.sp,
+            style = RuleUpTheme.typography.tiny,
         )
     }
 }

@@ -33,9 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.presentation.create.CalendarCell
 import com.ruleup.challenge.presentation.create.ChallengeDates
 import com.ruleup.designsystem.singleClickable
@@ -142,20 +140,18 @@ private fun SheetHeader(onDismiss: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("📅", fontSize = 16.sp)
+            Text("📅", style = RuleUpTheme.typography.section)
             Text(
                 "기간 선택",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
         }
         Text(
             "✕",
             modifier = Modifier.singleClickable(onClick = onDismiss),
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -191,8 +187,7 @@ private fun PresetChips(
                 Text(
                     ChallengeDates.durationLabel(preset),
                     color = if (selected) Color.White else RuleUpTheme.colors.textSlate,
-                    fontSize = 12.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    style = if (selected) RuleUpTheme.typography.smallBold else RuleUpTheme.typography.smallMedium,
                 )
             }
         }
@@ -219,8 +214,7 @@ private fun MonthNavigator(
         Text(
             "${year}년 ${month + 1}월",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
         MonthNavButton(label = "›", onClick = onNext)
     }
@@ -240,7 +234,7 @@ private fun MonthNavButton(
                 .singleClickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, color = RuleUpTheme.colors.textSlate, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+        Text(label, color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.section)
     }
 }
 
@@ -260,8 +254,7 @@ private fun WeekdayHeader() {
                             6 -> RuleUpTheme.colors.brand
                             else -> RuleUpTheme.colors.textSecondary
                         },
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = RuleUpTheme.typography.captionBold,
                 )
             }
         }
@@ -392,7 +385,7 @@ private fun DayNumber(
                     .background(RuleUpTheme.colors.brand),
             contentAlignment = Alignment.Center,
         ) {
-            Text("${cell.day}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("${cell.day}", color = Color.White, style = RuleUpTheme.typography.bodyBold)
         }
     } else {
         Text(
@@ -404,8 +397,7 @@ private fun DayNumber(
                     cell.dayOfWeek == 7 -> RuleUpTheme.colors.brand
                     else -> RuleUpTheme.colors.textPrimary
                 },
-            fontSize = 13.sp,
-            fontWeight = if (cell.inMonth) FontWeight.Medium else FontWeight.Normal,
+            style = if (cell.inMonth) RuleUpTheme.typography.bodyMedium else RuleUpTheme.typography.body,
         )
     }
 }
@@ -425,7 +417,7 @@ private fun PeriodSummary(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PeriodChip(label = "시작", date = ChallengeDates.formatMonthDay(startIso))
-            Text("→", color = RuleUpTheme.colors.textSecondary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("→", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.bodyBold)
             PeriodChip(
                 label = "종료",
                 date = ChallengeDates.formatMonthDay(ChallengeDates.endDate(startIso, durationDays)),
@@ -440,7 +432,7 @@ private fun PeriodSummary(
                     .padding(horizontal = 12.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Text("${durationDays}일", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("${durationDays}일", color = Color.White, style = RuleUpTheme.typography.captionBold)
         }
     }
 }
@@ -463,15 +455,12 @@ private fun PeriodChip(
         Text(
             label,
             color = RuleUpTheme.colors.brand,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.54.sp,
+            style = RuleUpTheme.typography.micro,
         )
         Text(
             date,
             color = RuleUpTheme.colors.brandStrong,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.captionBold,
         )
     }
 }
@@ -496,7 +485,7 @@ private fun SheetButtons(
                     .singleClickable(onClick = onCancel),
             contentAlignment = Alignment.Center,
         ) {
-            Text("취소", color = RuleUpTheme.colors.textSlate, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text("취소", color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.cardTitle)
         }
         Row(
             modifier =
@@ -509,8 +498,8 @@ private fun SheetButtons(
             horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("✓", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text("기간 확정", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("✓", color = Color.White, style = RuleUpTheme.typography.bodyBold)
+            Text("기간 확정", color = Color.White, style = RuleUpTheme.typography.cardTitle)
         }
     }
 }

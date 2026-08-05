@@ -31,11 +31,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
@@ -174,19 +171,18 @@ private fun AiDoneBanner() {
                     .background(RuleUpGradients.Brand),
             contentAlignment = Alignment.Center,
         ) {
-            Text("🤖", fontSize = 18.sp)
+            Text("🤖", style = RuleUpTheme.typography.section)
         }
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 "AI가 추천을 완료했어요",
                 color = RuleUpTheme.colors.brandStrong,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Text(
                 "각 항목은 자유롭게 수정할 수 있어요",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 10.sp,
+                style = RuleUpTheme.typography.tiny,
             )
         }
     }
@@ -211,27 +207,23 @@ private fun ChallengeInfoCard(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("📝", fontSize = 14.sp)
+            Text("📝", style = RuleUpTheme.typography.labelMedium)
             Text(
                 "챌린지 정보",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.66.sp,
+                style = RuleUpTheme.typography.captionBold,
             )
         }
         Text(
             title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
         if (description.isNotBlank()) {
             Text(
                 description,
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                lineHeight = 18.sp,
+                style = RuleUpTheme.typography.small,
             )
         }
     }
@@ -291,14 +283,12 @@ private fun CoverPhotoSection(
                                 .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(28.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("📷", fontSize = 24.sp)
+                        Text("📷", style = RuleUpTheme.typography.title)
                     }
                     Text(
                         "AI가 자동 선택한 배경",
                         color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.66.sp,
+                        style = RuleUpTheme.typography.captionBold,
                     )
                 }
             }
@@ -315,8 +305,8 @@ private fun CoverPhotoSection(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("✏️", fontSize = 11.sp)
-                Text("변경", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Text("✏️", style = RuleUpTheme.typography.caption)
+                Text("변경", color = Color.White, style = RuleUpTheme.typography.captionBold)
             }
         }
 
@@ -357,12 +347,11 @@ private fun CoverSourceChip(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(emoji, fontSize = 13.sp)
+        Text(emoji, style = RuleUpTheme.typography.body)
         Text(
             label,
             color = if (tinted) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }
@@ -388,23 +377,22 @@ private fun CategorySection(state: CreateChallengeState) {
                         .size(44.dp)
                         .clip(RuleUpTheme.shapes.small)
                         .background(
-                            Brush.linearGradient(listOf(Color(0xFFFFFBEB), Color(0xFFFED7AA))),
+                            SolidColor(RuleUpTheme.colors.warningContainer),
                         ),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(state.category?.let(::categoryEmoji) ?: "❓", fontSize = 22.sp)
+                Text(state.category?.let(::categoryEmoji) ?: "❓", style = RuleUpTheme.typography.title)
             }
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     state.category?.label ?: "분류 실패",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.cardTitle,
                 )
                 Text(
                     if (state.category != null) "제목에서 자동 분류했어요" else "제목을 수정해 다시 추천받아 주세요",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
             }
         }
@@ -424,7 +412,7 @@ private fun ParticipationSection(
                 emoji = "🌱",
                 title = "솔로",
                 caption = "나와의 약속",
-                background = Brush.linearGradient(listOf(Color(0xFFFFFBEB), Color(0xFFFED7AA))),
+                background = SolidColor(RuleUpTheme.colors.warningContainer),
                 selected = selected == ParticipationType.SOLO,
                 onClick = { onIntent(CreateChallengeIntent.SetParticipationType(ParticipationType.SOLO)) },
             )
@@ -467,9 +455,9 @@ private fun ParticipationCard(
         if (selected) {
             SmallBadge(text = "AI 선택", background = RuleUpTheme.colors.brand, textColor = Color.White)
         }
-        Text(emoji, fontSize = 28.sp)
-        Text(title, color = RuleUpTheme.colors.textPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-        Text(caption, color = RuleUpTheme.colors.textSecondary, fontSize = 10.sp)
+        Text(emoji, style = RuleUpTheme.typography.title)
+        Text(title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
+        Text(caption, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.tiny)
     }
 }
 
@@ -518,8 +506,7 @@ private fun MaxParticipantsSection(
             Text(
                 "방장 포함 인원",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.bodyMedium,
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -531,8 +518,7 @@ private fun MaxParticipantsSection(
                 Text(
                     "$count",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.section,
                 )
                 StepperButton(symbol = "+", enabled = count < CreateChallengeState.GROUP_PARTICIPANTS_MAX) {
                     onIntent(CreateChallengeIntent.SetMaxParticipants(count + 1))
@@ -560,8 +546,7 @@ private fun StepperButton(
         Text(
             symbol,
             color = if (enabled) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textMuted,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -587,13 +572,11 @@ private fun MannerTemperatureSection(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("👥", fontSize = 9.sp)
+                Text("👥", style = RuleUpTheme.typography.micro)
                 Text(
                     "그룹 전용",
                     color = RuleUpTheme.colors.brandStrong,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.36.sp,
+                    style = RuleUpTheme.typography.micro,
                 )
             }
         }
@@ -616,13 +599,12 @@ private fun MannerTemperatureSection(
                     Text(
                         "최소 참여 기준",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.captionMedium,
                     )
                     Text(
                         "내 매너 온도가 기준 이상이면 통과",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 10.sp,
+                        style = RuleUpTheme.typography.tiny,
                     )
                 }
                 Row(verticalAlignment = Alignment.Bottom) {
@@ -630,22 +612,14 @@ private fun MannerTemperatureSection(
                     val noLimit = shown <= CreateChallengeState.MANNER_MIN
                     Text(
                         if (noLimit) "제한 없음" else "$shown",
-                        style =
-                            TextStyle(
-                                brush =
-                                    Brush.horizontalGradient(
-                                        listOf(RuleUpPalette.Indigo500, RuleUpPalette.Violet500),
-                                    ),
-                                fontSize = if (noLimit) 20.sp else 30.sp,
-                                fontWeight = FontWeight.Bold,
-                            ),
+                        color = RuleUpTheme.colors.brand,
+                        style = if (noLimit) RuleUpTheme.typography.numberM else RuleUpTheme.typography.numberL,
                     )
                     if (!noLimit) {
                         Text(
                             "℃",
                             color = RuleUpTheme.colors.brand,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = RuleUpTheme.typography.section,
                             modifier = Modifier.padding(bottom = 3.dp),
                         )
                     }
@@ -675,14 +649,12 @@ private fun MannerTemperatureSection(
                     Text(
                         "${CreateChallengeState.MANNER_MIN}℃ (최저)",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.tinyMedium,
                     )
                     Text(
                         "$maxTemperature℃ (최고)",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.tinyMedium,
                     )
                 }
             }
@@ -713,8 +685,7 @@ private fun MannerTemperatureSection(
                         Text(
                             level.label,
                             color = if (active) Color.White else level.textColor,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            style = RuleUpTheme.typography.micro,
                         )
                     }
                 }
@@ -724,7 +695,7 @@ private fun MannerTemperatureSection(
                 emoji = "💡",
                 text = "기준이 높을수록 신뢰도 있는 멤버만 참여해요",
                 background = RuleUpTheme.colors.warningContainer,
-                textColor = Color(0xFFB45309),
+                textColor = RuleUpTheme.colors.warning,
             )
         }
     }
@@ -757,19 +728,17 @@ private fun FrequencyAndPeriodSection(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("🔁", fontSize = 13.sp)
+                    Text("🔁", style = RuleUpTheme.typography.body)
                     Text(
                         "반복 요일",
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = RuleUpTheme.typography.smallBold,
                     )
                 }
                 Text(
                     "${state.repeatDays.size} / 7일",
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.captionBold,
                 )
             }
 
@@ -800,12 +769,11 @@ private fun FrequencyAndPeriodSection(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("📅", fontSize = 13.sp)
+                    Text("📅", style = RuleUpTheme.typography.body)
                     Text(
                         "기간",
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = RuleUpTheme.typography.smallBold,
                     )
                 }
                 Row(
@@ -823,15 +791,13 @@ private fun FrequencyAndPeriodSection(
                     Text(
                         ChallengeDates.durationLabel(state.durationDays),
                         color = RuleUpTheme.colors.brandStrong,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.bodyBold,
                     )
-                    Text("·", color = RuleUpTheme.colors.brand, fontSize = 11.sp)
+                    Text("·", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.caption)
                     Text(
                         "${state.durationDays}일",
                         color = RuleUpTheme.colors.brandStrong,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.captionMedium,
                     )
                 }
             }
@@ -864,8 +830,7 @@ private fun RepeatDayChip(
         Text(
             day.label,
             color = if (selected) Color.White else RuleUpTheme.colors.textMuted,
-            fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            style = if (selected) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
         )
     }
 }
@@ -936,14 +901,13 @@ private fun MethodCard(
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(emoji, fontSize = 24.sp)
+        Text(emoji, style = RuleUpTheme.typography.title)
         Text(
             title,
             color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.bodyBold,
         )
-        Text(caption, color = RuleUpTheme.colors.textSecondary, fontSize = 9.sp)
+        Text(caption, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.micro)
     }
 }
 
@@ -995,8 +959,7 @@ private fun VerificationSnapshotCard(
                 Text(
                     "인증 상세",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.bodyBold,
                 )
                 if (option.recommended) {
                     SmallBadge(text = "추천", background = RuleUpTheme.colors.brand, textColor = Color.White)
@@ -1031,12 +994,11 @@ private fun SnapshotRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp)
+        Text(label, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.caption)
         Text(
             value,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }
@@ -1060,7 +1022,7 @@ private fun PenaltySection(
                 spec =
                     PenaltyRowSpec(
                         emoji = "🌡",
-                        tileBackground = Color(0xFFFFF1F2),
+                        tileBackground = RuleUpTheme.colors.dangerContainer,
                         title = "매너 온도 차감",
                         subtitle = "실패 1회당 −${state.mannerDeduction}℃",
                         required = true,
@@ -1150,7 +1112,7 @@ private fun PenaltyRow(
                         .background(spec.tileBackground),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(spec.emoji, fontSize = 18.sp)
+                Text(spec.emoji, style = RuleUpTheme.typography.section)
             }
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Row(
@@ -1160,8 +1122,7 @@ private fun PenaltyRow(
                     Text(
                         spec.title,
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = RuleUpTheme.typography.bodyBold,
                     )
                     if (spec.required) {
                         SmallBadge(
@@ -1177,7 +1138,7 @@ private fun PenaltyRow(
                         )
                     }
                 }
-                Text(spec.subtitle, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp)
+                Text(spec.subtitle, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.caption)
             }
         }
         GradientSwitch(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
@@ -1197,12 +1158,11 @@ private fun SnsPhoneField(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("📱", fontSize = 11.sp)
+            Text("📱", style = RuleUpTheme.typography.caption)
             Text(
                 "공유받을 전화번호",
                 color = RuleUpTheme.colors.textSlate,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.captionBold,
             )
         }
         Row(
@@ -1222,16 +1182,12 @@ private fun SnsPhoneField(
                 onValueChange = { onIntent(CreateChallengeIntent.SetSnsPhone(it)) },
                 singleLine = true,
                 textStyle =
-                    TextStyle(
-                        color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
+                    RuleUpTheme.typography.cardTitle.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
                     if (phone.isEmpty()) {
-                        Text("010-0000-0000", color = RuleUpTheme.colors.textMuted, fontSize = 14.sp)
+                        Text("010-0000-0000", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.labelMedium)
                     }
                     inner()
                 },
@@ -1251,15 +1207,12 @@ private fun SnsPhoneField(
                     Text(
                         "✓",
                         color = RuleUpTheme.colors.onSuccess,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.micro,
                     )
                     Text(
                         "인증됨",
                         color = RuleUpTheme.colors.onSuccess,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.36.sp,
+                        style = RuleUpTheme.typography.micro,
                     )
                 }
             }
@@ -1268,12 +1221,11 @@ private fun SnsPhoneField(
             horizontalArrangement = Arrangement.spacedBy(5.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("💡", fontSize = 10.sp)
+            Text("💡", style = RuleUpTheme.typography.tiny)
             Text(
                 "실패 시 이 번호로 결과가 카카오톡으로 전송돼요",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 10.sp,
-                lineHeight = 14.sp,
+                style = RuleUpTheme.typography.tiny,
             )
         }
     }
@@ -1309,8 +1261,7 @@ private fun ConfirmBottomBar(
             Text(
                 if (isRecommending) "추천 중..." else "다시 추천",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Row(
@@ -1326,12 +1277,11 @@ private fun ConfirmBottomBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("✓", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("✓", color = Color.White, style = RuleUpTheme.typography.cardTitle)
             Text(
                 if (isCreating) "만드는 중..." else "이대로 만들기",
                 color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
         }
     }
