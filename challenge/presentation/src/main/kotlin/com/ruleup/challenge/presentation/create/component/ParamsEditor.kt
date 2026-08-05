@@ -23,10 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.ParamValue
@@ -101,8 +98,7 @@ private fun NumberSliderRow(
             Text(
                 spec.key,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Row(
                 verticalAlignment = Alignment.Bottom,
@@ -111,15 +107,13 @@ private fun NumberSliderRow(
                 Text(
                     shown.asParamText(),
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.title,
                 )
                 spec.unit?.let {
                     Text(
                         it,
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.smallMedium,
                         modifier = Modifier.padding(bottom = 2.dp),
                     )
                 }
@@ -145,8 +139,8 @@ private fun NumberSliderRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(min.asParamText(), color = RuleUpTheme.colors.textMuted, fontSize = 10.sp)
-            Text(max.asParamText(), color = RuleUpTheme.colors.textMuted, fontSize = 10.sp)
+            Text(min.asParamText(), color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.tiny)
+            Text(max.asParamText(), color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.tiny)
         }
     }
 }
@@ -165,8 +159,7 @@ private fun TextParamRow(
             Text(
                 spec.key,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             val min = spec.min
             val max = spec.max
@@ -176,7 +169,7 @@ private fun TextParamRow(
                     min != null && max != null -> "${min.toInt()}~${max.toInt()}"
                     else -> null
                 }
-            rangeHint?.let { Text(it, color = RuleUpTheme.colors.textMuted, fontSize = 10.sp) }
+            rangeHint?.let { Text(it, color = RuleUpTheme.colors.textMuted) }
         }
         Row(
             modifier =
@@ -195,15 +188,11 @@ private fun TextParamRow(
                 onValueChange = { input -> onIntent(CreateChallengeIntent.EditParam(spec.key, spec.parse(input))) },
                 singleLine = true,
                 textStyle =
-                    TextStyle(
-                        color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                    ),
+                    RuleUpTheme.typography.cardTitle.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                 modifier = Modifier.weight(1f),
             )
-            spec.unit?.let { Text(it, color = RuleUpTheme.colors.textSecondary, fontSize = 11.sp) }
+            spec.unit?.let { Text(it, color = RuleUpTheme.colors.textSecondary) }
         }
     }
 }

@@ -16,9 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -49,14 +47,12 @@ fun CreateChallengeTopBar(
                 "‹",
                 modifier = Modifier.singleClickable(onClick = onBack),
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.title,
             )
             Text(
                 title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
         }
         if (trailingText != null) {
@@ -64,8 +60,7 @@ fun CreateChallengeTopBar(
                 trailingText,
                 modifier = Modifier.singleClickable(onClick = onTrailingClick),
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.bodyMedium,
             )
         }
     }
@@ -86,9 +81,7 @@ fun SectionLabel(
         Text(
             text,
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.66.sp,
+            style = RuleUpTheme.typography.captionBold,
         )
         trailing()
     }
@@ -114,9 +107,7 @@ fun SmallBadge(
         Text(
             text,
             color = textColor,
-            fontSize = 8.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.32.sp,
+            style = RuleUpTheme.typography.micro,
         )
     }
 }
@@ -174,7 +165,7 @@ fun InfoNote(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(emoji, fontSize = 13.sp)
-        Text(text, color = textColor, fontSize = 11.sp, lineHeight = 15.sp)
+        Text(emoji, style = RuleUpTheme.typography.body)
+        Text(text, color = textColor, style = RuleUpTheme.typography.caption)
     }
 }
