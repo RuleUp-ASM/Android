@@ -46,7 +46,7 @@ fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
     }
     if (state.forceUpdate) {
         ForceUpdateContent(
-            message = state.updateMessage ?: "원활한 사용을 위해 최신 버전으로 업데이트해주세요.",
+            message = updateMessage(state.minAppVersion),
             onUpdate = { context.openPlayStore() },
         )
     } else {
@@ -177,6 +177,18 @@ private fun ForceUpdateContent(
         }
     }
 }
+
+/**
+ * 강제 업데이트 안내 문구.
+ *
+ * 서버가 최소 버전을 주면 그 값을 그대로 보여준다 — 명세가 이 필드를 "x.x.x 이상으로 업데이트해
+ * 주세요" 표시용으로 정의한다. 못 받았을 때만 일반 문구로 떨어진다.
+ */
+private fun updateMessage(minAppVersion: String?): String =
+    minAppVersion
+        ?.takeIf { it.isNotBlank() }
+        ?.let { "$it 이상으로 업데이트해 주세요." }
+        ?: "원활한 사용을 위해 최신 버전으로 업데이트해주세요."
 
 /** Play 스토어 상세로 이동. 스토어 앱이 없으면 웹으로 폴백. */
 private fun Context.openPlayStore() {

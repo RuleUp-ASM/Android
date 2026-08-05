@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
 import com.ruleup.onboarding.domain.auth.SessionBootstrapState
@@ -56,7 +57,7 @@ class SplashViewModel
                 }
 
                 is SplashReducerEvent.ForceUpdateRequired -> {
-                    state.copy(isChecking = false, forceUpdate = true, updateMessage = event.message)
+                    state.copy(isChecking = false, forceUpdate = true, minAppVersion = event.minAppVersion)
                 }
             }
 
@@ -70,7 +71,10 @@ class SplashViewModel
                         }
 
                         is SessionBootstrapState.ForceUpdate -> {
-                            dispatch(SplashReducerEvent.ForceUpdateRequired(state.message))
+                            // devTestMsg 는 개발·점검용이라 사용자에게 노출하지 않는다. 운영 중
+                            // 무슨 이유로 게이트가 걸렸는지는 로그로 남겨야 추적이 된다.
+                            state.devTestMsg?.let { msg -> observability.i(TAG) { "강제 업데이트: $msg" } }
+                            dispatch(SplashReducerEvent.ForceUpdateRequired(state.minAppVersion))
                             return@collect
                         }
 
