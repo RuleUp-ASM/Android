@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.OnboardingGenderPage
+import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
@@ -49,7 +50,7 @@ fun BirthDateContent(
 ) {
     val nav = LocalNavigationHelper.current
     OnboardingScaffold(
-        step = 3,
+        step = OnboardingStep.BIRTH,
         buttonText = "다음",
         modifier = modifier,
         nextEnabled = birthDateValid,

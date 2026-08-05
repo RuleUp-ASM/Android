@@ -55,6 +55,10 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
         }
 
     LaunchedEffect(Unit) {
+        viewModel.onIntent(LoginIntent.Load)
+    }
+
+    LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.LaunchOAuth -> launcher.launch(effect.provider)

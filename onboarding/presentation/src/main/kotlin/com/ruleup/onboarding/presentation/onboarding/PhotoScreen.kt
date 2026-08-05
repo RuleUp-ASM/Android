@@ -32,6 +32,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
+import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
@@ -55,7 +56,8 @@ fun PhotoContent(
         rememberProfileImagePicker { uri -> onIntent(OnboardingIntent.SetProfileIcon(uri)) }
 
     OnboardingScaffold(
-        step = 5,
+        step = OnboardingStep.PHOTO,
+        skipped = imageUri.isNullOrBlank(),
         buttonText = "다음",
         modifier = modifier,
         onNext = { nav.navigateTo(OnboardingTermsPage) },

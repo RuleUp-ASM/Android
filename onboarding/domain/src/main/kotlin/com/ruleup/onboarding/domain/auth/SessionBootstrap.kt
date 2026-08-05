@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.auth
 
 import com.ruleup.domain.entity.user.TermsVersions
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.auth.usecase.BackfillUserIdUseCase
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
@@ -46,6 +47,7 @@ class SessionBootstrap
     @Inject
     constructor(
         private val loadIntroUseCase: LoadIntroUseCase,
+        private val tokenRepository: TokenRepository,
         private val autoLoginUseCase: AutoLoginUseCase,
         private val backfillUserIdUseCase: BackfillUserIdUseCase,
     ) {
@@ -62,6 +64,16 @@ class SessionBootstrap
         var termsVersions: TermsVersions? = null
             private set
 
+        /**
+         * 부팅 시점에 저장된 세션이 있었는지.
+         *
+         * 로그인 화면에 왔을 때 "첫 설치"와 "세션이 끊겨 돌아옴"을 가르는 근거다. 완주율의 분모가
+         * 되는 값이라 둘을 섞으면 지표가 무의미해진다.
+         */
+        @Volatile
+        var hadStoredSession: Boolean = false
+            private set
+
         private val started = AtomicBoolean(false)
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -76,6 +88,7 @@ class SessionBootstrap
                     _state.value = SessionBootstrapState.ForceUpdate(gate.devTestMsg)
                     return@launch
                 }
+                hadStoredSession = tokenRepository.getRefreshToken() != null
                 val authenticated = autoLoginUseCase()
                 // 판정을 먼저 방출한다 — 백필을 기다리면 모든 콜드스타트에 왕복 한 번이 얹힌다.
                 _state.value = SessionBootstrapState.Resolved(authenticated)

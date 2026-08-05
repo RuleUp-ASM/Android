@@ -31,6 +31,7 @@ import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
+import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
@@ -47,7 +48,8 @@ fun InterestContent(
 ) {
     val nav = LocalNavigationHelper.current
     OnboardingScaffold(
-        step = 2,
+        step = OnboardingStep.INTEREST,
+        skipped = selected.isEmpty(),
         buttonText = "다음",
         modifier = modifier,
         onNext = { nav.navigateTo(OnboardingBirthPage) },

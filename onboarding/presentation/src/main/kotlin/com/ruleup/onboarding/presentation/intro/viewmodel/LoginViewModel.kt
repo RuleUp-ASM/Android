@@ -6,11 +6,17 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.message.IconType
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
+import com.ruleup.observability.domain.event.Channel
+import com.ruleup.onboarding.domain.auth.SessionBootstrap
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
+import com.ruleup.onboarding.domain.entity.AuthException
 import com.ruleup.onboarding.domain.entity.LoginOutcome
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
+import com.ruleup.onboarding.domain.observability.LoginEntryType
+import com.ruleup.onboarding.domain.observability.OnboardingEvents
+import com.ruleup.onboarding.domain.observability.SignupTimer
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,15 +33,28 @@ class LoginViewModel
         private val navigationHelper: NavigationHelper,
         private val messageHelper: MessageHelper,
         private val observability: Observability,
+        private val signupTimer: SignupTimer,
+        private val sessionBootstrap: SessionBootstrap,
     ) : MviViewModel<LoginIntent, LoginState, LoginReducerEvent, LoginEffect>(LoginState.initial) {
         override fun onIntent(intent: LoginIntent) {
             when (intent) {
                 is LoginIntent.Load -> {
                     dispatch(LoginReducerEvent.Loaded)
+                    // 완주율의 분모. 첫 설치와 재로그인을 나누지 않으면 분모가 뒤섞인다.
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.loginScreenView(
+                            if (sessionBootstrap.hadStoredSession) LoginEntryType.RELOGIN else LoginEntryType.FRESH,
+                        )
+                    }
                 }
 
                 is LoginIntent.LoginClicked -> {
                     dispatch(LoginReducerEvent.LoginStarted)
+                    // 가입 소요 시간의 시작점. signup_complete 가 이 값과의 차이를 싣는다.
+                    signupTimer.start()
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.loginAttempt(intent.provider.provider)
+                    }
                     emitEffect(LoginEffect.LaunchOAuth(intent.provider))
                 }
 
@@ -74,6 +93,13 @@ class LoginViewModel
                     socialLoginUseCase(authorization)
                 }.onSuccess { result ->
                     dispatch(LoginReducerEvent.LoginFinished)
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.loginResult(
+                            provider = authorization.provider.provider,
+                            success = true,
+                            isNewUser = result is LoginOutcome.GoSignup,
+                        )
+                    }
                     when (result) {
                         LoginOutcome.GoHome -> navigationHelper.navigateTo(HomePage)
 
@@ -106,6 +132,13 @@ class LoginViewModel
                     // 원인은 로그로만 남긴다 — 사용자가 고칠 수 없는 코드(redirectUri·deviceInfo)까지
                     // 화면에 드러내면 안내만 어지러워진다.
                     observability.w(TAG, error) { "소셜 로그인 실패" }
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.loginResult(
+                            provider = authorization.provider.provider,
+                            success = false,
+                            errorCode = (error as? AuthException)?.failure?.name,
+                        )
+                    }
                     emitEffect(LoginEffect.ShowFailure(error.toAuthFailureUi()))
                 }
             }

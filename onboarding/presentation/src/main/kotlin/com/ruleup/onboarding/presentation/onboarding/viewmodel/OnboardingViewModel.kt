@@ -6,6 +6,8 @@ import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Gender
 import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
 import com.ruleup.onboarding.domain.auth.model.SignupForm
@@ -17,6 +19,8 @@ import com.ruleup.onboarding.domain.entity.AuthException
 import com.ruleup.onboarding.domain.entity.AuthFailure
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
+import com.ruleup.onboarding.domain.observability.OnboardingEvents
+import com.ruleup.onboarding.domain.observability.SignupTimer
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.profile.domain.entity.NicknameCheck
@@ -45,6 +49,8 @@ class OnboardingViewModel
         private val checkNicknameUseCase: CheckNicknameUseCase,
         private val validateBirthDateUseCase: ValidateBirthDateUseCase,
         private val sessionBootstrap: SessionBootstrap,
+        private val signupTimer: SignupTimer,
+        private val observability: Observability,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<OnboardingIntent, OnboardingState, OnboardingReducerEvent, OnboardingEffect>(OnboardingState.initial) {
         /**
@@ -158,6 +164,13 @@ class OnboardingViewModel
         private suspend fun checkNickname(name: String) {
             runCatching { checkNicknameUseCase(name) }
                 .onSuccess { check ->
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.nicknameCheck(
+                            valid = check.valid,
+                            available = check.available,
+                            reason = check.reason?.name,
+                        )
+                    }
                     dispatch(
                         OnboardingReducerEvent.NicknameChecked(
                             available = check.available,
@@ -243,10 +256,27 @@ class OnboardingViewModel
                             localImageUri = state.profileImageUri,
                         ),
                     )
-                }.onSuccess {
+                }.onSuccess { user ->
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.signupComplete(
+                            interestCount = state.interests.size,
+                            hasGender = state.gender != null,
+                            optionalAgreements = state.agreements.count { !it.required },
+                            durationMs = signupTimer.consumeElapsedMillis(),
+                        )
+                    }
+                    if (state.profileImageUri != null) {
+                        observability.log(Channel.BUSINESS) {
+                            // 업로드 실패는 UseCase 가 삼키므로 결과는 URL 이 붙었는지로 판정한다.
+                            OnboardingEvents.profileImageUploadResult(success = user.profileImageUrl != null)
+                        }
+                    }
                     navigationHelper.navigateTo(HomePage)
                 }.onFailure { error ->
                     dispatch(OnboardingReducerEvent.SubmitFailed)
+                    observability.log(Channel.BUSINESS) {
+                        OnboardingEvents.signupFailed((error as? AuthException)?.failure?.name ?: "UNKNOWN")
+                    }
                     // 토큰이 만료됐으면 되돌아갈 단계가 없다. 로그인부터 다시 시작한다.
                     if ((error as? AuthException)?.failure == AuthFailure.INVALID_SIGNUP_TOKEN) {
                         restartFromLogin("시간이 초과됐어요. 처음부터 다시 해주세요")

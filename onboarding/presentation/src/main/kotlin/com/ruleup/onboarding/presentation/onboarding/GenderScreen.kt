@@ -21,6 +21,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Gender
 import com.ruleup.onboarding.domain.navigation.OnboardingPhotoPage
+import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
@@ -43,7 +44,8 @@ fun GenderContent(
 ) {
     val nav = LocalNavigationHelper.current
     OnboardingScaffold(
-        step = 4,
+        step = OnboardingStep.GENDER,
+        skipped = gender == null,
         buttonText = "다음",
         modifier = modifier,
         onNext = { nav.navigateTo(OnboardingPhotoPage) },
