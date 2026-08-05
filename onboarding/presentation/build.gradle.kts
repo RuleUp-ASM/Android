@@ -46,6 +46,29 @@ android {
     }
 }
 
+/**
+ * androidTest 변형에만 매니페스트 placeholder 를 채운다.
+ *
+ * 이 모듈의 매니페스트는 카카오 redirect 스킴에 `${KAKAO_NATIVE_APP_KEY}` 를, 의존하는 AppAuth
+ * 라이브러리는 `${appAuthRedirectScheme}` 를 쓰는데 값을 정의하는 건 `:app` 뿐이다. 앱 병합에서는
+ * `:app` 이 채우니 문제가 없지만, **모듈의 androidTest 는 자기 힘으로 테스트 APK 를 만들어야 해서**
+ * 그 자리에서 값을 요구한다. Studio 의 Compose 프리뷰가 이 태스크를 돌려 빌드가 깨졌다.
+ *
+ * `defaultConfig` 에 넣지 않는 이유는 그러면 **앱에 실리는 매니페스트의 값까지 여기서 정해지기**
+ * 때문이다. 실제 스킴은 `:app` 이 local.properties 에서 읽은 값이어야 하고, 이 모듈이 끼어들면
+ * 로그인 redirect 가 조용히 엉뚱한 스킴으로 나간다.
+ *
+ * 이 모듈엔 계측 테스트가 없어 만들어지는 테스트 APK 는 비어 있다. 값은 자리만 채우면 된다.
+ */
+androidComponents {
+    onVariants { variant ->
+        variant.androidTest?.manifestPlaceholders?.apply {
+            put("KAKAO_NATIVE_APP_KEY", "androidTest")
+            put("appAuthRedirectScheme", "androidTest")
+        }
+    }
+}
+
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
