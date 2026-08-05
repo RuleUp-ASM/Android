@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?><!--
    Auto Backup 규칙 (API < 31, fullBackupContent).
-   인증 토큰 DataStore 는 클라우드 백업 대상에서 제외한다(refresh 토큰 유출 방지).
+   인증 토큰 DataStore 는 refresh 토큰 유출 방지로 제외한다.
+   기기·설치 식별자 DataStore 도 제외한다 — 복원되면 installationId 의 "재설치 시 재생성"이
+   깨져 동일 설치 다계정 차단이 헛돌고, deviceId 폴백이 새 기기로 넘어가 단일 활성 기기
+   판정이 무력화된다.
 -->
 <full-backup-content>
     <exclude domain="file" path="datastore/token.preferences_pb" />
+    <exclude domain="file" path="datastore/device.preferences_pb" />
 </full-backup-content>
