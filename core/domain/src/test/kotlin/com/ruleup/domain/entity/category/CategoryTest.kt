@@ -41,8 +41,21 @@ class CategoryTest {
     }
 
     @Test
-    fun `모르는 code 는 null 이다`() {
-        assertNull(Category.fromValue("COOKING"))
+    fun `15종 시절 code 도 별칭으로 흡수한다`() {
+        // 서버가 아직 이 값들을 내려준다. 별칭이 없으면 탐색·홈 카드의 아이콘과 필터가 사라진다.
+        assertEquals(Category.WAKE_SLEEP, Category.fromValue("WAKE_UP"))
+        assertEquals(Category.DIET_HEALTH, Category.fromValue("HEALTH"))
+        assertEquals(Category.MIND, Category.fromValue("MEDITATION"))
+        assertEquals(Category.HOUSEKEEPING, Category.fromValue("COOKING"))
+        assertEquals(Category.CAREER_PRODUCTIVITY, Category.fromValue("WORK"))
+    }
+
+    @Test
+    fun `사라진 분류는 여전히 null 이다`() {
+        // 대응되는 12종이 없다. 서버가 마이그레이션할 값이라 억지로 끼워 맞추지 않는다.
+        assertNull(Category.fromValue("ENVIRONMENT"))
+        assertNull(Category.fromValue("MUSIC"))
+        assertNull(Category.fromValue("CODING"))
         assertNull(Category.fromValue(""))
     }
 
@@ -50,7 +63,7 @@ class CategoryTest {
     fun `toCategories 는 모르는 값을 걸러낸다`() {
         assertEquals(
             listOf(Category.EXERCISE, Category.READING),
-            listOf("EXERCISE", "CODING", "READING").toCategories(),
+            listOf("EXERCISE", "MUSIC", "READING").toCategories(),
         )
         assertEquals(emptyList(), null.toCategories())
     }
