@@ -4,8 +4,6 @@ import com.ruleup.domain.entity.user.Token
 
 /**
  * accessToken 만료(401) 시 refreshToken 으로 토큰을 재발급하는 포트.
- *
- * 구현(AuthApi 호출)은 onboarding:data 에 둔다.
  */
 interface TokenRefresher {
     /**

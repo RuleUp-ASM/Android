@@ -1,8 +1,8 @@
 package com.ruleup.onboarding.domain.auth.model
 
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.onboarding.domain.entity.AgreementConsents
-import com.ruleup.onboarding.domain.entity.Gender
+import com.ruleup.domain.entity.user.AgreementConsents
+import com.ruleup.domain.entity.user.Gender
 import java.time.LocalDate
 
 /**

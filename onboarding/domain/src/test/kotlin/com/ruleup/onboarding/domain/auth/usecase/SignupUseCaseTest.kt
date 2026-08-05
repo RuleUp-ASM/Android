@@ -1,13 +1,13 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
+import com.ruleup.domain.entity.user.AgreementConsents
+import com.ruleup.domain.entity.user.AgreementType
+import com.ruleup.domain.entity.user.Gender
+import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.auth.model.SignupForm
-import com.ruleup.onboarding.domain.entity.AgreementConsents
-import com.ruleup.onboarding.domain.entity.AgreementType
 import com.ruleup.onboarding.domain.entity.AuthSession
-import com.ruleup.onboarding.domain.entity.Gender
-import com.ruleup.onboarding.domain.entity.TermsVersions
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeDeviceIdentityRepository
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository

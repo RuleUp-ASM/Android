@@ -1,6 +1,10 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.entity.user.AgreementConsents
+import com.ruleup.domain.entity.user.AgreementType
+import com.ruleup.domain.entity.user.Gender
+import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.SessionBootstrap
@@ -9,10 +13,6 @@ import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
-import com.ruleup.onboarding.domain.entity.AgreementConsents
-import com.ruleup.onboarding.domain.entity.AgreementType
-import com.ruleup.onboarding.domain.entity.Gender
-import com.ruleup.onboarding.domain.entity.TermsVersions
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.ProfileInterestPage
 import com.ruleup.profile.domain.entity.NicknameCheckReason

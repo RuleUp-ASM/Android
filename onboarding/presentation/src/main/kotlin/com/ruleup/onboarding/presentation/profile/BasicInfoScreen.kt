@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.onboarding.domain.entity.Gender
+import com.ruleup.domain.entity.user.Gender
 import com.ruleup.onboarding.domain.navigation.ProfileAgreementPage
 import com.ruleup.onboarding.presentation.component.ProfileSetupScaffold
 import com.ruleup.onboarding.presentation.profile.component.InfoBox

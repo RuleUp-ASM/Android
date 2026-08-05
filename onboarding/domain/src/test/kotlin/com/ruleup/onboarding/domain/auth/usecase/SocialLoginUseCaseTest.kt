@@ -1,9 +1,10 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
+import com.ruleup.domain.entity.user.AccountStatus
+import com.ruleup.domain.entity.user.LockInfo
+import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.Token
-import com.ruleup.onboarding.domain.entity.AccountStatus
 import com.ruleup.onboarding.domain.entity.AuthSession
-import com.ruleup.onboarding.domain.entity.LockInfo
 import com.ruleup.onboarding.domain.entity.LoginOutcome
 import com.ruleup.onboarding.domain.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.entity.OAuthProfile
@@ -13,7 +14,6 @@ import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeDeviceIdentityRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import com.ruleup.onboarding.domain.fake.testUser
-import com.ruleup.profile.domain.entity.NicknameStatus
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -118,7 +118,7 @@ class SocialLoginUseCaseTest {
             assertNull(tokens.savedToken)
         }
 
-    private fun existingUser(user: com.ruleup.onboarding.domain.entity.User) =
+    private fun existingUser(user: com.ruleup.domain.entity.user.User) =
         FakeAuthRepository().apply {
             exchangeResult = OAuthResult.ExistingUser(AuthSession(token, user), restored = false)
         }

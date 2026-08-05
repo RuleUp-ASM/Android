@@ -1,8 +1,8 @@
 package com.ruleup.onboarding.presentation.profile.viewmodel
 
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.onboarding.domain.entity.AgreementType
-import com.ruleup.onboarding.domain.entity.Gender
+import com.ruleup.domain.entity.user.AgreementType
+import com.ruleup.domain.entity.user.Gender
 import com.ruleup.ui.mvi.UiState
 import java.time.LocalDate
 
