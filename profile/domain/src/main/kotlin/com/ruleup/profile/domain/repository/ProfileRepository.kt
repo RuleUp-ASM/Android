@@ -2,6 +2,7 @@ package com.ruleup.profile.domain.repository
 
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
 
@@ -9,10 +10,21 @@ import com.ruleup.profile.domain.entity.Profile
  * 계정 프로필 계약 (명세 4.6~4.11). 구현은 :profile:data.
  *
  * 계정 정보의 소유자는 profile 이다. 온보딩은 최초 설정을 하고 지나가는 단계라 이 계약을
- * 빌려 쓴다(:onboarding:domain → :profile:domain). 온보딩 전용인 `PUT /onboarding/me` 는
- * 여기 두지 않는다 — [com.ruleup.onboarding.domain.profile.OnboardingProfileRepository].
+ * 빌려 쓴다(:onboarding:domain → :profile:domain).
  */
 interface ProfileRepository {
+    /**
+     * 내 프로필 조회 (GET /api/v1/users/me).
+     *
+     * 로그인 응답의 `user` 는 홈 진입용 최소 정보라 생일·성별·약관 동의가 없다. 앱 재시작이나
+     * 프로필 편집 후 최신 상태가 필요할 때 쓴다.
+     *
+     * 레거시 [getProfile] 과 공존한다 — 그쪽은 아직 구 엔드포인트(`GET /v1/profile`)를 보고 있고
+     * 매너 온도·닉네임 변경 이력처럼 새 응답에 없는 필드를 마이페이지가 쓰고 있다. 마이페이지
+     * 계약 정합화에서 하나로 합친다.
+     */
+    suspend fun getMyProfile(): MyProfile
+
     /** 닉네임 형식/중복 검사 (명세 4.6). */
     suspend fun checkNickname(nickname: String): NicknameCheck
 

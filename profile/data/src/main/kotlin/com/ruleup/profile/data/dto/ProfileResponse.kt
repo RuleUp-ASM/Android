@@ -18,6 +18,9 @@ data class NicknameCheckResponse(
     val available: Boolean? = null,
     @SerialName("reason")
     val reason: String? = null,
+    // RECENTLY_RELEASED 일 때만 오는 잠금 해제 시각(ISO).
+    @SerialName("availableAt")
+    val availableAt: String? = null,
 )
 
 internal fun NicknameCheckResponse.toDomain(): NicknameCheck =
@@ -25,6 +28,7 @@ internal fun NicknameCheckResponse.toDomain(): NicknameCheck =
         valid = valid ?: false,
         available = available ?: false,
         reason = NicknameCheckReason.fromValue(reason),
+        availableAt = availableAt,
     )
 
 // ---------- 4.7 관심 카테고리 마스터 ----------
@@ -88,9 +92,12 @@ internal fun ProfileResponse.toDomain(): Profile =
         createdAt = createdAt.requireField("createdAt"),
     )
 
-// ---------- 4.10 프로필 이미지 업로드 ----------
+// ---------- 프로필 이미지 등록 ----------
 @Serializable
 data class ProfileImageResponse(
-    @SerialName("profileImageUrl")
-    val profileImageUrl: String? = null,
+    @SerialName("imageUrl")
+    val imageUrl: String? = null,
+    // PENDING 고정 — 등록 즉시 자동 모더레이션이 돌지만 기능 제한은 없다.
+    @SerialName("status")
+    val status: String? = null,
 )

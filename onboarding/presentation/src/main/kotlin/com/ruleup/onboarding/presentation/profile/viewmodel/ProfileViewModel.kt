@@ -15,6 +15,7 @@ import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.ProfileInterestPage
+import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.NicknameCheckReason
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -149,7 +150,7 @@ class ProfileViewModel
                         if (check.available) {
                             navigationHelper.navigateTo(ProfileInterestPage)
                         } else {
-                            emitEffect(ProfileEffect.ShowError(check.reason.message()))
+                            emitEffect(ProfileEffect.ShowError(check.message()))
                         }
                     }.onFailure {
                         emitEffect(ProfileEffect.ShowError("닉네임을 확인하지 못했어요. 잠시 후 다시 시도해주세요"))
@@ -208,9 +209,13 @@ class ProfileViewModel
         }
     }
 
-private fun NicknameCheckReason?.message(): String =
-    when (this) {
+private fun NicknameCheck.message(): String =
+    when (reason) {
         NicknameCheckReason.DUPLICATED -> "이미 사용 중인 닉네임이에요"
         NicknameCheckReason.FORMAT -> "사용할 수 없는 닉네임이에요"
+        // 사칭 방지로 해제 후 1주간 잠긴다. 언제 풀리는지 모르면 계속 다른 닉네임을 시도하게 된다.
+        NicknameCheckReason.RECENTLY_RELEASED ->
+            availableAt?.let { "최근에 해제된 닉네임이에요. $it 부터 쓸 수 있어요" }
+                ?: "최근에 해제된 닉네임이라 잠시 쓸 수 없어요"
         null -> "사용할 수 없는 닉네임이에요"
     }
