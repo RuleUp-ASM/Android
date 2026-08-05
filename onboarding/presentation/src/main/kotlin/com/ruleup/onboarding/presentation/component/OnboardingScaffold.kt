@@ -23,9 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
@@ -125,14 +123,13 @@ private fun OnboardingTopBar(
                     .semantics { contentDescription = "이전 단계로" },
             contentAlignment = Alignment.Center,
         ) {
-            Text("‹", color = RuleUpTheme.colors.textPrimary, fontSize = 22.sp, fontWeight = FontWeight.Medium)
+            Text("‹", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.title)
         }
         Text(
             text = "$step/$ONBOARDING_TOTAL_STEPS",
             modifier = Modifier.semantics { contentDescription = "전체 $ONBOARDING_TOTAL_STEPS 단계 중 $step 단계" },
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.smallMedium,
         )
     }
 }

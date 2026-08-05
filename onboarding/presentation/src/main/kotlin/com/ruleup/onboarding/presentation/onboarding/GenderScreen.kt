@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,7 +53,6 @@ fun GenderContent(
         SectionHeader(
             title = "성별을 알려주세요",
             subtitle = "통계에만 사용해요",
-            titleSize = 22,
         )
 
         Row(
@@ -116,13 +114,13 @@ private fun GenderCard(
         Text(
             glyph,
             color = if (selected) RuleUpTheme.colors.brand else RuleUpTheme.colors.textSecondary,
+            // 기호 그림이라 타입 스케일이 아니라 그리는 크기로 잡는다.
             fontSize = 28.sp,
         )
         Text(
             label,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            style = if (selected) RuleUpTheme.typography.cardTitle else RuleUpTheme.typography.labelMedium,
         )
     }
 }

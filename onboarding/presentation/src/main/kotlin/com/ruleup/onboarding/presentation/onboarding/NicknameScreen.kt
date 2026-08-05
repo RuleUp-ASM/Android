@@ -18,16 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -66,7 +63,6 @@ fun NicknameContent(
         SectionHeader(
             title = "어떻게 불러드릴까요?",
             subtitle = "친구들에게 보여질 이름이에요",
-            titleSize = 24,
         )
         NicknamePreviewCard(nickname = nickname, imageUri = imageUri)
         NicknameField(
@@ -78,7 +74,7 @@ fun NicknameContent(
             Text(
                 nicknameMessage,
                 color = if (nicknameAvailable == true) RuleUpTheme.colors.brand else RuleUpTheme.colors.danger,
-                fontSize = 13.sp,
+                style = RuleUpTheme.typography.body,
             )
         }
         NicknameRules(nickname = nickname)
@@ -97,9 +93,7 @@ private fun NicknamePreviewCard(
                 .fillMaxWidth()
                 .height(160.dp)
                 .clip(RuleUpTheme.shapes.cardLarge)
-                .background(
-                    Brush.linearGradient(listOf(Color(0xFFEEF2FF), Color(0xFFF5F3FF))),
-                ),
+                .background(RuleUpTheme.colors.brandSoft),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -133,7 +127,6 @@ private fun NicknamePreviewCard(
             modifier = Modifier.padding(top = 10.dp),
             color = RuleUpTheme.colors.textPrimary,
             style = RuleUpTheme.typography.title,
-            fontWeight = FontWeight.Bold,
         )
     }
 }
@@ -152,8 +145,8 @@ private fun NicknameField(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text("닉네임", color = RuleUpTheme.colors.textSlate, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            Text("${nickname.length} / $maxLength", color = RuleUpTheme.colors.textMuted, fontSize = 11.sp)
+            Text("닉네임", color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.smallBold)
+            Text("${nickname.length} / $maxLength", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.caption)
         }
         Row(
             modifier =
@@ -209,8 +202,7 @@ private fun StatusBadge(valid: Boolean) {
         Text(
             if (valid) "✓" else "✕",
             color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }
@@ -226,13 +218,12 @@ private fun NicknameStatusMessage(validation: NicknameValidation) {
         Text(
             if (valid) "✓" else "✕",
             color = if (valid) RuleUpTheme.colors.success else RuleUpTheme.colors.danger,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.captionBold,
         )
         Text(
             NickNameUtil.message(validation),
             color = if (valid) RuleUpTheme.colors.onSuccess else RuleUpTheme.colors.danger,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }
@@ -274,10 +265,9 @@ private fun RuleRow(
         Text(
             if (ok) "✓" else "✗",
             color = if (ok) RuleUpTheme.colors.success else RuleUpTheme.colors.danger,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.captionBold,
         )
-        Text(text, color = RuleUpTheme.colors.textSlate, fontSize = 11.sp)
+        Text(text, color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.caption)
     }
 }
 

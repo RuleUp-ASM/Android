@@ -105,6 +105,7 @@ fun LoginContent(
                         .background(RuleUpGradients.Brand),
                 contentAlignment = Alignment.Center,
             ) {
+                // 브랜드 로크업. Figma 타입 스케일(최대 44)에 없는 크기라 리터럴로 둔다.
                 Text("R", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Bold)
             }
             Column(
@@ -119,8 +120,7 @@ fun LoginContent(
                 Text(
                     "1초 만에 시작할 수 있어요",
                     color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Normal,
+                    style = RuleUpTheme.typography.body,
                 )
             }
 
@@ -178,15 +178,13 @@ private fun SocialButton(
         Text(
             provider.mark,
             color = provider.contentColor,
-            fontSize = if (provider.markBold) 18.sp else 16.sp,
-            fontWeight = if (provider.markBold) FontWeight.Bold else FontWeight.Normal,
+            style = if (provider.markBold) RuleUpTheme.typography.section else RuleUpTheme.typography.labelMedium,
         )
         Spacer(Modifier.size(10.dp))
         Text(
             provider.label,
             color = provider.contentColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.cardTitle,
         )
     }
 }

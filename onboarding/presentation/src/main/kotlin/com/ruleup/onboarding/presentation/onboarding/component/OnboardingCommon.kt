@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -43,7 +42,6 @@ fun SectionHeader(
     title: String,
     subtitle: String,
     modifier: Modifier = Modifier,
-    titleSize: Int = 23,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -52,14 +50,12 @@ fun SectionHeader(
         Text(
             title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = titleSize.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Text(
             subtitle,
             color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Normal,
+            style = RuleUpTheme.typography.body,
         )
     }
 }
@@ -83,6 +79,7 @@ fun InfoBox(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // 이모지라 타입 스케일이 아니라 그리는 크기로 잡는다.
         Text(emoji, fontSize = 16.sp)
         Text(text, color = textColor, style = RuleUpTheme.typography.caption)
     }
@@ -108,9 +105,7 @@ fun RequirementBadge(
         Text(
             if (required) "필수" else "선택",
             color = textColor,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.36.sp,
+            style = RuleUpTheme.typography.micro,
         )
     }
 }
