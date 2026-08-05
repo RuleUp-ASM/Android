@@ -51,5 +51,14 @@ interface TokenRepository {
 
     suspend fun clear()
 
+    /**
+     * 이 기기에서 한 번이라도 로그인에 성공한 적이 있는지. **[clear] 로 지워지지 않는다.**
+     *
+     * 로그인 화면이 "첫 설치"와 "재로그인"을 가르는 근거다 — 완주율의 분모라 둘을 섞으면 지표가
+     * 무의미해진다. 부팅 시점의 토큰 유무로 대신하면 로그아웃 상태에서 앱을 완전히 종료한 사용자가
+     * 다음 실행에서 첫 설치로 집계된다.
+     */
+    suspend fun hasEverLoggedIn(): Boolean
+
     val isLoggedIn: Flow<Boolean>
 }

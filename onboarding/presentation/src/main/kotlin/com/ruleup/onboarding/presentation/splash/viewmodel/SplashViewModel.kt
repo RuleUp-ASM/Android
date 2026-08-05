@@ -1,10 +1,18 @@
 package com.ruleup.onboarding.presentation.splash.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.PendingDeepLink
+import com.ruleup.domain.navigation.PendingDeepLinkEntry
+import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
-import com.ruleup.onboarding.domain.auth.SessionBootstrap
-import com.ruleup.onboarding.domain.auth.SessionBootstrapState
+import com.ruleup.observability.domain.api.w
+import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
+import com.ruleup.onboarding.domain.intro.usecase.IntroGate
+import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
+import com.ruleup.onboarding.domain.navigation.HomePage
+import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,23 +22,39 @@ import javax.inject.Inject
 private const val TAG = "[Splash]"
 
 /**
- * 스플래시 ViewModel. 판정 자체는 하지 않고 [SessionBootstrap] 의 결과를 기다린다 —
- * 버전 게이트와 자동 로그인은 액티비티 `onCreate` 에서 이미 착수되어 컴포지션과 겹쳐 돌고 있다.
+ * 앱 진입 절차를 실행한다 — 버전 게이트 → 자동 로그인 → 목적지.
  *
- * **어디로 갈지는 여기서 정하지 않는다.** 진입 목적지는 [SessionBootstrap] 이 계산하고 네비게이션
- * 호스트가 옮긴다 — 판정에 필요한 건 세션·보류 딥링크·경로 공개 여부뿐이라 이 화면과 무관하다.
- * 스플래시가 갖는 건 버전 게이트 UI 상태 하나다.
+ * 판정은 하나도 여기서 하지 않는다. 게이트가 걸렸는지는 [LoadIntroUseCase], 세션을 되살릴 수
+ * 있는지는 [AutoLoginUseCase], 보류 딥링크를 열어도 되는지는 [PendingDeepLink.consumeFor] 가
+ * 정한다. 이 화면이 갖는 건 셋을 부르는 순서와, 게이트가 걸렸을 때의 UI 상태뿐이다.
+ *
+ * **백스택은 세우지 않는다.** 목적지를 [NavigationHelper] 로 흘려보내고 구성은 네비게이션 호스트가
+ * 한다 — 딥링크는 부모 화면까지 함께 깔아야 뒤로가기가 자연스럽고, 그건 라우트 목록을 가진 쪽만
+ * 할 수 있다.
+ *
+ * 세션이 끊겨 이 화면으로 되돌아오면 새 인스턴스가 절차를 처음부터 다시 돈다. 재판정을 위한 별도
+ * 경로가 필요 없는 이유다.
  */
 @HiltViewModel
 class SplashViewModel
     @Inject
     constructor(
-        private val sessionBootstrap: SessionBootstrap,
+        private val loadIntroUseCase: LoadIntroUseCase,
+        private val autoLoginUseCase: AutoLoginUseCase,
+        private val pendingDeepLink: PendingDeepLink,
+        private val routeAccessPolicy: RouteAccessPolicy,
+        private val navigationHelper: NavigationHelper,
         private val observability: Observability,
     ) : MviViewModel<SplashIntent, SplashState, SplashReducerEvent, NoEffect>(SplashState.initial) {
+        /**
+         * 액티비티가 재생성되면 컴포지션이 다시 만들어져 진입 인텐트가 한 번 더 들어온다. ViewModel 은
+         * 살아남으므로, 막지 않으면 인트로 조회와 토큰 재발급이 두 번 나간다.
+         */
+        private var started = false
+
         override fun onIntent(intent: SplashIntent) {
             when (intent) {
-                is SplashIntent.Check -> observeBootstrap()
+                is SplashIntent.Check -> resolveEntry()
             }
         }
 
@@ -48,31 +72,43 @@ class SplashViewModel
                 }
             }
 
-        private fun observeBootstrap() {
+        private fun resolveEntry() {
+            if (started) return
+            started = true
             viewModelScope.launch {
-                // 판정이 이미 끝나 있으면 StateFlow 가 즉시 그 값을 준다 — 액티비티 재생성에도 안전하다.
-                sessionBootstrap.state.collect { state ->
-                    when (state) {
-                        SessionBootstrapState.Running -> {
-                            Unit
-                        }
+                // 버전 게이트가 먼저다. 걸리면 자동 로그인도 하지 않는다 — 업데이트 전에는 어떤
+                // 화면도 열지 않으므로 세션을 되살릴 이유가 없다.
+                when (val gate = loadIntroUseCase()) {
+                    is IntroGate.ForceUpdate -> {
+                        // devTestMsg 는 개발·점검용이라 사용자에게 노출하지 않는다. 운영 중 무슨
+                        // 이유로 게이트가 걸렸는지는 로그로 남겨야 추적이 된다.
+                        gate.devTestMsg?.let { msg -> observability.i(TAG) { "강제 업데이트: $msg" } }
+                        dispatch(SplashReducerEvent.ForceUpdateRequired(gate.minAppVersion))
+                    }
 
-                        is SessionBootstrapState.ForceUpdate -> {
-                            // devTestMsg 는 개발·점검용이라 사용자에게 노출하지 않는다. 운영 중
-                            // 무슨 이유로 게이트가 걸렸는지는 로그로 남겨야 추적이 된다.
-                            state.devTestMsg?.let { msg -> observability.i(TAG) { "강제 업데이트: $msg" } }
-                            dispatch(SplashReducerEvent.ForceUpdateRequired(state.minAppVersion))
-                            return@collect
-                        }
-
-                        is SessionBootstrapState.Resolved -> {
-                            // 어디로 갈지는 SessionBootstrap 이 정하고 AppNavHost 가 옮긴다.
-                            // 스플래시는 판정이 끝났다는 것만 안다.
-                            dispatch(SplashReducerEvent.CheckFinished)
-                            return@collect
-                        }
+                    IntroGate.Pass -> {
+                        val authenticated = autoLoginUseCase()
+                        dispatch(SplashReducerEvent.CheckFinished)
+                        navigate(authenticated)
                     }
                 }
+            }
+        }
+
+        private fun navigate(authenticated: Boolean) {
+            when (val pending = pendingDeepLink.consumeFor(authenticated, routeAccessPolicy)) {
+                // 딥링크는 부모 화면까지 함께 깔아야 뒤로가기가 자연스럽다(공지 상세 → 방 홈 → 홈).
+                is PendingDeepLinkEntry.Open -> navigationHelper.replaceStackWith(pending.route)
+
+                is PendingDeepLinkEntry.Dropped -> {
+                    // 초대 링크로 유입된 신규 사용자가 여기 걸린다. 가입을 마쳐도 목적지로 돌아가지
+                    // 않으므로, 잃어버린 진입을 집계해 이어가기 필요성을 판단할 근거를 남긴다.
+                    observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.route.path}" }
+                    navigationHelper.navigateTo(LoginPage)
+                }
+
+                // 홈·로그인은 루트라 호스트가 스택을 비우고 단독으로 세운다.
+                PendingDeepLinkEntry.None -> navigationHelper.navigateTo(if (authenticated) HomePage else LoginPage)
             }
         }
     }

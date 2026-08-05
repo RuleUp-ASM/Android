@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
 import androidx.metrics.performance.JankStats
 import com.ruleup.android_ruleup.deeplink.resolveNewIntentRoute
 import com.ruleup.android_ruleup.deeplink.resolveStartRoute
@@ -15,9 +16,14 @@ import com.ruleup.android_ruleup.observability.ScreenTracker
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.PendingDeepLink
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
-import com.ruleup.onboarding.domain.auth.SessionBootstrap
+import com.ruleup.onboarding.domain.navigation.SplashPage
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -41,7 +47,7 @@ class MainActivity : ComponentActivity() {
     lateinit var pendingDeepLink: PendingDeepLink
 
     @Inject
-    lateinit var sessionBootstrap: SessionBootstrap
+    lateinit var tokenRepository: TokenRepository
 
     // 프레임 jank 측정. 창 단위로 묶어 성능 채널로 내보낸다([JankTracker]).
     private var jankStats: JankStats? = null
@@ -55,8 +61,7 @@ class MainActivity : ComponentActivity() {
         // 튕기면서 딥링크가 유실된다.
         // 알림 탭도 App Link 도 URI 로 온다 — 해석은 한 갈래다.
         pendingDeepLink.set(resolveStartRoute(intent?.data, observability))
-        // 컴포지션과 겹쳐 돌린다 — 자동 로그인은 토큰 재발급 네트워크 호출을 포함해 동기로 끝나지 않는다.
-        sessionBootstrap.start()
+        observeSessionEnd()
         val startStack = startStack()
         // 시작 화면은 네비게이션 신호 없이 백스택으로 직접 세팅되므로 ScreenTracker 를 거치지 않는다.
         // 그대로 두면 스플래시의 ScreenView 가 누락되고, 그 구간 jank 가 'unknown' 에 귀속된다.
@@ -74,6 +79,26 @@ class MainActivity : ComponentActivity() {
         // 성능 채널로 집계해 내보낸다. 릴리스에서도 켠다 — 실사용 기기의 jank 가 정작 필요한 데이터이고,
         // 프레임마다가 아니라 창 단위로 묶여 나가므로 이벤트 양이 통제된다.
         jankStats = JankStats.createAndTrack(window, jankTracker::onFrame)
+    }
+
+    /**
+     * 세션이 끊기면 스플래시로 돌려보내 진입 판정을 다시 시킨다.
+     *
+     * 이 경로가 필요한 건 **아무도 시작하지 않은 종료**가 있어서다 — 다른 기기 로그인이나
+     * refreshToken 만료는 `TokenAuthenticator` 가 OkHttp 스레드에서 토큰을 지우는 것으로만
+     * 드러난다. 거기엔 화면도 ViewModel 도 없고, `core:network` 가 네비게이션을 알 수도 없다.
+     *
+     * 첫 방출은 건너뛴다 — 앱 시작 시점의 로그인 여부는 전이가 아니다. 자동 로그인 실패도 토큰
+     * 정리를 거치지만, 그때는 이미 스플래시가 떠 있어 [handleNavRoute] 가 아무것도 하지 않는다.
+     */
+    private fun observeSessionEnd() {
+        lifecycleScope.launch {
+            tokenRepository.isLoggedIn
+                .distinctUntilChanged()
+                .drop(1)
+                .filter { loggedIn -> !loggedIn }
+                .collect { navigationHelper.navigateTo(SplashPage) }
+        }
     }
 
     // 화면이 보일 때만 측정(JankStats 권장).

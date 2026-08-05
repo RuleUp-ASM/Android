@@ -12,7 +12,7 @@ import javax.inject.Singleton
  * 넘기면 그대로 saved state 에 남는다. 인자가 아니게 되면서 외부 딥링크로 주입할 표면도 사라진다.
  *
  * 로그인 화면과 온보딩이 서로 다른 ViewModel 이라 값을 넘길 자리가 필요하다. 가입 흐름은 앱 전체에
- * 하나뿐이므로 싱글턴이면 충분하다 — `SessionBootstrap.termsVersions`·`SignupTimer` 와 같은 이유다.
+ * 하나뿐이므로 싱글턴이면 충분하다 — `SignupTimer` 와 같은 이유다.
  *
  * 프로세스가 죽으면 토큰도 사라진다. **그게 맞다** — 어차피 5분이면 만료되고, 복원해 봐야
  * `INVALID_SIGNUP_TOKEN` 으로 로그인부터 다시 하게 된다.

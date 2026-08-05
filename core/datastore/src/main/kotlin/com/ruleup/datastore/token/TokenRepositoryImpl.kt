@@ -3,6 +3,7 @@ package com.ruleup.datastore.token
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -76,6 +77,7 @@ class TokenRepositoryImpl
                 prefs[KEY_ACCESS] = token.accessToken
                 prefs[KEY_REFRESH] = token.refreshToken
                 prefs[KEY_USER_ID] = userId
+                prefs[KEY_EVER_LOGGED_IN] = true
             }
         }
 
@@ -90,6 +92,9 @@ class TokenRepositoryImpl
                 // null 이면 건드리지 않는다. 갱신 응답이 userId 를 안 주는 배포본에서 덮어 비우면
                 // 사용자 귀속이 끊긴다.
                 userId?.let { prefs[KEY_USER_ID] = it }
+                // 갱신에 성공했다는 건 이 기기에 유효한 세션이 있었다는 뜻이다. 플래그가 생기기 전에
+                // 로그인한 사용자도 여기서 채워진다.
+                prefs[KEY_EVER_LOGGED_IN] = true
             }
         }
 
@@ -105,16 +110,23 @@ class TokenRepositoryImpl
 
         override suspend fun getUserId(): String? = preferences.map { it[KEY_USER_ID] }.first()
 
+        override suspend fun hasEverLoggedIn(): Boolean = preferences.map { it[KEY_EVER_LOGGED_IN] == true }.first()
+
         override suspend fun clear() {
             cachedAccess = null
-            write("clear") { it.clear() }
+            write("clear") { prefs ->
+                // 로그인 이력만 남긴다. 지우면 재로그인이 첫 설치로 집계된다.
+                val everLoggedIn = prefs[KEY_EVER_LOGGED_IN]
+                prefs.clear()
+                everLoggedIn?.let { prefs[KEY_EVER_LOGGED_IN] = it }
+            }
         }
 
         /**
          * 쓰기 경로의 단일 입구. `IOException` 을 **호출부로 전파하지 않는다.**
          *
          * 전파하면 `AutoLoginUseCase` 가 `saveTokens` 를 `runCatching` 밖(`fold` 의 `onSuccess`)에서
-         * 부르는 탓에 `SessionBootstrap` 의 판정이 끝나지 않고 **스플래시에서 멈춘다.** 저장에 실패한
+         * 부르는 탓에 진입 판정이 끝나지 않고 **스플래시에서 멈춘다.** 저장에 실패한
          * 세션은 다음 실행에서 로그아웃으로 나타나므로, 여기서는 기록만 남기고 흐름을 살린다.
          */
         private suspend fun write(
@@ -132,5 +144,6 @@ class TokenRepositoryImpl
             private val KEY_ACCESS = stringPreferencesKey("access_token")
             private val KEY_REFRESH = stringPreferencesKey("refresh_token")
             private val KEY_USER_ID = stringPreferencesKey("user_id")
+            private val KEY_EVER_LOGGED_IN = booleanPreferencesKey("has_ever_logged_in")
         }
     }
