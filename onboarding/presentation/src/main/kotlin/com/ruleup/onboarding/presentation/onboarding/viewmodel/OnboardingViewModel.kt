@@ -4,12 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.user.AgreementConsents
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Gender
-import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.NickNameUtil
-import com.ruleup.onboarding.domain.auth.SessionBootstrap
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.model.SignupForm
 import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
@@ -18,6 +16,7 @@ import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
 import com.ruleup.onboarding.domain.entity.AuthException
 import com.ruleup.onboarding.domain.entity.AuthFailure
+import com.ruleup.onboarding.domain.intro.usecase.GetTermsVersionsUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.observability.OnboardingEvents
@@ -49,7 +48,7 @@ class OnboardingViewModel
         private val signupUseCase: SignupUseCase,
         private val checkNicknameUseCase: CheckNicknameUseCase,
         private val validateBirthDateUseCase: ValidateBirthDateUseCase,
-        private val sessionBootstrap: SessionBootstrap,
+        private val getTermsVersionsUseCase: GetTermsVersionsUseCase,
         private val signupSession: SignupSession,
         private val signupTimer: SignupTimer,
         private val observability: Observability,
@@ -245,7 +244,7 @@ class OnboardingViewModel
             }
 
             // 인트로 응답이 없으면(페일오픈) 폴백 버전으로 기록하고 서버 재검증에 맡긴다.
-            val versions = sessionBootstrap.termsVersions ?: TermsVersions(emptyMap())
+            val versions = getTermsVersionsUseCase()
 
             viewModelScope.launch {
                 dispatch(OnboardingReducerEvent.Submitting)

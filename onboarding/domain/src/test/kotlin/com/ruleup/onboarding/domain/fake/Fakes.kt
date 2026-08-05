@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.fake
 
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.domain.token.TokenRepository
@@ -177,9 +178,12 @@ class FakeProfileRepository : ProfileRepository {
 class FakeIntroRepository : IntroRepository {
     var result: IntroInfo? = null
     var error: Throwable? = null
+    private var lastTermsVersions: TermsVersions? = null
 
     override suspend fun getIntro(): IntroInfo {
         error?.let { throw it }
-        return result!!
+        return result!!.also { lastTermsVersions = it.termsVersions }
     }
+
+    override fun lastTermsVersions(): TermsVersions? = lastTermsVersions
 }

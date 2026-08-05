@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.domain.intro.repository
 
+import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.onboarding.domain.entity.IntroInfo
 
 /**
@@ -8,4 +9,12 @@ import com.ruleup.onboarding.domain.entity.IntroInfo
  */
 interface IntroRepository {
     suspend fun getIntro(): IntroInfo
+
+    /**
+     * 마지막 조회에서 받은 약관 버전. 아직 못 받았거나 조회가 실패했으면 null.
+     *
+     * 가입 화면이 동의를 기록할 때 필요한데 정작 받는 건 앱 진입 시점이라, 그때 다시 부르면
+     * 제출 경로에 네트워크 왕복이 하나 붙는다. 응답을 보관하는 건 저장소의 일이다.
+     */
+    fun lastTermsVersions(): TermsVersions?
 }

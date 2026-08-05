@@ -8,35 +8,65 @@ import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class LoadIntroUseCaseTest {
     @Test
-    fun `조회에 성공하면 버전 게이트와 약관 버전을 그대로 반환한다`() =
+    fun `강제 업데이트면 안내에 쓸 값과 함께 게이트가 걸린다`() =
         runBlocking {
-            val info =
-                IntroInfo(
-                    versionGate = AppVersionGate(forceUpdate = true, devTestMsg = null, minAppVersion = "1.0.0"),
-                    termsVersions = TermsVersions(mapOf(AgreementType.TERMS_OF_SERVICE to "1.2")),
-                )
-            val intro = FakeIntroRepository().apply { result = info }
+            val intro = repository(forceUpdate = true)
 
-            assertEquals(info, LoadIntroUseCase(intro)())
+            assertEquals(
+                IntroGate.ForceUpdate(minAppVersion = "1.0.0", devTestMsg = "점검 중"),
+                LoadIntroUseCase(intro)(),
+            )
         }
 
     @Test
-    fun `조회가 실패하면 페일오픈으로 null 을 반환한다`() =
+    fun `강제 업데이트가 아니면 통과한다`() =
+        runBlocking {
+            val intro = repository(forceUpdate = false)
+
+            assertEquals(IntroGate.Pass, LoadIntroUseCase(intro)())
+        }
+
+    @Test
+    fun `조회가 실패하면 페일오픈으로 통과한다`() =
         runBlocking {
             // 버전 점검 API 장애가 앱 실행 자체를 막으면 안 된다.
             val intro = FakeIntroRepository().apply { error = RuntimeException("network") }
 
-            assertNull(LoadIntroUseCase(intro)())
+            assertEquals(IntroGate.Pass, LoadIntroUseCase(intro)())
         }
 
     @Test
-    fun `약관 버전이 비어 오면 폴백 버전으로 떨어진다`() {
-        val versions = TermsVersions(emptyMap())
+    fun `조회에 성공하면 약관 버전이 남아 가입 화면이 꺼내 쓴다`() =
+        runBlocking {
+            val intro = repository(forceUpdate = false)
+            LoadIntroUseCase(intro)()
 
-        assertEquals(TermsVersions.FALLBACK_VERSION, versions.of(AgreementType.PRIVACY_POLICY))
+            assertEquals("1.2", GetTermsVersionsUseCase(intro)().of(AgreementType.TERMS_OF_SERVICE))
+        }
+
+    @Test
+    fun `조회 전이면 폴백 버전으로 떨어진다`() {
+        // 페일오픈으로 인트로를 못 받아도 가입은 진행되어야 한다. 버전은 서버가 재검증한다.
+        assertEquals(
+            TermsVersions.FALLBACK_VERSION,
+            GetTermsVersionsUseCase(FakeIntroRepository())().of(AgreementType.PRIVACY_POLICY),
+        )
     }
+
+    private fun repository(forceUpdate: Boolean) =
+        FakeIntroRepository().apply {
+            result =
+                IntroInfo(
+                    versionGate =
+                        AppVersionGate(
+                            forceUpdate = forceUpdate,
+                            devTestMsg = "점검 중",
+                            minAppVersion = "1.0.0",
+                        ),
+                    termsVersions = TermsVersions(mapOf(AgreementType.TERMS_OF_SERVICE to "1.2")),
+                )
+        }
 }
