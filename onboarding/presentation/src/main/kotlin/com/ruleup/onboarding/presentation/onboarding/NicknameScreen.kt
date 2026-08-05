@@ -34,6 +34,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.NicknameValidation
 import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
+import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
@@ -53,7 +54,7 @@ fun NicknameContent(
 ) {
     val nav = LocalNavigationHelper.current
     OnboardingScaffold(
-        step = 1,
+        step = OnboardingStep.NICKNAME,
         buttonText = "다음",
         modifier = modifier,
         // 서버 확인까지 통과해야 넘어간다. 통과 전에 전진시키면 마지막 제출에서 1단계로 되돌아온다.

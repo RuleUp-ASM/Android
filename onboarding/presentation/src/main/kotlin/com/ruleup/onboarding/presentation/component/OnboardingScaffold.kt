@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -29,6 +30,10 @@ import com.ruleup.designsystem.component.PrimaryGradientButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.observability.domain.event.Channel
+import com.ruleup.onboarding.domain.observability.OnboardingEvents
+import com.ruleup.onboarding.domain.observability.OnboardingStep
+import com.ruleup.ui.helper.LocalObservability
 
 /** 온보딩 전체 단계 수. 화면·진행바·로깅이 같은 값을 봐야 해서 한곳에 둔다. */
 const val ONBOARDING_TOTAL_STEPS = 6
@@ -39,20 +44,28 @@ const val ONBOARDING_TOTAL_STEPS = 6
  * 진행 표시를 점(dot)에서 **막대**로 바꿨다. 6단계에서 점을 쓰면 지금 어디쯤인지 한눈에 안 들어오고,
  * 디자인도 채워지는 막대다.
  *
- * @param step 1부터 센다. 화면 문구·진행률과 같은 기준이라 0-based 로 두면 매번 ±1 실수가 난다.
+ * @param step 화면 문구(`n/6`)·진행률·로깅이 같은 값을 본다. Int 가 아니라 enum 으로 받아
+ *   단계 이름과 번호가 갈라지지 않게 한다.
  * @param nextEnabled false 면 CTA 를 흐리게 두고 눌러도 넘어가지 않는다. 유효하지 않은 입력으로
  *   전진하면 마지막 제출에서야 서버가 튕겨, 사용자가 되짚어야 할 단계가 멀어진다.
  */
 @Composable
 fun OnboardingScaffold(
-    step: Int,
+    step: OnboardingStep,
     buttonText: String,
     modifier: Modifier = Modifier,
     nextEnabled: Boolean = true,
+    // 그 단계에서 아무것도 고르지 않고 넘어갔는지. 관심사·사진 선택률이 이 값에서 나온다.
+    skipped: Boolean = false,
     onBack: () -> Unit = {},
     onNext: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
+    val observability = LocalObservability.current
+    // 단계 진입·완료 로깅을 여기서 한다. 6개 화면에 따로 심으면 반드시 하나가 빠진다.
+    LaunchedEffect(step) {
+        observability.log(Channel.BUSINESS) { OnboardingEvents.stepView(step) }
+    }
     Column(
         modifier =
             modifier
@@ -60,8 +73,8 @@ fun OnboardingScaffold(
                 .background(RuleUpTheme.colors.surface)
                 .imePadding(),
     ) {
-        OnboardingTopBar(step = step, onBack = onBack)
-        OnboardingProgress(step = step)
+        OnboardingTopBar(step = step.index, onBack = onBack)
+        OnboardingProgress(step = step.index)
         Column(
             modifier =
                 Modifier
@@ -79,7 +92,11 @@ fun OnboardingScaffold(
                 text = buttonText,
                 modifier = Modifier.alpha(if (nextEnabled) 1f else DISABLED_ALPHA),
                 height = 56,
-                onClick = { if (nextEnabled) onNext() },
+                onClick = {
+                    if (!nextEnabled) return@PrimaryGradientButton
+                    observability.log(Channel.BUSINESS) { OnboardingEvents.stepComplete(step, skipped) }
+                    onNext()
+                },
             )
         }
     }

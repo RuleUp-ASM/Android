@@ -25,6 +25,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
+import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
@@ -49,7 +50,7 @@ fun TermsContent(
 ) {
     val nav = LocalNavigationHelper.current
     OnboardingScaffold(
-        step = 6,
+        step = OnboardingStep.TERMS,
         buttonText = "시작하기",
         modifier = modifier,
         // 필수 3종을 다 채우기 전엔 눌러도 서버가 REQUIRED_AGREEMENT_MISSING 으로 튕긴다.

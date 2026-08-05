@@ -5,6 +5,7 @@ import com.ruleup.onboarding.domain.entity.OAuthProvider
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface LoginIntent : MviIntent {
+    /** 화면 진입. 첫 설치인지 재로그인인지는 부트스트랩이 안다. */
     data object Load : LoginIntent
 
     data class LoginClicked(
