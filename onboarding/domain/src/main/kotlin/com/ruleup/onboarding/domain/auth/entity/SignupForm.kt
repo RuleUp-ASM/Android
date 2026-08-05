@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.auth.model
+package com.ruleup.onboarding.domain.auth.entity
 
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.AgreementConsents

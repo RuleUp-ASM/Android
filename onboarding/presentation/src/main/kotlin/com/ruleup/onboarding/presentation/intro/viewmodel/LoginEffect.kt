@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.presentation.intro.viewmodel
 
-import com.ruleup.onboarding.domain.entity.OAuthProvider
+import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.ui.mvi.MviEffect
 

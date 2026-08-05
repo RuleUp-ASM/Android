@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.onboarding.domain.auth.entity
 
 /** `POST /auth/oauth/{provider}` 의 두 갈래. `isNewUser` 로 나뉜다. */
 sealed interface OAuthResult {

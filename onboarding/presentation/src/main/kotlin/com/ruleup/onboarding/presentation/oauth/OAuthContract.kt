@@ -4,8 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.activity.result.contract.ActivityResultContract
-import com.ruleup.onboarding.domain.entity.OAuthAuthorization
-import com.ruleup.onboarding.domain.entity.OAuthProvider
+import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 
 class OAuthContract : ActivityResultContract<OAuthProvider, Result<OAuthAuthorization>>() {
     override fun createIntent(

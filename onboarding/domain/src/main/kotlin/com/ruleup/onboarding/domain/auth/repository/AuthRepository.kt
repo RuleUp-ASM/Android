@@ -1,12 +1,12 @@
 package com.ruleup.onboarding.domain.auth.repository
 
 import com.ruleup.domain.token.RefreshedSession
-import com.ruleup.onboarding.domain.auth.model.SignupForm
-import com.ruleup.onboarding.domain.entity.AuthSession
-import com.ruleup.onboarding.domain.entity.DeviceIdentity
-import com.ruleup.onboarding.domain.entity.OAuthAuthorization
-import com.ruleup.onboarding.domain.entity.OAuthResult
-import com.ruleup.onboarding.domain.entity.PermissionSnapshot
+import com.ruleup.onboarding.domain.auth.entity.AuthSession
+import com.ruleup.onboarding.domain.auth.entity.DeviceIdentity
+import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.auth.entity.OAuthResult
+import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
+import com.ruleup.onboarding.domain.auth.entity.SignupForm
 
 interface AuthRepository {
     /**

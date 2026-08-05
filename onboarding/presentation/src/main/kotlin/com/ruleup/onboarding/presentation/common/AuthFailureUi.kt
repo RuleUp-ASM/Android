@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.presentation.common
 
-import com.ruleup.onboarding.domain.entity.AuthException
-import com.ruleup.onboarding.domain.entity.AuthFailure
+import com.ruleup.onboarding.domain.auth.entity.AuthException
+import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 
 /**
  * 실패를 어떤 무게로 보여줄지.

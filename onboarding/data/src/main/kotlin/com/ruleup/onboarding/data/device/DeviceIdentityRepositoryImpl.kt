@@ -7,8 +7,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.ruleup.onboarding.data.di.DeviceStore
+import com.ruleup.onboarding.domain.auth.entity.DeviceIdentity
 import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
-import com.ruleup.onboarding.domain.entity.DeviceIdentity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex

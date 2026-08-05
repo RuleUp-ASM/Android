@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.entity
+package com.ruleup.onboarding.domain.auth.entity
 
 /**
  * 인증·가입에서 화면이 구분해야 하는 실패. 서버 에러 코드를 도메인 어휘로 옮긴 값이다.

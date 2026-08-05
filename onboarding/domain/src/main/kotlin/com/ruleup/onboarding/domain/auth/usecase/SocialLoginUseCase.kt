@@ -5,12 +5,12 @@ import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
+import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
+import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.auth.entity.OAuthResult
+import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
-import com.ruleup.onboarding.domain.entity.LoginOutcome
-import com.ruleup.onboarding.domain.entity.OAuthAuthorization
-import com.ruleup.onboarding.domain.entity.OAuthResult
-import com.ruleup.onboarding.domain.entity.PermissionSnapshot
 import javax.inject.Inject
 
 private const val TAG = "[Login]"
