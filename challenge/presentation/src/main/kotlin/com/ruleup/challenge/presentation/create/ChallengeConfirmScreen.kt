@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
@@ -283,7 +284,8 @@ private fun CoverPhotoSection(
                                 .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(28.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text("📷", style = RuleUpTheme.typography.title)
+                        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+                        Text("📷", fontSize = 24.sp)
                     }
                     Text(
                         "AI가 자동 선택한 배경",
@@ -455,7 +457,8 @@ private fun ParticipationCard(
         if (selected) {
             SmallBadge(text = "AI 선택", background = RuleUpTheme.colors.brand, textColor = Color.White)
         }
-        Text(emoji, style = RuleUpTheme.typography.title)
+        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+        Text(emoji, fontSize = 28.sp)
         Text(title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
         Text(caption, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.tiny)
     }
@@ -901,7 +904,8 @@ private fun MethodCard(
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(emoji, style = RuleUpTheme.typography.title)
+        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+        Text(emoji, fontSize = 24.sp)
         Text(
             title,
             color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,

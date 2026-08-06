@@ -31,17 +31,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.FriendInvitee
-import com.ruleup.profile.presentation.common.MyTopBar
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteEffect
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteIntent
@@ -95,7 +94,7 @@ fun FriendInviteScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        MyTopBar(title = "친구 초대", onBack = { viewModel.onIntent(FriendInviteIntent.Back) })
+        RuleUpTopBar(title = "친구 초대", onBack = { viewModel.onIntent(FriendInviteIntent.Back) })
 
         when {
             state.isLoading ->
@@ -108,7 +107,7 @@ fun FriendInviteScreen(
                     Text(
                         text = state.errorMessage ?: "초대 정보를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -152,14 +151,13 @@ private fun InviteBody(
             Text(
                 text = "내 초대 코드",
                 color = RuleUpPalette.Slate500,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
             )
             Text(
                 text = invitation.inviteCode,
                 color = RuleUpPalette.Slate900,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.numberL,
+                // 코드를 한 글자씩 끊어 읽으라고 벌린 값이라 스타일이 정할 값이 아니다.
                 letterSpacing = 6.sp,
             )
             val qr = rememberQrBitmap(content = invitation.inviteUrl)
@@ -182,7 +180,7 @@ private fun InviteBody(
                 Text(
                     text = invitation.rewardDescription,
                     color = RuleUpPalette.Slate500,
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
             }
@@ -211,8 +209,7 @@ private fun InviteBody(
             Text(
                 text = "초대 현황",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
             )
             Column(
                 modifier =
@@ -233,7 +230,7 @@ private fun InviteBody(
                         Text(
                             text = "아직 초대로 가입한 친구가 없어요",
                             color = RuleUpTheme.colors.textMuted,
-                            fontSize = 12.sp,
+                            style = RuleUpTheme.typography.small,
                         )
                     }
                 } else {
@@ -267,8 +264,7 @@ private fun ShareButton(
         Text(
             text = label,
             color = labelColor,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.bodyBold,
         )
     }
 }
@@ -282,19 +278,18 @@ private fun InviteeRow(invitee: FriendInvitee) {
                 .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "🎉", fontSize = 14.sp)
+        Text(text = "🎉", style = RuleUpTheme.typography.labelMedium)
         Spacer(Modifier.width(10.dp))
         Text(
             text = invitee.nickname,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.bodyBold,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = "${dateDotLabel(invitee.occurredAt)} 가입",
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }

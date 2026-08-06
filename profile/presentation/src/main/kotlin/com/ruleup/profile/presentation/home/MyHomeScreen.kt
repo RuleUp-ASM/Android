@@ -100,7 +100,7 @@ fun MyHomeScreen(
                     Text(
                         text = state.errorMessage ?: "마이 정보를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -157,8 +157,7 @@ fun MyHomeScreen(
                 Text(
                     text = "어느 그룹의 랭킹을 볼까요?",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.section,
                 )
                 Spacer(Modifier.height(12.dp))
                 picker.forEach { challenge ->
@@ -177,14 +176,13 @@ fun MyHomeScreen(
                         Text(
                             text = challenge.title,
                             color = RuleUpTheme.colors.textPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
+                            style = RuleUpTheme.typography.labelMedium,
                             modifier = Modifier.weight(1f),
                         )
                         Text(
                             text = "›",
                             color = RuleUpTheme.colors.textMuted,
-                            fontSize = 16.sp,
+                            style = RuleUpTheme.typography.section,
                         )
                     }
                 }
@@ -229,6 +227,7 @@ private fun MyHomeHero(
                 Text(
                     text = home.nickname.take(1),
                     color = RuleUpPalette.White,
+                    // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
                     fontSize = 34.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -238,8 +237,7 @@ private fun MyHomeHero(
             Text(
                 text = "${home.nickname}의 도전",
                 color = RuleUpPalette.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
             nicknameBadgeLabel(home.nicknameStatus)?.let { badge ->
                 Spacer(Modifier.width(6.dp))
@@ -253,8 +251,7 @@ private fun MyHomeHero(
                     Text(
                         text = badge,
                         color = RuleUpPalette.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.tinyBold,
                     )
                 }
             }
@@ -269,8 +266,7 @@ private fun MyHomeHero(
             Text(
                 text = "🌡️ 매너 온도 ${home.mannerTemperature.trimLabel()}℃",
                 color = RuleUpPalette.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
             )
         }
     }
@@ -333,14 +329,12 @@ private fun CountCard(
         Text(
             text = "$value",
             color = valueColor,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Text(
             text = label,
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.tinyMedium,
         )
     }
 }
@@ -389,19 +383,18 @@ private fun MenuRow(
                 .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = emoji, fontSize = 14.sp)
+        Text(text = emoji, style = RuleUpTheme.typography.labelMedium)
         Spacer(Modifier.width(12.dp))
         Text(
             text = label,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = "›",
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 16.sp,
+            style = RuleUpTheme.typography.section,
         )
     }
 }

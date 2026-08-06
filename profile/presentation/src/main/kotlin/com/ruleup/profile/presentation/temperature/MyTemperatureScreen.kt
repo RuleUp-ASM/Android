@@ -28,18 +28,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.NextTier
 import com.ruleup.profile.domain.entity.ReputationChange
 import com.ruleup.profile.domain.entity.ReputationDetail
-import com.ruleup.profile.presentation.common.MyTopBar
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.temperature.viewmodel.MyTemperatureIntent
@@ -67,7 +66,7 @@ fun MyTemperatureScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        MyTopBar(title = "매너 온도", onBack = { viewModel.onIntent(MyTemperatureIntent.Back) })
+        RuleUpTopBar(title = "매너 온도", onBack = { viewModel.onIntent(MyTemperatureIntent.Back) })
 
         when {
             state.isLoading ->
@@ -80,7 +79,7 @@ fun MyTemperatureScreen(
                     Text(
                         text = state.errorMessage ?: "온도 정보를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -130,19 +129,18 @@ private fun TemperatureHero(detail: ReputationDetail) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
         Text(text = "🌡️", fontSize = 26.sp)
         Text(
             text = "${detail.current.trimLabel()}℃",
             color = RuleUpPalette.White,
-            fontSize = 42.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.numberXl,
         )
         if (detail.bandLabel.isNotBlank()) {
             Text(
                 text = detail.bandLabel,
                 color = RuleUpPalette.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
     }
@@ -169,14 +167,12 @@ private fun NextTierCard(
             Text(
                 text = "다음 레벨까지 ",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Text(
                 text = "${nextTier.target.trimLabel()}℃",
                 color = RuleUpPalette.Amber500,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Box(
@@ -200,13 +196,12 @@ private fun NextTierCard(
             Text(
                 text = "${current.trimLabel()} / ${nextTier.target.trimLabel()}℃ · ",
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
             )
             Text(
                 text = "${remaining.trimLabel()}℃ 남음",
                 color = RuleUpPalette.Amber500,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
             )
         }
     }
@@ -223,13 +218,12 @@ private fun TierBenefitBanner(label: String) {
                 .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "✨", fontSize = 14.sp)
+        Text(text = "✨", style = RuleUpTheme.typography.labelMedium)
         Spacer(Modifier.width(10.dp))
         Text(
             text = label,
             color = RuleUpTheme.colors.brand,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }
@@ -247,19 +241,18 @@ private fun HistoryLinkRow(onClick: () -> Unit) {
                 .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "🏆", fontSize = 14.sp)
+        Text(text = "🏆", style = RuleUpTheme.typography.labelMedium)
         Spacer(Modifier.width(10.dp))
         Text(
             text = "평판 히스토리",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.bodyMedium,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = "›",
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 16.sp,
+            style = RuleUpTheme.typography.section,
         )
     }
 }
@@ -270,8 +263,7 @@ private fun RecentChangesCard(changes: List<ReputationChange>) {
         Text(
             text = "최근 변동",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
         Column(
             modifier =
@@ -292,7 +284,7 @@ private fun RecentChangesCard(changes: List<ReputationChange>) {
                     Text(
                         text = "아직 변동 기록이 없어요",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 12.sp,
+                        style = RuleUpTheme.typography.small,
                     )
                 }
             } else {
@@ -330,21 +322,19 @@ private fun ChangeRow(change: ReputationChange) {
             Text(
                 text = change.label,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = dateDotLabel(change.date),
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         Text(
             text = deltaLabel,
             color = deltaColor,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.cardTitle,
         )
     }
 }
