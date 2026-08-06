@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -32,9 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
@@ -101,12 +100,12 @@ private fun PendingReviewsContent(
 
             state.error != null ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(state.error, color = RuleUpTheme.colors.textSecondary, fontSize = 14.sp)
+                    Text(state.error, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.labelMedium)
                 }
 
             state.reviews?.items.isNullOrEmpty() ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("확인할 항목이 없어요", color = RuleUpTheme.colors.textMuted, fontSize = 14.sp)
+                    Text("확인할 항목이 없어요", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.labelMedium)
                 }
 
             else ->
@@ -146,7 +145,7 @@ private fun PendingReviewsContent(
                 Text(
                     if (approve) "승인하면 해당 일자가 성공으로 확정돼요." else "기각하면 실패가 유지돼요.",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 13.sp,
+                    style = RuleUpTheme.typography.body,
                 )
             },
             confirmButton = {
@@ -172,25 +171,7 @@ private fun PendingReviewsContent(
 
 @Composable
 private fun TopBar(onBack: () -> Unit) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("‹", color = RuleUpTheme.colors.textPrimary, fontSize = 24.sp, fontWeight = FontWeight.Medium)
-        }
-        Text("확인 대기함", color = RuleUpTheme.colors.textPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-    }
+    RuleUpTopBar(title = "확인 대기함", onBack = onBack)
 }
 
 @Composable
@@ -200,35 +181,25 @@ private fun ReviewCard(
     onApprove: () -> Unit,
     onReject: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    RuleUpCard(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             KindBadge(item.kind)
             Spacer(Modifier.width(8.dp))
             Text(
                 text = item.nickname,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.cardTitle,
                 modifier = Modifier.weight(1f),
             )
-            Text(item.targetDate, color = RuleUpTheme.colors.textSecondary, fontSize = 12.sp)
+            Text(item.targetDate, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.small)
         }
 
         item.content?.takeIf { it.isNotBlank() }?.let {
-            Text(it, color = RuleUpTheme.colors.textSlate, fontSize = 13.sp)
+            Text(it, color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.body)
         }
 
         item.deadline?.let {
-            Text("마감 $it", color = RuleUpTheme.colors.textMuted, fontSize = 11.sp)
+            Text("마감 $it", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.caption)
         }
 
         // 이의 제기만 승인/기각 가능. 폴백 수동 인증은 결정 API 부재로 읽기 전용.
@@ -271,7 +242,7 @@ private fun KindBadge(kind: ReviewKind) {
                 .padding(horizontal = 8.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = label, color = color, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(text = label, color = color, style = RuleUpTheme.typography.tinyBold)
     }
 }
 
@@ -293,6 +264,6 @@ private fun DecisionButton(
                 .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text = text, color = effective, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(text = text, color = effective, style = RuleUpTheme.typography.bodyBold)
     }
 }

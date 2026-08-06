@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -41,6 +40,7 @@ import com.kakao.vectormap.shape.Polygon
 import com.kakao.vectormap.shape.PolygonOptions
 import com.kakao.vectormap.shape.PolygonStyles
 import com.kakao.vectormap.shape.PolygonStylesSet
+import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.observability.domain.api.w
 import com.ruleup.ui.helper.LocalObservability
 import com.ruleup.verification.presentation.R
@@ -246,14 +246,15 @@ private class GeofenceMapObjects {
     }
 
     companion object {
-        // 반경 원 채움색(반투명 인디고, Design System v2.0 brand). Compose Color → ARGB Int.
-        private val CIRCLE_FILL_ARGB = Color(0x246366F1).toArgb()
+        // 반경 원 채움색(반투명 브랜드색). 지도 SDK 가 Compose Color 를 모르므로 ARGB Int 로 넘긴다.
+        private val CIRCLE_FILL_ARGB = RuleUpPalette.Primary600.copy(alpha = CIRCLE_FILL_ALPHA).toArgb()
+        private const val CIRCLE_FILL_ALPHA = 0.14f
 
-        // 앵커 번호 텍스트: 인디고 본문 + 흰색 외곽선(밝은 지도 위 가독성).
+        // 앵커 번호 텍스트: 브랜드색 본문 + 흰색 외곽선(밝은 지도 위 가독성).
         private const val ANCHOR_TEXT_SIZE = 28
-        private val ANCHOR_TEXT_ARGB = Color(0xFF4F46E5).toArgb()
+        private val ANCHOR_TEXT_ARGB = RuleUpPalette.Primary600.toArgb()
         private const val ANCHOR_TEXT_STROKE = 3
-        private val ANCHOR_TEXT_STROKE_ARGB = Color(0xFFFFFFFF).toArgb()
+        private val ANCHOR_TEXT_STROKE_ARGB = RuleUpPalette.BgSurface.toArgb()
     }
 }
 
