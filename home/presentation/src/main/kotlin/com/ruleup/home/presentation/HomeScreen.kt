@@ -33,15 +33,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.R
 import com.ruleup.designsystem.component.RuleUpBottomTab
 import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.home.presentation.viewmodel.HomeFilter
 import com.ruleup.home.presentation.viewmodel.HomeIntent
@@ -49,9 +48,9 @@ import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
 import java.time.LocalDate
 
-private val FigmaBrand = Color(0xFF6C5CE7)
-private val AvatarGradient = listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
-private val TodayGradient = listOf(Color(0xFF6366F1), Color(0xFF4F46E5))
+// 아바타·오늘 카드 그라데이션. Figma 디자인 시스템에 그라데이션 토큰이 없어 팔레트 두 색으로 만든다.
+private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
+private val TodayGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 
 /** 홈 · 진행 중. 온보딩/로그인 완료 후 진입하는 루트 화면(Figma 01 · 홈 진행중). */
 @Composable
@@ -113,7 +112,7 @@ private fun HomeContent(
 
         RuleUpBottomTabBar(
             selected = RuleUpBottomTab.HOME,
-            selectedColor = FigmaBrand,
+            selectedColor = RuleUpTheme.colors.brand,
             onTabClick = { tab ->
                 when (tab) {
                     RuleUpBottomTab.CHALLENGE -> onIntent(HomeIntent.OpenExplore)
@@ -134,7 +133,7 @@ private fun HomeContent(
                     .size(56.dp)
                     .shadow(10.dp, CircleShape, clip = false)
                     .clip(CircleShape)
-                    .background(FigmaBrand)
+                    .background(RuleUpTheme.colors.brand)
                     .singleClickable { onIntent(HomeIntent.CreateChallenge) },
             contentAlignment = Alignment.Center,
         ) {
@@ -163,13 +162,12 @@ private fun HomeHeader() {
             Text(
                 text = "안녕하세요 👋",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.section,
             )
             Text(
                 text = "오늘도 함께 해볼까요?",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -196,7 +194,7 @@ private fun HomeHeader() {
                         .background(Brush.linearGradient(AvatarGradient)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = "R", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(text = "R", color = Color.White, style = RuleUpTheme.typography.cardTitle)
             }
         }
     }
@@ -221,8 +219,7 @@ private fun WeekStreakCard() {
         Text(
             text = "이번 주",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.bodyBold,
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -250,15 +247,13 @@ private fun WeekStreakCard() {
                     Text(
                         text = labels[i],
                         color = if (isToday) Color.White else RuleUpTheme.colors.textMuted,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.micro,
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         text = date.dayOfMonth.toString(),
                         color = if (isToday) Color.White else RuleUpTheme.colors.textPrimary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = RuleUpTheme.typography.bodyBold,
                     )
                     Spacer(Modifier.height(4.dp))
                     Box(
@@ -334,8 +329,7 @@ private fun FilterTab(
         Text(
             text = text,
             color = if (selected) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textSecondary,
-            fontSize = 13.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            style = if (selected) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
         )
     }
 }
@@ -380,13 +374,12 @@ private fun ChallengeCard(
                 Text(
                     text = card.title,
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.cardTitle,
                 )
                 Text(
                     text = card.subtitle,
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
             }
         }
@@ -423,13 +416,12 @@ private fun EmptyChallenges() {
         Text(
             text = "아직 진행 중인 챌린지가 없어요",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.cardTitle,
         )
         Text(
             text = "오른쪽 아래 + 버튼으로 첫 챌린지를 만들어 보세요",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
+            style = RuleUpTheme.typography.small,
         )
     }
 }

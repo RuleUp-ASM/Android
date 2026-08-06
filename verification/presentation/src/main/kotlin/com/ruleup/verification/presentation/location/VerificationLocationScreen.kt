@@ -37,11 +37,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
@@ -272,19 +269,14 @@ private fun FloatingSearchPill(
                     Text(
                         text = "장소·주소 검색 (예: 스포애니)",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 15.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
                 BasicTextField(
                     value = query,
                     onValueChange = onQueryChange,
                     singleLine = true,
-                    textStyle =
-                        TextStyle(
-                            color = RuleUpTheme.colors.textPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                        ),
+                    textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),
                     cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -351,8 +343,7 @@ private fun SearchResults(
                     Text(
                         text = place.name,
                         color = RuleUpTheme.colors.textPrimary,
-                        fontSize = 14.5.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.labelMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -360,7 +351,7 @@ private fun SearchResults(
                         Text(
                             text = it,
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 12.sp,
+                            style = RuleUpTheme.typography.small,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -454,8 +445,7 @@ private fun SelectionSheet(
             Text(
                 text = pending.name,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.section,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false),
@@ -469,8 +459,7 @@ private fun SelectionSheet(
                     Text(
                         text = category,
                         color = RuleUpTheme.colors.brandStrong,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
+                        style = RuleUpTheme.typography.captionMedium,
                         modifier =
                             Modifier
                                 .clip(RoundedCornerShape(6.dp))
@@ -482,7 +471,7 @@ private fun SelectionSheet(
         Text(
             text = pending.address ?: if (isResolving) "주소 확인 중…" else "좌표로 선택한 위치",
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 13.sp,
+            style = RuleUpTheme.typography.body,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
@@ -507,13 +496,12 @@ private fun SelectionSheet(
                 Text(
                     text = "인증 반경 ${radiusM.toInt()}m",
                     color = RuleUpTheme.colors.textPrimary,
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.bodyMedium,
                 )
                 Text(
                     text = "이 반경 안에 들어오면 자동으로 인증돼요",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                 )
             }
         }
@@ -532,8 +520,7 @@ private fun SelectionSheet(
                 Text(
                     text = "취소",
                     color = RuleUpTheme.colors.textSlate,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
+                    style = RuleUpTheme.typography.labelMedium,
                 )
             }
             // 주소 확인 전(resolving)·앵커 가득 차면 추가 차단.
@@ -567,15 +554,13 @@ private fun AnchorListSheet(
             Text(
                 text = "등록한 인증 장소",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.section,
                 modifier = Modifier.weight(1f),
             )
             Text(
                 text = "${anchors.size} / ${SetupAnchors.MAX_COUNT}",
                 color = RuleUpTheme.colors.brandStrong,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Column(
@@ -630,8 +615,7 @@ private fun AnchorRow(
             Text(
                 text = "$number",
                 color = RuleUpTheme.colors.brandStrong,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Column(
@@ -641,15 +625,14 @@ private fun AnchorRow(
             Text(
                 text = anchor.label ?: "선택한 위치",
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 14.5.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = "${anchor.address ?: "지도에서 선택한 위치"} · 반경 ${anchor.radiusM.toInt()}m",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
+                style = RuleUpTheme.typography.small,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
