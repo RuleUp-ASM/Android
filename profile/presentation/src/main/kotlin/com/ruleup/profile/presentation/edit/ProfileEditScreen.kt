@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,7 +25,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,8 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,6 +42,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -109,7 +108,7 @@ fun ProfileEditScreen(
                     Text(
                         text = state.errorMessage ?: "프로필을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -133,35 +132,10 @@ private fun EditTopBar(
     onBack: () -> Unit,
     onSave: () -> Unit,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    RuleUpTopBar(
+        title = "프로필 편집",
+        onBack = onBack,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .singleClickable(onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(com.ruleup.designsystem.R.drawable.ic_arrow_back),
-                contentDescription = "뒤로",
-                tint = RuleUpTheme.colors.textPrimary,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        Text(
-            text = "프로필 편집",
-            color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
         Spacer(Modifier.weight(1f))
         Box(
             modifier =
@@ -174,8 +148,7 @@ private fun EditTopBar(
             Text(
                 text = if (isSaving) "저장 중…" else "저장",
                 color = RuleUpPalette.White,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
         }
         Spacer(Modifier.width(8.dp))
@@ -200,16 +173,10 @@ private fun EditBody(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         // ---------- 사진 ----------
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                    .padding(vertical = 22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        RuleUpCard(
+            contentPadding = PaddingValues(vertical = 22.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
                 modifier =
@@ -235,6 +202,7 @@ private fun EditBody(
                         Text(
                             text = state.nickname.take(1).ifBlank { "?" },
                             color = RuleUpPalette.White,
+                            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -256,8 +224,7 @@ private fun EditBody(
                 Text(
                     text = "닉네임",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.smallBold,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
@@ -268,7 +235,7 @@ private fun EditBody(
                             "30일 1회 변경 가능"
                         },
                     color = if (state.nicknameLocked) RuleUpPalette.Amber500 else RuleUpTheme.colors.textMuted,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
             }
             Row(
@@ -290,15 +257,13 @@ private fun EditBody(
                     singleLine = true,
                     enabled = !state.nicknameLocked,
                     textStyle =
-                        TextStyle(
+                        RuleUpTheme.typography.section.copy(
                             color =
                                 if (state.nicknameLocked) {
                                     RuleUpTheme.colors.textMuted
                                 } else {
                                     RuleUpTheme.colors.textPrimary
                                 },
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold,
                         ),
                     cursorBrush = SolidColor(RuleUpTheme.colors.brand),
                     modifier = Modifier.weight(1f),
@@ -306,7 +271,7 @@ private fun EditBody(
                 Text(
                     text = "${state.nickname.length}/${ProfileEditState.NICKNAME_MAX_LENGTH}",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 11.sp,
+                    style = RuleUpTheme.typography.caption,
                 )
             }
         }
@@ -317,15 +282,13 @@ private fun EditBody(
                 Text(
                     text = "관심 분야",
                     color = RuleUpTheme.colors.textSecondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.smallBold,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "${state.selectedCategories.size} / ${state.maxSelectable}",
                     color = RuleUpTheme.colors.brand,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.captionBold,
                 )
             }
             FlowRow(
@@ -351,13 +314,12 @@ private fun EditBody(
                     .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = "💡", fontSize = 13.sp)
+            Text(text = "💡", style = RuleUpTheme.typography.body)
             Spacer(Modifier.width(8.dp))
             Text(
                 text = "관심 분야는 추천 챌린지와 알림에 사용돼요",
                 color = RuleUpTheme.colors.brand,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
+                style = RuleUpTheme.typography.smallMedium,
             )
         }
     }
@@ -380,8 +342,7 @@ private fun ImageActionChip(
         Text(
             text = label,
             color = if (enabled) RuleUpTheme.colors.brand else RuleUpTheme.colors.textMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }
@@ -410,8 +371,7 @@ private fun CategoryChip(
         Text(
             text = "${categoryEmoji(category)} ${category.label}",
             color = if (selected) RuleUpPalette.White else RuleUpTheme.colors.textPrimary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = RuleUpTheme.typography.smallBold,
         )
     }
 }

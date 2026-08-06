@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,9 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -39,6 +38,8 @@ import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
 import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -49,7 +50,6 @@ import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarIntent
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarViewModel
-import com.ruleup.profile.presentation.common.MyTopBar
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -78,7 +78,7 @@ fun MyCalendarScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        MyTopBar(title = "활동 캘린더", onBack = { viewModel.onIntent(MyCalendarIntent.Back) })
+        RuleUpTopBar(title = "활동 캘린더", onBack = { viewModel.onIntent(MyCalendarIntent.Back) })
 
         val month = runCatching { YearMonth.parse(state.month) }.getOrNull()
         if (month == null) {
@@ -141,13 +141,12 @@ private fun MonthHeader(
                     .singleClickable(onClick = onPrev),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "‹", color = RuleUpTheme.colors.textSecondary, fontSize = 18.sp)
+            Text(text = "‹", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.section)
         }
         Text(
             text = "${month.year}년 ${month.monthValue}월",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.section,
             modifier = Modifier.padding(horizontal = 14.dp),
         )
         Box(
@@ -158,7 +157,7 @@ private fun MonthHeader(
                     .singleClickable(onClick = onNext),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = "›", color = RuleUpTheme.colors.textSecondary, fontSize = 18.sp)
+            Text(text = "›", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.section)
         }
     }
 }
@@ -181,14 +180,9 @@ private fun MonthGrid(
             firstDayOfWeek = DayOfWeek.SUNDAY,
         )
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(12.dp),
+    RuleUpCard(
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.Top,
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             daysOfWeek.forEach { dayOfWeek ->
@@ -200,8 +194,7 @@ private fun MonthGrid(
                             DayOfWeek.SATURDAY -> RuleUpPalette.Blue500
                             else -> RuleUpTheme.colors.textSecondary
                         },
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    style = RuleUpTheme.typography.smallBold,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     modifier = Modifier.weight(1f),
                 )
@@ -266,8 +259,7 @@ private fun DayCell(
                     isToday -> RuleUpTheme.colors.brand
                     else -> RuleUpTheme.colors.textPrimary
                 },
-            fontSize = 13.sp,
-            fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium,
+            style = if (isSelected || isToday) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
         )
         Box(
             modifier =
@@ -319,7 +311,7 @@ private fun LegendItem(
         Text(
             text = label,
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 11.sp,
+            style = RuleUpTheme.typography.caption,
         )
     }
 }
@@ -341,28 +333,18 @@ private fun DayDetailCard(
                 append(date)
             }
         }
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
+    RuleUpCard {
         Text(
             text = title,
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
         when {
             day == null ->
                 Text(
                     text = "인증 대상일이 아니에요",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                 )
 
             isLoading ->
@@ -380,7 +362,7 @@ private fun DayDetailCard(
                 Text(
                     text = "기록이 없어요",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                 )
 
             else ->
@@ -407,21 +389,19 @@ private fun DayItemRow(item: CalendarDayItem) {
             DayItemStatus.NOT_REQUIRED -> "인증 불필요" to RuleUpTheme.colors.textMuted
         }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = item.category?.let(::categoryEmoji) ?: "🎯", fontSize = 16.sp)
+        Text(text = item.category?.let(::categoryEmoji) ?: "🎯", style = RuleUpTheme.typography.section)
         Spacer(Modifier.width(10.dp))
         Column {
             Text(
                 text = item.title,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = statusLabel,
                 color = statusColor,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.captionBold,
             )
         }
     }

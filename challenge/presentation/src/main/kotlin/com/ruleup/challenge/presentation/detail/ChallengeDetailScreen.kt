@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -408,7 +409,8 @@ private fun DetailHero(detail: ChallengeDetail) {
                     .background(accent),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", style = RuleUpTheme.typography.title)
+            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
         }
         Text(
             text = detail.title,

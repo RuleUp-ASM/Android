@@ -28,17 +28,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.MilestoneType
 import com.ruleup.profile.domain.entity.ReputationHistory
 import com.ruleup.profile.domain.entity.ReputationMilestone
-import com.ruleup.profile.presentation.common.MyTopBar
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.history.viewmodel.ReputationHistoryIntent
@@ -66,7 +64,7 @@ fun ReputationHistoryScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        MyTopBar(title = "평판 히스토리", onBack = { viewModel.onIntent(ReputationHistoryIntent.Back) })
+        RuleUpTopBar(title = "평판 히스토리", onBack = { viewModel.onIntent(ReputationHistoryIntent.Back) })
 
         when {
             state.isLoading ->
@@ -79,7 +77,7 @@ fun ReputationHistoryScreen(
                     Text(
                         text = state.errorMessage ?: "히스토리를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
-                        fontSize = 14.sp,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
                 }
 
@@ -100,8 +98,7 @@ private fun HistoryBody(history: ReputationHistory) {
             Text(
                 text = "마일스톤",
                 color = RuleUpTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.smallBold,
                 modifier = Modifier.padding(top = 6.dp),
             )
         }
@@ -117,7 +114,7 @@ private fun HistoryBody(history: ReputationHistory) {
                     Text(
                         text = "아직 마일스톤이 없어요",
                         color = RuleUpTheme.colors.textMuted,
-                        fontSize = 12.sp,
+                        style = RuleUpTheme.typography.small,
                     )
                 }
             }
@@ -143,22 +140,20 @@ private fun PeakCard(history: ReputationHistory) {
         Text(
             text = "역대 최고 매너 온도",
             color = RuleUpPalette.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.smallBold,
         )
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = "${history.peakTemperature.trimLabel()}℃",
                 color = RuleUpPalette.White,
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.numberXl,
             )
             if (history.peakAchievedAt.isNotBlank()) {
                 Spacer(Modifier.width(10.dp))
                 Text(
                     text = dateDotLabel(history.peakAchievedAt),
                     color = RuleUpPalette.White.copy(alpha = 0.85f),
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                     modifier = Modifier.padding(bottom = 7.dp),
                 )
             }
@@ -194,21 +189,20 @@ private fun MilestoneRow(milestone: ReputationMilestone) {
                     .background(badgeColor.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = emoji, fontSize = 16.sp)
+            Text(text = emoji, style = RuleUpTheme.typography.section)
         }
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
                 text = milestone.label,
                 color = RuleUpTheme.colors.textPrimary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
+                style = RuleUpTheme.typography.bodyBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = dateDotLabel(milestone.achievedAt),
                 color = RuleUpTheme.colors.textMuted,
-                fontSize = 11.sp,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }

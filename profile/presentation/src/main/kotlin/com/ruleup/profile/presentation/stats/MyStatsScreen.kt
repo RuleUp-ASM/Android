@@ -26,19 +26,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.domain.entity.StatsPeriod
 import com.ruleup.profile.domain.entity.StatsPoint
 import com.ruleup.profile.domain.entity.StatsReport
-import com.ruleup.profile.presentation.common.MyTopBar
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
@@ -65,7 +64,7 @@ fun MyStatsScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        MyTopBar(title = "통계", onBack = { viewModel.onIntent(MyStatsIntent.Back) })
+        RuleUpTopBar(title = "통계", onBack = { viewModel.onIntent(MyStatsIntent.Back) })
 
         Column(
             modifier =
@@ -104,7 +103,7 @@ fun MyStatsScreen(
                         Text(
                             text = state.errorMessage ?: "통계를 불러오지 못했어요",
                             color = RuleUpTheme.colors.textSecondary,
-                            fontSize = 14.sp,
+                            style = RuleUpTheme.typography.labelMedium,
                         )
                     }
 
@@ -140,8 +139,7 @@ private fun PeriodTabs(
                 Text(
                     text = period.label,
                     color = if (isSelected) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textSecondary,
-                    fontSize = 12.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    style = if (isSelected) RuleUpTheme.typography.smallBold else RuleUpTheme.typography.smallMedium,
                 )
             }
         }
@@ -211,14 +209,12 @@ private fun StatCard(
         Text(
             text = value,
             color = valueColor,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.title,
         )
         Text(
             text = label,
             color = RuleUpTheme.colors.textSecondary,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.captionMedium,
         )
     }
 }
@@ -238,21 +234,11 @@ private fun SeriesChartCard(
             StatsPeriod.MONTHLY -> "주간 완주율"
             StatsPeriod.YEARLY -> "월별 완주율"
         }
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
+    RuleUpCard(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
             text = title,
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.cardTitle,
         )
         if (series.isEmpty()) {
             Box(
@@ -265,7 +251,7 @@ private fun SeriesChartCard(
                 Text(
                     text = "아직 집계된 기록이 없어요",
                     color = RuleUpTheme.colors.textMuted,
-                    fontSize = 12.sp,
+                    style = RuleUpTheme.typography.small,
                 )
             }
         } else {
@@ -310,13 +296,12 @@ private fun SeriesBar(
         Text(
             text = "${point.completionRate}",
             color = RuleUpTheme.colors.textPrimary,
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
+            style = RuleUpTheme.typography.tinyBold,
         )
         Text(
             text = point.bucket.shortBucket(),
             color = RuleUpTheme.colors.textMuted,
-            fontSize = 9.sp,
+            style = RuleUpTheme.typography.micro,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -341,13 +326,12 @@ private fun InsightBanner(insight: String) {
                 ).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "🤖", fontSize = 15.sp)
+        Text(text = "🤖", style = RuleUpTheme.typography.labelMedium)
         Spacer(Modifier.width(10.dp))
         Text(
             text = insight,
             color = RuleUpPalette.Slate700,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = RuleUpTheme.typography.smallMedium,
         )
     }
 }
