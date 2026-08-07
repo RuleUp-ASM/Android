@@ -56,6 +56,9 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
+// 달력 관례로 토요일은 파랑이다. Figma 팔레트 15색에 파랑이 없어 화면이 들고 있는다.
+private val SaturdayBlue = Color(0xFF3B82F6)
+
 /**
  * 활동 캘린더 (피그마 434:361). kizitonwose Calendar-Compose 월 그리드 + 일자 상세.
  * day status 는 서버 판정 값 그대로 — 확정된 날짜 기준이라 클라 재계산이 없다.
@@ -191,7 +194,7 @@ private fun MonthGrid(
                     color =
                         when (dayOfWeek) {
                             DayOfWeek.SUNDAY -> RuleUpTheme.colors.danger
-                            DayOfWeek.SATURDAY -> RuleUpPalette.Blue500
+                            DayOfWeek.SATURDAY -> SaturdayBlue
                             else -> RuleUpTheme.colors.textSecondary
                         },
                     style = RuleUpTheme.typography.smallBold,
@@ -255,7 +258,7 @@ private fun DayCell(
             text = "${date.dayOfMonth}",
             color =
                 when {
-                    isSelected -> RuleUpPalette.White
+                    isSelected -> RuleUpPalette.BgSurface
                     isToday -> RuleUpTheme.colors.brand
                     else -> RuleUpTheme.colors.textPrimary
                 },
@@ -275,9 +278,9 @@ private fun DayCell(
 private fun CalendarDayStatus?.dotColor(isSelected: Boolean): Color =
     when (this) {
         CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
-        CalendarDayStatus.PARTIAL -> RuleUpPalette.Amber500
+        CalendarDayStatus.PARTIAL -> RuleUpPalette.StatusWarn
         CalendarDayStatus.FAILED -> RuleUpTheme.colors.danger
-        CalendarDayStatus.PENDING -> if (isSelected) RuleUpPalette.White else RuleUpTheme.colors.brand
+        CalendarDayStatus.PENDING -> if (isSelected) RuleUpPalette.BgSurface else RuleUpTheme.colors.brand
         CalendarDayStatus.NOT_TARGET, null -> Color.Transparent
     }
 
@@ -288,7 +291,7 @@ private fun Legend() {
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         LegendItem(color = RuleUpTheme.colors.success, label = "성공")
-        LegendItem(color = RuleUpPalette.Amber500, label = "일부 성공")
+        LegendItem(color = RuleUpPalette.StatusWarn, label = "일부 성공")
         LegendItem(color = RuleUpTheme.colors.danger, label = "실패")
         LegendItem(color = RuleUpTheme.colors.brand, label = "대기")
     }
@@ -385,7 +388,7 @@ private fun DayItemRow(item: CalendarDayItem) {
                 } to RuleUpTheme.colors.success
 
             DayItemStatus.FAILED -> (item.failureReason?.failureLabel() ?: "실패") to RuleUpTheme.colors.danger
-            DayItemStatus.PENDING -> "판정 대기" to RuleUpPalette.Amber500
+            DayItemStatus.PENDING -> "판정 대기" to RuleUpPalette.StatusWarn
             DayItemStatus.NOT_REQUIRED -> "인증 불필요" to RuleUpTheme.colors.textMuted
         }
     Row(verticalAlignment = Alignment.CenterVertically) {

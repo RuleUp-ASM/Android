@@ -133,13 +133,13 @@ private fun TemperatureHero(detail: ReputationDetail) {
         Text(text = "🌡️", fontSize = 26.sp)
         Text(
             text = "${detail.current.trimLabel()}℃",
-            color = RuleUpPalette.White,
+            color = RuleUpPalette.BgSurface,
             style = RuleUpTheme.typography.numberXl,
         )
         if (detail.bandLabel.isNotBlank()) {
             Text(
                 text = detail.bandLabel,
-                color = RuleUpPalette.White,
+                color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.bodyBold,
             )
         }
@@ -171,7 +171,7 @@ private fun NextTierCard(
             )
             Text(
                 text = "${nextTier.target.trimLabel()}℃",
-                color = RuleUpPalette.Amber500,
+                color = RuleUpPalette.StatusWarn,
                 style = RuleUpTheme.typography.bodyBold,
             )
         }
@@ -200,7 +200,7 @@ private fun NextTierCard(
             )
             Text(
                 text = "${remaining.trimLabel()}℃ 남음",
-                color = RuleUpPalette.Amber500,
+                color = RuleUpPalette.StatusWarn,
                 style = RuleUpTheme.typography.smallBold,
             )
         }

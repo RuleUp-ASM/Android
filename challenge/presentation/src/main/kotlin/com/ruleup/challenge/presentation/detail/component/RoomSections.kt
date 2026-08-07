@@ -60,7 +60,7 @@ internal fun RoomSummaryRow(summary: RoomSummary) {
         RoomStatCard(
             value = "${summary.avgMannerTemperature.trimPercent()}℃",
             label = "평균 매너",
-            valueColor = RuleUpPalette.Amber500,
+            valueColor = RuleUpPalette.StatusWarn,
             modifier = Modifier.weight(1f),
         )
         RoomStatCard(
@@ -251,7 +251,7 @@ internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
     val (label, color) =
         when (status) {
             TodayVerificationStatus.SUCCESS -> "오늘 인증 완료" to RuleUpTheme.colors.success
-            TodayVerificationStatus.PENDING -> "오늘 인증 대기 중" to RuleUpPalette.Amber500
+            TodayVerificationStatus.PENDING -> "오늘 인증 대기 중" to RuleUpPalette.StatusWarn
             TodayVerificationStatus.FAILED -> "오늘 인증 실패" to RuleUpTheme.colors.danger
             TodayVerificationStatus.NOT_TARGET,
             TodayVerificationStatus.NOT_REQUIRED,
@@ -407,7 +407,7 @@ private fun MemberRow(
         Spacer(Modifier.width(8.dp))
         Text(
             text = "${member.mannerTemperature.trimPercent()}℃",
-            color = RuleUpPalette.Amber500,
+            color = RuleUpPalette.StatusWarn,
             style = RuleUpTheme.typography.smallBold,
         )
         if (ownerManage || selfDemote) {

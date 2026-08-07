@@ -93,7 +93,7 @@ private fun AiHelperBanner() {
                 .clip(RoundedCornerShape(18.dp))
                 .background(
                     Brush.linearGradient(
-                        listOf(RuleUpPalette.Indigo50, RuleUpPalette.Violet100, RuleUpPalette.Violet100),
+                        listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50, RuleUpPalette.Primary50),
                     ),
                 ).padding(18.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),

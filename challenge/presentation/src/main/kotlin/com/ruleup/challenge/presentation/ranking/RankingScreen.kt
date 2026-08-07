@@ -223,13 +223,13 @@ private fun PodiumColumn(
             ) {
                 Text(
                     text = "${entry.progressRate.rateLabel()}%",
-                    color = RuleUpPalette.White,
+                    color = RuleUpPalette.BgSurface,
                     style = RuleUpTheme.typography.title,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = "#${entry.rank}",
-                    color = RuleUpPalette.White,
+                    color = RuleUpPalette.BgSurface,
                     style = RuleUpTheme.typography.captionBold,
                 )
             }
@@ -253,7 +253,7 @@ private fun MyRankCard(myRank: MyRank) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(
-                    Brush.linearGradient(listOf(RuleUpPalette.Indigo50, RuleUpPalette.Violet100)),
+                    Brush.linearGradient(listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50)),
                 ).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -267,7 +267,7 @@ private fun MyRankCard(myRank: MyRank) {
         ) {
             Text(
                 text = "${myRank.rank}",
-                color = RuleUpPalette.White,
+                color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.cardTitle,
             )
         }
@@ -275,13 +275,13 @@ private fun MyRankCard(myRank: MyRank) {
         Column {
             Text(
                 text = "내 순위 #${myRank.rank}",
-                color = RuleUpPalette.Slate900,
+                color = RuleUpPalette.TextInk,
                 style = RuleUpTheme.typography.bodyBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
                 text = "완주율 ${myRank.progressRate.rateLabel()}% · $gapLabel",
-                color = RuleUpPalette.Slate500,
+                color = RuleUpPalette.TextSub,
                 style = RuleUpTheme.typography.caption,
             )
         }

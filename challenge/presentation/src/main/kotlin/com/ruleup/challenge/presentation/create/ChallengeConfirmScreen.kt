@@ -126,7 +126,7 @@ fun ChallengeConfirmContent(
                 InfoNote(
                     emoji = "✨",
                     text = "확정 후에도 챌린지 시작 전에는 수정할 수 있어요",
-                    background = RuleUpPalette.Violet100,
+                    background = RuleUpPalette.Primary50,
                     textColor = RuleUpTheme.colors.textSlate,
                 )
             }
@@ -159,7 +159,7 @@ private fun AiDoneBanner() {
             Modifier
                 .fillMaxWidth()
                 .clip(RuleUpTheme.shapes.large)
-                .background(Brush.linearGradient(listOf(RuleUpPalette.Indigo50, RuleUpPalette.Violet100)))
+                .background(Brush.linearGradient(listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50)))
                 .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -269,7 +269,7 @@ private fun CoverPhotoSection(
                             .matchParentSize()
                             .background(
                                 Brush.linearGradient(
-                                    listOf(RuleUpPalette.Amber500, RuleUpPalette.Rose500, RuleUpPalette.Violet500),
+                                    listOf(RuleUpPalette.StatusWarn, RuleUpPalette.StatusDanger, RuleUpPalette.Primary300),
                                 ),
                             ),
                     verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
@@ -423,7 +423,7 @@ private fun ParticipationSection(
                 emoji = "👥",
                 title = "그룹",
                 caption = "함께 도전",
-                background = Brush.linearGradient(listOf(RuleUpPalette.Indigo50, RuleUpPalette.Violet100)),
+                background = Brush.linearGradient(listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50)),
                 selected = selected == ParticipationType.GROUP,
                 onClick = { onIntent(CreateChallengeIntent.SetParticipationType(ParticipationType.GROUP)) },
             )
@@ -475,10 +475,10 @@ private data class MannerLevel(
 
 private val mannerLevels =
     listOf(
-        MannerLevel("매우 낮음", 37..49, 40, RuleUpPalette.Rose500.copy(alpha = 0.15f), RuleUpPalette.Rose500),
-        MannerLevel("보통", 50..64, 55, RuleUpPalette.Amber500.copy(alpha = 0.15f), RuleUpPalette.Amber500),
-        MannerLevel("높음", 65..79, 65, RuleUpPalette.Indigo500.copy(alpha = 0.15f), RuleUpPalette.Indigo500),
-        MannerLevel("최고", 80..99, 85, RuleUpPalette.Green500.copy(alpha = 0.15f), RuleUpPalette.Green500),
+        MannerLevel("매우 낮음", 37..49, 40, RuleUpPalette.StatusDanger.copy(alpha = 0.15f), RuleUpPalette.StatusDanger),
+        MannerLevel("보통", 50..64, 55, RuleUpPalette.StatusWarn.copy(alpha = 0.15f), RuleUpPalette.StatusWarn),
+        MannerLevel("높음", 65..79, 65, RuleUpPalette.Primary600.copy(alpha = 0.15f), RuleUpPalette.Primary600),
+        MannerLevel("최고", 80..99, 85, RuleUpPalette.StatusSuccess.copy(alpha = 0.15f), RuleUpPalette.StatusSuccess),
     )
 
 /** 그룹 전용 최대 참여 인원 스텝퍼(− n +). 범위는 [CreateChallengeState] 상수로 클램프한다. */
@@ -981,7 +981,7 @@ private fun VerificationSnapshotCard(
             InfoNote(
                 emoji = "💡",
                 text = it,
-                background = RuleUpPalette.Violet100,
+                background = RuleUpPalette.Primary50,
                 textColor = RuleUpTheme.colors.textSlate,
             )
         }
@@ -1056,7 +1056,7 @@ private fun PenaltySection(
                 spec =
                     PenaltyRowSpec(
                         emoji = "👥",
-                        tileBackground = RuleUpPalette.Violet100,
+                        tileBackground = RuleUpPalette.Primary50,
                         title = "그룹 내 공유",
                         subtitle = "그룹 멤버에게 결과 알림",
                         required = true,

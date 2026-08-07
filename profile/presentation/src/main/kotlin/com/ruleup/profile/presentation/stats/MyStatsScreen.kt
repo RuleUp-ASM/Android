@@ -43,7 +43,7 @@ import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
 
 // 막대 그라데이션 (피그마 435:250 — violet 계열)
-private val BarGradient = listOf(RuleUpPalette.Violet400, RuleUpPalette.Indigo500)
+private val BarGradient = listOf(RuleUpPalette.Primary300, RuleUpPalette.Primary600)
 
 /** 통계 리포트 (피그마 435:250). 주간/월간/연간 탭 + 지표 4카드 + 완주율 시리즈 + 인사이트. */
 @Composable
@@ -173,13 +173,13 @@ private fun StatsBody(report: StatsReport) {
             StatCard(
                 value = mannerLabel,
                 label = "매너 상승",
-                valueColor = RuleUpPalette.Amber500,
+                valueColor = RuleUpPalette.StatusWarn,
                 modifier = Modifier.weight(1f),
             )
             StatCard(
                 value = "${report.avgStreak.trimLabel()}일",
                 label = "평균 연속",
-                valueColor = RuleUpPalette.Violet500,
+                valueColor = RuleUpPalette.Primary300,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -322,7 +322,7 @@ private fun InsightBanner(insight: String) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(
-                    Brush.linearGradient(listOf(RuleUpPalette.Violet100, Color(0xFFFCE7F3))),
+                    Brush.linearGradient(listOf(RuleUpPalette.Primary50, Color(0xFFFCE7F3))),
                 ).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -330,7 +330,7 @@ private fun InsightBanner(insight: String) {
         Spacer(Modifier.width(10.dp))
         Text(
             text = insight,
-            color = RuleUpPalette.Slate700,
+            color = RuleUpPalette.TextSub,
             style = RuleUpTheme.typography.smallMedium,
         )
     }
