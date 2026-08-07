@@ -54,7 +54,7 @@ import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
 
-private val AvatarGradient = listOf(RuleUpPalette.Indigo500, RuleUpPalette.Violet500)
+private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 
 /**
  * 프로필 편집 (피그마 434:566). 마이 홈 프로필 영역으로 진입한다.
@@ -147,7 +147,7 @@ private fun EditTopBar(
         ) {
             Text(
                 text = if (isSaving) "저장 중…" else "저장",
-                color = RuleUpPalette.White,
+                color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.bodyBold,
             )
         }
@@ -188,7 +188,7 @@ private fun EditBody(
             ) {
                 when {
                     state.isImageBusy ->
-                        CircularProgressIndicator(color = RuleUpPalette.White, modifier = Modifier.size(26.dp))
+                        CircularProgressIndicator(color = RuleUpPalette.BgSurface, modifier = Modifier.size(26.dp))
 
                     profile.profileImageUrl != null ->
                         AsyncImage(
@@ -201,7 +201,7 @@ private fun EditBody(
                     else ->
                         Text(
                             text = state.nickname.take(1).ifBlank { "?" },
-                            color = RuleUpPalette.White,
+                            color = RuleUpPalette.BgSurface,
                             // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
@@ -234,7 +234,7 @@ private fun EditBody(
                         } else {
                             "30일 1회 변경 가능"
                         },
-                    color = if (state.nicknameLocked) RuleUpPalette.Amber500 else RuleUpTheme.colors.textMuted,
+                    color = if (state.nicknameLocked) RuleUpPalette.StatusWarn else RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                 )
             }
@@ -370,7 +370,7 @@ private fun CategoryChip(
     ) {
         Text(
             text = "${categoryEmoji(category)} ${category.label}",
-            color = if (selected) RuleUpPalette.White else RuleUpTheme.colors.textPrimary,
+            color = if (selected) RuleUpPalette.BgSurface else RuleUpTheme.colors.textPrimary,
             style = RuleUpTheme.typography.smallBold,
         )
     }

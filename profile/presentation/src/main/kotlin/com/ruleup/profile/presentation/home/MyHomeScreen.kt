@@ -56,7 +56,7 @@ import com.ruleup.ui.helper.LocalMessageHelper
 
 // 히어로 그라데이션 (피그마 434:257 — amber → rose → violet)
 private val HeroGradient = listOf(Color(0xFFF59E0B), Color(0xFFF43F5E), Color(0xFF8B5CF6))
-private val AvatarGradient = listOf(RuleUpPalette.Indigo500, RuleUpPalette.Violet500)
+private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 
 /** 마이 홈 (피그마 434:250 "내 프로필"). 하단 MY 탭의 루트 화면. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -213,7 +213,7 @@ private fun MyHomeHero(
                     .size(80.dp)
                     .clip(CircleShape)
                     .background(Brush.linearGradient(AvatarGradient))
-                    .border(4.dp, RuleUpPalette.White, CircleShape),
+                    .border(4.dp, RuleUpPalette.BgSurface, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             if (home.profileImageUrl != null) {
@@ -226,7 +226,7 @@ private fun MyHomeHero(
             } else {
                 Text(
                     text = home.nickname.take(1),
-                    color = RuleUpPalette.White,
+                    color = RuleUpPalette.BgSurface,
                     // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
                     fontSize = 34.sp,
                     fontWeight = FontWeight.Bold,
@@ -236,7 +236,7 @@ private fun MyHomeHero(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "${home.nickname}의 도전",
-                color = RuleUpPalette.White,
+                color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.section,
             )
             nicknameBadgeLabel(home.nicknameStatus)?.let { badge ->
@@ -245,12 +245,12 @@ private fun MyHomeHero(
                     modifier =
                         Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(RuleUpPalette.White.copy(alpha = 0.25f))
+                            .background(RuleUpPalette.BgSurface.copy(alpha = 0.25f))
                             .padding(horizontal = 7.dp, vertical = 2.dp),
                 ) {
                     Text(
                         text = badge,
-                        color = RuleUpPalette.White,
+                        color = RuleUpPalette.BgSurface,
                         style = RuleUpTheme.typography.tinyBold,
                     )
                 }
@@ -260,12 +260,12 @@ private fun MyHomeHero(
             modifier =
                 Modifier
                     .clip(RoundedCornerShape(14.dp))
-                    .background(RuleUpPalette.White.copy(alpha = 0.25f))
+                    .background(RuleUpPalette.BgSurface.copy(alpha = 0.25f))
                     .padding(horizontal = 14.dp, vertical = 5.dp),
         ) {
             Text(
                 text = "🌡️ 매너 온도 ${home.mannerTemperature.trimLabel()}℃",
-                color = RuleUpPalette.White,
+                color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.smallBold,
             )
         }
@@ -298,7 +298,7 @@ private fun MyHomeCountsRow(home: MyHome) {
         CountCard(
             value = home.counts.inProgress,
             label = "진행 중",
-            valueColor = RuleUpPalette.Amber500,
+            valueColor = RuleUpPalette.StatusWarn,
             modifier = Modifier.weight(1f),
         )
         CountCard(

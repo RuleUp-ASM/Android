@@ -139,20 +139,20 @@ private fun PeakCard(history: ReputationHistory) {
     ) {
         Text(
             text = "역대 최고 매너 온도",
-            color = RuleUpPalette.White,
+            color = RuleUpPalette.BgSurface,
             style = RuleUpTheme.typography.smallBold,
         )
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
                 text = "${history.peakTemperature.trimLabel()}℃",
-                color = RuleUpPalette.White,
+                color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.numberXl,
             )
             if (history.peakAchievedAt.isNotBlank()) {
                 Spacer(Modifier.width(10.dp))
                 Text(
                     text = dateDotLabel(history.peakAchievedAt),
-                    color = RuleUpPalette.White.copy(alpha = 0.85f),
+                    color = RuleUpPalette.BgSurface.copy(alpha = 0.85f),
                     style = RuleUpTheme.typography.small,
                     modifier = Modifier.padding(bottom = 7.dp),
                 )
@@ -165,10 +165,10 @@ private fun PeakCard(history: ReputationHistory) {
 private fun MilestoneRow(milestone: ReputationMilestone) {
     val (emoji, badgeColor) =
         when (milestone.type) {
-            MilestoneType.TIER_REACHED -> "🏆" to RuleUpPalette.Amber500
+            MilestoneType.TIER_REACHED -> "🏆" to RuleUpPalette.StatusWarn
             MilestoneType.STREAK -> "🎯" to RuleUpTheme.colors.brand
             MilestoneType.FIRST_COMPLETION -> "📗" to RuleUpTheme.colors.success
-            MilestoneType.SIGNUP -> "🌱" to RuleUpPalette.Violet500
+            MilestoneType.SIGNUP -> "🌱" to RuleUpPalette.Primary300
             MilestoneType.ETC -> "⭐" to RuleUpTheme.colors.textMuted
         }
     Row(

@@ -143,19 +143,19 @@ private fun InviteBody(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
                     .background(
-                        Brush.linearGradient(listOf(RuleUpPalette.Indigo50, RuleUpPalette.Violet100)),
+                        Brush.linearGradient(listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50)),
                     ).padding(vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text(
                 text = "내 초대 코드",
-                color = RuleUpPalette.Slate500,
+                color = RuleUpPalette.TextSub,
                 style = RuleUpTheme.typography.smallBold,
             )
             Text(
                 text = invitation.inviteCode,
-                color = RuleUpPalette.Slate900,
+                color = RuleUpPalette.TextInk,
                 style = RuleUpTheme.typography.numberL,
                 // 코드를 한 글자씩 끊어 읽으라고 벌린 값이라 스타일이 정할 값이 아니다.
                 letterSpacing = 6.sp,
@@ -166,7 +166,7 @@ private fun InviteBody(
                     modifier =
                         Modifier
                             .clip(RoundedCornerShape(14.dp))
-                            .background(RuleUpPalette.White)
+                            .background(RuleUpPalette.BgSurface)
                             .padding(10.dp),
                 ) {
                     Image(
@@ -179,7 +179,7 @@ private fun InviteBody(
             if (invitation.rewardDescription.isNotBlank()) {
                 Text(
                     text = invitation.rewardDescription,
-                    color = RuleUpPalette.Slate500,
+                    color = RuleUpPalette.TextSub,
                     style = RuleUpTheme.typography.small,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )

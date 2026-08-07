@@ -35,24 +35,6 @@ object RuleUpPalette {
     /** 카카오 브랜드 색. 카카오가 정한 값이라 팔레트 교체와 무관하게 고정이다. */
     val Kakao = Color(0xFFFEE500)
     val KakaoLabel = Color(0xFF191919)
-
-    // ---- 이전 팔레트(Tailwind 계열) ----
-    // challenge·profile 화면이 아직 81곳에서 직접 참조한다. 모듈별로 시맨틱 토큰 경유로 옮기면서
-    // 지운다(#233). 새 코드에서는 쓰지 않는다.
-    val Indigo500 = Color(0xFF6366F1)
-    val Indigo50 = Color(0xFFEEF2FF)
-    val Violet500 = Color(0xFF8B5CF6)
-    val Violet400 = Color(0xFFA78BFA)
-    val Violet100 = Color(0xFFF5F3FF)
-    val Slate900 = Color(0xFF0F172A)
-    val Slate700 = Color(0xFF334155)
-    val Slate500 = Color(0xFF64748B)
-    val Slate400 = Color(0xFF94A3B8)
-    val Green500 = Color(0xFF10B981)
-    val Amber500 = Color(0xFFF59E0B)
-    val Rose500 = Color(0xFFF43F5E)
-    val Blue500 = Color(0xFF3B82F6)
-    val White = Color(0xFFFFFFFF)
 }
 
 /**
