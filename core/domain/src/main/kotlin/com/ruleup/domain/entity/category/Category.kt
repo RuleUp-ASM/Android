@@ -35,27 +35,21 @@ enum class Category(
         /**
          * 서버 code 를 카테고리로 옮긴다. 아는 값이 아니면 null 이다.
          *
-         * [LEGACY_ALIASES] 는 **한시적이다** — 회원가입 API 는 `HOUSEKEEPING`·`CAREER_PRODUCTIVITY`
-         * 로 확정됐는데 챌린지 카테고리·탐색 API 는 아직 `TIDYING`·`CAREER` 를 내려준다. 별칭이
-         * 없으면 그 둘만 조용히 null 로 떨어져 아이콘·필터가 사라진다. 서버가 정렬되면 지운다.
+         * `TIDYING`·`CAREER` 별칭은 제거했다 — 탐색 기능 스펙이 2026-08-11 에 12종을 관심 분야 정책
+         * 표기(`HOUSEKEEPING`·`CAREER_PRODUCTIVITY`)로 확정하고 구 표기를 폐기했다. 서버가 아직
+         * 구 표기를 내려주면 그 분류만 조용히 사라지므로, 이 제거는 서버 정렬을 전제로 한다.
          */
         fun fromValue(value: String): Category? = entries.find { it.value == value } ?: LEGACY_ALIASES[value]
 
         /**
-         * 서버가 아직 내려주는 옛 code.
+         * 서버가 아직 내려주는 15종 시절 code.
          *
-         * 두 갈래가 섞여 있다 — 챌린지 카테고리·탐색 API 의 `TIDYING`·`CAREER` 는 12종 확정 전
-         * 표기이고, 나머지는 15종 시절 값이다. 별칭이 없으면 해당 분류가 조용히 null 로 떨어져
-         * 탐색·홈 카드의 아이콘과 필터가 사라진다.
-         *
-         * TODO(#185): 서버가 회원가입 API 기준 code 로 정렬하면 통째로 제거한다.
+         * 12종 확정 전 표기(`TIDYING`·`CAREER`)와 달리, 이 값들은 **폐기가 확인되지 않았다**.
+         * 별칭을 빼면 해당 분류가 조용히 null 로 떨어져 탐색·홈 카드의 아이콘과 필터가 사라지므로,
+         * 서버 응답에서 사라진 것을 확인하기 전까지 남긴다.
          */
         private val LEGACY_ALIASES =
             mapOf(
-                // 12종 확정 전 표기
-                "TIDYING" to HOUSEKEEPING,
-                "CAREER" to CAREER_PRODUCTIVITY,
-                // 15종 시절 값
                 "WAKE_UP" to WAKE_SLEEP,
                 "HEALTH" to DIET_HEALTH,
                 "MEDITATION" to MIND,
