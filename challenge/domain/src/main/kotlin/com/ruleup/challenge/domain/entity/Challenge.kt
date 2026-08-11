@@ -307,3 +307,11 @@ class ChallengeNotEditableException(
  * 화면은 settings 를 재조회해 다시 그린 뒤 재시도한다.
  */
 class ChallengeVersionConflictException : Exception("설정이 변경되었습니다. 다시 불러온 뒤 시도해 주세요.")
+
+/**
+ * 반복 거부로 수정이 잠겼다 (명세 429 `MODERATION_LOCKED` — 1시간 내 3회 거부 → 1시간 잠금).
+ * 화면은 [retryAfterSeconds] 로 해제 시각을 명시한다.
+ */
+class ModerationLockedException(
+    val retryAfterSeconds: Int? = null,
+) : Exception("심사 거부가 반복돼 잠시 수정할 수 없습니다.")

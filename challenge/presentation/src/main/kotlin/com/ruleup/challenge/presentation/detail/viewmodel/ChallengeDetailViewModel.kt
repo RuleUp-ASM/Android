@@ -16,6 +16,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
+import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.usecase.ChangeMemberRoleUseCase
@@ -85,6 +86,11 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
                 ChallengeDetailIntent.Proceed -> join()
                 ChallengeDetailIntent.CloneChallenge -> clone()
+
+                ChallengeDetailIntent.OpenSettings ->
+                    currentState.detail?.challengeId?.let {
+                        navigationHelper.navigateByRoute(ChallengeSettingsPage(it).toRoute())
+                    }
                 ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
