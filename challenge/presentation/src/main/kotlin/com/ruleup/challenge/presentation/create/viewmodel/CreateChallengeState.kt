@@ -47,6 +47,11 @@ data class CreateChallengeState(
     // minTier 슬라이더 상한 = 생성자 표시 티어(초안이 준 기본값). 진입 시점 값으로 고정한다.
     val ownerTierCap: Tier?,
     val period: ChallengePeriod,
+    /**
+     * 주간 수행 횟수 1~7. 초안이 준 값을 **읽기 전용으로 보여주기만** 한다 — 생성 요청 계약에 이 필드가
+     * 없어서, 고치게 두면 사용자가 고른 값이 그대로 사라진다.
+     */
+    val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verification: VerificationConfig?,
     val penalties: ChallengePenalties,
@@ -122,6 +127,7 @@ data class CreateChallengeState(
                 minTier = null,
                 ownerTierCap = null,
                 period = ChallengePeriod(start = "", end = ""),
+                weeklyCount = 7,
                 params = emptyList(),
                 verification = null,
                 penalties = ChallengePenalties(score = false, groupShare = false, watcher = false),

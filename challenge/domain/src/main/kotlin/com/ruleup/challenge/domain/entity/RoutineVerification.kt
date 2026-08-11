@@ -17,7 +17,10 @@ enum class VerificationType(
 }
 
 /**
- * 자동 인증 신호원 (명세 `verification.method`). 구 명세의 PHOTO·SLEEP 은 폐기됐다.
+ * 자동 인증 신호원 (명세 `verification.method`).
+ *
+ * 구 `SCREEN_TIME` 은 상한/하한이 갈려 `SCREEN_TIME_MAX`·`SCREEN_TIME_MIN` 이 됐고, `GPS_AVOID`·`SLEEP`
+ * 이 새로 생겼다(2026-08-11 명세). 구 `PHOTO` 는 폐기됐다.
  *
  * 서버가 값을 추가해도 구버전 앱이 통째로 막히지 않도록 미인식 값은 [SELF_CHECK] 로 떨어뜨린다 —
  * 모르는 자동 인증을 자동으로 처리하는 척하는 것보다 수동으로 보이는 편이 안전하다.
@@ -28,14 +31,23 @@ enum class VerificationMethod(
     // 지정 장소 체류
     GPS_PRESENCE("GPS_PRESENCE"),
 
-    // 대상 앱 사용 시간
-    SCREEN_TIME("SCREEN_TIME"),
+    // 지정 장소 회피
+    GPS_AVOID("GPS_AVOID"),
+
+    // 대상 앱 사용 시간 상한
+    SCREEN_TIME_MAX("SCREEN_TIME_MAX"),
+
+    // 대상 앱 사용 시간 하한
+    SCREEN_TIME_MIN("SCREEN_TIME_MIN"),
 
     // 걸음 수 등 건강 데이터
     HEALTH("HEALTH"),
 
     // 기상
     WAKE("WAKE"),
+
+    // 취침
+    SLEEP("SLEEP"),
 
     // 수동 — 직접 체크
     SELF_CHECK("SELF_CHECK"),

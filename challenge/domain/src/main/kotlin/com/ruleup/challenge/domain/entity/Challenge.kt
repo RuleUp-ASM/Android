@@ -120,6 +120,14 @@ data class ChallengeDraft(
     // 기본·상한 모두 생성자 표시 티어
     val minTier: Tier?,
     val period: ChallengePeriod,
+    /**
+     * 주간 수행 횟수 1~7 (명세 `draft.weeklyCount`). **요일을 지정하지 않는다** — 판정 주기는 1주 고정이고
+     * 그 주 안에서 아무 날이나 이 횟수를 채우면 된다.
+     *
+     * 초안 응답에만 있고 **생성 요청(`POST /challenges`)·설정 조회에는 없다.** 그래서 확인 화면은 이 값을
+     * 읽기 전용으로만 보여준다 — 편집하게 두면 고친 값이 조용히 사라진다. 계약이 열리면 슬라이더로 바꾼다.
+     */
+    val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verification: VerificationConfig,
     val penalties: ChallengePenalties,

@@ -1,0 +1,17 @@
+<!--
+  Figma `ic`(node 1134:656) 내보내기 경로를 그대로 옮긴 것. 색은 사용처에서 tint 로 지정한다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="12dp"
+    android:height="12dp"
+    android:viewportWidth="12"
+    android:viewportHeight="12">
+    <path
+        android:pathData="M8.4 5.04H3.6C2.93726 5.04 2.4 5.57726 2.4 6.24V9C2.4 9.66274 2.93726 10.2 3.6 10.2H8.4C9.06274 10.2 9.6 9.66274 9.6 9V6.24C9.6 5.57726 9.06274 5.04 8.4 5.04Z"
+        android:strokeWidth="1.32"
+        android:strokeColor="#FF000000" />
+    <path
+        android:pathData="M4.08 5.04V3.6C4.08 3.09078 4.28229 2.60242 4.64235 2.24235C5.00242 1.88228 5.49078 1.68 6 1.68C6.50922 1.68 6.99758 1.88228 7.35765 2.24235C7.71772 2.60242 7.92 3.09078 7.92 3.6V5.04"
+        android:strokeWidth="1.32"
+        android:strokeColor="#FF000000" />
+</vector>

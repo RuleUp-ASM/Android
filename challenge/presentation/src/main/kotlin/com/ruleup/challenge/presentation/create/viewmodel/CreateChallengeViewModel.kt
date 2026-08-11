@@ -229,6 +229,7 @@ class CreateChallengeViewModel
                         // 상한은 초안이 준 기본값(= 생성자 표시 티어)으로 고정한다.
                         ownerTierCap = draft.minTier,
                         period = draft.period,
+                        weeklyCount = draft.weeklyCount,
                         params = draft.params,
                         verification = draft.verification,
                         penalties = draft.penalties,

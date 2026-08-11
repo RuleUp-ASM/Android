@@ -131,6 +131,7 @@ fun draft(
     capacity = 50,
     minTier = null,
     period = ChallengePeriod(start = "2026-08-12", end = "2026-08-26"),
+    weeklyCount = 7,
     params = emptyList(),
     verification = verification,
     penalties = ChallengePenalties(score = false, groupShare = false, watcher = false),
