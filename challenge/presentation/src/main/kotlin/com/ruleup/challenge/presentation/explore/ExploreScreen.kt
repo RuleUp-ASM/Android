@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -88,19 +87,30 @@ private fun ExploreContent(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            when {
-                state.isLoading -> LoadingBox()
-                state.errorMessage != null ->
-                    ErrorBox(message = state.errorMessage, onRetry = { onIntent(ExploreIntent.Load) })
-
-                else -> {
-                    SectionHeader(title = "실시간 인기", onSeeAll = { onIntent(ExploreIntent.OpenTrendingAll) })
+            // 인기와 카테고리는 독립적으로 그린다 — 한쪽이 실패해도 다른 쪽은 그대로 보여야 한다.
+            if (state.isTrendingLoading || !state.hideTrendingSection) {
+                SectionHeader(title = "실시간 인기", onSeeAll = { onIntent(ExploreIntent.OpenTrendingAll) })
+                Text(
+                    text = "최근 24시간 참여 기준 · 10분마다 갱신 · 그룹 챌린지만",
+                    color = RuleUpTheme.colors.textMuted,
+                    style = RuleUpTheme.typography.caption,
+                )
+                if (state.isTrendingLoading) {
+                    TrendingSkeleton()
+                } else {
                     TrendingCard(
                         trending = state.trending,
                         onClick = { onIntent(ExploreIntent.OpenChallenge(it)) },
                     )
-                    Spacer(Modifier.height(8.dp))
-                    SectionHeader(title = "카테고리 탐색", onSeeAll = { onIntent(ExploreIntent.OpenCategoryAll) })
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
+            SectionHeader(title = "카테고리 탐색", onSeeAll = { onIntent(ExploreIntent.OpenCategoryAll) })
+            when {
+                state.isCategoriesLoading -> CategoryGridSkeleton()
+                state.categoriesFailed -> SectionRetry(onRetry = { onIntent(ExploreIntent.RetryCategories) })
+                else ->
                     CategoryGrid(
                         categories = state.categories,
                         onClick = { item ->
@@ -111,7 +121,6 @@ private fun ExploreContent(
                             )
                         },
                     )
-                }
             }
         }
         RuleUpBottomTabBar(
@@ -162,14 +171,6 @@ private fun TrendingCard(
                 .clip(RoundedCornerShape(16.dp))
                 .background(RuleUpTheme.colors.surface),
     ) {
-        if (trending.isEmpty()) {
-            Text(
-                text = "아직 인기 챌린지가 없어요",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.small,
-                modifier = Modifier.padding(16.dp),
-            )
-        }
         trending.forEachIndexed { index, item ->
             if (index > 0) HorizontalDivider(thickness = 1.dp, color = RuleUpTheme.colors.border)
             TrendingRow(rank = item.rank, item = item, onClick = { onClick(item.challengeId) })
@@ -193,12 +194,25 @@ private fun TrendingRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         RankBadge(rank = rank)
-        Text(
-            text = item.title,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.cardTitle,
+        Row(
             modifier = Modifier.weight(1f),
-        )
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = item.title,
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.cardTitle,
+            )
+            // 못 들어가는 방도 인기 목록에는 노출한다(의도된 동작) — 잠금은 색이 아니라 라벨로 알린다.
+            if (!item.joinable) {
+                Text(
+                    text = "🔒 ${item.minTier?.value ?: "티어 제한"}",
+                    color = RuleUpTheme.colors.textMuted,
+                    style = RuleUpTheme.typography.caption,
+                )
+            }
+        }
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -320,33 +334,72 @@ private fun CategoryCard(
 }
 
 @Composable
-private fun LoadingBox() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 120.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator(color = RuleUpTheme.colors.brand)
-    }
-}
-
-@Composable
-private fun ErrorBox(
-    message: String,
-    onRetry: () -> Unit,
-) {
+private fun TrendingSkeleton() {
+    // 카드 5개 자리를 먼저 잡아 목록이 도착할 때 화면이 튀지 않게 한다.
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(top = 120.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface),
+    ) {
+        repeat(TRENDING_SKELETON_COUNT) { index ->
+            if (index > 0) HorizontalDivider(thickness = 1.dp, color = RuleUpTheme.colors.border)
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .padding(horizontal = 14.dp, vertical = 13.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(14.dp)
+                            .clip(RoundedCornerShape(7.dp))
+                            .background(RuleUpTheme.colors.surfaceVariant),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryGridSkeleton() {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        repeat(CATEGORY_SKELETON_COUNT / 2) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                repeat(2) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .height(68.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(RuleUpTheme.colors.surfaceVariant),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 섹션 하나만 실패했을 때의 재시도 — 화면 전체를 에러로 만들지 않는다. */
+@Composable
+private fun SectionRetry(onRetry: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(RuleUpTheme.colors.surfaceVariant)
+                .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = message,
+            text = "불러오지 못했어요",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.body,
         )
@@ -358,3 +411,6 @@ private fun ErrorBox(
         )
     }
 }
+
+private const val TRENDING_SKELETON_COUNT = 5
+private const val CATEGORY_SKELETON_COUNT = 12

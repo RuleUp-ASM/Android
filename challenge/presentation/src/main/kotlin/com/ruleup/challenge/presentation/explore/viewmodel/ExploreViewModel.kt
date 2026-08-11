@@ -13,8 +13,7 @@ import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,8 +21,11 @@ import javax.inject.Inject
 private const val TRENDING_MAIN_COUNT = 5
 
 /**
- * 탐색 메인 ViewModel. 실시간 인기(서버 산정, 신선도 10분)와 카테고리별 챌린지 수를 병렬 조회한다.
- * 랭킹·집계는 서버 값을 그대로 노출하고, 클라이언트는 재계산하지 않는다.
+ * 탐색 메인 ViewModel.
+ *
+ * 인기와 카테고리를 **독립된 코루틴으로 병렬 조회**한다 — 한쪽 실패가 다른 쪽을 막지 않아야 하므로
+ * 하나의 `runCatching` 으로 묶지 않는다. 각각 1회 자동 재시도 후에도 실패하면 그 영역만 재시도 UI 로
+ * 떨어진다. 랭킹·집계는 서버 값을 그대로 노출하고 클라이언트가 재계산하지 않는다.
  */
 @HiltViewModel
 class ExploreViewModel
@@ -37,7 +39,14 @@ class ExploreViewModel
         ) {
         override fun onIntent(intent: ExploreIntent) {
             when (intent) {
-                ExploreIntent.Load -> load()
+                ExploreIntent.Load -> {
+                    loadTrending()
+                    loadCategories()
+                }
+
+                ExploreIntent.RetryTrending -> loadTrending()
+                ExploreIntent.RetryCategories -> loadCategories()
+
                 is ExploreIntent.OpenChallenge ->
                     navigationHelper.navigateByRoute(ChallengeDetailPage(intent.challengeId).toRoute())
 
@@ -58,39 +67,69 @@ class ExploreViewModel
             event: ExploreReducerEvent,
         ): ExploreState =
             when (event) {
-                ExploreReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
+                ExploreReducerEvent.TrendingLoading ->
+                    state.copy(isTrendingLoading = true, trendingFailed = false)
 
-                is ExploreReducerEvent.Loaded ->
+                is ExploreReducerEvent.TrendingLoaded ->
                     state.copy(
-                        isLoading = false,
-                        trending = event.trending,
+                        isTrendingLoading = false,
+                        trending = event.items,
+                        calculatedAt = event.calculatedAt,
+                        trendingFailed = false,
+                    )
+
+                ExploreReducerEvent.TrendingFailed ->
+                    state.copy(isTrendingLoading = false, trendingFailed = true)
+
+                ExploreReducerEvent.CategoriesLoading ->
+                    state.copy(isCategoriesLoading = true, categoriesFailed = false)
+
+                is ExploreReducerEvent.CategoriesLoaded ->
+                    state.copy(
+                        isCategoriesLoading = false,
                         categories = event.categories,
-                        errorMessage = null,
+                        categoriesFailed = false,
                     )
 
-                is ExploreReducerEvent.Failed -> state.copy(isLoading = false, errorMessage = event.message)
+                ExploreReducerEvent.CategoriesFailed ->
+                    state.copy(isCategoriesLoading = false, categoriesFailed = true)
             }
 
-        private fun load() {
-            viewModelScope.launch {
-                dispatch(ExploreReducerEvent.Loading)
-                runCatching {
-                    coroutineScope {
-                        val trending = async { getTrendingChallengesUseCase() }
-                        val categories = async { getChallengeCategoriesUseCase() }
-                        trending.await() to categories.await()
-                    }
-                }.onSuccess { (trending, categories) ->
-                    dispatch(
-                        ExploreReducerEvent.Loaded(
-                            // 서버는 Top 20 을 내려주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
-                            trending = trending.items.take(TRENDING_MAIN_COUNT),
-                            categories = categories,
-                        ),
-                    )
-                }.onFailure { dispatch(ExploreReducerEvent.Failed(it.message ?: "탐색 정보를 불러오지 못했어요")) }
-            }
+        /** 진행 중인 요청과 겹치지 않게만 막는다 — 화면 재진입·재시도는 그대로 통과시킨다. */
+        private var trendingJob: Job? = null
+        private var categoriesJob: Job? = null
+
+        private fun loadTrending() {
+            if (trendingJob?.isActive == true) return
+            trendingJob =
+                viewModelScope.launch {
+                    dispatch(ExploreReducerEvent.TrendingLoading)
+                    retryOnce { getTrendingChallengesUseCase() }
+                        .onSuccess { snapshot ->
+                            dispatch(
+                                ExploreReducerEvent.TrendingLoaded(
+                                    // 서버는 Top 20 을 주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
+                                    items = snapshot.items.take(TRENDING_MAIN_COUNT),
+                                    calculatedAt = snapshot.calculatedAt,
+                                ),
+                            )
+                        }.onFailure { dispatch(ExploreReducerEvent.TrendingFailed) }
+                }
         }
+
+        private fun loadCategories() {
+            if (categoriesJob?.isActive == true) return
+            categoriesJob =
+                viewModelScope.launch {
+                    dispatch(ExploreReducerEvent.CategoriesLoading)
+                    retryOnce { getChallengeCategoriesUseCase() }
+                        .onSuccess { dispatch(ExploreReducerEvent.CategoriesLoaded(it)) }
+                        .onFailure { dispatch(ExploreReducerEvent.CategoriesFailed) }
+                }
+        }
+
+        /** 1회 자동 재시도(프론트 스펙 4-4). 그 뒤부터는 사용자가 눌러야 다시 시도한다. */
+        private suspend fun <T> retryOnce(block: suspend () -> T): Result<T> = runCatching { block() }.recoverCatching { block() }
 
         private fun openCategory(category: Category) {
             navigationHelper.navigateByRoute(ChallengeExploreListPage(category = category).toRoute())
