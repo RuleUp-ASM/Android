@@ -131,8 +131,10 @@ fun MyHomeScreen(
             onTabClick = { tab ->
                 when (tab) {
                     RuleUpBottomTab.HOME -> viewModel.onIntent(MyHomeIntent.OpenHomeTab)
-                    RuleUpBottomTab.CHALLENGE -> viewModel.onIntent(MyHomeIntent.OpenChallengeTab)
-                    else -> Unit
+                    RuleUpBottomTab.EXPLORE -> viewModel.onIntent(MyHomeIntent.OpenChallengeTab)
+                    // TODO(#269): "내 챌린지" 목적지 미정.
+                    RuleUpBottomTab.CHALLENGE -> Unit
+                    RuleUpBottomTab.MY -> Unit
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter),

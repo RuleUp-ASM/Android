@@ -63,6 +63,9 @@ class ExploreViewModel
                 is ExploreIntent.OpenCategory -> openCategory(intent.category)
                 ExploreIntent.OpenHome -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 ExploreIntent.OpenMy -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
+
+                ExploreIntent.CreateChallenge ->
+                    navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_CREATE))
             }
         }
 
