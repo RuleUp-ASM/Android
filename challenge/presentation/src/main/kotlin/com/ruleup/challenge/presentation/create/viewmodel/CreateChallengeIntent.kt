@@ -77,6 +77,11 @@ sealed interface CreateChallengeIntent : MviIntent {
         val end: String,
     ) : CreateChallengeIntent
 
+    /** 주간 수행 횟수 1~7. 요일이 아니라 "그 주에 몇 번" 이다. */
+    data class SetWeeklyCount(
+        val count: Int,
+    ) : CreateChallengeIntent
+
     /** 목표값 편집. 값은 위젯이 문자열로 만들어 올린다(kind 로 위젯을 고른다). */
     data class EditParam(
         val key: String,

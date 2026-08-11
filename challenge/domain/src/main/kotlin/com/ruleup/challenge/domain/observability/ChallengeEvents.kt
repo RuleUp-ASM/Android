@@ -316,6 +316,7 @@ enum class DraftField(
     CAPACITY("capacity"),
     MIN_TIER("minTier"),
     PERIOD("period"),
+    WEEKLY_COUNT("weeklyCount"),
     PARAMS("params"),
     VERIFICATION("verification"),
     PENALTIES("penalties"),

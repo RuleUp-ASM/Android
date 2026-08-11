@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,6 +51,7 @@ import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.helper.LocalMessageHelper
+import kotlin.math.roundToInt
 
 /**
  * 챌린지 수정 화면(방장 전용).
@@ -132,6 +135,7 @@ private fun ChallengeSettingsContent(
                     } else {
                         item { RankingVisibleSection(state = state, onIntent = onIntent) }
                     }
+                    item { WeeklyCountSection(state = state, onIntent = onIntent) }
                     if (state.params.isNotEmpty()) {
                         item { ParamsSection(state = state, onIntent = onIntent) }
                     }
@@ -385,6 +389,59 @@ private fun MinTierSection(
         if (!editable) LockCaption()
     }
 }
+
+/**
+ * 주간 수행 횟수 (1~7). **요일이 아니라 그 주에 몇 번**이다 — 판정 주기가 1주 고정이라 어느 날 채워도 된다.
+ * 시작 전 + 방장 혼자일 때만 열린다(서버가 editableFields 로 알려준다).
+ */
+@Composable
+private fun WeeklyCountSection(
+    state: ChallengeSettingsState,
+    onIntent: (ChallengeSettingsIntent) -> Unit,
+) {
+    val editable = state.editable(ChallengeField.WEEKLY_COUNT)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("주간 횟수") {
+            Text(
+                text =
+                    if (state.weeklyCount >= ChallengeSettingsState.WEEKLY_COUNT_MAX) {
+                        "매일"
+                    } else {
+                        "주 ${state.weeklyCount}회"
+                    },
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.smallBold,
+            )
+        }
+        Slider(
+            value = state.weeklyCount.toFloat(),
+            onValueChange = { onIntent(ChallengeSettingsIntent.SetWeeklyCount(it.roundToInt())) },
+            enabled = editable,
+            valueRange = weeklyCountRange,
+            // 양 끝을 뺀 내부 눈금 수 — 1~7 이면 5개다.
+            steps = ChallengeSettingsState.WEEKLY_COUNT_MAX - ChallengeSettingsState.WEEKLY_COUNT_MIN - 1,
+            colors =
+                SliderDefaults.colors(
+                    thumbColor = RuleUpTheme.colors.brand,
+                    activeTrackColor = RuleUpTheme.colors.brand,
+                    inactiveTrackColor = RuleUpTheme.colors.border,
+                ),
+        )
+        if (editable) {
+            Text(
+                text = "요일은 고르지 않아요. 한 주 안에서 아무 날이나 채우면 돼요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
+        } else {
+            LockCaption()
+        }
+    }
+}
+
+/** 주간 횟수 슬라이더의 값 범위. 명세 1~7. */
+private val weeklyCountRange =
+    ChallengeSettingsState.WEEKLY_COUNT_MIN.toFloat()..ChallengeSettingsState.WEEKLY_COUNT_MAX.toFloat()
 
 @Composable
 private fun ParamsSection(

@@ -130,6 +130,11 @@ class CreateChallengeViewModel
                     setPeriod(intent.start, intent.end)
                 }
 
+                is CreateChallengeIntent.SetWeeklyCount -> {
+                    if (intent.count != currentState.original?.weeklyCount) logDraftEdit(DraftField.WEEKLY_COUNT)
+                    dispatch(CreateChallengeReducerEvent.WeeklyCountChanged(intent.count))
+                }
+
                 is CreateChallengeIntent.EditParam -> {
                     val origin =
                         currentState.original
@@ -292,6 +297,16 @@ class CreateChallengeViewModel
 
                 is CreateChallengeReducerEvent.PeriodChanged ->
                     state.copy(period = state.period.copy(start = event.start, end = event.end))
+
+                is CreateChallengeReducerEvent.WeeklyCountChanged ->
+                    // 범위 밖 값은 서버가 400 INVALID_WEEKLY_COUNT 로 막는다. 여기서 먼저 잘라 보낸다.
+                    state.copy(
+                        weeklyCount =
+                            event.count.coerceIn(
+                                CreateChallengeState.WEEKLY_COUNT_MIN,
+                                CreateChallengeState.WEEKLY_COUNT_MAX,
+                            ),
+                    )
 
                 is CreateChallengeReducerEvent.ParamEdited ->
                     state.copy(
@@ -511,6 +526,7 @@ class CreateChallengeViewModel
                     capacity = state.capacity.takeIf { state.isGroup },
                     minTier = state.minTier,
                     period = state.period,
+                    weeklyCount = state.weeklyCount,
                     params = state.params.toEntries(),
                     verification = verification,
                     watcherPenalty = state.penalties.watcher,

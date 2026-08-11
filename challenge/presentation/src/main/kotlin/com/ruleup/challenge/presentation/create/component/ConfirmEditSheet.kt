@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +41,7 @@ import com.ruleup.challenge.presentation.create.viewmodel.TextEditField
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
+import kotlin.math.roundToInt
 
 /** 확인 화면 요약 줄에 대응하는 편집 시트 (Figma 1134:669 — 4종). */
 enum class ConfirmEditSection {
@@ -103,7 +106,8 @@ internal fun ConfirmEditSheet(
                 ConfirmEditSection.TITLE_DESCRIPTION -> TitleDescriptionEditor(state, onIntent)
                 ConfirmEditSection.MODE_CAPACITY -> ModeCapacityEditor(state, onIntent)
                 ConfirmEditSection.VERIFICATION -> VerificationEditor(state, onIntent)
-                ConfirmEditSection.PERIOD -> PeriodEditor(state) { showPeriodPicker = true }
+                ConfirmEditSection.PERIOD ->
+                    PeriodEditor(state, onIntent) { showPeriodPicker = true }
             }
             SheetSaveButton(onClick = onDismiss)
         }
@@ -263,19 +267,16 @@ private fun VerificationEditor(
 @Composable
 private fun PeriodEditor(
     state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
     onPickPeriod: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 빈도는 초안이 정한 값을 그대로 보여주기만 한다 — 생성 요청 계약(`POST /challenges`)에 weeklyCount 가
-        // 없어서, 슬라이더로 고르게 두면 사용자가 맞춘 횟수가 전송되지 않고 조용히 사라진다.
-        BorderedRow(locked = true) {
-            Text("주간 횟수", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.bodyMedium)
-            Text(
-                text = if (state.weeklyCount >= 7) "매일" else "주 ${state.weeklyCount}회",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.bodyMedium,
-            )
-        }
+        // 빈도는 **요일이 아니라 그 주에 몇 번**이다. 판정 주기가 1주 고정이라 어느 날 하든 상관없고,
+        // 요일 체크박스를 두면 지키지도 않을 요일을 고르게 만든다.
+        WeeklyCountSlider(
+            count = state.weeklyCount,
+            onChange = { onIntent(CreateChallengeIntent.SetWeeklyCount(it)) },
+        )
         BorderedRow(onClick = onPickPeriod) {
             Text("시작일 · 기간", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
             val label =
@@ -287,8 +288,68 @@ private fun PeriodEditor(
                 }
             Text(label, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
         }
+    }
+}
+
+/** 주간 횟수 슬라이더의 값 범위. 명세 1~7. */
+private val weeklyCountRange =
+    CreateChallengeState.WEEKLY_COUNT_MIN.toFloat()..CreateChallengeState.WEEKLY_COUNT_MAX.toFloat()
+
+/**
+ * 주간 횟수 슬라이더 (1~7).
+ *
+ * 눈금이 7칸뿐이라 [Slider] 의 `steps` 로 딱 떨어지게 잡고, 숫자 라벨을 직접 탭해도 선택되게 둔다 —
+ * 슬라이더 손잡이만으로 한 칸을 정확히 맞추는 건 손가락으로 하기 번거롭다.
+ */
+@Composable
+private fun WeeklyCountSlider(
+    count: Int,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("주간 횟수", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
+            Text(
+                text = if (count >= CreateChallengeState.WEEKLY_COUNT_MAX) "매일" else "주 ${count}회",
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.numberS,
+            )
+        }
+        Slider(
+            value = count.toFloat(),
+            onValueChange = { onChange(it.roundToInt()) },
+            valueRange = weeklyCountRange,
+            // 양 끝을 뺀 내부 눈금 수 — 1~7 이면 5개다.
+            steps = CreateChallengeState.WEEKLY_COUNT_MAX - CreateChallengeState.WEEKLY_COUNT_MIN - 1,
+            colors =
+                SliderDefaults.colors(
+                    thumbColor = RuleUpTheme.colors.brand,
+                    activeTrackColor = RuleUpTheme.colors.brand,
+                    inactiveTrackColor = RuleUpTheme.colors.border,
+                    activeTickColor = RuleUpTheme.colors.brandSoft,
+                    inactiveTickColor = RuleUpTheme.colors.borderStrong,
+                ),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            (CreateChallengeState.WEEKLY_COUNT_MIN..CreateChallengeState.WEEKLY_COUNT_MAX).forEach { tick ->
+                Text(
+                    text = tick.toString(),
+                    modifier = Modifier.singleClickable { onChange(tick) },
+                    color = if (tick == count) RuleUpTheme.colors.brand else RuleUpTheme.colors.textMuted,
+                    style = if (tick == count) RuleUpTheme.typography.smallBold else RuleUpTheme.typography.smallMedium,
+                )
+            }
+        }
         Text(
-            text = "주간 횟수는 AI 초안이 정한 값이에요",
+            text = "요일은 고르지 않아요. 한 주 안에서 아무 날이나 채우면 돼요",
             color = RuleUpTheme.colors.textMuted,
             style = RuleUpTheme.typography.caption,
         )

@@ -121,11 +121,8 @@ data class ChallengeDraft(
     val minTier: Tier?,
     val period: ChallengePeriod,
     /**
-     * 주간 수행 횟수 1~7 (명세 `draft.weeklyCount`). **요일을 지정하지 않는다** — 판정 주기는 1주 고정이고
-     * 그 주 안에서 아무 날이나 이 횟수를 채우면 된다.
-     *
-     * 초안 응답에만 있고 **생성 요청(`POST /challenges`)·설정 조회에는 없다.** 그래서 확인 화면은 이 값을
-     * 읽기 전용으로만 보여준다 — 편집하게 두면 고친 값이 조용히 사라진다. 계약이 열리면 슬라이더로 바꾼다.
+     * 주간 수행 횟수 1~7 (명세 `weeklyCount`). **요일을 지정하지 않는다** — 판정 주기는 1주 고정이고
+     * 그 주 안에서 아무 날이나 이 횟수를 채우면 된다. 구 `repeatDays`(요일 선택)를 대체한다.
      */
     val weeklyCount: Int,
     val params: List<ParamSpec>,
@@ -187,6 +184,8 @@ data class CreateChallengeCommand(
     // ≤ 생성자 표시 티어
     val minTier: Tier?,
     val period: ChallengePeriod,
+    // 주간 수행 횟수 1~7. 범위를 벗어나면 서버가 400 INVALID_WEEKLY_COUNT 로 막는다.
+    val weeklyCount: Int,
     val params: List<ParamEntry>,
     val verification: VerificationConfig,
     // 선택 가능한 유일한 패널티
@@ -242,6 +241,7 @@ enum class ChallengeField(
     CAPACITY("capacity"),
     MIN_TIER("minTier"),
     PERIOD("period"),
+    WEEKLY_COUNT("weeklyCount"),
     PARAMS("params"),
     VERIFICATION("verification"),
     PENALTIES("penalties"),
@@ -264,6 +264,8 @@ data class ChallengeConfig(
     val capacity: Int,
     val minTier: Tier?,
     val period: ChallengePeriod,
+    // 주간 수행 횟수 1~7 — 시작 전 + 방장 혼자일 때만 수정 가능
+    val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verification: VerificationConfig,
     val penalties: ChallengePenalties,
@@ -290,6 +292,7 @@ data class ChallengeUpdate(
     val capacity: Int? = null,
     val minTier: Tier? = null,
     val period: ChallengePeriod? = null,
+    val weeklyCount: Int? = null,
     val params: List<ParamEntry>? = null,
     val verification: VerificationConfig? = null,
     val watcherPenalty: Boolean? = null,
@@ -309,6 +312,9 @@ data class ChallengeUpdateResult(
 class ChallengeNotEditableException(
     val editableFields: Set<ChallengeField> = emptySet(),
 ) : Exception("지금은 수정할 수 없는 항목이 포함되어 있습니다.")
+
+/** 주간 횟수가 1~7 범위를 벗어났다 (명세 400 `INVALID_WEEKLY_COUNT`). */
+class InvalidWeeklyCountException : Exception("주간 횟수는 1~7회 사이여야 합니다.")
 
 /**
  * 설정 버전 충돌 (명세 409 `VERSION_CONFLICT`). 다른 수정이나 가입·탈퇴로 잠금 범위가 바뀌었다.

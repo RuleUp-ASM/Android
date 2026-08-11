@@ -218,4 +218,4 @@ internal fun DraftDto.toDomain(): ChallengeDraft =
 private const val DEFAULT_CAPACITY = 50
 
 /** 명세 기본 주간 횟수(7 = 매일). 서버가 값을 빠뜨렸을 때만 쓰인다. */
-private const val DEFAULT_WEEKLY_COUNT = 7
+internal const val DEFAULT_WEEKLY_COUNT = 7

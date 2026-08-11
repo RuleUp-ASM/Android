@@ -179,6 +179,8 @@ data class ChallengeConfigResponse(
     val rankingVisible: Boolean? = null,
     @SerialName("capacity")
     val capacity: Int? = null,
+    @SerialName("weeklyCount")
+    val weeklyCount: Int? = null,
     @SerialName("minTier")
     val minTier: String? = null,
     @SerialName("period")
@@ -218,6 +220,8 @@ internal fun ChallengeSettingsResponse.toDomain(): ChallengeSettings {
                 capacity = config.capacity ?: 0,
                 minTier = config.minTier?.let(Tier::fromValue),
                 period = config.period.toDomain(),
+                // 서버가 빠뜨리면 7(매일)로 본다 — 0 이면 "아무 날도 안 함"이 돼 화면이 거짓말을 한다.
+                weeklyCount = (config.weeklyCount ?: DEFAULT_WEEKLY_COUNT).coerceIn(1, 7),
                 params = config.params.orEmpty().map { it.toDomain() },
                 verification = config.verification.toDomain(),
                 penalties = config.penalties.toDomain(),

@@ -169,6 +169,7 @@ fun command(
     capacity = null,
     minTier = null,
     period = ChallengePeriod(start = "2026-08-12", end = "2026-08-26"),
+    weeklyCount = 7,
     params = emptyList(),
     verification = verification(),
     watcherPenalty = false,

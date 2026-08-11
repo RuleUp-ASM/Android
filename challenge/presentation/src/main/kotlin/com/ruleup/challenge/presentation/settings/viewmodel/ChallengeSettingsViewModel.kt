@@ -74,6 +74,9 @@ class ChallengeSettingsViewModel
                 is ChallengeSettingsIntent.SetPeriod ->
                     dispatch(ChallengeSettingsReducerEvent.PeriodChanged(intent.start, intent.end))
 
+                is ChallengeSettingsIntent.SetWeeklyCount ->
+                    dispatch(ChallengeSettingsReducerEvent.WeeklyCountChanged(intent.count))
+
                 is ChallengeSettingsIntent.EditParam ->
                     dispatch(ChallengeSettingsReducerEvent.ParamEdited(intent.key, intent.value))
 
@@ -128,6 +131,16 @@ class ChallengeSettingsViewModel
                 is ChallengeSettingsReducerEvent.PeriodChanged ->
                     state.copy(period = state.period.copy(start = event.start, end = event.end))
 
+                is ChallengeSettingsReducerEvent.WeeklyCountChanged ->
+                    // 범위 밖 값은 서버가 400 INVALID_WEEKLY_COUNT 로 막는다. 여기서 먼저 잘라 보낸다.
+                    state.copy(
+                        weeklyCount =
+                            event.count.coerceIn(
+                                ChallengeSettingsState.WEEKLY_COUNT_MIN,
+                                ChallengeSettingsState.WEEKLY_COUNT_MAX,
+                            ),
+                    )
+
                 is ChallengeSettingsReducerEvent.ParamEdited ->
                     state.copy(
                         params = state.params.map { if (it.key == event.key) it.copy(value = event.value) else it },
@@ -159,6 +172,7 @@ class ChallengeSettingsViewModel
                 rankingVisible = config.rankingVisible,
                 minTier = config.minTier,
                 period = config.period,
+                weeklyCount = config.weeklyCount,
                 params = config.params,
                 verificationType = config.verification.type,
                 watcherPenalty = config.penalties.watcher,
@@ -260,6 +274,7 @@ class ChallengeSettingsViewModel
                 rankingVisible = rankingVisible.takeIf { it != config.rankingVisible },
                 minTier = minTier.takeIf { it != config.minTier },
                 period = period.takeIf { it != config.period },
+                weeklyCount = weeklyCount.takeIf { it != config.weeklyCount },
                 params = params.takeIf { it != config.params }?.toEntries(),
                 verification =
                     verificationType

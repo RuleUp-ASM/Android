@@ -47,10 +47,7 @@ data class CreateChallengeState(
     // minTier 슬라이더 상한 = 생성자 표시 티어(초안이 준 기본값). 진입 시점 값으로 고정한다.
     val ownerTierCap: Tier?,
     val period: ChallengePeriod,
-    /**
-     * 주간 수행 횟수 1~7. 초안이 준 값을 **읽기 전용으로 보여주기만** 한다 — 생성 요청 계약에 이 필드가
-     * 없어서, 고치게 두면 사용자가 고른 값이 그대로 사라진다.
-     */
+    // 주간 수행 횟수 1~7. 요일이 아니라 "그 주에 몇 번" 이다(구 repeatDays 대체).
     val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verification: VerificationConfig?,
@@ -100,6 +97,10 @@ data class CreateChallengeState(
 
         // 명세: 루틴 설명 1~200자. 서버가 같은 범위를 재검증한다.
         const val DESCRIPTION_MAX = 200
+
+        // 명세: 주간 횟수 1~7 · 기본 7(매일)
+        const val WEEKLY_COUNT_MIN = 1
+        const val WEEKLY_COUNT_MAX = 7
 
         // 명세: 정원 1~10,000 · 기본 50 · 그룹 전용
         const val CAPACITY_MIN = 1

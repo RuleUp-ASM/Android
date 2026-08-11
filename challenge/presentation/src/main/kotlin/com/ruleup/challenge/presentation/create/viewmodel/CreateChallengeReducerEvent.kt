@@ -88,6 +88,10 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
         val end: String,
     ) : CreateChallengeReducerEvent
 
+    data class WeeklyCountChanged(
+        val count: Int,
+    ) : CreateChallengeReducerEvent
+
     data class ParamEdited(
         val key: String,
         val value: String,
