@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -51,6 +52,7 @@ import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.category.Category
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -97,6 +99,19 @@ private fun ExploreListContent(
             onFilterClick = { showFilterSheet = true },
             onSortClick = { showSortSheet = true },
         )
+        if (state.filter.categories.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            AppliedCategoryChips(
+                categories = state.filter.categories,
+                onRemove = { category ->
+                    onIntent(
+                        ExploreListIntent.ApplyFilter(
+                            state.filter.copy(categories = state.filter.categories - category),
+                        ),
+                    )
+                },
+            )
+        }
         Spacer(Modifier.height(4.dp))
         ChallengeList(state = state, onIntent = onIntent)
     }
@@ -165,6 +180,39 @@ private fun TotalCountLabel(totalCount: Int) {
             style = RuleUpTheme.typography.bodyBold,
         )
         Text(text = "개", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
+    }
+}
+
+/** 적용된 카테고리 칩. 카테고리 타일로 들어와 프리필된 것도 여기서 해제할 수 있다. */
+@Composable
+private fun AppliedCategoryChips(
+    categories: Set<Category>,
+    onRemove: (Category) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        categories.forEach { category ->
+            Row(
+                modifier =
+                    Modifier
+                        .clip(RuleUpTheme.shapes.chip)
+                        .background(RuleUpTheme.colors.brandSoft)
+                        .singleClickable { onRemove(category) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = category.label,
+                    color = RuleUpTheme.colors.brand,
+                    style = RuleUpTheme.typography.smallMedium,
+                )
+                Text(text = "✕", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.caption)
+            }
+        }
     }
 }
 
@@ -247,7 +295,8 @@ private fun ChallengeList(
     onIntent: (ExploreListIntent) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    // 하단 근접(잔여 LOAD_MORE_PREFETCH 미만) 시 다음 커서 페이지를 미리 요청한다.
+    // 하단 근접 시 다음 커서 페이지를 미리 요청한다(프론트 스펙 5: 하단 70% 프리페치).
+    // size 기본 10 기준 잔여 3개면 70% 지점이다. 진행 중 요청은 canLoadMore 가 막는다.
     val shouldLoadMore by remember(state.canLoadMore) {
         derivedStateOf {
             val info = listState.layoutInfo
@@ -310,6 +359,24 @@ private fun ChallengeList(
                             CircularProgressIndicator(
                                 color = RuleUpTheme.colors.brand,
                                 modifier = Modifier.size(24.dp),
+                            )
+                        }
+                    }
+                }
+                if (state.loadMoreFailed) {
+                    item {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = "다시 불러오기",
+                                color = RuleUpTheme.colors.brand,
+                                style = RuleUpTheme.typography.bodyBold,
+                                modifier = Modifier.singleClickable { onIntent(ExploreListIntent.LoadMore) },
                             )
                         }
                     }
