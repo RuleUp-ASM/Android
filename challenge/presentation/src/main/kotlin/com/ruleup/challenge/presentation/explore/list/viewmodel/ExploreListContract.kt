@@ -33,6 +33,14 @@ sealed interface ExploreListIntent : MviIntent {
     /** 빈 결과에서 "티어 조건 끄기" — eligibleOnly 만 해제하고 재조회한다. */
     data object ClearEligibleOnly : ExploreListIntent
 
+    /**
+     * 카드가 화면에 충분히 오래 노출됐다. 화면이 뷰포트 50%·1초 조건을 판정해 올리고,
+     * 세션 내 중복 제거는 ViewModel 이 한다.
+     */
+    data class CardImpression(
+        val challengeId: String,
+    ) : ExploreListIntent
+
     /** 카드 → 챌린지 공개 상세. */
     data class OpenChallenge(
         val challengeId: String,

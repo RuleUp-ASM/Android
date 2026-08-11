@@ -34,10 +34,11 @@ class CategoryTest {
     }
 
     @Test
-    fun `탐색 API 의 구 code 는 별칭으로 흡수한다`() {
-        // 서버 정렬 전까지 탐색·카테고리 API 가 내려주는 값. 별칭이 없으면 이 둘만 조용히 사라진다.
-        assertEquals(Category.HOUSEKEEPING, Category.fromValue("TIDYING"))
-        assertEquals(Category.CAREER_PRODUCTIVITY, Category.fromValue("CAREER"))
+    fun `12종 확정 전 표기는 더 이상 흡수하지 않는다`() {
+        // 탐색 기능 스펙이 2026-08-11 에 TIDYING·CAREER 를 폐기하고 관심 분야 정책 표기로 확정했다.
+        // 별칭을 남겨두면 서버가 정리된 뒤에도 구 표기가 통과해 실수가 드러나지 않는다.
+        assertNull(Category.fromValue("TIDYING"))
+        assertNull(Category.fromValue("CAREER"))
     }
 
     @Test

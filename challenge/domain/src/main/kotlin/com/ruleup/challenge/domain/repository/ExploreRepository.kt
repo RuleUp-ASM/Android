@@ -16,7 +16,8 @@ import com.ruleup.domain.entity.category.Category
 interface ExploreRepository {
     /**
      * 실시간 인기 (명세 GET /challenges/trending). 서버가 Top 20 을 순위와 함께 주고 홈은 상위 5개만 쓴다.
-     * 10분 캐시라 `calculatedAt` 이 최대 10분 지연된다. [category] 를 주면 카테고리별 인기가 온다.
+     * 1시간 주기 갱신이라 `calculatedAt` 이 최대 1시간 지연된다(정책 2026-08-11 변경).
+     * [category] 를 주면 카테고리별 인기가 온다.
      */
     suspend fun getTrending(category: Category? = null): TrendingSnapshot
 

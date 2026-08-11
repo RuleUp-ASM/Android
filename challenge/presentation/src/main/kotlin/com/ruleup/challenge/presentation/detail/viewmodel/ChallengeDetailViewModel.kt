@@ -18,6 +18,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.usecase.ChangeMemberRoleUseCase
 import com.ruleup.challenge.domain.usecase.CloneChallengeUseCase
@@ -38,7 +39,9 @@ import com.ruleup.challenge.presentation.observability.ChallengeDetailTtiPage
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.TtiTracker
+import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.ScreenKey
 import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.ui.mvi.MviViewModel
@@ -63,6 +66,7 @@ class ChallengeDetailViewModel
         private val getChallengeMembersUseCase: GetChallengeMembersUseCase,
         private val joinChallengeUseCase: JoinChallengeUseCase,
         private val cloneChallengeUseCase: CloneChallengeUseCase,
+        private val observability: Observability,
         private val leaveChallengeUseCase: LeaveChallengeUseCase,
         private val deleteChallengeUseCase: DeleteChallengeUseCase,
         private val changeMemberRoleUseCase: ChangeMemberRoleUseCase,
@@ -167,17 +171,37 @@ class ChallengeDetailViewModel
         private fun join() {
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isJoining) return
+            val detail = currentState.detail
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.challengeJoinAttempt(
+                    challengeId = id,
+                    eligible = detail?.gate?.eligible ?: false,
+                    isFull = detail?.isFull ?: false,
+                )
+            }
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Joining(true))
                 runCatching { joinChallengeUseCase(id) }
                     .onSuccess { result ->
                         dispatch(ChallengeDetailReducerEvent.Joining(false))
+                        // 탐색→참여 전환율의 분자. 노출·클릭과 같은 challenge_id 로 이어진다.
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.challengeJoinResult(challengeId = id, success = true)
+                        }
                         // 사이클 중간 입장이면 언제부터 판정되는지 알려준다(사이클은 1주 고정).
                         result.countFromCycle?.let {
                             emitEffect(ChallengeDetailEffect.ShowMessage("${'$'}it부터 인증이 집계돼요"))
                         }
                         load(id, force = true)
                     }.onFailure { error ->
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.challengeJoinResult(
+                                challengeId = id,
+                                success = false,
+                                // 게이트 차단 분포를 보려면 reason 이 곧 에러 코드다.
+                                errorCode = (error as? JoinBlockedException)?.reason?.value ?: "UNKNOWN",
+                            )
+                        }
                         when (error) {
                             is JoinBlockedException -> {
                                 // ALREADY_JOINED 는 알릴 게 없다 — 조용히 방 상세로 전환한다.
@@ -214,6 +238,7 @@ class ChallengeDetailViewModel
         private fun clone() {
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isCloning) return
+            observability.log(Channel.BUSINESS) { ChallengeEvents.challengeCloneClick(id) }
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Cloning(true))
                 runCatching { cloneChallengeUseCase(id) }
@@ -244,6 +269,9 @@ class ChallengeDetailViewModel
                 else -> Unit
             }
         }
+
+        // 상세 진입은 전환 분모라 화면당 1회다. 가입 후 강제 재조회에서 또 나가면 분모가 부풀어 오른다.
+        private var detailViewLogged = false
 
         private fun load(
             challengeId: String,
@@ -276,6 +304,19 @@ class ChallengeDetailViewModel
                                 targetAppsRegistered = targetAppStore.isRegistered(challengeId),
                             ),
                         )
+                        // 상세→참여 전환의 분모. 재조회(가입 후 force)에서는 다시 보내지 않는다.
+                        if (!detailViewLogged) {
+                            detailViewLogged = true
+                            observability.log(Channel.BUSINESS) {
+                                ChallengeEvents.challengeDetailView(
+                                    challengeId = detail.challengeId,
+                                    // 카드에서 넘어온 경로는 아직 라우트 인자로 전달되지 않는다(오픈 이슈).
+                                    source = null,
+                                    eligible = detail.gate.eligible,
+                                    isFull = detail.isFull,
+                                )
+                            }
+                        }
                         // 상세가 화면 상태로 반영된 시점 = 사용 가능. 감시자·방 홈은 부가 섹션이라 기다리지 않는다.
                         ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
                         ttiTracker.complete(ChallengeDetailTtiPage)

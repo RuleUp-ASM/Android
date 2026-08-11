@@ -58,7 +58,7 @@ internal fun TrendingChallengeResponse.toDomain(index: Int): TrendingChallenge =
 
 @Serializable
 data class TrendingChallengesResponse(
-    // 순위 계산 기준 시각(ISO-8601, 최대 10분 지연)
+    // 순위 계산 기준 시각(ISO-8601, 최대 1시간 지연 — 정책 2026-08-11 변경)
     @SerialName("calculatedAt")
     val calculatedAt: String? = null,
     @SerialName("items")

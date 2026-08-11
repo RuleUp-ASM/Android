@@ -50,7 +50,7 @@ data class ExploreState(
     val isTrendingLoading: Boolean,
     // 서버 산정 순서 그대로의 상위 N
     val trending: List<TrendingChallenge>,
-    // 순위 계산 기준 시각 — 최대 10분 지연된 스냅샷이다
+    // 순위 계산 기준 시각 — 최대 1시간 지연된 스냅샷이다
     val calculatedAt: String?,
     val trendingFailed: Boolean,
     val isCategoriesLoading: Boolean,

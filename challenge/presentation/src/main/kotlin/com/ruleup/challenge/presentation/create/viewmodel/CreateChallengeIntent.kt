@@ -6,6 +6,12 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.MviIntent
 
+/** 포커스 아웃 시점에 수정 여부를 판정하는 텍스트 필드. */
+enum class TextEditField {
+    TITLE,
+    DESCRIPTION,
+}
+
 sealed interface CreateChallengeIntent : MviIntent {
     // ---- 입력 화면 ----
 
@@ -87,6 +93,14 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 화면이 OS 다이얼로그로 받은 허용 토큰을 돌려준다. */
     data class PermissionsResult(
         val granted: Set<String>,
+    ) : CreateChallengeIntent
+
+    /**
+     * 텍스트 입력에서 포커스가 빠졌다. 타이핑마다 보내지 않고 **여기서 원본과 비교해 1회** 기록한다.
+     * 되돌려 원문과 같아졌으면 보내지 않는다.
+     */
+    data class ConfirmTextEdit(
+        val field: TextEditField,
     ) : CreateChallengeIntent
 
     /** 이대로 만들기. */

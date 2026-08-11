@@ -69,7 +69,7 @@ data class ExploreFilter(
  * 홈 실시간 인기 항목 (명세 `GET /challenges/trending` items[]).
  *
  * **필터를 타지 않는다** — 내 티어로 못 들어가는 방도 노출하되 [joinable] 로 잠금만 표시한다(의도된 동작).
- * [participantCount] 는 순위와 같은 스냅샷 기준이라 **최대 10분 지연**된 값이다("현재" 값이 아니다).
+ * [participantCount] 는 순위와 같은 스냅샷 기준이라 **최대 1시간 지연**된 값이다("현재" 값이 아니다).
  */
 data class TrendingChallenge(
     val rank: Int,
@@ -89,7 +89,7 @@ data class TrendingChallenge(
     val endDate: String?,
 )
 
-/** 인기 스냅샷 (명세 trending 응답). [calculatedAt] 은 순위 계산 기준 시각으로 최대 10분 지연된다. */
+/** 인기 스냅샷 (명세 trending 응답). [calculatedAt] 은 순위 계산 기준 시각으로 최대 1시간 지연된다. */
 data class TrendingSnapshot(
     val calculatedAt: String?,
     val items: List<TrendingChallenge>,

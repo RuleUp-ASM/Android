@@ -1,6 +1,10 @@
 package com.ruleup.onboarding.domain.auth.usecase
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
+import com.ruleup.onboarding.domain.observability.OnboardingEvents
+import com.ruleup.onboarding.domain.observability.SessionExpiredTrigger
 import javax.inject.Inject
 
 /**
@@ -16,6 +20,7 @@ class AutoLoginUseCase
     constructor(
         private val authRepository: AuthRepository,
         private val tokenRepository: TokenRepository,
+        private val observability: Observability,
     ) {
         suspend operator fun invoke(): Boolean {
             val refreshToken = tokenRepository.getRefreshToken() ?: return false
@@ -34,6 +39,15 @@ class AutoLoginUseCase
                         if (latest != null && latest != refreshToken) {
                             true
                         } else {
+                            // 여기가 세션이 실제로 끊긴 지점이다 — 자진 로그아웃은 refreshToken 이 이미
+                            // 없어 위에서 일찍 빠지므로 여기 오지 않는다.
+                            //
+                            // 다른 기기 로그인 때문인지 단순 만료인지는 **계약상 구분할 수 없다**.
+                            // 서버가 둘 다 401 SESSION_EXPIRED 로 내려서, 트리거 분리는 응답에
+                            // 사유가 실린 뒤에나 가능하다.
+                            observability.log(Channel.BUSINESS) {
+                                OnboardingEvents.sessionExpired(SessionExpiredTrigger.EXPIRED)
+                            }
                             tokenRepository.clear()
                             false
                         }

@@ -91,7 +91,7 @@ private fun ExploreContent(
             if (state.isTrendingLoading || !state.hideTrendingSection) {
                 SectionHeader(title = "실시간 인기", onSeeAll = { onIntent(ExploreIntent.OpenTrendingAll) })
                 Text(
-                    text = "최근 24시간 참여 기준 · 10분마다 갱신 · 그룹 챌린지만",
+                    text = "최근 24시간 참여 기준 · 1시간마다 갱신 · 그룹 챌린지만",
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                 )
