@@ -2,18 +2,24 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeNotCloneableException
+import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
 import com.ruleup.challenge.domain.entity.DelegationAction
+import com.ruleup.challenge.domain.entity.JoinBlockReason
+import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
+import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.usecase.ChangeMemberRoleUseCase
+import com.ruleup.challenge.domain.usecase.CloneChallengeUseCase
 import com.ruleup.challenge.domain.usecase.CreateWatcherInvitationUseCase
 import com.ruleup.challenge.domain.usecase.DeleteChallengeUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
@@ -22,6 +28,7 @@ import com.ruleup.challenge.domain.usecase.GetChallengeRoomUseCase
 import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
 import com.ruleup.challenge.domain.usecase.GetCurrentUserIdUseCase
 import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
+import com.ruleup.challenge.domain.usecase.JoinChallengeUseCase
 import com.ruleup.challenge.domain.usecase.LeaveChallengeUseCase
 import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
 import com.ruleup.challenge.domain.usecase.RequestDelegationUseCase
@@ -53,6 +60,8 @@ class ChallengeDetailViewModel
         private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
         private val getChallengeRoomUseCase: GetChallengeRoomUseCase,
         private val getChallengeMembersUseCase: GetChallengeMembersUseCase,
+        private val joinChallengeUseCase: JoinChallengeUseCase,
+        private val cloneChallengeUseCase: CloneChallengeUseCase,
         private val leaveChallengeUseCase: LeaveChallengeUseCase,
         private val deleteChallengeUseCase: DeleteChallengeUseCase,
         private val changeMemberRoleUseCase: ChangeMemberRoleUseCase,
@@ -74,7 +83,10 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RefreshSetup -> refreshSetup()
                 ChallengeDetailIntent.RegisterApps -> registerApps()
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
-                ChallengeDetailIntent.Proceed -> navigationHelper.navigateToBack()
+                ChallengeDetailIntent.Proceed -> join()
+                ChallengeDetailIntent.CloneChallenge -> clone()
+                ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
+                ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
                 is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
                 ChallengeDetailIntent.OpenNotices -> openNotices()
@@ -131,10 +143,108 @@ class ChallengeDetailViewModel
                     state.copy(pendingDelegation = null, pendingDelegationNickname = null)
 
                 is ChallengeDetailReducerEvent.MyUserIdLoaded -> state.copy(myUserId = event.userId)
+
+                is ChallengeDetailReducerEvent.Joining -> state.copy(isJoining = event.joining)
+
+                is ChallengeDetailReducerEvent.JoinBlocked ->
+                    state.copy(isJoining = false, joinBlock = event.block)
+
+                ChallengeDetailReducerEvent.JoinBlockDismissed -> state.copy(joinBlock = null)
+
+                is ChallengeDetailReducerEvent.Cloning -> state.copy(isCloning = event.cloning)
             }
 
-        private fun load(challengeId: String) {
-            if (currentState.detail?.challengeId == challengeId) return
+        /**
+         * 가입. 권한은 화면이 **이 호출 전에** 확보해 둔다 — 서버는 OS 권한을 게이트로 검사하지 않고,
+         * 가입 후 권한 거부를 탈퇴로 롤백하는 경로는 폐기됐다.
+         */
+        private fun join() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isJoining) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.Joining(true))
+                runCatching { joinChallengeUseCase(id) }
+                    .onSuccess { result ->
+                        dispatch(ChallengeDetailReducerEvent.Joining(false))
+                        // 사이클 중간 입장이면 언제부터 판정되는지 알려준다(사이클은 1주 고정).
+                        result.countFromCycle?.let {
+                            emitEffect(ChallengeDetailEffect.ShowMessage("${'$'}it부터 인증이 집계돼요"))
+                        }
+                        load(id, force = true)
+                    }.onFailure { error ->
+                        when (error) {
+                            is JoinBlockedException -> {
+                                // ALREADY_JOINED 는 알릴 게 없다 — 조용히 방 상세로 전환한다.
+                                if (error.reason == JoinBlockReason.ALREADY_JOINED) {
+                                    dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                    load(id, force = true)
+                                } else {
+                                    dispatch(
+                                        ChallengeDetailReducerEvent.JoinBlocked(
+                                            JoinBlock(reason = error.reason, rejoinAvailableAt = error.rejoinAvailableAt),
+                                        ),
+                                    )
+                                    // 정원은 수시로 변한다 — 막힌 순간의 상태를 다시 받아 뱃지를 맞춘다.
+                                    if (error.reason == JoinBlockReason.FULL) load(id, force = true)
+                                }
+                            }
+
+                            is ChallengeNotFoundException -> {
+                                dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                emitEffect(ChallengeDetailEffect.ShowMessage(error.message.orEmpty()))
+                                navigationHelper.navigateToBack()
+                            }
+
+                            else -> {
+                                dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "참여하지 못했어요"))
+                            }
+                        }
+                    }
+            }
+        }
+
+        /** 복제 → 생성 확인 화면. 초안은 생성 모듈 draft 와 동일 스키마라 확인 화면을 그대로 쓴다. */
+        private fun clone() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isCloning) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.Cloning(true))
+                runCatching { cloneChallengeUseCase(id) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.Cloning(false))
+                        navigationHelper.navigateTo(ChallengeConfirmPage)
+                    }.onFailure { error ->
+                        dispatch(ChallengeDetailReducerEvent.Cloning(false))
+                        val message =
+                            when (error) {
+                                is ChallengeNotCloneableException -> error.message
+                                is ChallengeNotFoundException -> error.message
+                                else -> error.message ?: "복제하지 못했어요"
+                            }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(message.orEmpty()))
+                    }
+            }
+        }
+
+        /** 차단 시트의 CTA. 사유마다 데려갈 곳이 다르다. */
+        private fun followJoinBlockAction() {
+            val reason = currentState.joinBlock?.reason
+            dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
+            when (reason) {
+                JoinBlockReason.FREE_LIMIT -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
+                JoinBlockReason.TIER_GATE -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
+                JoinBlockReason.CHALLENGE_COMPLETED -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
+                else -> Unit
+            }
+        }
+
+        private fun load(
+            challengeId: String,
+            force: Boolean = false,
+        ) {
+            // 정원·자격은 수시로 변한다 — 가입 성공·실패 직후에는 캐시를 무시하고 다시 받는다.
+            if (!force && currentState.detail?.challengeId == challengeId) return
             // 현재 사용자 ID 는 멤버 목록의 "내 행" 식별용 — 실패해도 흡수(본인 한정 액션만 숨겨진다).
             if (currentState.myUserId == null) {
                 viewModelScope.launch {

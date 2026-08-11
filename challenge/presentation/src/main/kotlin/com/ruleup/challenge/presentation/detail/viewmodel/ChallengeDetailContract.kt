@@ -6,6 +6,7 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.DelegationTicket
+import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
@@ -27,8 +28,20 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** "인증 장소 등록하기" → 지도(앵커) 등록 화면으로 이동. */
     data object RegisterAnchor : ChallengeDetailIntent
 
-    /** 필요한 등록이 모두 끝난(또는 불필요한) 뒤 시작. */
+    /**
+     * 필요한 권한·등록이 모두 끝난 뒤 가입한다.
+     * **권한 확보 전에는 호출되지 않는다** — 가입 후 롤백 경로가 폐기됐기 때문이다.
+     */
     data object Proceed : ChallengeDetailIntent
+
+    /** "이 템플릿으로 만들기" → 복제 초안 생성 후 생성 확인 화면으로. */
+    data object CloneChallenge : ChallengeDetailIntent
+
+    /** 가입 차단 안내 시트 닫기. */
+    data object DismissJoinBlock : ChallengeDetailIntent
+
+    /** 가입 차단 시트의 CTA(참여 중인 방 목록·내 티어·탐색 등)로 이동. */
+    data object FollowJoinBlockAction : ChallengeDetailIntent
 
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
@@ -133,7 +146,24 @@ data class ChallengeDetailState(
     val pendingDelegationNickname: String? = null,
     // 현재 사용자 ID. 멤버 목록에서 "내 행"을 식별해 관리자 본인 해제(self-DEMOTE)를 노출하는 데 쓴다.
     val myUserId: String? = null,
+    // 가입 요청 중(버튼 중복 탭 방지). 정원 경합은 재시도해도 서버가 막는다.
+    val isJoining: Boolean = false,
+    // 가입이 막힌 사유. null 이 아니면 사유별 안내 시트를 띄운다.
+    val joinBlock: JoinBlock? = null,
+    // 복제 요청 중(버튼 스피너 + 중복 탭 차단).
+    val isCloning: Boolean = false,
 ) : UiState {
+    /**
+     * 참여 버튼을 아예 숨길지. 비공개 방은 초대 링크가 유일한 입장 경로라 버튼을 노출하지 않는다 —
+     * 눌러봐야 막히는 버튼을 두면 사용자가 원인을 오해한다.
+     */
+    val hideJoinButton: Boolean
+        get() = detail?.joinBlockReason == JoinBlockReason.PRIVATE_INVITE_ONLY
+
+    /** 복제 버튼을 활성할 수 있는지. 공개 그룹만 복제된다. */
+    val canClone: Boolean
+        get() = detail?.cloneable == true && !isCloning
+
     companion object {
         val initial =
             ChallengeDetailState(
@@ -144,6 +174,17 @@ data class ChallengeDetailState(
             )
     }
 }
+
+/**
+ * 가입 차단 안내에 필요한 값. 사유마다 문구와 다음 행동이 다르다.
+ *
+ * [reason] 이 null 이면 앱이 모르는 사유(서버가 추가한 값)이므로 일반 안내로 떨어뜨린다.
+ */
+data class JoinBlock(
+    val reason: JoinBlockReason?,
+    // REJOIN_COOLDOWN 일 때만 — 재입장 가능 시각(ISO)
+    val rejoinAvailableAt: String? = null,
+)
 
 sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     data class Loading(
@@ -203,5 +244,22 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     /** 현재 사용자 ID 로드됨(진입 시 1회). */
     data class MyUserIdLoaded(
         val userId: String?,
+    ) : ChallengeDetailReducerEvent
+
+    /** 가입 요청 시작/종료. */
+    data class Joining(
+        val joining: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 가입이 게이트에 막힘 — 사유별 시트를 띄운다. */
+    data class JoinBlocked(
+        val block: JoinBlock,
+    ) : ChallengeDetailReducerEvent
+
+    data object JoinBlockDismissed : ChallengeDetailReducerEvent
+
+    /** 복제 요청 시작/종료. */
+    data class Cloning(
+        val cloning: Boolean,
     ) : ChallengeDetailReducerEvent
 }
