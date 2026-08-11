@@ -25,6 +25,7 @@ val localProperties =
 
 val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
 val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
+val amplitudeApiKey: String = localProperties.getProperty("AMPLITUDE_API_KEY")?.trim().orEmpty()
 val appAuthRedirectScheme: String =
     localProperties
         .getProperty("GOOGLE_REDIRECT_URI")
@@ -58,6 +59,8 @@ android {
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
         // Retrofit base URL — Hilt AppModule(@BaseUrl)이 소비한다.
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+        // Amplitude 수집 키 — 비어 있으면 ObservabilityAppModule 이 출구를 달지 않는다.
+        buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
     }
 
     buildTypes {

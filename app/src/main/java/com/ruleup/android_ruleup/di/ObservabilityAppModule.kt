@@ -1,6 +1,7 @@
 package com.ruleup.android_ruleup.di
 
 import com.ruleup.android_ruleup.BuildConfig
+import com.ruleup.observability.domain.model.AmplitudeApiKey
 import com.ruleup.observability.domain.model.BuildProfile
 import dagger.Module
 import dagger.Provides
@@ -23,4 +24,14 @@ object ObservabilityAppModule {
     @Provides
     @Singleton
     fun buildProfile(): BuildProfile = if (BuildConfig.DEBUG) BuildProfile.DEV else BuildProfile.PRODUCTION
+
+    /**
+     * Amplitude 수집 키. `local.properties` 의 `AMPLITUDE_API_KEY` 가 `buildConfigField` 로 들어온다.
+     *
+     * 비어 있으면 배선이 출구를 달지 않는다 — 키 없이 SDK 를 띄워 조용히 실패하는 것보다,
+     * 아예 안 붙어서 로그에 안 보이는 편이 원인 추적이 빠르다.
+     */
+    @Provides
+    @Singleton
+    fun amplitudeApiKey(): AmplitudeApiKey = AmplitudeApiKey(BuildConfig.AMPLITUDE_API_KEY)
 }

@@ -5,6 +5,7 @@ import com.ruleup.observability.data.clock.RealClock
 import com.ruleup.observability.data.context.ScreenContextHolder
 import com.ruleup.observability.data.policy.RuntimePolicy
 import com.ruleup.observability.data.policy.defaultPolicyConfig
+import com.ruleup.observability.data.sink.AmplitudeSink
 import com.ruleup.observability.data.sink.ChannelFilterSink
 import com.ruleup.observability.data.sink.CompositeSink
 import com.ruleup.observability.data.sink.CrashlyticsSink
@@ -15,6 +16,7 @@ import com.ruleup.observability.data.sink.SinkFailureReporter
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
+import com.ruleup.observability.domain.model.AmplitudeApiKey
 import com.ruleup.observability.domain.model.BuildProfile
 import com.ruleup.observability.domain.model.Severity
 import com.ruleup.observability.domain.port.Clock
@@ -66,6 +68,7 @@ object ObservabilityModule {
      * ```
      * CompositeSink
      *   ├ ChannelFilterSink(BUSINESS, PERFORMANCE) → FirebaseAnalyticsSink
+     *   ├ ChannelFilterSink(BUSINESS, PERFORMANCE) → AmplitudeSink        (키가 있을 때만)
      *   ├ ChannelFilterSink(DIAGNOSTIC) → SeverityFilterSink(WARN) → CrashlyticsSink
      *   ├ LogcatSink                                        (프로덕션 제외)
      *   └ [extraSinks]                                      (debug 변형의 인스펙터 등)
@@ -77,6 +80,12 @@ object ObservabilityModule {
      * 진단 채널의 `WARN` 하한은 **Crashlytics 쿼터 보호**용이다. 그보다 낮은 진단은
      * 개발 중 [LogcatSink] 와 인스펙터로 본다.
      *
+     * Amplitude 는 Firebase 와 **병행**한다 — 같은 이벤트가 두 곳에 쌓이므로 집계할 때 출처를 섞지
+     * 않는다. Amplitude 로 확정되면 Firebase 줄을 빼면 된다.
+     *
+     * 키가 비어 있으면 **출구를 아예 달지 않는다.** 빈 키로 SDK 를 띄우면 전송이 조용히 실패해
+     * "왜 안 올라가지"를 한참 뒤에 알게 된다.
+     *
      * [extraSinks] 는 다른 모듈이 `@IntoSet Sink` 로 기여한 출구다. 릴리스에서는 비어 있다.
      */
     @Provides
@@ -84,6 +93,7 @@ object ObservabilityModule {
     fun sink(
         @ApplicationContext context: Context,
         profile: BuildProfile,
+        amplitudeApiKey: AmplitudeApiKey,
         failureReporter: SinkFailureReporter,
         extraSinks: Set<@JvmSuppressWildcards Sink>,
     ): Sink {
@@ -95,6 +105,14 @@ object ObservabilityModule {
                         delegate = FirebaseAnalyticsSink(context),
                     ),
                 )
+                if (amplitudeApiKey.isConfigured) {
+                    add(
+                        ChannelFilterSink(
+                            channels = setOf(Channel.BUSINESS, Channel.PERFORMANCE),
+                            delegate = AmplitudeSink(context, amplitudeApiKey, profile),
+                        ),
+                    )
+                }
                 add(
                     ChannelFilterSink(
                         channels = setOf(Channel.DIAGNOSTIC),
