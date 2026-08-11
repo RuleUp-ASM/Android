@@ -19,6 +19,9 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 경로 B: 설명으로 초안 생성(LLM). 폴백이면 이 화면에 머문다. */
     data object SubmitDescription : CreateChallengeIntent
 
+    /** 초안 생성 취소(뒤로가기). 화면을 잠그되 빠져나갈 길은 남긴다. */
+    data object CancelDrafting : CreateChallengeIntent
+
     /** 경로 A: 추천 칩 탭 → 템플릿 초안(LLM 미경유, 대기 없음). */
     data class SelectTemplate(
         val templateId: Long,

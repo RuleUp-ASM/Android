@@ -36,6 +36,9 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
         val retryAfterSeconds: Int?,
     ) : CreateChallengeReducerEvent
 
+    /** 카운트다운 1초 경과. */
+    data object RateLimitTicked : CreateChallengeReducerEvent
+
     data object RateLimitCleared : CreateChallengeReducerEvent
 
     /** 초안 수신 — 편집본을 초안값으로 채우고 idempotency key 를 1회 발급한다. */

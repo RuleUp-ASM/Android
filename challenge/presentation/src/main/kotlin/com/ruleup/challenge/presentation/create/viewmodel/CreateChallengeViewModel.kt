@@ -22,6 +22,8 @@ import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -61,6 +63,8 @@ class CreateChallengeViewModel
                     dispatch(CreateChallengeReducerEvent.RoutineDescriptionEntered(intent.description))
 
                 CreateChallengeIntent.SubmitDescription -> submitDescription()
+
+                CreateChallengeIntent.CancelDrafting -> cancelDrafting()
 
                 is CreateChallengeIntent.SelectTemplate -> selectTemplate(intent.templateId)
 
@@ -146,6 +150,9 @@ class CreateChallengeViewModel
 
                 is CreateChallengeReducerEvent.DraftRateLimited ->
                     state.copy(isDrafting = false, retryAfterSeconds = event.retryAfterSeconds ?: 0)
+
+                CreateChallengeReducerEvent.RateLimitTicked ->
+                    state.copy(retryAfterSeconds = (state.retryAfterSeconds ?: 0).minus(1).coerceAtLeast(0))
 
                 CreateChallengeReducerEvent.RateLimitCleared ->
                     state.copy(retryAfterSeconds = null)
@@ -281,29 +288,59 @@ class CreateChallengeViewModel
         private fun submitDescription() {
             val state = currentState
             if (!state.canSubmitDescription) return
-            viewModelScope.launch {
-                dispatch(CreateChallengeReducerEvent.Drafting)
-                runCatching { createDraftUseCase(state.routineDescription) }
-                    .onSuccess { result ->
-                        when (result) {
-                            is DraftResult.Ok -> applyDraft(result)
-                            is DraftResult.Fallback ->
-                                dispatch(CreateChallengeReducerEvent.DraftFellBack(result.message))
-                        }
-                    }.onFailure { error ->
-                        when (error) {
-                            is RecommendationRateLimitedException ->
-                                dispatch(CreateChallengeReducerEvent.DraftRateLimited(error.retryAfterSeconds))
+            draftJob =
+                viewModelScope.launch {
+                    dispatch(CreateChallengeReducerEvent.Drafting)
+                    runCatching { createDraftUseCase(state.routineDescription) }
+                        .onSuccess { result ->
+                            when (result) {
+                                is DraftResult.Ok -> applyDraft(result)
+                                is DraftResult.Fallback ->
+                                    dispatch(CreateChallengeReducerEvent.DraftFellBack(result.message))
+                            }
+                        }.onFailure { error ->
+                            when (error) {
+                                is RecommendationRateLimitedException -> {
+                                    dispatch(CreateChallengeReducerEvent.DraftRateLimited(error.retryAfterSeconds))
+                                    startRateLimitCountdown()
+                                }
 
-                            else -> {
-                                dispatch(CreateChallengeReducerEvent.DraftFailed)
-                                emitEffect(
-                                    CreateChallengeEffect.ShowError(error.message ?: "초안을 만들지 못했어요. 다시 시도해 주세요"),
-                                )
+                                else -> {
+                                    dispatch(CreateChallengeReducerEvent.DraftFailed)
+                                    emitEffect(
+                                        CreateChallengeEffect.ShowError(error.message ?: "초안을 만들지 못했어요. 다시 시도해 주세요"),
+                                    )
+                                }
                             }
                         }
+                }
+        }
+
+        /** 초안 생성은 최대 10초까지 걸릴 수 있어 화면을 잠근다 — 대신 뒤로가기로 빠져나갈 수 있게 둔다. */
+        private fun cancelDrafting() {
+            if (!currentState.isDrafting) return
+            draftJob?.cancel()
+            dispatch(CreateChallengeReducerEvent.DraftFailed)
+        }
+
+        /**
+         * 남은 제한 시간을 1초씩 깎는다. **끝나도 자동으로 재요청하지 않는다** — 버튼만 다시 열어준다.
+         * 자동 재시도는 남은 rate limit 을 소진시켜 사용자를 더 오래 막는다.
+         */
+        private fun startRateLimitCountdown() {
+            countdownJob?.cancel()
+            countdownJob =
+                viewModelScope.launch {
+                    while (true) {
+                        val remaining = currentState.retryAfterSeconds ?: break
+                        if (remaining <= 0) {
+                            dispatch(CreateChallengeReducerEvent.RateLimitCleared)
+                            break
+                        }
+                        delay(COUNTDOWN_TICK_MS)
+                        dispatch(CreateChallengeReducerEvent.RateLimitTicked)
                     }
-            }
+                }
         }
 
         /** 경로 A — 추천 칩. LLM 미경유라 폴백·rate limit 이 없다. */
@@ -453,6 +490,9 @@ class CreateChallengeViewModel
             navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
         }
 
+        private var countdownJob: Job? = null
+        private var draftJob: Job? = null
+
         private fun durationDays(
             start: String,
             end: String,
@@ -462,4 +502,8 @@ class CreateChallengeViewModel
             } catch (_: DateTimeParseException) {
                 0
             }
+
+        private companion object {
+            const val COUNTDOWN_TICK_MS = 1_000L
+        }
     }
