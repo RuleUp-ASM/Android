@@ -16,10 +16,12 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -109,6 +111,60 @@ fun ChallengeInputContent(
 
         if (state.isDrafting) DraftingOverlay()
     }
+
+    state.fallbackMessage?.let { message ->
+        DraftFallbackDialog(
+            message = message,
+            onDismiss = { onIntent(CreateChallengeIntent.DismissFallback) },
+        )
+    }
+}
+
+/**
+ * 초안 실패 안내 (`result=FALLBACK`).
+ *
+ * **에러가 아니다** — HTTP 200 이고 서버가 루틴을 못 알아본 것뿐이다. 그래서 에러 색을 쓰지 않는다.
+ * 실패로 인지되면 다시 안 쓰고 나가버린다.
+ *
+ * 다이얼로그로 띄우는 이유는 **뒤에 방금 쓴 문장이 그대로 보이기 때문**이다. 화면을 갈아타면
+ * 무엇을 고쳐야 할지 감이 없어진다. 닫아도 입력은 지우지 않는다.
+ */
+@Composable
+private fun DraftFallbackDialog(
+    message: String,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = RuleUpTheme.colors.surface,
+        title = {
+            Text(
+                text = "조금만 더 자세히 적어주세요",
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.section,
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // 왜 막혔는지는 서버가 더 잘 안다 — 서버 문구를 먼저 쓴다.
+                Text(
+                    text = message,
+                    color = RuleUpTheme.colors.textSecondary,
+                    style = RuleUpTheme.typography.bodyMedium,
+                )
+                Text(
+                    text = "언제·무엇을 할지 넣으면 잘 알아들어요. 예) 평일 아침 7시에 30분 걷기",
+                    color = RuleUpTheme.colors.textMuted,
+                    style = RuleUpTheme.typography.caption,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("고쳐 쓸게요", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.bodyBold)
+            }
+        },
+    )
 }
 
 @Composable

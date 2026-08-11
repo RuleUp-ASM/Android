@@ -81,10 +81,8 @@ class CreateChallengeViewModel
 
                 CreateChallengeIntent.CancelDrafting -> cancelDrafting()
 
-                CreateChallengeIntent.DismissFallback -> {
+                CreateChallengeIntent.DismissFallback ->
                     dispatch(CreateChallengeReducerEvent.FallbackDismissed)
-                    navigationHelper.navigateToBack()
-                }
 
                 is CreateChallengeIntent.SelectTemplate -> selectTemplate(intent.templateId)
 
