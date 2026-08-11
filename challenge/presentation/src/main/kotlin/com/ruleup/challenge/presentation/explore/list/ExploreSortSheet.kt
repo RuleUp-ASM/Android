@@ -27,28 +27,28 @@ import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-// 정렬 시트 노출 순서·라벨(Figma 05 · 챌린지 정렬 + 탐색 스펙 §3.2 7종).
+// 정렬 시트 노출 순서·라벨(명세 6종). 기본값인 인기순을 맨 위에 둔다.
 private val sortOptions =
     listOf(
         SortOption(
-            sort = ExploreSort.TEMPLATE_USAGE,
-            title = "챌린지 참여 수",
-            description = "같은 템플릿을 사용하는 전체 사용자 수",
+            sort = ExploreSort.POPULAR,
+            title = "인기순",
+            description = "최근 24시간 동안 참여가 많이 붙은 순서",
         ),
         SortOption(
             sort = ExploreSort.PARTICIPANTS,
-            title = "챌린지 참여자 수",
-            description = "이 챌린지에 참여 중인 인원 수",
+            title = "참여자 많은 순",
+            description = "지금 이 방에 참여 중인 인원이 많은 순서",
         ),
         SortOption(
             sort = ExploreSort.COMPLETION_RATE,
             title = "완주율 높은 순",
-            description = "챌린지 완주 비율이 높은 순서",
+            description = "기록이 충분한 방만 보여요",
         ),
         SortOption(
             sort = ExploreSort.SUCCESS_FAIL_RATIO,
-            title = "성공/실패 비율 순",
-            description = "지금 이 방의 성공 인원 비율이 높은 순서",
+            title = "유지율 높은 순",
+            description = "기록이 충분한 방만 보여요",
         ),
         SortOption(
             sort = ExploreSort.RECENT,
@@ -58,12 +58,7 @@ private val sortOptions =
         SortOption(
             sort = ExploreSort.DEADLINE,
             title = "마감 임박 순",
-            description = "모집 마감이 가까운 챌린지 순서",
-        ),
-        SortOption(
-            sort = ExploreSort.TRENDING,
-            title = "인기순",
-            description = "지금 참여가 빠르게 늘고 있는 순서",
+            description = "곧 끝나는 챌린지 순서",
         ),
     )
 

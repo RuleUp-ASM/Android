@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,11 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.category.Category
 
 /**
  * 04 · 챌린지 필터 시트. 유형(그룹/솔로)·인증(자동/수동)·매너 온도 컷을 편집하고
@@ -41,17 +42,15 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 @Composable
 internal fun ExploreFilterSheet(
     applied: ExploreFilter,
-    previewCount: Int?,
-    onPreview: (ExploreFilter) -> Unit,
     onApply: (ExploreFilter) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // 시트에서는 선택만 하고 "적용"을 눌렀을 때 1회 조회한다 — 체크마다 부르지 않는다.
     var draft by remember { mutableStateOf(applied) }
 
     fun update(next: ExploreFilter) {
         draft = next
-        onPreview(next)
     }
 
     ModalBottomSheet(
@@ -67,52 +66,37 @@ internal fun ExploreFilterSheet(
                     .padding(horizontal = 20.dp),
         ) {
             FilterSheetHeader(
-                onReset = { update(ExploreFilter(category = draft.category)) },
+                onReset = { update(ExploreFilter.none) },
             )
             Spacer(Modifier.height(16.dp))
-            FilterSectionLabel("챌린지 유형")
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                FilterToggleButton(
-                    text = "그룹",
-                    selected = draft.mode == ChallengeMode.GROUP,
-                    modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(mode = draft.mode.toggle(ChallengeMode.GROUP))) },
-                )
-                FilterToggleButton(
-                    text = "솔로",
-                    selected = draft.mode == ChallengeMode.SOLO,
-                    modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(mode = draft.mode.toggle(ChallengeMode.SOLO))) },
-                )
-            }
+            CategorySection(
+                selected = draft.categories,
+                onToggle = { category -> update(draft.copy(categories = draft.categories.toggleMember(category))) },
+            )
             Spacer(Modifier.height(16.dp))
             FilterSectionLabel("인증 방식")
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilterToggleButton(
                     text = "자동 인증",
-                    selected = draft.verificationType == VerificationType.AUTO,
+                    selected = draft.verifyType == VerificationType.AUTO,
                     modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(verificationType = draft.verificationType.toggle(VerificationType.AUTO))) },
+                    onClick = { update(draft.copy(verifyType = draft.verifyType.toggle(VerificationType.AUTO))) },
                 )
                 FilterToggleButton(
-                    text = "수동 인증",
-                    selected = draft.verificationType == VerificationType.MANUAL,
+                    text = "직접 체크",
+                    selected = draft.verifyType == VerificationType.MANUAL,
                     modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(verificationType = draft.verificationType.toggle(VerificationType.MANUAL))) },
+                    onClick = { update(draft.copy(verifyType = draft.verifyType.toggle(VerificationType.MANUAL))) },
                 )
             }
             Spacer(Modifier.height(16.dp))
-            MannerCutSection(
-                joinableOnly = draft.joinableOnly,
-                onChange = { update(draft.copy(joinableOnly = it)) },
+            TierCutSection(
+                eligibleOnly = draft.eligibleOnly,
+                onChange = { update(draft.copy(eligibleOnly = it)) },
             )
             Spacer(Modifier.height(20.dp))
-            ApplyButton(
-                previewCount = previewCount,
-                onClick = { onApply(draft) },
-            )
+            ApplyButton(onClick = { onApply(draft) })
             Spacer(Modifier.height(20.dp))
         }
     }
@@ -120,6 +104,30 @@ internal fun ExploreFilterSheet(
 
 // 같은 값을 다시 누르면 해제(전체)되는 nullable 토글.
 private fun <T> T?.toggle(value: T): T? = if (this == value) null else value
+
+/** 카테고리는 복수 선택이라 집합에서 넣고 뺀다. 비어 있으면 "전체"를 뜻한다. */
+private fun Set<Category>.toggleMember(value: Category): Set<Category> = if (value in this) this - value else this + value
+
+/** 카테고리 12종 복수 선택. 선택한 것 중 하나라도 해당하면 노출된다(OR). */
+@Composable
+private fun CategorySection(
+    selected: Set<Category>,
+    onToggle: (Category) -> Unit,
+) {
+    Column {
+        FilterSectionLabel("카테고리")
+        Spacer(Modifier.height(8.dp))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Category.entries.forEach { category ->
+                FilterToggleButton(
+                    text = category.label,
+                    selected = category in selected,
+                    onClick = { onToggle(category) },
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun SheetDragHandle() {
@@ -209,8 +217,8 @@ private fun FilterToggleButton(
 }
 
 @Composable
-private fun MannerCutSection(
-    joinableOnly: Boolean,
+private fun TierCutSection(
+    eligibleOnly: Boolean,
     onChange: (Boolean) -> Unit,
 ) {
     Column {
@@ -219,17 +227,18 @@ private fun MannerCutSection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FilterSectionLabel("매너 온도 컷")
+            FilterSectionLabel("티어 컷")
             Text(
-                text = if (joinableOnly) "참여 가능만" else "제한 없음",
+                text = if (eligibleOnly) "참여 가능만" else "제한 없음",
                 color = RuleUpTheme.colors.brand,
                 style = RuleUpTheme.typography.bodyBold,
             )
         }
         Spacer(Modifier.height(6.dp))
-        // 온도 값은 서버가 내 매너 온도 기준으로 계산하므로(API joinableOnly) on/off 만 고른다.
+        // 티어 값은 서버가 내 표시 티어 기준으로 계산하므로(API eligibleOnly) on/off 만 고른다.
+        // 기본은 off 다 — 켜 두면 초기 풀이 작아 빈 결과가 급증한다(정책 가드레일).
         Text(
-            text = "내 매너 온도로 들어갈 수 있는 챌린지만 보여요",
+            text = "내 티어로 들어갈 수 있는 챌린지만 보여요",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.caption,
         )
@@ -237,13 +246,13 @@ private fun MannerCutSection(
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             FilterToggleButton(
                 text = "제한 없음",
-                selected = !joinableOnly,
+                selected = !eligibleOnly,
                 modifier = Modifier.weight(1f),
                 onClick = { onChange(false) },
             )
             FilterToggleButton(
                 text = "참여 가능만",
-                selected = joinableOnly,
+                selected = eligibleOnly,
                 modifier = Modifier.weight(1f),
                 onClick = { onChange(true) },
             )
@@ -252,10 +261,7 @@ private fun MannerCutSection(
 }
 
 @Composable
-private fun ApplyButton(
-    previewCount: Int?,
-    onClick: () -> Unit,
-) {
+private fun ApplyButton(onClick: () -> Unit) {
     Box(
         modifier =
             Modifier
@@ -267,7 +273,7 @@ private fun ApplyButton(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = previewCount?.let { "결과 보기 · %,d개".format(it) } ?: "결과 보기",
+            text = "적용",
             color = Color.White,
             style = RuleUpTheme.typography.cardTitle,
         )

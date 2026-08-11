@@ -161,26 +161,33 @@ interface ChallengeApi {
     @GET("v1/challenges")
     suspend fun getMyChallenges(): BaseResponse<MyChallengesResponse>
 
-    // 탐색: 실시간 인기 챌린지 조회 (파라미터 없음, 서버가 Top 20 반환 · 홈은 상위 일부 사용)
+    // 탐색: 실시간 인기 (서버가 Top 20 반환 · 홈은 상위 5개 사용). category 를 주면 카테고리별 인기.
     @GET("v1/challenges/trending")
-    suspend fun getTrending(): BaseResponse<TrendingChallengesResponse>
+    suspend fun getTrending(
+        @Query("category") category: String? = null,
+    ): BaseResponse<TrendingChallengesResponse>
 
-    // 탐색: 카테고리별 진행 중 챌린지 수 조회
+    // 탐색: 카테고리별 진행 중 공개 그룹 챌린지 수 조회
     @GET("v1/challenge-categories")
     suspend fun getCategories(): BaseResponse<ChallengeCategoriesResponse>
 
-    // 탐색: 챌린지 둘러보기 (공통 제외 → 필터 AND → 정렬 → 커서 페이지네이션).
-    // 매너 온도 컷은 값 대신 joinableOnly 로 — 서버가 토큰 사용자 온도 기준으로 계산한다.
+    // 탐색: 둘러보기 (① 노출 제외 → ② 필터 AND → ③ 정렬 → 커서 페이지네이션).
+    // 티어 컷은 값 대신 eligibleOnly 로 — 서버가 토큰 사용자의 표시 티어 기준으로 계산한다.
     @GET("v1/challenges/explore")
     suspend fun explore(
-        @Query("category") category: String? = null,
-        @Query("participationType") participationType: String? = null,
-        @Query("verificationType") verificationType: String? = null,
-        @Query("joinableOnly") joinableOnly: Boolean? = null,
+        @Query("categories") categories: String? = null,
+        @Query("verifyType") verifyType: String? = null,
+        @Query("eligibleOnly") eligibleOnly: Boolean? = null,
         @Query("sort") sort: String? = null,
         @Query("cursor") cursor: String? = null,
         @Query("size") size: Int? = null,
     ): BaseResponse<ExploreChallengesResponse>
+
+    // 탐색: 템플릿 복제 → 생성 모듈의 draft 와 동일 스키마로 초안을 만든다.
+    @POST("v1/challenges/{challengeId}/clone")
+    suspend fun clone(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<TemplateDraftResponse>
 
     // 감시자: 초대 생성 (토큰 7일 만료, 무료 3명 초과 시 에러)
     @POST("v1/challenges/{challengeId}/watchers/invitations")
