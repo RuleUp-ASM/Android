@@ -41,6 +41,9 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
 
     data object RateLimitCleared : CreateChallengeReducerEvent
 
+    /** 폴백 화면을 벗어났다. 안내만 치우고 입력은 그대로 둔다. */
+    data object FallbackDismissed : CreateChallengeReducerEvent
+
     /** 초안 수신 — 편집본을 초안값으로 채우고 idempotency key 를 1회 발급한다. */
     data class DraftReceived(
         val draft: DraftResult.Ok,

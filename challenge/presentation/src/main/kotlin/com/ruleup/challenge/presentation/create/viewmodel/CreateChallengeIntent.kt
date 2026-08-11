@@ -25,6 +25,9 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 경로 B: 설명으로 초안 생성(LLM). 폴백이면 이 화면에 머문다. */
     data object SubmitDescription : CreateChallengeIntent
 
+    /** 폴백 화면에서 입력 화면으로 돌아간다. 쓰던 설명은 지우지 않는다. */
+    data object DismissFallback : CreateChallengeIntent
+
     /** 초안 생성 취소(뒤로가기). 화면을 잠그되 빠져나갈 길은 남긴다. */
     data object CancelDrafting : CreateChallengeIntent
 

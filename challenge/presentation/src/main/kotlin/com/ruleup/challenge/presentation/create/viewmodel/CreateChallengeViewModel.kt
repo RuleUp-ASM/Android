@@ -81,6 +81,11 @@ class CreateChallengeViewModel
 
                 CreateChallengeIntent.CancelDrafting -> cancelDrafting()
 
+                CreateChallengeIntent.DismissFallback -> {
+                    dispatch(CreateChallengeReducerEvent.FallbackDismissed)
+                    navigationHelper.navigateToBack()
+                }
+
                 is CreateChallengeIntent.SelectTemplate -> selectTemplate(intent.templateId)
 
                 is CreateChallengeIntent.SetTitle ->
@@ -198,6 +203,9 @@ class CreateChallengeViewModel
 
                 CreateChallengeReducerEvent.RateLimitCleared ->
                     state.copy(retryAfterSeconds = null)
+
+                CreateChallengeReducerEvent.FallbackDismissed ->
+                    state.copy(fallbackMessage = null)
 
                 is CreateChallengeReducerEvent.DraftReceived -> {
                     val draft = event.draft.draft
