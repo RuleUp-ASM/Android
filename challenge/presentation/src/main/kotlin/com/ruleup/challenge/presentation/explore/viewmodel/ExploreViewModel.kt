@@ -42,7 +42,7 @@ class ExploreViewModel
                     navigationHelper.navigateByRoute(ChallengeDetailPage(intent.challengeId).toRoute())
 
                 ExploreIntent.OpenTrendingAll ->
-                    navigationHelper.navigateByRoute(ChallengeExploreListPage(sort = ExploreSort.TRENDING).toRoute())
+                    navigationHelper.navigateByRoute(ChallengeExploreListPage(sort = ExploreSort.default).toRoute())
 
                 ExploreIntent.OpenCategoryAll ->
                     navigationHelper.navigateByRoute(ChallengeExploreListPage().toRoute())
@@ -84,7 +84,7 @@ class ExploreViewModel
                     dispatch(
                         ExploreReducerEvent.Loaded(
                             // 서버는 Top 20 을 내려주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
-                            trending = trending.take(TRENDING_MAIN_COUNT),
+                            trending = trending.items.take(TRENDING_MAIN_COUNT),
                             categories = categories,
                         ),
                     )

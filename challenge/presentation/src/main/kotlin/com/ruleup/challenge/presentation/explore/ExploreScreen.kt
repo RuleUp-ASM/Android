@@ -311,7 +311,7 @@ private fun CategoryCard(
                 style = RuleUpTheme.typography.cardTitle,
             )
             Text(
-                text = "%,d개 챌린지".format(item.activeChallengeCount),
+                text = "%,d개 챌린지".format(item.activeGroupCount),
                 color = RuleUpTheme.colors.textSecondary,
                 style = RuleUpTheme.typography.caption,
             )

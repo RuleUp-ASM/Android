@@ -39,10 +39,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ExploreChallenge
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.presentation.explore.list.viewmodel.EmptyReason
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListIntent
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListState
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListViewModel
@@ -90,10 +90,9 @@ private fun ExploreListContent(
                 .statusBarsPadding(),
     ) {
         ListHeader(onBack = { onIntent(ExploreListIntent.Back) })
-        TotalCountLabel(totalCount = state.totalCount)
         Spacer(Modifier.height(10.dp))
         FilterSortRow(
-            filterCount = state.filter.copy(category = null).activeCount,
+            filterCount = state.filter.activeCount,
             sortLabel = state.sort.shortLabel,
             onFilterClick = { showFilterSheet = true },
             onSortClick = { showSortSheet = true },
@@ -105,8 +104,6 @@ private fun ExploreListContent(
     if (showFilterSheet) {
         ExploreFilterSheet(
             applied = state.filter,
-            previewCount = state.previewCount,
-            onPreview = { onIntent(ExploreListIntent.PreviewFilter(it)) },
             onApply = {
                 showFilterSheet = false
                 onIntent(ExploreListIntent.ApplyFilter(it))
@@ -266,7 +263,7 @@ private fun ChallengeList(
 
     when {
         state.isLoading -> CenterBox { CircularProgressIndicator(color = RuleUpTheme.colors.brand) }
-        state.errorMessage != null && state.challenges.isEmpty() ->
+        state.errorMessage != null && state.items.isEmpty() ->
             CenterBox {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -285,14 +282,7 @@ private fun ChallengeList(
                 }
             }
 
-        state.challenges.isEmpty() ->
-            CenterBox {
-                Text(
-                    text = "조건에 맞는 챌린지가 없어요",
-                    color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.body,
-                )
-            }
+        state.items.isEmpty() -> EmptyResult(reason = state.emptyReason, onIntent = onIntent)
 
         else ->
             LazyColumn(
@@ -301,7 +291,7 @@ private fun ChallengeList(
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                itemsIndexed(state.challenges, key = { _, item -> item.challengeId }) { _, item ->
+                itemsIndexed(state.items, key = { _, item -> item.challengeId }) { _, item ->
                     ExploreChallengeCard(
                         item = item,
                         sort = state.sort,
@@ -388,11 +378,28 @@ private fun ExploreChallengeCard(
                 DdayBadge(endDate = item.endDate)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                TagChip(
-                    text = if (item.mode == ChallengeMode.GROUP) "그룹" else "솔로",
-                    background = RuleUpTheme.colors.surfaceVariant,
-                    textColor = RuleUpTheme.colors.textSlate,
-                )
+                if (item.isFull) {
+                    // 정원이 차도 흐리게 처리하지 않는다 — 탈퇴로 자리가 날 수 있다.
+                    TagChip(
+                        text = "정원 마감",
+                        background = RuleUpTheme.colors.dangerContainer,
+                        textColor = RuleUpTheme.colors.danger,
+                    )
+                }
+                if (item.startsSoon) {
+                    TagChip(
+                        text = "시작 전",
+                        background = RuleUpTheme.colors.surfaceVariant,
+                        textColor = RuleUpTheme.colors.textSlate,
+                    )
+                }
+                if (!item.eligible) {
+                    TagChip(
+                        text = "🔒 ${item.minTier?.value ?: "티어 제한"}",
+                        background = RuleUpTheme.colors.surfaceVariant,
+                        textColor = RuleUpTheme.colors.textMuted,
+                    )
+                }
                 if (item.verificationType == VerificationType.AUTO) {
                     TagChip(
                         text = "자동인증",
@@ -424,7 +431,7 @@ private fun CardStats(
 ) {
     val needsSampleNotice =
         (sort == ExploreSort.COMPLETION_RATE && item.completionRate == null) ||
-            (sort == ExploreSort.SUCCESS_FAIL_RATIO && item.successRate == null)
+            (sort == ExploreSort.SUCCESS_FAIL_RATIO && item.retentionRate == null)
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         StatsLine(item = item, sort = sort)
@@ -452,33 +459,58 @@ private fun StatsLine(
             color = RuleUpTheme.colors.brand,
             style = RuleUpTheme.typography.smallBold,
         )
-        val successRate = item.successRate
-        val completionRate = item.completionRate
-        when {
-            sort == ExploreSort.SUCCESS_FAIL_RATIO && successRate != null -> {
-                Dot()
-                Text(
-                    text = "성공률 ${(successRate * 100).toInt()}%",
-                    color = RuleUpTheme.colors.warning,
-                    style = RuleUpTheme.typography.smallBold,
-                )
-            }
+        // null 은 "표본 미달"이지 0이 아니다 — 값이 없으면 영역 자체를 그리지 않는다.
+        item.completionRate?.let {
+            Dot()
+            Text(
+                text = "완주 ${(it * 100).toInt()}%",
+                color = RuleUpTheme.colors.warning,
+                style = RuleUpTheme.typography.smallBold,
+            )
+        }
+        item.retentionRate?.let {
+            Dot()
+            Text(
+                text = "유지 ${(it * 100).toInt()}%",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.small,
+            )
+        }
+    }
+}
 
-            completionRate != null -> {
-                Dot()
+/** 빈 결과 — 사유별로 문구와 다음 행동이 다르다. */
+@Composable
+private fun EmptyResult(
+    reason: EmptyReason?,
+    onIntent: (ExploreListIntent) -> Unit,
+) {
+    CenterBox {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text =
+                    when (reason) {
+                        EmptyReason.LOW_SAMPLE -> "아직 기록이 충분한 챌린지가 없어요"
+                        EmptyReason.TIER_FILTER -> "내 티어로 들어갈 수 있는 챌린지가 없어요"
+                        EmptyReason.CATEGORY_EMPTY -> "이 카테고리에는 아직 챌린지가 없어요"
+                        else -> "조건에 맞는 챌린지가 없어요"
+                    },
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.body,
+            )
+            // 티어 컷이 켜져 있으면 완화를 가장 먼저 제안한다.
+            if (reason == EmptyReason.TIER_FILTER) {
                 Text(
-                    text = "완주 ${(completionRate * 100).toInt()}%",
-                    color = RuleUpTheme.colors.warning,
-                    style = RuleUpTheme.typography.smallBold,
+                    text = "티어 조건 끄기",
+                    color = RuleUpTheme.colors.brand,
+                    style = RuleUpTheme.typography.bodyBold,
+                    modifier = Modifier.singleClickable { onIntent(ExploreListIntent.ClearEligibleOnly) },
                 )
             }
         }
-        Dot()
-        Text(
-            text = "템플릿 ${compactCount(item.templateUsageCount)}",
-            color = RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.small,
-        )
     }
 }
 
@@ -554,11 +586,10 @@ private fun compactCount(count: Int): String =
 internal val ExploreSort.shortLabel: String
     get() =
         when (this) {
-            ExploreSort.TEMPLATE_USAGE -> "참여 수"
+            ExploreSort.POPULAR -> "인기순"
             ExploreSort.PARTICIPANTS -> "참여자 수"
             ExploreSort.COMPLETION_RATE -> "완주율"
-            ExploreSort.SUCCESS_FAIL_RATIO -> "성공/실패"
+            ExploreSort.SUCCESS_FAIL_RATIO -> "유지율"
             ExploreSort.RECENT -> "최근 생성"
             ExploreSort.DEADLINE -> "마감 임박"
-            ExploreSort.TRENDING -> "인기순"
         }
