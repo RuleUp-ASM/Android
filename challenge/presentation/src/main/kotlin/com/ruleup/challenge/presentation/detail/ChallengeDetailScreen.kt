@@ -44,8 +44,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeDetail
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
 import com.ruleup.challenge.presentation.detail.component.RoomManageEntry
@@ -137,11 +137,11 @@ fun ChallengeDetailScreen(
             setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
             else -> DetailSetupAction.JOIN
         }
-    // 이미지 모더레이션 미통과(검수 중·거부)면 모집 차단 — CTA 를 안내로 바꾸고 진행을 막는다(명세).
-    val recruitBlocked = state.detail?.moderationStatus?.blocksRecruit == true
+    // 심사 중에도 모집·입장에 제한이 없다 — 구 명세의 이미지 검수 모집 차단은 폐기됐다.
+    val recruitBlocked = false
     val ctaLabel =
         if (recruitBlocked) {
-            "이미지 검수 중 · 모집 준비 중"
+            ""
         } else {
             when (action) {
                 DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
@@ -276,7 +276,7 @@ private fun ChallengeDetailContent(
                                 RoomMemberSection(
                                     members = members.members,
                                     participantCount = members.participantCount,
-                                    maxParticipants = members.maxParticipants,
+                                    maxParticipants = members.capacity,
                                     myRole = room.myRole,
                                     myUserId = state.myUserId,
                                     actionEnabled = !state.isMemberActionLoading,
@@ -418,7 +418,7 @@ private fun DetailHero(detail: ChallengeDetail) {
             style = RuleUpTheme.typography.title,
         )
         Text(
-            text = "${detail.owner.nickname} · ${detail.stats.participantCount}명 참여 중",
+            text = "${detail.owner?.nickname ?: "방장 없음"} · ${detail.participantCount}명 참여 중",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.small,
         )
@@ -434,20 +434,14 @@ private fun DetailHero(detail: ChallengeDetail) {
 
 @Composable
 private fun DetailInfoCard(detail: ChallengeDetail) {
-    val method =
-        when (detail.verification?.selectedMethod) {
-            SelectedMethod.AUTO -> "자동 인증"
-            SelectedMethod.MANUAL -> "수동 인증"
-            null -> "수동 인증"
-        }
-    val participation = if (detail.participationType == ParticipationType.GROUP) "그룹" else "솔로"
-    val repeat = detail.repeatDays.joinToString(" · ") { it.label }.ifBlank { "—" }
+    val method = if (detail.verification.type == VerificationType.AUTO) "자동 인증" else "직접 체크"
+    val participation = if (detail.mode == ChallengeMode.GROUP) "그룹" else "솔로"
 
     RuleUpCard {
-        InfoRow(label = "기간", value = "${detail.durationDays}일")
-        InfoRow(label = "반복", value = repeat)
+        InfoRow(label = "기간", value = "${detail.period.start} ~ ${detail.period.end}")
+        InfoRow(label = "정원", value = "${detail.participantCount} / ${detail.capacity}명")
         InfoRow(label = "참여 형태", value = participation)
-        InfoRow(label = "인증 방식", value = method)
+        InfoRow(label = "인증 방식", value = detail.verification.detail ?: method)
     }
 }
 

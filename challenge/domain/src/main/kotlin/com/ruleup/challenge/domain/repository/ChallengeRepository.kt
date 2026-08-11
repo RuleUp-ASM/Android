@@ -1,54 +1,67 @@
 package com.ruleup.challenge.domain.repository
 
-import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeDetail
-import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengeMembers
-import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
+import com.ruleup.challenge.domain.entity.CreateChallengeCommand
+import com.ruleup.challenge.domain.entity.CreatedChallenge
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DelegationResolution
 import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.DeleteResult
+import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RoleAction
-import com.ruleup.challenge.domain.entity.RoutineRecommendation
+import com.ruleup.challenge.domain.entity.RoutineTemplate
 
 interface ChallengeRepository {
     /**
-     * 제목/설명으로 LLM 기본값을 추천받는다(명세 3.1). 상태 저장 없음, 구속력 없는 초안.
+     * 생성 화면에 항상 떠 있는 추천 루틴(명세 GET /challenges/recommendations).
+     * 서버가 **항상 3개**를 보장하므로 개수 파라미터가 없다.
      */
-    suspend fun recommend(
-        title: String,
-        description: String? = null,
-    ): ChallengeRecommendation
+    suspend fun getRoutineTemplates(): List<RoutineTemplate>
 
     /**
-     * 관심사 + 세그먼트 인기도 기반 루틴 템플릿 추천(명세 GET /recommendations/routines).
-     * 진행 중 템플릿 제외, 최대 [limit]건(기본 서버값 3). 상태 저장 없음.
+     * 루틴 설명으로 초안을 만든다(명세 POST /challenges/draft — 경로 B).
+     *
+     * 루틴으로 보이지 않거나 불순한 내용이면 [DraftResult.Fallback] 이 돌아온다 — **HTTP 200 이고 에러가
+     * 아니다.** 호출자는 재입력 화면에 머물며 안내만 띄운다.
+     *
+     * 1분 10회 제한이 있어 초과 시 [com.ruleup.challenge.domain.entity.RecommendationRateLimitedException]
+     * 이 던져진다. 자동 재시도는 금지 — 남은 rate limit 을 소진시킨다.
      */
-    suspend fun recommendRoutines(limit: Int? = null): List<RoutineRecommendation>
+    suspend fun createDraft(description: String): DraftResult
 
     /**
-     * 선택한 루틴 템플릿 기반 설정 초안 반환(명세 POST /challenges/recommendation/by-template).
-     * LLM 호출 없이 템플릿 카탈로그에서 초안을 구성한다. 응답 스키마는 [recommend] 와 동일하다.
+     * 추천 루틴 탭으로 초안을 만든다(명세 POST /challenges/recommendation/by-template — 경로 A).
+     * LLM 을 거치지 않아 대기가 없고 폴백도 없다.
      */
-    suspend fun recommendByTemplate(templateId: Long): ChallengeRecommendation
-
-    /** 확정값으로 챌린지를 생성한다(명세 3.2). */
-    suspend fun create(form: ChallengeForm): Challenge
+    suspend fun createDraftFromTemplate(templateId: Long): DraftResult.Ok
 
     /**
-     * 챌린지 대표 이미지를 업로드하고 서버 URL 을 반환한다(명세 3.9).
-     * 생성/수정 전에 호출해, 반환된 URL 을 [ChallengeForm.imageUrl] 로 전달한다.
+     * 확인 화면에서 확정한 값으로 챌린지를 생성한다(명세 POST /challenges).
+     *
+     * [idempotencyKey] 는 확인 화면 진입 시 1회 생성해 재시도까지 계속 쓴다 — 네트워크 타임아웃 후
+     * 재시도가 두 번째 방을 만들지 않게 하기 위해서다. 같은 키에 다른 본문을 보내면 서버가 409 로 막는다.
+     */
+    suspend fun create(
+        command: CreateChallengeCommand,
+        idempotencyKey: String,
+    ): CreatedChallenge
+
+    /**
+     * 챌린지 대표 이미지를 업로드하고 서버 URL 을 반환한다(명세 POST /challenges/image).
+     * 반환된 URL 만 생성·수정에 쓸 수 있다 — 서버가 발급 주체를 검증한다.
      */
     suspend fun uploadImage(imageUri: String): String
 
-    /** 챌린지 상세 + 참여 자격 조회(명세 3.3). */
+    /** 챌린지 공개 상세 조회(명세 GET /challenges/{id}). */
     suspend fun getChallenge(challengeId: String): ChallengeDetail
 
     /**
@@ -58,11 +71,23 @@ interface ChallengeRepository {
      */
     suspend fun getSetupInfo(challengeId: String): ChallengeSetupInfo
 
-    /** 챌린지 수정(시작 전, 생성자만). 변경할 필드만 전달한다(명세 3.4). */
+    /**
+     * 방장 전용 설정 조회(명세 GET /challenges/{id}/settings). 수정 화면 진입 시 현재 설정 전체와
+     * `editableFields`·`version` 을 받아 폼을 잠근다.
+     */
+    suspend fun getSettings(challengeId: String): ChallengeSettings
+
+    /**
+     * 챌린지 수정(방장, 명세 PATCH /challenges/{id}).
+     *
+     * [ChallengeUpdate.version] 이 서버와 다르거나 그 사이 수정 가능 범위가 바뀌었으면
+     * [com.ruleup.challenge.domain.entity.ChallengeVersionConflictException] 이 던져진다 —
+     * settings 를 재조회해 다시 그린 뒤 재시도한다.
+     */
     suspend fun update(
         challengeId: String,
         update: ChallengeUpdate,
-    ): Challenge
+    ): ChallengeUpdateResult
 
     /**
      * 챌린지 삭제(생성자만, 명세 DELETE). 참여자(방장 제외) 0명일 때만 가능.
@@ -71,8 +96,11 @@ interface ChallengeRepository {
     suspend fun delete(challengeId: String): DeleteResult
 
     /**
-     * 챌린지 참여 신청(명세 POST members). 승인 없이 검증 통과 시 즉시 ACTIVE.
-     * 자동 인증 챌린지면 [JoinResult.requiredPermissions] 로 가입 직후 권한 요청을 유도한다.
+     * 챌린지 가입(명세 POST members). 승인 없이 게이트만 통과하면 즉시 멤버가 된다.
+     *
+     * **자동 인증 방은 호출 전에 공개 상세의 `verification.requiredPermissions` 를 확보해야 한다** —
+     * 서버는 권한을 게이트로 검사하지 않으며, 가입 후 권한 거부를 탈퇴로 롤백하는 경로는 폐기됐다.
+     * 게이트에 막히면 [com.ruleup.challenge.domain.entity.JoinBlockedException] 이 던져진다.
      */
     suspend fun join(challengeId: String): JoinResult
 

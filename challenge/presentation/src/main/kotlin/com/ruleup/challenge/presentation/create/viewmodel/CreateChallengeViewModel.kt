@@ -1,22 +1,21 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.challenge.domain.entity.Anonymity
-import com.ruleup.challenge.domain.entity.ChallengeForm
-import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
-import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeVisibility
+import com.ruleup.challenge.domain.entity.CreateChallengeCommand
+import com.ruleup.challenge.domain.entity.DraftExpiredException
+import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.Penalty
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
-import com.ruleup.challenge.domain.entity.Reward
-import com.ruleup.challenge.domain.entity.SelectedMethod
-import com.ruleup.challenge.domain.entity.SnsShare
+import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.domain.entity.toEntries
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
-import com.ruleup.challenge.domain.usecase.RecommendChallengeByTemplateUseCase
-import com.ruleup.challenge.domain.usecase.RecommendChallengeUseCase
+import com.ruleup.challenge.domain.usecase.CreateDraftFromTemplateUseCase
+import com.ruleup.challenge.domain.usecase.CreateDraftUseCase
+import com.ruleup.challenge.domain.usecase.GetRoutineTemplatesUseCase
 import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -24,20 +23,27 @@ import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
+import java.util.UUID
 import javax.inject.Inject
 
 /**
  * 챌린지 생성 플로우 공유 ViewModel.
  *
- * 입력(01)·AI 추천 확인(02) 두 페이지가 같은 인스턴스를 공유해 입력값을 누적한다.
- * 추천(명세 3.1)과 생성(명세 3.2) 비동기 분기를 담당하고, 성공 시 직접 페이지를 이동시킨다.
+ * 입력 화면과 확인 화면이 같은 인스턴스를 공유한다. 두 진입 경로(추천 칩 · 설명 입력)가 **같은 확인
+ * 화면으로 수렴**하므로 초안 수신 처리도 하나로 묶여 있다.
+ *
+ * 생성 플로우 상태는 프로세스 종료 시 복원하지 않는다 — 초안 재생성 비용이 낮고 부분 복원이 오히려
+ * 혼란을 만든다.
  */
 @HiltViewModel
 class CreateChallengeViewModel
     @Inject
     constructor(
-        private val recommendChallengeUseCase: RecommendChallengeUseCase,
-        private val recommendChallengeByTemplateUseCase: RecommendChallengeByTemplateUseCase,
+        private val getRoutineTemplatesUseCase: GetRoutineTemplatesUseCase,
+        private val createDraftUseCase: CreateDraftUseCase,
+        private val createDraftFromTemplateUseCase: CreateDraftFromTemplateUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,
         private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
         private val myChallengeStore: MyChallengeStore,
@@ -47,75 +53,59 @@ class CreateChallengeViewModel
         ) {
         override fun onIntent(intent: CreateChallengeIntent) {
             when (intent) {
-                is CreateChallengeIntent.SetTitle -> {
+                CreateChallengeIntent.Load -> loadTemplates()
+
+                CreateChallengeIntent.RetryTemplates -> loadTemplates()
+
+                is CreateChallengeIntent.SetRoutineDescription ->
+                    dispatch(CreateChallengeReducerEvent.RoutineDescriptionEntered(intent.description))
+
+                CreateChallengeIntent.SubmitDescription -> submitDescription()
+
+                is CreateChallengeIntent.SelectTemplate -> selectTemplate(intent.templateId)
+
+                is CreateChallengeIntent.SetTitle ->
                     dispatch(CreateChallengeReducerEvent.TitleEntered(intent.title))
-                }
 
-                is CreateChallengeIntent.SetDescription -> {
+                is CreateChallengeIntent.SetDescription ->
                     dispatch(CreateChallengeReducerEvent.DescriptionEntered(intent.description))
-                }
 
-                CreateChallengeIntent.Recommend -> {
-                    recommend()
-                }
-
-                is CreateChallengeIntent.RecommendByTemplate -> {
-                    recommendByTemplate(intent.templateId)
-                }
-
-                is CreateChallengeIntent.SetCoverImage -> {
+                is CreateChallengeIntent.SetCoverImage ->
                     dispatch(CreateChallengeReducerEvent.CoverImageSelected(intent.uri))
-                }
 
-                is CreateChallengeIntent.SetParticipationType -> {
-                    dispatch(CreateChallengeReducerEvent.ParticipationTypeSelected(intent.type))
-                }
+                is CreateChallengeIntent.SetMode ->
+                    dispatch(CreateChallengeReducerEvent.ModeSelected(intent.mode))
 
-                is CreateChallengeIntent.SetMinMannerTemperature -> {
-                    dispatch(CreateChallengeReducerEvent.MinMannerChanged(intent.temperature))
-                }
+                is CreateChallengeIntent.SetVisibility ->
+                    dispatch(CreateChallengeReducerEvent.VisibilitySelected(intent.visibility))
 
-                is CreateChallengeIntent.SetMaxParticipants -> {
-                    dispatch(CreateChallengeReducerEvent.MaxParticipantsChanged(intent.count))
-                }
+                is CreateChallengeIntent.SetRankingVisible ->
+                    dispatch(CreateChallengeReducerEvent.RankingVisibleChanged(intent.visible))
 
-                is CreateChallengeIntent.ToggleRepeatDay -> {
-                    dispatch(CreateChallengeReducerEvent.RepeatDayToggled(intent.day))
-                }
+                is CreateChallengeIntent.SetCapacity ->
+                    dispatch(CreateChallengeReducerEvent.CapacityChanged(intent.capacity))
 
-                is CreateChallengeIntent.SetPeriod -> {
-                    dispatch(CreateChallengeReducerEvent.PeriodChanged(intent.startDate, intent.durationDays))
-                }
+                is CreateChallengeIntent.SetMinTier ->
+                    dispatch(CreateChallengeReducerEvent.MinTierChanged(intent.tier))
 
-                is CreateChallengeIntent.SelectMethod -> {
-                    dispatch(CreateChallengeReducerEvent.MethodSelected(intent.method))
-                }
+                is CreateChallengeIntent.SetPeriod -> setPeriod(intent.start, intent.end)
 
-                is CreateChallengeIntent.EditParam -> {
+                is CreateChallengeIntent.EditParam ->
                     dispatch(CreateChallengeReducerEvent.ParamEdited(intent.key, intent.value))
-                }
+
+                is CreateChallengeIntent.SetVerificationType -> setVerificationType(intent.type)
+
+                is CreateChallengeIntent.SetWatcherPenalty ->
+                    dispatch(CreateChallengeReducerEvent.WatcherPenaltyChanged(intent.enabled))
 
                 is CreateChallengeIntent.PermissionsResult -> {
-                    // 화면이 OS 다이얼로그로 받은 허용 토큰을 누적하고 생성을 재시도한다.
                     dispatch(CreateChallengeReducerEvent.PermissionsGranted(intent.granted))
-                    create()
+                    // 권한은 생성 이후 단계다 — 결과가 무엇이든 생성은 이미 끝났으므로 홈으로 보낸다.
+                    // 미허용은 첫 판정일 전까지 인증 설정에서 다시 받을 수 있다.
+                    if (currentState.createdChallengeId != null) goHome()
                 }
 
-                is CreateChallengeIntent.SetSnsShareEnabled -> {
-                    dispatch(CreateChallengeReducerEvent.SnsShareChanged(intent.enabled))
-                }
-
-                is CreateChallengeIntent.SetSnsPhone -> {
-                    dispatch(CreateChallengeReducerEvent.SnsPhoneEntered(intent.phone))
-                }
-
-                is CreateChallengeIntent.SetGroupShare -> {
-                    dispatch(CreateChallengeReducerEvent.GroupShareChanged(intent.enabled))
-                }
-
-                CreateChallengeIntent.Create -> {
-                    create()
-                }
+                CreateChallengeIntent.Create -> create()
             }
         }
 
@@ -124,342 +114,352 @@ class CreateChallengeViewModel
             event: CreateChallengeReducerEvent,
         ): CreateChallengeState =
             when (event) {
-                is CreateChallengeReducerEvent.TitleEntered -> {
-                    state.copy(title = event.title.take(CreateChallengeState.TITLE_MAX))
-                }
-
-                is CreateChallengeReducerEvent.DescriptionEntered -> {
-                    state.copy(description = event.description.take(CreateChallengeState.DESCRIPTION_MAX))
-                }
-
-                CreateChallengeReducerEvent.Recommending -> {
-                    state.copy(isRecommending = true)
-                }
-
-                CreateChallengeReducerEvent.RecommendFailed -> {
-                    state.copy(isRecommending = false)
-                }
-
-                is CreateChallengeReducerEvent.RecommendationReceived -> {
-                    val reco = event.recommendation
+                is CreateChallengeReducerEvent.RoutineDescriptionEntered ->
                     state.copy(
-                        isRecommending = false,
-                        hasRecommendation = true,
-                        matched = reco.matched,
-                        templateId = reco.templateId,
-                        title = reco.title.take(CreateChallengeState.TITLE_MAX),
-                        description = reco.description ?: state.description,
+                        routineDescription = event.description.take(CreateChallengeState.DESCRIPTION_MAX),
+                        // 다시 입력하기 시작하면 지난 폴백 안내는 치운다.
+                        fallbackMessage = null,
+                    )
+
+                CreateChallengeReducerEvent.TemplatesLoading ->
+                    state.copy(isLoadingTemplates = true, templatesFailed = false)
+
+                is CreateChallengeReducerEvent.TemplatesLoaded ->
+                    state.copy(
+                        templates = event.templates,
+                        isLoadingTemplates = false,
+                        templatesFailed = false,
+                    )
+
+                CreateChallengeReducerEvent.TemplatesFailed ->
+                    state.copy(isLoadingTemplates = false, templatesFailed = true)
+
+                CreateChallengeReducerEvent.Drafting ->
+                    state.copy(isDrafting = true, fallbackMessage = null)
+
+                CreateChallengeReducerEvent.DraftFailed ->
+                    state.copy(isDrafting = false)
+
+                is CreateChallengeReducerEvent.DraftFellBack ->
+                    // 입력은 그대로 둔다 — 사용자가 쓴 문장을 지우면 다시 쓰게 만드는 벌이 된다.
+                    state.copy(isDrafting = false, fallbackMessage = event.message)
+
+                is CreateChallengeReducerEvent.DraftRateLimited ->
+                    state.copy(isDrafting = false, retryAfterSeconds = event.retryAfterSeconds ?: 0)
+
+                CreateChallengeReducerEvent.RateLimitCleared ->
+                    state.copy(retryAfterSeconds = null)
+
+                is CreateChallengeReducerEvent.DraftReceived -> {
+                    val draft = event.draft.draft
+                    state.copy(
+                        isDrafting = false,
+                        fallbackMessage = null,
+                        draftId = event.draft.draftId,
+                        original = draft,
+                        title = draft.title.take(CreateChallengeState.TITLE_MAX),
+                        description = draft.description,
+                        category = draft.category,
+                        mode = draft.mode,
+                        visibility = draft.visibility,
+                        rankingVisible = draft.rankingVisible,
+                        capacity =
+                            draft.capacity.coerceIn(
+                                CreateChallengeState.CAPACITY_MIN,
+                                CreateChallengeState.CAPACITY_MAX,
+                            ),
+                        minTier = draft.minTier,
+                        // 상한은 초안이 준 기본값(= 생성자 표시 티어)으로 고정한다.
+                        ownerTierCap = draft.minTier,
+                        period = draft.period,
+                        params = draft.params,
+                        verification = draft.verification,
+                        penalties = draft.penalties,
                         coverImageUri = null,
-                        category = reco.category,
-                        participationType = reco.participationType,
-                        // 기준 온도 상한 = 생성자 현재 온도(없으면 MANNER_MAX).
-                        maxMannerTemperature =
-                            reco.maxMannerTemperature
-                                ?.toInt()
-                                ?.coerceIn(CreateChallengeState.MANNER_MIN, CreateChallengeState.MANNER_MAX)
-                                ?: CreateChallengeState.MANNER_MAX,
-                        minMannerTemperature =
-                            reco.minMannerTemperature
-                                ?.toInt()
-                                ?.coerceIn(CreateChallengeState.MANNER_MIN, CreateChallengeState.MANNER_MAX)
-                                ?: state.minMannerTemperature,
-                        maxParticipants =
-                            reco.maxParticipants
-                                ?.coerceIn(
-                                    CreateChallengeState.GROUP_PARTICIPANTS_MIN,
-                                    CreateChallengeState.GROUP_PARTICIPANTS_MAX,
-                                )
-                                ?: state.maxParticipants,
-                        repeatDays = reco.repeatDays,
-                        startDate = reco.startDate,
-                        durationDays = reco.durationDays,
-                        options = reco.options,
-                        selectedMethod = reco.recommendedMethod,
-                        params = reco.params,
-                        rationale = reco.rationale,
-                        // 새 추천을 받으면 권한 누적/요청 이력은 초기화한다.
+                        idempotencyKey = event.idempotencyKey,
                         grantedPermissions = emptySet(),
                         permissionRequested = false,
-                        mannerDeduction = reco.penalty.mannerDeduction,
-                        mannerGain = reco.reward.mannerGain,
-                        snsShareEnabled = reco.penalty.snsShare.enabled,
-                        snsPhone =
-                            reco.penalty.snsShare.phone
-                                .orEmpty(),
-                        groupShare = reco.penalty.groupShare,
+                        createdChallengeId = null,
                     )
                 }
 
-                is CreateChallengeReducerEvent.CoverImageSelected -> {
+                is CreateChallengeReducerEvent.TitleEntered ->
+                    state.copy(title = event.title.take(CreateChallengeState.TITLE_MAX))
+
+                is CreateChallengeReducerEvent.DescriptionEntered ->
+                    state.copy(description = event.description)
+
+                is CreateChallengeReducerEvent.CoverImageSelected ->
                     state.copy(coverImageUri = event.uri)
-                }
 
-                is CreateChallengeReducerEvent.ParticipationTypeSelected -> {
-                    state.copy(participationType = event.type)
-                }
-
-                is CreateChallengeReducerEvent.MinMannerChanged -> {
-                    state.copy(
-                        // 상한은 생성자 온도(maxMannerTemperature) — 초과 값은 서버가 거부(MIN_TEMP_EXCEEDS_OWNER).
-                        minMannerTemperature =
-                            event.temperature.coerceIn(
-                                CreateChallengeState.MANNER_MIN,
-                                state.maxMannerTemperature,
-                            ),
-                    )
-                }
-
-                is CreateChallengeReducerEvent.MaxParticipantsChanged -> {
-                    state.copy(
-                        maxParticipants =
-                            event.count.coerceIn(
-                                CreateChallengeState.GROUP_PARTICIPANTS_MIN,
-                                CreateChallengeState.GROUP_PARTICIPANTS_MAX,
-                            ),
-                    )
-                }
-
-                is CreateChallengeReducerEvent.RepeatDayToggled -> {
-                    if (event.day in state.repeatDays) {
-                        state.copy(repeatDays = state.repeatDays - event.day)
+                is CreateChallengeReducerEvent.ModeSelected ->
+                    // 파생 필드는 서버가 정규화하지만, 화면이 엉뚱한 입력부를 열지 않도록 여기서도 맞춘다.
+                    if (event.mode == ChallengeMode.GROUP) {
+                        state.copy(
+                            mode = event.mode,
+                            visibility = state.visibility ?: ChallengeVisibility.PUBLIC,
+                            rankingVisible = null,
+                        )
                     } else {
-                        state.copy(repeatDays = state.repeatDays + event.day)
+                        state.copy(
+                            mode = event.mode,
+                            visibility = null,
+                            rankingVisible = state.rankingVisible ?: true,
+                        )
                     }
-                }
 
-                is CreateChallengeReducerEvent.PeriodChanged -> {
-                    state.copy(startDate = event.startDate, durationDays = event.durationDays)
-                }
+                is CreateChallengeReducerEvent.VisibilitySelected ->
+                    state.copy(visibility = event.visibility)
 
-                is CreateChallengeReducerEvent.MethodSelected -> {
-                    // 인증 방식을 바꾸면 권한 요청 이력을 초기화한다.
+                is CreateChallengeReducerEvent.RankingVisibleChanged ->
+                    state.copy(rankingVisible = event.visible)
+
+                is CreateChallengeReducerEvent.CapacityChanged ->
                     state.copy(
-                        selectedMethod = event.method,
-                        permissionRequested = false,
+                        capacity =
+                            event.capacity.coerceIn(
+                                CreateChallengeState.CAPACITY_MIN,
+                                CreateChallengeState.CAPACITY_MAX,
+                            ),
                     )
-                }
 
-                is CreateChallengeReducerEvent.ParamEdited -> {
+                is CreateChallengeReducerEvent.MinTierChanged ->
+                    // 상한은 생성자 표시 티어 — 초과하면 서버가 MIN_TIER_EXCEEDS_OWNER 로 막는다.
                     state.copy(
-                        params =
-                            state.params.map {
-                                if (it.key == event.key) it.copy(value = event.value) else it
-                            },
+                        minTier =
+                            state.ownerTierCap?.let { cap ->
+                                if (event.tier.ordinal > cap.ordinal) cap else event.tier
+                            } ?: event.tier,
                     )
-                }
 
-                is CreateChallengeReducerEvent.PermissionsGranted -> {
+                is CreateChallengeReducerEvent.PeriodChanged ->
+                    state.copy(period = state.period.copy(start = event.start, end = event.end))
+
+                is CreateChallengeReducerEvent.ParamEdited ->
+                    state.copy(
+                        params = state.params.map { if (it.key == event.key) it.copy(value = event.value) else it },
+                    )
+
+                is CreateChallengeReducerEvent.VerificationTypeSelected ->
+                    state.copy(
+                        verification = state.verification?.copy(type = event.type),
+                        // 인증 방식을 바꾸면 서버가 score 패널티를 재계산한다. 표시도 맞춰 둔다.
+                        penalties = state.penalties.copy(score = event.type == VerificationType.AUTO),
+                    )
+
+                is CreateChallengeReducerEvent.WatcherPenaltyChanged ->
+                    state.copy(penalties = state.penalties.copy(watcher = event.enabled))
+
+                is CreateChallengeReducerEvent.PermissionsGranted ->
                     state.copy(
                         grantedPermissions = state.grantedPermissions + event.tokens,
                         permissionRequested = true,
                     )
-                }
 
-                is CreateChallengeReducerEvent.SnsShareChanged -> {
-                    state.copy(snsShareEnabled = event.enabled)
-                }
-
-                is CreateChallengeReducerEvent.SnsPhoneEntered -> {
-                    state.copy(snsPhone = event.phone.take(PHONE_MAX))
-                }
-
-                is CreateChallengeReducerEvent.GroupShareChanged -> {
-                    state.copy(groupShare = event.enabled)
-                }
-
-                CreateChallengeReducerEvent.Creating -> {
+                CreateChallengeReducerEvent.Creating ->
                     state.copy(isCreating = true)
-                }
 
-                CreateChallengeReducerEvent.CreateFailed -> {
+                CreateChallengeReducerEvent.CreateFailed ->
                     state.copy(isCreating = false)
-                }
+
+                is CreateChallengeReducerEvent.Created ->
+                    state.copy(isCreating = false, createdChallengeId = event.challengeId)
             }
 
-        private fun recommend() {
-            val state = currentState
-            if (state.isRecommending) return
-            val title = state.title.trim()
-            if (title.length < 2) {
-                emitEffect(CreateChallengeEffect.ShowError("챌린지 이름을 2자 이상 입력해주세요"))
-                return
-            }
+        private fun loadTemplates() {
+            if (currentState.isLoadingTemplates) return
             viewModelScope.launch {
-                dispatch(CreateChallengeReducerEvent.Recommending)
-                runCatching {
-                    recommendChallengeUseCase(
-                        title = title,
-                        description = state.description.trim().ifBlank { null },
-                    )
-                }.onSuccess { recommendation ->
-                    applyRecommendation(recommendation)
-                }.onFailure { error ->
-                    dispatch(CreateChallengeReducerEvent.RecommendFailed)
-                    val message =
-                        when (error) {
-                            is RecommendationRateLimitedException -> {
-                                val minutes = error.retryAfterSeconds?.let { (it + 59) / 60 }
-                                if (minutes != null) {
-                                    "추천 요청이 많아요. ${minutes}분 후에 다시 시도해 주세요"
-                                } else {
-                                    "추천 요청이 많아요. 잠시 후 다시 시도해 주세요"
-                                }
-                            }
-
-                            else -> error.message ?: "AI 추천에 실패했어요"
-                        }
-                    emitEffect(CreateChallengeEffect.ShowError(message))
-                }
+                dispatch(CreateChallengeReducerEvent.TemplatesLoading)
+                runCatching { getRoutineTemplatesUseCase() }
+                    .onSuccess { dispatch(CreateChallengeReducerEvent.TemplatesLoaded(it)) }
+                    // 추천이 실패해도 설명 입력 경로는 살아 있어야 하므로 화면 전체를 에러로 만들지 않는다.
+                    .onFailure { dispatch(CreateChallengeReducerEvent.TemplatesFailed) }
             }
         }
 
-        /**
-         * 탐색 "추천 루틴" 선택 → 템플릿 초안 생성 후 확인 화면으로. by-template 은 LLM 미호출이라
-         * fallback·rate-limit 이 없다(matched 항상 true). 실패(TEMPLATE_NOT_FOUND 등)는 안내한다.
-         */
-        private fun recommendByTemplate(templateId: Long) {
-            if (currentState.isRecommending) return
+        /** 경로 B — 설명 입력. 폴백은 실패가 아니라 재입력 분기다. */
+        private fun submitDescription() {
+            val state = currentState
+            if (!state.canSubmitDescription) return
             viewModelScope.launch {
-                dispatch(CreateChallengeReducerEvent.Recommending)
-                runCatching { recommendChallengeByTemplateUseCase(templateId) }
-                    .onSuccess { recommendation -> applyRecommendation(recommendation) }
+                dispatch(CreateChallengeReducerEvent.Drafting)
+                runCatching { createDraftUseCase(state.routineDescription) }
+                    .onSuccess { result ->
+                        when (result) {
+                            is DraftResult.Ok -> applyDraft(result)
+                            is DraftResult.Fallback ->
+                                dispatch(CreateChallengeReducerEvent.DraftFellBack(result.message))
+                        }
+                    }.onFailure { error ->
+                        when (error) {
+                            is RecommendationRateLimitedException ->
+                                dispatch(CreateChallengeReducerEvent.DraftRateLimited(error.retryAfterSeconds))
+
+                            else -> {
+                                dispatch(CreateChallengeReducerEvent.DraftFailed)
+                                emitEffect(
+                                    CreateChallengeEffect.ShowError(error.message ?: "초안을 만들지 못했어요. 다시 시도해 주세요"),
+                                )
+                            }
+                        }
+                    }
+            }
+        }
+
+        /** 경로 A — 추천 칩. LLM 미경유라 폴백·rate limit 이 없다. */
+        private fun selectTemplate(templateId: Long) {
+            if (currentState.isDrafting) return
+            viewModelScope.launch {
+                dispatch(CreateChallengeReducerEvent.Drafting)
+                runCatching { createDraftFromTemplateUseCase(templateId) }
+                    .onSuccess { applyDraft(it) }
                     .onFailure { error ->
-                        dispatch(CreateChallengeReducerEvent.RecommendFailed)
+                        dispatch(CreateChallengeReducerEvent.DraftFailed)
                         emitEffect(CreateChallengeEffect.ShowError(error.message ?: "루틴 초안을 불러오지 못했어요"))
                     }
             }
         }
 
-        /** 추천/템플릿 초안 수신 공통 처리: fallback 이면 머무르고, 아니면 확인 화면으로 전진. */
-        private fun applyRecommendation(recommendation: ChallengeRecommendation) {
-            if (recommendation.fallback) {
-                // Step 1·2 차단(200) — 확인 화면으로 넘어가지 않고 최초 생성 화면에 머문다(명세).
-                dispatch(CreateChallengeReducerEvent.RecommendFailed)
-                emitEffect(CreateChallengeEffect.ShowError("추천을 만들지 못했어요. 제목·설명을 다시 확인해 주세요"))
-            } else {
-                dispatch(CreateChallengeReducerEvent.RecommendationReceived(recommendation))
-                // 입력 화면에서는 확인 페이지로 전진, 확인 화면의 "다시 추천" 은
-                // 동일 키 중복 push 가 무시되므로 그대로 머문다.
-                navigationHelper.navigateTo(ChallengeConfirmPage)
+        /**
+         * 두 경로 공통 — 초안을 편집본에 채우고 확인 화면으로 보낸다.
+         * idempotency key 는 **여기서 1회만** 만든다. 생성 재시도는 같은 키를 다시 쓴다.
+         */
+        private fun applyDraft(draft: DraftResult.Ok) {
+            dispatch(
+                CreateChallengeReducerEvent.DraftReceived(
+                    draft = draft,
+                    idempotencyKey = UUID.randomUUID().toString(),
+                ),
+            )
+            navigationHelper.navigateTo(ChallengeConfirmPage)
+        }
+
+        private fun setPeriod(
+            start: String,
+            end: String,
+        ) {
+            if (!isValidPeriod(start, end)) {
+                emitEffect(CreateChallengeEffect.ShowError("종료일은 시작일보다 뒤여야 해요"))
+                return
             }
+            dispatch(CreateChallengeReducerEvent.PeriodChanged(start, end))
+        }
+
+        private fun isValidPeriod(
+            start: String,
+            end: String,
+        ): Boolean =
+            try {
+                !LocalDate.parse(end).isBefore(LocalDate.parse(start))
+            } catch (_: DateTimeParseException) {
+                false
+            }
+
+        /** AUTO → MANUAL 단방향. 되돌리려는 시도는 화면에서 막고 이유를 알린다. */
+        private fun setVerificationType(type: VerificationType) {
+            val state = currentState
+            if (type == VerificationType.AUTO && !state.canUseAuto) {
+                emitEffect(CreateChallengeEffect.ShowError("이 루틴은 자동 인증을 쓸 수 없어요"))
+                return
+            }
+            if (type == VerificationType.AUTO && state.verification?.type == VerificationType.MANUAL) {
+                emitEffect(CreateChallengeEffect.ShowError("수동 인증으로 바꾼 뒤에는 되돌릴 수 없어요"))
+                return
+            }
+            dispatch(CreateChallengeReducerEvent.VerificationTypeSelected(type))
         }
 
         private fun create() {
             val state = currentState
             if (state.isCreating) return
 
+            val draftId = state.draftId ?: return
             val category =
                 state.category ?: run {
-                    emitEffect(CreateChallengeEffect.ShowError("카테고리 분류에 실패했어요. 제목을 수정해 다시 추천받아 주세요"))
+                    emitEffect(CreateChallengeEffect.ShowError("카테고리를 분류하지 못했어요. 초안을 다시 만들어 주세요"))
                     return
                 }
-            if (state.repeatDays.isEmpty()) {
-                emitEffect(CreateChallengeEffect.ShowError("반복 요일을 1개 이상 선택해주세요"))
-                return
-            }
-
-            // AUTO 인증이면 필요한 권한을 먼저 확보한다. 부족하면 OS 권한 요청 후 재시도(PermissionsResult).
-            if (state.selectedMethod == SelectedMethod.AUTO) {
-                val missing = state.selectedOption?.requiredPermissions.orEmpty() - state.grantedPermissions
-                if (missing.isNotEmpty()) {
-                    if (state.permissionRequested) {
-                        emitEffect(
-                            CreateChallengeEffect.ShowError("자동 인증에 필요한 권한이 거부됐어요. 권한을 허용하거나 수동 인증을 선택해주세요"),
-                        )
-                    } else {
-                        emitEffect(CreateChallengeEffect.RequestPermissions(missing.toList()))
-                    }
+            val verification =
+                state.verification ?: run {
+                    emitEffect(CreateChallengeEffect.ShowError("인증 방식을 불러오지 못했어요. 초안을 다시 만들어 주세요"))
                     return
                 }
-            }
+            val idempotencyKey = state.idempotencyKey ?: return
 
-            val isGroup = state.participationType == ParticipationType.GROUP
-            val form =
-                ChallengeForm(
+            val command =
+                CreateChallengeCommand(
+                    draftId = draftId,
                     title = state.title.trim(),
-                    description = state.description.trim().ifBlank { null },
-                    // 로컬 커버 이미지는 생성 직전 업로드(3.9)해 URL 로 치환한다. 아래 launch 참고.
-                    imageUrl = null,
+                    description = state.description.trim(),
                     category = category,
-                    participationType = state.participationType,
-                    // GROUP 필수, SOLO 는 1 고정(명세 MAX_PARTICIPANTS_REQUIRED 예방).
-                    maxParticipants = if (isGroup) state.maxParticipants else 1,
-                    // 그룹이라도 최저값(제한 없음)이면 null 을 보낸다. 서버는 기준을 생성자 본인 온도 이하로만
-                    // 허용하므로, 최저값을 실제 온도로 보내면(예: 37 > 신규 유저 36.5) 항상 400 이 된다.
-                    minMannerTemperature =
-                        if (isGroup && state.minMannerTemperature > CreateChallengeState.MANNER_MIN) {
-                            state.minMannerTemperature.toDouble()
-                        } else {
-                            null
-                        },
-                    repeatDays = state.repeatDays,
-                    durationDays = state.durationDays,
-                    startDate = state.startDate,
-                    templateId = state.templateId,
-                    selectedMethod = state.selectedMethod,
-                    params = state.params.associate { it.key to it.value },
-                    grantedPermissions = state.grantedPermissions.toList(),
-                    penalty =
-                        Penalty(
-                            mannerDeduction = state.mannerDeduction,
-                            snsShare =
-                                SnsShare(
-                                    enabled = state.snsShareEnabled,
-                                    phone =
-                                        state.snsPhone
-                                            .trim()
-                                            .ifBlank { null }
-                                            .takeIf { state.snsShareEnabled },
-                                ),
-                            groupShare = state.groupShare,
-                        ),
-                    reward = Reward(mannerGain = state.mannerGain),
-                    anonymity = Anonymity.REAL,
+                    mode = state.mode,
+                    visibility = state.visibility.takeIf { state.isGroup },
+                    rankingVisible = state.rankingVisible.takeIf { !state.isGroup },
+                    capacity = state.capacity.takeIf { state.isGroup },
+                    minTier = state.minTier,
+                    period = state.period,
+                    params = state.params.toEntries(),
+                    verification = verification,
+                    watcherPenalty = state.penalties.watcher,
+                    imageUrl = null,
                 )
 
             val coverImageUri = state.coverImageUri?.takeIf { it.isNotBlank() }
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.Creating)
                 runCatching {
-                    // 커버 이미지가 있으면 먼저 업로드(3.9)해 URL 을 확보한 뒤 생성한다.
-                    val imageUrl = coverImageUri?.let { uploadChallengeImageUseCase(it) }
-                    createChallengeUseCase(form.copy(imageUrl = imageUrl))
-                }.onSuccess { challenge ->
-                    // 생성 응답은 슬림(title·category 생략 가능)하므로 요약은 폼/상태 값으로 채운다.
+                    // 이미지 업로드가 실패해도 생성은 막지 않는다 — 선택 항목이라 기본 이미지로 진행한다.
+                    val imageUrl =
+                        coverImageUri?.let { uri ->
+                            runCatching { uploadChallengeImageUseCase(uri) }
+                                .onFailure { emitEffect(CreateChallengeEffect.ShowError("이미지 업로드에 실패해 기본 이미지로 만들어요")) }
+                                .getOrNull()
+                        }
+                    createChallengeUseCase(command.copy(imageUrl = imageUrl), idempotencyKey)
+                }.onSuccess { created ->
                     // 진행률 API 반영 전이라도 홈에 즉시 노출되도록 로컬 스토어에 반영한다.
                     myChallengeStore.add(
                         MyChallengeSummary(
-                            challengeId = challenge.challengeId,
-                            title = state.title.trim(),
+                            challengeId = created.challengeId,
+                            title = command.title,
                             category = category,
-                            participationType = state.participationType,
-                            durationDays = state.durationDays,
+                            mode = state.mode,
+                            durationDays = durationDays(state.period.start, state.period.end),
                         ),
                     )
-                    // 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다.
-                    navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
+                    dispatch(CreateChallengeReducerEvent.Created(created.challengeId))
+
+                    // 권한은 생성 이후에 받는다 — 생성 전에 받으면 만들지도 않은 방 때문에 권한을 요구하는 꼴이 된다.
+                    val missing = created.verification.requiredPermissions - state.grantedPermissions
+                    if (created.verification.type == VerificationType.AUTO && missing.isNotEmpty()) {
+                        emitEffect(CreateChallengeEffect.RequestPermissions(missing.toList()))
+                    } else {
+                        goHome()
+                    }
                 }.onFailure { error ->
                     dispatch(CreateChallengeReducerEvent.CreateFailed)
-                    when (error) {
-                        // 사전 권한 확보를 거쳐도 서버가 부족하다고 바운스하면(거부 등) 1회만 재요청, 이후엔 안내.
-                        is ChallengePermissionRequiredException -> {
-                            val tokens = state.selectedOption?.requiredPermissions.orEmpty() - state.grantedPermissions
-                            if (!state.permissionRequested && tokens.isNotEmpty()) {
-                                emitEffect(CreateChallengeEffect.RequestPermissions(tokens.toList()))
-                            } else {
-                                emitEffect(
-                                    CreateChallengeEffect.ShowError("자동 인증 권한이 필요해요. 권한을 허용하거나 수동 인증을 선택해주세요"),
-                                )
-                            }
+                    val message =
+                        when (error) {
+                            is DraftExpiredException -> "초안이 만료됐어요. 처음부터 다시 만들어 주세요"
+                            else -> error.message ?: "챌린지 생성에 실패했어요"
                         }
-
-                        else -> emitEffect(CreateChallengeEffect.ShowError(error.message ?: "챌린지 생성에 실패했어요"))
-                    }
+                    emitEffect(CreateChallengeEffect.ShowError(message))
                 }
             }
         }
 
-        companion object {
-            private const val PHONE_MAX = 13
+        /** 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다. */
+        private fun goHome() {
+            navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
         }
+
+        private fun durationDays(
+            start: String,
+            end: String,
+        ): Int =
+            try {
+                (LocalDate.parse(end).toEpochDay() - LocalDate.parse(start).toEpochDay()).toInt().coerceAtLeast(0)
+            } catch (_: DateTimeParseException) {
+                0
+            }
     }

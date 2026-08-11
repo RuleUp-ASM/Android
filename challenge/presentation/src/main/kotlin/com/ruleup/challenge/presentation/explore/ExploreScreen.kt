@@ -35,12 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeCategoryCount
-import com.ruleup.challenge.domain.entity.RoutineRecommendation
 import com.ruleup.challenge.domain.entity.TrendingChallenge
-import com.ruleup.challenge.presentation.create.rememberActivityViewModelStoreOwner
-import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeEffect
-import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
-import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeViewModel
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreIntent
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreState
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreViewModel
@@ -50,7 +45,6 @@ import com.ruleup.designsystem.component.RuleUpBottomTab
 import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.ui.helper.LocalMessageHelper
 
 // 인기 1~3위 랭크 배지 그라데이션(Figma 탐색 메인).
 private val TopRankGradient = listOf(Color(0xFFF97316), Color(0xFFEF4444))
@@ -60,24 +54,15 @@ private val TopRankGradient = listOf(Color(0xFFF97316), Color(0xFFEF4444))
 fun ExploreScreen(
     modifier: Modifier = Modifier,
     viewModel: ExploreViewModel = hiltViewModel(),
-    // "추천 루틴" 탭은 생성 플로우 공유 VM 을 구동한다(by-template 초안 → 확인 화면). 확인 화면과 같은 인스턴스.
-    createViewModel: CreateChallengeViewModel = hiltViewModel(viewModelStoreOwner = rememberActivityViewModelStoreOwner()),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) { viewModel.onIntent(ExploreIntent.Load) }
-    LaunchedEffect(Unit) {
-        createViewModel.effect.collect { effect ->
-            if (effect is CreateChallengeEffect.ShowError) messageHelper.showToast(effect.message)
-        }
-    }
 
     ExploreContent(
         modifier = modifier,
         state = state,
         onIntent = viewModel::onIntent,
-        onRoutineClick = { templateId -> createViewModel.onIntent(CreateChallengeIntent.RecommendByTemplate(templateId)) },
     )
 }
 
@@ -85,7 +70,6 @@ fun ExploreScreen(
 private fun ExploreContent(
     state: ExploreState,
     onIntent: (ExploreIntent) -> Unit,
-    onRoutineClick: (templateId: Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -110,14 +94,6 @@ private fun ExploreContent(
                     ErrorBox(message = state.errorMessage, onRetry = { onIntent(ExploreIntent.Load) })
 
                 else -> {
-                    // 추천 루틴(관심사+세그먼트 기반, 최대 3) — 있을 때만 최상단에 노출. 탭 → 템플릿 초안 생성.
-                    if (state.recommendedRoutines.isNotEmpty()) {
-                        RoutineRecommendationSection(
-                            routines = state.recommendedRoutines,
-                            onRoutineClick = onRoutineClick,
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
                     SectionHeader(title = "실시간 인기", onSeeAll = { onIntent(ExploreIntent.OpenTrendingAll) })
                     TrendingCard(
                         trending = state.trending,
@@ -152,78 +128,6 @@ private fun ExploreContent(
 }
 
 /** 추천 루틴 섹션: 제목 + 카드 목록(카테고리 아이콘·제목·추천 사유). 탭 시 템플릿 초안 생성. */
-@Composable
-private fun RoutineRecommendationSection(
-    routines: List<RoutineRecommendation>,
-    onRoutineClick: (templateId: Long) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            text = "추천 루틴",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.section,
-        )
-        routines.forEach { routine ->
-            RoutineCard(routine = routine, onClick = { onRoutineClick(routine.templateId) })
-        }
-    }
-}
-
-@Composable
-private fun RoutineCard(
-    routine: RoutineRecommendation,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(RuleUpTheme.colors.brandSoft)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp))
-                .singleClickable(onClick = onClick)
-                .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(RuleUpTheme.colors.surface),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(categoryIconRes(routine.category)),
-                contentDescription = null,
-                tint = RuleUpTheme.colors.brand,
-                modifier = Modifier.size(20.dp),
-            )
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = routine.title,
-                color = RuleUpTheme.colors.textPrimary,
-                style = RuleUpTheme.typography.cardTitle,
-            )
-            Text(
-                text = routine.reason,
-                color = RuleUpTheme.colors.brandStrong,
-                style = RuleUpTheme.typography.smallMedium,
-            )
-        }
-        Text(
-            text = "›",
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.section,
-        )
-    }
-}
-
 @Composable
 private fun SectionHeader(
     title: String,

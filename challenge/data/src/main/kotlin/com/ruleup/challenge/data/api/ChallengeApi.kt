@@ -4,9 +4,10 @@ import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
-import com.ruleup.challenge.data.dto.ChallengeResponse
+import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
+import com.ruleup.challenge.data.dto.CreateChallengeResponse
 import com.ruleup.challenge.data.dto.CreateNoticeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeResponse
 import com.ruleup.challenge.data.dto.DelegationActionRequest
@@ -14,6 +15,8 @@ import com.ruleup.challenge.data.dto.DelegationRequestBody
 import com.ruleup.challenge.data.dto.DelegationResolutionResponse
 import com.ruleup.challenge.data.dto.DelegationResponse
 import com.ruleup.challenge.data.dto.DeleteChallengeResponse
+import com.ruleup.challenge.data.dto.DraftRequest
+import com.ruleup.challenge.data.dto.DraftResponse
 import com.ruleup.challenge.data.dto.ExploreChallengesResponse
 import com.ruleup.challenge.data.dto.JoinResponse
 import com.ruleup.challenge.data.dto.LeaveChallengeResponse
@@ -26,22 +29,23 @@ import com.ruleup.challenge.data.dto.PinNoticeRequest
 import com.ruleup.challenge.data.dto.PinNoticeResponse
 import com.ruleup.challenge.data.dto.RankingResponse
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
-import com.ruleup.challenge.data.dto.RecommendationRequest
-import com.ruleup.challenge.data.dto.RecommendationResponse
 import com.ruleup.challenge.data.dto.RoomResponse
-import com.ruleup.challenge.data.dto.RoutineRecommendationResponse
+import com.ruleup.challenge.data.dto.RoutineTemplatesResponse
+import com.ruleup.challenge.data.dto.TemplateDraftResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
-import com.ruleup.challenge.data.dto.UpdateChallengeRequest
+import com.ruleup.challenge.data.dto.UpdateChallengeResponse
 import com.ruleup.challenge.data.dto.UpdateNoticeRequest
 import com.ruleup.challenge.data.dto.UpdateNoticeResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
+import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -51,31 +55,30 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ChallengeApi {
-    // 3.1 LLM 기본값 추천 (초안)
-    @POST("v1/challenges/recommendation")
-    suspend fun recommend(
-        @Body request: RecommendationRequest,
-    ): BaseResponse<RecommendationResponse>
+    // 생성 화면 추천 루틴 — 파라미터 없음, 서버가 항상 3개를 보장한다(구 limit 폐기).
+    @GET("v1/challenges/recommendations")
+    suspend fun getRoutineTemplates(): BaseResponse<RoutineTemplatesResponse>
 
-    // 루틴 발견 추천 (관심사+세그먼트 인기도 기반, 최대 limit건)
-    @GET("v1/recommendations/routines")
-    suspend fun recommendRoutines(
-        @Query("limit") limit: Int?,
-    ): BaseResponse<List<RoutineRecommendationResponse>>
+    // 경로 B: 설명 입력 → LLM 5-Step 초안. result=FALLBACK 도 200 이다.
+    @POST("v1/challenges/draft")
+    suspend fun createDraft(
+        @Body request: DraftRequest,
+    ): BaseResponse<DraftResponse>
 
-    // 루틴 템플릿 선택 초안 (LLM 호출 X, recommend 와 동일 응답 스키마)
+    // 경로 A: 추천 루틴 탭 → 템플릿 기본값 초안 (LLM 미경유, draft 와 동일 스키마)
     @POST("v1/challenges/recommendation/by-template")
-    suspend fun recommendByTemplate(
+    suspend fun createDraftFromTemplate(
         @Body request: RecommendByTemplateRequest,
-    ): BaseResponse<RecommendationResponse>
+    ): BaseResponse<TemplateDraftResponse>
 
-    // 3.2 챌린지 생성
+    // 챌린지 최종 생성. Idempotency-Key 는 필수 — 재시도가 두 번째 방을 만들지 않게 한다.
     @POST("v1/challenges")
     suspend fun create(
+        @Header("Idempotency-Key") idempotencyKey: String,
         @Body request: CreateChallengeRequest,
-    ): BaseResponse<ChallengeResponse>
+    ): BaseResponse<CreateChallengeResponse>
 
-    // 3.3 챌린지 상세 + 참여 자격
+    // 공개 상세 (멤버 전용 내부는 /room). 비공개·솔로·없음은 전부 404 로 존재를 숨긴다.
     @GET("v1/challenges/{challengeId}")
     suspend fun getChallenge(
         @Path("challengeId") challengeId: String,
@@ -87,12 +90,18 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<ChallengeSetupInfoResponse>
 
-    // 3.4 챌린지 수정 (시작 전, 생성자만)
+    // 방장 전용 설정 조회 — 수정 폼이 쓸 현재 설정 전체 + editableFields + version
+    @GET("v1/challenges/{challengeId}/settings")
+    suspend fun getSettings(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeSettingsResponse>
+
+    // 챌린지 수정 (방장). 본문은 "넣은 키만 변경"이라 JsonObject 로 직접 조립한다.
     @PATCH("v1/challenges/{challengeId}")
     suspend fun update(
         @Path("challengeId") challengeId: String,
-        @Body request: UpdateChallengeRequest,
-    ): BaseResponse<ChallengeResponse>
+        @Body request: JsonObject,
+    ): BaseResponse<UpdateChallengeResponse>
 
     // 챌린지 삭제 — 응답에 penaltyApplied(탈퇴 패널티 트리거 여부)
     @DELETE("v1/challenges/{challengeId}")

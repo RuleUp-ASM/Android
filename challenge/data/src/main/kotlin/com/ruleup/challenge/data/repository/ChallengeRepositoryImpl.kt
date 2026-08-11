@@ -3,30 +3,38 @@ package com.ruleup.challenge.data.repository
 import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.DelegationActionRequest
 import com.ruleup.challenge.data.dto.DelegationRequestBody
+import com.ruleup.challenge.data.dto.DraftRequest
 import com.ruleup.challenge.data.dto.MemberRoleActionRequest
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
-import com.ruleup.challenge.data.dto.RecommendationRequest
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
-import com.ruleup.challenge.domain.entity.Challenge
+import com.ruleup.challenge.data.dto.toRequestBody
 import com.ruleup.challenge.domain.entity.ChallengeDetail
-import com.ruleup.challenge.domain.entity.ChallengeForm
 import com.ruleup.challenge.domain.entity.ChallengeMembers
-import com.ruleup.challenge.domain.entity.ChallengePermissionRequiredException
-import com.ruleup.challenge.domain.entity.ChallengeRecommendation
+import com.ruleup.challenge.domain.entity.ChallengeNotEditableException
+import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
+import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
+import com.ruleup.challenge.domain.entity.ChallengeVersionConflictException
+import com.ruleup.challenge.domain.entity.CreateChallengeCommand
+import com.ruleup.challenge.domain.entity.CreatedChallenge
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DelegationResolution
 import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.DeleteResult
+import com.ruleup.challenge.domain.entity.DraftExpiredException
+import com.ruleup.challenge.domain.entity.DraftResult
+import com.ruleup.challenge.domain.entity.JoinBlockReason
+import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoleAction
-import com.ruleup.challenge.domain.entity.RoutineRecommendation
+import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
@@ -43,50 +51,45 @@ class ChallengeRepositoryImpl
         private val api: ChallengeApi,
         private val imageReader: ImageReader,
     ) : ChallengeRepository {
-        override suspend fun recommend(
-            title: String,
-            description: String?,
-        ): ChallengeRecommendation =
+        override suspend fun getRoutineTemplates(): List<RoutineTemplate> =
+            api
+                .getRoutineTemplates()
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun createDraft(description: String): DraftResult =
             try {
                 api
-                    .recommend(
-                        RecommendationRequest(
-                            title = title,
-                            description = description,
-                        ),
-                    ).getOrThrow()
+                    .createDraft(DraftRequest(description = description))
+                    .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 429 rate limit 은 화면이 최초 생성 화면 복귀 + 재시도 안내로 분기하도록 도메인 예외로 변환.
-                if (e.code == "RECOMMENDATION_RATE_LIMITED") {
+                // 429 는 화면이 카운트다운으로 버튼을 잠그도록 도메인 예외로 옮긴다. 자동 재시도는 금지.
+                if (e.code == CODE_RATE_LIMITED) {
                     throw RecommendationRateLimitedException(retryAfterSeconds = e.retryAfterSeconds)
                 }
                 throw e
             }
 
-        override suspend fun recommendRoutines(limit: Int?): List<RoutineRecommendation> =
+        override suspend fun createDraftFromTemplate(templateId: Long): DraftResult.Ok =
             api
-                .recommendRoutines(limit)
-                .getOrThrow()
-                .map { it.toDomain() }
-
-        override suspend fun recommendByTemplate(templateId: Long): ChallengeRecommendation =
-            api
-                .recommendByTemplate(RecommendByTemplateRequest(templateId = templateId))
+                .createDraftFromTemplate(RecommendByTemplateRequest(templateId = templateId))
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun create(form: ChallengeForm): Challenge =
+        override suspend fun create(
+            command: CreateChallengeCommand,
+            idempotencyKey: String,
+        ): CreatedChallenge =
             try {
                 api
-                    .create(form.toRequest())
+                    .create(idempotencyKey = idempotencyKey, request = command.toRequest())
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // AUTO 권한 부족 바운스는 프레젠테이션이 권한 요청·재시도할 수 있도록 도메인 예외로 변환한다.
-                // TODO(server-contract): 400 바디가 부족 권한 목록을 주면 파싱해 requiredPermissions 로 전달.
-                if (e.code == "ROUTINE_PERMISSION_REQUIRED") {
-                    throw ChallengePermissionRequiredException()
+                // 초안은 24시간만 산다 — 화면이 "다시 만들어 주세요"로 안내하도록 구분해 올린다.
+                if (e.code == CODE_DRAFT_NOT_FOUND || e.code == CODE_DRAFT_EXPIRED) {
+                    throw DraftExpiredException()
                 }
                 throw e
             }
@@ -107,10 +110,16 @@ class ChallengeRepositoryImpl
         }
 
         override suspend fun getChallenge(challengeId: String): ChallengeDetail =
-            api
-                .getChallenge(challengeId)
-                .getOrThrow()
-                .toDomain()
+            try {
+                api
+                    .getChallenge(challengeId)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 없음·비공개·솔로를 구분하지 않는다(존재 은닉) — 화면 문구도 하나다.
+                if (e.code == CODE_CHALLENGE_NOT_FOUND) throw ChallengeNotFoundException()
+                throw e
+            }
 
         override suspend fun getSetupInfo(challengeId: String): ChallengeSetupInfo =
             api
@@ -118,14 +127,29 @@ class ChallengeRepositoryImpl
                 .getOrThrow()
                 .toDomain()
 
+        override suspend fun getSettings(challengeId: String): ChallengeSettings =
+            api
+                .getSettings(challengeId)
+                .getOrThrow()
+                .toDomain()
+
         override suspend fun update(
             challengeId: String,
             update: ChallengeUpdate,
-        ): Challenge =
-            api
-                .update(challengeId, update.toRequest())
-                .getOrThrow()
-                .toDomain()
+        ): ChallengeUpdateResult =
+            try {
+                api
+                    .update(challengeId, update.toRequestBody())
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                when (e.code) {
+                    // 둘 다 "서버 기준으로 다시 그려라"로 귀결되지만, 문구가 달라 타입을 나눈다.
+                    CODE_VERSION_CONFLICT -> throw ChallengeVersionConflictException()
+                    CODE_NOT_EDITABLE -> throw ChallengeNotEditableException()
+                    else -> throw e
+                }
+            }
 
         override suspend fun delete(challengeId: String): DeleteResult =
             api
@@ -134,10 +158,22 @@ class ChallengeRepositoryImpl
                 .toDomain()
 
         override suspend fun join(challengeId: String): JoinResult =
-            api
-                .join(challengeId)
-                .getOrThrow()
-                .toDomain()
+            try {
+                api
+                    .join(challengeId)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 거절은 전부 409 JOIN_BLOCKED + reason 단일 형식이다(구 403/409 분리 표기 폐기).
+                if (e.code == CODE_JOIN_BLOCKED) {
+                    throw JoinBlockedException(
+                        reason = JoinBlockReason.fromValue(e.reason),
+                        rejoinAvailableAt = e.rejoinAvailableAt,
+                    )
+                }
+                if (e.code == CODE_CHALLENGE_NOT_FOUND) throw ChallengeNotFoundException()
+                throw e
+            }
 
         override suspend fun getMembers(challengeId: String): ChallengeMembers =
             api
@@ -193,4 +229,14 @@ class ChallengeRepositoryImpl
                     request = DelegationActionRequest(action = action.value),
                 ).getOrThrow()
                 .toDomain()
+
+        private companion object {
+            const val CODE_RATE_LIMITED = "RECOMMENDATION_RATE_LIMITED"
+            const val CODE_DRAFT_NOT_FOUND = "DRAFT_NOT_FOUND"
+            const val CODE_DRAFT_EXPIRED = "DRAFT_EXPIRED"
+            const val CODE_CHALLENGE_NOT_FOUND = "CHALLENGE_NOT_FOUND"
+            const val CODE_VERSION_CONFLICT = "VERSION_CONFLICT"
+            const val CODE_NOT_EDITABLE = "CHALLENGE_NOT_EDITABLE"
+            const val CODE_JOIN_BLOCKED = "JOIN_BLOCKED"
+        }
     }

@@ -42,15 +42,15 @@ enum class ExploreSort(
  */
 data class ExploreFilter(
     val category: Category? = null,
-    val participationType: ParticipationType? = null,
-    val verificationMethod: SelectedMethod? = null,
+    val mode: ChallengeMode? = null,
+    val verificationType: VerificationType? = null,
     // 매너 온도 컷: 클라이언트가 온도 값을 보내지 않고, true 면 서버가 토큰 사용자 기준으로
     // minMannerTemperature ≤ 내 매너 온도 인 챌린지만 반환한다(API 기본 true).
     val joinableOnly: Boolean = true,
 ) {
     // 필터 칩 배지 수. joinableOnly 는 기본 on 인 설정이라 세지 않는다.
     val activeCount: Int
-        get() = listOfNotNull(category, participationType, verificationMethod).size
+        get() = listOfNotNull(category, mode, verificationType).size
 
     companion object {
         val none = ExploreFilter()
@@ -81,8 +81,8 @@ data class ExploreChallenge(
     val challengeId: String,
     val title: String,
     val category: Category?,
-    val participationType: ParticipationType,
-    val verificationMethod: SelectedMethod,
+    val mode: ChallengeMode,
+    val verificationType: VerificationType,
     // 이 방의 현재 참여자 수
     val participantCount: Int,
     // 템플릿 완주율(0..1). 누적 완료 참여자 10명 이하면 null(표본 부족)

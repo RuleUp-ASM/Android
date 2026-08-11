@@ -1,8 +1,8 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.DelegationAction
-import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
@@ -167,7 +167,7 @@ class ChallengeDetailViewModel
                         // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
                         loadWatchers(challengeId)
                         // 방 홈은 그룹 챌린지의 ACTIVE 멤버만 — 조회 성공 시 방 홈으로 확장 렌더링.
-                        if (detail.participationType == ParticipationType.GROUP) loadRoom(challengeId)
+                        if (detail.mode == ChallengeMode.GROUP) loadRoom(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }

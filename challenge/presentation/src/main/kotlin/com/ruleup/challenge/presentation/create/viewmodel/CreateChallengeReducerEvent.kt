@@ -1,13 +1,50 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
-import com.ruleup.challenge.domain.entity.ChallengeRecommendation
-import com.ruleup.challenge.domain.entity.ParamValue
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeVisibility
+import com.ruleup.challenge.domain.entity.DraftResult
+import com.ruleup.challenge.domain.entity.RoutineTemplate
+import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.ReducerEvent
 
 sealed interface CreateChallengeReducerEvent : ReducerEvent {
+    // ---- 입력 화면 ----
+    data class RoutineDescriptionEntered(
+        val description: String,
+    ) : CreateChallengeReducerEvent
+
+    data object TemplatesLoading : CreateChallengeReducerEvent
+
+    data class TemplatesLoaded(
+        val templates: List<RoutineTemplate>,
+    ) : CreateChallengeReducerEvent
+
+    data object TemplatesFailed : CreateChallengeReducerEvent
+
+    data object Drafting : CreateChallengeReducerEvent
+
+    data object DraftFailed : CreateChallengeReducerEvent
+
+    /** 폴백 — 입력을 지우지 않고 안내만 띄운다. */
+    data class DraftFellBack(
+        val message: String,
+    ) : CreateChallengeReducerEvent
+
+    /** 429 — 버튼을 잠그고 카운트다운을 표시한다. */
+    data class DraftRateLimited(
+        val retryAfterSeconds: Int?,
+    ) : CreateChallengeReducerEvent
+
+    data object RateLimitCleared : CreateChallengeReducerEvent
+
+    /** 초안 수신 — 편집본을 초안값으로 채우고 idempotency key 를 1회 발급한다. */
+    data class DraftReceived(
+        val draft: DraftResult.Ok,
+        val idempotencyKey: String,
+    ) : CreateChallengeReducerEvent
+
+    // ---- 확인 화면 ----
     data class TitleEntered(
         val title: String,
     ) : CreateChallengeReducerEvent
@@ -16,65 +53,58 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
         val description: String,
     ) : CreateChallengeReducerEvent
 
-    data object Recommending : CreateChallengeReducerEvent
-
-    data object RecommendFailed : CreateChallengeReducerEvent
-
-    data class RecommendationReceived(
-        val recommendation: ChallengeRecommendation,
-    ) : CreateChallengeReducerEvent
-
     data class CoverImageSelected(
         val uri: String?,
     ) : CreateChallengeReducerEvent
 
-    data class ParticipationTypeSelected(
-        val type: ParticipationType,
+    data class ModeSelected(
+        val mode: ChallengeMode,
     ) : CreateChallengeReducerEvent
 
-    data class MinMannerChanged(
-        val temperature: Int,
+    data class VisibilitySelected(
+        val visibility: ChallengeVisibility,
     ) : CreateChallengeReducerEvent
 
-    data class MaxParticipantsChanged(
-        val count: Int,
+    data class RankingVisibleChanged(
+        val visible: Boolean,
     ) : CreateChallengeReducerEvent
 
-    data class RepeatDayToggled(
-        val day: RepeatDay,
+    data class CapacityChanged(
+        val capacity: Int,
+    ) : CreateChallengeReducerEvent
+
+    data class MinTierChanged(
+        val tier: Tier,
     ) : CreateChallengeReducerEvent
 
     data class PeriodChanged(
-        val startDate: String,
-        val durationDays: Int,
-    ) : CreateChallengeReducerEvent
-
-    data class MethodSelected(
-        val method: SelectedMethod,
+        val start: String,
+        val end: String,
     ) : CreateChallengeReducerEvent
 
     data class ParamEdited(
         val key: String,
-        val value: ParamValue,
+        val value: String,
+    ) : CreateChallengeReducerEvent
+
+    data class VerificationTypeSelected(
+        val type: VerificationType,
+    ) : CreateChallengeReducerEvent
+
+    data class WatcherPenaltyChanged(
+        val enabled: Boolean,
     ) : CreateChallengeReducerEvent
 
     data class PermissionsGranted(
         val tokens: Set<String>,
     ) : CreateChallengeReducerEvent
 
-    data class SnsShareChanged(
-        val enabled: Boolean,
-    ) : CreateChallengeReducerEvent
-
-    data class SnsPhoneEntered(
-        val phone: String,
-    ) : CreateChallengeReducerEvent
-
-    data class GroupShareChanged(
-        val enabled: Boolean,
-    ) : CreateChallengeReducerEvent
-
     data object Creating : CreateChallengeReducerEvent
 
     data object CreateFailed : CreateChallengeReducerEvent
+
+    /** 생성 성공 — 권한 요청이 남았을 때만 화면에 머문다. */
+    data class Created(
+        val challengeId: String,
+    ) : CreateChallengeReducerEvent
 }

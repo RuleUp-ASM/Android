@@ -12,6 +12,7 @@ data class MyChallengeSummary(
     val challengeId: String,
     val title: String,
     val category: Category?,
-    val participationType: ParticipationType,
+    val mode: ChallengeMode,
+    // 기간 길이(일). 카드가 진행률 없이도 기간 표기를 그릴 수 있게 보관한다.
     val durationDays: Int,
 )

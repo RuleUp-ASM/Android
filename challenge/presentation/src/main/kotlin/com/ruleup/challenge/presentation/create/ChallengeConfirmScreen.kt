@@ -1,7 +1,6 @@
 package com.ruleup.challenge.presentation.create
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,25 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
-import com.ruleup.challenge.domain.entity.ParamKind
-import com.ruleup.challenge.domain.entity.ParamSpec
-import com.ruleup.challenge.domain.entity.ParamValue
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.SelectedMethod
-import com.ruleup.challenge.domain.entity.SignalSource
-import com.ruleup.challenge.domain.entity.VerificationOption
+import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.VerificationType
-import com.ruleup.challenge.domain.entity.WearableRequirement
-import com.ruleup.challenge.presentation.create.component.ChallengeFlowPreview
 import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
 import com.ruleup.challenge.presentation.create.component.DurationPickerSheet
 import com.ruleup.challenge.presentation.create.component.GradientSwitch
@@ -57,14 +37,19 @@ import com.ruleup.challenge.presentation.create.component.rememberChallengeImage
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.helper.LocalNavigationHelper
-import kotlin.math.roundToInt
 
-/** 02 · AI 추천 확인. 추천값을 항목별로 보여주고 자유롭게 수정한 뒤 확정한다. */
+/**
+ * 확인 화면 — 초안을 항목별로 보여주고 고친 뒤 생성한다. 두 진입 경로(추천 칩 · 설명 입력)가 여기로 수렴한다.
+ *
+ * 잠긴 항목은 회색 처리로 끝내지 않고 **잠금 아이콘과 사유를 함께** 보여준다. 생성 CTA 는 하단 고정이라
+ * 끝까지 스크롤해야 누를 수 있는 구조를 만들지 않는다.
+ */
 @Composable
 fun ChallengeConfirmContent(
     onIntent: (CreateChallengeIntent) -> Unit,
@@ -72,11 +57,11 @@ fun ChallengeConfirmContent(
     state: CreateChallengeState = CreateChallengeState.initial,
 ) {
     val nav = LocalNavigationHelper.current
-    var showDurationSheet by remember { mutableStateOf(false) }
+    var showPeriodSheet by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
         CreateChallengeTopBar(
-            title = "AI 추천 확인",
+            title = "챌린지 확인",
             onBack = { nav.navigateToBack() },
             trailingText = "취소",
             onTrailingClick = { nav.navigateToBack() },
@@ -85,148 +70,137 @@ fun ChallengeConfirmContent(
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            item { AiDoneBanner() }
-            item { ChallengeInfoCard(title = state.title, description = state.description) }
+            item { TitleSection(state = state, onIntent = onIntent) }
+            item { DescriptionSection(state = state, onIntent = onIntent) }
             item { CoverPhotoSection(coverImageUri = state.coverImageUri, onIntent = onIntent) }
             item { CategorySection(state = state) }
-            item { ParticipationSection(selected = state.participationType, onIntent = onIntent) }
-            if (state.participationType == ParticipationType.GROUP) {
-                item {
-                    MaxParticipantsSection(
-                        count = state.maxParticipants,
-                        onIntent = onIntent,
-                    )
-                }
-                item {
-                    MannerTemperatureSection(
-                        temperature = state.minMannerTemperature,
-                        maxTemperature = state.maxMannerTemperature,
-                        onIntent = onIntent,
-                    )
-                }
+            item { ModeSection(state = state, onIntent = onIntent) }
+            if (state.isGroup) {
+                item { VisibilitySection(state = state, onIntent = onIntent) }
+                item { CapacitySection(capacity = state.capacity, onIntent = onIntent) }
+                item { MinTierSection(state = state, onIntent = onIntent) }
+            } else {
+                item { RankingVisibleSection(state = state, onIntent = onIntent) }
             }
-            item {
-                FrequencyAndPeriodSection(
-                    state = state,
-                    onIntent = onIntent,
-                    onPeriodClick = { showDurationSheet = true },
-                )
-            }
-            item { MethodSelector(state = state, onIntent = onIntent) }
-            state.selectedOption?.let { option ->
-                item { VerificationSnapshotCard(option = option, rationale = state.rationale) }
-            }
+            item { PeriodSection(state = state, onClick = { showPeriodSheet = true }) }
             if (state.params.isNotEmpty()) {
-                item { ParamsEditor(params = state.params, onIntent = onIntent) }
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        SectionLabel("목표")
+                        ParamsEditor(
+                            params = state.params,
+                            onEdit = { key, value -> onIntent(CreateChallengeIntent.EditParam(key, value)) },
+                        )
+                    }
+                }
             }
+            item { VerificationSection(state = state, onIntent = onIntent) }
             item { PenaltySection(state = state, onIntent = onIntent) }
             item {
                 InfoNote(
                     emoji = "✨",
-                    text = "확정 후에도 챌린지 시작 전에는 수정할 수 있어요",
+                    text = "카테고리는 만든 뒤에는 바꿀 수 없어요. 나머지는 시작 전 혼자일 때 수정할 수 있어요",
                     background = RuleUpPalette.Primary50,
                     textColor = RuleUpTheme.colors.textSlate,
                 )
             }
         }
 
-        ConfirmBottomBar(
-            isRecommending = state.isRecommending,
-            isCreating = state.isCreating,
-            onIntent = onIntent,
-        )
-    }
-
-    if (showDurationSheet) {
-        DurationPickerSheet(
-            startDate = state.startDate,
-            durationDays = state.durationDays,
-            onConfirm = { startDate, durationDays ->
-                onIntent(CreateChallengeIntent.SetPeriod(startDate, durationDays))
-                showDurationSheet = false
-            },
-            onDismiss = { showDurationSheet = false },
-        )
-    }
-}
-
-@Composable
-private fun AiDoneBanner() {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RuleUpTheme.shapes.large)
-                .background(Brush.linearGradient(listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50)))
-                .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
         Box(
             modifier =
                 Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(RuleUpGradients.Brand),
-            contentAlignment = Alignment.Center,
+                    .fillMaxWidth()
+                    .background(RuleUpTheme.colors.surface)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            Text("🤖", style = RuleUpTheme.typography.section)
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "AI가 추천을 완료했어요",
-                color = RuleUpTheme.colors.brandStrong,
-                style = RuleUpTheme.typography.bodyBold,
-            )
-            Text(
-                "각 항목은 자유롭게 수정할 수 있어요",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.tiny,
+            RuleUpPrimaryButton(
+                text = if (state.isCreating) "만드는 중…" else "이대로 만들기",
+                enabled = state.hasDraft && !state.isCreating,
+                onClick = { onIntent(CreateChallengeIntent.Create) },
             )
         }
+    }
+
+    if (showPeriodSheet) {
+        // 시트는 기간 길이로 고르고, 계약이 요구하는 (start, end) 로 바꿔 올린다.
+        DurationPickerSheet(
+            startDate = state.period.start,
+            durationDays = ChallengeDates.daysBetween(state.period.start, state.period.end) + 1,
+            onConfirm = { start, duration ->
+                onIntent(CreateChallengeIntent.SetPeriod(start, ChallengeDates.endDate(start, duration)))
+                showPeriodSheet = false
+            },
+            onDismiss = { showPeriodSheet = false },
+        )
     }
 }
 
 @Composable
-private fun ChallengeInfoCard(
-    title: String,
-    description: String,
+private fun TitleSection(
+    state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RuleUpTheme.shapes.card)
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card)
-                .padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("📝", style = RuleUpTheme.typography.labelMedium)
-            Text(
-                "챌린지 정보",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.captionBold,
-            )
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("제목") {
+            // 원본 그대로면 "AI 생성", 고쳤으면 "수정함". 되돌리면 다시 AI 생성으로 돌아간다.
+            if (state.titleEdited) {
+                SmallBadge("수정함", RuleUpTheme.colors.warningContainer, RuleUpTheme.colors.warning)
+            } else {
+                SmallBadge("AI 생성", RuleUpPalette.Primary50, RuleUpTheme.colors.brand)
+            }
         }
-        Text(
-            title,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.section,
+        BoxedTextField(
+            value = state.title,
+            onValueChange = { onIntent(CreateChallengeIntent.SetTitle(it)) },
         )
-        if (description.isNotBlank()) {
-            Text(
-                description,
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.small,
-            )
+    }
+}
+
+@Composable
+private fun DescriptionSection(
+    state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("설명") {
+            if (state.descriptionEdited) {
+                SmallBadge("수정함", RuleUpTheme.colors.warningContainer, RuleUpTheme.colors.warning)
+            }
         }
+        BoxedTextField(
+            value = state.description,
+            onValueChange = { onIntent(CreateChallengeIntent.SetDescription(it)) },
+            minHeight = 88.dp,
+        )
+    }
+}
+
+@Composable
+private fun BoxedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    minHeight: androidx.compose.ui.unit.Dp = 48.dp,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(minHeight)
+                .clip(RuleUpTheme.shapes.small)
+                .background(RuleUpTheme.colors.surface)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = RuleUpTheme.typography.body.copy(color = RuleUpTheme.colors.textPrimary),
+        )
     }
 }
 
@@ -234,166 +208,63 @@ private fun ChallengeInfoCard(
 private fun CoverPhotoSection(
     coverImageUri: String?,
     onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val imagePicker =
-        rememberChallengeImagePicker { uri -> onIntent(CreateChallengeIntent.SetCoverImage(uri)) }
-    val openGallery = { imagePicker.launchGallery() }
-
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "배경 사진") {
-            SmallBadge(
-                text = "선택",
-                background = RuleUpTheme.colors.surfaceVariant,
-                textColor = RuleUpTheme.colors.textSecondary,
-            )
+    val picker = rememberChallengeImagePicker { onIntent(CreateChallengeIntent.SetCoverImage(it)) }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("대표 이미지") {
+            SmallBadge("선택", RuleUpTheme.colors.surfaceVariant, RuleUpTheme.colors.textMuted)
         }
-
         Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(160.dp)
-                    .clip(RuleUpTheme.shapes.large),
+                    .height(96.dp)
+                    .clip(RuleUpTheme.shapes.small)
+                    .background(RuleUpTheme.colors.surface)
+                    .singleClickable { picker.launchGallery() },
+            contentAlignment = Alignment.Center,
         ) {
-            if (coverImageUri != null) {
-                AsyncImage(
-                    model = coverImageUri,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.matchParentSize(),
-                )
-            } else {
-                Column(
-                    modifier =
-                        Modifier
-                            .matchParentSize()
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(RuleUpPalette.StatusWarn, RuleUpPalette.StatusDanger, RuleUpPalette.Primary300),
-                                ),
-                            ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(28.dp))
-                                .background(Color.White.copy(alpha = 0.25f))
-                                .border(2.dp, Color.White.copy(alpha = 0.5f), RoundedCornerShape(28.dp)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
-                        Text("📷", fontSize = 24.sp)
-                    }
-                    Text(
-                        "AI가 자동 선택한 배경",
-                        color = Color.White,
-                        style = RuleUpTheme.typography.captionBold,
-                    )
-                }
-            }
-            Row(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(12.dp)
-                        .height(30.dp)
-                        .clip(RoundedCornerShape(15.dp))
-                        .background(Color.Black.copy(alpha = 0.55f))
-                        .singleClickable(onClick = openGallery)
-                        .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("✏️", style = RuleUpTheme.typography.caption)
-                Text("변경", color = Color.White, style = RuleUpTheme.typography.captionBold)
-            }
-        }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            CoverSourceChip(emoji = "📷", label = "카메라", tinted = true) {
-                imagePicker.launchCamera()
-            }
-            CoverSourceChip(emoji = "🖼️", label = "갤러리", onClick = openGallery)
-            CoverSourceChip(emoji = "✨", label = "AI 추천") {
-                onIntent(CreateChallengeIntent.SetCoverImage(null))
-            }
+            Text(
+                text = if (coverImageUri == null) "사진 고르기" else "사진 1장 선택됨 · 다시 고르기",
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.bodyMedium,
+            )
         }
     }
 }
 
+/** 카테고리는 확인 화면부터 수정 불가이며 생성 후에도 불변이다. */
 @Composable
-private fun CoverSourceChip(
-    emoji: String,
-    label: String,
-    tinted: Boolean = false,
-    onClick: () -> Unit = {},
+private fun CategorySection(
+    state: CreateChallengeState,
+    modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier =
-            Modifier
-                .height(36.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .let { base ->
-                    if (tinted) {
-                        base.background(RuleUpTheme.colors.brandSoft)
-                    } else {
-                        base
-                            .background(RuleUpTheme.colors.surface)
-                            .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(18.dp))
-                    }
-                }.singleClickable(onClick = onClick)
-                .padding(horizontal = 14.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(emoji, style = RuleUpTheme.typography.body)
-        Text(
-            label,
-            color = if (tinted) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.smallBold,
-        )
-    }
-}
-
-@Composable
-private fun CategorySection(state: CreateChallengeState) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "카테고리")
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("카테고리")
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clip(RuleUpTheme.shapes.large)
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    .padding(14.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    .clip(RuleUpTheme.shapes.small)
+                    .background(RuleUpTheme.colors.surfaceVariant)
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(44.dp)
-                        .clip(RuleUpTheme.shapes.small)
-                        .background(
-                            SolidColor(RuleUpTheme.colors.warningContainer),
-                        ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(state.category?.let(::categoryEmoji) ?: "❓", style = RuleUpTheme.typography.title)
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                state.category?.let { Text(categoryEmoji(it), style = RuleUpTheme.typography.body) }
                 Text(
-                    state.category?.label ?: "분류 실패",
+                    text = state.category?.label ?: "분류 없음",
                     color = RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.cardTitle,
+                    style = RuleUpTheme.typography.bodyMedium,
                 )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("🔒", style = RuleUpTheme.typography.caption)
                 Text(
-                    if (state.category != null) "제목에서 자동 분류했어요" else "제목을 수정해 다시 추천받아 주세요",
-                    color = RuleUpTheme.colors.textSecondary,
+                    "만든 뒤 바꿀 수 없어요",
+                    color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                 )
             }
@@ -402,747 +273,265 @@ private fun CategorySection(state: CreateChallengeState) {
 }
 
 @Composable
-private fun ParticipationSection(
-    selected: ParticipationType,
+private fun ModeSection(
+    state: CreateChallengeState,
     onIntent: (CreateChallengeIntent) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "참여 방식")
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            ParticipationCard(
-                modifier = Modifier.weight(1f),
-                emoji = "🌱",
-                title = "솔로",
-                caption = "나와의 약속",
-                background = SolidColor(RuleUpTheme.colors.warningContainer),
-                selected = selected == ParticipationType.SOLO,
-                onClick = { onIntent(CreateChallengeIntent.SetParticipationType(ParticipationType.SOLO)) },
-            )
-            ParticipationCard(
-                modifier = Modifier.weight(1f),
-                emoji = "👥",
-                title = "그룹",
-                caption = "함께 도전",
-                background = Brush.linearGradient(listOf(RuleUpPalette.Primary50, RuleUpPalette.Primary50)),
-                selected = selected == ParticipationType.GROUP,
-                onClick = { onIntent(CreateChallengeIntent.SetParticipationType(ParticipationType.GROUP)) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun ParticipationCard(
-    emoji: String,
-    title: String,
-    caption: String,
-    background: Brush,
-    selected: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
 ) {
-    Column(
-        modifier =
-            modifier
-                .height(108.dp)
-                .clip(RuleUpTheme.shapes.large)
-                .background(background)
-                .let { base ->
-                    if (selected) base.border(3.dp, RuleUpTheme.colors.brand, RuleUpTheme.shapes.large) else base
-                }.singleClickable(onClick = onClick)
-                .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        if (selected) {
-            SmallBadge(text = "AI 선택", background = RuleUpTheme.colors.brand, textColor = Color.White)
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("참여 형태")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SelectableChip(
+                text = "혼자",
+                selected = state.mode == ChallengeMode.SOLO,
+                onClick = { onIntent(CreateChallengeIntent.SetMode(ChallengeMode.SOLO)) },
+            )
+            SelectableChip(
+                text = "같이",
+                selected = state.mode == ChallengeMode.GROUP,
+                onClick = { onIntent(CreateChallengeIntent.SetMode(ChallengeMode.GROUP)) },
+            )
         }
-        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
-        Text(emoji, fontSize = 28.sp)
-        Text(title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
-        Text(caption, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.tiny)
     }
 }
 
-/** 매너 온도 구간 라벨. 탭하면 대표값으로 설정한다. */
-private data class MannerLevel(
-    val label: String,
-    val range: IntRange,
-    val representative: Int,
-    val background: Color,
-    val textColor: Color,
-)
-
-private val mannerLevels =
-    listOf(
-        MannerLevel("매우 낮음", 37..49, 40, RuleUpPalette.StatusDanger.copy(alpha = 0.15f), RuleUpPalette.StatusDanger),
-        MannerLevel("보통", 50..64, 55, RuleUpPalette.StatusWarn.copy(alpha = 0.15f), RuleUpPalette.StatusWarn),
-        MannerLevel("높음", 65..79, 65, RuleUpPalette.Primary600.copy(alpha = 0.15f), RuleUpPalette.Primary600),
-        MannerLevel("최고", 80..99, 85, RuleUpPalette.StatusSuccess.copy(alpha = 0.15f), RuleUpPalette.StatusSuccess),
-    )
-
-/** 그룹 전용 최대 참여 인원 스텝퍼(− n +). 범위는 [CreateChallengeState] 상수로 클램프한다. */
 @Composable
-private fun MaxParticipantsSection(
-    count: Int,
+private fun VisibilitySection(
+    state: CreateChallengeState,
     onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "최대 참여 인원") {
-            SmallBadge(
-                text = "그룹 전용",
-                background = RuleUpTheme.colors.brandSoft,
-                textColor = RuleUpTheme.colors.brandStrong,
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("공개 범위")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SelectableChip(
+                text = "공개",
+                selected = state.visibility != ChallengeVisibility.PRIVATE,
+                onClick = { onIntent(CreateChallengeIntent.SetVisibility(ChallengeVisibility.PUBLIC)) },
+            )
+            SelectableChip(
+                text = "비공개",
+                selected = state.visibility == ChallengeVisibility.PRIVATE,
+                onClick = { onIntent(CreateChallengeIntent.SetVisibility(ChallengeVisibility.PRIVATE)) },
             )
         }
+        if (state.visibility == ChallengeVisibility.PRIVATE) {
+            Text(
+                "비공개 방은 초대 링크로만 들어올 수 있어요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RankingVisibleSection(
+    state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ToggleRow(
+        modifier = modifier,
+        label = "랭킹에 내 기록 보이기",
+        checked = state.rankingVisible ?: true,
+        onCheckedChange = { onIntent(CreateChallengeIntent.SetRankingVisible(it)) },
+    )
+}
+
+/** 정원 스테퍼. 10,000까지 버튼으로만 올리게 하지 않고 직접 입력도 허용한다. */
+@Composable
+private fun CapacitySection(
+    capacity: Int,
+    onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("최대 인원")
         Row(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .clip(RuleUpTheme.shapes.large)
+                    .clip(RuleUpTheme.shapes.small)
                     .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StepperButton("−") { onIntent(CreateChallengeIntent.SetCapacity(capacity - 1)) }
+            BasicTextField(
+                value = capacity.toString(),
+                onValueChange = { input ->
+                    input.filter(Char::isDigit).toIntOrNull()?.let {
+                        onIntent(CreateChallengeIntent.SetCapacity(it))
+                    }
+                },
+                textStyle = RuleUpTheme.typography.bodyBold.copy(color = RuleUpTheme.colors.textPrimary),
+                singleLine = true,
+            )
+            StepperButton("+") { onIntent(CreateChallengeIntent.SetCapacity(capacity + 1)) }
+        }
+    }
+}
+
+/**
+ * 최소 입장 티어. 상한은 **생성자 표시 티어**라 그 위는 고를 수 없다(서버도 `MIN_TIER_EXCEEDS_OWNER` 로 막는다).
+ * 슬라이더는 터치만으로 다루기 어려워 라벨을 직접 탭해도 선택되게 둔다.
+ */
+@Composable
+private fun MinTierSection(
+    state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val cap = state.ownerTierCap
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("최소 입장 티어") {
+            cap?.let {
+                SmallBadge("내 티어 ${it.label()}까지", RuleUpTheme.colors.surfaceVariant, RuleUpTheme.colors.textMuted)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Tier.entries.forEach { tier ->
+                val selectable = cap == null || tier.ordinal <= cap.ordinal
+                SelectableChip(
+                    text = tier.label(),
+                    selected = state.minTier == tier,
+                    enabled = selectable,
+                    onClick = { onIntent(CreateChallengeIntent.SetMinTier(tier)) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PeriodSection(
+    state: CreateChallengeState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("기간")
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RuleUpTheme.shapes.small)
+                    .background(RuleUpTheme.colors.surface)
+                    .singleClickable(onClick = onClick)
+                    .padding(horizontal = 14.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                "방장 포함 인원",
-                color = RuleUpTheme.colors.textSecondary,
+                text =
+                    if (state.period.start.isBlank()) {
+                        "기간 고르기"
+                    } else {
+                        "${ChallengeDates.formatMonthDay(state.period.start)} ~ " +
+                            ChallengeDates.formatMonthDay(state.period.end)
+                    },
+                color = RuleUpTheme.colors.textPrimary,
                 style = RuleUpTheme.typography.bodyMedium,
             )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                StepperButton(symbol = "−", enabled = count > CreateChallengeState.GROUP_PARTICIPANTS_MIN) {
-                    onIntent(CreateChallengeIntent.SetMaxParticipants(count - 1))
-                }
-                Text(
-                    "$count",
-                    color = RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.section,
-                )
-                StepperButton(symbol = "+", enabled = count < CreateChallengeState.GROUP_PARTICIPANTS_MAX) {
-                    onIntent(CreateChallengeIntent.SetMaxParticipants(count + 1))
-                }
-            }
+            Text("›", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.body)
         }
     }
 }
 
+/** 인증 방식. 자동 → 수동은 되지만 되돌릴 수 없다는 것을 미리 알린다. */
 @Composable
-private fun StepperButton(
-    symbol: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(32.dp)
-                .clip(CircleShape)
-                .background(if (enabled) RuleUpTheme.colors.brandSoft else RuleUpTheme.colors.surfaceVariant)
-                .then(if (enabled) Modifier.singleClickable(onClick = onClick) else Modifier),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            symbol,
-            color = if (enabled) RuleUpTheme.colors.brandStrong else RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.section,
-        )
-    }
-}
-
-@Composable
-private fun MannerTemperatureSection(
-    temperature: Int,
-    maxTemperature: Int,
-    onIntent: (CreateChallengeIntent) -> Unit,
-) {
-    // 드래그 중에는 로컬 값만 갱신하고 손을 뗄 때 한 번만 커밋한다.
-    var drag by remember(temperature) { mutableStateOf(temperature.toFloat()) }
-    val shown = drag.roundToInt()
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "참여 매너 온도") {
-            Row(
-                modifier =
-                    Modifier
-                        .height(18.dp)
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(RuleUpTheme.colors.brandSoft)
-                        .padding(horizontal = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("👥", style = RuleUpTheme.typography.micro)
-                Text(
-                    "그룹 전용",
-                    color = RuleUpTheme.colors.brandStrong,
-                    style = RuleUpTheme.typography.micro,
-                )
-            }
-        }
-
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RuleUpTheme.shapes.large)
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                        "최소 참여 기준",
-                        color = RuleUpTheme.colors.textSecondary,
-                        style = RuleUpTheme.typography.captionMedium,
-                    )
-                    Text(
-                        "내 매너 온도가 기준 이상이면 통과",
-                        color = RuleUpTheme.colors.textMuted,
-                        style = RuleUpTheme.typography.tiny,
-                    )
-                }
-                Row(verticalAlignment = Alignment.Bottom) {
-                    // 최저값은 "제한 없음"(기준 미설정)을 의미한다 — 생성 시 서버로 null 이 전송된다.
-                    val noLimit = shown <= CreateChallengeState.MANNER_MIN
-                    Text(
-                        if (noLimit) "제한 없음" else "$shown",
-                        color = RuleUpTheme.colors.brand,
-                        style = if (noLimit) RuleUpTheme.typography.numberM else RuleUpTheme.typography.numberL,
-                    )
-                    if (!noLimit) {
-                        Text(
-                            "℃",
-                            color = RuleUpTheme.colors.brand,
-                            style = RuleUpTheme.typography.section,
-                            modifier = Modifier.padding(bottom = 3.dp),
-                        )
-                    }
-                }
-            }
-
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Slider(
-                    value = drag,
-                    onValueChange = { drag = it },
-                    onValueChangeFinished = {
-                        onIntent(CreateChallengeIntent.SetMinMannerTemperature(shown))
-                    },
-                    valueRange =
-                        CreateChallengeState.MANNER_MIN.toFloat()..maxTemperature.toFloat(),
-                    colors =
-                        SliderDefaults.colors(
-                            thumbColor = RuleUpTheme.colors.brand,
-                            activeTrackColor = RuleUpTheme.colors.brand,
-                            inactiveTrackColor = RuleUpTheme.colors.surfaceVariant,
-                        ),
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        "${CreateChallengeState.MANNER_MIN}℃ (최저)",
-                        color = RuleUpTheme.colors.textMuted,
-                        style = RuleUpTheme.typography.tinyMedium,
-                    )
-                    Text(
-                        "$maxTemperature℃ (최고)",
-                        color = RuleUpTheme.colors.textMuted,
-                        style = RuleUpTheme.typography.tinyMedium,
-                    )
-                }
-            }
-
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(RuleUpTheme.colors.surfaceVariant)
-                        .padding(4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                mannerLevels.forEach { level ->
-                    val active = shown in level.range
-                    Box(
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .height(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(if (active) RuleUpTheme.colors.brand else level.background)
-                                .singleClickable {
-                                    onIntent(CreateChallengeIntent.SetMinMannerTemperature(level.representative))
-                                },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            level.label,
-                            color = if (active) Color.White else level.textColor,
-                            style = RuleUpTheme.typography.micro,
-                        )
-                    }
-                }
-            }
-
-            InfoNote(
-                emoji = "💡",
-                text = "기준이 높을수록 신뢰도 있는 멤버만 참여해요",
-                background = RuleUpTheme.colors.warningContainer,
-                textColor = RuleUpTheme.colors.warning,
-            )
-        }
-    }
-}
-
-@Composable
-private fun FrequencyAndPeriodSection(
+private fun VerificationSection(
     state: CreateChallengeState,
     onIntent: (CreateChallengeIntent) -> Unit,
-    onPeriodClick: () -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "빈도와 기간")
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RuleUpTheme.shapes.large)
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("🔁", style = RuleUpTheme.typography.body)
-                    Text(
-                        "반복 요일",
-                        color = RuleUpTheme.colors.textPrimary,
-                        style = RuleUpTheme.typography.smallBold,
-                    )
-                }
-                Text(
-                    "${state.repeatDays.size} / 7일",
-                    color = RuleUpTheme.colors.brand,
-                    style = RuleUpTheme.typography.captionBold,
-                )
-            }
-
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                RepeatDay.entries.forEach { day ->
-                    RepeatDayChip(
-                        day = day,
-                        selected = day in state.repeatDays,
-                        onClick = { onIntent(CreateChallengeIntent.ToggleRepeatDay(day)) },
-                    )
-                }
-            }
-
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .background(RuleUpTheme.colors.border),
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text("📅", style = RuleUpTheme.typography.body)
-                    Text(
-                        "기간",
-                        color = RuleUpTheme.colors.textPrimary,
-                        style = RuleUpTheme.typography.smallBold,
-                    )
-                }
-                Row(
-                    modifier =
-                        Modifier
-                            .height(32.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(RuleUpTheme.colors.brandSoft)
-                            .border(1.dp, RuleUpTheme.colors.brand, RoundedCornerShape(16.dp))
-                            .singleClickable(onClick = onPeriodClick)
-                            .padding(horizontal = 14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        ChallengeDates.durationLabel(state.durationDays),
-                        color = RuleUpTheme.colors.brandStrong,
-                        style = RuleUpTheme.typography.bodyBold,
-                    )
-                    Text("·", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.caption)
-                    Text(
-                        "${state.durationDays}일",
-                        color = RuleUpTheme.colors.brandStrong,
-                        style = RuleUpTheme.typography.captionMedium,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RepeatDayChip(
-    day: RepeatDay,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(38.dp)
-                .clip(RoundedCornerShape(19.dp))
-                .then(
-                    if (selected) {
-                        Modifier.background(RuleUpTheme.colors.brand)
-                    } else {
-                        Modifier
-                            .background(RuleUpTheme.colors.surface)
-                            .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(19.dp))
-                    },
-                ).singleClickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            day.label,
-            color = if (selected) Color.White else RuleUpTheme.colors.textMuted,
-            style = if (selected) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
-        )
-    }
-}
-
-/** AUTO/MANUAL 인증 방식 선택. AUTO 옵션이 없는 루틴이면 자동 인증 카드는 비활성. */
-@Composable
-private fun MethodSelector(
-    state: CreateChallengeState,
-    onIntent: (CreateChallengeIntent) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "인증 방식")
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            MethodCard(
-                modifier = Modifier.weight(1f),
-                emoji = "⚡",
-                title = "자동 인증",
-                caption = "센서·권한으로 자동 확인",
-                selected = state.selectedMethod == SelectedMethod.AUTO,
-                enabled = state.hasAutoOption,
-                onClick = { onIntent(CreateChallengeIntent.SelectMethod(SelectedMethod.AUTO)) },
-            )
-            MethodCard(
-                modifier = Modifier.weight(1f),
-                emoji = "✍️",
-                title = "수동 인증",
-                caption = "직접 체크",
-                selected = state.selectedMethod == SelectedMethod.MANUAL,
-                enabled = true,
-                onClick = { onIntent(CreateChallengeIntent.SelectMethod(SelectedMethod.MANUAL)) },
-            )
-        }
-        if (!state.hasAutoOption) {
-            InfoNote(
-                emoji = "ℹ️",
-                text = "이 루틴은 자동 인증을 지원하지 않아요",
-                background = RuleUpTheme.colors.surfaceVariant,
-                textColor = RuleUpTheme.colors.textSecondary,
-            )
-        }
-    }
-}
-
-@Composable
-private fun MethodCard(
-    emoji: String,
-    title: String,
-    caption: String,
-    selected: Boolean,
-    enabled: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
 ) {
-    Column(
-        modifier =
-            modifier
-                .height(96.dp)
-                .clip(RuleUpTheme.shapes.large)
-                .background(if (enabled) RuleUpTheme.colors.surface else RuleUpTheme.colors.surfaceVariant)
-                .then(
-                    if (selected) {
-                        Modifier.border(3.dp, RuleUpTheme.colors.brand, RuleUpTheme.shapes.large)
-                    } else {
-                        Modifier.border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    },
-                ).singleClickable(enabled = enabled, onClick = onClick)
-                .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
-        Text(emoji, fontSize = 24.sp)
-        Text(
-            title,
-            color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.bodyBold,
-        )
-        Text(caption, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.micro)
-    }
-}
-
-private fun VerificationType.label(): String =
-    when (this) {
-        VerificationType.PHONE -> "휴대폰 센서"
-        VerificationType.HEALTH_CONNECT -> "건강 데이터"
-        VerificationType.EXTERNAL -> "외부 서비스"
-        VerificationType.MANUAL -> "직접 체크"
-    }
-
-private fun SignalSource.label(): String =
-    when (this) {
-        SignalSource.GPS -> "위치(GPS)"
-        SignalSource.GEOFENCE -> "지오펜스"
-        SignalSource.PHOTO -> "사진"
-        SignalSource.GROUP_CHECK -> "그룹 체크"
-        SignalSource.UNKNOWN -> "기타"
-    }
-
-private fun WearableRequirement.label(): String =
-    when (this) {
-        WearableRequirement.NONE -> "불필요"
-        WearableRequirement.OPTIONAL -> "선택"
-        WearableRequirement.REQUIRED -> "필수"
-    }
-
-/** 선택된 인증 옵션의 상세(스냅샷) 안내 카드. */
-@Composable
-private fun VerificationSnapshotCard(
-    option: VerificationOption,
-    rationale: String?,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RuleUpTheme.shapes.large)
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large)
-                    .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "인증 상세",
-                    color = RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.bodyBold,
-                )
-                if (option.recommended) {
-                    SmallBadge(text = "추천", background = RuleUpTheme.colors.brand, textColor = Color.White)
-                }
-            }
-            SnapshotRow(label = "인증 수단", value = option.verificationType.label())
-            option.signalSource?.let { SnapshotRow(label = "신호원", value = it.label()) }
-            option.externalService?.let { SnapshotRow(label = "외부 서비스", value = it) }
-            SnapshotRow(label = "웨어러블", value = option.wearableRequirement.label())
-            if (option.requiredPermissions.isNotEmpty()) {
-                SnapshotRow(label = "필요 권한", value = option.requiredPermissions.joinToString(", "))
-            }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("인증 방식")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SelectableChip(
+                text = "자동 인증",
+                selected = state.isAuto,
+                enabled = state.canUseAuto && state.isAuto,
+                onClick = { onIntent(CreateChallengeIntent.SetVerificationType(VerificationType.AUTO)) },
+            )
+            SelectableChip(
+                text = "직접 체크",
+                selected = !state.isAuto,
+                onClick = { onIntent(CreateChallengeIntent.SetVerificationType(VerificationType.MANUAL)) },
+            )
         }
-        rationale?.takeIf { it.isNotBlank() }?.let {
-            InfoNote(
-                emoji = "💡",
-                text = it,
-                background = RuleUpPalette.Primary50,
-                textColor = RuleUpTheme.colors.textSlate,
+        if (state.isAuto) {
+            Text(
+                "직접 체크로 바꾸면 되돌릴 수 없어요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }
 }
 
-@Composable
-private fun SnapshotRow(
-    label: String,
-    value: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(label, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.caption)
-        Text(
-            value,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.smallBold,
-        )
-    }
-}
-
+/**
+ * 패널티. `score`·`groupShare` 는 **서버가 강제**하는 값이라 잠근 채로 보여준다(인지 목적).
+ * 고를 수 있는 건 감시자 통지 하나뿐이다.
+ */
 @Composable
 private fun PenaltySection(
     state: CreateChallengeState,
     onIntent: (CreateChallengeIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(text = "패널티")
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RuleUpTheme.shapes.large)
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.large),
-        ) {
-            PenaltyRow(
-                spec =
-                    PenaltyRowSpec(
-                        emoji = "🌡",
-                        tileBackground = RuleUpTheme.colors.dangerContainer,
-                        title = "매너 온도 차감",
-                        subtitle = "실패 1회당 −${state.mannerDeduction}℃",
-                        required = true,
-                    ),
-                checked = true,
-                // 필수 패널티라 끌 수 없다.
-                enabled = false,
-            )
-            PenaltyDivider()
-            PenaltyRow(
-                spec =
-                    PenaltyRowSpec(
-                        emoji = "📣",
-                        tileBackground = RuleUpTheme.colors.brandSoft,
-                        title = "SNS 공유",
-                        subtitle = "실패 시 친구에게 자동 공유",
-                        required = false,
-                    ),
-                checked = state.snsShareEnabled,
-                onCheckedChange = { onIntent(CreateChallengeIntent.SetSnsShareEnabled(it)) },
-            )
-            if (state.snsShareEnabled) {
-                SnsPhoneField(phone = state.snsPhone, onIntent = onIntent)
-            }
-            PenaltyDivider()
-            PenaltyRow(
-                spec =
-                    PenaltyRowSpec(
-                        emoji = "👥",
-                        tileBackground = RuleUpPalette.Primary50,
-                        title = "그룹 내 공유",
-                        subtitle = "그룹 멤버에게 결과 알림",
-                        required = true,
-                    ),
-                checked = state.groupShare,
-                onCheckedChange = { onIntent(CreateChallengeIntent.SetGroupShare(it)) },
-            )
-        }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        SectionLabel("실패했을 때")
+        ToggleRow(
+            label = "점수 차감",
+            checked = state.penalties.score,
+            enabled = false,
+            caption = "자동 인증 방은 항상 켜져 있어요",
+            onCheckedChange = {},
+        )
+        ToggleRow(
+            label = "같이 하는 사람에게 공유",
+            checked = state.penalties.groupShare,
+            enabled = false,
+            caption = "같이 하는 방은 항상 켜져 있어요",
+            onCheckedChange = {},
+        )
+        ToggleRow(
+            label = "감시자에게 알리기",
+            checked = state.penalties.watcher,
+            onCheckedChange = { onIntent(CreateChallengeIntent.SetWatcherPenalty(it)) },
+        )
     }
 }
 
 @Composable
-private fun PenaltyDivider() {
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(RuleUpTheme.colors.border),
-    )
-}
-
-/** [PenaltyRow] 의 정적 표시 정보. */
-private data class PenaltyRowSpec(
-    val emoji: String,
-    val tileBackground: Color,
-    val title: String,
-    val subtitle: String,
-    val required: Boolean,
-)
-
-@Composable
-private fun PenaltyRow(
-    spec: PenaltyRowSpec,
+private fun ToggleRow(
+    label: String,
     checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit = {},
+    caption: String? = null,
 ) {
     Row(
         modifier =
-            Modifier
+            modifier
                 .fillMaxWidth()
-                .height(64.dp)
-                .padding(horizontal = 14.dp),
+                .clip(RuleUpTheme.shapes.small)
+                .background(RuleUpTheme.colors.surface)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(spec.tileBackground),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(spec.emoji, style = RuleUpTheme.typography.section)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (!enabled) Text("🔒", style = RuleUpTheme.typography.caption)
+                Text(label, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
             }
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        spec.title,
-                        color = RuleUpTheme.colors.textPrimary,
-                        style = RuleUpTheme.typography.bodyBold,
-                    )
-                    if (spec.required) {
-                        SmallBadge(
-                            text = "필수",
-                            background = RuleUpTheme.colors.textMuted,
-                            textColor = Color.White,
-                        )
-                    } else {
-                        SmallBadge(
-                            text = "선택",
-                            background = RuleUpTheme.colors.surfaceVariant,
-                            textColor = RuleUpTheme.colors.textSecondary,
-                        )
-                    }
-                }
-                Text(spec.subtitle, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.caption)
+            caption?.let {
+                Text(it, color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.caption)
             }
         }
         GradientSwitch(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
@@ -1150,200 +539,63 @@ private fun PenaltyRow(
 }
 
 @Composable
-private fun SnsPhoneField(
-    phone: String,
-    onIntent: (CreateChallengeIntent) -> Unit,
+private fun SelectableChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("📱", style = RuleUpTheme.typography.caption)
-            Text(
-                "공유받을 전화번호",
-                color = RuleUpTheme.colors.textSlate,
-                style = RuleUpTheme.typography.captionBold,
-            )
-        }
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .clip(RuleUpTheme.shapes.small)
-                    .background(RuleUpTheme.colors.background)
-                    .border(2.dp, RuleUpTheme.colors.brand, RuleUpTheme.shapes.small)
-                    .padding(horizontal = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BasicTextField(
-                value = phone,
-                onValueChange = { onIntent(CreateChallengeIntent.SetSnsPhone(it)) },
-                singleLine = true,
-                textStyle =
-                    RuleUpTheme.typography.cardTitle.copy(color = RuleUpTheme.colors.textPrimary),
-                cursorBrush = SolidColor(RuleUpTheme.colors.brand),
-                modifier = Modifier.weight(1f),
-                decorationBox = { inner ->
-                    if (phone.isEmpty()) {
-                        Text("010-0000-0000", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.labelMedium)
-                    }
-                    inner()
-                },
-            )
-            // 단순 형식 검사 표시. 실제 번호 인증은 추후 서버 연동.
-            if (phone.length >= 12) {
-                Row(
-                    modifier =
-                        Modifier
-                            .height(20.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(RuleUpTheme.colors.successContainer)
-                            .padding(horizontal = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "✓",
-                        color = RuleUpTheme.colors.onSuccess,
-                        style = RuleUpTheme.typography.micro,
-                    )
-                    Text(
-                        "인증됨",
-                        color = RuleUpTheme.colors.onSuccess,
-                        style = RuleUpTheme.typography.micro,
-                    )
-                }
-            }
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("💡", style = RuleUpTheme.typography.tiny)
-            Text(
-                "실패 시 이 번호로 결과가 카카오톡으로 전송돼요",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.tiny,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ConfirmBottomBar(
-    isRecommending: Boolean,
-    isCreating: Boolean,
-    onIntent: (CreateChallengeIntent) -> Unit,
-) {
-    Row(
+    Box(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(RuleUpTheme.colors.surface)
-                .padding(20.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier
+                .clip(RuleUpTheme.shapes.chip)
+                .background(
+                    when {
+                        selected -> RuleUpTheme.colors.brand
+                        !enabled -> RuleUpTheme.colors.surfaceVariant
+                        else -> RuleUpTheme.colors.surface
+                    },
+                ).singleClickable(enabled = enabled, onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .height(56.dp)
-                    .clip(RuleUpTheme.shapes.card)
-                    .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card)
-                    .singleClickable(enabled = !isRecommending && !isCreating) {
-                        onIntent(CreateChallengeIntent.Recommend)
-                    },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                if (isRecommending) "추천 중..." else "다시 추천",
-                color = RuleUpTheme.colors.textPrimary,
-                style = RuleUpTheme.typography.bodyBold,
-            )
-        }
-        Row(
-            modifier =
-                Modifier
-                    .weight(2f)
-                    .height(56.dp)
-                    .clip(RuleUpTheme.shapes.card)
-                    .background(RuleUpTheme.colors.brand)
-                    .singleClickable(enabled = !isRecommending && !isCreating) {
-                        onIntent(CreateChallengeIntent.Create)
-                    },
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("✓", color = Color.White, style = RuleUpTheme.typography.cardTitle)
-            Text(
-                if (isCreating) "만드는 중..." else "이대로 만들기",
-                color = Color.White,
-                style = RuleUpTheme.typography.section,
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun ChallengeConfirmPreview() {
-    ChallengeFlowPreview {
-        ChallengeConfirmContent(
-            onIntent = {},
-            state =
-                CreateChallengeState.initial.copy(
-                    title = "매일 아침 6시 기상",
-                    description = "아침형 인간이 되어 하루를 길게 쓰는 습관을 만들어요",
-                    hasRecommendation = true,
-                    matched = true,
-                    participationType = ParticipationType.GROUP,
-                    repeatDays = listOf(RepeatDay.MON, RepeatDay.TUE, RepeatDay.WED, RepeatDay.THU, RepeatDay.FRI),
-                    startDate = "2026-06-01",
-                    selectedMethod = SelectedMethod.AUTO,
-                    options =
-                        listOf(
-                            VerificationOption(
-                                method = SelectedMethod.AUTO,
-                                recommended = true,
-                                verificationType = VerificationType.PHONE,
-                                signalSource = SignalSource.GPS,
-                                wearableRequirement = WearableRequirement.OPTIONAL,
-                                externalService = null,
-                                requiredPermissions = listOf("LOCATION"),
-                            ),
-                            VerificationOption(
-                                method = SelectedMethod.MANUAL,
-                                recommended = false,
-                                verificationType = VerificationType.MANUAL,
-                                signalSource = null,
-                                wearableRequirement = WearableRequirement.NONE,
-                                externalService = null,
-                                requiredPermissions = emptyList(),
-                            ),
-                        ),
-                    params =
-                        listOf(
-                            ParamSpec(
-                                key = "distance_km",
-                                kind = ParamKind.NUMBER,
-                                value = ParamValue.Num(5.0),
-                                defaultValue = ParamValue.Num(3.0),
-                                unit = "km",
-                                min = 1.0,
-                                max = 42.0,
-                            ),
-                        ),
-                    rationale = "지정 장소에서 30분 이상 머무르면 자동으로 인증돼요",
-                    snsShareEnabled = true,
-                    snsPhone = "010-1234-5678",
-                ),
+        Text(
+            text = text,
+            color =
+                when {
+                    selected -> RuleUpTheme.colors.onSuccess
+                    !enabled -> RuleUpTheme.colors.textMuted
+                    else -> RuleUpTheme.colors.textSecondary
+                },
+            style = RuleUpTheme.typography.smallMedium,
         )
     }
 }
+
+@Composable
+private fun StepperButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+) {
+    Box(
+        modifier =
+            modifier
+                .size(32.dp)
+                .clip(RuleUpTheme.shapes.pill)
+                .background(RuleUpTheme.colors.surfaceVariant)
+                .singleClickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyBold)
+    }
+}
+
+private fun Tier.label(): String =
+    when (this) {
+        Tier.BRONZE -> "브론즈"
+        Tier.SILVER -> "실버"
+        Tier.GOLD -> "골드"
+        Tier.DIAMOND -> "다이아"
+        Tier.RUBY -> "루비"
+    }

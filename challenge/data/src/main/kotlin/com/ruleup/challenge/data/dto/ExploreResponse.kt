@@ -1,11 +1,11 @@
 package com.ruleup.challenge.data.dto
 
 import com.ruleup.challenge.domain.entity.ChallengeCategoryCount
+import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ExploreChallenge
 import com.ruleup.challenge.domain.entity.ExploreResult
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.SelectedMethod
 import com.ruleup.challenge.domain.entity.TrendingChallenge
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
@@ -154,8 +154,8 @@ internal fun ExploreChallengeResponse.toDomain(): ExploreChallenge =
         challengeId = challengeId.requireField("challengeId"),
         title = title.requireField("title"),
         category = Category.fromValue(category.orEmpty()),
-        participationType = ParticipationType.fromValue(participationType) ?: ParticipationType.SOLO,
-        verificationMethod = SelectedMethod.fromValue(verificationType) ?: SelectedMethod.MANUAL,
+        mode = ChallengeMode.fromValue(participationType) ?: ChallengeMode.GROUP,
+        verificationType = VerificationType.fromValue(verificationType) ?: VerificationType.MANUAL,
         participantCount = participantCount ?: 0,
         completionRate = completionRate,
         successRate = successFailRatio?.successRate,
