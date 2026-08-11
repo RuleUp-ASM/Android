@@ -94,8 +94,8 @@ class RecordingSetupNotifier : SetupNotifier {
     data class Call(
         val challengeId: String,
         val title: String,
-        val requiredPermissions: List<String>,
-        val isAuto: Boolean,
+        val verification: VerificationConfig,
+        val personalSetupRequired: Boolean,
     )
 
     var lastCall: Call? = null
@@ -104,10 +104,10 @@ class RecordingSetupNotifier : SetupNotifier {
     override fun notifyAfterCreate(
         challengeId: String,
         title: String,
-        requiredPermissions: List<String>,
-        isAuto: Boolean,
+        verification: VerificationConfig,
+        personalSetupRequired: Boolean,
     ) {
-        lastCall = Call(challengeId, title, requiredPermissions, isAuto)
+        lastCall = Call(challengeId, title, verification, personalSetupRequired)
     }
 }
 
@@ -139,6 +139,7 @@ fun draft(
 fun createdChallenge(
     challengeId: String = "c1",
     verification: VerificationConfig = verification(),
+    personalSetupRequired: Boolean = false,
 ) = CreatedChallenge(
     challengeId = challengeId,
     status = ChallengeStatus.UPCOMING,
@@ -149,7 +150,7 @@ fun createdChallenge(
             image = ModerationState.NONE,
         ),
     verification = verification,
-    personalSetupRequired = false,
+    personalSetupRequired = personalSetupRequired,
     createdAt = "2026-08-11T10:00:00+09:00",
 )
 
