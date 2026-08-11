@@ -37,18 +37,16 @@ class CreateChallengeUseCaseTest {
         }
 
     @Test
-    fun `자동 인증 챌린지는 필요한 권한과 함께 셋업 알림을 요청한다`() =
+    fun `셋업 알림에 인증 스냅샷을 그대로 넘긴다`() =
         runBlocking {
-            val created =
-                createdChallenge(
-                    challengeId = "c1",
-                    verification =
-                        verification(
-                            type = VerificationType.AUTO,
-                            method = VerificationMethod.WAKE,
-                            requiredPermissions = listOf("PACKAGE_USAGE_STATS"),
-                        ),
+            // 무엇을 등록해야 하는지는 method 가 결정한다 — 알림이 장소·앱을 가르려면 이 값이 필요하다.
+            val snapshot =
+                verification(
+                    type = VerificationType.AUTO,
+                    method = VerificationMethod.GPS_PRESENCE,
+                    requiredPermissions = listOf("ACCESS_FINE_LOCATION"),
                 )
+            val created = createdChallenge(challengeId = "c1", verification = snapshot, personalSetupRequired = true)
             val notifier = RecordingSetupNotifier()
 
             CreateChallengeUseCase(FakeChallengeRepository(created = created), notifier)(
@@ -60,13 +58,14 @@ class CreateChallengeUseCaseTest {
             assertEquals("c1", call.challengeId)
             // 생성 응답에 제목이 없으므로 방금 보낸 요청값을 쓴다.
             assertEquals("달리기", call.title)
-            assertTrue(call.isAuto)
-            assertEquals(listOf("PACKAGE_USAGE_STATS"), call.requiredPermissions)
+            assertEquals(snapshot, call.verification)
+            assertTrue(call.personalSetupRequired)
         }
 
     @Test
-    fun `수동 인증 챌린지는 isAuto false 와 빈 권한으로 셋업 알림을 요청한다`() =
+    fun `서버가 개인 설정 불필요라고 하면 그대로 전달한다`() =
         runBlocking {
+            // 알림을 띄울지 말지는 구현이 정하지만, 서버 판단이 유실되면 정할 수가 없다.
             val notifier = RecordingSetupNotifier()
 
             CreateChallengeUseCase(FakeChallengeRepository(created = createdChallenge()), notifier)(
@@ -74,8 +73,6 @@ class CreateChallengeUseCaseTest {
                 "key-1",
             )
 
-            val call = notifier.lastCall!!
-            assertFalse(call.isAuto)
-            assertTrue(call.requiredPermissions.isEmpty())
+            assertFalse(notifier.lastCall!!.personalSetupRequired)
         }
 }

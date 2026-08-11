@@ -2,7 +2,6 @@ package com.ruleup.challenge.domain.usecase
 
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
-import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.SetupNotifier
 import javax.inject.Inject
@@ -31,8 +30,8 @@ class CreateChallengeUseCase
                 challengeId = created.challengeId,
                 // 생성 응답은 슬림해 제목이 없다 — 방금 보낸 값이 곧 최종값이라 그대로 쓴다.
                 title = command.title,
-                requiredPermissions = created.verification.requiredPermissions,
-                isAuto = created.verification.type == VerificationType.AUTO,
+                verification = created.verification,
+                personalSetupRequired = created.personalSetupRequired,
             )
             return created
         }
