@@ -12,13 +12,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -33,6 +31,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,28 +81,35 @@ private fun HomeContent(
                     .statusBarsPadding(),
         ) {
             HomeHeader()
-            LazyColumn(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                item { WeekStreakCard() }
-                item {
-                    FilterTabs(
-                        filter = state.filter,
-                        activeCount = state.activeCount,
-                        todayCount = state.todayCount,
-                        onSelect = { onIntent(HomeIntent.SelectFilter(it)) },
-                    )
-                }
-                val cards = state.visibleChallenges
-                if (cards.isEmpty() && !state.isLoading) {
-                    item { EmptyChallenges() }
-                } else {
-                    items(cards, key = { it.challengeId }) { card ->
+
+            // 챌린지가 하나도 없으면 **화면 전체를 빈 상태로** 바꾼다(Figma 1134:2033).
+            // 스트릭 카드와 필터 탭을 남겨 두면 "0/0" 을 채운 껍데기만 보여주는 꼴이라,
+            // 처음 들어온 사람이 무엇부터 해야 할지 알 수 없다.
+            if (state.isEmpty) {
+                HomeEmptyState(
+                    modifier = Modifier.weight(1f),
+                    onExplore = { onIntent(HomeIntent.OpenExplore) },
+                    onCreate = { onIntent(HomeIntent.CreateChallenge) },
+                )
+            } else {
+                LazyColumn(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    item { WeekStreakCard() }
+                    item {
+                        FilterTabs(
+                            filter = state.filter,
+                            activeCount = state.activeCount,
+                            todayCount = state.todayCount,
+                            onSelect = { onIntent(HomeIntent.SelectFilter(it)) },
+                        )
+                    }
+                    items(state.visibleChallenges, key = { it.challengeId }) { card ->
                         ChallengeCard(card = card, onClick = { onIntent(HomeIntent.OpenChallenge(card.challengeId)) })
                     }
                 }
@@ -113,91 +119,150 @@ private fun HomeContent(
         RuleUpBottomTabBar(
             selected = RuleUpBottomTab.HOME,
             selectedColor = RuleUpTheme.colors.brand,
+            onCreateClick = { onIntent(HomeIntent.CreateChallenge) },
             onTabClick = { tab ->
                 when (tab) {
-                    RuleUpBottomTab.CHALLENGE -> onIntent(HomeIntent.OpenExplore)
+                    RuleUpBottomTab.EXPLORE -> onIntent(HomeIntent.OpenExplore)
                     RuleUpBottomTab.MY -> onIntent(HomeIntent.OpenMy)
-                    else -> Unit
+                    // TODO(#269): "내 챌린지" 목적지 미정 — 화면도 라우트 등록도 아직 없다.
+                    RuleUpBottomTab.CHALLENGE -> Unit
+                    RuleUpBottomTab.HOME -> Unit
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter),
         )
+    }
+}
 
-        // FAB · 챌린지 추가. 하단 탭 위에 떠 있도록 오프셋.
+/**
+ * 홈 빈 상태 (Figma 1134:2051).
+ *
+ * 다음 행동을 둘로만 좁힌다 — 남의 방에 들어가거나, 내가 만들거나. 둘 중 뭘 해도 홈이 채워진다.
+ */
+@Composable
+private fun HomeEmptyState(
+    onExplore: () -> Unit,
+    onCreate: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 36.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
         Box(
             modifier =
                 Modifier
-                    .align(Alignment.BottomEnd)
-                    .navigationBarsPadding()
-                    .padding(end = 20.dp, bottom = 84.dp)
                     .size(56.dp)
-                    .shadow(10.dp, CircleShape, clip = false)
-                    .clip(CircleShape)
-                    .background(RuleUpTheme.colors.brand)
-                    .singleClickable { onIntent(HomeIntent.CreateChallenge) },
+                    .clip(RoundedCornerShape(19.dp))
+                    .background(RuleUpTheme.colors.brandSoft),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_plus),
-                contentDescription = "챌린지 추가",
-                tint = Color.White,
-                modifier = Modifier.size(26.dp),
+                painter = painterResource(R.drawable.ic_star),
+                contentDescription = null,
+                tint = RuleUpTheme.colors.brand,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+        Spacer(Modifier.height(14.dp))
+        Text(
+            text = "첫 습관을 시작해 볼까요?",
+            color = RuleUpTheme.colors.textPrimary,
+            style = RuleUpTheme.typography.title,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(14.dp))
+        Text(
+            text = "함께할 방을 찾거나\n직접 만들 수 있어요",
+            color = RuleUpTheme.colors.textSecondary,
+            style = RuleUpTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(20.dp))
+        EmptyActionButton(
+            text = "챌린지 둘러보기",
+            background = RuleUpTheme.colors.brand,
+            textColor = Color.White,
+            onClick = onExplore,
+        )
+        Spacer(Modifier.height(8.dp))
+        EmptyActionButton(
+            text = "직접 만들기",
+            background = RuleUpTheme.colors.surface,
+            textColor = RuleUpTheme.colors.textPrimary,
+            bordered = true,
+            onClick = onCreate,
+        )
+    }
+}
+
+@Composable
+private fun EmptyActionButton(
+    text: String,
+    background: Color,
+    textColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    bordered: Boolean = false,
+) {
+    Box(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(background)
+                .let { base ->
+                    if (bordered) base.border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp)) else base
+                }.singleClickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = text, color = textColor, style = RuleUpTheme.typography.cardTitle)
+    }
+}
+
+/** 홈 상단 (Figma 1134:2045). 오늘 날짜 + 알림. 인사말 대신 날짜를 두면 "오늘 뭘 했나"로 시선이 간다. */
+@Composable
+private fun HomeHeader() {
+    val today = remember { LocalDate.now() }
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .padding(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = today.headerLabel(),
+            color = RuleUpTheme.colors.textPrimary,
+            style = RuleUpTheme.typography.numberM,
+        )
+        Box(
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(RuleUpTheme.colors.surface)
+                    .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(12.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_bell),
+                contentDescription = "알림",
+                tint = RuleUpTheme.colors.textSecondary,
+                modifier = Modifier.size(16.dp),
             )
         }
     }
 }
 
-@Composable
-private fun HomeHeader() {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(RuleUpTheme.colors.surface)
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = "안녕하세요 👋",
-                color = RuleUpTheme.colors.textPrimary,
-                style = RuleUpTheme.typography.section,
-            )
-            Text(
-                text = "오늘도 함께 해볼까요?",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.caption,
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(RuleUpTheme.colors.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_bell),
-                    contentDescription = "알림",
-                    tint = RuleUpTheme.colors.textSecondary,
-                    modifier = Modifier.size(18.dp),
-                )
-            }
-            Box(
-                modifier =
-                    Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(AvatarGradient)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = "R", color = Color.White, style = RuleUpTheme.typography.cardTitle)
-            }
-        }
-    }
+/** "8월 3일 월요일". 연도는 빼고 오늘만 읽히게 둔다. */
+private fun LocalDate.headerLabel(): String {
+    val weekday = listOf("월", "화", "수", "목", "금", "토", "일")[dayOfWeek.ordinal]
+    return "${monthValue}월 ${dayOfMonth}일 ${weekday}요일"
 }
 
 @Composable

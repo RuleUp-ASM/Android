@@ -39,6 +39,10 @@ data class HomeState(
     val challenges: List<HomeChallengeUi>,
     val filter: HomeFilter,
 ) : UiState {
+    /** 챌린지가 하나도 없는 상태. 로딩 중에는 빈 상태를 띄우지 않는다 — 곧 채워질 화면에 "없어요"가 스쳐 지나간다. */
+    val isEmpty: Boolean
+        get() = !isLoading && challenges.isEmpty()
+
     /** 진행 중 개수. */
     val activeCount: Int get() = challenges.size
 

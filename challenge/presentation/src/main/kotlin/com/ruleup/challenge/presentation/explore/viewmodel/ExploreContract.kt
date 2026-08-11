@@ -38,6 +38,9 @@ sealed interface ExploreIntent : MviIntent {
 
     /** 하단 탭 "마이". */
     data object OpenMy : ExploreIntent
+
+    /** 하단 탭 가운데 생성 버튼. */
+    data object CreateChallenge : ExploreIntent
 }
 
 /**
