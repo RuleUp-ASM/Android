@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,6 +46,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
@@ -60,6 +62,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
+import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
@@ -309,7 +312,7 @@ private fun ChallengeDetailContent(
 
         // 하단 고정 CTA. 상세 로딩 완료 후에만 활성화하고, 이미 참여 중인 방(멤버)에서는 숨긴다.
         if (state.detail != null && state.room == null) {
-            Box(
+            Column(
                 modifier =
                     Modifier
                         .align(Alignment.BottomCenter)
@@ -317,13 +320,52 @@ private fun ChallengeDetailContent(
                         .background(RuleUpTheme.colors.surface)
                         .navigationBarsPadding()
                         .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                RuleUpPrimaryButton(
-                    text = ctaLabel,
-                    onClick = onCta,
-                )
+                // 복제는 공개 그룹만 가능하다 — 불가능하면 눌러보게 두지 않고 사전 비활성한다.
+                if (state.detail.cloneable) {
+                    CloneButton(
+                        isCloning = state.isCloning,
+                        enabled = state.canClone,
+                        onClick = { onIntent(ChallengeDetailIntent.CloneChallenge) },
+                    )
+                }
+                // 비공개 방은 초대 링크가 유일한 입장 경로라 참여 버튼 자체를 노출하지 않는다.
+                if (state.hideJoinButton) {
+                    Text(
+                        text = "초대 링크로만 들어올 수 있는 챌린지예요",
+                        color = RuleUpTheme.colors.textSecondary,
+                        style = RuleUpTheme.typography.small,
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center,
+                    )
+                } else {
+                    RuleUpPrimaryButton(
+                        text = if (state.isJoining) "참여하는 중…" else ctaLabel,
+                        enabled = !state.isJoining,
+                        onClick = onCta,
+                    )
+                }
             }
         }
+    }
+
+    state.joinBlock?.let { block ->
+        JoinBlockedSheet(
+            block = block,
+            myTier =
+                state.detail
+                    ?.gate
+                    ?.myDisplayTier
+                    ?.value,
+            requiredTier =
+                state.detail
+                    ?.gate
+                    ?.minTier
+                    ?.value,
+            onAction = { onIntent(ChallengeDetailIntent.FollowJoinBlockAction) },
+            onDismiss = { onIntent(ChallengeDetailIntent.DismissJoinBlock) },
+        )
     }
 
     when (confirmAction) {
@@ -556,3 +598,109 @@ private fun permissionLabel(token: String): String =
         "USAGE", "USAGE_STATS", "PACKAGE_USAGE_STATS" -> "사용 기록 접근"
         else -> token
     }
+
+/** "이 템플릿으로 만들기" — 복제 초안을 만들어 생성 확인 화면으로 보낸다. */
+@Composable
+private fun CloneButton(
+    isCloning: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RuleUpTheme.shapes.medium)
+                .background(RuleUpTheme.colors.brandSoft)
+                .singleClickable(enabled = enabled, onClick = onClick)
+                .padding(vertical = 13.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = if (isCloning) "초안을 만드는 중…" else "이 템플릿으로 만들기",
+            color = RuleUpTheme.colors.brand,
+            style = RuleUpTheme.typography.cardTitle,
+        )
+    }
+}
+
+/**
+ * 가입 차단 안내 (명세 409 `JOIN_BLOCKED` reason 8종).
+ *
+ * 사유마다 문구와 다음 행동이 다르다. **탈퇴·강퇴를 구분하는 문구는 쓰지 않고**(REJOIN_COOLDOWN),
+ * 차단 사유도 설명하지 않는다(BANNED) — 둘 다 알려서 얻는 것보다 잃는 게 크다.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun JoinBlockedSheet(
+    block: JoinBlock,
+    myTier: String?,
+    requiredTier: String?,
+    onAction: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val (title, body) =
+        when (block.reason) {
+            JoinBlockReason.REJOIN_COOLDOWN ->
+                "아직 다시 들어올 수 없어요" to
+                    (block.rejoinAvailableAt?.take(10)?.let { "$it 부터 다시 참여할 수 있어요" } ?: "조금 뒤에 다시 시도해 주세요")
+
+            JoinBlockReason.FREE_LIMIT ->
+                "동시에 3개까지 참여할 수 있어요" to "참여 중인 챌린지를 정리하면 새로 들어올 수 있어요"
+
+            JoinBlockReason.FULL ->
+                "정원이 찼어요" to "자리가 나면 다시 참여할 수 있어요"
+
+            JoinBlockReason.TIER_GATE ->
+                "티어 조건을 만족하지 않아요" to
+                    "필요한 티어 ${requiredTier ?: "-"} · 내 티어 ${myTier ?: "-"}"
+
+            JoinBlockReason.BANNED ->
+                "이 챌린지에는 참여할 수 없어요" to "자세한 내용은 안내드릴 수 없어요"
+
+            JoinBlockReason.CHALLENGE_COMPLETED ->
+                "이미 끝난 챌린지예요" to "비슷한 챌린지를 찾아볼까요?"
+
+            else ->
+                "지금은 참여할 수 없어요" to "잠시 후 다시 시도해 주세요"
+        }
+    val actionLabel =
+        when (block.reason) {
+            JoinBlockReason.FREE_LIMIT -> "참여 중인 챌린지 보기"
+            JoinBlockReason.TIER_GATE -> "내 티어 보기"
+            JoinBlockReason.CHALLENGE_COMPLETED -> "다른 챌린지 찾기"
+            else -> null
+        }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = RuleUpTheme.colors.surface,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(text = title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.section)
+            Text(text = body, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
+            Spacer(Modifier.height(6.dp))
+            if (actionLabel != null) {
+                RuleUpPrimaryButton(text = actionLabel, onClick = onAction)
+            }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .singleClickable(onClick = onDismiss)
+                        .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = "닫기", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.bodyMedium)
+            }
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
