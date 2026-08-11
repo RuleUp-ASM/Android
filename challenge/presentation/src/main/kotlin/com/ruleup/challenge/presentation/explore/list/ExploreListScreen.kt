@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +54,9 @@ import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
@@ -61,6 +65,9 @@ private const val DDAY_URGENT_THRESHOLD = 7L
 
 // 다음 페이지 프리페치를 시작할 하단 잔여 아이템 수.
 private const val LOAD_MORE_PREFETCH = 3
+
+// 카드 노출로 인정하는 최소 체류 시간(기능 스펙 9번 — 제안값이라 데이터팀 합의 후 조정).
+private const val IMPRESSION_DWELL_MS = 1_000L
 
 /** 챌린지 둘러보기(Figma 02 · 챌린지 둘러보기). 필터(AND) + 정렬 7종 + 커서 무한 스크롤. */
 @Composable
@@ -308,6 +315,33 @@ private fun ChallengeList(
     val currentOnIntent by rememberUpdatedState(onIntent)
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) currentOnIntent(ExploreListIntent.LoadMore)
+    }
+
+    /*
+     * 카드 노출 로깅. 기준은 **뷰포트 50% 이상 · 1초 이상**이다(기능 스펙 9번).
+     *
+     * collectLatest 가 핵심이다 — 보이는 카드 집합이 1초 안에 바뀌면 직전 대기가 취소되므로,
+     * 빠르게 스크롤해 지나간 카드는 노출로 세지 않는다. 세션 내 중복 제거는 ViewModel 이 한다.
+     */
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            val info = listState.layoutInfo
+            val viewportStart = info.viewportStartOffset
+            val viewportEnd = info.viewportEndOffset
+            info.visibleItemsInfo
+                .filter { item ->
+                    if (item.size <= 0) return@filter false
+                    val visible =
+                        (minOf(item.offset + item.size, viewportEnd) - maxOf(item.offset, viewportStart))
+                            .coerceAtLeast(0)
+                    visible * 2 >= item.size
+                }.mapNotNull { it.key as? String }
+                .toSet()
+        }.distinctUntilChanged()
+            .collectLatest { visibleKeys ->
+                delay(IMPRESSION_DWELL_MS)
+                visibleKeys.forEach { currentOnIntent(ExploreListIntent.CardImpression(it)) }
+            }
     }
 
     when {

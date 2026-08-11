@@ -2,6 +2,7 @@ package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.RefreshedSession
+import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import kotlinx.coroutines.runBlocking
@@ -18,7 +19,7 @@ class AutoLoginUseCaseTest {
             val auth = FakeAuthRepository()
             val tokens = FakeTokenRepository(refreshToken = null)
 
-            val result = AutoLoginUseCase(auth, tokens)()
+            val result = AutoLoginUseCase(auth, tokens, testObservability())()
 
             assertFalse(result)
             assertNull(auth.refreshCalledWith)
@@ -33,7 +34,7 @@ class AutoLoginUseCaseTest {
             val auth = FakeAuthRepository().apply { refreshResult = RefreshedSession(newToken, userId = "u-1") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
-            val result = AutoLoginUseCase(auth, tokens)()
+            val result = AutoLoginUseCase(auth, tokens, testObservability())()
 
             assertTrue(result)
             assertEquals(newToken, tokens.savedToken)
@@ -52,7 +53,7 @@ class AutoLoginUseCaseTest {
                 }
             val tokens = FakeTokenRepository(refreshToken = "r1").apply { savedUserId = "u-old" }
 
-            AutoLoginUseCase(auth, tokens)()
+            AutoLoginUseCase(auth, tokens, testObservability())()
 
             assertEquals("u-old", tokens.savedUserId)
         }
@@ -63,7 +64,7 @@ class AutoLoginUseCaseTest {
             val auth = FakeAuthRepository().apply { refreshError = RuntimeException("expired") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
-            val result = AutoLoginUseCase(auth, tokens)()
+            val result = AutoLoginUseCase(auth, tokens, testObservability())()
 
             assertFalse(result)
             assertTrue(tokens.cleared)

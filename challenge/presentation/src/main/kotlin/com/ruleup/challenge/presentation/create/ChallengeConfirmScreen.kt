@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
@@ -36,6 +37,7 @@ import com.ruleup.challenge.presentation.create.component.SmallBadge
 import com.ruleup.challenge.presentation.create.component.rememberChallengeImagePicker
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
+import com.ruleup.challenge.presentation.create.viewmodel.TextEditField
 import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
@@ -155,6 +157,7 @@ private fun TitleSection(
         BoxedTextField(
             value = state.title,
             onValueChange = { onIntent(CreateChallengeIntent.SetTitle(it)) },
+            onFocusLeave = { onIntent(CreateChallengeIntent.ConfirmTextEdit(TextEditField.TITLE)) },
         )
     }
 }
@@ -175,6 +178,7 @@ private fun DescriptionSection(
             value = state.description,
             onValueChange = { onIntent(CreateChallengeIntent.SetDescription(it)) },
             minHeight = 88.dp,
+            onFocusLeave = { onIntent(CreateChallengeIntent.ConfirmTextEdit(TextEditField.DESCRIPTION)) },
         )
     }
 }
@@ -185,7 +189,10 @@ private fun BoxedTextField(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     minHeight: androidx.compose.ui.unit.Dp = 48.dp,
+    onFocusLeave: () -> Unit = {},
 ) {
+    // 포커스가 빠지는 순간을 잡는다 — 타이핑마다 수정 로그를 보내지 않기 위해서다.
+    var hadFocus by remember { mutableStateOf(false) }
     Box(
         modifier =
             modifier
@@ -198,7 +205,15 @@ private fun BoxedTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier.fillMaxWidth().onFocusChanged { focus ->
+                    if (focus.isFocused) {
+                        hadFocus = true
+                    } else if (hadFocus) {
+                        hadFocus = false
+                        onFocusLeave()
+                    }
+                },
             textStyle = RuleUpTheme.typography.body.copy(color = RuleUpTheme.colors.textPrimary),
         )
     }

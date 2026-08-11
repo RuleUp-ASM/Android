@@ -11,6 +11,10 @@ import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.toEntries
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
+import com.ruleup.challenge.domain.observability.ChallengeEvents
+import com.ruleup.challenge.domain.observability.CreateEntry
+import com.ruleup.challenge.domain.observability.CreatePath
+import com.ruleup.challenge.domain.observability.DraftField
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
 import com.ruleup.challenge.domain.usecase.CreateDraftFromTemplateUseCase
@@ -20,6 +24,8 @@ import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.event.Channel
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -50,12 +56,21 @@ class CreateChallengeViewModel
         private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
+        private val observability: Observability,
     ) : MviViewModel<CreateChallengeIntent, CreateChallengeState, CreateChallengeReducerEvent, CreateChallengeEffect>(
             CreateChallengeState.initial,
         ) {
         override fun onIntent(intent: CreateChallengeIntent) {
             when (intent) {
-                CreateChallengeIntent.Load -> loadTemplates()
+                CreateChallengeIntent.Load -> {
+                    // 생성 전환율의 분모. 프로그래매틱 재진입에서 중복 전송되지 않게 1회로 잠근다.
+                    if (!createStartLogged) {
+                        createStartLogged = true
+                        // TODO(entry): 진입점(홈·목록 빈 상태·탐색 빈 결과) 구분은 라우트 인자 확정 후 채운다.
+                        observability.log(Channel.BUSINESS) { ChallengeEvents.createStart(CreateEntry.UNKNOWN) }
+                    }
+                    loadTemplates()
+                }
 
                 CreateChallengeIntent.RetryTemplates -> loadTemplates()
 
@@ -74,33 +89,58 @@ class CreateChallengeViewModel
                 is CreateChallengeIntent.SetDescription ->
                     dispatch(CreateChallengeReducerEvent.DescriptionEntered(intent.description))
 
-                is CreateChallengeIntent.SetCoverImage ->
+                is CreateChallengeIntent.SetCoverImage -> {
+                    logDraftEdit(DraftField.IMAGE)
                     dispatch(CreateChallengeReducerEvent.CoverImageSelected(intent.uri))
+                }
 
-                is CreateChallengeIntent.SetMode ->
+                is CreateChallengeIntent.SetMode -> {
+                    if (intent.mode != currentState.original?.mode) logDraftEdit(DraftField.MODE)
                     dispatch(CreateChallengeReducerEvent.ModeSelected(intent.mode))
+                }
 
-                is CreateChallengeIntent.SetVisibility ->
+                is CreateChallengeIntent.SetVisibility -> {
+                    if (intent.visibility != currentState.original?.visibility) logDraftEdit(DraftField.VISIBILITY)
                     dispatch(CreateChallengeReducerEvent.VisibilitySelected(intent.visibility))
+                }
 
-                is CreateChallengeIntent.SetRankingVisible ->
+                is CreateChallengeIntent.SetRankingVisible -> {
+                    if (intent.visible != currentState.original?.rankingVisible) logDraftEdit(DraftField.RANKING_VISIBLE)
                     dispatch(CreateChallengeReducerEvent.RankingVisibleChanged(intent.visible))
+                }
 
-                is CreateChallengeIntent.SetCapacity ->
+                is CreateChallengeIntent.SetCapacity -> {
+                    if (intent.capacity != currentState.original?.capacity) logDraftEdit(DraftField.CAPACITY)
                     dispatch(CreateChallengeReducerEvent.CapacityChanged(intent.capacity))
+                }
 
-                is CreateChallengeIntent.SetMinTier ->
+                is CreateChallengeIntent.SetMinTier -> {
+                    if (intent.tier != currentState.original?.minTier) logDraftEdit(DraftField.MIN_TIER)
                     dispatch(CreateChallengeReducerEvent.MinTierChanged(intent.tier))
+                }
 
-                is CreateChallengeIntent.SetPeriod -> setPeriod(intent.start, intent.end)
+                is CreateChallengeIntent.SetPeriod -> {
+                    val origin = currentState.original?.period
+                    if (intent.start != origin?.start || intent.end != origin.end) logDraftEdit(DraftField.PERIOD)
+                    setPeriod(intent.start, intent.end)
+                }
 
-                is CreateChallengeIntent.EditParam ->
+                is CreateChallengeIntent.EditParam -> {
+                    val origin =
+                        currentState.original
+                            ?.params
+                            ?.firstOrNull { it.key == intent.key }
+                            ?.value
+                    if (intent.value != origin) logDraftEdit(DraftField.PARAMS)
                     dispatch(CreateChallengeReducerEvent.ParamEdited(intent.key, intent.value))
+                }
 
                 is CreateChallengeIntent.SetVerificationType -> setVerificationType(intent.type)
 
-                is CreateChallengeIntent.SetWatcherPenalty ->
+                is CreateChallengeIntent.SetWatcherPenalty -> {
+                    if (intent.enabled != currentState.original?.penalties?.watcher) logDraftEdit(DraftField.PENALTIES)
                     dispatch(CreateChallengeReducerEvent.WatcherPenaltyChanged(intent.enabled))
+                }
 
                 is CreateChallengeIntent.PermissionsResult -> {
                     dispatch(CreateChallengeReducerEvent.PermissionsGranted(intent.granted))
@@ -108,6 +148,8 @@ class CreateChallengeViewModel
                     // 미허용은 첫 판정일 전까지 인증 설정에서 다시 받을 수 있다.
                     if (currentState.createdChallengeId != null) goHome()
                 }
+
+                is CreateChallengeIntent.ConfirmTextEdit -> confirmTextEdit(intent.field)
 
                 CreateChallengeIntent.Create -> create()
             }
@@ -288,6 +330,7 @@ class CreateChallengeViewModel
         private fun submitDescription() {
             val state = currentState
             if (!state.canSubmitDescription) return
+            observability.log(Channel.BUSINESS) { ChallengeEvents.createPathSelect(CreatePath.PROMPT) }
             draftJob =
                 viewModelScope.launch {
                     dispatch(CreateChallengeReducerEvent.Drafting)
@@ -346,6 +389,7 @@ class CreateChallengeViewModel
         /** 경로 A — 추천 칩. LLM 미경유라 폴백·rate limit 이 없다. */
         private fun selectTemplate(templateId: Long) {
             if (currentState.isDrafting) return
+            observability.log(Channel.BUSINESS) { ChallengeEvents.createPathSelect(CreatePath.TEMPLATE) }
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.Drafting)
                 runCatching { createDraftFromTemplateUseCase(templateId) }
@@ -362,6 +406,7 @@ class CreateChallengeViewModel
          * idempotency key 는 **여기서 1회만** 만든다. 생성 재시도는 같은 키를 다시 쓴다.
          */
         private fun applyDraft(draft: DraftResult.Ok) {
+            editedFields.clear()
             dispatch(
                 CreateChallengeReducerEvent.DraftReceived(
                     draft = draft,
@@ -403,7 +448,24 @@ class CreateChallengeViewModel
                 emitEffect(CreateChallengeEffect.ShowError("수동 인증으로 바꾼 뒤에는 되돌릴 수 없어요"))
                 return
             }
+            if (type != state.original?.verification?.type) {
+                logDraftEdit(
+                    DraftField.VERIFICATION,
+                    autoToManual = type == VerificationType.MANUAL && state.canUseAuto,
+                )
+            }
             dispatch(CreateChallengeReducerEvent.VerificationTypeSelected(type))
+        }
+
+        /** 포커스가 빠진 시점에 원본과 비교한다. 되돌려 원문과 같아졌으면 보내지 않는다. */
+        private fun confirmTextEdit(field: TextEditField) {
+            val state = currentState
+            val origin = state.original ?: return
+            when (field) {
+                TextEditField.TITLE -> if (state.title != origin.title) logDraftEdit(DraftField.TITLE)
+                TextEditField.DESCRIPTION ->
+                    if (state.description != origin.description) logDraftEdit(DraftField.DESCRIPTION)
+            }
         }
 
         private fun create() {
@@ -492,6 +554,19 @@ class CreateChallengeViewModel
 
         private var countdownJob: Job? = null
         private var draftJob: Job? = null
+        private var createStartLogged = false
+
+        // 초안 수정률은 **필드별 1회**로 센다 — 타이핑마다 보내면 수정률이 타이핑 양에 좌우된다.
+        private val editedFields = mutableSetOf<DraftField>()
+
+        /** 원본과 달라진 항목을 필드당 한 번만 기록한다. 되돌려도 취소하지 않는다(이미 만진 것은 사실이다). */
+        private fun logDraftEdit(
+            field: DraftField,
+            autoToManual: Boolean? = null,
+        ) {
+            if (!editedFields.add(field)) return
+            observability.log(Channel.BUSINESS) { ChallengeEvents.draftEdit(field, autoToManual) }
+        }
 
         private fun durationDays(
             start: String,
