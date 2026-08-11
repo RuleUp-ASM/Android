@@ -67,6 +67,9 @@ calendarCompose = "2.7.0"
 # QR (친구 초대 코드 렌더링 — 클라 생성, 서버 생성 미채택)
 zxing = "3.5.3"
 
+# amplitude — 문서는 1.+ 를 권하지만 동적 버전은 빌드 재현성을 깨뜨려 고정한다.
+amplitudeAnalytics = "1.30.1"
+
 # firebase
 googleservice = "4.4.4"
 firebaseCrashlyticsPlugin = "3.0.6"
@@ -175,6 +178,9 @@ kizitonwose-calendar-compose = { module = "com.kizitonwose.calendar:compose", ve
 
 # QR (친구 초대 코드 렌더링)
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+
+# amplitude
+amplitude-analytics = { group = "com.amplitude", name = "analytics-android", version.ref = "amplitudeAnalytics" }
 
 # firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
