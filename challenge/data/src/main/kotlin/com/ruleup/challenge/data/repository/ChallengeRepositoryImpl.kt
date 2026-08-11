@@ -31,6 +31,7 @@ import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
+import com.ruleup.challenge.domain.entity.ModerationLockedException
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoleAction
@@ -147,6 +148,7 @@ class ChallengeRepositoryImpl
                     // 둘 다 "서버 기준으로 다시 그려라"로 귀결되지만, 문구가 달라 타입을 나눈다.
                     CODE_VERSION_CONFLICT -> throw ChallengeVersionConflictException()
                     CODE_NOT_EDITABLE -> throw ChallengeNotEditableException()
+                    CODE_MODERATION_LOCKED -> throw ModerationLockedException(retryAfterSeconds = e.retryAfterSeconds)
                     else -> throw e
                 }
             }
@@ -237,6 +239,7 @@ class ChallengeRepositoryImpl
             const val CODE_CHALLENGE_NOT_FOUND = "CHALLENGE_NOT_FOUND"
             const val CODE_VERSION_CONFLICT = "VERSION_CONFLICT"
             const val CODE_NOT_EDITABLE = "CHALLENGE_NOT_EDITABLE"
+            const val CODE_MODERATION_LOCKED = "MODERATION_LOCKED"
             const val CODE_JOIN_BLOCKED = "JOIN_BLOCKED"
         }
     }

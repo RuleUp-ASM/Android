@@ -37,6 +37,7 @@ object AppRoutes {
     const val CHALLENGE_NOTICE_DETAIL = "challenge/notices/detail" // 공지 상세(조회 = 읽음)
     const val CHALLENGE_NOTICE_EDIT = "challenge/notices/edit" // 공지 작성/수정(방장 전용)
     const val CHALLENGE_RANKING = "challenge/ranking" // 그룹 랭킹(방 홈 → 랭킹)
+    const val CHALLENGE_SETTINGS = "challenge/settings" // 챌린지 수정(방장 전용, 방 설정 → 수정)
 
     // profile (마이)
     const val MY_HOME = "my/home" // 진입점 (하단 MY 탭 → 마이 홈)

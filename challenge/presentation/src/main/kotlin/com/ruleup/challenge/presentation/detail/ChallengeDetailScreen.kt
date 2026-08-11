@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.JoinBlockReason
+import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
@@ -267,6 +268,14 @@ private fun ChallengeDetailContent(
                                 RoomManageEntry(
                                     label = "확인 대기함",
                                     onClick = { onIntent(ChallengeDetailIntent.OpenPendingReviews) },
+                                )
+                            }
+
+                            // 수정은 방장 전용이다 — 공동 관리자는 설정을 바꿀 수 없다.
+                            if (room.myRole == MemberRole.OWNER) {
+                                RoomManageEntry(
+                                    label = "챌린지 수정",
+                                    onClick = { onIntent(ChallengeDetailIntent.OpenSettings) },
                                 )
                             }
 

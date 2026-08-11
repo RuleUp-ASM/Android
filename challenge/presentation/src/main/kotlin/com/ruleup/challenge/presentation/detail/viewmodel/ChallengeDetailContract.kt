@@ -65,6 +65,9 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈, 방장·관리자) 확인 대기함으로 이동. */
     data object OpenPendingReviews : ChallengeDetailIntent
 
+    /** (방 홈, 방장 전용) 챌린지 수정 화면으로 이동. */
+    data object OpenSettings : ChallengeDetailIntent
+
     /** (방 홈, 비방장) 챌린지 탈퇴. 성공 시 이전 화면으로. */
     data object LeaveChallenge : ChallengeDetailIntent
 
