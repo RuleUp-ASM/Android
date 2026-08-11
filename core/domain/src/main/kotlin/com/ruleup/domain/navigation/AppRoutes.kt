@@ -29,6 +29,7 @@ object AppRoutes {
     // challenge
     const val CHALLENGE_CREATE = "challenge/create" // 진입점
     const val CHALLENGE_CONFIRM = "challenge/confirm"
+    const val CHALLENGE_DRAFT_FALLBACK = "challenge/draft-fallback" // 초안 생성 폴백(정상 분기)
     const val CHALLENGE_DETAIL = "challenge/detail" // 진입점 (홈 카드 → 챌린지 상세/참여)
     const val CHALLENGE_TARGETS = "challenge/targets" // 대상 앱 등록(상세 → 앱 등록하기)
     const val CHALLENGE_EXPLORE = "challenge/explore" // 진입점 (하단 탭 → 탐색 메인)

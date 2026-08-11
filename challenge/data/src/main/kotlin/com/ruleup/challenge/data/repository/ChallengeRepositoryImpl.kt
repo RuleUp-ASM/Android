@@ -26,6 +26,7 @@ import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.DraftExpiredException
 import com.ruleup.challenge.domain.entity.DraftResult
+import com.ruleup.challenge.domain.entity.InvalidWeeklyCountException
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.JoinResult
@@ -92,6 +93,7 @@ class ChallengeRepositoryImpl
                 if (e.code == CODE_DRAFT_NOT_FOUND || e.code == CODE_DRAFT_EXPIRED) {
                     throw DraftExpiredException()
                 }
+                if (e.code == CODE_INVALID_WEEKLY_COUNT) throw InvalidWeeklyCountException()
                 throw e
             }
 
@@ -149,6 +151,7 @@ class ChallengeRepositoryImpl
                     CODE_VERSION_CONFLICT -> throw ChallengeVersionConflictException()
                     CODE_NOT_EDITABLE -> throw ChallengeNotEditableException()
                     CODE_MODERATION_LOCKED -> throw ModerationLockedException(retryAfterSeconds = e.retryAfterSeconds)
+                    CODE_INVALID_WEEKLY_COUNT -> throw InvalidWeeklyCountException()
                     else -> throw e
                 }
             }
@@ -241,5 +244,6 @@ class ChallengeRepositoryImpl
             const val CODE_NOT_EDITABLE = "CHALLENGE_NOT_EDITABLE"
             const val CODE_MODERATION_LOCKED = "MODERATION_LOCKED"
             const val CODE_JOIN_BLOCKED = "JOIN_BLOCKED"
+            const val CODE_INVALID_WEEKLY_COUNT = "INVALID_WEEKLY_COUNT"
         }
     }

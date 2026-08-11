@@ -4,6 +4,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.navigation.ChallengeDraftFallbackPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
@@ -14,6 +15,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
+import com.ruleup.challenge.presentation.create.ChallengeDraftFallbackScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
 import com.ruleup.challenge.presentation.explore.ExploreScreen
 import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
@@ -222,6 +224,10 @@ val appRoutes: List<AppRoute> =
             render = { args ->
                 RankingScreen(challengeId = args[ChallengeRankingPage.ARG_CHALLENGE_ID].orEmpty())
             },
+        ),
+        AppRoute(
+            path = ChallengeDraftFallbackPage.PATH,
+            render = { ChallengeDraftFallbackScreen() },
         ),
         AppRoute(
             path = ChallengeSettingsPage.PATH,

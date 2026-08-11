@@ -319,8 +319,11 @@ private fun ChallengeDetailContent(
             }
         }
 
-        // 하단 고정 CTA. 상세 로딩 완료 후에만 활성화하고, 이미 참여 중인 방(멤버)에서는 숨긴다.
-        if (state.detail != null && state.room == null) {
+        // 하단 고정 CTA. **참여 여부는 myRole 하나로만 판단한다** — 이미 멤버면 숨긴다.
+        // room(방 홈) 조회 성공 여부로 판단하면 안 된다. 방 홈은 GROUP·ACTIVE 일 때만 내려오므로
+        // 솔로 방이나 시작 전 그룹 방에서는 내가 멤버인데도 room 이 null 이라 "참여하기" 가 다시 떴다.
+        // joinable/eligible 은 자물쇠 표시용이지 버튼 노출 조건이 아니다.
+        if (state.detail != null && state.detail.myRole == MemberRole.NONE) {
             Column(
                 modifier =
                     Modifier

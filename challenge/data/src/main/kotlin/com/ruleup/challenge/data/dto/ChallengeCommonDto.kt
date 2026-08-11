@@ -186,6 +186,8 @@ data class DraftDto(
     val minTier: String? = null,
     @SerialName("period")
     val period: PeriodDto? = null,
+    @SerialName("weeklyCount")
+    val weeklyCount: Int? = null,
     @SerialName("params")
     val params: List<ParamSpecDto>? = null,
     @SerialName("verification")
@@ -205,6 +207,8 @@ internal fun DraftDto.toDomain(): ChallengeDraft =
         capacity = capacity ?: DEFAULT_CAPACITY,
         minTier = minTier?.let(Tier::fromValue),
         period = period.toDomain(),
+        // 명세: 빈도 언급이 없거나 템플릿 진입이면 기본 7(=매일).
+        weeklyCount = (weeklyCount ?: DEFAULT_WEEKLY_COUNT).coerceIn(1, 7),
         params = params.orEmpty().map { it.toDomain() },
         verification = verification.toDomain(),
         penalties = penalties.toDomain(),
@@ -212,3 +216,6 @@ internal fun DraftDto.toDomain(): ChallengeDraft =
 
 /** 명세 기본 정원. 서버가 값을 빠뜨렸을 때만 쓰인다. */
 private const val DEFAULT_CAPACITY = 50
+
+/** 명세 기본 주간 횟수(7 = 매일). 서버가 값을 빠뜨렸을 때만 쓰인다. */
+internal const val DEFAULT_WEEKLY_COUNT = 7

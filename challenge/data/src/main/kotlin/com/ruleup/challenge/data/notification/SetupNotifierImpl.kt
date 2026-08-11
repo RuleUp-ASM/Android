@@ -68,11 +68,17 @@ class SetupNotifierImpl
             return when (verification.method) {
                 // 앵커 바인딩 여부는 서버만 알아서(anchorsConfigured) 여기서는 확인하지 않는다.
                 // 이미 등록했다면 상세 화면이 곧바로 다음 단계를 보여주므로 잘못된 안내는 아니다.
-                VerificationMethod.GPS_PRESENCE -> Kind.REGISTER_ANCHOR
-                VerificationMethod.SCREEN_TIME ->
+                // 장소를 피하는 방식(GPS_AVOID)도 어디를 피할지 먼저 찍어야 한다.
+                VerificationMethod.GPS_PRESENCE, VerificationMethod.GPS_AVOID -> Kind.REGISTER_ANCHOR
+                // 사용 시간은 상한·하한 어느 쪽이든 어떤 앱을 볼지 골라야 한다.
+                VerificationMethod.SCREEN_TIME_MAX, VerificationMethod.SCREEN_TIME_MIN ->
                     Kind.REGISTER_APPS.takeIf { !targetAppStore.isRegistered(challengeId) }
-                // 걸음·기상은 권한만 있으면 되고, 수동은 위에서 이미 걸러졌다.
-                VerificationMethod.HEALTH, VerificationMethod.WAKE, VerificationMethod.SELF_CHECK -> null
+                // 걸음·기상·취침은 권한만 있으면 되고, 수동은 위에서 이미 걸러졌다.
+                VerificationMethod.HEALTH,
+                VerificationMethod.WAKE,
+                VerificationMethod.SLEEP,
+                VerificationMethod.SELF_CHECK,
+                -> null
             }
         }
 

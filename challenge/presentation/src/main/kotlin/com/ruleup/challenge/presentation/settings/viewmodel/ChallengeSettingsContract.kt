@@ -55,6 +55,11 @@ sealed interface ChallengeSettingsIntent : MviIntent {
         val end: String,
     ) : ChallengeSettingsIntent
 
+    /** 주간 수행 횟수 1~7. 요일이 아니라 "그 주에 몇 번" 이다. */
+    data class SetWeeklyCount(
+        val count: Int,
+    ) : ChallengeSettingsIntent
+
     data class EditParam(
         val key: String,
         val value: String,
@@ -108,6 +113,7 @@ data class ChallengeSettingsState(
     val rankingVisible: Boolean?,
     val minTier: Tier?,
     val period: ChallengePeriod,
+    val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verificationType: VerificationType?,
     val watcherPenalty: Boolean,
@@ -142,12 +148,17 @@ data class ChallengeSettingsState(
                 rankingVisible != origin.rankingVisible ||
                 minTier != origin.minTier ||
                 period != origin.period ||
+                weeklyCount != origin.weeklyCount ||
                 params != origin.params ||
                 verificationType != origin.verification.type ||
                 watcherPenalty != origin.penalties.watcher
         }
 
     companion object {
+        // 명세: 주간 횟수 1~7 · 기본 7(매일)
+        const val WEEKLY_COUNT_MIN = 1
+        const val WEEKLY_COUNT_MAX = 7
+
         val initial =
             ChallengeSettingsState(
                 challengeId = "",
@@ -165,6 +176,7 @@ data class ChallengeSettingsState(
                 rankingVisible = null,
                 minTier = null,
                 period = ChallengePeriod(start = "", end = ""),
+                weeklyCount = WEEKLY_COUNT_MAX,
                 params = emptyList(),
                 verificationType = null,
                 watcherPenalty = false,
@@ -192,6 +204,10 @@ sealed interface ChallengeSettingsReducerEvent : ReducerEvent {
 
     data class Saving(
         val saving: Boolean,
+    ) : ChallengeSettingsReducerEvent
+
+    data class WeeklyCountChanged(
+        val count: Int,
     ) : ChallengeSettingsReducerEvent
 
     data class ModerationLocked(

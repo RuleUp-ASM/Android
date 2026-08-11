@@ -81,6 +81,11 @@ class CreateChallengeViewModel
 
                 CreateChallengeIntent.CancelDrafting -> cancelDrafting()
 
+                CreateChallengeIntent.DismissFallback -> {
+                    dispatch(CreateChallengeReducerEvent.FallbackDismissed)
+                    navigationHelper.navigateToBack()
+                }
+
                 is CreateChallengeIntent.SelectTemplate -> selectTemplate(intent.templateId)
 
                 is CreateChallengeIntent.SetTitle ->
@@ -123,6 +128,11 @@ class CreateChallengeViewModel
                     val origin = currentState.original?.period
                     if (intent.start != origin?.start || intent.end != origin.end) logDraftEdit(DraftField.PERIOD)
                     setPeriod(intent.start, intent.end)
+                }
+
+                is CreateChallengeIntent.SetWeeklyCount -> {
+                    if (intent.count != currentState.original?.weeklyCount) logDraftEdit(DraftField.WEEKLY_COUNT)
+                    dispatch(CreateChallengeReducerEvent.WeeklyCountChanged(intent.count))
                 }
 
                 is CreateChallengeIntent.EditParam -> {
@@ -199,6 +209,9 @@ class CreateChallengeViewModel
                 CreateChallengeReducerEvent.RateLimitCleared ->
                     state.copy(retryAfterSeconds = null)
 
+                CreateChallengeReducerEvent.FallbackDismissed ->
+                    state.copy(fallbackMessage = null)
+
                 is CreateChallengeReducerEvent.DraftReceived -> {
                     val draft = event.draft.draft
                     state.copy(
@@ -221,6 +234,7 @@ class CreateChallengeViewModel
                         // 상한은 초안이 준 기본값(= 생성자 표시 티어)으로 고정한다.
                         ownerTierCap = draft.minTier,
                         period = draft.period,
+                        weeklyCount = draft.weeklyCount,
                         params = draft.params,
                         verification = draft.verification,
                         penalties = draft.penalties,
@@ -283,6 +297,16 @@ class CreateChallengeViewModel
 
                 is CreateChallengeReducerEvent.PeriodChanged ->
                     state.copy(period = state.period.copy(start = event.start, end = event.end))
+
+                is CreateChallengeReducerEvent.WeeklyCountChanged ->
+                    // 범위 밖 값은 서버가 400 INVALID_WEEKLY_COUNT 로 막는다. 여기서 먼저 잘라 보낸다.
+                    state.copy(
+                        weeklyCount =
+                            event.count.coerceIn(
+                                CreateChallengeState.WEEKLY_COUNT_MIN,
+                                CreateChallengeState.WEEKLY_COUNT_MAX,
+                            ),
+                    )
 
                 is CreateChallengeReducerEvent.ParamEdited ->
                     state.copy(
@@ -502,6 +526,7 @@ class CreateChallengeViewModel
                     capacity = state.capacity.takeIf { state.isGroup },
                     minTier = state.minTier,
                     period = state.period,
+                    weeklyCount = state.weeklyCount,
                     params = state.params.toEntries(),
                     verification = verification,
                     watcherPenalty = state.penalties.watcher,

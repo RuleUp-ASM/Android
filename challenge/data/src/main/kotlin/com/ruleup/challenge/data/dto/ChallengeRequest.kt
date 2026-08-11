@@ -66,6 +66,8 @@ data class CreateChallengeRequest(
     val minTier: String? = null,
     @SerialName("period")
     val period: PeriodDto,
+    @SerialName("weeklyCount")
+    val weeklyCount: Int,
     @SerialName("params")
     val params: List<ParamEntryDto>,
     @SerialName("verification")
@@ -88,6 +90,7 @@ internal fun CreateChallengeCommand.toRequest(): CreateChallengeRequest =
         capacity = capacity,
         minTier = minTier?.value,
         period = period.toDto(),
+        weeklyCount = weeklyCount,
         params = params.map { it.toDto() },
         verification = verification.toDto(),
         penalties = PenaltiesDto(watcher = watcherPenalty),
@@ -122,6 +125,7 @@ internal fun ChallengeUpdate.toRequestBody(): JsonObject =
         capacity?.let { put("capacity", it) }
         minTier?.let { put("minTier", it.value) }
         period?.let { put("period", ChallengeJson.encodeToJsonElement(it.toDto())) }
+        weeklyCount?.let { put("weeklyCount", it) }
         params?.let { entries -> put("params", ChallengeJson.encodeToJsonElement(entries.map { it.toDto() })) }
         verification?.let { put("verification", ChallengeJson.encodeToJsonElement(it.toDto())) }
         watcherPenalty?.let {
