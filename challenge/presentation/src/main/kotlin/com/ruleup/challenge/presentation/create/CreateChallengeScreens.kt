@@ -57,21 +57,6 @@ fun ChallengeCreateScreen(modifier: Modifier = Modifier) {
     )
 }
 
-/** 초안 생성 폴백(Figma 1134:737). 입력 화면과 같은 VM 을 공유해 쓰던 설명이 살아 있다. */
-@Composable
-fun ChallengeDraftFallbackScreen(modifier: Modifier = Modifier) {
-    val viewModel = sharedCreateChallengeViewModel()
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    CollectEffects(viewModel)
-
-    ChallengeDraftFallbackContent(
-        modifier = modifier,
-        state = state,
-        onIntent = viewModel::onIntent,
-    )
-}
-
 /** 02 · AI 추천 확인. */
 @Composable
 fun ChallengeConfirmScreen(modifier: Modifier = Modifier) {
