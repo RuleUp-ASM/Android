@@ -468,7 +468,8 @@ private fun VerificationSection(
             SelectableChip(
                 text = "자동 인증",
                 selected = state.isAuto,
-                enabled = state.canUseAuto && state.isAuto,
+                // 초안이 자동 인증으로 왔으면 되돌릴 수 있다 — 단방향 잠금은 생성 이후 수정 화면의 규칙이다.
+                enabled = state.canUseAuto,
                 onClick = { onIntent(CreateChallengeIntent.SetVerificationType(VerificationType.AUTO)) },
             )
             SelectableChip(
