@@ -39,10 +39,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ExploreChallenge
 import com.ruleup.challenge.domain.entity.ExploreSort
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListIntent
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListState
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListViewModel
@@ -389,11 +389,11 @@ private fun ExploreChallengeCard(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 TagChip(
-                    text = if (item.participationType == ParticipationType.GROUP) "그룹" else "솔로",
+                    text = if (item.mode == ChallengeMode.GROUP) "그룹" else "솔로",
                     background = RuleUpTheme.colors.surfaceVariant,
                     textColor = RuleUpTheme.colors.textSlate,
                 )
-                if (item.verificationMethod == SelectedMethod.AUTO) {
+                if (item.verificationType == VerificationType.AUTO) {
                     TagChip(
                         text = "자동인증",
                         // 자동인증 표식의 파랑은 Figma 팔레트 15색에 없다. 화면 디자인에서 온 값이라 남긴다.

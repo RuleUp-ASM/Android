@@ -48,12 +48,11 @@ fun ChallengeCreateScreen(modifier: Modifier = Modifier) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     CollectEffects(viewModel)
+    LaunchedEffect(Unit) { viewModel.onIntent(CreateChallengeIntent.Load) }
 
     ChallengeInputContent(
         modifier = modifier,
-        title = state.title,
-        description = state.description,
-        isRecommending = state.isRecommending,
+        state = state,
         onIntent = viewModel::onIntent,
     )
 }

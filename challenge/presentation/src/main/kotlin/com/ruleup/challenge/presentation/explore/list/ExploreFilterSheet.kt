@@ -25,9 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ExploreFilter
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -75,15 +75,15 @@ internal fun ExploreFilterSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilterToggleButton(
                     text = "그룹",
-                    selected = draft.participationType == ParticipationType.GROUP,
+                    selected = draft.mode == ChallengeMode.GROUP,
                     modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(participationType = draft.participationType.toggle(ParticipationType.GROUP))) },
+                    onClick = { update(draft.copy(mode = draft.mode.toggle(ChallengeMode.GROUP))) },
                 )
                 FilterToggleButton(
                     text = "솔로",
-                    selected = draft.participationType == ParticipationType.SOLO,
+                    selected = draft.mode == ChallengeMode.SOLO,
                     modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(participationType = draft.participationType.toggle(ParticipationType.SOLO))) },
+                    onClick = { update(draft.copy(mode = draft.mode.toggle(ChallengeMode.SOLO))) },
                 )
             }
             Spacer(Modifier.height(16.dp))
@@ -92,15 +92,15 @@ internal fun ExploreFilterSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilterToggleButton(
                     text = "자동 인증",
-                    selected = draft.verificationMethod == SelectedMethod.AUTO,
+                    selected = draft.verificationType == VerificationType.AUTO,
                     modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(verificationMethod = draft.verificationMethod.toggle(SelectedMethod.AUTO))) },
+                    onClick = { update(draft.copy(verificationType = draft.verificationType.toggle(VerificationType.AUTO))) },
                 )
                 FilterToggleButton(
                     text = "수동 인증",
-                    selected = draft.verificationMethod == SelectedMethod.MANUAL,
+                    selected = draft.verificationType == VerificationType.MANUAL,
                     modifier = Modifier.weight(1f),
-                    onClick = { update(draft.copy(verificationMethod = draft.verificationMethod.toggle(SelectedMethod.MANUAL))) },
+                    onClick = { update(draft.copy(verificationType = draft.verificationType.toggle(VerificationType.MANUAL))) },
                 )
             }
             Spacer(Modifier.height(16.dp))

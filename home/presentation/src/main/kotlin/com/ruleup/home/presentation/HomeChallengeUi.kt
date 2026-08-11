@@ -2,9 +2,9 @@ package com.ruleup.home.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
+import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
-import com.ruleup.challenge.domain.entity.ParticipationType
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.verification.domain.entity.ChallengeProgress
@@ -60,7 +60,7 @@ fun mergeHomeChallenges(
 
 private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi {
     val dayPart = if (progress == null || progress.successDays <= 0) "오늘 시작" else "${progress.successDays}일째"
-    val groupPart = if (participationType == ParticipationType.GROUP) "함께" else "솔로"
+    val groupPart = if (mode == ChallengeMode.GROUP) "함께" else "솔로"
     return HomeChallengeUi(
         challengeId = challengeId,
         title = title,
@@ -74,10 +74,11 @@ private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi 
 
 private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
     val dayPart = if (successDays <= 0) "오늘 시작" else "${successDays}일째"
+    // 인증 모듈의 진행률 응답은 아직 구 필드명(participationType)을 문자열로 준다.
     val groupPart =
         when (participationType) {
-            ParticipationType.GROUP.value -> "함께"
-            ParticipationType.SOLO.value -> "솔로"
+            ChallengeMode.GROUP.value -> "함께"
+            ChallengeMode.SOLO.value -> "솔로"
             else -> null
         }
     return HomeChallengeUi(
@@ -95,7 +96,7 @@ private fun MyChallengeSummary.toHomeUi(): HomeChallengeUi =
     HomeChallengeUi(
         challengeId = challengeId,
         title = title,
-        subtitle = "오늘 시작 · ${if (participationType == ParticipationType.GROUP) "함께" else "솔로"}",
+        subtitle = "오늘 시작 · ${if (mode == ChallengeMode.GROUP) "함께" else "솔로"}",
         progress = 0f,
         todayTarget = true,
         iconRes = categoryIconRes(category),

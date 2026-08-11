@@ -37,8 +37,8 @@ class ExploreRepositoryImpl
             api
                 .explore(
                     category = filter.category?.value,
-                    participationType = filter.participationType?.value,
-                    verificationType = filter.verificationMethod?.value,
+                    participationType = filter.mode?.value,
+                    verificationType = filter.verificationType?.value,
                     joinableOnly = filter.joinableOnly,
                     sort = sort.value,
                     cursor = cursor,

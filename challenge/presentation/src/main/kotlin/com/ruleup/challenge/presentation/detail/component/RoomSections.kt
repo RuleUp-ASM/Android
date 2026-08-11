@@ -405,11 +405,13 @@ private fun MemberRow(
         )
         RoleBadge(member.role)
         Spacer(Modifier.width(8.dp))
-        Text(
-            text = "${member.mannerTemperature.trimPercent()}℃",
-            color = RuleUpPalette.StatusWarn,
-            style = RuleUpTheme.typography.smallBold,
-        )
+        member.tier?.let { tier ->
+            Text(
+                text = tier.value,
+                color = RuleUpPalette.StatusWarn,
+                style = RuleUpTheme.typography.smallBold,
+            )
+        }
         if (ownerManage || selfDemote) {
             Spacer(Modifier.width(4.dp))
             MemberManageMenu(

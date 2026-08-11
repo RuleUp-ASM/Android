@@ -1,28 +1,13 @@
 package com.ruleup.challenge.domain.entity
 
 /**
- * 루틴 인증 방식 (명세: verificationMethods 다중선택 → 단일 selectedMethod 로 대체).
- * AUTO = 자동 인증(권한·신호원 필요), MANUAL = 수동(직접 체크).
+ * 인증 방식 (명세 `verification.type`). 방 단위로 고정되며 **AUTO → MANUAL 단방향 전환만** 허용한다.
+ * 역방향(MANUAL → AUTO)은 서버가 `ROUTINE_AUTO_NOT_SUPPORTED` 로 막는다.
  */
-enum class SelectedMethod(
-    val value: String,
-) {
-    AUTO("AUTO"),
-    MANUAL("MANUAL"),
-    ;
-
-    companion object {
-        fun fromValue(value: String?): SelectedMethod? = entries.find { it.value == value }
-    }
-}
-
-/** 인증 수단 종류. */
 enum class VerificationType(
     val value: String,
 ) {
-    PHONE("PHONE"),
-    HEALTH_CONNECT("HEALTH_CONNECT"),
-    EXTERNAL("EXTERNAL"),
+    AUTO("AUTO"),
     MANUAL("MANUAL"),
     ;
 
@@ -31,39 +16,52 @@ enum class VerificationType(
     }
 }
 
-/** 자동 인증 신호원. 서버가 새 값을 추가해도 깨지지 않도록 미지정/미인식은 UNKNOWN 으로 떨어진다. */
-enum class SignalSource {
-    GPS,
-    GEOFENCE,
-    PHOTO,
-    GROUP_CHECK,
-    UNKNOWN,
-    ;
-
-    companion object {
-        fun fromValue(value: String?): SignalSource? =
-            when (value) {
-                null -> null
-                else -> entries.find { it.name == value } ?: UNKNOWN
-            }
-    }
-}
-
-/** 웨어러블 요구 수준 (안내용, 후순위). */
-enum class WearableRequirement(
+/**
+ * 자동 인증 신호원 (명세 `verification.method`). 구 명세의 PHOTO·SLEEP 은 폐기됐다.
+ *
+ * 서버가 값을 추가해도 구버전 앱이 통째로 막히지 않도록 미인식 값은 [SELF_CHECK] 로 떨어뜨린다 —
+ * 모르는 자동 인증을 자동으로 처리하는 척하는 것보다 수동으로 보이는 편이 안전하다.
+ */
+enum class VerificationMethod(
     val value: String,
 ) {
-    NONE("NONE"),
-    OPTIONAL("OPTIONAL"),
-    REQUIRED("REQUIRED"),
+    // 지정 장소 체류
+    GPS_PRESENCE("GPS_PRESENCE"),
+
+    // 대상 앱 사용 시간
+    SCREEN_TIME("SCREEN_TIME"),
+
+    // 걸음 수 등 건강 데이터
+    HEALTH("HEALTH"),
+
+    // 기상
+    WAKE("WAKE"),
+
+    // 수동 — 직접 체크
+    SELF_CHECK("SELF_CHECK"),
     ;
 
     companion object {
-        fun fromValue(value: String?): WearableRequirement = entries.find { it.value == value } ?: NONE
+        fun fromValue(value: String?): VerificationMethod? = entries.find { it.value == value }
     }
 }
 
-/** 목표값 입력 종류 (UI 입력기 분기용). */
+/**
+ * 챌린지에 박히는 인증 스냅샷 (명세 `verification`).
+ *
+ * [requiredPermissions] 는 **가입·생성 전에 클라이언트가 확보해야 하는** OS 권한 목록이다(수동 방이면 빈 배열).
+ * 서버는 권한 보유 여부를 게이트로 검사하지 않는다 — Android 권한 상태를 서버가 신뢰성 있게 알 수 없고
+ * 가입 후 언제든 철회될 수 있기 때문. 가입 후 권한 거부를 탈퇴로 롤백하는 경로는 폐기됐다.
+ */
+data class VerificationConfig(
+    val type: VerificationType,
+    val method: VerificationMethod,
+    // 표시 문구(예: "기상 06:00 ±10분 내 10걸음"). 공개 상세에서만 내려온다.
+    val detail: String? = null,
+    val requiredPermissions: List<String> = emptyList(),
+)
+
+/** 목표값 입력 종류 — 입력 위젯 분기용. 미인식 값은 [NUMBER] 로 떨어진다. */
 enum class ParamKind(
     val value: String,
 ) {
@@ -77,72 +75,46 @@ enum class ParamKind(
 }
 
 /**
- * 목표값 (서버 params 의 Number|String). [Any] 없이 [ParamKind] 로 구분해 표현한다.
- */
-sealed interface ParamValue {
-    data class Num(
-        val value: Double,
-    ) : ParamValue
-
-    data class Text(
-        val value: String,
-    ) : ParamValue
-}
-
-/**
- * 추천이 내려주는 선택 가능한 인증 옵션 (명세 recommendation.options[]).
- */
-data class VerificationOption(
-    val method: SelectedMethod,
-    // 기본 선택 여부
-    val recommended: Boolean,
-    val verificationType: VerificationType,
-    val signalSource: SignalSource?,
-    val wearableRequirement: WearableRequirement,
-    val externalService: String?,
-    // AUTO 에 필요한 권한 토큰 목록 (서버 정의)
-    val requiredPermissions: List<String>,
-)
-
-/**
- * 수정 가능한 목표값 스펙 (명세 recommendation.params[]).
- * [value] 는 사용자가 편집하는 현재값, [defaultValue] 는 되돌리기용 템플릿 기본값.
+ * 수정 가능한 목표값 스펙 (명세 `draft.params[]` · `settings.config.params[]`).
+ *
+ * **루틴별 분기를 클라이언트에 하드코딩하지 않는다** — 입력 위젯과 검증 범위를 [kind]·[unit]·[min]·[max]
+ * 로 결정한다. 루틴 테이블이 서버에서 계속 늘어나기 때문.
+ *
+ * 값은 전선(wire)과 같이 문자열이다 — `"06:00"` 처럼 숫자가 아닌 값이 섞여 있어 숫자 타입으로 좁히면
+ * 표현이 깨진다. 숫자 해석이 필요한 곳은 [kind] 를 보고 파싱한다.
  */
 data class ParamSpec(
     val key: String,
+    val value: String,
+    // 되돌리기용 템플릿 기본값
+    val defaultValue: String,
     val kind: ParamKind,
-    val value: ParamValue,
-    val defaultValue: ParamValue,
     val unit: String?,
     val min: Double?,
     val max: Double?,
 )
 
-/**
- * 생성/상세 챌린지에 박히는 인증 스냅샷 (명세 verification). 템플릿이 바뀌어도 보존된다.
- */
-data class VerificationConfig(
-    val selectedMethod: SelectedMethod,
-    val verificationType: VerificationType,
-    val signalSource: SignalSource?,
-    val wearableRequirement: WearableRequirement,
-    val requiredPermissions: List<String>,
-    val externalService: String?,
+/** 생성·수정 요청에 실리는 목표값 (명세 `params[]` — `{key, value}` 만). */
+data class ParamEntry(
+    val key: String,
+    val value: String,
 )
 
-/**
- * AUTO 생성 시 서버가 권한 부족(ROUTINE_PERMISSION_REQUIRED)으로 바운스했음을 알리는 도메인 예외.
- * 데이터 계층이 ApiException 을 이 타입으로 변환해, 프레젠테이션이 네트워크 계층을 모르고도 분기할 수 있게 한다.
- */
-class ChallengePermissionRequiredException(
-    // 서버가 부족 권한 목록을 주면 담고, 없으면 null (호출자가 옵션 전체를 재요청).
-    val requiredPermissions: List<String>? = null,
-) : Exception("자동 인증에 필요한 권한이 부족합니다.")
+/** [ParamSpec] 의 현재값만 뽑아 요청 형태로 접는다. */
+fun List<ParamSpec>.toEntries(): List<ParamEntry> = map { ParamEntry(key = it.key, value = it.value) }
 
 /**
- * 추천 rate limit 초과 (명세 recommendation, HTTP 429 RECOMMENDATION_RATE_LIMITED).
- * 화면은 최초 생성 화면으로 복귀하고 [retryAfterSeconds] 후 재시도 안내한다.
+ * 초안 생성 rate limit 초과 (명세 429 `RECOMMENDATION_RATE_LIMITED` — 사용자당 1분 10회).
+ *
+ * 화면은 [retryAfterSeconds] 카운트다운을 버튼에 표시하고 비활성한다. **자동 재시도는 금지** —
+ * 남은 rate limit 을 소진시킨다. 추천 칩 경로는 제한이 없으므로 대안으로 안내한다.
  */
 class RecommendationRateLimitedException(
     val retryAfterSeconds: Int? = null,
-) : Exception("추천 요청이 너무 잦습니다.")
+) : Exception("초안 생성 요청이 너무 잦습니다.")
+
+/**
+ * 초안이 만료·소실됐다 (명세 400 `DRAFT_NOT_FOUND` / `DRAFT_EXPIRED`).
+ * 서버는 초안을 24시간만 보관한다 — 화면은 초안 재생성을 안내한다.
+ */
+class DraftExpiredException : Exception("초안이 만료되었습니다.")

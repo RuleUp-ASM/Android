@@ -1,13 +1,33 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
-import com.ruleup.challenge.domain.entity.ParamValue
-import com.ruleup.challenge.domain.entity.ParticipationType
-import com.ruleup.challenge.domain.entity.RepeatDay
-import com.ruleup.challenge.domain.entity.SelectedMethod
+import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeVisibility
+import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.MviIntent
 
 sealed interface CreateChallengeIntent : MviIntent {
-    // 01 · 입력
+    // ---- 입력 화면 ----
+
+    /** 화면 진입 — 추천 루틴 3개를 불러온다. */
+    data object Load : CreateChallengeIntent
+
+    data class SetRoutineDescription(
+        val description: String,
+    ) : CreateChallengeIntent
+
+    /** 경로 B: 설명으로 초안 생성(LLM). 폴백이면 이 화면에 머문다. */
+    data object SubmitDescription : CreateChallengeIntent
+
+    /** 경로 A: 추천 칩 탭 → 템플릿 초안(LLM 미경유, 대기 없음). */
+    data class SelectTemplate(
+        val templateId: Long,
+    ) : CreateChallengeIntent
+
+    /** 추천 영역만 재시도. */
+    data object RetryTemplates : CreateChallengeIntent
+
+    // ---- 확인 화면 ----
     data class SetTitle(
         val title: String,
     ) : CreateChallengeIntent
@@ -16,66 +36,54 @@ sealed interface CreateChallengeIntent : MviIntent {
         val description: String,
     ) : CreateChallengeIntent
 
-    /** AI 추천 요청. 확인 화면의 "다시 추천" 도 같은 intent 를 쓴다. */
-    data object Recommend : CreateChallengeIntent
-
-    /** 탐색 "추천 루틴" 선택 → 템플릿 기반 초안 생성 후 확인 화면으로(LLM 호출 X). */
-    data class RecommendByTemplate(
-        val templateId: Long,
-    ) : CreateChallengeIntent
-
-    // 02 · 추천 확인(수정)
     data class SetCoverImage(
         val uri: String?,
     ) : CreateChallengeIntent
 
-    data class SetParticipationType(
-        val type: ParticipationType,
+    data class SetMode(
+        val mode: ChallengeMode,
     ) : CreateChallengeIntent
 
-    data class SetMinMannerTemperature(
-        val temperature: Int,
+    data class SetVisibility(
+        val visibility: ChallengeVisibility,
     ) : CreateChallengeIntent
 
-    data class SetMaxParticipants(
-        val count: Int,
+    data class SetRankingVisible(
+        val visible: Boolean,
     ) : CreateChallengeIntent
 
-    data class ToggleRepeatDay(
-        val day: RepeatDay,
+    data class SetCapacity(
+        val capacity: Int,
+    ) : CreateChallengeIntent
+
+    data class SetMinTier(
+        val tier: Tier,
     ) : CreateChallengeIntent
 
     data class SetPeriod(
-        val startDate: String,
-        val durationDays: Int,
+        val start: String,
+        val end: String,
     ) : CreateChallengeIntent
 
-    /** AUTO/MANUAL 인증 방식 선택. */
-    data class SelectMethod(
-        val method: SelectedMethod,
-    ) : CreateChallengeIntent
-
-    /** 목표값 편집. */
+    /** 목표값 편집. 값은 위젯이 문자열로 만들어 올린다(kind 로 위젯을 고른다). */
     data class EditParam(
         val key: String,
-        val value: ParamValue,
+        val value: String,
     ) : CreateChallengeIntent
 
-    /** 권한 요청 결과(화면이 OS 다이얼로그를 띄운 뒤 허용된 토큰을 돌려준다). */
+    /** 인증 방식 선택. AUTO → MANUAL 단방향만 허용된다. */
+    data class SetVerificationType(
+        val type: VerificationType,
+    ) : CreateChallengeIntent
+
+    /** 유일하게 선택 가능한 패널티. */
+    data class SetWatcherPenalty(
+        val enabled: Boolean,
+    ) : CreateChallengeIntent
+
+    /** 화면이 OS 다이얼로그로 받은 허용 토큰을 돌려준다. */
     data class PermissionsResult(
         val granted: Set<String>,
-    ) : CreateChallengeIntent
-
-    data class SetSnsShareEnabled(
-        val enabled: Boolean,
-    ) : CreateChallengeIntent
-
-    data class SetSnsPhone(
-        val phone: String,
-    ) : CreateChallengeIntent
-
-    data class SetGroupShare(
-        val enabled: Boolean,
     ) : CreateChallengeIntent
 
     /** 이대로 만들기. */
