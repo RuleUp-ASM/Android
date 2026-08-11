@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.create
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +37,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalNavigationHelper
+import kotlinx.coroutines.delay
 
 /**
  * 생성 입력 화면 — 두 경로의 출발점.
@@ -45,45 +53,114 @@ fun ChallengeInputContent(
 ) {
     val nav = LocalNavigationHelper.current
 
-    Column(modifier = modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
-        CreateChallengeTopBar(title = "챌린지 만들기", onBack = { nav.navigateToBack() })
+    // 초안 생성 중에는 화면을 잠그되 뒤로가기로 취소할 수 있게 한다(프론트 스펙 5).
+    BackHandler(enabled = state.isDrafting) { onIntent(CreateChallengeIntent.CancelDrafting) }
 
-        Column(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            RecommendationSection(state = state, onIntent = onIntent)
-            DescriptionSection(state = state, onIntent = onIntent)
-            state.fallbackMessage?.let { FallbackBanner(message = it) }
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
+            CreateChallengeTopBar(title = "챌린지 만들기", onBack = { nav.navigateToBack() })
+
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                RecommendationSection(state = state, onIntent = onIntent)
+                DescriptionSection(state = state, onIntent = onIntent)
+                state.fallbackMessage?.let { FallbackBanner(message = it) }
+                if ((state.retryAfterSeconds ?: 0) > 0) {
+                    Text(
+                        text = "요청이 많아 잠시 쉬어가요. 위 추천 루틴은 지금 바로 쓸 수 있어요",
+                        color = RuleUpTheme.colors.textMuted,
+                        style = RuleUpTheme.typography.caption,
+                    )
+                }
+            }
+
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(RuleUpTheme.colors.surface)
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+            ) {
+                RuleUpPrimaryButton(
+                    text = submitLabel(state),
+                    enabled = state.canSubmitDescription,
+                    onClick = { onIntent(CreateChallengeIntent.SubmitDescription) },
+                )
+            }
         }
 
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .background(RuleUpTheme.colors.surface)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+        if (state.isDrafting) DraftingOverlay()
+    }
+}
+
+/**
+ * 초안 생성 대기 오버레이.
+ *
+ * p95 5초 · 최대 10초까지 걸릴 수 있어 **문구를 단계적으로 바꿔** 멈춘 화면처럼 보이지 않게 한다.
+ * 스피너만 오래 두면 이탈로 이어진다.
+ */
+@Composable
+private fun DraftingOverlay() {
+    var stage by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (stage < DRAFTING_MESSAGES.lastIndex) {
+            delay(DRAFTING_STAGE_MS)
+            stage += 1
+        }
+    }
+    Box(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(RuleUpTheme.colors.background.copy(alpha = 0.92f))
+                // 뒤 화면 조작을 막는다. 빠져나갈 길은 뒤로가기다.
+                .singleClickable {},
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            RuleUpPrimaryButton(
-                text = submitLabel(state),
-                enabled = state.canSubmitDescription,
-                onClick = { onIntent(CreateChallengeIntent.SubmitDescription) },
+            CircularProgressIndicator(color = RuleUpTheme.colors.brand)
+            Text(
+                text = DRAFTING_MESSAGES[stage],
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.bodyMedium,
+            )
+            Text(
+                text = "뒤로가기로 취소할 수 있어요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
             )
         }
     }
 }
 
-private fun submitLabel(state: CreateChallengeState): String =
-    when {
+private val DRAFTING_MESSAGES =
+    listOf(
+        "루틴을 이해하는 중이에요",
+        "어울리는 인증 방식을 고르는 중이에요",
+        "거의 다 됐어요",
+    )
+
+private const val DRAFTING_STAGE_MS = 3_000L
+
+private fun submitLabel(state: CreateChallengeState): String {
+    val remaining = state.retryAfterSeconds
+    return when {
         state.isDrafting -> "AI가 초안을 만드는 중…"
-        state.retryAfterSeconds != null -> "잠시 후 다시 시도해 주세요"
+        // 남은 시간을 정확히 보여준다 — "잠시 후"만 두면 언제 되는지 몰라 계속 누르게 된다.
+        remaining != null && remaining > 0 -> "${remaining}초 후 다시 시도할 수 있어요"
         else -> "다음"
     }
+}
 
 /** 추천 루틴 3개. 서버가 항상 3개를 보장하므로 비어 있으면 실패했거나 로딩 중이다. */
 @Composable
