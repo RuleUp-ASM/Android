@@ -49,6 +49,7 @@ enum class ConfirmEditSection {
     MODE_CAPACITY,
     VERIFICATION,
     PERIOD,
+    PENALTIES,
 }
 
 /**
@@ -108,6 +109,8 @@ internal fun ConfirmEditSheet(
                 ConfirmEditSection.VERIFICATION -> VerificationEditor(state, onIntent)
                 ConfirmEditSection.PERIOD ->
                     PeriodEditor(state, onIntent) { showPeriodPicker = true }
+
+                ConfirmEditSection.PENALTIES -> PenaltyEditor(state, onIntent)
             }
             SheetSaveButton(onClick = onDismiss)
         }
@@ -120,6 +123,7 @@ private fun ConfirmEditSection.title(): String =
         ConfirmEditSection.MODE_CAPACITY -> "모드와 인원"
         ConfirmEditSection.VERIFICATION -> "인증 방법"
         ConfirmEditSection.PERIOD -> "빈도와 기간"
+        ConfirmEditSection.PENALTIES -> "실패하면"
     }
 
 // ---------- 이름과 설명 ----------
@@ -353,6 +357,76 @@ private fun WeeklyCountSlider(
             color = RuleUpTheme.colors.textMuted,
             style = RuleUpTheme.typography.caption,
         )
+    }
+}
+
+// ---------- 실패하면 ----------
+
+/**
+ * 패널티.
+ *
+ * `score`·`groupShare` 는 **서버가 강제**한다 — 자동 인증 방이면 점수 차감이, 그룹 방이면 그룹 공개가
+ * 항상 켜지고 클라가 뭘 보내든 무시된다. 그래도 잠근 채 노출한다(무엇이 걸려 있는지 알고 만들어야 한다).
+ * 고를 수 있는 건 감시자 알림 하나뿐이다.
+ */
+@Composable
+private fun PenaltyEditor(
+    state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        PenaltyToggleRow(
+            label = "점수 차감",
+            checked = state.penalties.score,
+            enabled = false,
+            caption = "자동 인증 방은 항상 켜져 있어요",
+        )
+        PenaltyToggleRow(
+            label = "같이 하는 사람에게 공개",
+            checked = state.penalties.groupShare,
+            enabled = false,
+            caption = "같이 하는 방은 항상 켜져 있어요",
+        )
+        PenaltyToggleRow(
+            label = "감시자에게 알리기",
+            checked = state.penalties.watcher,
+            caption = "각자 등록한 감시자에게만 가요",
+            onCheckedChange = { onIntent(CreateChallengeIntent.SetWatcherPenalty(it)) },
+        )
+    }
+}
+
+@Composable
+private fun PenaltyToggleRow(
+    label: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    caption: String? = null,
+    onCheckedChange: (Boolean) -> Unit = {},
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RuleUpTheme.shapes.medium)
+                .background(if (enabled) Color.Transparent else RuleUpTheme.colors.background)
+                .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.medium)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = label,
+                color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.bodyMedium,
+            )
+            caption?.let {
+                Text(it, color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.micro)
+            }
+        }
+        GradientSwitch(checked = checked, enabled = enabled, onCheckedChange = onCheckedChange)
     }
 }
 

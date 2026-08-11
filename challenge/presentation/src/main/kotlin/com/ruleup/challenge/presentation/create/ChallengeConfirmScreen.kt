@@ -51,7 +51,7 @@ import com.ruleup.ui.helper.LocalNavigationHelper
  * 항목을 전부 펼쳐 놓지 않는다. 초안은 대부분 그대로 쓰이므로 스크롤 한 화면에 요약을 담고,
  * 고칠 사람만 해당 줄을 탭해 들어가게 한다.
  *
- * 잠긴 줄(패널티·카테고리)은 회색 처리로 끝내지 않고 **자물쇠와 함께** 보여준다 — 왜 못 고치는지
+ * 잠긴 줄(카테고리)은 회색 처리로 끝내지 않고 **자물쇠와 함께** 보여준다 — 왜 못 고치는지
  * 모른 채 눌러보게 두지 않기 위해서다.
  */
 @Composable
@@ -238,12 +238,13 @@ private fun SummaryCard(
             value = state.frequencyPeriodSummary(),
             onClick = { onEdit(ConfirmEditSection.PERIOD) },
         )
-        // 패널티는 서버가 강제한다 — 점수 차감은 자동 인증 방, 그룹 공개는 그룹 방에서 항상 켜진다.
+        // 점수 차감·그룹 공개는 서버가 강제하지만 감시자 알림은 고를 수 있다 — 줄 전체를 잠그면
+        // 유일하게 고를 수 있는 항목까지 같이 막힌다. 시트 안에서 잠긴 둘과 구분해 보여준다.
         SummaryRow(
             label = "실패하면",
             value = state.penaltySummary(),
             caption = "감시자 알림은 각자 설정한 사람에게만 가요",
-            locked = true,
+            onClick = { onEdit(ConfirmEditSection.PENALTIES) },
         )
         // 카테고리는 확인 화면부터 수정 불가이며 생성 후에도 불변이다.
         SummaryRow(
