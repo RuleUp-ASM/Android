@@ -437,15 +437,20 @@ class CreateChallengeViewModel
                 false
             }
 
-        /** AUTO → MANUAL 단방향. 되돌리려는 시도는 화면에서 막고 이유를 알린다. */
+        /**
+         * 인증 방식 선택.
+         *
+         * **확인 화면에서는 되돌릴 수 있다.** 아직 방이 만들어지지 않았고 초안은 메모리에만 있어서,
+         * 초안이 AUTO 로 온 루틴이라면 다시 AUTO 를 보내도 서버가 받는다. 계약의 "역방향 불가"는
+         * *자동 인증을 지원하지 않는 루틴에 AUTO 를 요청하는 것*을 막는 규칙이고
+         * (`ROUTINE_AUTO_NOT_SUPPORTED`), 단방향 잠금은 **생성 이후 수정 화면**의 규칙이다(FE 스펙 4-7).
+         *
+         * 여기서 잠가두면 잠깐 눌러본 사용자가 초안을 처음부터 다시 만들어야 한다.
+         */
         private fun setVerificationType(type: VerificationType) {
             val state = currentState
             if (type == VerificationType.AUTO && !state.canUseAuto) {
                 emitEffect(CreateChallengeEffect.ShowError("이 루틴은 자동 인증을 쓸 수 없어요"))
-                return
-            }
-            if (type == VerificationType.AUTO && state.verification?.type == VerificationType.MANUAL) {
-                emitEffect(CreateChallengeEffect.ShowError("수동 인증으로 바꾼 뒤에는 되돌릴 수 없어요"))
                 return
             }
             if (type != state.original?.verification?.type) {
