@@ -30,5 +30,5 @@ class IntroRepositoryImpl
                 .also { termsVersions.set(it.termsVersions) }
         }
 
-        override fun lastTermsVersions(): TermsVersions? = termsVersions.get()
+        override fun lastTermsVersions(): TermsVersions = termsVersions.get() ?: TermsVersions(emptyMap())
     }

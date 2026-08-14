@@ -44,7 +44,7 @@ class LoadIntroUseCaseTest {
             val intro = repository(forceUpdate = false)
             LoadIntroUseCase(intro)()
 
-            assertEquals("1.2", GetTermsVersionsUseCase(intro)().of(AgreementType.TERMS_OF_SERVICE))
+            assertEquals("1.2", intro.lastTermsVersions().of(AgreementType.TERMS_OF_SERVICE))
         }
 
     @Test
@@ -52,7 +52,7 @@ class LoadIntroUseCaseTest {
         // 페일오픈으로 인트로를 못 받아도 가입은 진행되어야 한다. 버전은 서버가 재검증한다.
         assertEquals(
             TermsVersions.FALLBACK_VERSION,
-            GetTermsVersionsUseCase(FakeIntroRepository())().of(AgreementType.PRIVACY_POLICY),
+            FakeIntroRepository().lastTermsVersions().of(AgreementType.PRIVACY_POLICY),
         )
     }
 

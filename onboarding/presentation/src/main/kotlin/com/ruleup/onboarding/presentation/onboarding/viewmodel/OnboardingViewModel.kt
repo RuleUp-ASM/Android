@@ -13,10 +13,9 @@ import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 import com.ruleup.onboarding.domain.auth.entity.SignupForm
 import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
-import com.ruleup.onboarding.domain.auth.usecase.CheckNicknameUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
-import com.ruleup.onboarding.domain.intro.usecase.GetTermsVersionsUseCase
+import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.observability.OnboardingEvents
@@ -25,6 +24,7 @@ import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.NicknameCheckReason
+import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
@@ -46,9 +46,9 @@ class OnboardingViewModel
     @Inject
     constructor(
         private val signupUseCase: SignupUseCase,
-        private val checkNicknameUseCase: CheckNicknameUseCase,
         private val validateBirthDateUseCase: ValidateBirthDateUseCase,
-        private val getTermsVersionsUseCase: GetTermsVersionsUseCase,
+        private val profileRepository: ProfileRepository,
+        private val introRepository: IntroRepository,
         private val signupSession: SignupSession,
         private val signupTimer: SignupTimer,
         private val observability: Observability,
@@ -167,7 +167,7 @@ class OnboardingViewModel
         }
 
         private suspend fun checkNickname(name: String) {
-            runCatching { checkNicknameUseCase(name) }
+            runCatching { profileRepository.checkNickname(name) }
                 .onSuccess { check ->
                     observability.log(Channel.BUSINESS) {
                         OnboardingEvents.nicknameCheck(
@@ -244,7 +244,7 @@ class OnboardingViewModel
             }
 
             // 인트로 응답이 없으면(페일오픈) 폴백 버전으로 기록하고 서버 재검증에 맡긴다.
-            val versions = getTermsVersionsUseCase()
+            val versions = introRepository.lastTermsVersions()
 
             viewModelScope.launch {
                 dispatch(OnboardingReducerEvent.Submitting)
