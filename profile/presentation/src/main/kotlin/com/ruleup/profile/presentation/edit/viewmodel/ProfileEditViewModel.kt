@@ -4,12 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.entity.NicknameCheckReason
-import com.ruleup.profile.domain.usecase.CheckNicknameUseCase
-import com.ruleup.profile.domain.usecase.DeleteProfileImageUseCase
-import com.ruleup.profile.domain.usecase.GetCategoryCatalogUseCase
-import com.ruleup.profile.domain.usecase.GetProfileUseCase
-import com.ruleup.profile.domain.usecase.UpdateProfileUseCase
-import com.ruleup.profile.domain.usecase.UploadProfileImageUseCase
+import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -28,12 +23,7 @@ import javax.inject.Inject
 class ProfileEditViewModel
     @Inject
     constructor(
-        private val getProfileUseCase: GetProfileUseCase,
-        private val getCategoryCatalogUseCase: GetCategoryCatalogUseCase,
-        private val checkNicknameUseCase: CheckNicknameUseCase,
-        private val updateProfileUseCase: UpdateProfileUseCase,
-        private val uploadProfileImageUseCase: UploadProfileImageUseCase,
-        private val deleteProfileImageUseCase: DeleteProfileImageUseCase,
+        private val profileRepository: ProfileRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ProfileEditIntent, ProfileEditState, ProfileEditReducerEvent, ProfileEditEffect>(
             ProfileEditState.initial,
@@ -100,9 +90,9 @@ class ProfileEditViewModel
             dispatch(ProfileEditReducerEvent.Loading)
             viewModelScope.launch {
                 runCatching {
-                    val profileDeferred = async { getProfileUseCase() }
+                    val profileDeferred = async { profileRepository.getProfile() }
                     // 마스터 조회 실패는 기본 상한(6)으로 흡수한다.
-                    val catalogDeferred = async { runCatching { getCategoryCatalogUseCase() }.getOrNull() }
+                    val catalogDeferred = async { runCatching { profileRepository.getCategories() }.getOrNull() }
                     profileDeferred.await() to catalogDeferred.await()
                 }.onSuccess { (profile, catalog) ->
                     dispatch(
@@ -139,7 +129,7 @@ class ProfileEditViewModel
             if (currentState.isImageBusy) return
             viewModelScope.launch {
                 dispatch(ProfileEditReducerEvent.ImageBusy(true))
-                runCatching { uploadProfileImageUseCase(uri) }
+                runCatching { profileRepository.uploadProfileImage(uri) }
                     .onSuccess { url ->
                         dispatch(ProfileEditReducerEvent.ImageChanged(url))
                         emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 변경했어요"))
@@ -155,7 +145,7 @@ class ProfileEditViewModel
             if (currentState.profile?.profileImageUrl == null) return
             viewModelScope.launch {
                 dispatch(ProfileEditReducerEvent.ImageBusy(true))
-                runCatching { deleteProfileImageUseCase() }
+                runCatching { profileRepository.deleteProfileImage() }
                     .onSuccess {
                         dispatch(ProfileEditReducerEvent.ImageChanged(null))
                         emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 제거했어요"))
@@ -193,7 +183,7 @@ class ProfileEditViewModel
                     dispatch(ProfileEditReducerEvent.Saving(true))
                     runCatching {
                         if (nicknameChanged) {
-                            val check = checkNicknameUseCase(trimmed)
+                            val check = profileRepository.checkNickname(trimmed)
                             if (!check.valid || !check.available) {
                                 val message =
                                     when (check.reason) {
@@ -210,7 +200,7 @@ class ProfileEditViewModel
                                 return@launch
                             }
                         }
-                        updateProfileUseCase(
+                        profileRepository.updateProfile(
                             nickname = trimmed.takeIf { nicknameChanged },
                             interestCategories = state.selectedCategories.takeIf { categoriesChanged },
                         )

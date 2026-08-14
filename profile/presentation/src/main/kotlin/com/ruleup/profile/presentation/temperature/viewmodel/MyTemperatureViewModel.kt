@@ -3,7 +3,7 @@ package com.ruleup.profile.presentation.temperature.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.navigation.ReputationHistoryPage
-import com.ruleup.profile.domain.usecase.GetReputationDetailUseCase
+import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +18,7 @@ import javax.inject.Inject
 class MyTemperatureViewModel
     @Inject
     constructor(
-        private val getReputationDetailUseCase: GetReputationDetailUseCase,
+        private val myPageRepository: MyPageRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<MyTemperatureIntent, MyTemperatureState, MyTemperatureReducerEvent, NoEffect>(
             MyTemperatureState.initial,
@@ -49,7 +49,7 @@ class MyTemperatureViewModel
             if (currentState.detail != null) return
             dispatch(MyTemperatureReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { getReputationDetailUseCase() }
+                runCatching { myPageRepository.getReputation() }
                     .onSuccess { dispatch(MyTemperatureReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(MyTemperatureReducerEvent.Failed(it.message ?: "온도 정보를 불러오지 못했어요")) }
             }

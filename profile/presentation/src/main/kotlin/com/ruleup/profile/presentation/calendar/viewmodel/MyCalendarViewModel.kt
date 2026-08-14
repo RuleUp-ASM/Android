@@ -3,8 +3,7 @@ package com.ruleup.profile.presentation.calendar.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.entity.CalendarDay
-import com.ruleup.profile.domain.usecase.GetActivityCalendarUseCase
-import com.ruleup.profile.domain.usecase.GetCalendarDayDetailUseCase
+import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,8 +21,7 @@ import javax.inject.Inject
 class MyCalendarViewModel
     @Inject
     constructor(
-        private val getActivityCalendarUseCase: GetActivityCalendarUseCase,
-        private val getCalendarDayDetailUseCase: GetCalendarDayDetailUseCase,
+        private val myPageRepository: MyPageRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<MyCalendarIntent, MyCalendarState, MyCalendarReducerEvent, NoEffect>(
             MyCalendarState.initial,
@@ -88,7 +86,7 @@ class MyCalendarViewModel
             }
             dispatch(MyCalendarReducerEvent.MonthLoading(month))
             viewModelScope.launch {
-                runCatching { getActivityCalendarUseCase(month) }
+                runCatching { myPageRepository.getCalendar(month) }
                     .onSuccess { calendar ->
                         val days = calendar.days.associateBy { it.date }
                         // 당월은 인증 확정마다 갱신되므로 캐시하지 않는다 (스펙: 과거 월 캐시).
@@ -106,7 +104,7 @@ class MyCalendarViewModel
             if (currentState.days[date] == null && currentState.month == date.take(7)) return
             viewModelScope.launch {
                 dispatch(MyCalendarReducerEvent.DetailLoading(true))
-                runCatching { getCalendarDayDetailUseCase(date) }
+                runCatching { myPageRepository.getCalendarDay(date) }
                     .onSuccess { detail ->
                         // 상세가 도착하기 전에 다른 날짜를 골랐으면 버린다.
                         if (currentState.selectedDate == date) {
