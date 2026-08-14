@@ -199,11 +199,11 @@ class ChallengeSettingsViewModel
         /** AUTO → MANUAL 단방향. 되돌리려는 시도는 여기서 막고 이유를 알린다. */
         private fun setVerificationType(type: VerificationType) {
             val state = currentState
-            if (type == VerificationType.AUTO && state.verificationType == VerificationType.MANUAL) {
+            if (type.isAuto && state.verificationType?.isAuto == false) {
                 emitEffect(ChallengeSettingsEffect.ShowMessage("직접 체크로 바꾼 뒤에는 되돌릴 수 없어요"))
                 return
             }
-            if (type == VerificationType.AUTO && !state.canUseAuto) {
+            if (type.isAuto && !state.canUseAuto) {
                 emitEffect(ChallengeSettingsEffect.ShowMessage("이 루틴은 자동 인증을 쓸 수 없어요"))
                 return
             }

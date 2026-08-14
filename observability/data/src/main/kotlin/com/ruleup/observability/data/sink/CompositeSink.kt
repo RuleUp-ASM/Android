@@ -46,7 +46,7 @@ internal class CompositeSink(
                 if (failure == null) failure = t
             }
         }
-        if (profile != BuildProfile.PRODUCTION) failure?.let { throw it }
+        if (profile.isDebuggable) failure?.let { throw it }
     }
 
     /** 보고 자체가 실패해도 원래 예외를 덮지 않는다 — 디버그 도구 버그가 진짜 원인을 가리면 안 된다. */

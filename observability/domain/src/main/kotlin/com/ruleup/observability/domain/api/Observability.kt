@@ -96,7 +96,7 @@ class Observability(
         tag: String?,
         payload: ObsPayload,
     ) {
-        if (profile == BuildProfile.PRODUCTION) return
+        if (!profile.isDebuggable) return
         require(payload.channel == channel && payload.severity == severity && payload.tag == tag) {
             "게이트는 $channel/$severity/$tag 로 판단했는데 페이로드는 " +
                 "${payload.channel}/${payload.severity}/${payload.tag} 다. " +

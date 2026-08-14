@@ -8,7 +8,6 @@ import com.ruleup.verification.data.signal.common.PermissionSnapshotProvider
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.PermissionSnapshot
-import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SignalScope
 import com.ruleup.verification.domain.repository.EnvelopeMetadataProvider
@@ -65,20 +64,20 @@ class EnvelopeMetadataProviderImpl
 
                 val geofenceActive = scope.activeRequestIds.isNotEmpty()
                 if (geofenceActive &&
-                    (perms.location == PermissionState.DENIED || perms.backgroundLocation == PermissionState.DENIED)
+                    (perms.location.isDenied || perms.backgroundLocation.isDenied)
                 ) {
                     gap(SIGNAL_GEOFENCE)
                 }
-                if (scope.targetPackages.isNotEmpty() && perms.usageStats == PermissionState.DENIED) {
+                if (scope.targetPackages.isNotEmpty() && perms.usageStats.isDenied) {
                     gap(SIGNAL_SCREEN_TIME)
                 }
                 if (scope.healthTargets.isNotEmpty() &&
-                    perms.healthDistance == PermissionState.DENIED &&
-                    perms.healthSteps == PermissionState.DENIED
+                    perms.healthDistance.isDenied &&
+                    perms.healthSteps.isDenied
                 ) {
                     gap(SIGNAL_HEALTH)
                 }
-                if (scope.sleepRequested && perms.healthSleep == PermissionState.DENIED) {
+                if (scope.sleepRequested && perms.healthSleep.isDenied) {
                     gap(SIGNAL_SLEEP)
                 }
             }

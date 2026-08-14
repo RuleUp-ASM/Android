@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
-import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.repository.SetupNotifier
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.domain.helper.PushNotificationHelper
@@ -43,7 +42,7 @@ class SetupNotifierImpl
             personalSetupRequired: Boolean,
         ) {
             // 수동 인증은 셋업이 없다. 서버가 설정 불필요라고 했으면 그 판단을 따른다.
-            if (verification.type != VerificationType.AUTO || !personalSetupRequired) return
+            if (!verification.type.isAuto || !personalSetupRequired) return
 
             val kind = kindFor(challengeId, verification) ?: return
             pushNotificationHelper.show(

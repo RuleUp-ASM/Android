@@ -332,9 +332,9 @@ internal fun RoomMemberSection(
             MemberRow(
                 member = member,
                 // 방장은 방장 자신(OWNER)을 제외한 멤버를 관리한다.
-                ownerManage = myRole == MemberRole.OWNER && member.role != MemberRole.OWNER,
+                ownerManage = myRole.isOwner && !member.role.isOwner,
                 // 관리자는 본인 행에서만 스스로 관리자 해제(self-DEMOTE)할 수 있다.
-                selfDemote = myRole == MemberRole.MANAGER && member.role == MemberRole.MANAGER && member.userId == myUserId,
+                selfDemote = myRole.isManager && member.role.isManager && member.userId == myUserId,
                 actionEnabled = actionEnabled,
                 onPromote = { onPromote(member.userId) },
                 onDemote = { onDemote(member.userId) },
@@ -343,7 +343,7 @@ internal fun RoomMemberSection(
         }
 
         when {
-            myRole != MemberRole.OWNER ->
+            !myRole.isOwner ->
                 DangerActionButton(
                     text = "챌린지 나가기",
                     enabled = actionEnabled,
@@ -538,7 +538,7 @@ private fun RoleBadge(role: MemberRole) {
             MemberRole.MANAGER -> "관리자"
             else -> return
         }
-    val color = if (role == MemberRole.OWNER) RuleUpTheme.colors.brand else RuleUpTheme.colors.textSlate
+    val color = if (role.isOwner) RuleUpTheme.colors.brand else RuleUpTheme.colors.textSlate
     Box(
         modifier =
             Modifier

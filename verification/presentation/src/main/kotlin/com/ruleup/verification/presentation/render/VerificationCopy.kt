@@ -30,8 +30,6 @@ fun todayStatusLabel(status: TodayStatus): String =
     }
 
 /** 오늘 상태가 실패로 렌더되어야 하는가(PENDING/NOT_TARGET 은 실패 아님). */
-fun isFailureState(status: TodayStatus): Boolean = status == TodayStatus.FAILED
-
 fun overallStatusLabel(status: OverallStatus): String =
     when (status) {
         OverallStatus.ON_TRACK -> "순항 중"

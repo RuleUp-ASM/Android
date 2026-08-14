@@ -11,14 +11,6 @@ import kotlin.test.assertTrue
 
 class VerificationCopyTest {
     @Test
-    fun `PENDING 과 NOT_TARGET 은 실패 상태가 아니다`() {
-        assertFalse(isFailureState(TodayStatus.PENDING))
-        assertFalse(isFailureState(TodayStatus.NOT_TARGET))
-        assertFalse(isFailureState(TodayStatus.SUCCESS))
-        assertTrue(isFailureState(TodayStatus.FAILED))
-    }
-
-    @Test
     fun `PENDING 라벨은 진행 중 - 실패 카피가 아니다`() {
         assertEquals("진행 중", todayStatusLabel(TodayStatus.PENDING))
     }

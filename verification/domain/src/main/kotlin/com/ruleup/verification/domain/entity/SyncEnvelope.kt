@@ -30,6 +30,11 @@ data class DeviceProfile(
 enum class PermissionState {
     GRANTED,
     DENIED,
+    ;
+
+    /** 권한이 없어 신호를 못 모으는 상태인가 — gap 보고의 기준. */
+    val isDenied: Boolean
+        get() = this == DENIED
 }
 
 /**
