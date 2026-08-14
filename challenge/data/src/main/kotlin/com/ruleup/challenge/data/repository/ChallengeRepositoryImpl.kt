@@ -36,6 +36,7 @@ import com.ruleup.challenge.domain.entity.ModerationLockedException
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.network.dto.ApiException
@@ -59,10 +60,10 @@ class ChallengeRepositoryImpl
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun createDraft(description: String): DraftResult =
+        override suspend fun createDraft(description: RoutineDescription): DraftResult =
             try {
                 api
-                    .createDraft(DraftRequest(description = description))
+                    .createDraft(DraftRequest(description = description.value))
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {

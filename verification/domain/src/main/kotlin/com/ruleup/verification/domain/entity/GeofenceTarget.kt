@@ -20,7 +20,8 @@ enum class LocationBinding {
 /**
  * OS 에 사전 등록할 지오펜스 1개 (명세 §2.1). [requestId] = "{userId}#{challengeId}#{anchorIndex}"
  * (멤버 자연키 `uq_member(challenge_id, user_id)` 파생) — GEOFENCE 이벤트의 anchorId 로 서버에 보고된다.
- * 반경은 아래 범위로 클램프된다.
+ *
+ * 반경 범위는 [SetupAnchors] 하나를 따른다 — 서버 판정 반경과 OS 트리거 반경이 어긋나면 안 된다.
  */
 data class GeofenceTarget(
     val requestId: String,
@@ -28,19 +29,48 @@ data class GeofenceTarget(
     val lng: Double,
     val radiusM: Float,
     val dwellMinutes: Int,
-) {
-    companion object {
-        // 명세 setup·my-location 앵커 반경 범위(500~5000m)와 동일 — 서버 판정 반경과 OS 트리거 반경을 일치시킨다.
-        const val MIN_RADIUS_M: Float = 500f
-        const val MAX_RADIUS_M: Float = 5000f
-    }
-}
+)
 
-/** 지도 핀 결과 페이로드 (명세 §5.3). [label]·[address] 는 표시용("우리 동네 헬스장"). */
+/**
+ * 지도 핀 결과 페이로드 (명세 §5.3). [label]·[address] 는 표시용("우리 동네 헬스장").
+ *
+ * 반경은 생성 시점에 검증한다 — 범위를 벗어난 핀은 만들어지지 않는다. 서버 응답처럼 통제할 수 없는
+ * 입력은 data 가 경계에서 흡수한 뒤 이 타입으로 올린다.
+ */
 data class LocationPin(
     val lat: Double,
     val lng: Double,
     val radiusM: Float,
     val label: String?,
     val address: String? = null,
-)
+) {
+    init {
+        require(radiusM in SetupAnchors.MIN_RADIUS_M..SetupAnchors.MAX_RADIUS_M) {
+            "인증 반경은 ${SetupAnchors.MIN_RADIUS_M.toInt()}~${SetupAnchors.MAX_RADIUS_M.toInt()}m 여야 해요"
+        }
+    }
+}
+
+/**
+ * 제출 단위 앵커 묶음. 개수 제한을 타입이 보장한다 — [of] 를 거치지 않고는 만들 수 없어
+ * 어떤 경로로 와도 규칙이 빠지지 않는다.
+ *
+ * 비어 있어도 된다 — 앱 전용 셋업은 앵커 없이 제출하고 서버가 location 을 생략한다(명세 setup).
+ * "1개 이상 추가" 같은 화면별 요구는 그 화면이 판단한다.
+ */
+class AnchorSet private constructor(
+    val pins: List<LocationPin>,
+) {
+    val isEmpty: Boolean get() = pins.isEmpty()
+
+    companion object {
+        val EMPTY = AnchorSet(emptyList())
+
+        fun of(pins: List<LocationPin>): AnchorSet {
+            require(pins.size <= SetupAnchors.MAX_COUNT) {
+                "인증 장소는 최대 ${SetupAnchors.MAX_COUNT}개까지 추가할 수 있어요"
+            }
+            return AnchorSet(pins)
+        }
+    }
+}

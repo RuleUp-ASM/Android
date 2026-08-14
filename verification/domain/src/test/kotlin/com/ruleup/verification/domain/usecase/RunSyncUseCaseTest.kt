@@ -1,5 +1,6 @@
 package com.ruleup.verification.domain.usecase
 
+import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
@@ -7,7 +8,6 @@ import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
-import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
@@ -19,7 +19,7 @@ import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
-import com.ruleup.verification.domain.entity.ScreenApp
+import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
@@ -241,7 +241,7 @@ class RunSyncUseCaseTest {
 
         override suspend fun setupChallenge(
             challengeId: String,
-            anchors: List<LocationPin>,
+            anchors: AnchorSet,
             targetPackages: List<String>,
         ): ChallengeSetupResult = error("unused")
 
@@ -251,7 +251,7 @@ class RunSyncUseCaseTest {
 
         override suspend fun updateMyScreenApps(
             challengeId: String,
-            apps: List<ScreenApp>,
+            apps: ScreenAppSet,
         ): ScreenAppsUpdate = error("unused")
 
         override suspend fun submitObjection(

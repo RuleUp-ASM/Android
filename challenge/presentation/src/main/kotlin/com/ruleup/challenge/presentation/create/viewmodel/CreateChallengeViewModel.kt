@@ -8,6 +8,7 @@ import com.ruleup.challenge.domain.entity.DraftExpiredException
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
+import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.toEntries
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
@@ -18,7 +19,6 @@ import com.ruleup.challenge.domain.observability.DraftField
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
-import com.ruleup.challenge.domain.usecase.CreateDraftUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -47,7 +47,6 @@ import javax.inject.Inject
 class CreateChallengeViewModel
     @Inject
     constructor(
-        private val createDraftUseCase: CreateDraftUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,
         private val challengeRepository: ChallengeRepository,
         private val myChallengeStore: MyChallengeStore,
@@ -166,7 +165,7 @@ class CreateChallengeViewModel
             when (event) {
                 is CreateChallengeReducerEvent.RoutineDescriptionEntered ->
                     state.copy(
-                        routineDescription = event.description.take(CreateChallengeState.DESCRIPTION_MAX),
+                        routineDescription = event.description.take(RoutineDescription.MAX_LENGTH),
                         // 다시 입력하기 시작하면 지난 폴백 안내는 치운다.
                         fallbackMessage = null,
                     )
@@ -352,7 +351,7 @@ class CreateChallengeViewModel
             draftJob =
                 viewModelScope.launch {
                     dispatch(CreateChallengeReducerEvent.Drafting)
-                    runCatching { createDraftUseCase(state.routineDescription) }
+                    runCatching { challengeRepository.createDraft(RoutineDescription.of(state.routineDescription)) }
                         .onSuccess { result ->
                             when (result) {
                                 is DraftResult.Ok -> applyDraft(result)

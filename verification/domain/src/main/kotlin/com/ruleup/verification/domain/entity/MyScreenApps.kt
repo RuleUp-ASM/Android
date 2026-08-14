@@ -36,8 +36,24 @@ data class ScreenAppsUpdate(
     val appliedFrom: String,
 )
 
-/** 대상 앱 세트 제약 (명세 my-screen-apps PUT: 1~10개, packageName 중복 불가). */
-object ScreenAppSet {
-    const val MAX_COUNT = 10
-    const val MIN_COUNT = 1
+/**
+ * 제출 단위 대상 앱 세트 (명세 my-screen-apps PUT: 1~10개, packageName 중복 불가).
+ *
+ * 제약을 타입이 보장한다 — [of] 를 거치지 않고는 만들 수 없어 어떤 경로로 와도 규칙이 빠지지 않는다.
+ * 위반은 서버가 400 으로 돌려주는 것과 같은 [InvalidScreenAppException] 으로 알려, 화면이 실패 안내를
+ * 한 갈래로 처리하게 한다.
+ */
+class ScreenAppSet private constructor(
+    val apps: List<ScreenApp>,
+) {
+    companion object {
+        const val MAX_COUNT = 10
+        const val MIN_COUNT = 1
+
+        fun of(apps: List<ScreenApp>): ScreenAppSet {
+            if (apps.size !in MIN_COUNT..MAX_COUNT) throw InvalidScreenAppException()
+            if (apps.distinctBy { it.packageName }.size != apps.size) throw InvalidScreenAppException()
+            return ScreenAppSet(apps)
+        }
+    }
 }

@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
@@ -235,7 +236,7 @@ private fun RoutineDescriptionBox(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = "${state.routineDescription.length}/${CreateChallengeState.DESCRIPTION_MAX}",
+                text = "${state.routineDescription.length}/${RoutineDescription.MAX_LENGTH}",
                 color = RuleUpTheme.colors.textMuted,
                 style = RuleUpTheme.typography.captionMedium,
             )

@@ -57,6 +57,7 @@ import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.profile.presentation.invite.FriendInviteScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
 import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
+import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationDetailPage
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.navigation.VerificationManualPage
@@ -256,7 +257,13 @@ val appRoutes: List<AppRoute> =
             render = { args ->
                 VerificationLocationScreen(
                     challengeId = args[VerificationLocationPage.ARG_CHALLENGE_ID].orEmpty(),
-                    defaultRadiusM = args[VerificationLocationPage.ARG_RADIUS]?.toFloatOrNull() ?: 500f,
+                    // 딥링크로 들어오는 인자라 값을 신뢰할 수 없다. LocationPin 이 범위를 강제하므로
+                    // 여기서 흡수하지 않으면 앵커 추가가 그대로 터진다.
+                    defaultRadiusM =
+                        args[VerificationLocationPage.ARG_RADIUS]
+                            ?.toFloatOrNull()
+                            ?.coerceIn(SetupAnchors.MIN_RADIUS_M, SetupAnchors.MAX_RADIUS_M)
+                            ?: SetupAnchors.MIN_RADIUS_M,
                     dwellMinutes = args[VerificationLocationPage.ARG_DWELL]?.toIntOrNull() ?: 60,
                     targetPackages =
                         args[VerificationLocationPage.ARG_TARGET_PACKAGES]

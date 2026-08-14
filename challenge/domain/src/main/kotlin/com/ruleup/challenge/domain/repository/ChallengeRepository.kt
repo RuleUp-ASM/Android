@@ -18,6 +18,7 @@ import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 
 interface ChallengeRepository {
@@ -36,7 +37,7 @@ interface ChallengeRepository {
      * 1분 10회 제한이 있어 초과 시 [com.ruleup.challenge.domain.entity.RecommendationRateLimitedException]
      * 이 던져진다. 자동 재시도는 금지 — 남은 rate limit 을 소진시킨다.
      */
-    suspend fun createDraft(description: String): DraftResult
+    suspend fun createDraft(description: RoutineDescription): DraftResult
 
     /**
      * 추천 루틴 탭으로 초안을 만든다(명세 POST /challenges/recommendation/by-template — 경로 A).
