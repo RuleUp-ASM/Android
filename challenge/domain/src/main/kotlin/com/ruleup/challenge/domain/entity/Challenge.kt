@@ -49,26 +49,14 @@ enum class ChallengeStatus(
  * **심사 중에도 모집·입장·인증에 제한이 없다** — 구 명세의 `CHALLENGE_UNDER_REVIEW` 모집 차단은 폐기됐다.
  * 상태는 방장 본인 화면의 뱃지 표시에만 쓴다.
  */
-enum class ModerationState(
-    val value: String,
-) {
-    // 심사 대상 아님 — AI·템플릿 생성본을 고치지 않고 그대로 썼다
-    EXEMPT("EXEMPT"),
-    APPROVED("APPROVED"),
-    IN_REVIEW("IN_REVIEW"),
-    REJECTED("REJECTED"),
+enum class ModerationState {
+    // 심사를 앱이 하지 않으므로 "심사 대상 아님"(EXEMPT)도 여기로 합쳐 받는다 — data 가 매핑한다.
+    APPROVED,
+    IN_REVIEW,
+    REJECTED,
 
     // 이미지 미등록
-    NONE("NONE"),
-    ;
-
-    /** 방장 본인 화면에 "심사중" 뱃지를 붙일지. */
-    val showsBadge: Boolean
-        get() = this == IN_REVIEW || this == REJECTED
-
-    companion object {
-        fun fromValue(value: String?): ModerationState = entries.find { it.value == value } ?: NONE
-    }
+    NONE,
 }
 
 /** 제목·설명·이미지의 심사 상태 묶음 (명세 `moderation`). 방장 본인 조회에서만 내려온다. */

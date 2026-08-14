@@ -146,8 +146,8 @@ fun createdChallenge(
     status = ChallengeStatus.UPCOMING,
     moderation =
         ChallengeModeration(
-            title = ModerationState.EXEMPT,
-            description = ModerationState.EXEMPT,
+            title = ModerationState.APPROVED,
+            description = ModerationState.APPROVED,
             image = ModerationState.NONE,
         ),
     verification = verification,
