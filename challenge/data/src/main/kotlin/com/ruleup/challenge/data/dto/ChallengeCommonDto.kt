@@ -158,10 +158,25 @@ data class ModerationDto(
 
 internal fun ModerationDto.toDomain(): ChallengeModeration =
     ChallengeModeration(
-        title = ModerationState.fromValue(title),
-        description = ModerationState.fromValue(description),
-        image = ModerationState.fromValue(image),
+        title = moderationState(title),
+        description = moderationState(description),
+        image = moderationState(image),
     )
+
+/**
+ * 심사 상태 문자열 → 도메인.
+ *
+ * `EXEMPT` 는 심사 대상이 아니라는 뜻이다(AI·템플릿 생성본을 고치지 않고 그대로 썼을 때).
+ * 앱은 심사 주체가 아니라 통과와 구분할 이유가 없어 [ModerationState.APPROVED] 로 합친다.
+ */
+private fun moderationState(value: String?): ModerationState =
+    when (value) {
+        "EXEMPT", "APPROVED" -> ModerationState.APPROVED
+        "IN_REVIEW" -> ModerationState.IN_REVIEW
+        "REJECTED" -> ModerationState.REJECTED
+        // 이미지 미등록("NONE")과 아직 모르는 값을 같이 흡수한다.
+        else -> ModerationState.NONE
+    }
 
 /**
  * 초안 본문. `draft` · `by-template` · `clone` 세 API 가 **같은 스키마**로 내려주므로 하나로 공유한다.
