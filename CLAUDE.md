@@ -21,6 +21,12 @@
 - `domain/usecase/`: 단일 책임 UseCase (예: `CreateChallengeUseCase`).
 - `domain/<Name>Repository.kt`: Repository **인터페이스**를 domain에 두고, 구현은 `data` 모듈에 둔다.
 
+### UseCase를 만드는 기준
+UseCase는 **repository를 둘 이상 엮거나, repository 없이 성립하는 도메인 규칙·검증·정규화가 있을 때만** 만든다.
+- 단일 repository로의 위임(인자를 그대로 넘기거나 기본값만 지정하는 경우 포함)은 UseCase를 만들지 않는다. ViewModel이 domain의 Repository 인터페이스를 직접 주입받아 호출한다.
+- 인자 기본값은 Repository 인터페이스 시그니처에 둔다. UseCase가 같은 기본값을 다시 선언하지 않는다.
+- 나중에 규칙이 생기면 그때 UseCase로 올린다. 미리 만들어 두지 않는다.
+
 ## MVI (presentation 레이어)
 화면별로 `viewmodel/` 패키지를 두고 다음 요소로 구성한다 (기존 `CreateChallenge*` 컨벤션):
 - `<Screen>Intent`: 사용자/시스템 의도(이벤트).
