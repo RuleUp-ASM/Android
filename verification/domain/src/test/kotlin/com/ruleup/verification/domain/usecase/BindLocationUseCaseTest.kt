@@ -48,25 +48,6 @@ class BindLocationUseCaseTest {
             assertEquals(listOf("c1#0"), registrar.bound.map { it.requestId })
         }
 
-    @Test
-    fun `반경은 명세 범위로 클램프해 bind 한다`() =
-        runBlocking {
-            val registrar = FakeRegistrar()
-
-            BindLocationUseCase(registrar, FakeTokenRepository(storedUserId = "u2"))(
-                challengeId = "c2",
-                anchors =
-                    listOf(
-                        LocationPin(lat = 37.0, lng = 127.0, radiusM = 999_999f, label = null),
-                        LocationPin(lat = 37.1, lng = 127.1, radiusM = 5f, label = null),
-                    ),
-                dwellMinutes = 30,
-            )
-
-            assertEquals(GeofenceTarget.MAX_RADIUS_M, registrar.bound[0].radiusM)
-            assertEquals(GeofenceTarget.MIN_RADIUS_M, registrar.bound[1].radiusM)
-        }
-
     private class FakeRegistrar : GeofenceRegistrar {
         var boundPrefix: String? = null
         var bound: List<GeofenceTarget> = emptyList()

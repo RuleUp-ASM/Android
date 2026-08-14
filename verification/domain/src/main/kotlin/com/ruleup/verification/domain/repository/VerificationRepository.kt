@@ -1,5 +1,6 @@
 package com.ruleup.verification.domain.repository
 
+import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
@@ -16,7 +17,7 @@ import com.ruleup.verification.domain.entity.PendingReviews
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
-import com.ruleup.verification.domain.entity.ScreenApp
+import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SyncPolicy
@@ -56,12 +57,12 @@ interface VerificationRepository {
 
     /**
      * 셋업(앵커·대상앱 바인딩) 제출(명세 setup). 모두 충족 시 [com.ruleup.verification.domain.entity.SetupStatus.READY],
-     * 미충족 시 missing[] 과 함께 PENDING_SETUP. 앵커 미입력이면 [anchors] 빈 리스트로 location 을 생략한다.
-     * 반경 범위(500~5000m)·개수(최대 10) 위반은 [com.ruleup.verification.domain.entity.InvalidAnchorException] 로 분기한다.
+     * 미충족 시 missing[] 과 함께 PENDING_SETUP. 앵커 미입력이면 [anchors] 를 비워 location 을 생략한다.
+     * 반경 범위(500~5000m)·개수(최대 10)는 [AnchorSet]·[LocationPin] 이 생성 시점에 보장한다.
      */
     suspend fun setupChallenge(
         challengeId: String,
-        anchors: List<LocationPin>,
+        anchors: AnchorSet,
         targetPackages: List<String> = emptyList(),
     ): ChallengeSetupResult
 
@@ -81,12 +82,13 @@ interface VerificationRepository {
 
     /**
      * 스크린타임 대상 앱 세트 교체(명세: PUT /my-screen-apps). 항상 익일 00:00 부터 적용된다.
-     * 쿨다운은 [com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException](429),
-     * 형식/중복/개수(1~10) 위반은 [com.ruleup.verification.domain.entity.InvalidScreenAppException](400) 로 분기한다.
+     * 쿨다운은 [com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException](429) 로 분기한다.
+     * 중복·개수(1~10)는 [ScreenAppSet] 이 생성 시점에 보장하고, 서버가 되돌려주는 형식 위반은
+     * [com.ruleup.verification.domain.entity.InvalidScreenAppException](400) 이다.
      */
     suspend fun updateMyScreenApps(
         challengeId: String,
-        apps: List<ScreenApp>,
+        apps: ScreenAppSet,
     ): ScreenAppsUpdate
 
     /**

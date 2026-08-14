@@ -1,8 +1,10 @@
 package com.ruleup.verification.data.dto
 
+import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.MyLocation
+import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.entity.SetupStatus
 import kotlinx.serialization.SerialName
@@ -47,14 +49,15 @@ data class ChallengeSetupRequest(
     val targetPackages: List<String>? = null,
 )
 
-/** 도메인 앵커/대상앱 → setup 와이어. radiusM 은 UseCase 에서 이미 500~5000 으로 클램프된 값을 반올림한다. */
+/** 도메인 앵커/대상앱 → setup 와이어. radiusM 은 [LocationPin] 이 이미 범위를 보장하므로 반올림만 한다. */
 internal fun buildChallengeSetupRequest(
-    anchors: List<LocationPin>,
+    anchors: AnchorSet,
     targetPackages: List<String>,
 ): ChallengeSetupRequest =
     ChallengeSetupRequest(
         location =
             anchors
+                .pins
                 .takeIf { it.isNotEmpty() }
                 ?.let { pins ->
                     LocationBindingRequest(
@@ -91,12 +94,17 @@ internal fun ChallengeSetupResponse.toDomain(): ChallengeSetupResult =
 
 // ---------- 앵커 조회 응답 (명세: GET /my-location) ----------
 
-/** setup 요청과 동일한 앵커 표현을 재사용한다. radiusM 은 도메인에서 Float 로 승격. */
+/**
+ * setup 요청과 동일한 앵커 표현을 재사용한다. radiusM 은 도메인에서 Float 로 승격.
+ *
+ * [LocationPin] 은 반경 범위를 생성 시점에 강제한다. 서버가 계약을 벗어난 값을 주더라도 조회가
+ * 깨지면 안 되므로 경계에서 흡수한다.
+ */
 internal fun AnchorDto.toDomain(): LocationPin =
     LocationPin(
         lat = lat,
         lng = lng,
-        radiusM = radiusM.toFloat(),
+        radiusM = radiusM.toFloat().coerceIn(SetupAnchors.MIN_RADIUS_M, SetupAnchors.MAX_RADIUS_M),
         label = label,
     )
 

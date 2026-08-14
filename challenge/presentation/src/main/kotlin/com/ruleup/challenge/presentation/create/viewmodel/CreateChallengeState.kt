@@ -96,7 +96,6 @@ data class CreateChallengeState(
         const val TITLE_MAX = 30
 
         // 명세: 루틴 설명 1~200자. 서버가 같은 범위를 재검증한다.
-        const val DESCRIPTION_MAX = 200
 
         // 명세: 주간 횟수 1~7 · 기본 7(매일)
         const val WEEKLY_COUNT_MIN = 1

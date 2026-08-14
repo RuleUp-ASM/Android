@@ -3,12 +3,12 @@ package com.ruleup.verification.presentation.location.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.repository.VerificationRepository
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
-import com.ruleup.verification.domain.usecase.SubmitChallengeSetupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -17,7 +17,7 @@ import javax.inject.Inject
 /**
  * 지도 핀 → 셋업(앵커 바인딩) 제출(명세 setup). 지도 탭/검색으로 확인 대기 핀을 찍고([pending]),
  * 하단 카드의 [VerificationLocationIntent.AddAnchor] 로 최대 10개까지 누적한 뒤
- * [VerificationLocationIntent.Submit] 시 [SubmitChallengeSetupUseCase] 로 송신한다. READY 면 앵커 전체를
+ * [VerificationLocationIntent.Submit] 시 setup 으로 송신한다. READY 면 앵커 전체를
  * [BindLocationUseCase] 로 OS 지오펜스 등록 후 종료한다. 탭 지점의 이름/주소는 역지오코딩으로 채운다.
  */
 @HiltViewModel
@@ -25,7 +25,6 @@ class VerificationLocationViewModel
     @Inject
     constructor(
         private val verificationRepository: VerificationRepository,
-        private val submitChallengeSetupUseCase: SubmitChallengeSetupUseCase,
         private val bindLocationUseCase: BindLocationUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
@@ -173,9 +172,9 @@ class VerificationLocationViewModel
             viewModelScope.launch {
                 dispatch(VerificationLocationReducerEvent.Submitting)
                 runCatching {
-                    submitChallengeSetupUseCase(
+                    verificationRepository.setupChallenge(
                         challengeId = intent.challengeId,
-                        anchors = anchors,
+                        anchors = AnchorSet.of(anchors),
                         targetPackages = intent.targetPackages,
                     )
                 }.onSuccess { result ->

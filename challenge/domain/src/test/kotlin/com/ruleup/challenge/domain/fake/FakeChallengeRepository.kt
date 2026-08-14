@@ -13,6 +13,7 @@ import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -35,7 +36,7 @@ class FakeChallengeRepository(
 
     override suspend fun getRoutineTemplates() = throw NotImplementedError()
 
-    override suspend fun createDraft(description: String): DraftResult = requireNotNull(draftResult)
+    override suspend fun createDraft(description: RoutineDescription): DraftResult = requireNotNull(draftResult)
 
     override suspend fun createDraftFromTemplate(templateId: Long): DraftResult.Ok = requireNotNull(draftResult) as DraftResult.Ok
 

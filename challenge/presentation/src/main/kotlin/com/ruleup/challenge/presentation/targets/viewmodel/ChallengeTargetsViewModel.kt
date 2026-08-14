@@ -6,8 +6,8 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException
+import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.repository.VerificationRepository
-import com.ruleup.verification.domain.usecase.UpdateScreenAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,15 +17,14 @@ import javax.inject.Inject
  * 바인딩한 뒤 로컬 [TargetAppStore](상세의 등록 게이트 판정용)에도 반영한다.
  *
  * 대상 앱 설정은 verification 소관이라 그쪽 domain 계약을 직접 쓴다. 예전에는 core 포트를 경유했는데,
- * 쿨다운·형식 위반을 구분할 수 없었고 **[UpdateScreenAppsUseCase] 를 통째로 우회해** 중복 제거·최대 개수 제한도
- * 적용되지 않았다.
+ * 쿨다운·형식 위반을 구분할 수 없었고 중복 제거·최대 개수 제한도 적용되지 않았다.
+ * 지금은 [ScreenAppSet] 이 생성 시점에 그 규칙을 강제해 경로를 우회해도 빠지지 않는다.
  */
 @HiltViewModel
 class ChallengeTargetsViewModel
     @Inject
     constructor(
         private val verificationRepository: VerificationRepository,
-        private val updateScreenAppsUseCase: UpdateScreenAppsUseCase,
         private val targetAppStore: TargetAppStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeTargetsIntent, ChallengeTargetsState, ChallengeTargetsReducerEvent, ChallengeTargetsEffect>(
@@ -63,7 +62,7 @@ class ChallengeTargetsViewModel
 
         private fun save(intent: ChallengeTargetsIntent.Save) {
             if (currentState.isSaving) return
-            // 중복 제거·최대 개수 제한은 UseCase 가 한다. 여기서는 왕복 없이 즉시 알려줄 수 있는
+            // 중복 제거·최대 개수 제한은 ScreenAppSet 이 한다. 여기서는 왕복 없이 즉시 알려줄 수 있는
             // 빈 선택만 먼저 막는다.
             if (intent.apps.isEmpty()) {
                 emitEffect(ChallengeTargetsEffect.ShowMessage("대상 앱을 1개 이상 선택해주세요"))
@@ -71,10 +70,10 @@ class ChallengeTargetsViewModel
             }
             dispatch(ChallengeTargetsReducerEvent.Saving)
             viewModelScope.launch {
-                runCatching { updateScreenAppsUseCase(intent.challengeId, intent.apps) }
+                runCatching { verificationRepository.updateMyScreenApps(intent.challengeId, ScreenAppSet.of(intent.apps)) }
                     .onSuccess { accepted ->
                         // 상세 화면의 "등록됨" 게이트 판정용 로컬 반영(서버 성공 시에만).
-                        // 서버가 접수한 세트를 쓴다 — UseCase 가 정규화했을 수 있다.
+                        // 서버가 접수한 세트를 쓴다.
                         targetAppStore.save(intent.challengeId, accepted.apps.map { it.packageName })
                         // 변경은 항상 익일 00:00 부터 적용된다. "등록됐어요" 로만 끝내면 오늘부터
                         // 측정되는 줄 안다.
