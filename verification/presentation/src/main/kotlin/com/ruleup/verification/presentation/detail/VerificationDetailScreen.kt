@@ -193,7 +193,7 @@ private fun ColumnScope.DetailBody(
                 }
             }
             // 이의 제기: 실패 일자를 특정할 수 있을 때만 노출(가장 최근 실패 로그 기준).
-            val failedDate = detail.dailyLogs.lastOrNull { it.status == TodayStatus.FAILED }?.date
+            val failedDate = detail.dailyLogs.lastOrNull { it.status.isFailure }?.date
             if (failedDate != null) {
                 OutlinedButton(
                     onClick = { onObjectionClick(failedDate) },

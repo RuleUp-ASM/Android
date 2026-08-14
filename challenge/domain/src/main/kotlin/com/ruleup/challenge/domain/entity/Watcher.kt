@@ -26,6 +26,14 @@ enum class WatcherStatus(
     EXPIRED("EXPIRED"),
     ;
 
+    /**
+     * 아직 살아 있는 감시자인가 — 무료 한도 계산과 목록 노출의 기준.
+     *
+     * 해제/만료가 아닌 상태를 모두 포함한다. 상태가 늘어나면 여기만 고치면 된다.
+     */
+    val isActive: Boolean
+        get() = this != REVOKED && this != EXPIRED
+
     companion object {
         fun fromValue(value: String?): WatcherStatus? = entries.find { it.value == value }
     }

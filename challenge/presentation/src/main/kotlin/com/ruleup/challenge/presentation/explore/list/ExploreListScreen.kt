@@ -43,7 +43,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ExploreChallenge
 import com.ruleup.challenge.domain.entity.ExploreSort
-import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.explore.list.viewmodel.EmptyReason
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListIntent
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListState
@@ -501,7 +500,7 @@ private fun ExploreChallengeCard(
                         textColor = RuleUpTheme.colors.textMuted,
                     )
                 }
-                if (item.verificationType == VerificationType.AUTO) {
+                if (item.verificationType.isAuto) {
                     TagChip(
                         text = "자동인증",
                         // 자동인증 표식의 파랑은 Figma 팔레트 15색에 없다. 화면 디자인에서 온 값이라 남긴다.

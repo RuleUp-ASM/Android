@@ -119,7 +119,7 @@ object ObservabilityModule {
                         delegate = SeverityFilterSink(min = Severity.WARN, delegate = CrashlyticsSink()),
                     ),
                 )
-                if (profile != BuildProfile.PRODUCTION) add(LogcatSink())
+                if (profile.isDebuggable) add(LogcatSink())
                 addAll(extraSinks)
             }
         return CompositeSink(children, profile, failureReporter)

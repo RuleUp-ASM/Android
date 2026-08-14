@@ -60,7 +60,7 @@ fun mergeHomeChallenges(
 
 private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi {
     val dayPart = if (progress == null || progress.successDays <= 0) "오늘 시작" else "${progress.successDays}일째"
-    val groupPart = if (mode == ChallengeMode.GROUP) "함께" else "솔로"
+    val groupPart = if (mode.isGroup) "함께" else "솔로"
     return HomeChallengeUi(
         challengeId = challengeId,
         title = title,
@@ -96,7 +96,7 @@ private fun MyChallengeSummary.toHomeUi(): HomeChallengeUi =
     HomeChallengeUi(
         challengeId = challengeId,
         title = title,
-        subtitle = "오늘 시작 · ${if (mode == ChallengeMode.GROUP) "함께" else "솔로"}",
+        subtitle = "오늘 시작 · ${if (mode.isGroup) "함께" else "솔로"}",
         progress = 0f,
         todayTarget = true,
         iconRes = categoryIconRes(category),

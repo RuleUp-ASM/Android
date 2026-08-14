@@ -1,7 +1,6 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.DraftExpiredException
@@ -250,7 +249,7 @@ class CreateChallengeViewModel
 
                 is CreateChallengeReducerEvent.ModeSelected ->
                     // 파생 필드는 서버가 정규화하지만, 화면이 엉뚱한 입력부를 열지 않도록 여기서도 맞춘다.
-                    if (event.mode == ChallengeMode.GROUP) {
+                    if (event.mode.isGroup) {
                         state.copy(
                             mode = event.mode,
                             visibility = state.visibility ?: ChallengeVisibility.PUBLIC,
@@ -310,7 +309,7 @@ class CreateChallengeViewModel
                     state.copy(
                         verification = state.verification?.copy(type = event.type),
                         // 인증 방식을 바꾸면 서버가 score 패널티를 재계산한다. 표시도 맞춰 둔다.
-                        penalties = state.penalties.copy(score = event.type == VerificationType.AUTO),
+                        penalties = state.penalties.copy(score = event.type.isAuto),
                     )
 
                 is CreateChallengeReducerEvent.WatcherPenaltyChanged ->
@@ -466,14 +465,14 @@ class CreateChallengeViewModel
          */
         private fun setVerificationType(type: VerificationType) {
             val state = currentState
-            if (type == VerificationType.AUTO && !state.canUseAuto) {
+            if (type.isAuto && !state.canUseAuto) {
                 emitEffect(CreateChallengeEffect.ShowError("이 루틴은 자동 인증을 쓸 수 없어요"))
                 return
             }
             if (type != state.original?.verification?.type) {
                 logDraftEdit(
                     DraftField.VERIFICATION,
-                    autoToManual = type == VerificationType.MANUAL && state.canUseAuto,
+                    autoToManual = !type.isAuto && state.canUseAuto,
                 )
             }
             dispatch(CreateChallengeReducerEvent.VerificationTypeSelected(type))
@@ -553,7 +552,7 @@ class CreateChallengeViewModel
 
                     // 권한은 생성 이후에 받는다 — 생성 전에 받으면 만들지도 않은 방 때문에 권한을 요구하는 꼴이 된다.
                     val missing = created.verification.requiredPermissions - state.grantedPermissions
-                    if (created.verification.type == VerificationType.AUTO && missing.isNotEmpty()) {
+                    if (created.verification.type.isAuto && missing.isNotEmpty()) {
                         emitEffect(CreateChallengeEffect.RequestPermissions(missing.toList()))
                     } else {
                         goHome()

@@ -16,6 +16,18 @@ enum class MemberRole(
     val canManage: Boolean
         get() = this == OWNER || this == MANAGER
 
+    /** 방장인가 — 삭제·위임·권한 변경은 방장만 한다. */
+    val isOwner: Boolean
+        get() = this == OWNER
+
+    /** 공동 관리자인가. */
+    val isManager: Boolean
+        get() = this == MANAGER
+
+    /** 참여자인가. [NONE] 은 아직 참여하지 않은 상태다. */
+    val isMember: Boolean
+        get() = this != NONE
+
     companion object {
         fun fromValue(value: String?): MemberRole? = entries.find { it.value == value }
     }
@@ -84,6 +96,18 @@ enum class JoinBlockReason(
 
     CHALLENGE_COMPLETED("CHALLENGE_COMPLETED"),
     ;
+
+    /** 이미 참여 중이라 막힌 경우 — 알릴 게 없어 조용히 방 상세로 전환한다. */
+    val isAlreadyJoined: Boolean
+        get() = this == ALREADY_JOINED
+
+    /** 초대 전용이라 막힌 경우. */
+    val isPrivateInviteOnly: Boolean
+        get() = this == PRIVATE_INVITE_ONLY
+
+    /** 막힌 순간의 상태가 곧 낡는가 — 정원은 수시로 변해 다시 받아야 뱃지가 맞는다. */
+    val needsRefresh: Boolean
+        get() = this == FULL
 
     companion object {
         fun fromValue(value: String?): JoinBlockReason? = entries.find { it.value == value }

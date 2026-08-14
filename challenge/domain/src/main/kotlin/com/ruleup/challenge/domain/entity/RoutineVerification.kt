@@ -11,6 +11,10 @@ enum class VerificationType(
     MANUAL("MANUAL"),
     ;
 
+    /** 신호를 자동 수집해 판정하는가. 아니면 사용자가 직접 체크한다. */
+    val isAuto: Boolean
+        get() = this == AUTO
+
     companion object {
         fun fromValue(value: String?): VerificationType? = entries.find { it.value == value }
     }

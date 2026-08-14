@@ -8,7 +8,6 @@ import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationConfig
-import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.UiState
@@ -74,18 +73,18 @@ data class CreateChallengeState(
         get() = original != null && original.description != description
 
     val isGroup: Boolean
-        get() = mode == ChallengeMode.GROUP
+        get() = mode.isGroup
 
     /**
      * 자동 인증을 고를 수 있는지. 초안이 AUTO 로 왔을 때만 true 다 —
      * 수동으로 바꾼 뒤에는 되돌릴 수 없다(단방향 전환).
      */
     val canUseAuto: Boolean
-        get() = original?.verification?.type == VerificationType.AUTO
+        get() = original?.verification?.type?.isAuto == true
 
     /** 지금 자동 인증이 선택돼 있는지. */
     val isAuto: Boolean
-        get() = verification?.type == VerificationType.AUTO
+        get() = verification?.type?.isAuto == true
 
     /** 설명 입력으로 초안을 만들 수 있는 상태인지. */
     val canSubmitDescription: Boolean

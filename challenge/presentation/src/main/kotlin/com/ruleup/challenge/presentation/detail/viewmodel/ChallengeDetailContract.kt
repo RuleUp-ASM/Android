@@ -161,7 +161,7 @@ data class ChallengeDetailState(
      * 눌러봐야 막히는 버튼을 두면 사용자가 원인을 오해한다.
      */
     val hideJoinButton: Boolean
-        get() = detail?.joinBlockReason == JoinBlockReason.PRIVATE_INVITE_ONLY
+        get() = detail?.joinBlockReason?.isPrivateInviteOnly == true
 
     /** 복제 버튼을 활성할 수 있는지. 공개 그룹만 복제된다. */
     val canClone: Boolean

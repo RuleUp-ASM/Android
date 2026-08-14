@@ -79,13 +79,13 @@ internal fun ExploreFilterSheet(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilterToggleButton(
                     text = "자동 인증",
-                    selected = draft.verifyType == VerificationType.AUTO,
+                    selected = draft.verifyType?.isAuto == true,
                     modifier = Modifier.weight(1f),
                     onClick = { update(draft.copy(verifyType = draft.verifyType.toggle(VerificationType.AUTO))) },
                 )
                 FilterToggleButton(
                     text = "직접 체크",
-                    selected = draft.verifyType == VerificationType.MANUAL,
+                    selected = draft.verifyType?.isAuto == false,
                     modifier = Modifier.weight(1f),
                     onClick = { update(draft.copy(verifyType = draft.verifyType.toggle(VerificationType.MANUAL))) },
                 )

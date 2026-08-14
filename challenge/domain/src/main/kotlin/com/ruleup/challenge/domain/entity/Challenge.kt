@@ -11,6 +11,10 @@ enum class ChallengeMode(
     GROUP("GROUP"),
     ;
 
+    /** 남과 함께하는 챌린지인가 — 방 홈·랭킹·멤버 관리는 여기서만 열린다. */
+    val isGroup: Boolean
+        get() = this == GROUP
+
     companion object {
         fun fromValue(value: String?): ChallengeMode? = entries.find { it.value == value }
     }
@@ -23,6 +27,10 @@ enum class ChallengeVisibility(
     PUBLIC("PUBLIC"),
     PRIVATE("PRIVATE"),
     ;
+
+    /** 초대로만 들어올 수 있는가 — 탐색 노출과 참여 게이트가 달라진다. */
+    val isPrivate: Boolean
+        get() = this == PRIVATE
 
     companion object {
         fun fromValue(value: String?): ChallengeVisibility? = entries.find { it.value == value }

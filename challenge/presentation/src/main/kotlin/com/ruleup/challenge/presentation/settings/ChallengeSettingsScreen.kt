@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeField
-import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -129,7 +128,7 @@ private fun ChallengeSettingsContent(
                     item { CoverSection(state = state, onIntent = onIntent) }
                     item { CategorySection(state = state) }
                     item { CapacitySection(state = state, onIntent = onIntent) }
-                    if (state.loaded.config.mode == ChallengeMode.GROUP) {
+                    if (state.loaded.config.mode.isGroup) {
                         item { VisibilitySection(state = state, onIntent = onIntent) }
                         item { MinTierSection(state = state, onIntent = onIntent) }
                     } else {
@@ -340,13 +339,13 @@ private fun VisibilitySection(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ChoiceChip(
                 text = "공개",
-                selected = state.visibility != ChallengeVisibility.PRIVATE,
+                selected = state.visibility?.isPrivate != true,
                 enabled = editable,
                 onClick = { onIntent(ChallengeSettingsIntent.SetVisibility(ChallengeVisibility.PUBLIC)) },
             )
             ChoiceChip(
                 text = "비공개",
-                selected = state.visibility == ChallengeVisibility.PRIVATE,
+                selected = state.visibility?.isPrivate == true,
                 enabled = editable,
                 onClick = { onIntent(ChallengeSettingsIntent.SetVisibility(ChallengeVisibility.PRIVATE)) },
             )
@@ -481,21 +480,21 @@ private fun VerificationSection(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ChoiceChip(
                 text = "자동 인증",
-                selected = state.verificationType == VerificationType.AUTO,
+                selected = state.verificationType?.isAuto == true,
                 // 수동으로 바꾼 뒤에는 되돌릴 수 없다 — 이미 수동이면 자동 칩을 열지 않는다.
-                enabled = editable && state.verificationType == VerificationType.AUTO,
+                enabled = editable && state.verificationType?.isAuto == true,
                 onClick = { onIntent(ChallengeSettingsIntent.SetVerificationType(VerificationType.AUTO)) },
             )
             ChoiceChip(
                 text = "직접 체크",
-                selected = state.verificationType == VerificationType.MANUAL,
+                selected = state.verificationType?.isAuto == false,
                 enabled = editable,
                 onClick = { onIntent(ChallengeSettingsIntent.SetVerificationType(VerificationType.MANUAL)) },
             )
         }
         when {
             !editable -> LockCaption()
-            state.verificationType == VerificationType.AUTO ->
+            state.verificationType?.isAuto == true ->
                 Text(
                     text = "직접 체크로 바꾸면 되돌릴 수 없어요",
                     color = RuleUpTheme.colors.textMuted,

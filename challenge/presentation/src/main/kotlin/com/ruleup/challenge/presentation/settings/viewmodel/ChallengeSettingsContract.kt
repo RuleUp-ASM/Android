@@ -133,7 +133,12 @@ data class ChallengeSettingsState(
 
     /** 자동 인증으로 되돌릴 수 있는지 — 원본이 AUTO 였을 때만 가능하다(단방향 전환). */
     val canUseAuto: Boolean
-        get() = loaded?.config?.verification?.type == VerificationType.AUTO
+        get() =
+            loaded
+                ?.config
+                ?.verification
+                ?.type
+                ?.isAuto == true
 
     /** 저장할 게 있는지. 아무것도 안 바꿨으면 버튼을 열지 않는다. */
     val hasChanges: Boolean

@@ -61,7 +61,7 @@ internal fun WatcherSection(
                 color = RuleUpTheme.colors.textPrimary,
                 style = RuleUpTheme.typography.cardTitle,
             )
-            val activeCount = watchers.count { it.status != WatcherStatus.EXPIRED && it.status != WatcherStatus.REVOKED }
+            val activeCount = watchers.count { it.status.isActive }
             Text(
                 // 무료 한도 대비 현재 유효(만료·해제 제외) 감시자 수. 구독(limit=null)이면 무제한
                 text = limit?.let { "$activeCount/$it" } ?: "${activeCount}명",

@@ -13,6 +13,14 @@ enum class TodayStatus {
     NOT_TARGET,
     ;
 
+    /**
+     * 실패로 확정된 날인가 — 실패 카피·이의 제기 노출의 기준.
+     *
+     * [PENDING] 은 아직 판정 전이고 [NOT_TARGET] 은 애초에 대상이 아니다. 둘 다 실패가 아니다.
+     */
+    val isFailure: Boolean
+        get() = this == FAILED
+
     companion object {
         // 서버가 새 값을 추가해도 깨지지 않도록 미인식은 보수적으로 PENDING(진행 중)으로 떨군다.
         fun fromValue(value: String?): TodayStatus = entries.find { it.name == value } ?: PENDING

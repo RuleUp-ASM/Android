@@ -130,7 +130,7 @@ private fun PendingReviewsContent(
     }
 
     confirm?.let { (objectionId, decision) ->
-        val approve = decision == ObjectionDecision.APPROVE
+        val approve = decision.isApprove
         AlertDialog(
             onDismissRequest = { confirm = null },
             containerColor = RuleUpTheme.colors.surface,

@@ -36,7 +36,7 @@ internal class AmplitudeSink(
         ).also {
             // 개발 빌드에서만 SDK 내부 로그를 연다. 기본값(WARN)이면 전송 성공이 아무 흔적도 남기지
             // 않아 "올라가고 있나"를 확인할 방법이 없다. 프로덕션은 로그를 남기지 않는다.
-            if (profile != BuildProfile.PRODUCTION) it.logger.logMode = Logger.LogMode.DEBUG
+            if (profile.isDebuggable) it.logger.logMode = Logger.LogMode.DEBUG
         }
     }
 

@@ -45,10 +45,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeDetail
-import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.JoinBlockReason
-import com.ruleup.challenge.domain.entity.MemberRole
-import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
 import com.ruleup.challenge.presentation.detail.component.RoomManageEntry
@@ -272,7 +269,7 @@ private fun ChallengeDetailContent(
                             }
 
                             // 수정은 방장 전용이다 — 공동 관리자는 설정을 바꿀 수 없다.
-                            if (room.myRole == MemberRole.OWNER) {
+                            if (room.myRole.isOwner) {
                                 RoomManageEntry(
                                     label = "챌린지 수정",
                                     onClick = { onIntent(ChallengeDetailIntent.OpenSettings) },
@@ -323,7 +320,7 @@ private fun ChallengeDetailContent(
         // room(방 홈) 조회 성공 여부로 판단하면 안 된다. 방 홈은 GROUP·ACTIVE 일 때만 내려오므로
         // 솔로 방이나 시작 전 그룹 방에서는 내가 멤버인데도 room 이 null 이라 "참여하기" 가 다시 떴다.
         // joinable/eligible 은 자물쇠 표시용이지 버튼 노출 조건이 아니다.
-        if (state.detail != null && state.detail.myRole == MemberRole.NONE) {
+        if (state.detail != null && !state.detail.myRole.isMember) {
             Column(
                 modifier =
                     Modifier
@@ -488,8 +485,8 @@ private fun DetailHero(detail: ChallengeDetail) {
 
 @Composable
 private fun DetailInfoCard(detail: ChallengeDetail) {
-    val method = if (detail.verification.type == VerificationType.AUTO) "자동 인증" else "직접 체크"
-    val participation = if (detail.mode == ChallengeMode.GROUP) "그룹" else "솔로"
+    val method = if (detail.verification.type.isAuto) "자동 인증" else "직접 체크"
+    val participation = if (detail.mode.isGroup) "그룹" else "솔로"
 
     RuleUpCard {
         InfoRow(label = "기간", value = "${detail.period.start} ~ ${detail.period.end}")

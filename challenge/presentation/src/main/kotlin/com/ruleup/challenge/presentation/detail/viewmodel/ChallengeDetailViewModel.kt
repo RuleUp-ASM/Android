@@ -1,7 +1,6 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeNotCloneableException
 import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
 import com.ruleup.challenge.domain.entity.DelegationAction
@@ -185,7 +184,7 @@ class ChallengeDetailViewModel
                         when (error) {
                             is JoinBlockedException -> {
                                 // ALREADY_JOINED 는 알릴 게 없다 — 조용히 방 상세로 전환한다.
-                                if (error.reason == JoinBlockReason.ALREADY_JOINED) {
+                                if (error.reason?.isAlreadyJoined == true) {
                                     dispatch(ChallengeDetailReducerEvent.Joining(false))
                                     load(id, force = true)
                                 } else {
@@ -195,7 +194,7 @@ class ChallengeDetailViewModel
                                         ),
                                     )
                                     // 정원은 수시로 변한다 — 막힌 순간의 상태를 다시 받아 뱃지를 맞춘다.
-                                    if (error.reason == JoinBlockReason.FULL) load(id, force = true)
+                                    if (error.reason?.needsRefresh == true) load(id, force = true)
                                 }
                             }
 
@@ -304,7 +303,7 @@ class ChallengeDetailViewModel
                         // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
                         loadWatchers(challengeId)
                         // 방 홈은 그룹 챌린지의 ACTIVE 멤버만 — 조회 성공 시 방 홈으로 확장 렌더링.
-                        if (detail.mode == ChallengeMode.GROUP) loadRoom(challengeId)
+                        if (detail.mode.isGroup) loadRoom(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }

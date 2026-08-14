@@ -66,7 +66,7 @@ class PendingReviewsViewModel
                 dispatch(PendingReviewsReducerEvent.Deciding(true))
                 runCatching { verificationRepository.decideObjection(id, objectionId, decision) }
                     .onSuccess {
-                        val message = if (decision == ObjectionDecision.APPROVE) "이의 제기를 승인했어요" else "이의 제기를 기각했어요"
+                        val message = if (decision.isApprove) "이의 제기를 승인했어요" else "이의 제기를 기각했어요"
                         emitEffect(PendingReviewsEffect.ShowMessage(message))
                         load(id)
                     }.onFailure {

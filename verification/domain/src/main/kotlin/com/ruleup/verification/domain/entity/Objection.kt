@@ -32,6 +32,11 @@ enum class ObjectionDecision(
 ) {
     APPROVE("APPROVE"),
     REJECT("REJECT"),
+    ;
+
+    /** 이의 제기를 받아들이는가. */
+    val isApprove: Boolean
+        get() = this == APPROVE
 }
 
 /** 확인 대기함 항목 종류 (명세 pending-reviews). */

@@ -29,8 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.ruleup.challenge.domain.entity.ChallengeMode
-import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.VerificationMethod
@@ -326,8 +324,8 @@ private fun CreateChallengeState.verificationLabel(): String =
     }
 
 private fun CreateChallengeState.modeSummary(): String =
-    if (mode == ChallengeMode.GROUP) {
-        val visibilityLabel = if (visibility == ChallengeVisibility.PRIVATE) "비공개" else "그룹"
+    if (mode.isGroup) {
+        val visibilityLabel = if (visibility?.isPrivate == true) "비공개" else "그룹"
         val tierLabel = minTier?.let { "티어 ${it.label()} 이상" } ?: "티어 제한 없음"
         "$visibilityLabel · 정원 ${capacity}명 · $tierLabel"
     } else {
