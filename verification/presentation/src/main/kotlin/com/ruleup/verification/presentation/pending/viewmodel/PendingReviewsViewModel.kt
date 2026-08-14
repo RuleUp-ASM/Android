@@ -4,8 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.ObjectionDecision
-import com.ruleup.verification.domain.usecase.DecideObjectionUseCase
-import com.ruleup.verification.domain.usecase.GetPendingReviewsUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,8 +17,7 @@ import javax.inject.Inject
 class PendingReviewsViewModel
     @Inject
     constructor(
-        private val getPendingReviewsUseCase: GetPendingReviewsUseCase,
-        private val decideObjectionUseCase: DecideObjectionUseCase,
+        private val verificationRepository: VerificationRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<PendingReviewsIntent, PendingReviewsState, PendingReviewsReducerEvent, PendingReviewsEffect>(
             PendingReviewsState.initial,
@@ -52,7 +50,7 @@ class PendingReviewsViewModel
         private fun load(id: String) {
             viewModelScope.launch {
                 dispatch(PendingReviewsReducerEvent.Loading)
-                runCatching { getPendingReviewsUseCase(id) }
+                runCatching { verificationRepository.getPendingReviews(id) }
                     .onSuccess { dispatch(PendingReviewsReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(PendingReviewsReducerEvent.Failed(it.message ?: "대기함을 불러오지 못했어요")) }
             }
@@ -66,7 +64,7 @@ class PendingReviewsViewModel
             if (currentState.isDeciding) return
             viewModelScope.launch {
                 dispatch(PendingReviewsReducerEvent.Deciding(true))
-                runCatching { decideObjectionUseCase(id, objectionId, decision) }
+                runCatching { verificationRepository.decideObjection(id, objectionId, decision) }
                     .onSuccess {
                         val message = if (decision == ObjectionDecision.APPROVE) "이의 제기를 승인했어요" else "이의 제기를 기각했어요"
                         emitEffect(PendingReviewsEffect.ShowMessage(message))

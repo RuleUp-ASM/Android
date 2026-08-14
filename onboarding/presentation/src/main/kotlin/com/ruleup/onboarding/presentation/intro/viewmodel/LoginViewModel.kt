@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.message.IconType
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
 import com.ruleup.observability.domain.event.Channel
@@ -11,7 +12,6 @@ import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
-import com.ruleup.onboarding.domain.auth.usecase.HasEverLoggedInUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
@@ -35,7 +35,7 @@ class LoginViewModel
         private val messageHelper: MessageHelper,
         private val observability: Observability,
         private val signupTimer: SignupTimer,
-        private val hasEverLoggedInUseCase: HasEverLoggedInUseCase,
+        private val tokenRepository: TokenRepository,
         private val signupSession: SignupSession,
     ) : MviViewModel<LoginIntent, LoginState, LoginReducerEvent, LoginEffect>(LoginState.initial) {
         override fun onIntent(intent: LoginIntent) {
@@ -44,7 +44,7 @@ class LoginViewModel
                     dispatch(LoginReducerEvent.Loaded)
                     viewModelScope.launch {
                         // 완주율의 분모. 첫 설치와 재로그인을 나누지 않으면 분모가 뒤섞인다.
-                        val entryType = if (hasEverLoggedInUseCase()) LoginEntryType.RELOGIN else LoginEntryType.FRESH
+                        val entryType = if (tokenRepository.hasEverLoggedIn()) LoginEntryType.RELOGIN else LoginEntryType.FRESH
                         observability.log(Channel.BUSINESS) { OnboardingEvents.loginScreenView(entryType) }
                     }
                 }

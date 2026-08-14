@@ -2,7 +2,7 @@ package com.ruleup.profile.presentation.history.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.profile.domain.usecase.GetReputationHistoryUseCase
+import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +14,7 @@ import javax.inject.Inject
 class ReputationHistoryViewModel
     @Inject
     constructor(
-        private val getReputationHistoryUseCase: GetReputationHistoryUseCase,
+        private val myPageRepository: MyPageRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ReputationHistoryIntent, ReputationHistoryState, ReputationHistoryReducerEvent, NoEffect>(
             ReputationHistoryState.initial,
@@ -44,7 +44,7 @@ class ReputationHistoryViewModel
             if (currentState.history != null) return
             dispatch(ReputationHistoryReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { getReputationHistoryUseCase() }
+                runCatching { myPageRepository.getReputationHistory() }
                     .onSuccess { dispatch(ReputationHistoryReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(ReputationHistoryReducerEvent.Failed(it.message ?: "히스토리를 불러오지 못했어요")) }
             }

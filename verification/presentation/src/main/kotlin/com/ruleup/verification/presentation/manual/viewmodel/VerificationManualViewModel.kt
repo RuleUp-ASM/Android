@@ -11,7 +11,7 @@ import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.FallbackLimitExceededException
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.VerifiedVia
-import com.ruleup.verification.domain.usecase.SubmitManualUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -57,7 +57,7 @@ sealed interface VerificationManualEffect : MviEffect {
 class VerificationManualViewModel
     @Inject
     constructor(
-        private val submitManualUseCase: SubmitManualUseCase,
+        private val verificationRepository: VerificationRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationManualIntent, VerificationManualState, VerificationManualReducerEvent, VerificationManualEffect>(
             VerificationManualState.initial,
@@ -82,7 +82,7 @@ class VerificationManualViewModel
             viewModelScope.launch {
                 dispatch(VerificationManualReducerEvent.Submitting)
                 runCatching {
-                    submitManualUseCase(
+                    verificationRepository.submitManual(
                         challengeId = intent.challengeId,
                         method = intent.method,
                         imageUrl = intent.imageUrl,

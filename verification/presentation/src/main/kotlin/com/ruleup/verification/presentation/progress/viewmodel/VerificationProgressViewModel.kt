@@ -5,7 +5,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import com.ruleup.verification.domain.navigation.VerificationDetailPage
-import com.ruleup.verification.domain.usecase.ObserveProgressUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,7 +18,7 @@ import javax.inject.Inject
 class VerificationProgressViewModel
     @Inject
     constructor(
-        private val observeProgressUseCase: ObserveProgressUseCase,
+        private val verificationRepository: VerificationRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationProgressIntent, VerificationProgressState, VerificationProgressReducerEvent, NoEffect>(
             VerificationProgressState.initial,
@@ -45,7 +45,7 @@ class VerificationProgressViewModel
             if (currentState.isLoading) return
             viewModelScope.launch {
                 dispatch(VerificationProgressReducerEvent.Loading)
-                runCatching { observeProgressUseCase() }
+                runCatching { verificationRepository.getProgress() }
                     .onSuccess { dispatch(VerificationProgressReducerEvent.Loaded(it.challenges)) }
                     .onFailure { dispatch(VerificationProgressReducerEvent.Failed(it.message ?: "진행률을 불러오지 못했어요")) }
             }

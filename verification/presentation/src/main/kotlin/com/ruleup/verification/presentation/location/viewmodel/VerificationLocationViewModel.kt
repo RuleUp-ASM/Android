@@ -6,10 +6,8 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
+import com.ruleup.verification.domain.repository.VerificationRepository
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
-import com.ruleup.verification.domain.usecase.GetMyLocationUseCase
-import com.ruleup.verification.domain.usecase.ReverseGeocodeUseCase
-import com.ruleup.verification.domain.usecase.SearchPlacesUseCase
 import com.ruleup.verification.domain.usecase.SubmitChallengeSetupUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -20,17 +18,15 @@ import javax.inject.Inject
  * 지도 핀 → 셋업(앵커 바인딩) 제출(명세 setup). 지도 탭/검색으로 확인 대기 핀을 찍고([pending]),
  * 하단 카드의 [VerificationLocationIntent.AddAnchor] 로 최대 10개까지 누적한 뒤
  * [VerificationLocationIntent.Submit] 시 [SubmitChallengeSetupUseCase] 로 송신한다. READY 면 앵커 전체를
- * [BindLocationUseCase] 로 OS 지오펜스 등록 후 종료한다. 탭 지점의 이름/주소는 [ReverseGeocodeUseCase] 로 채운다.
+ * [BindLocationUseCase] 로 OS 지오펜스 등록 후 종료한다. 탭 지점의 이름/주소는 역지오코딩으로 채운다.
  */
 @HiltViewModel
 class VerificationLocationViewModel
     @Inject
     constructor(
-        private val getMyLocationUseCase: GetMyLocationUseCase,
+        private val verificationRepository: VerificationRepository,
         private val submitChallengeSetupUseCase: SubmitChallengeSetupUseCase,
         private val bindLocationUseCase: BindLocationUseCase,
-        private val searchPlacesUseCase: SearchPlacesUseCase,
-        private val reverseGeocodeUseCase: ReverseGeocodeUseCase,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
             VerificationLocationState.initial,
@@ -85,7 +81,7 @@ class VerificationLocationViewModel
         // 미등록(null)일 때만 지도 등록 UI 를 연다. 조회 자체 실패는 등록을 막지 않도록 미등록처럼 진행한다.
         private fun init(intent: VerificationLocationIntent.Init) {
             viewModelScope.launch {
-                val existing = runCatching { getMyLocationUseCase(intent.challengeId) }.getOrNull()
+                val existing = runCatching { verificationRepository.getMyLocation(intent.challengeId) }.getOrNull()
                 if (existing != null) {
                     emitEffect(VerificationLocationEffect.ShowMessage("이미 인증 장소가 등록돼 있어요"))
                     navigationHelper.navigateToBack()
@@ -106,7 +102,7 @@ class VerificationLocationViewModel
             )
             resolveJob =
                 viewModelScope.launch {
-                    val place = runCatching { reverseGeocodeUseCase(intent.lat, intent.lng) }.getOrNull()
+                    val place = runCatching { verificationRepository.reverseGeocode(intent.lat, intent.lng) }.getOrNull()
                     dispatch(
                         VerificationLocationReducerEvent.PendingSet(
                             PendingSelection(
@@ -225,7 +221,7 @@ class VerificationLocationViewModel
                 viewModelScope.launch {
                     dispatch(VerificationLocationReducerEvent.Searching)
                     runCatching {
-                        searchPlacesUseCase(
+                        verificationRepository.searchPlaces(
                             query = intent.query,
                             lat = intent.lat,
                             lng = intent.lng,

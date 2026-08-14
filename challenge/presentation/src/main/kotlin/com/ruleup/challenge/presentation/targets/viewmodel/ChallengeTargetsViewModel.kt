@@ -6,7 +6,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException
-import com.ruleup.verification.domain.usecase.GetMyScreenAppsUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import com.ruleup.verification.domain.usecase.UpdateScreenAppsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,15 +16,15 @@ import javax.inject.Inject
  * 대상 앱 등록 ViewModel. 진입 시 서버(my-screen-apps)에서 이전 선택을 복원하고, 저장 시 서버에
  * 바인딩한 뒤 로컬 [TargetAppStore](상세의 등록 게이트 판정용)에도 반영한다.
  *
- * 대상 앱 설정은 verification 소관이라 그쪽 UseCase 를 직접 쓴다. 예전에는 core 포트를 경유했는데,
- * 쿨다운·형식 위반을 구분할 수 없었고 **이 UseCase 들을 통째로 우회해** 중복 제거·최대 개수 제한도
+ * 대상 앱 설정은 verification 소관이라 그쪽 domain 계약을 직접 쓴다. 예전에는 core 포트를 경유했는데,
+ * 쿨다운·형식 위반을 구분할 수 없었고 **[UpdateScreenAppsUseCase] 를 통째로 우회해** 중복 제거·최대 개수 제한도
  * 적용되지 않았다.
  */
 @HiltViewModel
 class ChallengeTargetsViewModel
     @Inject
     constructor(
-        private val getMyScreenAppsUseCase: GetMyScreenAppsUseCase,
+        private val verificationRepository: VerificationRepository,
         private val updateScreenAppsUseCase: UpdateScreenAppsUseCase,
         private val targetAppStore: TargetAppStore,
         private val navigationHelper: NavigationHelper,
@@ -52,7 +52,7 @@ class ChallengeTargetsViewModel
         private fun load(challengeId: String) {
             viewModelScope.launch {
                 // 미설정(null)·조회 실패는 조용히 무시 — 최초 진입이면 복원할 게 없다.
-                val myApps = runCatching { getMyScreenAppsUseCase(challengeId) }.getOrNull() ?: return@launch
+                val myApps = runCatching { verificationRepository.getMyScreenApps(challengeId) }.getOrNull() ?: return@launch
                 // 익일 적용 대기 세트가 있으면 그쪽을 시드로 쓴다 — 사용자가 마지막으로 고른 것이 그거다.
                 val apps = myApps.pending?.apps ?: myApps.apps
                 if (apps.isNotEmpty()) {

@@ -9,8 +9,7 @@ import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTemperaturePage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
-import com.ruleup.profile.domain.usecase.GetMyGroupChallengesUseCase
-import com.ruleup.profile.domain.usecase.GetMyHomeUseCase
+import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -24,8 +23,7 @@ import javax.inject.Inject
 class MyHomeViewModel
     @Inject
     constructor(
-        private val getMyHomeUseCase: GetMyHomeUseCase,
-        private val getMyGroupChallengesUseCase: GetMyGroupChallengesUseCase,
+        private val myPageRepository: MyPageRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<MyHomeIntent, MyHomeState, MyHomeReducerEvent, MyHomeEffect>(
             MyHomeState.initial,
@@ -77,7 +75,7 @@ class MyHomeViewModel
             if (!force && currentState.home != null) return
             if (currentState.home == null) dispatch(MyHomeReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { getMyHomeUseCase() }
+                runCatching { myPageRepository.getHome() }
                     .onSuccess { dispatch(MyHomeReducerEvent.Loaded(it)) }
                     .onFailure {
                         if (currentState.home == null) {
@@ -92,7 +90,7 @@ class MyHomeViewModel
             if (currentState.isLoadingRanking) return
             viewModelScope.launch {
                 dispatch(MyHomeReducerEvent.LoadingRanking(true))
-                runCatching { getMyGroupChallengesUseCase() }
+                runCatching { myPageRepository.getMyGroupChallenges() }
                     .onSuccess { challenges ->
                         when {
                             challenges.isEmpty() ->

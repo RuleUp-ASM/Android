@@ -2,15 +2,15 @@ package com.ruleup.home.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
-import com.ruleup.challenge.domain.usecase.GetMyChallengesUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.home.presentation.mergeHomeChallenges
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
-import com.ruleup.verification.domain.usecase.ObserveProgressUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -27,8 +27,8 @@ import javax.inject.Inject
 class HomeViewModel
     @Inject
     constructor(
-        private val getMyChallengesUseCase: GetMyChallengesUseCase,
-        private val observeProgressUseCase: ObserveProgressUseCase,
+        private val challengeRepository: ChallengeRepository,
+        private val verificationRepository: VerificationRepository,
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<HomeIntent, HomeState, HomeReducerEvent, NoEffect>(HomeState.initial) {
@@ -75,8 +75,8 @@ class HomeViewModel
                     // 서로 독립인 두 조회를 병렬로 실행해 첫 렌더 지연을 줄인다(각 실패는 흡수).
                     val (myChallenges, progress) =
                         coroutineScope {
-                            val challenges = async { runCatching { getMyChallengesUseCase() }.getOrDefault(emptyList()) }
-                            val progressSnapshot = async { runCatching { observeProgressUseCase() }.getOrNull() }
+                            val challenges = async { runCatching { challengeRepository.getMyChallenges() }.getOrDefault(emptyList()) }
+                            val progressSnapshot = async { runCatching { verificationRepository.getProgress() }.getOrNull() }
                             challenges.await() to progressSnapshot.await()
                         }
                     dispatch(

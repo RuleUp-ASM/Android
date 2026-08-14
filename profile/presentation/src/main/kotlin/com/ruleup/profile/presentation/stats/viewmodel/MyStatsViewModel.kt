@@ -3,7 +3,7 @@ package com.ruleup.profile.presentation.stats.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.entity.StatsPeriod
-import com.ruleup.profile.domain.usecase.GetStatsReportUseCase
+import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +15,7 @@ import javax.inject.Inject
 class MyStatsViewModel
     @Inject
     constructor(
-        private val getStatsReportUseCase: GetStatsReportUseCase,
+        private val myPageRepository: MyPageRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<MyStatsIntent, MyStatsState, MyStatsReducerEvent, NoEffect>(
             MyStatsState.initial,
@@ -51,7 +51,7 @@ class MyStatsViewModel
         private fun load(period: StatsPeriod) {
             dispatch(MyStatsReducerEvent.Loading(period))
             viewModelScope.launch {
-                runCatching { getStatsReportUseCase(period) }
+                runCatching { myPageRepository.getStats(period) }
                     .onSuccess { dispatch(MyStatsReducerEvent.Loaded(period, it)) }
                     .onFailure { dispatch(MyStatsReducerEvent.Failed(it.message ?: "통계를 불러오지 못했어요")) }
             }

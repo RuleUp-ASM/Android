@@ -191,5 +191,5 @@ class FakeIntroRepository : IntroRepository {
         return result!!.also { lastTermsVersions = it.termsVersions }
     }
 
-    override fun lastTermsVersions(): TermsVersions? = lastTermsVersions
+    override fun lastTermsVersions(): TermsVersions = lastTermsVersions ?: TermsVersions(emptyMap())
 }

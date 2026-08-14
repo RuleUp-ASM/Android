@@ -2,7 +2,7 @@ package com.ruleup.profile.presentation.invite.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.profile.domain.usecase.GetFriendInvitationUseCase
+import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,7 +16,7 @@ import javax.inject.Inject
 class FriendInviteViewModel
     @Inject
     constructor(
-        private val getFriendInvitationUseCase: GetFriendInvitationUseCase,
+        private val myPageRepository: MyPageRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<FriendInviteIntent, FriendInviteState, FriendInviteReducerEvent, FriendInviteEffect>(
             FriendInviteState.initial,
@@ -56,7 +56,7 @@ class FriendInviteViewModel
             if (currentState.invitation != null) return
             dispatch(FriendInviteReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { getFriendInvitationUseCase() }
+                runCatching { myPageRepository.getInvitation() }
                     .onSuccess { dispatch(FriendInviteReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(FriendInviteReducerEvent.Failed(it.message ?: "초대 정보를 불러오지 못했어요")) }
             }

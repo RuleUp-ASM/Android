@@ -2,9 +2,7 @@ package com.ruleup.challenge.presentation.notice.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.NoticePolicy
-import com.ruleup.challenge.domain.usecase.CreateNoticeUseCase
-import com.ruleup.challenge.domain.usecase.GetNoticeDetailUseCase
-import com.ruleup.challenge.domain.usecase.UpdateNoticeUseCase
+import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,9 +18,7 @@ import javax.inject.Inject
 class NoticeEditViewModel
     @Inject
     constructor(
-        private val getNoticeDetailUseCase: GetNoticeDetailUseCase,
-        private val createNoticeUseCase: CreateNoticeUseCase,
-        private val updateNoticeUseCase: UpdateNoticeUseCase,
+        private val roomRepository: RoomRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<NoticeEditIntent, NoticeEditState, NoticeEditReducerEvent, NoticeEditEffect>(
             NoticeEditState.initial,
@@ -81,7 +77,7 @@ class NoticeEditViewModel
             dispatch(NoticeEditReducerEvent.Init(challengeId, noticeId))
             if (noticeId == null) return
             viewModelScope.launch {
-                runCatching { getNoticeDetailUseCase(challengeId, noticeId) }
+                runCatching { roomRepository.getNotice(challengeId, noticeId) }
                     .onSuccess { dispatch(NoticeEditReducerEvent.Prefilled(title = it.title, content = it.content)) }
                     .onFailure { dispatch(NoticeEditReducerEvent.PrefillFailed(it.message ?: "공지를 불러오지 못했어요")) }
             }
@@ -99,14 +95,14 @@ class NoticeEditViewModel
                 runCatching {
                     val noticeId = state.noticeId
                     if (noticeId == null) {
-                        createNoticeUseCase(
+                        roomRepository.createNotice(
                             challengeId = state.challengeId,
                             title = state.title.trim(),
                             content = state.content.trim(),
                             pinned = state.pinned,
                         )
                     } else {
-                        updateNoticeUseCase(
+                        roomRepository.updateNotice(
                             challengeId = state.challengeId,
                             noticeId = noticeId,
                             title = state.title.trim(),

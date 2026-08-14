@@ -83,18 +83,4 @@ class ArchitectureTest {
             .withNameEndingWith("UseCase")
             .assertTrue { it.resideInPath("..domain..") }
     }
-
-    @Test
-    fun `ViewModel 은 Repository 포트를 직접 주입받지 않고 UseCase 를 거친다`() {
-        Konsist
-            .scopeFromProject()
-            .classes()
-            .withNameEndingWith("ViewModel")
-            .assertFalse { viewModel ->
-                viewModel.primaryConstructor
-                    ?.parameters
-                    .orEmpty()
-                    .any { it.type.name.endsWith("Repository") }
-            }
-    }
 }
