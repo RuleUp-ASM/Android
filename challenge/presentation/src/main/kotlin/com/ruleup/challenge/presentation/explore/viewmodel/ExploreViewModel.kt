@@ -6,8 +6,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.observability.ChallengeCardSource
 import com.ruleup.challenge.domain.observability.ChallengeEvents
-import com.ruleup.challenge.domain.usecase.GetChallengeCategoriesUseCase
-import com.ruleup.challenge.domain.usecase.GetTrendingChallengesUseCase
+import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -35,8 +34,7 @@ private const val TRENDING_MAIN_COUNT = 5
 class ExploreViewModel
     @Inject
     constructor(
-        private val getTrendingChallengesUseCase: GetTrendingChallengesUseCase,
-        private val getChallengeCategoriesUseCase: GetChallengeCategoriesUseCase,
+        private val exploreRepository: ExploreRepository,
         private val navigationHelper: NavigationHelper,
         private val observability: Observability,
     ) : MviViewModel<ExploreIntent, ExploreState, ExploreReducerEvent, NoEffect>(
@@ -111,7 +109,7 @@ class ExploreViewModel
             trendingJob =
                 viewModelScope.launch {
                     dispatch(ExploreReducerEvent.TrendingLoading)
-                    retryOnce { getTrendingChallengesUseCase() }
+                    retryOnce { exploreRepository.getTrending() }
                         .onSuccess { snapshot ->
                             // 서버는 Top 20 을 주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
                             val shown = snapshot.items.take(TRENDING_MAIN_COUNT)
@@ -140,7 +138,7 @@ class ExploreViewModel
             categoriesJob =
                 viewModelScope.launch {
                     dispatch(ExploreReducerEvent.CategoriesLoading)
-                    retryOnce { getChallengeCategoriesUseCase() }
+                    retryOnce { exploreRepository.getCategories() }
                         .onSuccess { dispatch(ExploreReducerEvent.CategoriesLoaded(it)) }
                         .onFailure { dispatch(ExploreReducerEvent.CategoriesFailed) }
                 }

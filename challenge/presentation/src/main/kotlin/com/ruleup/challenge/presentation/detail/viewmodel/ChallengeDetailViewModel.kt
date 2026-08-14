@@ -19,26 +19,16 @@ import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.observability.ChallengeEvents
+import com.ruleup.challenge.domain.repository.ChallengeRepository
+import com.ruleup.challenge.domain.repository.ExploreRepository
+import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.challenge.domain.repository.TargetAppStore
-import com.ruleup.challenge.domain.usecase.ChangeMemberRoleUseCase
-import com.ruleup.challenge.domain.usecase.CloneChallengeUseCase
-import com.ruleup.challenge.domain.usecase.CreateWatcherInvitationUseCase
-import com.ruleup.challenge.domain.usecase.DeleteChallengeUseCase
-import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
-import com.ruleup.challenge.domain.usecase.GetChallengeMembersUseCase
-import com.ruleup.challenge.domain.usecase.GetChallengeRoomUseCase
-import com.ruleup.challenge.domain.usecase.GetChallengeSetupUseCase
-import com.ruleup.challenge.domain.usecase.GetCurrentUserIdUseCase
-import com.ruleup.challenge.domain.usecase.GetWatchersUseCase
-import com.ruleup.challenge.domain.usecase.JoinChallengeUseCase
-import com.ruleup.challenge.domain.usecase.LeaveChallengeUseCase
-import com.ruleup.challenge.domain.usecase.RemoveWatcherUseCase
-import com.ruleup.challenge.domain.usecase.RequestDelegationUseCase
-import com.ruleup.challenge.domain.usecase.RespondDelegationUseCase
+import com.ruleup.challenge.domain.repository.WatcherRepository
 import com.ruleup.challenge.presentation.observability.ChallengeDetailTtiPage
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
@@ -60,22 +50,12 @@ import javax.inject.Inject
 class ChallengeDetailViewModel
     @Inject
     constructor(
-        private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
-        private val getChallengeSetupUseCase: GetChallengeSetupUseCase,
-        private val getChallengeRoomUseCase: GetChallengeRoomUseCase,
-        private val getChallengeMembersUseCase: GetChallengeMembersUseCase,
-        private val joinChallengeUseCase: JoinChallengeUseCase,
-        private val cloneChallengeUseCase: CloneChallengeUseCase,
+        private val challengeRepository: ChallengeRepository,
+        private val roomRepository: RoomRepository,
+        private val watcherRepository: WatcherRepository,
+        private val exploreRepository: ExploreRepository,
+        private val tokenRepository: TokenRepository,
         private val observability: Observability,
-        private val leaveChallengeUseCase: LeaveChallengeUseCase,
-        private val deleteChallengeUseCase: DeleteChallengeUseCase,
-        private val changeMemberRoleUseCase: ChangeMemberRoleUseCase,
-        private val requestDelegationUseCase: RequestDelegationUseCase,
-        private val respondDelegationUseCase: RespondDelegationUseCase,
-        private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
-        private val getWatchersUseCase: GetWatchersUseCase,
-        private val createWatcherInvitationUseCase: CreateWatcherInvitationUseCase,
-        private val removeWatcherUseCase: RemoveWatcherUseCase,
         private val targetAppStore: TargetAppStore,
         private val navigationHelper: NavigationHelper,
         private val ttiTracker: TtiTracker,
@@ -181,7 +161,7 @@ class ChallengeDetailViewModel
             }
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Joining(true))
-                runCatching { joinChallengeUseCase(id) }
+                runCatching { challengeRepository.join(id) }
                     .onSuccess { result ->
                         dispatch(ChallengeDetailReducerEvent.Joining(false))
                         // 탐색→참여 전환율의 분자. 노출·클릭과 같은 challenge_id 로 이어진다.
@@ -241,7 +221,7 @@ class ChallengeDetailViewModel
             observability.log(Channel.BUSINESS) { ChallengeEvents.challengeCloneClick(id) }
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Cloning(true))
-                runCatching { cloneChallengeUseCase(id) }
+                runCatching { exploreRepository.clone(id) }
                     .onSuccess {
                         dispatch(ChallengeDetailReducerEvent.Cloning(false))
                         navigationHelper.navigateTo(ChallengeConfirmPage)
@@ -282,7 +262,7 @@ class ChallengeDetailViewModel
             // 현재 사용자 ID 는 멤버 목록의 "내 행" 식별용 — 실패해도 흡수(본인 한정 액션만 숨겨진다).
             if (currentState.myUserId == null) {
                 viewModelScope.launch {
-                    val userId = runCatching { getCurrentUserIdUseCase() }.getOrNull()
+                    val userId = runCatching { tokenRepository.getUserId() }.getOrNull()
                     dispatch(ChallengeDetailReducerEvent.MyUserIdLoaded(userId))
                 }
             }
@@ -291,12 +271,12 @@ class ChallengeDetailViewModel
                 ttiTracker.start(ChallengeDetailTtiPage, ScreenKey(AppRoutes.CHALLENGE_DETAIL))
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
                 ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
-                runCatching { getChallengeDetailUseCase(challengeId) }
+                runCatching { challengeRepository.getChallenge(challengeId) }
                     .onSuccess { detail ->
                         ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
                         ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
                         // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
-                        val setup = runCatching { getChallengeSetupUseCase(challengeId) }.getOrNull()
+                        val setup = runCatching { challengeRepository.getSetupInfo(challengeId) }.getOrNull()
                         dispatch(
                             ChallengeDetailReducerEvent.Loaded(
                                 detail = detail,
@@ -333,7 +313,7 @@ class ChallengeDetailViewModel
         private fun refreshSetup() {
             val id = currentState.detail?.challengeId ?: return
             viewModelScope.launch {
-                val setup = runCatching { getChallengeSetupUseCase(id) }.getOrNull() ?: currentState.setup
+                val setup = runCatching { challengeRepository.getSetupInfo(id) }.getOrNull() ?: currentState.setup
                 dispatch(
                     ChallengeDetailReducerEvent.SetupRefreshed(
                         setup = setup,
@@ -348,7 +328,7 @@ class ChallengeDetailViewModel
         // 비멤버/솔로의 403 등 실패는 흡수 — room 이 null 이면 기존 공개 상세 그대로 렌더링된다.
         private fun loadRoom(challengeId: String) {
             viewModelScope.launch {
-                runCatching { getChallengeRoomUseCase(challengeId) }
+                runCatching { roomRepository.getRoom(challengeId) }
                     .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
             }
             loadMembers(challengeId)
@@ -357,7 +337,7 @@ class ChallengeDetailViewModel
         // 멤버 목록은 방 홈 부가 정보 — 실패해도(권한 등) 방 홈 렌더를 막지 않도록 흡수한다.
         private fun loadMembers(challengeId: String) {
             viewModelScope.launch {
-                runCatching { getChallengeMembersUseCase(challengeId) }
+                runCatching { challengeRepository.getMembers(challengeId) }
                     .onSuccess { dispatch(ChallengeDetailReducerEvent.MembersLoaded(it)) }
             }
         }
@@ -368,7 +348,7 @@ class ChallengeDetailViewModel
             if (currentState.isMemberActionLoading) return
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { leaveChallengeUseCase(id) }
+                runCatching { challengeRepository.leaveChallenge(id) }
                     .onSuccess { result ->
                         emitEffect(
                             ChallengeDetailEffect.ShowMessage(
@@ -389,7 +369,7 @@ class ChallengeDetailViewModel
             if (currentState.isMemberActionLoading) return
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { deleteChallengeUseCase(id) }
+                runCatching { challengeRepository.delete(id) }
                     .onSuccess { result ->
                         emitEffect(
                             ChallengeDetailEffect.ShowMessage(
@@ -413,7 +393,7 @@ class ChallengeDetailViewModel
             if (currentState.isMemberActionLoading) return
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { changeMemberRoleUseCase(id, userId, action) }
+                runCatching { challengeRepository.changeMemberRole(id, userId, action) }
                     .onSuccess {
                         val message = if (action == RoleAction.PROMOTE) "공동 관리자로 임명했어요" else "공동 관리자를 해제했어요"
                         emitEffect(ChallengeDetailEffect.ShowMessage(message))
@@ -436,7 +416,7 @@ class ChallengeDetailViewModel
                     ?.nickname
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { requestDelegationUseCase(id, targetUserId) }
+                runCatching { challengeRepository.requestDelegation(id, targetUserId) }
                     .onSuccess { ticket ->
                         dispatch(ChallengeDetailReducerEvent.DelegationRequested(ticket, nickname))
                         emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임을 요청했어요. 상대가 수락하면 방장이 넘어가요"))
@@ -454,7 +434,7 @@ class ChallengeDetailViewModel
             if (currentState.isMemberActionLoading) return
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { respondDelegationUseCase(id, delegationId, DelegationAction.CANCEL) }
+                runCatching { challengeRepository.respondDelegation(id, delegationId, DelegationAction.CANCEL) }
                     .onSuccess {
                         dispatch(ChallengeDetailReducerEvent.DelegationCleared)
                         emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임 요청을 취소했어요"))
@@ -509,7 +489,7 @@ class ChallengeDetailViewModel
 
         private fun loadWatchers(challengeId: String) {
             viewModelScope.launch {
-                runCatching { getWatchersUseCase(challengeId) }
+                runCatching { watcherRepository.getWatchers(challengeId) }
                     .onSuccess { dispatch(ChallengeDetailReducerEvent.WatchersLoaded(it)) }
             }
         }
@@ -523,7 +503,7 @@ class ChallengeDetailViewModel
             if (currentState.isInvitingWatcher) return
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.InvitingWatcher(true))
-                runCatching { createWatcherInvitationUseCase(detail.challengeId) }
+                runCatching { watcherRepository.createInvitation(detail.challengeId) }
                     .onSuccess { invitation ->
                         emitEffect(
                             ChallengeDetailEffect.ShareWatcherInvite(
@@ -548,7 +528,7 @@ class ChallengeDetailViewModel
         private fun removeWatcher(watcherId: String) {
             val challengeId = currentState.detail?.challengeId ?: return
             viewModelScope.launch {
-                runCatching { removeWatcherUseCase(challengeId, watcherId) }
+                runCatching { watcherRepository.removeWatcher(challengeId, watcherId) }
                     .onSuccess { loadWatchers(challengeId) }
                     .onFailure {
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "감시자 해제에 실패했어요"))

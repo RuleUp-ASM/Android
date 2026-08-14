@@ -2,8 +2,8 @@ package com.ruleup.home.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
-import com.ruleup.challenge.domain.usecase.GetMyChallengesUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -27,7 +27,7 @@ import javax.inject.Inject
 class HomeViewModel
     @Inject
     constructor(
-        private val getMyChallengesUseCase: GetMyChallengesUseCase,
+        private val challengeRepository: ChallengeRepository,
         private val observeProgressUseCase: ObserveProgressUseCase,
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
@@ -75,7 +75,7 @@ class HomeViewModel
                     // 서로 독립인 두 조회를 병렬로 실행해 첫 렌더 지연을 줄인다(각 실패는 흡수).
                     val (myChallenges, progress) =
                         coroutineScope {
-                            val challenges = async { runCatching { getMyChallengesUseCase() }.getOrDefault(emptyList()) }
+                            val challenges = async { runCatching { challengeRepository.getMyChallenges() }.getOrDefault(emptyList()) }
                             val progressSnapshot = async { runCatching { observeProgressUseCase() }.getOrNull() }
                             challenges.await() to progressSnapshot.await()
                         }

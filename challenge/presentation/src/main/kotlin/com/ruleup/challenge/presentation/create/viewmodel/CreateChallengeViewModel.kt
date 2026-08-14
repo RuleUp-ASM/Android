@@ -15,12 +15,10 @@ import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.observability.CreateEntry
 import com.ruleup.challenge.domain.observability.CreatePath
 import com.ruleup.challenge.domain.observability.DraftField
+import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
-import com.ruleup.challenge.domain.usecase.CreateDraftFromTemplateUseCase
 import com.ruleup.challenge.domain.usecase.CreateDraftUseCase
-import com.ruleup.challenge.domain.usecase.GetRoutineTemplatesUseCase
-import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -49,11 +47,9 @@ import javax.inject.Inject
 class CreateChallengeViewModel
     @Inject
     constructor(
-        private val getRoutineTemplatesUseCase: GetRoutineTemplatesUseCase,
         private val createDraftUseCase: CreateDraftUseCase,
-        private val createDraftFromTemplateUseCase: CreateDraftFromTemplateUseCase,
         private val createChallengeUseCase: CreateChallengeUseCase,
-        private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
+        private val challengeRepository: ChallengeRepository,
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
         private val observability: Observability,
@@ -341,7 +337,7 @@ class CreateChallengeViewModel
             if (currentState.isLoadingTemplates) return
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.TemplatesLoading)
-                runCatching { getRoutineTemplatesUseCase() }
+                runCatching { challengeRepository.getRoutineTemplates() }
                     .onSuccess { dispatch(CreateChallengeReducerEvent.TemplatesLoaded(it)) }
                     // 추천이 실패해도 설명 입력 경로는 살아 있어야 하므로 화면 전체를 에러로 만들지 않는다.
                     .onFailure { dispatch(CreateChallengeReducerEvent.TemplatesFailed) }
@@ -414,7 +410,7 @@ class CreateChallengeViewModel
             observability.log(Channel.BUSINESS) { ChallengeEvents.createPathSelect(CreatePath.TEMPLATE) }
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.Drafting)
-                runCatching { createDraftFromTemplateUseCase(templateId) }
+                runCatching { challengeRepository.createDraftFromTemplate(templateId) }
                     .onSuccess { applyDraft(it) }
                     .onFailure { error ->
                         dispatch(CreateChallengeReducerEvent.DraftFailed)
@@ -538,7 +534,7 @@ class CreateChallengeViewModel
                     // 이미지 업로드가 실패해도 생성은 막지 않는다 — 선택 항목이라 기본 이미지로 진행한다.
                     val imageUrl =
                         coverImageUri?.let { uri ->
-                            runCatching { uploadChallengeImageUseCase(uri) }
+                            runCatching { challengeRepository.uploadImage(uri) }
                                 .onFailure { emitEffect(CreateChallengeEffect.ShowError("이미지 업로드에 실패해 기본 이미지로 만들어요")) }
                                 .getOrNull()
                         }

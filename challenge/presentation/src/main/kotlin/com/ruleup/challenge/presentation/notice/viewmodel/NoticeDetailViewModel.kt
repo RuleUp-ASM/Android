@@ -2,9 +2,7 @@ package com.ruleup.challenge.presentation.notice.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.navigation.ChallengeNoticeEditPage
-import com.ruleup.challenge.domain.usecase.DeleteNoticeUseCase
-import com.ruleup.challenge.domain.usecase.GetNoticeDetailUseCase
-import com.ruleup.challenge.domain.usecase.PinNoticeUseCase
+import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,9 +17,7 @@ import javax.inject.Inject
 class NoticeDetailViewModel
     @Inject
     constructor(
-        private val getNoticeDetailUseCase: GetNoticeDetailUseCase,
-        private val pinNoticeUseCase: PinNoticeUseCase,
-        private val deleteNoticeUseCase: DeleteNoticeUseCase,
+        private val roomRepository: RoomRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<NoticeDetailIntent, NoticeDetailState, NoticeDetailReducerEvent, NoticeDetailEffect>(
             NoticeDetailState.initial,
@@ -86,7 +82,7 @@ class NoticeDetailViewModel
             noticeId: String,
         ) {
             viewModelScope.launch {
-                runCatching { getNoticeDetailUseCase(challengeId, noticeId) }
+                runCatching { roomRepository.getNotice(challengeId, noticeId) }
                     .onSuccess { dispatch(NoticeDetailReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(NoticeDetailReducerEvent.Failed(it.message ?: "공지를 불러오지 못했어요")) }
             }
@@ -98,7 +94,7 @@ class NoticeDetailViewModel
             viewModelScope.launch {
                 dispatch(NoticeDetailReducerEvent.Mutating(true))
                 runCatching {
-                    pinNoticeUseCase(
+                    roomRepository.pinNotice(
                         challengeId = currentState.challengeId,
                         noticeId = currentState.noticeId,
                         pinned = !detail.pinned,
@@ -131,7 +127,7 @@ class NoticeDetailViewModel
             if (currentState.isMutating) return
             viewModelScope.launch {
                 dispatch(NoticeDetailReducerEvent.Mutating(true))
-                runCatching { deleteNoticeUseCase(currentState.challengeId, currentState.noticeId) }
+                runCatching { roomRepository.deleteNotice(currentState.challengeId, currentState.noticeId) }
                     .onSuccess {
                         emitEffect(NoticeDetailEffect.ShowMessage("공지를 삭제했어요"))
                         navigationHelper.navigateToBack()

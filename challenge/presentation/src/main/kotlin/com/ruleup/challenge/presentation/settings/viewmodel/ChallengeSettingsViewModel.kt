@@ -8,10 +8,7 @@ import com.ruleup.challenge.domain.entity.ChallengeVersionConflictException
 import com.ruleup.challenge.domain.entity.ModerationLockedException
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.toEntries
-import com.ruleup.challenge.domain.usecase.GetChallengeDetailUseCase
-import com.ruleup.challenge.domain.usecase.GetChallengeSettingsUseCase
-import com.ruleup.challenge.domain.usecase.UpdateChallengeUseCase
-import com.ruleup.challenge.domain.usecase.UploadChallengeImageUseCase
+import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,10 +28,7 @@ import javax.inject.Inject
 class ChallengeSettingsViewModel
     @Inject
     constructor(
-        private val getChallengeSettingsUseCase: GetChallengeSettingsUseCase,
-        private val getChallengeDetailUseCase: GetChallengeDetailUseCase,
-        private val updateChallengeUseCase: UpdateChallengeUseCase,
-        private val uploadChallengeImageUseCase: UploadChallengeImageUseCase,
+        private val challengeRepository: ChallengeRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<
             ChallengeSettingsIntent,
@@ -183,12 +177,12 @@ class ChallengeSettingsViewModel
         private fun load(challengeId: String) {
             viewModelScope.launch {
                 dispatch(ChallengeSettingsReducerEvent.Loading(challengeId))
-                runCatching { getChallengeSettingsUseCase(challengeId) }
+                runCatching { challengeRepository.getSettings(challengeId) }
                     .onSuccess { settings ->
                         // 정원 하한 계산에 현재 인원이 필요한데 settings 응답에 없다. 실패는 흡수한다 —
                         // 하한을 못 잠글 뿐이고 서버가 CAPACITY_BELOW_CURRENT 로 최종 방어한다.
                         val participants =
-                            runCatching { getChallengeDetailUseCase(challengeId).participantCount }.getOrNull()
+                            runCatching { challengeRepository.getChallenge(challengeId).participantCount }.getOrNull()
                         dispatch(ChallengeSettingsReducerEvent.Loaded(settings, participants))
                     }.onFailure {
                         dispatch(ChallengeSettingsReducerEvent.Failed(it.message ?: "설정을 불러오지 못했어요"))
@@ -228,8 +222,8 @@ class ChallengeSettingsViewModel
                 dispatch(ChallengeSettingsReducerEvent.Saving(true))
                 runCatching {
                     // 새 사진을 골랐으면 먼저 업로드해 URL 을 확보한다(서버가 발급 주체를 검증한다).
-                    val uploadedUrl = state.coverImageUri?.let { uploadChallengeImageUseCase(it) }
-                    updateChallengeUseCase(state.challengeId, state.toUpdate(origin, uploadedUrl))
+                    val uploadedUrl = state.coverImageUri?.let { challengeRepository.uploadImage(it) }
+                    challengeRepository.update(state.challengeId, state.toUpdate(origin, uploadedUrl))
                 }.onSuccess {
                     dispatch(ChallengeSettingsReducerEvent.Saving(false))
                     emitEffect(ChallengeSettingsEffect.ShowMessage("저장했어요"))

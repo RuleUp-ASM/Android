@@ -10,7 +10,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.observability.ChallengeCardSource
 import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.observability.ExploreListEntry
-import com.ruleup.challenge.domain.usecase.ExploreChallengesUseCase
+import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.observability.domain.api.Observability
@@ -31,7 +31,7 @@ import javax.inject.Inject
 class ExploreListViewModel
     @Inject
     constructor(
-        private val exploreChallengesUseCase: ExploreChallengesUseCase,
+        private val exploreRepository: ExploreRepository,
         private val navigationHelper: NavigationHelper,
         private val observability: Observability,
     ) : MviViewModel<ExploreListIntent, ExploreListState, ExploreListReducerEvent, NoEffect>(
@@ -186,7 +186,7 @@ class ExploreListViewModel
             viewModelScope.launch {
                 dispatch(ExploreListReducerEvent.Loading(filter = filter, sort = sort))
                 impressed.clear()
-                runCatching { exploreChallengesUseCase(filter = filter, sort = sort) }
+                runCatching { exploreRepository.explore(filter = filter, sort = sort) }
                     .onSuccess { result ->
                         dispatch(
                             ExploreListReducerEvent.FirstPageLoaded(
@@ -255,7 +255,7 @@ class ExploreListViewModel
             viewModelScope.launch {
                 dispatch(ExploreListReducerEvent.LoadingMore)
                 runCatching {
-                    exploreChallengesUseCase(
+                    exploreRepository.explore(
                         filter = currentState.filter,
                         sort = currentState.sort,
                         cursor = cursor,

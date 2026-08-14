@@ -3,7 +3,7 @@ package com.ruleup.challenge.presentation.notice.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeNoticeEditPage
-import com.ruleup.challenge.domain.usecase.GetNoticesUseCase
+import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class NoticeListViewModel
     @Inject
     constructor(
-        private val getNoticesUseCase: GetNoticesUseCase,
+        private val roomRepository: RoomRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<NoticeListIntent, NoticeListState, NoticeListReducerEvent, NoEffect>(
             NoticeListState.initial,
@@ -71,7 +71,7 @@ class NoticeListViewModel
 
         private fun fetch(challengeId: String) {
             viewModelScope.launch {
-                runCatching { getNoticesUseCase(challengeId) }
+                runCatching { roomRepository.getNotices(challengeId) }
                     .onSuccess { dispatch(NoticeListReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(NoticeListReducerEvent.Failed(it.message ?: "공지를 불러오지 못했어요")) }
             }

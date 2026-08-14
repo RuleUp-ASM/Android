@@ -1,7 +1,7 @@
 package com.ruleup.challenge.presentation.ranking.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.challenge.domain.usecase.GetChallengeRankingUseCase
+import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -17,7 +17,7 @@ import javax.inject.Inject
 class RankingViewModel
     @Inject
     constructor(
-        private val getChallengeRankingUseCase: GetChallengeRankingUseCase,
+        private val roomRepository: RoomRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<RankingIntent, RankingState, RankingReducerEvent, NoEffect>(
             RankingState.initial,
@@ -47,7 +47,7 @@ class RankingViewModel
         private fun load(challengeId: String) {
             dispatch(RankingReducerEvent.Loading(challengeId))
             viewModelScope.launch {
-                runCatching { getChallengeRankingUseCase(challengeId) }
+                runCatching { roomRepository.getRanking(challengeId) }
                     .onSuccess { dispatch(RankingReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(RankingReducerEvent.Failed(it.message ?: "랭킹을 불러오지 못했어요")) }
             }
