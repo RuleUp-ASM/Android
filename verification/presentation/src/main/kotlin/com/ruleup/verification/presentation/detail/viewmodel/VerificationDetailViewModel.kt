@@ -3,9 +3,9 @@ package com.ruleup.verification.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.entity.ObjectionType
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
-import com.ruleup.verification.domain.usecase.GetVerificationDetailUseCase
-import com.ruleup.verification.domain.usecase.SubmitObjectionUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import com.ruleup.verification.presentation.render.CtaTarget
 import com.ruleup.verification.presentation.render.failureReasonCta
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,8 +20,7 @@ import javax.inject.Inject
 class VerificationDetailViewModel
     @Inject
     constructor(
-        private val getVerificationDetailUseCase: GetVerificationDetailUseCase,
-        private val submitObjectionUseCase: SubmitObjectionUseCase,
+        private val verificationRepository: VerificationRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<VerificationDetailIntent, VerificationDetailState, VerificationDetailReducerEvent, VerificationDetailEffect>(
             VerificationDetailState.initial,
@@ -56,7 +55,7 @@ class VerificationDetailViewModel
             if (currentState.isLoading) return
             viewModelScope.launch {
                 dispatch(VerificationDetailReducerEvent.Loading)
-                runCatching { getVerificationDetailUseCase(id) }
+                runCatching { verificationRepository.getVerificationDetail(id) }
                     .onSuccess { dispatch(VerificationDetailReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(VerificationDetailReducerEvent.Failed(it.message ?: "검증 결과를 불러오지 못했어요")) }
             }
@@ -86,13 +85,19 @@ class VerificationDetailViewModel
             if (currentState.isSubmittingObjection) return
             viewModelScope.launch {
                 dispatch(VerificationDetailReducerEvent.SubmittingObjection(true))
-                runCatching { submitObjectionUseCase(challengeId = id, targetDate = targetDate, content = content) }
-                    .onSuccess {
-                        emitEffect(VerificationDetailEffect.ShowMessage("이의를 접수했어요. 검토 후 결과를 알려드려요"))
-                        load(id)
-                    }.onFailure {
-                        emitEffect(VerificationDetailEffect.ShowMessage(it.message ?: "이의 제기에 실패했어요"))
-                    }
+                runCatching {
+                    verificationRepository.submitObjection(
+                        challengeId = id,
+                        type = ObjectionType.FAILURE,
+                        targetDate = targetDate,
+                        content = content,
+                    )
+                }.onSuccess {
+                    emitEffect(VerificationDetailEffect.ShowMessage("이의를 접수했어요. 검토 후 결과를 알려드려요"))
+                    load(id)
+                }.onFailure {
+                    emitEffect(VerificationDetailEffect.ShowMessage(it.message ?: "이의 제기에 실패했어요"))
+                }
                 dispatch(VerificationDetailReducerEvent.SubmittingObjection(false))
             }
         }

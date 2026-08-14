@@ -10,7 +10,7 @@ import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.home.presentation.mergeHomeChallenges
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
-import com.ruleup.verification.domain.usecase.ObserveProgressUseCase
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -28,7 +28,7 @@ class HomeViewModel
     @Inject
     constructor(
         private val challengeRepository: ChallengeRepository,
-        private val observeProgressUseCase: ObserveProgressUseCase,
+        private val verificationRepository: VerificationRepository,
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<HomeIntent, HomeState, HomeReducerEvent, NoEffect>(HomeState.initial) {
@@ -76,7 +76,7 @@ class HomeViewModel
                     val (myChallenges, progress) =
                         coroutineScope {
                             val challenges = async { runCatching { challengeRepository.getMyChallenges() }.getOrDefault(emptyList()) }
-                            val progressSnapshot = async { runCatching { observeProgressUseCase() }.getOrNull() }
+                            val progressSnapshot = async { runCatching { verificationRepository.getProgress() }.getOrNull() }
                             challenges.await() to progressSnapshot.await()
                         }
                     dispatch(

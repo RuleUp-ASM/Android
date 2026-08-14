@@ -12,8 +12,8 @@ import com.ruleup.observability.data.UserIdentitySync
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.api.w
+import com.ruleup.verification.domain.repository.GeofenceRegistrar
 import com.ruleup.verification.domain.repository.SyncScheduler
-import com.ruleup.verification.domain.usecase.RegisterGeofencesUseCase
 import com.ruleup.verification.domain.usecase.SubmitDeviceIntroUseCase
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +45,7 @@ class App :
 
     // 콜드스타트 지오펜스 reconcile(명세 §2.3): 로컬 보존 목표를 OS 에 재등록해 등록 실패·휘발을 보정한다.
     @Inject
-    lateinit var registerGeofences: RegisterGeofencesUseCase
+    lateinit var geofenceRegistrar: GeofenceRegistrar
 
     // FCM 토큰 서버 등록(기기 1대 = 토큰 1개 upsert). 앱 시작 + onNewToken 경로가 공유한다.
     @Inject
@@ -86,7 +86,7 @@ class App :
 
         // 콜드스타트 지오펜스 reconcile — OS 등록 실패/휘발분을 앱 시작마다 재등록한다. 실패는 다음 시작이 보정.
         appScope.launch {
-            runCatching { registerGeofences() }
+            runCatching { geofenceRegistrar.reconcilePersisted() }
                 .onFailure { observability.w("GeofenceReconcile", it) { "콜드스타트 지오펜스 reconcile 실패" } }
         }
 
