@@ -409,6 +409,7 @@ private fun RoomDetailTabs(
                 RoomInfoTab(
                     detail = detail,
                     room = room,
+                    today = state.todayResult,
                     onOpenNoticeInFeed = { onIntent(ChallengeDetailIntent.SelectTab(RoomTab.FEED)) },
                     // 등록할 게 있는 인증 방식일 때만 진입점을 만든다 — 없으면 줄 자체가 생기지 않는다.
                     onRegisterApps =
@@ -459,6 +460,9 @@ private fun RoomDetailTabs(
                     onOpenNotice = { onIntent(ChallengeDetailIntent.OpenNotice(it)) },
                     onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
                     onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
+                    // 봇방장 방의 멤버에게만 자리를 만든다 — 방장이 있는 방에서 누르면 409 다.
+                    onClaimOwner =
+                        { onIntent(ChallengeDetailIntent.ClaimOwner) }.takeIf { state.canClaimOwner },
                 )
 
             RoomTab.RANKING ->

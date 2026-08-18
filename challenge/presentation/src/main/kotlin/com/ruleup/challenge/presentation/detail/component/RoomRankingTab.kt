@@ -107,7 +107,7 @@ private fun LazyListScope.memberRanking(state: ChallengeDetailState) {
 
         else -> {
             item(key = "me") {
-                MyRankSummary(me = ranking.me)
+                MyRankSummary(me = ranking.me, streakDays = state.todayResult?.streak?.after)
                 Spacer(Modifier.height(10.dp))
             }
             if (ranking.items.isEmpty()) {
@@ -166,7 +166,10 @@ private fun LazyListScope.roomRanking(state: ChallengeDetailState) {
 
 /** 내 순위 요약 (Figma 1134:360) — 내 순위 · 성공률 · 참여. */
 @Composable
-private fun MyRankSummary(me: MyRank) {
+private fun MyRankSummary(
+    me: MyRank,
+    streakDays: Int?,
+) {
     Row(
         modifier = Modifier.ruleUpCardSurface(),
         verticalAlignment = Alignment.CenterVertically,
@@ -185,13 +188,23 @@ private fun MyRankSummary(me: MyRank) {
             modifier = Modifier.weight(1f),
         )
         RoomVerticalDivider()
-        RankStat(
-            // Figma 의 "연속"은 내려오는 값이 없다. 등재까지 얼마나 남았는지가 이 자리에서 실제로 쓸모 있다.
-            label = "참여",
-            value = me.participations.toString(),
-            unit = "회",
-            modifier = Modifier.weight(1f),
-        )
+        // 연속 일수는 랭킹이 아니라 오늘 인증 결과에서 온다. 조회가 실패했으면 등재까지 얼마나
+        // 남았는지가 이 자리에서 그다음으로 쓸모 있는 값이다.
+        if (streakDays != null) {
+            RankStat(
+                label = "연속",
+                value = streakDays.toString(),
+                unit = "일",
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            RankStat(
+                label = "참여",
+                value = me.participations.toString(),
+                unit = "회",
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 

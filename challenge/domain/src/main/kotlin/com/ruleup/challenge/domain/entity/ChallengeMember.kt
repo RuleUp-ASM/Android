@@ -145,3 +145,23 @@ data class MemberRoleChange(
     val userId: String,
     val role: MemberRole,
 )
+
+/**
+ * 봇방장 방 클레임 결과 (명세 POST owner/claim).
+ *
+ * [graceUntil] 까지는 **방장 본인뿐 아니라 그 방의 잔류 멤버 전원이** 탈퇴해도 감점되지 않는다
+ * (승계 면책). 손들고 방장이 되는 부담을 낮추려는 장치라, 화면도 이 시각을 근거로 안내한다.
+ */
+data class OwnerClaimResult(
+    val myRole: MemberRole,
+    // ISO datetime. 면책 기간이 없으면 null
+    val graceUntil: String?,
+)
+
+/**
+ * 선착순 클레임에서 밀렸다 (명세 409 `OWNER_ALREADY_EXISTS`).
+ *
+ * 조건부 UPDATE 라 경합에서 한 명만 성공한다 — 실패는 오류가 아니라 정상적인 결과이므로 화면은
+ * 에러가 아니라 "이미 다른 분이 방장이 되었어요" 로 안내하고 방을 다시 받는다.
+ */
+class OwnerAlreadyExistsException : Exception("이미 다른 분이 방장이 되었어요.")

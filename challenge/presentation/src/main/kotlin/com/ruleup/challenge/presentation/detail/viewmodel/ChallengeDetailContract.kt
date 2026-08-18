@@ -11,12 +11,14 @@ import com.ruleup.challenge.domain.entity.CrossChallengeRanking
 import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.NoticeSummary
+import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
+import com.ruleup.verification.domain.entity.TodayResult
 
 sealed interface ChallengeDetailIntent : MviIntent {
     /** 화면 진입 시 상세 + 셋업 요구사항 조회. */
@@ -74,6 +76,9 @@ sealed interface ChallengeDetailIntent : MviIntent {
 
     /** (랭킹 탭 · 방 순위) 하단 도달 → 다음 페이지. */
     data object LoadMoreCrossRanking : ChallengeDetailIntent
+
+    /** (봇방장 방) "방장 되기" — 선착순 클레임. 밀리면 안내 후 방을 다시 받는다. */
+    data object ClaimOwner : ChallengeDetailIntent
 
     /** (방 홈) 공지 목록으로 이동. */
     data object OpenNotices : ChallengeDetailIntent
@@ -215,6 +220,11 @@ data class ChallengeDetailState(
     // 방 밖 랭킹. 세그먼트를 처음 열 때 받아온다 — 하루 1회 갱신이라 미리 받아둘 이유가 없다.
     val crossRanking: CrossChallengeRanking? = null,
     val isCrossRankingLoading: Boolean = false,
+    // 오늘 인증 결과(인증 모듈). room 의 myTodayStatus 보다 자세해서 인증 시각·실패 사유·연속 일수·
+    // 이의 잔여 횟수를 여기서 가져온다. 조회 실패는 흡수하고 room 값으로 떨어진다.
+    val todayResult: TodayResult? = null,
+    // 방장 클레임 요청 중(버튼 중복 탭 방지). 선착순이라 두 번 눌러도 한 번만 나간다.
+    val isClaimingOwner: Boolean = false,
 ) : UiState {
     /**
      * 참여 버튼을 아예 숨길지. 비공개 방은 초대 링크가 유일한 입장 경로라 버튼을 노출하지 않는다 —
@@ -248,6 +258,13 @@ data class ChallengeDetailState(
     /** 방 밖 랭킹을 더 받아올 수 있는지. */
     val canLoadMoreCrossRanking: Boolean
         get() = crossRanking?.nextCursor != null && !isCrossRankingLoading
+
+    /**
+     * "방장 되기"를 보여줄지. 봇방장 방의 멤버에게만 의미가 있다 — 이미 방장이 있는 방에서 누르면
+     * 서버가 409 로 막으므로, 버튼을 아예 만들지 않는 쪽이 맞다.
+     */
+    val canClaimOwner: Boolean
+        get() = room != null && room.ownerType == OwnerType.BOT && !room.myRole.isOwner
 
     companion object {
         val initial =
@@ -388,5 +405,14 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     data class CrossRankingLoaded(
         val ranking: CrossChallengeRanking,
         val append: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 오늘 인증 결과 도착(인증 모듈). 실패해도 방 렌더를 막지 않으므로 성공 시에만 온다. */
+    data class TodayResultLoaded(
+        val result: TodayResult,
+    ) : ChallengeDetailReducerEvent
+
+    data class ClaimingOwner(
+        val claiming: Boolean,
     ) : ChallengeDetailReducerEvent
 }

@@ -16,21 +16,35 @@ data class RoomUser(
 /**
  * 내 오늘 인증 상태 (명세 `myTodayStatus`).
  *
- * 앱이 모르는 값은 [fromValue] 가 null 을 돌려주고 화면은 상태 표기를 생략한다 — 임의로 실패·성공
- * 어느 쪽으로도 접지 않는다.
+ * room 명세의 예시에는 [DONE]·[CHECKING]·[NOT_TARGET] 만 나오지만, 같은 사실을 내려주는
+ * `GET /challenges/{id}/verifications/today` 의 `status` 는 [IN_PROGRESS]·[FAILED] 를 포함한 5종이다.
+ * 어휘가 같으므로 5종을 모두 받아 둔다 — 서버가 안 보내면 아무 일도 없고, 보내면 정상 표기된다.
+ *
+ * 그래도 앱이 모르는 값은 [fromValue] 가 null 을 돌려주고 화면이 상태 표기를 생략한다 — 임의로
+ * 실패·성공 어느 쪽으로도 접지 않는다.
  */
 enum class TodayVerificationStatus(
     val value: String,
 ) {
+    // 인증 창이 아직 열려 있음
+    IN_PROGRESS("IN_PROGRESS"),
+
+    // 00~03시 유예 구간 — 창은 닫혔지만 확정 전
+    CHECKING("CHECKING"),
+
     // 오늘 인증 완료
     DONE("DONE"),
 
-    // 00~03시 유예 구간 — 아직 판정 전
-    CHECKING("CHECKING"),
+    // 실패 확정
+    FAILED("FAILED"),
 
     // 오늘은 판정 대상일이 아님 (반복 요일 밖)
     NOT_TARGET("NOT_TARGET"),
     ;
+
+    /** 실패로 확정됐는가. 유예·진행 중은 아직 실패가 아니다. */
+    val isFailure: Boolean
+        get() = this == FAILED
 
     companion object {
         fun fromValue(value: String?): TodayVerificationStatus? = entries.find { it.value == value }

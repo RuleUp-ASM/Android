@@ -6,7 +6,9 @@ import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengePenalties
 import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
+import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.ModerationState
+import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.ParamEntry
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
@@ -234,3 +236,20 @@ private const val DEFAULT_CAPACITY = 50
 
 /** 명세 기본 주간 횟수(7 = 매일). 서버가 값을 빠뜨렸을 때만 쓰인다. */
 internal const val DEFAULT_WEEKLY_COUNT = 7
+
+// ---------- 봇방장 클레임 (POST /challenges/{id}/owner/claim) ----------
+@Serializable
+data class OwnerClaimResponse(
+    @SerialName("myRole")
+    val myRole: String? = null,
+    // 승계 면책 종료 시각. 이 시각까지는 잔류 멤버 전원이 탈퇴해도 감점되지 않는다
+    @SerialName("graceUntil")
+    val graceUntil: String? = null,
+)
+
+internal fun OwnerClaimResponse.toDomain(): OwnerClaimResult =
+    OwnerClaimResult(
+        // 성공했다면 서버가 OWNER 로 바꿔 준 것이다. 값이 없더라도 방을 다시 받으면 정정된다.
+        myRole = MemberRole.fromValue(myRole) ?: MemberRole.OWNER,
+        graceUntil = graceUntil,
+    )

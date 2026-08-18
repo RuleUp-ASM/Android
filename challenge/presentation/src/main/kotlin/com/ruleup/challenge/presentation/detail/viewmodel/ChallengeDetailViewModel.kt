@@ -6,6 +6,7 @@ import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
+import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
 import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
@@ -38,6 +39,7 @@ import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.ScreenKey
 import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -56,6 +58,7 @@ class ChallengeDetailViewModel
         private val challengeRepository: ChallengeRepository,
         private val roomRepository: RoomRepository,
         private val watcherRepository: WatcherRepository,
+        private val verificationRepository: VerificationRepository,
         private val exploreRepository: ExploreRepository,
         private val tokenRepository: TokenRepository,
         private val observability: Observability,
@@ -87,6 +90,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
                 is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
                 ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
+                ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenNotices -> openNotices()
                 is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
                 ChallengeDetailIntent.OpenRanking -> openRanking()
@@ -184,6 +188,10 @@ class ChallengeDetailViewModel
                     state.copy(isRankingLoading = false, ranking = event.ranking)
 
                 is ChallengeDetailReducerEvent.CrossRankingLoading -> state.copy(isCrossRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.TodayResultLoaded -> state.copy(todayResult = event.result)
+
+                is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
 
                 is ChallengeDetailReducerEvent.CrossRankingLoaded ->
                     state.copy(
@@ -409,6 +417,67 @@ class ChallengeDetailViewModel
             loadThreads(next = false)
             // 방 안 랭킹은 랭킹 탭뿐 아니라 정보 탭 헤더의 "내 달성률" 원천이라 진입 시 함께 받는다.
             loadRanking(challengeId)
+            loadTodayResult(challengeId)
+        }
+
+        /**
+         * 오늘 인증 결과(인증 모듈). room 의 `myTodayStatus` 는 상태 하나뿐이라 인증 시각·실패 사유·
+         * 연속 일수·이의 잔여를 여기서 보충한다. **실패는 흡수한다** — 부가 정보라 없으면 room 값으로
+         * 떨어질 뿐 방을 못 그릴 이유가 없다.
+         */
+        private fun loadTodayResult(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { verificationRepository.getTodayResult(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.TodayResultLoaded(it)) }
+            }
+        }
+
+        /**
+         * 봇방장 방 클레임. 선착순이라 **밀리는 것이 정상 결과**다 — 오류로 알리지 않고 안내한 뒤
+         * 방을 다시 받아 누가 방장이 됐는지 화면에 반영한다.
+         */
+        private fun claimOwner() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isClaimingOwner) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ClaimingOwner(true))
+                runCatching { challengeRepository.claimOwner(id) }
+                    .onSuccess { result ->
+                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
+                        observability.log(Channel.BUSINESS) { ChallengeEvents.ownerClaim(challengeId = id, success = true) }
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                // 면책 기간을 함께 알린다 — "3일 안엔 빠져도 감점 없다"가 손드는 근거였다.
+                                if (result.graceUntil != null) {
+                                    "방장이 되었어요. 3일 안에는 나가도 감점되지 않아요"
+                                } else {
+                                    "방장이 되었어요"
+                                },
+                            ),
+                        )
+                        reloadRoom(id)
+                    }.onFailure { error ->
+                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.ownerClaim(
+                                challengeId = id,
+                                success = false,
+                                errorCode = (error as? OwnerAlreadyExistsException)?.let { "OWNER_ALREADY_EXISTS" },
+                            )
+                        }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "방장이 되지 못했어요"))
+                        // 경합에서 밀렸으면 누가 방장인지 화면이 틀린 상태다 — 무조건 다시 받는다.
+                        if (error is OwnerAlreadyExistsException) reloadRoom(id)
+                    }
+            }
+        }
+
+        /** 방 상태만 다시 받는다(클레임·권한 변경 후). 상세·피드는 그대로 두어 스크롤을 잃지 않는다. */
+        private fun reloadRoom(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { roomRepository.getRoom(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+            }
         }
 
         /** 탭 전환. 방 밖 랭킹처럼 진입 시 받지 않은 데이터는 처음 열릴 때 조회한다. */

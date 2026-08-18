@@ -109,6 +109,8 @@ class VerificationRepositoryImplTest {
 
         override suspend fun getProgress(status: String?): BaseResponse<ProgressResponse> = error("unused")
 
+        override suspend fun getTodayResult(challengeId: String) = error("unused")
+
         override suspend fun getVerification(
             challengeId: String,
             logDays: Int?,

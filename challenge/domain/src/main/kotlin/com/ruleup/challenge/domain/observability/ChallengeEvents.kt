@@ -230,6 +230,24 @@ object ChallengeEvents {
             attributes { put("owner_type", ownerType) },
         )
 
+    /**
+     * 봇방장 클레임 결과. **실패도 남긴다** — 선착순 경합이 얼마나 자주 일어나는지가 방장 공백
+     * 해소율을 해석하는 근거다(기능 스펙 9번 #13).
+     */
+    fun ownerClaim(
+        challengeId: String,
+        success: Boolean,
+        errorCode: String? = null,
+    ) = BusinessPayload.Custom(
+        "owner_claim",
+        attributes {
+            put("challenge_id", challengeId)
+            put("success", success)
+            // 성공이면 키를 아예 넣지 않는다 — 빈 문자열은 집계에 가짜 분류를 하나 만든다.
+            errorCode?.let { put("error_code", it) }
+        },
+    )
+
     /** 참여 버튼 클릭. 게이트에 막히기 전 시점이라 시도 수의 분모가 된다. */
     fun challengeJoinAttempt(
         challengeId: String,

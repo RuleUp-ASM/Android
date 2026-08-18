@@ -88,6 +88,8 @@ class FakeChallengeRepository(
         delegationId: String,
         action: DelegationAction,
     ) = throw NotImplementedError()
+
+    override suspend fun claimOwner(challengeId: String) = throw NotImplementedError()
 }
 
 /** 셋업 알림 호출을 기록만 하는 테스트 더블. */

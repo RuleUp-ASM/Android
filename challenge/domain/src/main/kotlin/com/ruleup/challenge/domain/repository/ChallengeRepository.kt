@@ -17,6 +17,7 @@ import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
@@ -146,4 +147,10 @@ interface ChallengeRepository {
         delegationId: String,
         action: DelegationAction,
     ): DelegationResolution
+
+    /**
+     * 봇방장 방에서 손들고 방장 되기(명세 POST owner/claim). **선착순**이라 경합에서 밀리면
+     * [com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException] 이 올라온다.
+     */
+    suspend fun claimOwner(challengeId: String): OwnerClaimResult
 }

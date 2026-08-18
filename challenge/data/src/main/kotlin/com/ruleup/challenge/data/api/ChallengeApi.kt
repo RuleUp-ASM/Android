@@ -26,6 +26,7 @@ import com.ruleup.challenge.data.dto.MemberRoleResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
 import com.ruleup.challenge.data.dto.NoticeDetailResponse
 import com.ruleup.challenge.data.dto.NoticesResponse
+import com.ruleup.challenge.data.dto.OwnerClaimResponse
 import com.ruleup.challenge.data.dto.PinNoticeRequest
 import com.ruleup.challenge.data.dto.PinNoticeResponse
 import com.ruleup.challenge.data.dto.RankingResponse
@@ -136,6 +137,12 @@ interface ChallengeApi {
         @Path("userId") userId: String,
         @Body request: MemberRoleActionRequest,
     ): BaseResponse<MemberRoleResponse>
+
+    // 봇방장 방 클레임 — 선착순, 바디 없음(토큰으로 식별). 밀리면 409 OWNER_ALREADY_EXISTS
+    @POST("v1/challenges/{challengeId}/owner/claim")
+    suspend fun claimOwner(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<OwnerClaimResponse>
 
     // 방장 위임 요청 생성 — { targetUserId }
     @POST("v1/challenges/{challengeId}/delegation")

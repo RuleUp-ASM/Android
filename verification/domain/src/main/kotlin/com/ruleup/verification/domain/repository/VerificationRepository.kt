@@ -22,6 +22,7 @@ import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
+import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.VerificationDetail
 
 /**
@@ -48,6 +49,12 @@ interface VerificationRepository {
 
     /** 참여 중인 모든 챌린지 진행률 일괄 조회(명세 3.2). */
     suspend fun getProgress(filter: ProgressFilter = ProgressFilter.ACTIVE): ProgressSnapshot
+
+    /**
+     * 오늘 인증 결과(명세 GET verifications/today). 방 상세의 "오늘 내 인증" 카드와 판정 결과
+     * 모달이 같은 응답을 쓴다. 연속 일수·이의 잔여 횟수도 여기서 온다.
+     */
+    suspend fun getTodayResult(challengeId: String): TodayResult
 
     /** 챌린지 인증 여부 판단(검증 결과 + 실패 사유, 명세 3.3). */
     suspend fun getVerificationDetail(

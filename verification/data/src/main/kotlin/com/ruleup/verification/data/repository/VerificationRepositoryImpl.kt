@@ -42,6 +42,7 @@ import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
+import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.VerificationDetail
 import com.ruleup.verification.domain.repository.VerificationRepository
 import javax.inject.Inject
@@ -79,6 +80,12 @@ class VerificationRepositoryImpl
         override suspend fun getProgress(filter: ProgressFilter): ProgressSnapshot =
             api
                 .getProgress(filter.value)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getTodayResult(challengeId: String): TodayResult =
+            api
+                .getTodayResult(challengeId)
                 .getOrThrow()
                 .toDomain()
 
