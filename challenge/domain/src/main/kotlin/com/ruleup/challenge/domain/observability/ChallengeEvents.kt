@@ -170,6 +170,66 @@ object ChallengeEvents {
         },
     )
 
+    // ---------- 방 내부 (기능 스펙 9번) ----------
+
+    /**
+     * 방 내부 진입. **방 주간 방문율**(그룹 참여자 중 주 1회 이상 진입, 목표 60%)의 분자다.
+     *
+     * 공지·댓글이 Phase 1 에서 빠지면서 방 안에 사람이 흔적을 남길 수단이 사라졌다. 그래서 이
+     * 이벤트가 "인증 피드와 랭킹만으로 재방문이 유지되는가"를 판단하는 유일한 근거가 됐다.
+     */
+    fun roomView(
+        challengeId: String,
+        myRole: String,
+        ownerType: String,
+        hasPinnedNotice: Boolean,
+    ) = BusinessPayload.Custom(
+        "room_view",
+        attributes {
+            put("challenge_id", challengeId)
+            put("my_role", myRole)
+            put("owner_type", ownerType)
+            put("has_pinned_notice", hasPinnedNotice)
+        },
+    )
+
+    /** 피드 다음 페이지 로드. 피드를 얼마나 깊이 소비하는지 본다. */
+    fun threadScroll(
+        pageIndex: Int,
+        itemCount: Int,
+    ) = BusinessPayload.Custom(
+        "thread_scroll",
+        attributes {
+            put("page_index", pageIndex.toLong())
+            put("item_count", itemCount.toLong())
+        },
+    )
+
+    /**
+     * 랭킹 조회. [myRankNull] 은 등재 미달 비중을 보기 위한 값이다 — 이 비중이 높으면 10회 기준이
+     * 너무 높다는 신호다.
+     */
+    fun rankingView(
+        scope: RankingViewScope,
+        myRankNull: Boolean,
+    ) = BusinessPayload.Custom(
+        "ranking_view",
+        attributes {
+            put("scope", scope.value)
+            put("my_rank_null", myRankNull)
+        },
+    )
+
+    /**
+     * 피드 빈 상태 노출. 봇방장 방이 얼마나 비어 보이는지를 따로 세려고 `owner_type` 을 싣는다
+     * (기능 스펙 리스크 #2).
+     */
+    fun roomEmptyStateView(ownerType: String) =
+        BusinessPayload.Custom(
+            "room_empty_state_view",
+            attributes { put("owner_type", ownerType) },
+        )
+
     /** 참여 버튼 클릭. 게이트에 막히기 전 시점이라 시도 수의 분모가 된다. */
     fun challengeJoinAttempt(
         challengeId: String,
@@ -280,6 +340,14 @@ enum class ExploreListEntry(
 
     /** 카테고리 타일 */
     CATEGORY("category"),
+}
+
+/** 랭킹 조회 범위. 방 안과 방 밖은 등재 기준·갱신 주기가 달라 한 지표로 묶으면 해석이 안 된다. */
+enum class RankingViewScope(
+    val value: String,
+) {
+    IN_ROOM("IN_ROOM"),
+    CROSS("CROSS"),
 }
 
 /** 생성 화면 진입 경로. */

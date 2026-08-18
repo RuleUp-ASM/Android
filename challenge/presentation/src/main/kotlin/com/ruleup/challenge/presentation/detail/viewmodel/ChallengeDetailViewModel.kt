@@ -9,6 +9,7 @@ import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
+import com.ruleup.challenge.domain.entity.ThreadPolicy
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -20,6 +21,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.observability.ChallengeEvents
+import com.ruleup.challenge.domain.observability.RankingViewScope
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
@@ -304,6 +306,12 @@ class ChallengeDetailViewModel
         // 상세 진입은 전환 분모라 화면당 1회다. 가입 후 강제 재조회에서 또 나가면 분모가 부풀어 오른다.
         private var detailViewLogged = false
 
+        // 방 진입도 같은 이유로 화면당 1회다.
+        private var roomViewLogged = false
+
+        // 빈 피드는 같은 화면에서 여러 번 그려질 수 있어 노출 로그는 한 번만 남긴다.
+        private var emptyFeedLogged = false
+
         private fun load(
             challengeId: String,
             force: Boolean = false,
@@ -380,7 +388,21 @@ class ChallengeDetailViewModel
         private fun loadRoom(challengeId: String) {
             viewModelScope.launch {
                 runCatching { roomRepository.getRoom(challengeId) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+                    .onSuccess { room ->
+                        dispatch(ChallengeDetailReducerEvent.RoomLoaded(room))
+                        // 방 주간 방문율의 분자. 재조회(가입 후 force)에서 또 나가면 분자가 부풀어 오른다.
+                        if (!roomViewLogged) {
+                            roomViewLogged = true
+                            observability.log(Channel.BUSINESS) {
+                                ChallengeEvents.roomView(
+                                    challengeId = challengeId,
+                                    myRole = room.myRole.value,
+                                    ownerType = room.ownerType.value,
+                                    hasPinnedNotice = room.pinnedNotice != null,
+                                )
+                            }
+                        }
+                    }
             }
             loadMembers(challengeId)
             // room·threads 는 병렬로 받는다 — 한쪽이 늦거나 실패해도 다른 쪽 렌더를 막지 않는다.
@@ -397,13 +419,59 @@ class ChallengeDetailViewModel
             if (tab == RoomTab.FEED && currentState.threads.isEmpty() && !currentState.isThreadsLoading) {
                 loadThreads(next = false)
             }
-            if (tab == RoomTab.RANKING) ensureRankingScopeLoaded(currentState.rankingScope)
+            if (tab == RoomTab.RANKING) {
+                ensureRankingScopeLoaded(currentState.rankingScope)
+                logRankingView(currentState.rankingScope)
+            }
         }
 
         private fun selectRankingScope(scope: RankingScope) {
             if (currentState.rankingScope == scope) return
             dispatch(ChallengeDetailReducerEvent.RankingScopeSelected(scope))
             ensureRankingScopeLoaded(scope)
+            logRankingView(scope)
+        }
+
+        /** 랭킹 조회. my_rank_null 이 등재 기준(10회·50회)이 너무 높은지 판단하는 근거다. */
+        private fun logRankingView(scope: RankingScope) {
+            val (viewScope, myRankNull) =
+                when (scope) {
+                    RankingScope.MEMBER -> RankingViewScope.IN_ROOM to (currentState.ranking?.me?.rank == null)
+                    RankingScope.ROOM -> RankingViewScope.CROSS to (currentState.crossRanking?.myChallenge?.rank == null)
+                }
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.rankingView(scope = viewScope, myRankNull = myRankNull)
+            }
+        }
+
+        /**
+         * 피드 페이지 로깅. 첫 페이지는 진입(room_view)에 이미 담기므로 **이어받기부터** 센다 —
+         * 보려는 건 "얼마나 더 내려갔는가"이지 화면을 열었는지가 아니다.
+         * 빈 피드는 봇방장 방 비중을 보려고 따로 남긴다(기능 스펙 리스크 #2).
+         */
+        private fun logThreadPage(
+            isFirstPage: Boolean,
+            pageItemCount: Int,
+        ) {
+            if (isFirstPage) {
+                val ownerType = currentState.room?.ownerType ?: return
+                if (pageItemCount == 0 && !emptyFeedLogged) {
+                    emptyFeedLogged = true
+                    observability.log(Channel.BUSINESS) {
+                        ChallengeEvents.roomEmptyStateView(ownerType.value)
+                    }
+                }
+                return
+            }
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.threadScroll(
+                    // 첫 페이지가 0 번이므로 누적 개수에서 이번 페이지를 뺀 몫이 곧 페이지 번호다.
+                    pageIndex =
+                        ((currentState.threads.size - pageItemCount) / ThreadPolicy.PAGE_SIZE)
+                            .coerceAtLeast(0),
+                    itemCount = pageItemCount,
+                )
+            }
         }
 
         private fun ensureRankingScopeLoaded(scope: RankingScope) {
@@ -433,6 +501,7 @@ class ChallengeDetailViewModel
                 runCatching { roomRepository.getThreads(id, cursor = cursor) }
                     .onSuccess {
                         dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = cursor == null))
+                        logThreadPage(isFirstPage = cursor == null, pageItemCount = it.items.size)
                     }.onFailure { error ->
                         when (error) {
                             // 커서가 만료·변조됐다. 이어받기를 포기하고 첫 페이지부터 다시 세운다.
