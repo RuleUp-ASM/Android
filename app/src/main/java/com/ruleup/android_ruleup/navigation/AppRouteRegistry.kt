@@ -6,9 +6,6 @@ import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticeEditPage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
@@ -17,9 +14,6 @@ import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
 import com.ruleup.challenge.presentation.explore.ExploreScreen
 import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
-import com.ruleup.challenge.presentation.notice.NoticeDetailScreen
-import com.ruleup.challenge.presentation.notice.NoticeEditScreen
-import com.ruleup.challenge.presentation.notice.NoticeListScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
@@ -174,48 +168,6 @@ val appRoutes: List<AppRoute> =
             path = ChallengeTargetsPage.PATH,
             render = { args ->
                 ChallengeTargetsScreen(challengeId = args[ChallengeTargetsPage.ARG_CHALLENGE_ID].orEmpty())
-            },
-        ),
-        AppRoute(
-            path = ChallengeNoticesPage.PATH,
-            render = { args ->
-                NoticeListScreen(
-                    challengeId = args[ChallengeNoticesPage.ARG_CHALLENGE_ID].orEmpty(),
-                    canManage = args[ChallengeNoticesPage.ARG_CAN_MANAGE].toBoolean(),
-                )
-            },
-        ),
-        AppRoute(
-            path = ChallengeNoticeDetailPage.PATH,
-            // 공지 푸시(NOTICE_CREATED) 콜드스타트 진입: 뒤로가기가 방 홈 → 홈으로 흐르게 스택을 구성한다.
-            syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(HomePage.PATH),
-                    GenericNavKey(
-                        ChallengeDetailPage.PATH,
-                        mapOf(
-                            ChallengeDetailPage.ARG_CHALLENGE_ID to
-                                args[ChallengeNoticeDetailPage.ARG_CHALLENGE_ID].orEmpty(),
-                        ),
-                    ),
-                    GenericNavKey(ChallengeNoticeDetailPage.PATH, args),
-                )
-            },
-            render = { args ->
-                NoticeDetailScreen(
-                    challengeId = args[ChallengeNoticeDetailPage.ARG_CHALLENGE_ID].orEmpty(),
-                    noticeId = args[ChallengeNoticeDetailPage.ARG_NOTICE_ID].orEmpty(),
-                    canManage = args[ChallengeNoticeDetailPage.ARG_CAN_MANAGE].toBoolean(),
-                )
-            },
-        ),
-        AppRoute(
-            path = ChallengeNoticeEditPage.PATH,
-            render = { args ->
-                NoticeEditScreen(
-                    challengeId = args[ChallengeNoticeEditPage.ARG_CHALLENGE_ID].orEmpty(),
-                    noticeId = args[ChallengeNoticeEditPage.ARG_NOTICE_ID],
-                )
             },
         ),
         AppRoute(

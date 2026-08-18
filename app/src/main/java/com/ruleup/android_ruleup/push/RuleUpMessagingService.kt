@@ -2,9 +2,6 @@ package com.ruleup.android_ruleup.push
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import com.ruleup.domain.helper.PushNotificationHelper
-import com.ruleup.domain.navigation.AppRoutes
-import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.d
 import com.ruleup.observability.domain.api.w
@@ -19,21 +16,19 @@ import javax.inject.Inject
 private const val TAG = "[Push]"
 
 // 페이로드 명세("서버 FCM 푸시 페이로드 명세")의 type 딱지. 서버는 항상 데이터 전용 메시지를 보낸다.
-private const val TYPE_NOTICE_CREATED = "NOTICE_CREATED"
 private const val TYPE_SETUP_REQUIRED = "SETUP_REQUIRED"
 private const val TYPE_PERMISSION_REQUIRED = "PERMISSION_REQUIRED"
 
 /**
  * FCM 수신 진입점. 페이로드 명세의 type 기반으로 분기한다:
- * - [TYPE_NOTICE_CREATED]: 알림 표시(title=챌린지명, body=공지 제목) → 탭 시 공지 상세 진입
  * - 무음 쪽지(셋업/권한): 알림 없음 — 상태 재확인은 해당 화면 재진입 시 수행된다
  * - 미지 type: 조용히 폐기 (명세 규칙 3 — 서버·앱 독립 배포 보장)
+ *
+ * 공지가 제품에서 빠지면서 `NOTICE_CREATED` 분기가 사라졌고, 지금은 **알림을 띄우는 type 이 하나도
+ * 없다.** 서버가 계속 보내더라도 미지 type 으로 조용히 버려진다.
  */
 @AndroidEntryPoint
 class RuleUpMessagingService : FirebaseMessagingService() {
-    @Inject
-    lateinit var pushNotificationHelper: PushNotificationHelper
-
     @Inject
     lateinit var pushTokenRegistrar: PushTokenRegistrar
 
@@ -52,8 +47,6 @@ class RuleUpMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
         when (val type = data["type"]) {
-            TYPE_NOTICE_CREATED -> showNoticeNotification(data)
-
             // 무음 쪽지(인증 스펙 관할): 알림을 띄우지 않는다. 셋업/권한 재확인은
             // 상세 화면 ON_RESUME 재조회가 이미 담당 — 백그라운드 선반영은 후속 고도화 여지.
             TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
@@ -61,34 +54,6 @@ class RuleUpMessagingService : FirebaseMessagingService() {
             // 명세 규칙 3: 모르는 type 은 조용히 버린다.
             else -> observability.d(TAG) { "미지 푸시 type 무시: $type" }
         }
-    }
-
-    private fun showNoticeNotification(data: Map<String, String>) {
-        val title = data["title"] ?: return
-        val body = data["body"] ?: return
-        val challengeId = data["challengeId"]
-        val noticeId = data["noticeId"]
-        // 서버 deepLink 문자열 형식에 의존하지 않고, ID 키로 앱 내부 주소 규칙(NavRouteUriParser)에
-        // 맞춰 조립한다 — 페이로드 명세 §4 "앱 파서 규칙을 따르는 걸로 확정" 합의.
-        // 목적지는 NavRoute 로 넘긴다 — 알림은 앱이 직접 만들어 자기 액티비티를 여는 것이라
-        // URL 을 경유할 이유가 없다(#179).
-        val route =
-            if (challengeId != null && noticeId != null) {
-                NavRoute(
-                    AppRoutes.CHALLENGE_NOTICE_DETAIL,
-                    mapOf("challengeId" to challengeId, "noticeId" to noticeId),
-                )
-            } else {
-                NavRoute(AppRoutes.HOME)
-            }
-
-        pushNotificationHelper.show(
-            // 같은 챌린지의 공지 알림은 하나로 묶어 갱신한다 (명세 권장).
-            id = (challengeId ?: route.path).hashCode(),
-            title = title,
-            message = body,
-            route = route,
-        )
     }
 
     override fun onDestroy() {

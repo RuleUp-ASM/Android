@@ -21,10 +21,10 @@ class NavRouteUriParserTest {
 
     @Test
     fun `app_접두사를_떼고_등록_경로_형식으로_만든다`() {
-        val route = parse("https://android.ruleup.co.kr/app/challenge/notices/detail?challengeId=ch1&noticeId=n1")
+        val route = parse("https://android.ruleup.co.kr/app/challenge/detail?challengeId=ch1&from=push")
 
-        assertEquals("challenge/notices/detail", route?.path)
-        assertEquals(mapOf("challengeId" to "ch1", "noticeId" to "n1"), route?.args)
+        assertEquals("challenge/detail", route?.path)
+        assertEquals(mapOf("challengeId" to "ch1", "from" to "push"), route?.args)
     }
 
     @Test
@@ -46,7 +46,7 @@ class NavRouteUriParserTest {
     @Test
     fun `앱이_만든_URI_는_그대로_되파싱된다`() {
         // 알림이 조립한 목적지가 왕복해서 같은 NavRoute 로 돌아와야 한다.
-        val original = NavRoute("challenge/notices/detail", mapOf("challengeId" to "ch1", "noticeId" to "n1"))
+        val original = NavRoute("challenge/detail", mapOf("challengeId" to "ch1", "from" to "push"))
 
         val roundTrip = original.toAppLinkUri().toNavRoute()
 

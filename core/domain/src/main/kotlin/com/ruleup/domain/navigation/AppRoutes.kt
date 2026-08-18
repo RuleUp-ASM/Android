@@ -33,9 +33,6 @@ object AppRoutes {
     const val CHALLENGE_TARGETS = "challenge/targets" // 대상 앱 등록(상세 → 앱 등록하기)
     const val CHALLENGE_EXPLORE = "challenge/explore" // 진입점 (하단 탭 → 탐색 메인)
     const val CHALLENGE_EXPLORE_LIST = "challenge/explore/list" // 챌린지 둘러보기(필터+정렬 목록)
-    const val CHALLENGE_NOTICES = "challenge/notices" // 공지 목록(방 홈 → 공지)
-    const val CHALLENGE_NOTICE_DETAIL = "challenge/notices/detail" // 공지 상세(조회 = 읽음)
-    const val CHALLENGE_NOTICE_EDIT = "challenge/notices/edit" // 공지 작성/수정(방장 전용)
     const val CHALLENGE_RANKING = "challenge/ranking" // 그룹 랭킹(방 홈 → 랭킹)
     const val CHALLENGE_SETTINGS = "challenge/settings" // 챌린지 수정(방장 전용, 방 설정 → 수정)
 

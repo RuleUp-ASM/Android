@@ -8,8 +8,6 @@ import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateChallengeResponse
-import com.ruleup.challenge.data.dto.CreateNoticeRequest
-import com.ruleup.challenge.data.dto.CreateNoticeResponse
 import com.ruleup.challenge.data.dto.CrossRankingResponse
 import com.ruleup.challenge.data.dto.DelegationActionRequest
 import com.ruleup.challenge.data.dto.DelegationRequestBody
@@ -24,11 +22,7 @@ import com.ruleup.challenge.data.dto.LeaveChallengeResponse
 import com.ruleup.challenge.data.dto.MemberRoleActionRequest
 import com.ruleup.challenge.data.dto.MemberRoleResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
-import com.ruleup.challenge.data.dto.NoticeDetailResponse
-import com.ruleup.challenge.data.dto.NoticesResponse
 import com.ruleup.challenge.data.dto.OwnerClaimResponse
-import com.ruleup.challenge.data.dto.PinNoticeRequest
-import com.ruleup.challenge.data.dto.PinNoticeResponse
 import com.ruleup.challenge.data.dto.RankingResponse
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.RoomResponse
@@ -37,8 +31,6 @@ import com.ruleup.challenge.data.dto.TemplateDraftResponse
 import com.ruleup.challenge.data.dto.ThreadsResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
-import com.ruleup.challenge.data.dto.UpdateNoticeRequest
-import com.ruleup.challenge.data.dto.UpdateNoticeResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.network.dto.BaseResponse
@@ -52,7 +44,6 @@ import retrofit2.http.Header
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -223,49 +214,6 @@ interface ChallengeApi {
     suspend fun getRoom(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<RoomResponse>
-
-    // 공지: 목록 조회 (고정 우선 → 최신순, 서버 고정 최근 10건)
-    @GET("v1/challenges/{challengeId}/notices")
-    suspend fun getNotices(
-        @Path("challengeId") challengeId: String,
-    ): BaseResponse<NoticesResponse>
-
-    // 공지: 상세 조회 (서버가 조회 시점에 읽음 upsert — 별도 읽음 API 없음)
-    @GET("v1/challenges/{challengeId}/notices/{noticeId}")
-    suspend fun getNotice(
-        @Path("challengeId") challengeId: String,
-        @Path("noticeId") noticeId: String,
-    ): BaseResponse<NoticeDetailResponse>
-
-    // 공지: 작성 (방장 전용 — 저장 후 ACTIVE 멤버 푸시 fan-out)
-    @POST("v1/challenges/{challengeId}/notices")
-    suspend fun createNotice(
-        @Path("challengeId") challengeId: String,
-        @Body request: CreateNoticeRequest,
-    ): BaseResponse<CreateNoticeResponse>
-
-    // 공지: 수정 (방장 전용 — resetRead=true 면 읽음 초기화 + 재발송)
-    @PUT("v1/challenges/{challengeId}/notices/{noticeId}")
-    suspend fun updateNotice(
-        @Path("challengeId") challengeId: String,
-        @Path("noticeId") noticeId: String,
-        @Body request: UpdateNoticeRequest,
-    ): BaseResponse<UpdateNoticeResponse>
-
-    // 공지: 삭제 (방장 전용 — 서버는 소프트 삭제)
-    @DELETE("v1/challenges/{challengeId}/notices/{noticeId}")
-    suspend fun deleteNotice(
-        @Path("challengeId") challengeId: String,
-        @Path("noticeId") noticeId: String,
-    ): BaseResponse<EmptyData>
-
-    // 공지: 고정/해제 (방장 전용 — 단일 pin, 기존 고정 자동 해제)
-    @PATCH("v1/challenges/{challengeId}/notices/{noticeId}/pin")
-    suspend fun pinNotice(
-        @Path("challengeId") challengeId: String,
-        @Path("noticeId") noticeId: String,
-        @Body request: PinNoticeRequest,
-    ): BaseResponse<PinNoticeResponse>
 
     // 방 스레드 피드 (ACTIVE 멤버 전용 — 커서 페이징, size 기본 20·최대 50)
     @GET("v1/challenges/{challengeId}/threads")
