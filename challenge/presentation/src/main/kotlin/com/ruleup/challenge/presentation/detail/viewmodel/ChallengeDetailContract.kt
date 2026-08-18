@@ -2,11 +2,16 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeMembers
+import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
+import com.ruleup.challenge.domain.entity.ChallengeThreads
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
+import com.ruleup.challenge.domain.entity.CrossChallengeRanking
 import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.JoinBlockReason
+import com.ruleup.challenge.domain.entity.NoticeSummary
+import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
@@ -50,6 +55,25 @@ sealed interface ChallengeDetailIntent : MviIntent {
     data class RemoveWatcher(
         val watcherId: String,
     ) : ChallengeDetailIntent
+
+    /** (방 상세) 상단 탭 전환. 아직 안 받아온 탭이면 그때 조회한다. */
+    data class SelectTab(
+        val tab: RoomTab,
+    ) : ChallengeDetailIntent
+
+    /** (피드 탭) 하단 도달 → 다음 페이지. */
+    data object LoadMoreThreads : ChallengeDetailIntent
+
+    /** (피드 탭) 실패 후 "다시 불러오기". 기존 목록은 유지한 채 이어 받는다. */
+    data object RetryThreads : ChallengeDetailIntent
+
+    /** (랭킹 탭) 멤버 ↔ 방 순위 세그먼트 전환. */
+    data class SelectRankingScope(
+        val scope: RankingScope,
+    ) : ChallengeDetailIntent
+
+    /** (랭킹 탭 · 방 순위) 하단 도달 → 다음 페이지. */
+    data object LoadMoreCrossRanking : ChallengeDetailIntent
 
     /** (방 홈) 공지 목록으로 이동. */
     data object OpenNotices : ChallengeDetailIntent
@@ -110,6 +134,26 @@ sealed interface ChallengeDetailEffect : MviEffect {
     ) : ChallengeDetailEffect
 }
 
+/** 방 상세 상단 탭 (Figma 1134:181 — 정보 · 피드 · 랭킹). 비멤버 공개 상세에는 탭이 없다. */
+enum class RoomTab(
+    val label: String,
+) {
+    INFO("정보"),
+    FEED("피드"),
+    RANKING("랭킹"),
+}
+
+/** 랭킹 탭의 세그먼트 (Figma 1134:355). 비교 단위가 사람이냐 방이냐로 갈린다. */
+enum class RankingScope(
+    val label: String,
+) {
+    // 같은 방의 참여자끼리 — GET /challenges/{id}/ranking
+    MEMBER("멤버"),
+
+    // 같은 모드의 방끼리 — GET /rankings/challenges (하루 1회 배치)
+    ROOM("방 순위"),
+}
+
 /**
  * 상세 하단 CTA 버튼이 유도할 다음 셋업 단계. GET setup 의 requiresTargetPackages/requiresAnchors 로
  * 필요한 등록만 노출한다: 권한 → (필요 시) 앱 등록 → (필요 시) 지도 앵커 → 시작.
@@ -155,6 +199,22 @@ data class ChallengeDetailState(
     val joinBlock: JoinBlock? = null,
     // 복제 요청 중(버튼 스피너 + 중복 탭 차단).
     val isCloning: Boolean = false,
+    // ---- 방 상세 3탭 (room 이 있을 때만 의미가 있다) ----
+    val selectedTab: RoomTab = RoomTab.INFO,
+    // 피드. 커서 누적이라 목록·커서를 함께 들고 있는다.
+    val threads: List<ThreadItem> = emptyList(),
+    val threadsCursor: String? = null,
+    // 첫 페이지 로딩(스켈레톤) / 다음 페이지 로딩(하단 스피너)을 구분한다 — 스크롤 중 목록이 사라지면 안 된다.
+    val isThreadsLoading: Boolean = false,
+    val isThreadsPaging: Boolean = false,
+    val threadsError: String? = null,
+    // 방 안 랭킹. 정보 탭 헤더의 "내 달성률"도 여기서 온다(room 응답에는 내 성공률이 없다).
+    val ranking: ChallengeRanking? = null,
+    val isRankingLoading: Boolean = false,
+    val rankingScope: RankingScope = RankingScope.MEMBER,
+    // 방 밖 랭킹. 세그먼트를 처음 열 때 받아온다 — 하루 1회 갱신이라 미리 받아둘 이유가 없다.
+    val crossRanking: CrossChallengeRanking? = null,
+    val isCrossRankingLoading: Boolean = false,
 ) : UiState {
     /**
      * 참여 버튼을 아예 숨길지. 비공개 방은 초대 링크가 유일한 입장 경로라 버튼을 노출하지 않는다 —
@@ -166,6 +226,28 @@ data class ChallengeDetailState(
     /** 복제 버튼을 활성할 수 있는지. 공개 그룹만 복제된다. */
     val canClone: Boolean
         get() = detail?.cloneable == true && !isCloning
+
+    /**
+     * 고정 공지. Phase 1 에서는 서버가 항상 null 로 내려주므로 배너·요약 행이 통째로 사라진다 —
+     * 필드를 지우지 않고 null 로 두는 것이 서버와의 합의라 화면도 값이 있을 때만 그린다.
+     */
+    val pinnedNoticeOrNull: NoticeSummary?
+        get() = room?.pinnedNotice
+
+    /**
+     * 정보 탭 헤더의 내 달성률(0~1). 방 안 랭킹의 내 성공률이 원천이며, 참여 10회 미만이라
+     * 미등재면 null 이다 — 이때 헤더는 값 대신 "-" 를 그린다.
+     */
+    val myProgressRate: Double?
+        get() = ranking?.me?.successRate
+
+    /** 피드를 더 받아올 수 있는지. 커서가 없으면 마지막 페이지다. */
+    val canLoadMoreThreads: Boolean
+        get() = threadsCursor != null && !isThreadsPaging && !isThreadsLoading && threadsError == null
+
+    /** 방 밖 랭킹을 더 받아올 수 있는지. */
+    val canLoadMoreCrossRanking: Boolean
+        get() = crossRanking?.nextCursor != null && !isCrossRankingLoading
 
     companion object {
         val initial =
@@ -264,5 +346,47 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     /** 복제 요청 시작/종료. */
     data class Cloning(
         val cloning: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class TabSelected(
+        val tab: RoomTab,
+    ) : ChallengeDetailReducerEvent
+
+    data class RankingScopeSelected(
+        val scope: RankingScope,
+    ) : ChallengeDetailReducerEvent
+
+    /** 피드 조회 시작. [first] 면 첫 페이지(스켈레톤), 아니면 다음 페이지(하단 스피너). */
+    data class ThreadsLoading(
+        val first: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 피드 페이지 도착. [reset] 이면 기존 목록을 버리고 새로 시작한다(커서 무효·재진입). */
+    data class ThreadsLoaded(
+        val page: ChallengeThreads,
+        val reset: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 피드 조회 실패. 기존 목록은 남기고 재시도 행만 붙인다. */
+    data class ThreadsFailed(
+        val message: String,
+    ) : ChallengeDetailReducerEvent
+
+    data class RankingLoading(
+        val loading: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class RankingLoaded(
+        val ranking: ChallengeRanking,
+    ) : ChallengeDetailReducerEvent
+
+    data class CrossRankingLoading(
+        val loading: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 방 밖 랭킹 페이지 도착. [append] 면 기존 목록 뒤에 잇는다. */
+    data class CrossRankingLoaded(
+        val ranking: CrossChallengeRanking,
+        val append: Boolean,
     ) : ChallengeDetailReducerEvent
 }

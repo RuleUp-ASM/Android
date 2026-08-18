@@ -45,15 +45,19 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
+import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
-import com.ruleup.challenge.presentation.detail.component.RoomManageEntry
+import com.ruleup.challenge.presentation.detail.component.RoomAppBar
+import com.ruleup.challenge.presentation.detail.component.RoomFeedTab
+import com.ruleup.challenge.presentation.detail.component.RoomInfoHeader
+import com.ruleup.challenge.presentation.detail.component.RoomInfoTab
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
-import com.ruleup.challenge.presentation.detail.component.RoomNoticeSection
-import com.ruleup.challenge.presentation.detail.component.RoomRankingSection
-import com.ruleup.challenge.presentation.detail.component.RoomSummaryRow
-import com.ruleup.challenge.presentation.detail.component.RoomTodayStatusCard
+import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
+import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
+import com.ruleup.challenge.presentation.detail.component.RoomTabRow
 import com.ruleup.challenge.presentation.detail.component.WatcherSection
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
@@ -61,6 +65,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewModel
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
+import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
@@ -208,13 +213,25 @@ private fun ChallengeDetailContent(
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.background),
     ) {
+        val detail = state.detail
+        val room = state.room
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
                     .statusBarsPadding(),
         ) {
-            DetailTopBar(onBack = onBack)
+            // 참여 중인 그룹 방이면 방 이름이 제목이고 관리 동작은 ⋯ 로 모은다.
+            // 비멤버가 보는 공개 상세는 기존 상단바 그대로다.
+            if (detail != null && room != null) {
+                RoomAppBar(
+                    title = detail.title,
+                    menuItems = roomMenuItems(room.myRole, onIntent),
+                    onBack = onBack,
+                )
+            } else {
+                DetailTopBar(onBack = onBack)
+            }
 
             when {
                 state.isLoading ->
@@ -222,7 +239,7 @@ private fun ChallengeDetailContent(
                         CircularProgressIndicator(color = RuleUpTheme.colors.brand)
                     }
 
-                state.detail == null ->
+                detail == null ->
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
                             text = state.errorMessage ?: "챌린지를 불러오지 못했어요",
@@ -230,6 +247,17 @@ private fun ChallengeDetailContent(
                             style = RuleUpTheme.typography.labelMedium,
                         )
                     }
+
+                // 방 상세(3탭). room 은 그룹 챌린지의 ACTIVE 멤버에게만 내려온다.
+                room != null ->
+                    RoomDetailTabs(
+                        state = state,
+                        detail = detail,
+                        room = room,
+                        onIntent = onIntent,
+                        onConfirmLeave = { confirmAction = MemberConfirm.LEAVE },
+                        onConfirmDelete = { confirmAction = MemberConfirm.DELETE },
+                    )
 
                 else ->
                     Column(
@@ -241,66 +269,8 @@ private fun ChallengeDetailContent(
                                 .padding(top = 8.dp, bottom = 120.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        DetailHero(state.detail)
-
-                        // 방 홈 (그룹 챌린지 ACTIVE 멤버): 요약·공지·랭킹·오늘 상태를 확장 렌더링.
-                        // room == null(비멤버·솔로)이면 기존 공개 상세 그대로.
-                        val room = state.room
-                        if (room != null) {
-                            RoomSummaryRow(summary = room.summary)
-                            RoomNoticeSection(
-                                pinnedNotice = room.pinnedNotice,
-                                onOpenNotices = { onIntent(ChallengeDetailIntent.OpenNotices) },
-                                onOpenNotice = { onIntent(ChallengeDetailIntent.OpenNotice(it)) },
-                            )
-                            RoomRankingSection(
-                                topRanking = room.topRanking,
-                                onOpenRanking = { onIntent(ChallengeDetailIntent.OpenRanking) },
-                            )
-                            // 앱이 모르는 상태 값이면 카드를 생략한다 — 임의로 성공·실패로 접지 않는다.
-                            room.myTodayStatus?.let { RoomTodayStatusCard(status = it) }
-
-                            // 방장·공동 관리자만: 확인 대기함(폴백 인증·이의 제기) 진입.
-                            if (room.myRole.canManage) {
-                                RoomManageEntry(
-                                    label = "확인 대기함",
-                                    onClick = { onIntent(ChallengeDetailIntent.OpenPendingReviews) },
-                                )
-                            }
-
-                            // 수정은 방장 전용이다 — 공동 관리자는 설정을 바꿀 수 없다.
-                            if (room.myRole.isOwner) {
-                                RoomManageEntry(
-                                    label = "챌린지 수정",
-                                    onClick = { onIntent(ChallengeDetailIntent.OpenSettings) },
-                                )
-                            }
-
-                            val members = state.members
-                            if (members != null) {
-                                val delegationBanner =
-                                    state.pendingDelegation?.let {
-                                        "${state.pendingDelegationNickname ?: "선택한 멤버"}님에게 방장 위임을 요청했어요"
-                                    }
-                                RoomMemberSection(
-                                    members = members.members,
-                                    participantCount = members.participantCount,
-                                    maxParticipants = members.capacity,
-                                    myRole = room.myRole,
-                                    myUserId = state.myUserId,
-                                    actionEnabled = !state.isMemberActionLoading,
-                                    delegationBanner = delegationBanner,
-                                    onLeave = { confirmAction = MemberConfirm.LEAVE },
-                                    onDelete = { confirmAction = MemberConfirm.DELETE },
-                                    onPromote = { onIntent(ChallengeDetailIntent.PromoteMember(it)) },
-                                    onDemote = { onIntent(ChallengeDetailIntent.DemoteMember(it)) },
-                                    onRequestDelegation = { onIntent(ChallengeDetailIntent.RequestDelegation(it)) },
-                                    onCancelDelegation = { onIntent(ChallengeDetailIntent.CancelDelegation) },
-                                )
-                            }
-                        }
-
-                        DetailInfoCard(state.detail)
+                        DetailHero(detail)
+                        DetailInfoCard(detail)
                         // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
                         val myWatchers = state.watchers
                         if (myWatchers != null) {
@@ -405,6 +375,122 @@ private fun ChallengeDetailContent(
         null -> Unit
     }
 }
+
+/**
+ * 방 상세 3탭 (Figma 1134:143 · 1134:231 · 1134:326).
+ *
+ * 헤더(카테고리·D-day·내 달성률)는 정보 탭에서만 편다 — 피드·랭킹은 목록이 화면을 꽉 채워야 해서
+ * Figma 도 상단바와 탭만 남긴다.
+ */
+@Composable
+private fun RoomDetailTabs(
+    state: ChallengeDetailState,
+    detail: ChallengeDetail,
+    room: ChallengeRoom,
+    onIntent: (ChallengeDetailIntent) -> Unit,
+    onConfirmLeave: () -> Unit,
+    onConfirmDelete: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        if (state.selectedTab == RoomTab.INFO) {
+            RoomInfoHeader(
+                categoryLabel = detail.category?.label,
+                remainingDays = room.summary.remainingDays,
+                myProgressRate = state.myProgressRate,
+            )
+        }
+        RoomTabRow(
+            selected = state.selectedTab,
+            onSelect = { onIntent(ChallengeDetailIntent.SelectTab(it)) },
+        )
+
+        when (state.selectedTab) {
+            RoomTab.INFO ->
+                RoomInfoTab(
+                    detail = detail,
+                    room = room,
+                    onOpenNoticeInFeed = { onIntent(ChallengeDetailIntent.SelectTab(RoomTab.FEED)) },
+                    // 등록할 게 있는 인증 방식일 때만 진입점을 만든다 — 없으면 줄 자체가 생기지 않는다.
+                    onRegisterApps =
+                        { onIntent(ChallengeDetailIntent.RegisterApps) }
+                            .takeIf { state.setup?.requiresTargetPackages == true },
+                    onRegisterAnchor =
+                        { onIntent(ChallengeDetailIntent.RegisterAnchor) }
+                            .takeIf { state.setup?.requiresAnchors == true },
+                    extraSections = {
+                        val myWatchers = state.watchers
+                        if (myWatchers != null) {
+                            WatcherSection(
+                                watchers = myWatchers.watchers,
+                                limit = myWatchers.limit,
+                                isInviting = state.isInvitingWatcher,
+                                onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
+                                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
+                            )
+                        }
+                        val members = state.members
+                        if (members != null) {
+                            val delegationBanner =
+                                state.pendingDelegation?.let {
+                                    "${state.pendingDelegationNickname ?: "선택한 멤버"}님에게 방장 위임을 요청했어요"
+                                }
+                            RoomMemberSection(
+                                members = members.members,
+                                participantCount = members.participantCount,
+                                maxParticipants = members.capacity,
+                                myRole = room.myRole,
+                                myUserId = state.myUserId,
+                                actionEnabled = !state.isMemberActionLoading,
+                                delegationBanner = delegationBanner,
+                                onLeave = onConfirmLeave,
+                                onDelete = onConfirmDelete,
+                                onPromote = { onIntent(ChallengeDetailIntent.PromoteMember(it)) },
+                                onDemote = { onIntent(ChallengeDetailIntent.DemoteMember(it)) },
+                                onRequestDelegation = { onIntent(ChallengeDetailIntent.RequestDelegation(it)) },
+                                onCancelDelegation = { onIntent(ChallengeDetailIntent.CancelDelegation) },
+                            )
+                        }
+                    },
+                )
+
+            RoomTab.FEED ->
+                RoomFeedTab(
+                    state = state,
+                    onOpenNotice = { onIntent(ChallengeDetailIntent.OpenNotice(it)) },
+                    onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
+                    onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
+                )
+
+            RoomTab.RANKING ->
+                RoomRankingTab(
+                    state = state,
+                    onSelectScope = { onIntent(ChallengeDetailIntent.SelectRankingScope(it)) },
+                    onLoadMoreCross = { onIntent(ChallengeDetailIntent.LoadMoreCrossRanking) },
+                )
+        }
+    }
+}
+
+/**
+ * 상단바 ⋯ 메뉴. 자주 쓰지 않는 관리 동작만 담는다.
+ *
+ * 공지는 Phase 1 범위 밖이라(서버가 pinnedNotice 를 항상 null 로 내림) 진입점을 만들지 않는다 —
+ * 화면은 남아 있지만 이번 릴리즈에서 클라이언트가 공지 API 를 호출하지 않기로 한 합의를 따른다.
+ */
+private fun roomMenuItems(
+    myRole: MemberRole,
+    onIntent: (ChallengeDetailIntent) -> Unit,
+): List<RoomMenuItem> =
+    buildList {
+        // 확인 대기함(폴백 인증·이의)은 방장과 공동 관리자가 함께 처리한다.
+        if (myRole.canManage) {
+            add(RoomMenuItem("확인 대기함") { onIntent(ChallengeDetailIntent.OpenPendingReviews) })
+        }
+        // 설정 변경은 방장 전용이다 — 공동 관리자는 규칙을 바꿀 수 없다.
+        if (myRole.isOwner) {
+            add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
+        }
+    }
 
 /** 방 홈 멤버 섹션의 파괴적 액션 확인 대상. */
 private enum class MemberConfirm { LEAVE, DELETE }

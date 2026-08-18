@@ -6,7 +6,9 @@ import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
+import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -78,6 +80,11 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
                 is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
+                is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
+                ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
+                ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
+                is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
+                ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
                 ChallengeDetailIntent.OpenNotices -> openNotices()
                 is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
                 ChallengeDetailIntent.OpenRanking -> openRanking()
@@ -141,6 +148,51 @@ class ChallengeDetailViewModel
                 ChallengeDetailReducerEvent.JoinBlockDismissed -> state.copy(joinBlock = null)
 
                 is ChallengeDetailReducerEvent.Cloning -> state.copy(isCloning = event.cloning)
+
+                is ChallengeDetailReducerEvent.TabSelected -> state.copy(selectedTab = event.tab)
+
+                is ChallengeDetailReducerEvent.RankingScopeSelected -> state.copy(rankingScope = event.scope)
+
+                is ChallengeDetailReducerEvent.ThreadsLoading ->
+                    state.copy(
+                        isThreadsLoading = event.first,
+                        isThreadsPaging = !event.first,
+                        threadsError = null,
+                    )
+
+                is ChallengeDetailReducerEvent.ThreadsLoaded ->
+                    state.copy(
+                        isThreadsLoading = false,
+                        isThreadsPaging = false,
+                        threadsError = null,
+                        threads = if (event.reset) event.page.items else state.threads + event.page.items,
+                        threadsCursor = event.page.nextCursor,
+                    )
+
+                is ChallengeDetailReducerEvent.ThreadsFailed ->
+                    state.copy(
+                        isThreadsLoading = false,
+                        isThreadsPaging = false,
+                        threadsError = event.message,
+                    )
+
+                is ChallengeDetailReducerEvent.RankingLoading -> state.copy(isRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.RankingLoaded ->
+                    state.copy(isRankingLoading = false, ranking = event.ranking)
+
+                is ChallengeDetailReducerEvent.CrossRankingLoading -> state.copy(isCrossRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.CrossRankingLoaded ->
+                    state.copy(
+                        isCrossRankingLoading = false,
+                        crossRanking =
+                            if (event.append && state.crossRanking != null) {
+                                event.ranking.copy(items = state.crossRanking.items + event.ranking.items)
+                            } else {
+                                event.ranking
+                            },
+                    )
             }
 
         /**
@@ -331,6 +383,111 @@ class ChallengeDetailViewModel
                     .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
             }
             loadMembers(challengeId)
+            // room·threads 는 병렬로 받는다 — 한쪽이 늦거나 실패해도 다른 쪽 렌더를 막지 않는다.
+            loadThreads(next = false)
+            // 방 안 랭킹은 랭킹 탭뿐 아니라 정보 탭 헤더의 "내 달성률" 원천이라 진입 시 함께 받는다.
+            loadRanking(challengeId)
+        }
+
+        /** 탭 전환. 방 밖 랭킹처럼 진입 시 받지 않은 데이터는 처음 열릴 때 조회한다. */
+        private fun selectTab(tab: RoomTab) {
+            if (currentState.selectedTab == tab) return
+            dispatch(ChallengeDetailReducerEvent.TabSelected(tab))
+            // 피드가 비어 있는 채로 실패해 있었다면 탭을 여는 김에 다시 시도한다.
+            if (tab == RoomTab.FEED && currentState.threads.isEmpty() && !currentState.isThreadsLoading) {
+                loadThreads(next = false)
+            }
+            if (tab == RoomTab.RANKING) ensureRankingScopeLoaded(currentState.rankingScope)
+        }
+
+        private fun selectRankingScope(scope: RankingScope) {
+            if (currentState.rankingScope == scope) return
+            dispatch(ChallengeDetailReducerEvent.RankingScopeSelected(scope))
+            ensureRankingScopeLoaded(scope)
+        }
+
+        private fun ensureRankingScopeLoaded(scope: RankingScope) {
+            val id = currentState.detail?.challengeId ?: return
+            when (scope) {
+                RankingScope.MEMBER -> if (currentState.ranking == null) loadRanking(id)
+                RankingScope.ROOM -> if (currentState.crossRanking == null) loadCrossRanking(next = false)
+            }
+        }
+
+        /**
+         * 피드 조회. [next] 면 커서를 이어 받고, 아니면 첫 페이지부터 받는다.
+         * [retry] 는 실패 후 재시도라 진행 중 가드(threadsError)를 통과시켜야 한다.
+         */
+        private fun loadThreads(
+            next: Boolean,
+            retry: Boolean = false,
+        ) {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            if (currentState.isThreadsLoading || currentState.isThreadsPaging) return
+            // 마지막 페이지까지 받은 뒤의 추가 요청은 무시한다 — 커서 없이 첫 페이지를 다시 받으면 중복된다.
+            if (next && !retry && currentState.threadsCursor == null) return
+            val cursor = if (next) currentState.threadsCursor else null
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ThreadsLoading(first = cursor == null))
+                runCatching { roomRepository.getThreads(id, cursor = cursor) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = cursor == null))
+                    }.onFailure { error ->
+                        when (error) {
+                            // 커서가 만료·변조됐다. 이어받기를 포기하고 첫 페이지부터 다시 세운다.
+                            is ThreadCursorInvalidException -> {
+                                dispatch(ChallengeDetailReducerEvent.ThreadsLoading(first = true))
+                                runCatching { roomRepository.getThreads(id, cursor = null) }
+                                    .onSuccess {
+                                        dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = true))
+                                    }.onFailure {
+                                        dispatch(
+                                            ChallengeDetailReducerEvent.ThreadsFailed(
+                                                it.message ?: "피드를 불러오지 못했어요",
+                                            ),
+                                        )
+                                    }
+                            }
+
+                            else ->
+                                dispatch(
+                                    ChallengeDetailReducerEvent.ThreadsFailed(error.message ?: "피드를 불러오지 못했어요"),
+                                )
+                        }
+                    }
+            }
+        }
+
+        // 랭킹은 부가 정보라 실패해도 방 렌더를 막지 않는다 — 화면은 값이 없으면 빈 상태를 그린다.
+        private fun loadRanking(challengeId: String) {
+            if (currentState.isRankingLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.RankingLoading(true))
+                runCatching { roomRepository.getRanking(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RankingLoaded(it)) }
+                    .onFailure { dispatch(ChallengeDetailReducerEvent.RankingLoading(false)) }
+            }
+        }
+
+        /** 방 밖 랭킹. 그룹·솔로는 서로 비교하지 않으므로 이 방의 모드로 조회한다. */
+        private fun loadCrossRanking(next: Boolean) {
+            val detail = currentState.detail ?: return
+            if (currentState.isCrossRankingLoading) return
+            val cursor = if (next) currentState.crossRanking?.nextCursor ?: return else null
+            val mode = if (detail.mode.isGroup) RankingMode.GROUP else RankingMode.SOLO
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.CrossRankingLoading(true))
+                runCatching {
+                    roomRepository.getCrossRanking(
+                        mode = mode,
+                        challengeId = detail.challengeId,
+                        cursor = cursor,
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.CrossRankingLoaded(ranking = it, append = cursor != null))
+                }.onFailure { dispatch(ChallengeDetailReducerEvent.CrossRankingLoading(false)) }
+            }
         }
 
         // 멤버 목록은 방 홈 부가 정보 — 실패해도(권한 등) 방 홈 렌더를 막지 않도록 흡수한다.

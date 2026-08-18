@@ -2,9 +2,7 @@ package com.ruleup.challenge.presentation.detail.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,12 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
-import com.ruleup.challenge.domain.entity.NoticeSummary
-import com.ruleup.challenge.domain.entity.RoomSummary
-import com.ruleup.challenge.domain.entity.RoomTopRanker
-import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.designsystem.component.RuleUpCard
-import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -44,40 +37,6 @@ import java.util.Locale
 // 요약 3카드 스타일은 피그마 "챌린지 상세 그룹"(420:321) 시안, 공지·랭킹 섹션은 시안 부재로
 // 기존 디자인 시스템 토큰으로 구성했다.
 
-/** 방 성공률 · 남은 기간 · 인원 3카드 (시안 420:347~355). */
-@Composable
-internal fun RoomSummaryRow(summary: RoomSummary) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        RoomStatCard(
-            // 판정 이력이 없으면 null 이다 — 0% 로 접으면 갓 만든 방이 실패한 방처럼 보인다
-            value = summary.roomSuccessRate?.let { "${it.toPercentText()}%" } ?: "–",
-            label = "방 성공률",
-            valueColor =
-                if (summary.roomSuccessRate == null) {
-                    RuleUpTheme.colors.textMuted
-                } else {
-                    RuleUpTheme.colors.brand
-                },
-            modifier = Modifier.weight(1f),
-        )
-        RoomStatCard(
-            value = "${summary.remainingDays}일",
-            label = "남은 기간",
-            valueColor = RuleUpTheme.colors.success,
-            modifier = Modifier.weight(1f),
-        )
-        RoomStatCard(
-            value = "${summary.participantCount}/${summary.capacity}",
-            label = "인원",
-            valueColor = RuleUpPalette.StatusWarn,
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
 /** 성공률 0~1 → 표시용 백분율. 0.92 → "92", 0.925 → "92.5". */
 internal fun Double.toPercentText(): String {
     val percent = this * 100
@@ -85,205 +44,6 @@ internal fun Double.toPercentText(): String {
         percent.toInt().toString()
     } else {
         String.format(Locale.US, "%.1f", percent)
-    }
-}
-
-@Composable
-private fun RoomStatCard(
-    value: String,
-    label: String,
-    valueColor: Color,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier =
-            modifier
-                .clip(RoundedCornerShape(14.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp))
-                .padding(vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-    ) {
-        Text(
-            text = value,
-            color = valueColor,
-            style = RuleUpTheme.typography.title,
-        )
-        Text(
-            text = label,
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.captionMedium,
-        )
-    }
-}
-
-/**
- * 공지 섹션: 고정 공지 배너(있으면) + 목록 진입 행.
- * **읽음/미읽음 표시는 없다** — "확인해야 할 일"로 읽혀 압박이 되므로 정책상 제외됐고, 방 계약에도
- * 읽음 필드가 없다.
- */
-@Composable
-internal fun RoomNoticeSection(
-    pinnedNotice: NoticeSummary?,
-    onOpenNotices: () -> Unit,
-    onOpenNotice: (String) -> Unit,
-) {
-    RuleUpCard {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .singleClickable(onClick = onOpenNotices),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SectionTitle("공지")
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = "전체 보기 ›",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.smallMedium,
-            )
-        }
-
-        if (pinnedNotice != null) {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(RuleUpTheme.colors.brandSoft)
-                        .singleClickable(onClick = { onOpenNotice(pinnedNotice.noticeId) })
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(text = "📌", style = RuleUpTheme.typography.body)
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = pinnedNotice.title,
-                    color = RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.bodyBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-        } else {
-            Text(
-                text = "등록된 고정 공지가 없어요",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.small,
-            )
-        }
-    }
-}
-
-/** 그룹 랭킹 섹션: top3 미리보기 + 전체 랭킹 진입 (시안 부재 — 랭킹 화면 시안 434:514 의 행 구성을 축약). */
-@Composable
-internal fun RoomRankingSection(
-    topRanking: List<RoomTopRanker>,
-    onOpenRanking: () -> Unit,
-) {
-    RuleUpCard {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .singleClickable(onClick = onOpenRanking),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SectionTitle("그룹 랭킹")
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = "전체 보기 ›",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.smallMedium,
-            )
-        }
-
-        if (topRanking.isEmpty()) {
-            Text(
-                text = "아직 랭킹이 집계되지 않았어요",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.small,
-            )
-        } else {
-            topRanking.forEach { entry ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = rankEmoji(entry.rank),
-                        style = RuleUpTheme.typography.labelMedium,
-                        modifier = Modifier.width(28.dp),
-                    )
-                    Text(
-                        text = entry.nickname,
-                        color = RuleUpTheme.colors.textPrimary,
-                        style = RuleUpTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        text = "${entry.successRate.toPercentText()}%",
-                        color = RuleUpTheme.colors.brand,
-                        style = RuleUpTheme.typography.bodyBold,
-                    )
-                }
-            }
-        }
-    }
-}
-
-internal fun rankEmoji(rank: Int): String =
-    when (rank) {
-        1 -> "🥇"
-        2 -> "🥈"
-        3 -> "🥉"
-        else -> "$rank"
-    }
-
-/** 내 오늘 인증 상태 (myTodayStatus). 앱이 모르는 값이면 호출부가 카드 자체를 그리지 않는다. */
-@Composable
-internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
-    val (label, color) =
-        when (status) {
-            TodayVerificationStatus.DONE -> "오늘 인증 완료" to RuleUpTheme.colors.success
-            // 00~03시 유예 구간 — 아직 실패가 아니다. 경고색을 쓰되 실패 문구를 쓰지 않는다.
-            TodayVerificationStatus.CHECKING -> "판정 대기 중" to RuleUpPalette.StatusWarn
-            TodayVerificationStatus.NOT_TARGET -> "오늘은 인증 대상일이 아니에요" to RuleUpTheme.colors.textMuted
-        }
-    Row(
-        modifier = Modifier.ruleUpCardSurface(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SectionTitle("오늘 내 상태")
-        Spacer(Modifier.weight(1f))
-        Dot(color)
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = label,
-            color = color,
-            style = RuleUpTheme.typography.bodyBold,
-        )
-    }
-}
-
-/** 방장·관리자 전용 관리 진입 행(확인 대기함 등). 카드 우측 "›" 로 이동을 표시한다. */
-@Composable
-internal fun RoomManageEntry(
-    label: String,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.singleClickable(onClick = onClick).ruleUpCardSurface(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SectionTitle(label)
-        Spacer(Modifier.weight(1f))
-        Text(text = "›", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.section)
     }
 }
 
