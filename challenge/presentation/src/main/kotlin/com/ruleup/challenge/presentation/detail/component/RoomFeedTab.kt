@@ -1,6 +1,5 @@
 package com.ruleup.challenge.presentation.detail.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.ThreadItemType
@@ -48,13 +46,11 @@ import com.ruleup.designsystem.theme.RuleUpTheme
  * 실패는 이의 기간(1일)이 지난 뒤에야 흐르고 인용되면 아예 오지 않는다 — 서버가 이미 걸러 내리므로
  * 화면은 받은 것을 그대로 그리되, 날짜를 명시한 과거형으로 적어 지금 실패한 것처럼 읽히지 않게 한다.
  *
- * Phase 1 에서 공지는 서버가 내려주지 않아 [ChallengeDetailState.threads] 에 `NOTICE` 가 없고
- * 고정 공지도 항상 null 이다. 두 자리 모두 값이 있을 때만 그리므로 Phase 2 에 그대로 살아난다.
+ * 공지·댓글·반응은 제품에서 빠졌다 — 이 피드에는 판정 카드만 흐른다.
  */
 @Composable
 internal fun RoomFeedTab(
     state: ChallengeDetailState,
-    onOpenNotice: (String) -> Unit,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
     onClaimOwner: (() -> Unit)? = null,
@@ -93,7 +89,7 @@ internal fun RoomFeedTab(
                 onAction = onRetry,
             )
 
-        state.threads.isEmpty() && state.pinnedNoticeOrNull == null ->
+        state.threads.isEmpty() ->
             FeedEmptyState(
                 modifier = modifier,
                 ownerType = state.room?.ownerType,
@@ -108,12 +104,6 @@ internal fun RoomFeedTab(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                state.pinnedNoticeOrNull?.let { notice ->
-                    item(key = "pinned-${notice.noticeId}") {
-                        PinnedNoticeCard(notice = notice, onClick = { onOpenNotice(notice.noticeId) })
-                    }
-                }
-
                 // 같은 날짜끼리 묶어 "오늘 / 어제 / 7월 25일" 헤더를 세운다. 목록은 이미 최신순이다.
                 var lastDateKey: String? = null
                 state.threads.forEach { item ->
@@ -130,16 +120,7 @@ internal fun RoomFeedTab(
                         }
                     }
                     item(key = "${item.type.value}-${item.id}") {
-                        ThreadItemCard(
-                            item = item,
-                            isMe = item.user.userId == state.myUserId,
-                            onClick =
-                                if (item.type == ThreadItemType.NOTICE) {
-                                    { onOpenNotice(item.id) }
-                                } else {
-                                    null
-                                },
-                        )
+                        ThreadItemCard(item = item, isMe = item.user.userId == state.myUserId)
                     }
                 }
 
@@ -223,65 +204,13 @@ private fun FeedEmptyState(
     }
 }
 
-/** 고정 공지 배너 (Figma 1134:260). 피드에 섞지 않고 항상 최상단에 둔다. */
-@Composable
-private fun PinnedNoticeCard(
-    notice: NoticeSummary,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RuleUpTheme.shapes.card)
-                .background(RuleUpTheme.colors.brandSoft)
-                .singleClickable(onClick = onClick)
-                .padding(16.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Text(
-            text = "공지",
-            color = RuleUpTheme.colors.surface,
-            style = RuleUpTheme.typography.captionBold,
-            modifier =
-                Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(RuleUpTheme.colors.brand)
-                    .padding(horizontal = 9.dp, vertical = 5.dp),
-        )
-        Spacer(Modifier.width(10.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = notice.title,
-                color = RuleUpTheme.colors.textPrimary,
-                style = RuleUpTheme.typography.bodyBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(3.dp))
-            Text(
-                text = feedDateHeader(notice.createdAt),
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.caption,
-            )
-        }
-    }
-}
-
 /** 피드 아이템 카드 (Figma 1134:267). 성공/실패는 색만이 아니라 텍스트로도 구분한다(접근성). */
 @Composable
 private fun ThreadItemCard(
     item: ThreadItem,
     isMe: Boolean,
-    onClick: (() -> Unit)?,
 ) {
-    val base = Modifier.fillMaxWidth()
-    Column(
-        modifier =
-            (if (onClick != null) base.singleClickable(onClick = onClick) else base)
-                .ruleUpCardSurface(),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    Column(modifier = Modifier.ruleUpCardSurface()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             RoomAvatar(nickname = item.user.nickname, highlighted = isMe)
             Spacer(Modifier.width(10.dp))
@@ -302,24 +231,14 @@ private fun ThreadItemCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            item.statusChip()?.let { (label, tone) ->
-                Spacer(Modifier.width(10.dp))
-                StatusChip(text = label, tone = tone)
-            }
-        }
-
-        // 댓글은 Phase 2 다. 서버가 0 을 내려주는 동안에는 이 줄이 통째로 사라진다.
-        if (item.commentCount > 0) {
-            Text(
-                text = "댓글 ${item.commentCount}",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.caption,
-            )
+            Spacer(Modifier.width(10.dp))
+            val (label, tone) = item.statusChip()
+            StatusChip(text = label, tone = tone)
         }
     }
 }
 
-/** 아이템 종류별 부제. 성공은 시각과 연속 일수, 실패는 귀속일, 공지는 제목이다. */
+/** 아이템 종류별 부제. 성공은 시각과 연속 일수, 실패는 귀속일이다. */
 private fun ThreadItem.subtitle(): String =
     when (type) {
         ThreadItemType.VERIFY_SUCCESS -> {
@@ -330,13 +249,10 @@ private fun ThreadItem.subtitle(): String =
         }
 
         ThreadItemType.VERIFY_FAIL -> failDateLabel(failDate)
-
-        ThreadItemType.NOTICE -> title.orEmpty().ifBlank { "공지" }
     }
 
-private fun ThreadItem.statusChip(): Pair<String, StatusChipTone>? =
+private fun ThreadItem.statusChip(): Pair<String, StatusChipTone> =
     when (type) {
         ThreadItemType.VERIFY_SUCCESS -> "성공" to StatusChipTone.Success
         ThreadItemType.VERIFY_FAIL -> "실패" to StatusChipTone.Danger
-        ThreadItemType.NOTICE -> null
     }

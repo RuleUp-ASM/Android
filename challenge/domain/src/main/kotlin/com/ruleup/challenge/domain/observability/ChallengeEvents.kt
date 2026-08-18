@@ -182,14 +182,12 @@ object ChallengeEvents {
         challengeId: String,
         myRole: String,
         ownerType: String,
-        hasPinnedNotice: Boolean,
     ) = BusinessPayload.Custom(
         "room_view",
         attributes {
             put("challenge_id", challengeId)
             put("my_role", myRole)
             put("owner_type", ownerType)
-            put("has_pinned_notice", hasPinnedNotice)
         },
     )
 

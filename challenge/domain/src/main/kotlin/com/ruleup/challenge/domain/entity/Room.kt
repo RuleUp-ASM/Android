@@ -80,8 +80,7 @@ data class RoomTopRanker(
  * 챌린지 방 내부 일괄 조회 (명세: GET /challenges/{id}/room). ACTIVE 멤버 전용 — 비멤버는 403.
  *
  * **읽음 관련 필드는 없다** — 미읽음 뱃지는 "확인해야 할 일"로 읽혀 압박이 되므로 정책상 제외됐다.
- * [pinnedNotice] 는 Phase 1 에서 서버가 항상 null 로 내려준다(공지 기능은 Phase 2). 필드를 지우지
- * 않고 null 로 두는 것이 서버 합의라, 화면도 값이 있을 때만 배너를 그리는 형태로 둔다.
+ * 응답의 `pinnedNotice` 도 읽지 않는다 — 공지가 제품에서 빠졌다.
  */
 data class ChallengeRoom(
     // 서버 합의: 미지 값은 MEMBER 취급 (운영 스프린트의 role 값 추가에 대비)
@@ -89,8 +88,6 @@ data class ChallengeRoom(
     // BOT 이면 "방장 되기"(선착순 클레임) 진입점을 노출한다
     val ownerType: OwnerType,
     val summary: RoomSummary,
-    // 고정 공지 요약 — 없거나, 봇방장 방이거나, 작성자를 내가 차단했으면 null
-    val pinnedNotice: NoticeSummary?,
     // 상위 3. 10회 미만 참여자는 등재되지 않아 3명보다 적을 수 있다
     val topRanking: List<RoomTopRanker>,
     val myTodayStatus: TodayVerificationStatus?,

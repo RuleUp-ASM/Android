@@ -80,9 +80,7 @@ data class RoomResponse(
     val ownerType: String? = null,
     @SerialName("summary")
     val summary: RoomSummaryResponse? = null,
-    // Phase 1 에서는 항상 null — 필드는 유지된다(Phase 2 공지 합류 대비)
-    @SerialName("pinnedNotice")
-    val pinnedNotice: NoticeSummaryResponse? = null,
+    // 응답의 pinnedNotice 는 읽지 않는다 — 공지가 제품에서 빠졌다.
     @SerialName("topRanking")
     val topRanking: List<RoomTopRankerResponse>? = null,
     @SerialName("myTodayStatus")
@@ -103,7 +101,6 @@ internal fun RoomResponse.toDomain(): ChallengeRoom =
                 participantCount = summary?.participantCount ?: 0,
                 capacity = summary?.capacity ?: 0,
             ),
-        pinnedNotice = pinnedNotice?.toDomain(),
         topRanking = topRanking.orEmpty().map { it.toDomain() },
         // 미지 값은 null — 성공·실패 어느 쪽으로도 임의로 접지 않고 표기를 생략한다
         myTodayStatus = TodayVerificationStatus.fromValue(myTodayStatus),

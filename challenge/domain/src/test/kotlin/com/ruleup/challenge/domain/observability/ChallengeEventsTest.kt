@@ -59,7 +59,7 @@ class ChallengeEventsTest {
     fun `방 내부 이벤트 이름을 고정한다`() {
         val names =
             listOf(
-                ChallengeEvents.roomView("c1", "MEMBER", "USER", false),
+                ChallengeEvents.roomView("c1", "MEMBER", "USER"),
                 ChallengeEvents.threadScroll(1, 20),
                 ChallengeEvents.rankingView(RankingViewScope.IN_ROOM, false),
                 ChallengeEvents.roomEmptyStateView("BOT"),
@@ -74,14 +74,13 @@ class ChallengeEventsTest {
     @Test
     fun `방 진입은 역할과 방장 유형을 함께 싣는다`() {
         // 봇방장 방과 유저 방장 방은 화면 구성이 다르다 — 둘을 섞으면 방문율 해석이 안 된다.
-        val event = ChallengeEvents.roomView("c1", "OWNER", "BOT", hasPinnedNotice = true)
+        val event = ChallengeEvents.roomView("c1", "OWNER", "BOT")
 
         assertEquals(
             attributes {
                 put("challenge_id", "c1")
                 put("my_role", "OWNER")
                 put("owner_type", "BOT")
-                put("has_pinned_notice", true)
             },
             event.attrs,
         )

@@ -10,7 +10,6 @@ import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.CrossChallengeRanking
 import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.JoinBlockReason
-import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -79,14 +78,6 @@ sealed interface ChallengeDetailIntent : MviIntent {
 
     /** (봇방장 방) "방장 되기" — 선착순 클레임. 밀리면 안내 후 방을 다시 받는다. */
     data object ClaimOwner : ChallengeDetailIntent
-
-    /** (방 홈) 공지 목록으로 이동. */
-    data object OpenNotices : ChallengeDetailIntent
-
-    /** (방 홈) 고정 공지 배너 탭 → 공지 상세로 이동. */
-    data class OpenNotice(
-        val noticeId: String,
-    ) : ChallengeDetailIntent
 
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
@@ -236,13 +227,6 @@ data class ChallengeDetailState(
     /** 복제 버튼을 활성할 수 있는지. 공개 그룹만 복제된다. */
     val canClone: Boolean
         get() = detail?.cloneable == true && !isCloning
-
-    /**
-     * 고정 공지. Phase 1 에서는 서버가 항상 null 로 내려주므로 배너·요약 행이 통째로 사라진다 —
-     * 필드를 지우지 않고 null 로 두는 것이 서버와의 합의라 화면도 값이 있을 때만 그린다.
-     */
-    val pinnedNoticeOrNull: NoticeSummary?
-        get() = room?.pinnedNotice
 
     /**
      * 정보 탭 헤더의 내 달성률(0~1). 방 안 랭킹의 내 성공률이 원천이며, 참여 10회 미만이라

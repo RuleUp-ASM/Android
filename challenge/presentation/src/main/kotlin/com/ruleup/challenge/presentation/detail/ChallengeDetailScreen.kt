@@ -410,7 +410,6 @@ private fun RoomDetailTabs(
                     detail = detail,
                     room = room,
                     today = state.todayResult,
-                    onOpenNoticeInFeed = { onIntent(ChallengeDetailIntent.SelectTab(RoomTab.FEED)) },
                     // 등록할 게 있는 인증 방식일 때만 진입점을 만든다 — 없으면 줄 자체가 생기지 않는다.
                     onRegisterApps =
                         { onIntent(ChallengeDetailIntent.RegisterApps) }
@@ -457,7 +456,6 @@ private fun RoomDetailTabs(
             RoomTab.FEED ->
                 RoomFeedTab(
                     state = state,
-                    onOpenNotice = { onIntent(ChallengeDetailIntent.OpenNotice(it)) },
                     onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
                     onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
                     // 봇방장 방의 멤버에게만 자리를 만든다 — 방장이 있는 방에서 누르면 409 다.
@@ -478,8 +476,8 @@ private fun RoomDetailTabs(
 /**
  * 상단바 ⋯ 메뉴. 자주 쓰지 않는 관리 동작만 담는다.
  *
- * 공지는 Phase 1 범위 밖이라(서버가 pinnedNotice 를 항상 null 로 내림) 진입점을 만들지 않는다 —
- * 화면은 남아 있지만 이번 릴리즈에서 클라이언트가 공지 API 를 호출하지 않기로 한 합의를 따른다.
+ * 공지는 제품에서 빠져 진입점을 두지 않는다. 공지 화면·라우트는 아직 코드에 남아 있으나 방
+ * 상세 어디에서도 이어지지 않는다.
  */
 private fun roomMenuItems(
     myRole: MemberRole,

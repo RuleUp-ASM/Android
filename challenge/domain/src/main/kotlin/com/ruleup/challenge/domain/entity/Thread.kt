@@ -9,20 +9,16 @@ object ThreadPolicy {
 /**
  * 피드 아이템 종류 (명세 `items[].type`).
  *
- * Phase 1 에서 서버는 `VERIFY_SUCCESS`/`VERIFY_FAIL` 만 내려준다. `NOTICE` 는 Phase 2 에 합류하지만
- * 값을 미리 알고 있어야 그때 파싱이 깨지지 않으므로 지금 정의해 둔다.
+ * 피드는 **인증 판정만** 흐른다. 공지가 제품에서 빠지면서 `NOTICE` 는 앱이 아는 값이 아니게 됐고,
+ * 서버가 보내더라도 [fromValue] 가 null 을 돌려 아이템이 조용히 버려진다 — 정체를 모르는 카드를
+ * 빈 껍데기로 그리는 것보다 낫다.
  */
 enum class ThreadItemType(
     val value: String,
 ) {
     VERIFY_SUCCESS("VERIFY_SUCCESS"),
     VERIFY_FAIL("VERIFY_FAIL"),
-    NOTICE("NOTICE"),
     ;
-
-    /** 인증 판정 이벤트인가 — 공지와 달리 상세로 들어갈 대상이 없다. */
-    val isVerification: Boolean
-        get() = this == VERIFY_SUCCESS || this == VERIFY_FAIL
 
     companion object {
         fun fromValue(value: String?): ThreadItemType? = entries.find { it.value == value }
@@ -38,7 +34,7 @@ enum class ThreadItemType(
  */
 data class ThreadItem(
     val type: ThreadItemType,
-    // 댓글 대상 ID — VERIFY_* 는 verificationId, NOTICE 는 noticeId
+    // 판정 ID (verificationId). 목록 키로 쓴다
     val id: String,
     val user: RoomUser,
     // ISO datetime
@@ -47,19 +43,15 @@ data class ThreadItem(
     val streak: Int?,
     // VERIFY_FAIL 만 — 실패 귀속일 (ISO date)
     val failDate: String?,
-    // NOTICE 만 — 공지 제목
-    val title: String?,
-    val commentCount: Int,
 )
 
 /**
  * 방 스레드 피드 (명세: GET /challenges/{id}/threads). ACTIVE 멤버 전용.
  *
- * [pinnedNotice] 는 피드에 섞지 않고 최상단에 따로 둔다. Phase 1 에서는 항상 null 이다.
+ * 응답의 `pinnedNotice` 는 읽지 않는다 — 공지가 제품에서 빠졌다.
  * [nextCursor] 가 null 이면 마지막 페이지다.
  */
 data class ChallengeThreads(
-    val pinnedNotice: NoticeSummary?,
     val items: List<ThreadItem>,
     val nextCursor: String?,
 )

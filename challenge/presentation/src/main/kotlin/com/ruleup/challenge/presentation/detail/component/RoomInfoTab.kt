@@ -1,6 +1,5 @@
 package com.ruleup.challenge.presentation.detail.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,11 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
-import com.ruleup.challenge.domain.entity.NoticeSummary
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.designsystem.component.RuleUpCard
@@ -35,7 +32,7 @@ import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 
 /**
- * 정보 탭 (Figma 1134:143) — 오늘 내 상태 · 고정 공지 · 내 세부 설정 · 인증 규칙 · 진행 정보.
+ * 정보 탭 (Figma 1134:143) — 오늘 내 상태 · 내 세부 설정 · 인증 규칙 · 진행 정보.
  *
  * 방에 들어와 가장 먼저 확인하는 건 "오늘 내가 됐나"이므로 그 카드를 맨 위에 둔다. 아래로는 바꿀 수
  * 있는 것(내 설정) → 바뀌지 않는 것(규칙·기간) 순이다.
@@ -47,7 +44,6 @@ internal fun RoomInfoTab(
     detail: ChallengeDetail,
     room: ChallengeRoom,
     today: TodayResult?,
-    onOpenNoticeInFeed: () -> Unit,
     modifier: Modifier = Modifier,
     onRegisterApps: (() -> Unit)? = null,
     onRegisterAnchor: (() -> Unit)? = null,
@@ -63,11 +59,6 @@ internal fun RoomInfoTab(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TodayVerificationCard(roomStatus = room.myTodayStatus, today = today)
-
-        // Phase 1 은 서버가 고정 공지를 내려주지 않아 이 카드가 통째로 빠진다(공지는 Phase 2).
-        room.pinnedNotice?.let {
-            PinnedNoticeRow(notice = it, onOpenInFeed = onOpenNoticeInFeed)
-        }
 
         MySetupCard(
             onRegisterApps = onRegisterApps,
@@ -168,47 +159,6 @@ private fun TodayVerificationStatus.toResultStatus(): TodayResultStatus =
         TodayVerificationStatus.FAILED -> TodayResultStatus.FAILED
         TodayVerificationStatus.NOT_TARGET -> TodayResultStatus.NOT_TARGET
     }
-
-/** 고정 공지 요약 행 (Figma 1134:195). 본문은 피드 최상단 배너에서 이어 읽는다. */
-@Composable
-private fun PinnedNoticeRow(
-    notice: NoticeSummary,
-    onOpenInFeed: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .singleClickable(onClick = onOpenInFeed)
-                .ruleUpCardSurface(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = "공지",
-            color = RuleUpTheme.colors.brand,
-            style = RuleUpTheme.typography.captionBold,
-            modifier =
-                Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(RuleUpTheme.colors.brandSoft)
-                    .padding(horizontal = 9.dp, vertical = 5.dp),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = notice.title,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = "피드에서 보기",
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.caption,
-        )
-    }
-}
 
 /**
  * 내 세부 설정 (Figma 1134:200).

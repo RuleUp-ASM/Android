@@ -16,8 +16,6 @@ import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
@@ -91,8 +89,6 @@ class ChallengeDetailViewModel
                 is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
                 ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
-                ChallengeDetailIntent.OpenNotices -> openNotices()
-                is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 ChallengeDetailIntent.OpenPendingReviews -> openPendingReviews()
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
@@ -406,7 +402,6 @@ class ChallengeDetailViewModel
                                     challengeId = challengeId,
                                     myRole = room.myRole.value,
                                     ownerType = room.ownerType.value,
-                                    hasPinnedNotice = room.pinnedNotice != null,
                                 )
                             }
                         }
@@ -737,29 +732,6 @@ class ChallengeDetailViewModel
                     }
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
             }
-        }
-
-        private fun openNotices() {
-            val room = currentState.room ?: return
-            val id = currentState.detail?.challengeId ?: return
-            navigationHelper.navigateByRoute(
-                ChallengeNoticesPage(
-                    challengeId = id,
-                    canManage = room.myRole.canManage,
-                ).toRoute(),
-            )
-        }
-
-        private fun openNotice(noticeId: String) {
-            val room = currentState.room ?: return
-            val id = currentState.detail?.challengeId ?: return
-            navigationHelper.navigateByRoute(
-                ChallengeNoticeDetailPage(
-                    challengeId = id,
-                    noticeId = noticeId,
-                    canManage = room.myRole.canManage,
-                ).toRoute(),
-            )
         }
 
         private fun openRanking() {
