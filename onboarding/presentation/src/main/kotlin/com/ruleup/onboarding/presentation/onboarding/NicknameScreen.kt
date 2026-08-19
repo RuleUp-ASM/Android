@@ -28,8 +28,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.onboarding.domain.auth.NickNameUtil
-import com.ruleup.onboarding.domain.auth.NicknameValidation
+import com.ruleup.domain.entity.user.NickNameUtil
+import com.ruleup.domain.entity.user.NicknameValidation
 import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
 import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
@@ -247,7 +247,7 @@ private fun NicknameRules(nickname: String) {
             color = RuleUpTheme.colors.brandStrong,
             style = RuleUpTheme.typography.captionBold,
         )
-        RuleRow(ok = inRange, "2 ~ 12자 사이")
+        RuleRow(ok = inRange, "${NickNameUtil.MIN_LENGTH} ~ ${NickNameUtil.MAX_LENGTH}자 사이")
         RuleRow(ok = validType, "한글, 영문, 숫자 사용 가능")
         RuleRow(ok = validType, "특수문자 및 공백 불가")
     }

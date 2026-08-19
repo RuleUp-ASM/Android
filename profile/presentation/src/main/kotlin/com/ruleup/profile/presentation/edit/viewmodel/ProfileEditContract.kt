@@ -57,8 +57,6 @@ data class ProfileEditState(
     val nicknameLocked: Boolean get() = nicknameLockedDays > 0
 
     companion object {
-        const val NICKNAME_MAX_LENGTH = 12
-
         val initial =
             ProfileEditState(
                 isLoading = true,
