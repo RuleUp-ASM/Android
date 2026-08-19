@@ -31,6 +31,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.create.ChallengeDates
@@ -185,6 +186,7 @@ private fun ModeCapacityEditor(
                         text = "−",
                         highlighted = false,
                         onClick = { onIntent(CreateChallengeIntent.SetCapacity(state.capacity - 1)) },
+                        enabled = state.capacity > ChallengeLimits.CAPACITY_MIN,
                     )
                     Text(
                         "${state.capacity}명",
@@ -195,6 +197,7 @@ private fun ModeCapacityEditor(
                         text = "＋",
                         highlighted = true,
                         onClick = { onIntent(CreateChallengeIntent.SetCapacity(state.capacity + 1)) },
+                        enabled = state.capacity < ChallengeLimits.CAPACITY_MAX,
                     )
                 }
             }
@@ -297,7 +300,7 @@ private fun PeriodEditor(
 
 /** 주간 횟수 슬라이더의 값 범위. 명세 1~7. */
 private val weeklyCountRange =
-    CreateChallengeState.WEEKLY_COUNT_MIN.toFloat()..CreateChallengeState.WEEKLY_COUNT_MAX.toFloat()
+    ChallengeLimits.WEEKLY_COUNT_MIN.toFloat()..ChallengeLimits.WEEKLY_COUNT_MAX.toFloat()
 
 /**
  * 주간 횟수 슬라이더 (1~7).
@@ -319,7 +322,7 @@ private fun WeeklyCountSlider(
         ) {
             Text("주간 횟수", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
             Text(
-                text = if (count >= CreateChallengeState.WEEKLY_COUNT_MAX) "매일" else "주 ${count}회",
+                text = if (count >= ChallengeLimits.WEEKLY_COUNT_MAX) "매일" else "주 ${count}회",
                 color = RuleUpTheme.colors.brand,
                 style = RuleUpTheme.typography.numberS,
             )
@@ -329,7 +332,7 @@ private fun WeeklyCountSlider(
             onValueChange = { onChange(it.roundToInt()) },
             valueRange = weeklyCountRange,
             // 양 끝을 뺀 내부 눈금 수 — 1~7 이면 5개다.
-            steps = CreateChallengeState.WEEKLY_COUNT_MAX - CreateChallengeState.WEEKLY_COUNT_MIN - 1,
+            steps = ChallengeLimits.WEEKLY_COUNT_MAX - ChallengeLimits.WEEKLY_COUNT_MIN - 1,
             colors =
                 SliderDefaults.colors(
                     thumbColor = RuleUpTheme.colors.brand,
@@ -343,7 +346,7 @@ private fun WeeklyCountSlider(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            (CreateChallengeState.WEEKLY_COUNT_MIN..CreateChallengeState.WEEKLY_COUNT_MAX).forEach { tick ->
+            (ChallengeLimits.WEEKLY_COUNT_MIN..ChallengeLimits.WEEKLY_COUNT_MAX).forEach { tick ->
                 Text(
                     text = tick.toString(),
                     modifier = Modifier.singleClickable { onChange(tick) },
@@ -582,29 +585,42 @@ private fun BorderedRow(
     }
 }
 
+/**
+ * 증감 버튼. [enabled] 가 false 면 눌리지 않고 **색도 함께 죽인다** — 눌리는데 값이 안 바뀌는 것처럼
+ * 보이면 고장으로 읽힌다.
+ */
 @Composable
 private fun StepperBox(
     text: String,
     highlighted: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
+    val accented = highlighted && enabled
     Box(
         modifier =
             modifier
                 .size(28.dp)
                 .clip(RoundedCornerShape(9.dp))
-                .background(if (highlighted) RuleUpTheme.colors.brandSoft else RuleUpTheme.colors.background)
-                .singleClickable(onClick = onClick),
+                .background(if (accented) RuleUpTheme.colors.brandSoft else RuleUpTheme.colors.background)
+                .singleClickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            color = if (highlighted) RuleUpTheme.colors.brand else RuleUpTheme.colors.textMuted,
+            color =
+                when {
+                    !enabled -> RuleUpTheme.colors.textMuted.copy(alpha = DISABLED_ALPHA)
+                    highlighted -> RuleUpTheme.colors.brand
+                    else -> RuleUpTheme.colors.textMuted
+                },
             style = RuleUpTheme.typography.bodyBold,
         )
     }
 }
+
+private const val DISABLED_ALPHA = 0.4f
 
 @Composable
 private fun ChoiceChip(

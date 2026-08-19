@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.DraftExpiredException
@@ -217,16 +218,22 @@ class CreateChallengeViewModel
                         mode = draft.mode,
                         visibility = draft.visibility,
                         rankingVisible = draft.rankingVisible,
+                        // 초안은 서버가 준 값이라 통제할 수 없다 — 경계에서 흡수한다(사용자 입력 clamp 가
+                        // 아니다). 여기서 접지 않으면 범위 밖 값이 그대로 생성 요청까지 내려간다.
                         capacity =
                             draft.capacity.coerceIn(
-                                CreateChallengeState.CAPACITY_MIN,
-                                CreateChallengeState.CAPACITY_MAX,
+                                ChallengeLimits.CAPACITY_MIN,
+                                ChallengeLimits.CAPACITY_MAX,
                             ),
                         minTier = draft.minTier,
                         // 상한은 초안이 준 기본값(= 생성자 표시 티어)으로 고정한다.
                         ownerTierCap = draft.minTier,
                         period = draft.period,
-                        weeklyCount = draft.weeklyCount,
+                        weeklyCount =
+                            draft.weeklyCount.coerceIn(
+                                ChallengeLimits.WEEKLY_COUNT_MIN,
+                                ChallengeLimits.WEEKLY_COUNT_MAX,
+                            ),
                         params = draft.params,
                         verification = draft.verification,
                         penalties = draft.penalties,
@@ -269,14 +276,9 @@ class CreateChallengeViewModel
                 is CreateChallengeReducerEvent.RankingVisibleChanged ->
                     state.copy(rankingVisible = event.visible)
 
+                // 경계에서는 ± 버튼이 눌리지 않으므로(ConfirmEditSheet) 범위 밖 값이 올라오지 않는다.
                 is CreateChallengeReducerEvent.CapacityChanged ->
-                    state.copy(
-                        capacity =
-                            event.capacity.coerceIn(
-                                CreateChallengeState.CAPACITY_MIN,
-                                CreateChallengeState.CAPACITY_MAX,
-                            ),
-                    )
+                    state.copy(capacity = event.capacity)
 
                 is CreateChallengeReducerEvent.MinTierChanged ->
                     // 상한은 생성자 표시 티어 — 초과하면 서버가 MIN_TIER_EXCEEDS_OWNER 로 막는다.
@@ -290,15 +292,9 @@ class CreateChallengeViewModel
                 is CreateChallengeReducerEvent.PeriodChanged ->
                     state.copy(period = state.period.copy(start = event.start, end = event.end))
 
+                // 슬라이더가 1~7 로 고정돼 있어 범위 밖 값이 올라오지 않는다.
                 is CreateChallengeReducerEvent.WeeklyCountChanged ->
-                    // 범위 밖 값은 서버가 400 INVALID_WEEKLY_COUNT 로 막는다. 여기서 먼저 잘라 보낸다.
-                    state.copy(
-                        weeklyCount =
-                            event.count.coerceIn(
-                                CreateChallengeState.WEEKLY_COUNT_MIN,
-                                CreateChallengeState.WEEKLY_COUNT_MAX,
-                            ),
-                    )
+                    state.copy(weeklyCount = event.count)
 
                 is CreateChallengeReducerEvent.ParamEdited ->
                     state.copy(

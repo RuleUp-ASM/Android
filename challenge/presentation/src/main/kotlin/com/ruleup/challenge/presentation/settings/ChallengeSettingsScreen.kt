@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeField
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -403,7 +404,7 @@ private fun WeeklyCountSection(
         SectionLabel("주간 횟수") {
             Text(
                 text =
-                    if (state.weeklyCount >= ChallengeSettingsState.WEEKLY_COUNT_MAX) {
+                    if (state.weeklyCount >= ChallengeLimits.WEEKLY_COUNT_MAX) {
                         "매일"
                     } else {
                         "주 ${state.weeklyCount}회"
@@ -418,7 +419,7 @@ private fun WeeklyCountSection(
             enabled = editable,
             valueRange = weeklyCountRange,
             // 양 끝을 뺀 내부 눈금 수 — 1~7 이면 5개다.
-            steps = ChallengeSettingsState.WEEKLY_COUNT_MAX - ChallengeSettingsState.WEEKLY_COUNT_MIN - 1,
+            steps = ChallengeLimits.WEEKLY_COUNT_MAX - ChallengeLimits.WEEKLY_COUNT_MIN - 1,
             colors =
                 SliderDefaults.colors(
                     thumbColor = RuleUpTheme.colors.brand,
@@ -440,7 +441,7 @@ private fun WeeklyCountSection(
 
 /** 주간 횟수 슬라이더의 값 범위. 명세 1~7. */
 private val weeklyCountRange =
-    ChallengeSettingsState.WEEKLY_COUNT_MIN.toFloat()..ChallengeSettingsState.WEEKLY_COUNT_MAX.toFloat()
+    ChallengeLimits.WEEKLY_COUNT_MIN.toFloat()..ChallengeLimits.WEEKLY_COUNT_MAX.toFloat()
 
 @Composable
 private fun ParamsSection(

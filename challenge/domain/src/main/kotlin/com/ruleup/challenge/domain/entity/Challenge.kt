@@ -3,6 +3,20 @@ package com.ruleup.challenge.domain.entity
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Tier
 
+/**
+ * 생성·수정 입력의 허용 범위 (명세). 화면 위젯과 [CreateChallengeCommand] 검증이 **같은 값**을 본다 —
+ * 숫자가 화면마다 따로 살면 한쪽만 고쳐져도 아무도 모른다.
+ */
+object ChallengeLimits {
+    // 주간 수행 횟수. 벗어나면 서버가 400 INVALID_WEEKLY_COUNT 로 막는다
+    const val WEEKLY_COUNT_MIN = 1
+    const val WEEKLY_COUNT_MAX = 7
+
+    // 그룹 정원
+    const val CAPACITY_MIN = 1
+    const val CAPACITY_MAX = 10_000
+}
+
 /** 참여 형태 (명세 `mode`). 구 `participationType` 을 대체한다. */
 enum class ChallengeMode(
     val value: String,
@@ -175,12 +189,12 @@ data class CreateChallengeCommand(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    // 1~10,000 · 그룹 전용
+    // 그룹 전용. 범위는 [ChallengeLimits]
     val capacity: Int?,
     // ≤ 생성자 표시 티어
     val minTier: Tier?,
     val period: ChallengePeriod,
-    // 주간 수행 횟수 1~7. 범위를 벗어나면 서버가 400 INVALID_WEEKLY_COUNT 로 막는다.
+    // 주간 수행 횟수. 범위는 [ChallengeLimits]
     val weeklyCount: Int,
     val params: List<ParamEntry>,
     val verification: VerificationConfig,
@@ -188,7 +202,31 @@ data class CreateChallengeCommand(
     val watcherPenalty: Boolean,
     // 챌린지 이미지 업로드 API 가 발급한 URL 만 허용. null 이면 기본 이미지(심사 없음).
     val imageUrl: String?,
-)
+) {
+    /**
+     * 범위와 [mode] 별 필드 조합을 타입이 보장한다.
+     *
+     * 화면도 같은 범위로 입력을 막지만 그건 UX 이지 정합성이 아니다 — 상태 복원·테스트처럼 화면을
+     * 거치지 않는 경로가 남는다. 이 요청은 **송신 전용**이라(서버 응답이 이 타입으로 들어오지 않는다)
+     * 여기서 던지는 예외는 언제나 우리 코드의 버그다.
+     */
+    init {
+        require(weeklyCount in ChallengeLimits.WEEKLY_COUNT_MIN..ChallengeLimits.WEEKLY_COUNT_MAX) {
+            "주간 횟수가 범위를 벗어났습니다: $weeklyCount"
+        }
+        if (mode.isGroup) {
+            require(visibility != null) { "그룹 챌린지는 공개 범위가 필요합니다." }
+            require(rankingVisible == null) { "랭킹 공개 여부는 솔로 전용입니다." }
+            require(capacity != null && capacity in ChallengeLimits.CAPACITY_MIN..ChallengeLimits.CAPACITY_MAX) {
+                "정원이 범위를 벗어났습니다: $capacity"
+            }
+        } else {
+            require(visibility == null) { "공개 범위는 그룹 전용입니다." }
+            require(rankingVisible != null) { "솔로 챌린지는 랭킹 공개 여부가 필요합니다." }
+            require(capacity == null) { "정원은 그룹 전용입니다." }
+        }
+    }
+}
 
 /**
  * 생성 결과 (명세 `POST /challenges` 201).
