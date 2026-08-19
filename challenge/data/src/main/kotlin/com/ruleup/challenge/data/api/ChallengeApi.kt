@@ -10,6 +10,7 @@ import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateChallengeResponse
 import com.ruleup.challenge.data.dto.CreateNoticeRequest
 import com.ruleup.challenge.data.dto.CreateNoticeResponse
+import com.ruleup.challenge.data.dto.CrossRankingResponse
 import com.ruleup.challenge.data.dto.DelegationActionRequest
 import com.ruleup.challenge.data.dto.DelegationRequestBody
 import com.ruleup.challenge.data.dto.DelegationResolutionResponse
@@ -32,6 +33,7 @@ import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.RoomResponse
 import com.ruleup.challenge.data.dto.RoutineTemplatesResponse
 import com.ruleup.challenge.data.dto.TemplateDraftResponse
+import com.ruleup.challenge.data.dto.ThreadsResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
 import com.ruleup.challenge.data.dto.UpdateNoticeRequest
@@ -258,9 +260,26 @@ interface ChallengeApi {
         @Body request: PinNoticeRequest,
     ): BaseResponse<PinNoticeResponse>
 
-    // 그룹 랭킹 조회 (비정규화 진행률 정렬 — 상위 3 + 전체 + 내 순위)
+    // 방 스레드 피드 (ACTIVE 멤버 전용 — 커서 페이징, size 기본 20·최대 50)
+    @GET("v1/challenges/{challengeId}/threads")
+    suspend fun getThreads(
+        @Path("challengeId") challengeId: String,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<ThreadsResponse>
+
+    // 방 안 랭킹 조회 (참여일 이후 전체 성공률 — 10회 이상 등재, 미달은 rank=null)
     @GET("v1/challenges/{challengeId}/ranking")
     suspend fun getRanking(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<RankingResponse>
+
+    // 방 밖 랭킹 조회 (같은 모드의 방끼리 — 하루 1회 03시 배치 스냅샷)
+    @GET("v1/rankings/challenges")
+    suspend fun getCrossRanking(
+        @Query("mode") mode: String,
+        @Query("challengeId") challengeId: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<CrossRankingResponse>
 }

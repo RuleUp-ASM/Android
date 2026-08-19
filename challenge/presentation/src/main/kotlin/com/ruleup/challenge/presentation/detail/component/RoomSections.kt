@@ -30,8 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.NoticeSummary
-import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.domain.entity.RoomSummary
+import com.ruleup.challenge.domain.entity.RoomTopRanker
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.ruleUpCardSurface
@@ -44,7 +44,7 @@ import java.util.Locale
 // 요약 3카드 스타일은 피그마 "챌린지 상세 그룹"(420:321) 시안, 공지·랭킹 섹션은 시안 부재로
 // 기존 디자인 시스템 토큰으로 구성했다.
 
-/** 완주율 · 평균 매너 · 남은 기간 3카드 (시안 420:347~355). */
+/** 방 성공률 · 남은 기간 · 인원 3카드 (시안 420:347~355). */
 @Composable
 internal fun RoomSummaryRow(summary: RoomSummary) {
     Row(
@@ -52,15 +52,15 @@ internal fun RoomSummaryRow(summary: RoomSummary) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         RoomStatCard(
-            value = "${summary.completionRate.trimPercent()}%",
-            label = "완주율",
-            valueColor = RuleUpTheme.colors.brand,
-            modifier = Modifier.weight(1f),
-        )
-        RoomStatCard(
-            value = "${summary.avgMannerTemperature.trimPercent()}℃",
-            label = "평균 매너",
-            valueColor = RuleUpPalette.StatusWarn,
+            // 판정 이력이 없으면 null 이다 — 0% 로 접으면 갓 만든 방이 실패한 방처럼 보인다
+            value = summary.roomSuccessRate?.let { "${it.toPercentText()}%" } ?: "–",
+            label = "방 성공률",
+            valueColor =
+                if (summary.roomSuccessRate == null) {
+                    RuleUpTheme.colors.textMuted
+                } else {
+                    RuleUpTheme.colors.brand
+                },
             modifier = Modifier.weight(1f),
         )
         RoomStatCard(
@@ -69,16 +69,24 @@ internal fun RoomSummaryRow(summary: RoomSummary) {
             valueColor = RuleUpTheme.colors.success,
             modifier = Modifier.weight(1f),
         )
+        RoomStatCard(
+            value = "${summary.participantCount}/${summary.capacity}",
+            label = "인원",
+            valueColor = RuleUpPalette.StatusWarn,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
-// 92.0 → "92", 92.5 → "92.5" (시안은 정수 표기 — 소수점이 있으면 그대로 노출)
-private fun Double.trimPercent(): String =
-    if (this % 1.0 == 0.0) {
-        toInt().toString()
+/** 성공률 0~1 → 표시용 백분율. 0.92 → "92", 0.925 → "92.5". */
+internal fun Double.toPercentText(): String {
+    val percent = this * 100
+    return if (percent % 1.0 == 0.0) {
+        percent.toInt().toString()
     } else {
-        String.format(Locale.US, "%.1f", this)
+        String.format(Locale.US, "%.1f", percent)
     }
+}
 
 @Composable
 private fun RoomStatCard(
@@ -111,13 +119,13 @@ private fun RoomStatCard(
 }
 
 /**
- * 공지 섹션: 고정 공지 배너(있으면) + 목록 진입 행(미읽음 뱃지).
- * 상세 조회 = 읽음 처리라 별도 읽음 버튼은 없다.
+ * 공지 섹션: 고정 공지 배너(있으면) + 목록 진입 행.
+ * **읽음/미읽음 표시는 없다** — "확인해야 할 일"로 읽혀 압박이 되므로 정책상 제외됐고, 방 계약에도
+ * 읽음 필드가 없다.
  */
 @Composable
 internal fun RoomNoticeSection(
     pinnedNotice: NoticeSummary?,
-    unreadCount: Int,
     onOpenNotices: () -> Unit,
     onOpenNotice: (String) -> Unit,
 ) {
@@ -130,10 +138,6 @@ internal fun RoomNoticeSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SectionTitle("공지")
-            if (unreadCount > 0) {
-                Spacer(Modifier.width(6.dp))
-                UnreadBadge(unreadCount)
-            }
             Spacer(Modifier.weight(1f))
             Text(
                 text = "전체 보기 ›",
@@ -163,10 +167,6 @@ internal fun RoomNoticeSection(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                if (!pinnedNotice.isRead) {
-                    Spacer(Modifier.width(8.dp))
-                    Dot(RuleUpTheme.colors.danger)
-                }
             }
         } else {
             Text(
@@ -181,7 +181,7 @@ internal fun RoomNoticeSection(
 /** 그룹 랭킹 섹션: top3 미리보기 + 전체 랭킹 진입 (시안 부재 — 랭킹 화면 시안 434:514 의 행 구성을 축약). */
 @Composable
 internal fun RoomRankingSection(
-    topRanking: List<RankingEntry>,
+    topRanking: List<RoomTopRanker>,
     onOpenRanking: () -> Unit,
 ) {
     RuleUpCard {
@@ -227,7 +227,7 @@ internal fun RoomRankingSection(
                         modifier = Modifier.weight(1f),
                     )
                     Text(
-                        text = "${entry.progressRate.trimPercent()}%",
+                        text = "${entry.successRate.toPercentText()}%",
                         color = RuleUpTheme.colors.brand,
                         style = RuleUpTheme.typography.bodyBold,
                     )
@@ -245,17 +245,15 @@ internal fun rankEmoji(rank: Int): String =
         else -> "$rank"
     }
 
-/** 내 오늘 상태 (myTodayStatus — ChallengeMember.todayStatus 비정규화 값). */
+/** 내 오늘 인증 상태 (myTodayStatus). 앱이 모르는 값이면 호출부가 카드 자체를 그리지 않는다. */
 @Composable
 internal fun RoomTodayStatusCard(status: TodayVerificationStatus) {
     val (label, color) =
         when (status) {
-            TodayVerificationStatus.SUCCESS -> "오늘 인증 완료" to RuleUpTheme.colors.success
-            TodayVerificationStatus.PENDING -> "오늘 인증 대기 중" to RuleUpPalette.StatusWarn
-            TodayVerificationStatus.FAILED -> "오늘 인증 실패" to RuleUpTheme.colors.danger
-            TodayVerificationStatus.NOT_TARGET,
-            TodayVerificationStatus.NOT_REQUIRED,
-            -> "오늘은 인증 대상일이 아니에요" to RuleUpTheme.colors.textMuted
+            TodayVerificationStatus.DONE -> "오늘 인증 완료" to RuleUpTheme.colors.success
+            // 00~03시 유예 구간 — 아직 실패가 아니다. 경고색을 쓰되 실패 문구를 쓰지 않는다.
+            TodayVerificationStatus.CHECKING -> "판정 대기 중" to RuleUpPalette.StatusWarn
+            TodayVerificationStatus.NOT_TARGET -> "오늘은 인증 대상일이 아니에요" to RuleUpTheme.colors.textMuted
         }
     Row(
         modifier = Modifier.ruleUpCardSurface(),
@@ -579,24 +577,6 @@ private fun SectionTitle(text: String) {
         color = RuleUpTheme.colors.textPrimary,
         style = RuleUpTheme.typography.cardTitle,
     )
-}
-
-@Composable
-internal fun UnreadBadge(count: Int) {
-    Box(
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(9.dp))
-                .background(RuleUpTheme.colors.danger)
-                .padding(horizontal = 6.dp, vertical = 1.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = if (count > 99) "99+" else "$count",
-            color = RuleUpTheme.colors.surface,
-            style = RuleUpTheme.typography.tinyBold,
-        )
-    }
 }
 
 @Composable

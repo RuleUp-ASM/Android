@@ -250,7 +250,6 @@ private fun ChallengeDetailContent(
                             RoomSummaryRow(summary = room.summary)
                             RoomNoticeSection(
                                 pinnedNotice = room.pinnedNotice,
-                                unreadCount = room.unreadNoticeCount,
                                 onOpenNotices = { onIntent(ChallengeDetailIntent.OpenNotices) },
                                 onOpenNotice = { onIntent(ChallengeDetailIntent.OpenNotice(it)) },
                             )
@@ -258,7 +257,8 @@ private fun ChallengeDetailContent(
                                 topRanking = room.topRanking,
                                 onOpenRanking = { onIntent(ChallengeDetailIntent.OpenRanking) },
                             )
-                            RoomTodayStatusCard(status = room.myTodayStatus)
+                            // 앱이 모르는 상태 값이면 카드를 생략한다 — 임의로 성공·실패로 접지 않는다.
+                            room.myTodayStatus?.let { RoomTodayStatusCard(status = it) }
 
                             // 방장·공동 관리자만: 확인 대기함(폴백 인증·이의 제기) 진입.
                             if (room.myRole.canManage) {

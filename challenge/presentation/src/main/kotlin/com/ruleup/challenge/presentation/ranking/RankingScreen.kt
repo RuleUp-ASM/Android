@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.MyRank
 import com.ruleup.challenge.domain.entity.RankingEntry
+import com.ruleup.challenge.domain.entity.RankingPolicy
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingIntent
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingViewModel
 import com.ruleup.designsystem.singleClickable
@@ -137,12 +138,12 @@ private fun RankingBody(ranking: ChallengeRanking) {
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        val top3 = ranking.rankings.filter { it.rank in 1..3 }
+        val top3 = ranking.items.filter { it.rank != null && it.rank in 1..3 }
         if (top3.isNotEmpty()) {
             item { Podium(top3 = top3) }
         }
-        item { MyRankCard(myRank = ranking.myRank) }
-        if (ranking.rankings.isNotEmpty()) {
+        item { MyRankCard(me = ranking.me) }
+        if (ranking.items.isNotEmpty()) {
             item {
                 Text(
                     text = "전체 순위",
@@ -150,7 +151,7 @@ private fun RankingBody(ranking: ChallengeRanking) {
                     style = RuleUpTheme.typography.smallBold,
                 )
             }
-            items(ranking.rankings, key = { it.userId + it.rank }) { entry ->
+            items(ranking.items, key = { it.user.userId }) { entry ->
                 RankingRow(entry = entry)
             }
         } else {
@@ -205,7 +206,7 @@ private fun PodiumColumn(
         if (entry != null) {
             Text(text = rankMedal(entry.rank), style = RuleUpTheme.typography.title)
             Text(
-                text = entry.nickname,
+                text = entry.user.nickname,
                 color = RuleUpTheme.colors.textPrimary,
                 style = RuleUpTheme.typography.smallBold,
                 maxLines = 1,
@@ -222,7 +223,7 @@ private fun PodiumColumn(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = "${entry.progressRate.rateLabel()}%",
+                    text = entry.successRate.percentLabel(),
                     color = RuleUpPalette.BgSurface,
                     style = RuleUpTheme.typography.title,
                 )
@@ -237,15 +238,25 @@ private fun PodiumColumn(
     }
 }
 
-/** 내 순위 카드 (시안 434:560) — 1위면 격차 대신 축하 문구. */
+/**
+ * 내 순위 카드 (시안 434:560).
+ *
+ * 참여 10회 미만이면 등재되지 않아 순위가 없다 — 이때는 "-" 를 보여주고 몇 회 남았는지로 안내한다.
+ * 1위면 격차 대신 축하 문구를 쓴다.
+ */
 @Composable
-private fun MyRankCard(myRank: MyRank) {
-    val gap = myRank.gapToAbove
-    val gapLabel =
-        if (myRank.rank <= 1 || gap == null) {
-            "지금 1위를 지키고 있어요"
-        } else {
-            "1단계 위까지 ${gap.rateLabel()}% 차이"
+private fun MyRankCard(me: MyRank) {
+    val gap = me.gapToFirst
+    val subLabel =
+        when {
+            !me.ranked ->
+                "${RankingPolicy.IN_ROOM_MIN_PARTICIPATIONS}회부터 순위에 올라요 · 지금 ${me.participations}회"
+
+            (me.rank ?: Int.MAX_VALUE) <= 1 || gap == null ->
+                "성공률 ${me.successRate.percentLabel()} · 지금 1위를 지키고 있어요"
+
+            else ->
+                "성공률 ${me.successRate.percentLabel()} · 1위와 ${gap.percentLabel()} 차이"
         }
     Row(
         modifier =
@@ -266,7 +277,7 @@ private fun MyRankCard(myRank: MyRank) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = "${myRank.rank}",
+                text = me.rank?.toString() ?: "-",
                 color = RuleUpPalette.BgSurface,
                 style = RuleUpTheme.typography.cardTitle,
             )
@@ -274,13 +285,13 @@ private fun MyRankCard(myRank: MyRank) {
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
-                text = "내 순위 #${myRank.rank}",
+                text = me.rank?.let { "내 순위 #$it" } ?: "아직 순위가 없어요",
                 color = RuleUpPalette.TextInk,
                 style = RuleUpTheme.typography.bodyBold,
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = "완주율 ${myRank.progressRate.rateLabel()}% · $gapLabel",
+                text = subLabel,
                 color = RuleUpPalette.TextSub,
                 style = RuleUpTheme.typography.caption,
             )
@@ -307,41 +318,51 @@ private fun RankingRow(entry: RankingEntry) {
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = entry.nickname,
+                text = entry.user.nickname,
                 color = RuleUpTheme.colors.textPrimary,
                 style = RuleUpTheme.typography.bodyBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            entry.successDays?.let {
-                Spacer(Modifier.height(1.dp))
-                Text(
-                    text = "${it}일 성공",
-                    color = RuleUpTheme.colors.textMuted,
-                    style = RuleUpTheme.typography.caption,
-                )
-            }
+            Spacer(Modifier.height(1.dp))
+            Text(
+                // 미등재면 등수 대신 왜 없는지가 정보다.
+                text =
+                    if (entry.rank == null) {
+                        "인증 ${RankingPolicy.IN_ROOM_MIN_PARTICIPATIONS}회 미만"
+                    } else {
+                        "${entry.successCount}회 성공 · ${entry.participations}회 참여"
+                    },
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
         }
         Text(
-            text = "${entry.progressRate.rateLabel()}%",
-            color = RuleUpTheme.colors.brand,
+            text = entry.successRate.percentLabel(),
+            color = if (entry.rank == null) RuleUpTheme.colors.textMuted else RuleUpTheme.colors.brand,
             style = RuleUpTheme.typography.cardTitle,
         )
     }
 }
 
-private fun rankMedal(rank: Int): String =
+// 미등재(rank null)는 "-" 로 표시한다 — 순위에서 빼면 등수가 어긋난다.
+private fun rankMedal(rank: Int?): String =
     when (rank) {
         1 -> "🥇"
         2 -> "🥈"
         3 -> "🥉"
+        null -> "-"
         else -> "$rank"
     }
 
-// 98.0 → "98", 97.5 → "97.5"
-private fun Double.rateLabel(): String =
-    if (this % 1.0 == 0.0) {
-        toInt().toString()
-    } else {
-        String.format(Locale.US, "%.1f", this)
-    }
+// 성공률 0~1 → "98%" / "97.5%". 미등재라 값이 없으면 "-".
+private fun Double?.percentLabel(): String {
+    val percent = (this ?: return "-") * 100
+    val text =
+        if (percent % 1.0 == 0.0) {
+            percent.toInt().toString()
+        } else {
+            String.format(Locale.US, "%.1f", percent)
+        }
+    return "$text%"
+}
