@@ -2,6 +2,8 @@ package com.ruleup.profile.presentation.edit.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.NickNameUtil
+import com.ruleup.domain.entity.user.NicknameValidation
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.entity.NicknameCheckReason
 import com.ruleup.profile.domain.repository.ProfileRepository
@@ -34,7 +36,7 @@ class ProfileEditViewModel
                 is ProfileEditIntent.ChangeNickname ->
                     dispatch(
                         ProfileEditReducerEvent.NicknameChanged(
-                            intent.nickname.take(ProfileEditState.NICKNAME_MAX_LENGTH),
+                            intent.nickname.take(NickNameUtil.MAX_LENGTH),
                         ),
                     )
 
@@ -169,8 +171,10 @@ class ProfileEditViewModel
                 emitEffect(ProfileEditEffect.ShowMessage("변경된 내용이 없어요"))
                 return
             }
-            if (nicknameChanged && trimmed.length < 2) {
-                emitEffect(ProfileEditEffect.ShowMessage("닉네임은 2~12자로 입력해주세요"))
+            // 온보딩과 같은 규칙으로 막는다 — 길이뿐 아니라 문자 종류까지. 서버 왕복 전에 알려준다.
+            val validation = NickNameUtil.validate(trimmed)
+            if (nicknameChanged && !validation.isValid) {
+                emitEffect(ProfileEditEffect.ShowMessage(NickNameUtil.message(validation)))
                 return
             }
             if (categoriesChanged && state.selectedCategories.isEmpty()) {
@@ -188,7 +192,7 @@ class ProfileEditViewModel
                                 val message =
                                     when (check.reason) {
                                         NicknameCheckReason.DUPLICATED -> "이미 사용 중인 닉네임이에요"
-                                        NicknameCheckReason.FORMAT -> "닉네임은 2~12자 한글·영문·숫자만 쓸 수 있어요"
+                                        NicknameCheckReason.FORMAT -> NickNameUtil.message(NicknameValidation.INVALID_CHAR)
                                         // 최근에 해제된 닉네임은 1주간 잠긴다. 언제부터 쓸 수 있는지 함께 알려 준다.
                                         NicknameCheckReason.RECENTLY_RELEASED ->
                                             check.availableAt

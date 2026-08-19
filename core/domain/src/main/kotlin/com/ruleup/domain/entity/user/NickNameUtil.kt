@@ -1,5 +1,9 @@
-package com.ruleup.onboarding.domain.auth
+package com.ruleup.domain.entity.user
 
+/**
+ * 닉네임 규칙 (명세). **가입과 프로필 수정이 같은 규칙을 본다** — 한쪽만 고쳐지면 온보딩에서 막히는
+ * 닉네임이 수정으로는 통과한다.
+ */
 object NickNameUtil {
     const val MIN_LENGTH = 2
     const val MAX_LENGTH = 12

@@ -48,6 +48,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditEffect
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditIntent
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState
@@ -58,7 +59,7 @@ private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Prim
 
 /**
  * 프로필 편집 (피그마 434:566). 마이 홈 프로필 영역으로 진입한다.
- * 닉네임(2~12자·30일 제한·저장 시 선검사), 관심 분야(1~[maxSelectable]), 사진(갤러리/제거 — 즉시 반영).
+ * 닉네임([NickNameUtil] 규칙·30일 제한·저장 시 선검사), 관심 분야(1~[maxSelectable]), 사진(갤러리/제거 — 즉시 반영).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -269,7 +270,7 @@ private fun EditBody(
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = "${state.nickname.length}/${ProfileEditState.NICKNAME_MAX_LENGTH}",
+                    text = "${state.nickname.length}/${NickNameUtil.MAX_LENGTH}",
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                 )

@@ -5,10 +5,10 @@ import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.domain.entity.user.AgreementConsents
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Gender
+import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
-import com.ruleup.onboarding.domain.auth.NickNameUtil
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.AuthFailure
