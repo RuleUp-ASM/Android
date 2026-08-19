@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.ObjectionType
+import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.repository.VerificationRepository
 import com.ruleup.verification.presentation.render.CtaTarget
@@ -67,7 +68,11 @@ class VerificationDetailViewModel
                 CtaTarget.OPEN_LOCATION_PIN ->
                     challengeId?.let {
                         navigationHelper.navigateTo(
-                            VerificationLocationPage(challengeId = it, defaultRadiusM = 500f, dwellMinutes = 60),
+                            VerificationLocationPage(
+                                challengeId = it,
+                                defaultRadiusM = SetupAnchors.MIN_RADIUS_M,
+                                dwellMinutes = 60,
+                            ),
                         )
                     }
 
