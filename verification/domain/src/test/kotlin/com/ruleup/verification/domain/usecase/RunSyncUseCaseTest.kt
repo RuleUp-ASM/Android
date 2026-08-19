@@ -234,6 +234,8 @@ class RunSyncUseCaseTest {
 
         override suspend fun getProgress(filter: ProgressFilter): ProgressSnapshot = error("unused")
 
+        override suspend fun getTodayResult(challengeId: String) = error("unused")
+
         override suspend fun getVerificationDetail(
             challengeId: String,
             logDays: Int,

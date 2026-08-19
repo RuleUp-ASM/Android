@@ -17,6 +17,7 @@ import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.SubmitObjectionRequest
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
+import com.ruleup.verification.data.dto.TodayResultResponse
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
 import com.ruleup.verification.data.dto.VerificationDetailResponse
@@ -52,6 +53,12 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
         @Query("logDays") logDays: Int? = null,
     ): BaseResponse<VerificationDetailResponse>
+
+    // 오늘 인증 결과 + 판정 결과 모달 데이터. 구 GET /{id}/verification 을 대체하는 계약이다.
+    @GET("v1/challenges/{challengeId}/verifications/today")
+    suspend fun getTodayResult(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<TodayResultResponse>
 
     // 3.4 수동 인증 제출 (VF-04)
     @POST("v1/challenges/{challengeId}/verifications")

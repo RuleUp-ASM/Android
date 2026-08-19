@@ -34,6 +34,8 @@ import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationLockedException
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
+import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
@@ -236,7 +238,20 @@ class ChallengeRepositoryImpl
                 ).getOrThrow()
                 .toDomain()
 
+        override suspend fun claimOwner(challengeId: String): OwnerClaimResult =
+            try {
+                api
+                    .claimOwner(challengeId)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 선착순에서 밀린 건 오류가 아니라 정상 결과다 — 화면이 안내 문구로 분기하도록 타입을 나눈다.
+                if (e.code == CODE_OWNER_ALREADY_EXISTS) throw OwnerAlreadyExistsException()
+                throw e
+            }
+
         private companion object {
+            const val CODE_OWNER_ALREADY_EXISTS = "OWNER_ALREADY_EXISTS"
             const val CODE_RATE_LIMITED = "RECOMMENDATION_RATE_LIMITED"
             const val CODE_DRAFT_NOT_FOUND = "DRAFT_NOT_FOUND"
             const val CODE_DRAFT_EXPIRED = "DRAFT_EXPIRED"

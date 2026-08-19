@@ -6,18 +6,21 @@ import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
+import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
+import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
+import com.ruleup.challenge.domain.entity.ThreadPolicy
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticeDetailPage
-import com.ruleup.challenge.domain.navigation.ChallengeNoticesPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.observability.ChallengeEvents
+import com.ruleup.challenge.domain.observability.RankingViewScope
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
@@ -34,6 +37,7 @@ import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.ScreenKey
 import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -52,6 +56,7 @@ class ChallengeDetailViewModel
         private val challengeRepository: ChallengeRepository,
         private val roomRepository: RoomRepository,
         private val watcherRepository: WatcherRepository,
+        private val verificationRepository: VerificationRepository,
         private val exploreRepository: ExploreRepository,
         private val tokenRepository: TokenRepository,
         private val observability: Observability,
@@ -78,8 +83,12 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
                 is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
-                ChallengeDetailIntent.OpenNotices -> openNotices()
-                is ChallengeDetailIntent.OpenNotice -> openNotice(intent.noticeId)
+                is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
+                ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
+                ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
+                is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
+                ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
+                ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 ChallengeDetailIntent.OpenPendingReviews -> openPendingReviews()
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
@@ -141,6 +150,55 @@ class ChallengeDetailViewModel
                 ChallengeDetailReducerEvent.JoinBlockDismissed -> state.copy(joinBlock = null)
 
                 is ChallengeDetailReducerEvent.Cloning -> state.copy(isCloning = event.cloning)
+
+                is ChallengeDetailReducerEvent.TabSelected -> state.copy(selectedTab = event.tab)
+
+                is ChallengeDetailReducerEvent.RankingScopeSelected -> state.copy(rankingScope = event.scope)
+
+                is ChallengeDetailReducerEvent.ThreadsLoading ->
+                    state.copy(
+                        isThreadsLoading = event.first,
+                        isThreadsPaging = !event.first,
+                        threadsError = null,
+                    )
+
+                is ChallengeDetailReducerEvent.ThreadsLoaded ->
+                    state.copy(
+                        isThreadsLoading = false,
+                        isThreadsPaging = false,
+                        threadsError = null,
+                        threads = if (event.reset) event.page.items else state.threads + event.page.items,
+                        threadsCursor = event.page.nextCursor,
+                    )
+
+                is ChallengeDetailReducerEvent.ThreadsFailed ->
+                    state.copy(
+                        isThreadsLoading = false,
+                        isThreadsPaging = false,
+                        threadsError = event.message,
+                    )
+
+                is ChallengeDetailReducerEvent.RankingLoading -> state.copy(isRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.RankingLoaded ->
+                    state.copy(isRankingLoading = false, ranking = event.ranking)
+
+                is ChallengeDetailReducerEvent.CrossRankingLoading -> state.copy(isCrossRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.TodayResultLoaded -> state.copy(todayResult = event.result)
+
+                is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
+
+                is ChallengeDetailReducerEvent.CrossRankingLoaded ->
+                    state.copy(
+                        isCrossRankingLoading = false,
+                        crossRanking =
+                            if (event.append && state.crossRanking != null) {
+                                event.ranking.copy(items = state.crossRanking.items + event.ranking.items)
+                            } else {
+                                event.ranking
+                            },
+                    )
             }
 
         /**
@@ -252,6 +310,12 @@ class ChallengeDetailViewModel
         // 상세 진입은 전환 분모라 화면당 1회다. 가입 후 강제 재조회에서 또 나가면 분모가 부풀어 오른다.
         private var detailViewLogged = false
 
+        // 방 진입도 같은 이유로 화면당 1회다.
+        private var roomViewLogged = false
+
+        // 빈 피드는 같은 화면에서 여러 번 그려질 수 있어 노출 로그는 한 번만 남긴다.
+        private var emptyFeedLogged = false
+
         private fun load(
             challengeId: String,
             force: Boolean = false,
@@ -328,9 +392,235 @@ class ChallengeDetailViewModel
         private fun loadRoom(challengeId: String) {
             viewModelScope.launch {
                 runCatching { roomRepository.getRoom(challengeId) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+                    .onSuccess { room ->
+                        dispatch(ChallengeDetailReducerEvent.RoomLoaded(room))
+                        // 방 주간 방문율의 분자. 재조회(가입 후 force)에서 또 나가면 분자가 부풀어 오른다.
+                        if (!roomViewLogged) {
+                            roomViewLogged = true
+                            observability.log(Channel.BUSINESS) {
+                                ChallengeEvents.roomView(
+                                    challengeId = challengeId,
+                                    myRole = room.myRole.value,
+                                    ownerType = room.ownerType.value,
+                                )
+                            }
+                        }
+                    }
             }
             loadMembers(challengeId)
+            // room·threads 는 병렬로 받는다 — 한쪽이 늦거나 실패해도 다른 쪽 렌더를 막지 않는다.
+            loadThreads(next = false)
+            // 방 안 랭킹은 랭킹 탭뿐 아니라 정보 탭 헤더의 "내 달성률" 원천이라 진입 시 함께 받는다.
+            loadRanking(challengeId)
+            loadTodayResult(challengeId)
+        }
+
+        /**
+         * 오늘 인증 결과(인증 모듈). room 의 `myTodayStatus` 는 상태 하나뿐이라 인증 시각·실패 사유·
+         * 연속 일수·이의 잔여를 여기서 보충한다. **실패는 흡수한다** — 부가 정보라 없으면 room 값으로
+         * 떨어질 뿐 방을 못 그릴 이유가 없다.
+         */
+        private fun loadTodayResult(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { verificationRepository.getTodayResult(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.TodayResultLoaded(it)) }
+            }
+        }
+
+        /**
+         * 봇방장 방 클레임. 선착순이라 **밀리는 것이 정상 결과**다 — 오류로 알리지 않고 안내한 뒤
+         * 방을 다시 받아 누가 방장이 됐는지 화면에 반영한다.
+         */
+        private fun claimOwner() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isClaimingOwner) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ClaimingOwner(true))
+                runCatching { challengeRepository.claimOwner(id) }
+                    .onSuccess { result ->
+                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
+                        observability.log(Channel.BUSINESS) { ChallengeEvents.ownerClaim(challengeId = id, success = true) }
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                // 면책 기간을 함께 알린다 — "3일 안엔 빠져도 감점 없다"가 손드는 근거였다.
+                                if (result.graceUntil != null) {
+                                    "방장이 되었어요. 3일 안에는 나가도 감점되지 않아요"
+                                } else {
+                                    "방장이 되었어요"
+                                },
+                            ),
+                        )
+                        reloadRoom(id)
+                    }.onFailure { error ->
+                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.ownerClaim(
+                                challengeId = id,
+                                success = false,
+                                errorCode = (error as? OwnerAlreadyExistsException)?.let { "OWNER_ALREADY_EXISTS" },
+                            )
+                        }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "방장이 되지 못했어요"))
+                        // 경합에서 밀렸으면 누가 방장인지 화면이 틀린 상태다 — 무조건 다시 받는다.
+                        if (error is OwnerAlreadyExistsException) reloadRoom(id)
+                    }
+            }
+        }
+
+        /** 방 상태만 다시 받는다(클레임·권한 변경 후). 상세·피드는 그대로 두어 스크롤을 잃지 않는다. */
+        private fun reloadRoom(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { roomRepository.getRoom(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+            }
+        }
+
+        /** 탭 전환. 방 밖 랭킹처럼 진입 시 받지 않은 데이터는 처음 열릴 때 조회한다. */
+        private fun selectTab(tab: RoomTab) {
+            if (currentState.selectedTab == tab) return
+            dispatch(ChallengeDetailReducerEvent.TabSelected(tab))
+            // 피드가 비어 있는 채로 실패해 있었다면 탭을 여는 김에 다시 시도한다.
+            if (tab == RoomTab.FEED && currentState.threads.isEmpty() && !currentState.isThreadsLoading) {
+                loadThreads(next = false)
+            }
+            if (tab == RoomTab.RANKING) {
+                ensureRankingScopeLoaded(currentState.rankingScope)
+                logRankingView(currentState.rankingScope)
+            }
+        }
+
+        private fun selectRankingScope(scope: RankingScope) {
+            if (currentState.rankingScope == scope) return
+            dispatch(ChallengeDetailReducerEvent.RankingScopeSelected(scope))
+            ensureRankingScopeLoaded(scope)
+            logRankingView(scope)
+        }
+
+        /** 랭킹 조회. my_rank_null 이 등재 기준(10회·50회)이 너무 높은지 판단하는 근거다. */
+        private fun logRankingView(scope: RankingScope) {
+            val (viewScope, myRankNull) =
+                when (scope) {
+                    RankingScope.MEMBER -> RankingViewScope.IN_ROOM to (currentState.ranking?.me?.rank == null)
+                    RankingScope.ROOM -> RankingViewScope.CROSS to (currentState.crossRanking?.myChallenge?.rank == null)
+                }
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.rankingView(scope = viewScope, myRankNull = myRankNull)
+            }
+        }
+
+        /**
+         * 피드 페이지 로깅. 첫 페이지는 진입(room_view)에 이미 담기므로 **이어받기부터** 센다 —
+         * 보려는 건 "얼마나 더 내려갔는가"이지 화면을 열었는지가 아니다.
+         * 빈 피드는 봇방장 방 비중을 보려고 따로 남긴다(기능 스펙 리스크 #2).
+         */
+        private fun logThreadPage(
+            isFirstPage: Boolean,
+            pageItemCount: Int,
+        ) {
+            if (isFirstPage) {
+                val ownerType = currentState.room?.ownerType ?: return
+                if (pageItemCount == 0 && !emptyFeedLogged) {
+                    emptyFeedLogged = true
+                    observability.log(Channel.BUSINESS) {
+                        ChallengeEvents.roomEmptyStateView(ownerType.value)
+                    }
+                }
+                return
+            }
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.threadScroll(
+                    // 첫 페이지가 0 번이므로 누적 개수에서 이번 페이지를 뺀 몫이 곧 페이지 번호다.
+                    pageIndex =
+                        ((currentState.threads.size - pageItemCount) / ThreadPolicy.PAGE_SIZE)
+                            .coerceAtLeast(0),
+                    itemCount = pageItemCount,
+                )
+            }
+        }
+
+        private fun ensureRankingScopeLoaded(scope: RankingScope) {
+            val id = currentState.detail?.challengeId ?: return
+            when (scope) {
+                RankingScope.MEMBER -> if (currentState.ranking == null) loadRanking(id)
+                RankingScope.ROOM -> if (currentState.crossRanking == null) loadCrossRanking(next = false)
+            }
+        }
+
+        /**
+         * 피드 조회. [next] 면 커서를 이어 받고, 아니면 첫 페이지부터 받는다.
+         * [retry] 는 실패 후 재시도라 진행 중 가드(threadsError)를 통과시켜야 한다.
+         */
+        private fun loadThreads(
+            next: Boolean,
+            retry: Boolean = false,
+        ) {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            if (currentState.isThreadsLoading || currentState.isThreadsPaging) return
+            // 마지막 페이지까지 받은 뒤의 추가 요청은 무시한다 — 커서 없이 첫 페이지를 다시 받으면 중복된다.
+            if (next && !retry && currentState.threadsCursor == null) return
+            val cursor = if (next) currentState.threadsCursor else null
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ThreadsLoading(first = cursor == null))
+                runCatching { roomRepository.getThreads(id, cursor = cursor) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = cursor == null))
+                        logThreadPage(isFirstPage = cursor == null, pageItemCount = it.items.size)
+                    }.onFailure { error ->
+                        when (error) {
+                            // 커서가 만료·변조됐다. 이어받기를 포기하고 첫 페이지부터 다시 세운다.
+                            is ThreadCursorInvalidException -> {
+                                dispatch(ChallengeDetailReducerEvent.ThreadsLoading(first = true))
+                                runCatching { roomRepository.getThreads(id, cursor = null) }
+                                    .onSuccess {
+                                        dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = true))
+                                    }.onFailure {
+                                        dispatch(
+                                            ChallengeDetailReducerEvent.ThreadsFailed(
+                                                it.message ?: "피드를 불러오지 못했어요",
+                                            ),
+                                        )
+                                    }
+                            }
+
+                            else ->
+                                dispatch(
+                                    ChallengeDetailReducerEvent.ThreadsFailed(error.message ?: "피드를 불러오지 못했어요"),
+                                )
+                        }
+                    }
+            }
+        }
+
+        // 랭킹은 부가 정보라 실패해도 방 렌더를 막지 않는다 — 화면은 값이 없으면 빈 상태를 그린다.
+        private fun loadRanking(challengeId: String) {
+            if (currentState.isRankingLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.RankingLoading(true))
+                runCatching { roomRepository.getRanking(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RankingLoaded(it)) }
+                    .onFailure { dispatch(ChallengeDetailReducerEvent.RankingLoading(false)) }
+            }
+        }
+
+        /** 방 밖 랭킹. 그룹·솔로는 서로 비교하지 않으므로 이 방의 모드로 조회한다. */
+        private fun loadCrossRanking(next: Boolean) {
+            val detail = currentState.detail ?: return
+            if (currentState.isCrossRankingLoading) return
+            val cursor = if (next) currentState.crossRanking?.nextCursor ?: return else null
+            val mode = if (detail.mode.isGroup) RankingMode.GROUP else RankingMode.SOLO
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.CrossRankingLoading(true))
+                runCatching {
+                    roomRepository.getCrossRanking(
+                        mode = mode,
+                        challengeId = detail.challengeId,
+                        cursor = cursor,
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.CrossRankingLoaded(ranking = it, append = cursor != null))
+                }.onFailure { dispatch(ChallengeDetailReducerEvent.CrossRankingLoading(false)) }
+            }
         }
 
         // 멤버 목록은 방 홈 부가 정보 — 실패해도(권한 등) 방 홈 렌더를 막지 않도록 흡수한다.
@@ -442,29 +732,6 @@ class ChallengeDetailViewModel
                     }
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
             }
-        }
-
-        private fun openNotices() {
-            val room = currentState.room ?: return
-            val id = currentState.detail?.challengeId ?: return
-            navigationHelper.navigateByRoute(
-                ChallengeNoticesPage(
-                    challengeId = id,
-                    canManage = room.myRole.canManage,
-                ).toRoute(),
-            )
-        }
-
-        private fun openNotice(noticeId: String) {
-            val room = currentState.room ?: return
-            val id = currentState.detail?.challengeId ?: return
-            navigationHelper.navigateByRoute(
-                ChallengeNoticeDetailPage(
-                    challengeId = id,
-                    noticeId = noticeId,
-                    canManage = room.myRole.canManage,
-                ).toRoute(),
-            )
         }
 
         private fun openRanking() {

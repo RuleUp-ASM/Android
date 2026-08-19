@@ -56,6 +56,56 @@ class ChallengeEventsTest {
     }
 
     @Test
+    fun `방 내부 이벤트 이름을 고정한다`() {
+        val names =
+            listOf(
+                ChallengeEvents.roomView("c1", "MEMBER", "USER"),
+                ChallengeEvents.threadScroll(1, 20),
+                ChallengeEvents.rankingView(RankingViewScope.IN_ROOM, false),
+                ChallengeEvents.roomEmptyStateView("BOT"),
+            ).map { it.name }
+
+        assertEquals(
+            listOf("room_view", "thread_scroll", "ranking_view", "room_empty_state_view"),
+            names,
+        )
+    }
+
+    @Test
+    fun `방 진입은 역할과 방장 유형을 함께 싣는다`() {
+        // 봇방장 방과 유저 방장 방은 화면 구성이 다르다 — 둘을 섞으면 방문율 해석이 안 된다.
+        val event = ChallengeEvents.roomView("c1", "OWNER", "BOT")
+
+        assertEquals(
+            attributes {
+                put("challenge_id", "c1")
+                put("my_role", "OWNER")
+                put("owner_type", "BOT")
+            },
+            event.attrs,
+        )
+    }
+
+    @Test
+    fun `랭킹 조회는 방 안과 방 밖을 다른 scope 로 남긴다`() {
+        // 등재 기준(10회 대 50회)이 달라 my_rank_null 을 한 지표로 묶으면 해석이 안 된다.
+        assertEquals(
+            attributes {
+                put("scope", "IN_ROOM")
+                put("my_rank_null", true)
+            },
+            ChallengeEvents.rankingView(RankingViewScope.IN_ROOM, myRankNull = true).attrs,
+        )
+        assertEquals(
+            attributes {
+                put("scope", "CROSS")
+                put("my_rank_null", false)
+            },
+            ChallengeEvents.rankingView(RankingViewScope.CROSS, myRankNull = false).attrs,
+        )
+    }
+
+    @Test
     fun `Android 담당 생성 이벤트 3종만 여기 있다`() {
         // 나머지(draft_request·challenge_create_result·moderation_result 등)는 BE 담당이라 클라가 보내지 않는다.
         assertEquals("create_start", ChallengeEvents.createStart(CreateEntry.HOME).name)

@@ -23,14 +23,10 @@ data class ThreadItemResponse(
     val streak: Int? = null,
     @SerialName("failDate")
     val failDate: String? = null,
-    @SerialName("title")
-    val title: String? = null,
-    @SerialName("commentCount")
-    val commentCount: Int? = null,
 )
 
-// 앱이 모르는 type 은 null 을 돌려주고 호출부가 아이템 자체를 버린다 — 정체를 모르는 카드를
-// 빈 껍데기로 그리는 것보다 낫다.
+// 앱이 모르는 type(공지 등)은 null 을 돌려주고 호출부가 아이템 자체를 버린다 — 정체를 모르는
+// 카드를 빈 껍데기로 그리는 것보다 낫다.
 internal fun ThreadItemResponse.toDomainOrNull(): ThreadItem? {
     val itemType = ThreadItemType.fromValue(type) ?: return null
     return ThreadItem(
@@ -40,16 +36,12 @@ internal fun ThreadItemResponse.toDomainOrNull(): ThreadItem? {
         at = at.orEmpty(),
         streak = streak,
         failDate = failDate,
-        title = title,
-        commentCount = commentCount ?: 0,
     )
 }
 
 @Serializable
 data class ThreadsResponse(
-    // Phase 1 에서는 항상 null (공지는 Phase 2)
-    @SerialName("pinnedNotice")
-    val pinnedNotice: NoticeSummaryResponse? = null,
+    // 응답의 pinnedNotice 는 읽지 않는다 — 공지가 제품에서 빠졌다.
     @SerialName("items")
     val items: List<ThreadItemResponse>? = null,
     // null 이면 마지막 페이지
@@ -59,7 +51,6 @@ data class ThreadsResponse(
 
 internal fun ThreadsResponse.toDomain(): ChallengeThreads =
     ChallengeThreads(
-        pinnedNotice = pinnedNotice?.toDomain(),
         items = items.orEmpty().mapNotNull { it.toDomainOrNull() },
         nextCursor = nextCursor,
     )

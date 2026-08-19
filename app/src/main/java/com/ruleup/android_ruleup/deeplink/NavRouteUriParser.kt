@@ -37,7 +37,7 @@ private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEN
  * App Link 의 [Uri] 를 [NavRoute] 로 변환한다. 변환에 실패하면 null.
  *
  * - path: `/app` 접두사를 떼고 남은 segment 를 슬래시로 합쳐 등록된 PATH 형식으로 만든다
- *   (앞 슬래시 없음, 예: "challenge/notices/detail").
+ *   (앞 슬래시 없음, 예: "challenge/ranking").
  * - args: query parameter 를 그대로 String 맵으로 옮긴다. 인자를 걸러내지 않는 근거는
  *   [APP_LINK_HOST] 주석 참고 — `/app` 이 매니페스트에 없어 외부에서 이 경로로 들어올 수 없다.
  */
