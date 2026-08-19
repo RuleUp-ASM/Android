@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeDraft
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengePenalties
 import com.ruleup.challenge.domain.entity.ChallengePeriod
@@ -96,13 +97,7 @@ data class CreateChallengeState(
 
         // 명세: 루틴 설명 1~200자. 서버가 같은 범위를 재검증한다.
 
-        // 명세: 주간 횟수 1~7 · 기본 7(매일)
-        const val WEEKLY_COUNT_MIN = 1
-        const val WEEKLY_COUNT_MAX = 7
-
-        // 명세: 정원 1~10,000 · 기본 50 · 그룹 전용
-        const val CAPACITY_MIN = 1
-        const val CAPACITY_MAX = 10_000
+        // 범위는 도메인이 정한다([ChallengeLimits]). 여기 남는 건 화면 기본값뿐이다.
         const val CAPACITY_DEFAULT = 50
 
         val initial =
@@ -126,7 +121,8 @@ data class CreateChallengeState(
                 minTier = null,
                 ownerTierCap = null,
                 period = ChallengePeriod(start = "", end = ""),
-                weeklyCount = 7,
+                // 기본 7회 = 매일
+                weeklyCount = ChallengeLimits.WEEKLY_COUNT_MAX,
                 params = emptyList(),
                 verification = null,
                 penalties = ChallengePenalties(score = false, groupShare = false, watcher = false),

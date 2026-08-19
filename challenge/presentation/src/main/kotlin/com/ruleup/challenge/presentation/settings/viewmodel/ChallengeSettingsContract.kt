@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.settings.viewmodel
 
 import com.ruleup.challenge.domain.entity.ChallengeField
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeSettings
@@ -160,10 +161,6 @@ data class ChallengeSettingsState(
         }
 
     companion object {
-        // 명세: 주간 횟수 1~7 · 기본 7(매일)
-        const val WEEKLY_COUNT_MIN = 1
-        const val WEEKLY_COUNT_MAX = 7
-
         val initial =
             ChallengeSettingsState(
                 challengeId = "",
@@ -181,7 +178,8 @@ data class ChallengeSettingsState(
                 rankingVisible = null,
                 minTier = null,
                 period = ChallengePeriod(start = "", end = ""),
-                weeklyCount = WEEKLY_COUNT_MAX,
+                // 기본 7회 = 매일
+                weeklyCount = ChallengeLimits.WEEKLY_COUNT_MAX,
                 params = emptyList(),
                 verificationType = null,
                 watcherPenalty = false,

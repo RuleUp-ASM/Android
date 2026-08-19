@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.settings.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeNotEditableException
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
@@ -130,8 +131,8 @@ class ChallengeSettingsViewModel
                     state.copy(
                         weeklyCount =
                             event.count.coerceIn(
-                                ChallengeSettingsState.WEEKLY_COUNT_MIN,
-                                ChallengeSettingsState.WEEKLY_COUNT_MAX,
+                                ChallengeLimits.WEEKLY_COUNT_MIN,
+                                ChallengeLimits.WEEKLY_COUNT_MAX,
                             ),
                     )
 
@@ -192,7 +193,10 @@ class ChallengeSettingsViewModel
 
         private fun setCapacity(capacity: Int) {
             // 현재 인원 미만으로는 줄일 수 없다 — 스테퍼 하한을 여기서 잠근다.
-            val clamped = capacity.coerceAtLeast(currentState.capacityFloor).coerceAtMost(CAPACITY_MAX)
+            val clamped =
+                capacity
+                    .coerceAtLeast(currentState.capacityFloor)
+                    .coerceAtMost(ChallengeLimits.CAPACITY_MAX)
             dispatch(ChallengeSettingsReducerEvent.CapacityChanged(clamped))
         }
 
@@ -276,9 +280,5 @@ class ChallengeSettingsViewModel
                         ?.let { config.verification.copy(type = it) },
                 watcherPenalty = watcherPenalty.takeIf { it != config.penalties.watcher },
             )
-        }
-
-        private companion object {
-            const val CAPACITY_MAX = 10_000
         }
     }
