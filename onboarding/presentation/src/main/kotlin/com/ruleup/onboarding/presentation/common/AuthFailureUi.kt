@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.presentation.common
 
+import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 
@@ -66,7 +67,8 @@ fun Throwable.toAuthFailureUi(): AuthFailureUi {
         AuthFailure.BIRTHDATE_UNDERAGE -> AuthFailureUi.Blocking("만 14세 미만은 가입할 수 없어요")
 
         AuthFailure.GENDER_REQUIRED -> AuthFailureUi.Toast("성별을 다시 선택해주세요")
-        AuthFailure.INTEREST_LIMIT_EXCEEDED -> AuthFailureUi.Toast("관심 분야는 최대 6개까지 고를 수 있어요")
+        AuthFailure.INTEREST_LIMIT_EXCEEDED ->
+            AuthFailureUi.Toast("관심 분야는 최대 ${InterestLimits.MAX}개까지 고를 수 있어요")
         AuthFailure.REQUIRED_AGREEMENT_MISSING -> AuthFailureUi.Toast("필수 약관에 동의해주세요")
 
         AuthFailure.IMAGE_TOO_LARGE -> AuthFailureUi.Toast("사진 용량이 너무 커요")

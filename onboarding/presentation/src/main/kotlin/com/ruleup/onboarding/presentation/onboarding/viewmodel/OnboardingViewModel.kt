@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.presentation.onboarding.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.domain.entity.user.AgreementConsents
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Gender
@@ -109,7 +110,8 @@ class OnboardingViewModel
                 is OnboardingReducerEvent.InterestsSelected ->
                     when {
                         event.interest in state.interests -> state.copy(interests = state.interests - event.interest)
-                        state.interests.size < MAX_INTERESTS -> state.copy(interests = state.interests + event.interest)
+                        state.interests.size < InterestLimits.MAX ->
+                            state.copy(interests = state.interests + event.interest)
                         // 6개를 넘기면 서버가 INTEREST_LIMIT_EXCEEDED 로 튕긴다. 아예 담지 않는다.
                         else -> state
                     }
@@ -303,7 +305,6 @@ class OnboardingViewModel
         private companion object {
             const val BIRTH_DATE_LENGTH = 8
             const val NICKNAME_DEBOUNCE_MS = 500L
-            const val MAX_INTERESTS = 6
         }
     }
 
