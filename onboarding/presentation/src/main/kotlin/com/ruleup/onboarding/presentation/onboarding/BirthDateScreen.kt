@@ -40,6 +40,7 @@ import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
+import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingState
 import com.ruleup.ui.helper.LocalNavigationHelper
 import java.time.Instant
 import java.time.LocalDate
@@ -142,7 +143,7 @@ private fun BirthDateSection(
         ) {
             BasicTextField(
                 value = digits,
-                onValueChange = { input -> onChange(input.filter { it.isDigit() }.take(8)) },
+                onValueChange = { input -> onChange(input.filter { it.isDigit() }.take(OnboardingState.BIRTH_DATE_LENGTH)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 textStyle =

@@ -2,6 +2,7 @@ package com.ruleup.profile.presentation.edit.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.entity.user.NicknameValidation
 import com.ruleup.domain.helper.NavigationHelper
@@ -100,7 +101,7 @@ class ProfileEditViewModel
                     dispatch(
                         ProfileEditReducerEvent.Loaded(
                             profile = profile,
-                            maxSelectable = catalog?.maxSelectable ?: 6,
+                            maxSelectable = catalog?.maxSelectable ?: InterestLimits.MAX,
                             nicknameLockedDays = profile.nicknameChangeableAfter.remainingDays(),
                         ),
                     )

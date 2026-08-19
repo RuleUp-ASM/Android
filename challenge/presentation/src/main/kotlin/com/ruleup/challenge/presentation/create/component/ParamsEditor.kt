@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
+import com.ruleup.challenge.domain.entity.clamp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -160,11 +161,6 @@ private fun ParamSpec.label(): String =
     key
         .replace('_', ' ')
         .replaceFirstChar { it.uppercase() }
-
-private fun ParamSpec.clamp(value: Double): Double =
-    value
-        .coerceAtLeast(min ?: Double.NEGATIVE_INFINITY)
-        .coerceAtMost(max ?: Double.POSITIVE_INFINITY)
 
 /** 정수면 소수점을 떼고 보낸다 — 서버가 `"3"` 을 기대하는데 `"3.0"` 을 보내면 형식 검증에 걸린다. */
 private fun Double.format(): String = if (this % 1.0 == 0.0) toLong().toString() else toString()

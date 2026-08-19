@@ -1,5 +1,6 @@
 package com.ruleup.profile.data.dto
 
+import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.domain.entity.category.toCategories
 import com.ruleup.network.dto.requireField
 import com.ruleup.profile.domain.entity.CategoryCatalog
@@ -52,7 +53,7 @@ data class CategoryResponse(
 
 internal fun CategoriesResponse.toDomain(): CategoryCatalog =
     CategoryCatalog(
-        maxSelectable = maxSelectable ?: 6,
+        maxSelectable = maxSelectable ?: InterestLimits.MAX,
         categories = categories?.mapNotNull { it.code }.toCategories(),
     )
 

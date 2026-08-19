@@ -197,8 +197,8 @@ class OnboardingViewModel
 
         /** 8자리가 차기 전에는 검증하지 않는다 — 입력 도중 "잘못된 날짜"를 띄우면 계속 깜빡인다. */
         private fun enterBirthDate(digits: String) {
-            val trimmed = digits.filter { it.isDigit() }.take(BIRTH_DATE_LENGTH)
-            if (trimmed.length < BIRTH_DATE_LENGTH) {
+            val trimmed = digits.filter { it.isDigit() }.take(OnboardingState.BIRTH_DATE_LENGTH)
+            if (trimmed.length < OnboardingState.BIRTH_DATE_LENGTH) {
                 dispatch(OnboardingReducerEvent.BirthDateEntered(trimmed, birthDate = null, error = null))
                 return
             }
@@ -303,7 +303,6 @@ class OnboardingViewModel
         }
 
         private companion object {
-            const val BIRTH_DATE_LENGTH = 8
             const val NICKNAME_DEBOUNCE_MS = 500L
         }
     }

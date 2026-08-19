@@ -1,6 +1,7 @@
 package com.ruleup.profile.presentation.edit.viewmodel
 
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
@@ -45,7 +46,7 @@ data class ProfileEditState(
     val profile: Profile?,
     val nickname: String,
     val selectedCategories: List<Category>,
-    // 카테고리 선택 상한 (마스터 조회, 기본 6)
+    // 카테고리 선택 상한. 서버가 주며, 응답이 비면 [InterestLimits] 가 기본값이다
     val maxSelectable: Int,
     // 닉네임 30일 제한 — 변경 가능일까지 남은 일수 (0 = 변경 가능)
     val nicknameLockedDays: Int,
@@ -63,7 +64,7 @@ data class ProfileEditState(
                 profile = null,
                 nickname = "",
                 selectedCategories = emptyList(),
-                maxSelectable = 6,
+                maxSelectable = InterestLimits.MAX,
                 nicknameLockedDays = 0,
                 isSaving = false,
                 isImageBusy = false,
