@@ -110,6 +110,16 @@ data class ParamSpec(
     val max: Double?,
 )
 
+/**
+ * 이 스펙이 허용하는 값으로 접는다. [min]·[max] 는 **서버가 파라미터마다 다르게** 주므로 상수로
+ * 굳힐 수 없지만, "허용 범위로 접는다"는 판단 자체는 도메인 규칙이라 화면이 아니라 여기 둔다.
+ * 한쪽이 null 이면 그쪽 방향은 열려 있다.
+ */
+fun ParamSpec.clamp(value: Double): Double =
+    value
+        .coerceAtLeast(min ?: Double.NEGATIVE_INFINITY)
+        .coerceAtMost(max ?: Double.POSITIVE_INFINITY)
+
 /** 생성·수정 요청에 실리는 목표값 (명세 `params[]` — `{key, value}` 만). */
 data class ParamEntry(
     val key: String,
