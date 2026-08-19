@@ -58,12 +58,11 @@ enum class JoinNote(
 }
 
 /**
- * 챌린지 **공개 상세** (명세 `GET /challenges/{challengeId}`).
+ * 챌린지 **공개 상세** (명세 `GET /challenges/{challengeId}`). 방에 들어간 뒤의 내부 화면은 `/room` 이 맡는다.
  *
- * 멤버 전용 내부 화면은 `/room` 이 담당한다. 제목·설명·이미지는 심사 대체 규칙이 적용된 값이며,
- * **방장 본인이 조회할 때만** [moderation] 이 동반되고 입력 원본이 내려온다.
- *
- * 없음·비공개 방 비멤버·타인의 솔로 방은 **전부 동일한 404** 다(존재 은닉) — 화면 문구도 구분하지 않는다.
+ * **누가 조회하느냐에 따라 내용이 다르다.** 방장 본인은 자기가 입력한 제목·설명·이미지를 그대로 보고
+ * [moderation] 으로 각 항목의 심사 상태까지 받는다. 남이 보면 심사 중이거나 거부된 항목이 가려진 채
+ * 내려오고 [moderation] 은 null 이다.
  */
 data class ChallengeDetail(
     val challengeId: String,
