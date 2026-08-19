@@ -27,6 +27,7 @@ import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
 import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
@@ -78,7 +79,7 @@ fun InterestContent(
     }
 }
 
-/** "최소 3개 이상" 안내 + 선택 카운트 바. */
+/** 상한 안내 + 선택 카운트 바. 하한은 없다 — 아무것도 안 고르고 넘어갈 수 있다. */
 @Composable
 private fun SelectionCounter(count: Int) {
     Row(
@@ -103,12 +104,16 @@ private fun SelectionCounter(count: Int) {
                 modifier = Modifier.size(16.dp),
             )
             Text(
-                "최소 3개 이상 선택해주세요",
+                "최대 ${InterestLimits.MAX}개까지 고를 수 있어요",
                 color = RuleUpTheme.colors.brand,
                 style = RuleUpTheme.typography.smallMedium,
             )
         }
-        Text("$count / 10", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.smallBold)
+        Text(
+            "$count / ${InterestLimits.MAX}",
+            color = RuleUpTheme.colors.brand,
+            style = RuleUpTheme.typography.smallBold,
+        )
     }
 }
 
