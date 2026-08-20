@@ -30,7 +30,7 @@ private const val TYPE_PERMISSION_REQUIRED = "PERMISSION_REQUIRED"
 @AndroidEntryPoint
 class RuleUpMessagingService : FirebaseMessagingService() {
     @Inject
-    lateinit var pushTokenRegistrar: PushTokenRegistrar
+    lateinit var pushTokenRegister: PushTokenRegister
 
     @Inject
     lateinit var observability: Observability
@@ -39,7 +39,7 @@ class RuleUpMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         serviceScope.launch {
-            runCatching { pushTokenRegistrar.register(token) }
+            runCatching { pushTokenRegister.register(token) }
                 .onFailure { observability.w(TAG, it) { "onNewToken 등록 실패 — 다음 앱 시작이 보정" } }
         }
     }

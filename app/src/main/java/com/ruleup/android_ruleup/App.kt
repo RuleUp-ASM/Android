@@ -6,7 +6,7 @@ import androidx.work.Configuration
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
-import com.ruleup.android_ruleup.push.PushTokenRegistrar
+import com.ruleup.android_ruleup.push.PushTokenRegister
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.data.UserIdentitySync
 import com.ruleup.observability.domain.api.Observability
@@ -49,7 +49,7 @@ class App :
 
     // FCM 토큰 서버 등록(기기 1대 = 토큰 1개 upsert). 앱 시작 + onNewToken 경로가 공유한다.
     @Inject
-    lateinit var pushTokenRegistrar: PushTokenRegistrar
+    lateinit var pushTokenRegister: PushTokenRegister
 
     // 관측 파이프라인. 여기서 주입해야 앱 시작 시점에 그래프가 만들어진다.
     @Inject
@@ -98,9 +98,9 @@ class App :
             }
         }
 
-        // FCM 토큰 등록(로그인 상태 upsert — PushTokenRegistrar 내부에서 판단). 실패는 다음 시작/onNewToken 이 보정.
+        // FCM 토큰 등록(로그인 상태 upsert — PushTokenRegister 내부에서 판단). 실패는 다음 시작/onNewToken 이 보정.
         appScope.launch {
-            pushTokenRegistrar.registerCurrentToken()
+            pushTokenRegister.registerCurrentToken()
         }
 
         // 사용자 식별자를 분석 SDK 에 반영한다. isLoggedIn 이 아니라 userId 를 구독하는 이유는
