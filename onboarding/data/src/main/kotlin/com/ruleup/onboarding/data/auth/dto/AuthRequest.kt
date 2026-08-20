@@ -86,7 +86,7 @@ data class SignUpRequest(
     // YYYY-MM-DD. 만 14세 미만은 서버가 400 으로 막는다.
     @SerialName("birthDate")
     val birthDate: String,
-    // MALE / FEMALE / NON_BINARY. 필수 필드라 UI 건너뛰기 시 NON_BINARY 를 보낸다.
+    // MALE / FEMALE. 필수 입력이라 온보딩에서 고르지 않으면 제출 자체가 되지 않는다(회원 정책 §2).
     @SerialName("gender")
     val gender: String,
     // 6종 전부. 키는 AgreementType.key 와 같다.

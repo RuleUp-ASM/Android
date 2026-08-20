@@ -4,7 +4,6 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.domain.entity.user.AgreementConsents
 import com.ruleup.domain.entity.user.AgreementType
-import com.ruleup.domain.entity.user.Gender
 import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.observability.domain.api.Observability
@@ -123,9 +122,8 @@ class OnboardingViewModel
                         birthDateError = event.error,
                     )
 
-                // 같은 카드를 다시 고르면 해제한다. 미선택은 제출 시 NON_BINARY 로 나간다.
-                is OnboardingReducerEvent.GenderSelected ->
-                    state.copy(gender = if (state.gender == event.gender) null else event.gender)
+                // 필수 입력이라 해제는 없다 — 재탭은 같은 선택을 유지한다.
+                is OnboardingReducerEvent.GenderSelected -> state.copy(gender = event.gender)
 
                 is OnboardingReducerEvent.AgreementToggled ->
                     state.copy(
@@ -240,6 +238,12 @@ class OnboardingViewModel
                 emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Toast("생년월일을 입력해주세요")))
                 return
             }
+            // 성별은 필수(회원 정책 §2). 화면이 이미 막지만, 상태 복원 등 화면을 안 거치는 경로도 받친다.
+            val gender = state.gender
+            if (gender == null) {
+                emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Toast("성별을 선택해주세요")))
+                return
+            }
             if (!state.requiredAgreementsSatisfied) {
                 emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Toast("필수 약관에 동의해주세요")))
                 return
@@ -257,8 +261,7 @@ class OnboardingViewModel
                             nickname = state.nickname,
                             interestCategories = state.interests,
                             birthDate = birthDate,
-                            // 건너뛴 경우에도 필드는 필수라 논바이너리로 저장된다.
-                            gender = state.gender ?: Gender.NON_BINARY,
+                            gender = gender,
                             agreements = AgreementConsents.of(state.agreements, versions),
                             localImageUri = state.profileImageUri,
                         ),
@@ -269,7 +272,8 @@ class OnboardingViewModel
                     observability.log(Channel.BUSINESS) {
                         OnboardingEvents.signupComplete(
                             interestCount = state.interests.size,
-                            hasGender = state.gender != null,
+                            // 성별이 필수가 되면서 항상 true 다. 이벤트 스키마 정리는 분석 쪽과 합의 후.
+                            hasGender = true,
                             optionalAgreements = state.agreements.count { !it.required },
                             durationMs = signupTimer.consumeElapsedMillis(),
                         )

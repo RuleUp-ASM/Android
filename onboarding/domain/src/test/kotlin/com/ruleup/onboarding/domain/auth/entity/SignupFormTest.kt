@@ -32,6 +32,6 @@ private fun form(interests: List<Category>) =
         nickname = "nick",
         interestCategories = interests,
         birthDate = LocalDate.of(2000, 5, 27),
-        gender = Gender.NON_BINARY,
+        gender = Gender.FEMALE,
         agreements = AgreementConsents.of(AgreementType.REQUIRED.toSet(), TermsVersions(emptyMap())),
     )

@@ -122,7 +122,7 @@ fun OnboardingBirthScreen(modifier: Modifier = Modifier) {
     )
 }
 
-/** 4/6 · 성별. 안 고르고 넘어가면 논바이너리로 저장된다. */
+/** 4/6 · 성별. 필수이며 고르기 전에는 다음으로 넘어갈 수 없다. */
 @Composable
 fun OnboardingGenderScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()

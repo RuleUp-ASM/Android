@@ -1,17 +1,16 @@
 package com.ruleup.domain.entity.user
 
 /**
- * 성별. **API 필수 필드**다.
+ * 성별. **필수 입력이며 남/여 두 가지다** (회원 정책 §2 · 2026-08-20 확정).
  *
- * UI 는 건너뛰기를 허용하되, 건너뛴 경우 클라가 [NON_BINARY] 를 보낸다(2026-08-03 확정). 필드를
- * 빼면 서버가 `GENDER_REQUIRED` 로 400 을 준다.
+ * 한때 UI 건너뛰기를 허용하고 그 경우 `NON_BINARY` 를 보냈는데, 정책은 성별을 필수로 정의한다.
+ * 건너뛰기 경로와 함께 값도 걷어냈다 — 고르지 않으면 다음 단계로 가지 못한다.
  */
 enum class Gender(
     val value: String,
 ) {
     MALE("MALE"),
     FEMALE("FEMALE"),
-    NON_BINARY("NON_BINARY"),
     ;
 
     companion object {

@@ -120,7 +120,7 @@ class SignupUseCaseTest {
             nickname = "nick",
             interestCategories = emptyList(),
             birthDate = LocalDate.of(2000, 5, 27),
-            gender = Gender.NON_BINARY,
+            gender = Gender.FEMALE,
             agreements = AgreementConsents.of(AgreementType.REQUIRED.toSet(), TermsVersions(emptyMap())),
             localImageUri = localImageUri,
         )
