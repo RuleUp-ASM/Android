@@ -31,9 +31,8 @@ import com.ruleup.ui.helper.LocalNavigationHelper
 /**
  * 04 · 성별.
  *
- * 화면에서는 건너뛸 수 있지만 **API 필드는 필수**다. 안 고르고 넘어가면 논바이너리로 저장된다 —
- * "안 보냄"이라는 상태가 없어서, 별도의 "응답 안 함" 항목을 두면 같은 결과를 두 갈래로 표현하게
- * 된다. 그래서 카드 해제 상태가 곧 건너뛰기다.
+ * **필수 입력이다** (회원 정책 §2). 고르기 전까지 다음 버튼을 잠근다 — 건너뛰기를 열어 두면
+ * "안 고름"을 저장할 값이 없어 결국 없는 성별을 지어내게 된다.
  */
 @Composable
 fun GenderContent(
@@ -44,9 +43,9 @@ fun GenderContent(
     val nav = LocalNavigationHelper.current
     OnboardingScaffold(
         step = OnboardingStep.GENDER,
-        skipped = gender == null,
         buttonText = "다음",
         modifier = modifier,
+        nextEnabled = gender != null,
         onNext = { nav.navigateTo(OnboardingPhotoPage) },
         onBack = { nav.navigateToBack() },
     ) {
@@ -78,7 +77,7 @@ fun GenderContent(
         InfoBox(
             background = RuleUpTheme.colors.brandSoft,
             emoji = "ℹ️",
-            text = "고르지 않고 넘어가도 괜찮아요. 다른 사용자에게 공개되지 않아요",
+            text = "다른 사용자에게 공개되지 않아요",
             textColor = RuleUpTheme.colors.brandStrong,
         )
     }

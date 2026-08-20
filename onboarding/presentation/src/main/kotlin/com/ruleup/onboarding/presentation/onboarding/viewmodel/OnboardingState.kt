@@ -10,8 +10,8 @@ import java.time.LocalDate
  * 프로필 설정 플로우의 누적 상태. 페이지별 화면이 같은 ViewModel 을 공유하므로 step 없이 입력값만
  * 쌓는다.
  *
- * @property gender null 은 "아직 안 골랐다"이며 제출 시 [Gender.NON_BINARY] 로 보낸다 — 서버가
- *   성별을 필수 필드로 받기 때문이다. 미전송이 아니라 논바이너리 저장이라는 게 계약의 핵심이다.
+ * @property gender null 은 "아직 안 골랐다"이며, 필수 입력이라 고르기 전에는 다음 단계로
+ *   넘어가지 못한다 (회원 정책 §2).
  * @property agreements 체크된 항목만 담는다. 전송 시 6종 전체를 만들어 미체크는 `agreed=false` 로
  *   기록한다 — 선택 약관도 "동의 안 함"을 남겨야 약관 개정 시 재동의 판정이 된다.
  */
