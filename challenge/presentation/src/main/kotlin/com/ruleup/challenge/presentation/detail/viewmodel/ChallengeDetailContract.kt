@@ -82,8 +82,12 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
-    /** (방 홈, 방장·관리자) 확인 대기함으로 이동. */
-    data object OpenPendingReviews : ChallengeDetailIntent
+    /**
+     * (방 정보) 오늘 실패 건에 이의를 낸다. 사유 10자 이상이면 즉시 인용된다 — 판정 단계가 없다.
+     */
+    data class SubmitAppeal(
+        val reason: String,
+    ) : ChallengeDetailIntent
 
     /** (방 홈, 방장 전용) 챌린지 수정 화면으로 이동. */
     data object OpenSettings : ChallengeDetailIntent
@@ -216,6 +220,8 @@ data class ChallengeDetailState(
     val todayResult: TodayResult? = null,
     // 방장 클레임 요청 중(버튼 중복 탭 방지). 선착순이라 두 번 눌러도 한 번만 나간다.
     val isClaimingOwner: Boolean = false,
+    // 이의 제출 중(중복 탭 방지).
+    val isSubmittingAppeal: Boolean = false,
 ) : UiState {
     /**
      * 참여 버튼을 아예 숨길지. 비공개 방은 초대 링크가 유일한 입장 경로라 버튼을 노출하지 않는다 —
@@ -398,5 +404,9 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
 
     data class ClaimingOwner(
         val claiming: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class SubmittingAppeal(
+        val submitting: Boolean,
     ) : ChallengeDetailReducerEvent
 }

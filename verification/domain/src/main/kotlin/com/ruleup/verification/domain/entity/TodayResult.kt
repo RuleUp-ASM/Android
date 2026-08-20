@@ -1,10 +1,5 @@
 package com.ruleup.verification.domain.entity
 
-/** 이의 제기 한도 (명세 `appeal.remainingThisMonth` 0~3). 남은 횟수 안내 문구의 분모다. */
-object AppealPolicy {
-    const val MONTHLY_LIMIT = 3
-}
-
 /**
  * 오늘 인증 상태 (명세: GET /challenges/{id}/verifications/today `status`).
  *
@@ -51,11 +46,12 @@ data class UnacknowledgedResult(
 
 /**
  * 이의 제기 가능 여부 (명세 `appeal`). `FAILED` 일 때만 내려온다.
- * [eligibleUntil] 은 실패 확정 +7일이다.
+ *
+ * [eligibleUntil] 은 **실패 확정 후 1일**이다(인증 정책 §5.2 · 챌린지 정책 §7.2). 횟수 한도는
+ * 없어졌으므로 "몇 회 남음"을 세지 않는다 — 남용은 이상탐지가 잡는다.
  */
 data class AppealChance(
     val eligibleUntil: String?,
-    val remainingThisMonth: Int,
     val eligible: Boolean,
 )
 
@@ -68,6 +64,8 @@ data class AppealChance(
 data class TodayResult(
     // 오늘 (KST)
     val date: String,
+    // 이의 제기 대상 인증 건 ID. 이 값이 없으면 이의를 접수할 경로가 없어 진입점을 열지 않는다.
+    val verificationId: String?,
     val status: TodayResultStatus?,
     // 인증 창 표시 문구 — 자동은 시간대("06:00-07:00"), 수동은 "자정 마감"
     val window: String?,

@@ -417,6 +417,8 @@ private fun RoomDetailTabs(
                     onRegisterAnchor =
                         { onIntent(ChallengeDetailIntent.RegisterAnchor) }
                             .takeIf { state.setup?.requiresAnchors == true },
+                    onSubmitAppeal = { reason -> onIntent(ChallengeDetailIntent.SubmitAppeal(reason)) },
+                    isSubmittingAppeal = state.isSubmittingAppeal,
                     extraSections = {
                         val myWatchers = state.watchers
                         if (myWatchers != null) {
@@ -484,10 +486,8 @@ private fun roomMenuItems(
     onIntent: (ChallengeDetailIntent) -> Unit,
 ): List<RoomMenuItem> =
     buildList {
-        // 확인 대기함(폴백 인증·이의)은 방장과 공동 관리자가 함께 처리한다.
-        if (myRole.canManage) {
-            add(RoomMenuItem("확인 대기함") { onIntent(ChallengeDetailIntent.OpenPendingReviews) })
-        }
+        // 확인 대기함은 없앴다 — 이의에 판정 단계가 없어져 방장이 처리할 항목 자체가 사라졌다
+        // (챌린지 정책 §7.1 "방장은 이의를 판정하지 않는다").
         // 설정 변경은 방장 전용이다 — 공동 관리자는 규칙을 바꿀 수 없다.
         if (myRole.isOwner) {
             add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })

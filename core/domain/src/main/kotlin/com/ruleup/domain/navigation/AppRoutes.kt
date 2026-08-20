@@ -50,5 +50,4 @@ object AppRoutes {
     const val VERIFICATION_DETAIL = "verification/detail" // 진입점 (홈 카드 → 검증 결과/실패)
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)
     const val VERIFICATION_MANUAL = "verification/manual" // 진입점 (수동 인증 제출, VF-04)
-    const val VERIFICATION_PENDING_REVIEWS = "verification/pending-reviews" // 진입점 (방장·관리자 확인 대기함)
 }

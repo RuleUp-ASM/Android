@@ -29,11 +29,9 @@ data class UnacknowledgedResultResponse(
 
 @Serializable
 data class AppealChanceResponse(
-    // 실패 확정 +7일
+    // 실패 확정 후 1일 (인증 정책 §5.2)
     @SerialName("eligibleUntil")
     val eligibleUntil: String? = null,
-    @SerialName("remainingThisMonth")
-    val remainingThisMonth: Int? = null,
     @SerialName("eligible")
     val eligible: Boolean? = null,
 )
@@ -42,6 +40,10 @@ data class AppealChanceResponse(
 data class TodayResultResponse(
     @SerialName("date")
     val date: String? = null,
+    // 이의 접수 대상 인증 건 ID. 명세에 아직 없어 서버가 안 줄 수 있고, 그때는
+    // unacknowledgedResult 쪽 ID 로 폴백한다(BE 에 최상위 노출 요청 중).
+    @SerialName("verificationId")
+    val verificationId: String? = null,
     @SerialName("status")
     val status: String? = null,
     @SerialName("window")
@@ -62,6 +64,7 @@ data class TodayResultResponse(
 internal fun TodayResultResponse.toDomain(): TodayResult =
     TodayResult(
         date = date.orEmpty(),
+        verificationId = verificationId ?: unacknowledgedResult?.verificationId,
         // 미인식 상태는 null — 모르는 값을 성공·실패로 접지 않는다.
         status = TodayResultStatus.fromValue(status),
         window = window,
@@ -80,9 +83,8 @@ internal fun TodayResultResponse.toDomain(): TodayResult =
             appeal?.let {
                 AppealChance(
                     eligibleUntil = it.eligibleUntil,
-                    remainingThisMonth = it.remainingThisMonth ?: 0,
-                    // eligible 이 없으면 남은 횟수로 판단한다 — 둘은 같은 사실의 다른 표현이다.
-                    eligible = it.eligible ?: ((it.remainingThisMonth ?: 0) > 0),
+                    // 한도가 없어졌으므로 eligible 이 없으면 기한만 남은 조건이다 — 낼 수 있다고 본다.
+                    eligible = it.eligible ?: true,
                 )
             },
     )

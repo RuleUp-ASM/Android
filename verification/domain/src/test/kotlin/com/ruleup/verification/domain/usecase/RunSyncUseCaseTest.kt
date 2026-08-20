@@ -256,22 +256,11 @@ class RunSyncUseCaseTest {
             apps: ScreenAppSet,
         ): ScreenAppsUpdate = error("unused")
 
-        override suspend fun submitObjection(
-            challengeId: String,
-            type: com.ruleup.verification.domain.entity.ObjectionType,
-            targetDate: String,
-            content: String,
+        override suspend fun submitAppeal(
+            verificationId: String,
+            reason: String,
             imageUrl: String?,
         ) = error("unused")
-
-        override suspend fun decideObjection(
-            challengeId: String,
-            objectionId: String,
-            decision: com.ruleup.verification.domain.entity.ObjectionDecision,
-            reason: String?,
-        ) = error("unused")
-
-        override suspend fun getPendingReviews(challengeId: String) = error("unused")
 
         override suspend fun submitManual(
             challengeId: String,

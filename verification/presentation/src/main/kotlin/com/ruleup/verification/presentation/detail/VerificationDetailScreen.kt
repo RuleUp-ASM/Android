@@ -8,20 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -69,9 +63,6 @@ fun VerificationDetailScreen(
     VerificationDetailContent(
         state = state,
         onCtaClick = { viewModel.onIntent(VerificationDetailIntent.CtaClicked) },
-        onSubmitObjection = { targetDate, content ->
-            viewModel.onIntent(VerificationDetailIntent.SubmitObjection(targetDate = targetDate, content = content))
-        },
         modifier = modifier,
     )
 }
@@ -80,12 +71,8 @@ fun VerificationDetailScreen(
 private fun VerificationDetailContent(
     state: VerificationDetailState,
     onCtaClick: () -> Unit,
-    onSubmitObjection: (targetDate: String, content: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 이의 제기 다이얼로그 대상 실패 일자(열려 있으면 non-null).
-    var objectionTargetDate by remember { mutableStateOf<String?>(null) }
-
     Column(
         modifier =
             modifier
@@ -101,67 +88,15 @@ private fun VerificationDetailContent(
                 DetailBody(
                     detail = state.detail,
                     onCtaClick = onCtaClick,
-                    onObjectionClick = { targetDate -> objectionTargetDate = targetDate },
                 )
         }
     }
-
-    objectionTargetDate?.let { targetDate ->
-        ObjectionDialog(
-            targetDate = targetDate,
-            submitting = state.isSubmittingObjection,
-            onSubmit = { content ->
-                objectionTargetDate = null
-                onSubmitObjection(targetDate, content)
-            },
-            onDismiss = { objectionTargetDate = null },
-        )
-    }
-}
-
-@Composable
-private fun ObjectionDialog(
-    targetDate: String,
-    submitting: Boolean,
-    onSubmit: (content: String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var content by remember { mutableStateOf("") }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("이의 제기", fontWeight = FontWeight.Bold) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("$targetDate 인증 실패에 대해 재검토를 요청해요.")
-                OutlinedTextField(
-                    value = content,
-                    onValueChange = { content = it },
-                    label = { Text("사유") },
-                    placeholder = { Text("어떤 점이 잘못됐는지 알려주세요") },
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSubmit(content.trim()) },
-                enabled = !submitting && content.isNotBlank(),
-            ) {
-                Text("제출")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("취소") }
-        },
-    )
 }
 
 @Composable
 private fun ColumnScope.DetailBody(
     detail: VerificationDetail,
     onCtaClick: () -> Unit,
-    onObjectionClick: (targetDate: String) -> Unit,
 ) {
     Text(detail.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
     Text("${overallStatusLabel(detail.overallStatus)} · 진행률 ${detail.progressRate.toInt()}%")
@@ -192,16 +127,8 @@ private fun ColumnScope.DetailBody(
                     }
                 }
             }
-            // 이의 제기: 실패 일자를 특정할 수 있을 때만 노출(가장 최근 실패 로그 기준).
-            val failedDate = detail.dailyLogs.lastOrNull { it.status.isFailure }?.date
-            if (failedDate != null) {
-                OutlinedButton(
-                    onClick = { onObjectionClick(failedDate) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("이의 제기 · 재검토 요청")
-                }
-            }
+            // 이의 제기는 오늘 인증 카드(방 정보 탭)에서 받는다 — 새 계약이 verificationId 로
+            // 키가 잡히는데 이 화면의 구 계약(dailyLogs)에는 그 ID 가 없다.
         }
 
         TodayStatus.PENDING -> Text("아직 진행 중이에요. 창이 닫히면 확정돼요.")
