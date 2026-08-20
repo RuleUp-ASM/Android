@@ -3,7 +3,7 @@ package com.ruleup.verification.data.signal.geofence
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.ruleup.verification.domain.repository.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegister
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +17,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
     @Inject
-    lateinit var geofenceRegistrar: GeofenceRegistrar
+    lateinit var geofenceRegister: GeofenceRegister
 
     override fun onReceive(
         context: Context,
@@ -29,7 +29,7 @@ class BootReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                geofenceRegistrar.reconcilePersisted()
+                geofenceRegister.reconcilePersisted()
             } catch (t: Throwable) {
                 // 재등록 실패는 다음 콜드스타트 reconcile 이 보정한다.
             } finally {

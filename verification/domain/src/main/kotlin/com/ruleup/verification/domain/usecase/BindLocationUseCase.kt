@@ -3,7 +3,7 @@ package com.ruleup.verification.domain.usecase
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.entity.LocationPin
-import com.ruleup.verification.domain.repository.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegister
 import javax.inject.Inject
 
 /**
@@ -12,14 +12,14 @@ import javax.inject.Inject
  * `(userId, challengeId)` 는 멤버 자연키(`uq_member(challenge_id, user_id)`, 재참여는 status 갱신)라
  * 멤버 단위 귀속이 보장되고, 같은 기기에서 계정을 전환해도 로컬 키가 섞이지 않는다.
  * userId 가 아직 저장되지 않은 세션(저장 도입 전 자동로그인)은 기존 관례대로 challengeId 접두로 폴백한다.
- * 변경 시 재등록도 [GeofenceRegistrar.bind] 가 멱등 처리한다(§5.4.3).
+ * 변경 시 재등록도 [GeofenceRegister.bind] 가 멱등 처리한다(§5.4.3).
  *
  * [radiusM] 은 서버가 정한 인증 반경이다 — 참여자가 고르는 값이 아니다(인증 정책 §1.1).
  */
 class BindLocationUseCase
     @Inject
     constructor(
-        private val geofenceRegistrar: GeofenceRegistrar,
+        private val geofenceRegister: GeofenceRegister,
         private val tokenRepository: TokenRepository,
     ) {
         suspend operator fun invoke(
@@ -43,7 +43,7 @@ class BindLocationUseCase
                         dwellMinutes = dwellMinutes,
                     )
                 }
-            geofenceRegistrar.bind(requestIdPrefix = memberKey, targets = targets)
+            geofenceRegister.bind(requestIdPrefix = memberKey, targets = targets)
         }
 
         companion object {

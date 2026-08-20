@@ -232,8 +232,6 @@ interface ChallengeRepository {
 | `Scheduler` | 나중에 실행되도록 예약한다 | `SyncScheduler` |
 | `Notifier` | 앱 밖으로 알린다 | `SetupNotifier` |
 
-현재 코드의 `GeofenceRegistrar` 는 이 표에 맞지 않는 옛 이름이다 — 새로 만드는 것은 `Register` 로 쓴다.
-
 뒤의 다섯은 **driven adapter 포트**다 — domain 이 Android 를 모른 채 OS 능력을 쓰기 위한 구멍이고,
 KDoc 에 그 사실을 적어 둔다(`OS 신호 수집 포트(driven adapter, 명세 §1·§2)`).
 
