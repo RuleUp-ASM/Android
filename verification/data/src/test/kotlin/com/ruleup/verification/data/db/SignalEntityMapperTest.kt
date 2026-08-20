@@ -34,7 +34,25 @@ class SignalEntityMapperTest {
         assertEquals(123_456L, event.at)
         assertEquals(37.49, event.lat)
         // isMock 은 처음부터 보존·전송(명세 §7).
-        assertTrue(event.isMock)
+        assertTrue(event.isMock == true)
+    }
+
+    @Test
+    fun `위치 없는 전이는 좌표를 지어내지 않는다`() {
+        val entity =
+            GeofenceTransitionEntity(
+                requestId = "member-1",
+                transition = "ENTER",
+                occurredAt = 123_456L,
+            )
+
+        val event = entity.toDomain()
+
+        // (0, 0) 으로 접으면 서버가 기니만 체류로 읽는다 — 모르는 값은 null 로 올린다.
+        assertEquals(null, event.lat)
+        assertEquals(null, event.lng)
+        assertEquals(null, event.accuracy)
+        assertEquals(null, event.isMock)
     }
 
     @Test

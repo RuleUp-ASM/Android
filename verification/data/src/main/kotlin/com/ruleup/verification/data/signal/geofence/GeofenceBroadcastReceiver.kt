@@ -29,12 +29,14 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         val fences = event.triggeringGeofences ?: return
         if (fences.isEmpty()) return
 
+        // 위치가 없는 전이도 신호로서 유효하다(어느 펜스를 언제 넘었는지). 다만 좌표·정확도·mock 여부는
+        // 지어내지 않고 null 로 둔다 — (0, 0)은 기니만의 실제 좌표라 결측이 아니라 알리바이가 된다.
         val location = event.triggeringLocation
         val occurredAt = location?.time ?: System.currentTimeMillis()
-        val lat = location?.latitude ?: 0.0
-        val lng = location?.longitude ?: 0.0
-        val accuracy = location?.accuracy ?: 0f
-        val isMock = location?.isMockCompat() ?: false
+        val lat = location?.latitude
+        val lng = location?.longitude
+        val accuracy = location?.accuracy
+        val isMock = location?.isMockCompat()
 
         val dao = verificationDatabase(context).geofenceTransitionDao()
         val pending = goAsync()

@@ -6,6 +6,9 @@ import androidx.room.PrimaryKey
 /**
  * 지오펜스 전이 버퍼 (명세 §2.1). 리시버가 앱이 죽어도 보존되도록 즉시 적재하고 sync 가 드레인한다.
  * [collectedAt] 은 드레인 시 부여되는 멱등 배치 태그(null=미드레인). [occurredAt] 은 epoch millis.
+ *
+ * 좌표·정확도·mock 여부는 **없을 수 있다** — OS 가 전이만 주고 위치를 안 실어 보내는 경우가 있다.
+ * 결측을 기본값으로 채우면 (0, 0)·정확도 0m·"mock 아님"이라는 없던 사실이 만들어진다.
  */
 @Entity(tableName = "geofence_transition")
 data class GeofenceTransitionEntity(
@@ -14,10 +17,10 @@ data class GeofenceTransitionEntity(
     val requestId: String,
     // ENTER / EXIT / DWELL
     val transition: String,
-    val lat: Double,
-    val lng: Double,
-    val accuracy: Float,
-    val isMock: Boolean,
+    val lat: Double? = null,
+    val lng: Double? = null,
+    val accuracy: Float? = null,
+    val isMock: Boolean? = null,
     val occurredAt: Long,
     val synced: Boolean = false,
     val collectedAt: String? = null,
