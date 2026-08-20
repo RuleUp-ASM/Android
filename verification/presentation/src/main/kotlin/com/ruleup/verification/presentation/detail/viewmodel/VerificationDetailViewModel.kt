@@ -70,7 +70,7 @@ class VerificationDetailViewModel
                         navigationHelper.navigateTo(
                             VerificationLocationPage(
                                 challengeId = it,
-                                defaultRadiusM = SetupAnchors.MIN_RADIUS_M,
+                                defaultRadiusM = SetupAnchors.DEFAULT_RADIUS_M,
                                 dwellMinutes = 60,
                             ),
                         )

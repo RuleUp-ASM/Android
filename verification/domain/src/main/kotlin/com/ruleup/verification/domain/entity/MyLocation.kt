@@ -12,4 +12,6 @@ data class MyLocation(
     val anchors: List<LocationPin>,
     // 앵커 마지막 적용 시각(ISO-8601). 적용 이력 없으면 null
     val appliedFrom: String?,
+    // 서버 설정 인증 반경(m) — 지도 원 표시·지오펜스 등록이 이 값을 쓴다
+    val serverRadiusM: Float? = null,
 )
