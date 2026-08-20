@@ -6,13 +6,13 @@ import androidx.work.Configuration
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
-import com.ruleup.android_ruleup.push.PushTokenRegistrar
+import com.ruleup.android_ruleup.push.PushTokenRegister
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.data.UserIdentitySync
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.api.w
-import com.ruleup.verification.domain.repository.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegister
 import com.ruleup.verification.domain.repository.SyncScheduler
 import com.ruleup.verification.domain.usecase.SubmitDeviceIntroUseCase
 import dagger.hilt.android.HiltAndroidApp
@@ -45,11 +45,11 @@ class App :
 
     // 콜드스타트 지오펜스 reconcile(명세 §2.3): 로컬 보존 목표를 OS 에 재등록해 등록 실패·휘발을 보정한다.
     @Inject
-    lateinit var geofenceRegistrar: GeofenceRegistrar
+    lateinit var geofenceRegister: GeofenceRegister
 
     // FCM 토큰 서버 등록(기기 1대 = 토큰 1개 upsert). 앱 시작 + onNewToken 경로가 공유한다.
     @Inject
-    lateinit var pushTokenRegistrar: PushTokenRegistrar
+    lateinit var pushTokenRegister: PushTokenRegister
 
     // 관측 파이프라인. 여기서 주입해야 앱 시작 시점에 그래프가 만들어진다.
     @Inject
@@ -86,7 +86,7 @@ class App :
 
         // 콜드스타트 지오펜스 reconcile — OS 등록 실패/휘발분을 앱 시작마다 재등록한다. 실패는 다음 시작이 보정.
         appScope.launch {
-            runCatching { geofenceRegistrar.reconcilePersisted() }
+            runCatching { geofenceRegister.reconcilePersisted() }
                 .onFailure { observability.w("GeofenceReconcile", it) { "콜드스타트 지오펜스 reconcile 실패" } }
         }
 
@@ -98,9 +98,9 @@ class App :
             }
         }
 
-        // FCM 토큰 등록(로그인 상태 upsert — PushTokenRegistrar 내부에서 판단). 실패는 다음 시작/onNewToken 이 보정.
+        // FCM 토큰 등록(로그인 상태 upsert — PushTokenRegister 내부에서 판단). 실패는 다음 시작/onNewToken 이 보정.
         appScope.launch {
-            pushTokenRegistrar.registerCurrentToken()
+            pushTokenRegister.registerCurrentToken()
         }
 
         // 사용자 식별자를 분석 SDK 에 반영한다. isLoggedIn 이 아니라 userId 를 구독하는 이유는

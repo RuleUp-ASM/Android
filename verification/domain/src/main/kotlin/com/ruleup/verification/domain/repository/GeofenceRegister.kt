@@ -7,7 +7,7 @@ import com.ruleup.verification.domain.entity.GeofenceTarget
  * 지오펜스는 재부팅·위치설정 토글·앱 데이터 삭제 시 휘발되므로(명세 §2.3) [reconcile] 을
  * BOOT_COMPLETED·콜드스타트·참여/탈퇴 트리거에서 호출한다.
  */
-interface GeofenceRegistrar {
+interface GeofenceRegister {
     /**
      * 현재 OS 등록 펜스와 활성 [targets] 를 비교해 차집합만 add/remove 한다.
      * 최대 100개 제한(TOO_MANY_GEOFENCES) 초과 시 마감 임박 우선으로 등록한다(명세 §2.1).

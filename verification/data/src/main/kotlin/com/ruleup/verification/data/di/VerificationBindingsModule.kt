@@ -5,7 +5,7 @@ import com.ruleup.verification.data.repository.SignalRepositoryImpl
 import com.ruleup.verification.data.repository.UsageTargetStoreImpl
 import com.ruleup.verification.data.repository.VerificationRepositoryImpl
 import com.ruleup.verification.data.signal.common.SignalCollectorImpl
-import com.ruleup.verification.data.signal.geofence.GeofenceRegistrarImpl
+import com.ruleup.verification.data.signal.geofence.GeofenceRegisterImpl
 import com.ruleup.verification.data.sync.DeviceIntroProviderImpl
 import com.ruleup.verification.data.sync.EnvelopeMetadataProviderImpl
 import com.ruleup.verification.data.sync.ProgressCacheStoreImpl
@@ -14,7 +14,7 @@ import com.ruleup.verification.data.sync.SyncScopeProviderImpl
 import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 import com.ruleup.verification.domain.repository.DeviceIntroProvider
 import com.ruleup.verification.domain.repository.EnvelopeMetadataProvider
-import com.ruleup.verification.domain.repository.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegister
 import com.ruleup.verification.domain.repository.HealthTargetStore
 import com.ruleup.verification.domain.repository.ProgressCacheStore
 import com.ruleup.verification.domain.repository.SignalCollector
@@ -47,7 +47,7 @@ abstract class VerificationBindingsModule {
 
     @Binds
     @Singleton
-    abstract fun bindGeofenceRegistrar(impl: GeofenceRegistrarImpl): GeofenceRegistrar
+    abstract fun bindGeofenceRegister(impl: GeofenceRegisterImpl): GeofenceRegister
 
     @Binds
     @Singleton

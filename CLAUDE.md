@@ -71,10 +71,11 @@ JDK 21. Gradle wrapper 사용(`./gradlew`). CI(`.github/workflows/`)는 `assembl
 - `domain/<Name>Repository.kt`: Repository **인터페이스**를 domain에 두고, 구현은 `data` 모듈에 둔다.
 
 ### UseCase를 만드는 기준
-UseCase는 **repository를 둘 이상 엮거나, repository 없이 성립하는 도메인 규칙·검증·정규화가 있을 때만** 만든다.
+UseCase는 **여러 협력자를 엮는 조립**을 위한 것이다. repository·포트를 둘 이상 엮거나, 호출에 부수효과가 따라붙을 때만 만든다.
 - 단일 repository로의 위임(인자를 그대로 넘기거나 기본값만 지정하는 경우 포함)은 UseCase를 만들지 않는다. ViewModel이 domain의 Repository 인터페이스를 직접 주입받아 호출한다.
+- **협력자 없이 성립하는 비즈니스 규칙·검증·정규화는 entity 소관이다.** 규칙이 값에 붙어 있어야 그 값을 만드는 모든 경로에 규칙이 걸린다 — UseCase로 빼면 그것을 거치지 않은 경로가 규칙을 통과해 버린다.
 - 인자 기본값은 Repository 인터페이스 시그니처에 둔다. UseCase가 같은 기본값을 다시 선언하지 않는다.
-- 나중에 규칙이 생기면 그때 UseCase로 올린다. 미리 만들어 두지 않는다.
+- 나중에 협력자가 늘면 그때 UseCase로 올린다. 미리 만들어 두지 않는다.
 
 ### data 레이어 구성
 `data/api/<Feature>Api.kt`(Retrofit 인터페이스) · `data/dto/`(`@Serializable` 요청/응답) · `data/repository/<Name>RepositoryImpl.kt`(DTO ↔ entity 매핑 포함) · `data/di/`(`<Feature>NetworkModule` 은 Retrofit api 를 `@Provides`, `<Feature>RepositoryModule` 은 구현체를 `@Binds`).

@@ -21,7 +21,7 @@ private const val TAG = "[Push]"
  * 다음 앱 시작 또는 토큰 갱신이 재등록을 보정한다. 죽은 토큰 정리는 서버가 담당한다.
  */
 @Singleton
-class PushTokenRegistrar
+class PushTokenRegister
     @Inject
     constructor(
         private val pushApi: PushApi,

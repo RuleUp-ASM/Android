@@ -12,7 +12,7 @@ import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.data.signal.common.GapRecorder
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTarget
-import com.ruleup.verification.domain.repository.GeofenceRegistrar
+import com.ruleup.verification.domain.repository.GeofenceRegister
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
@@ -25,14 +25,14 @@ import javax.inject.Inject
  * 권한 lint(MissingPermission)를 클래스 단위로 억제한다.
  */
 @SuppressLint("MissingPermission")
-class GeofenceRegistrarImpl
+class GeofenceRegisterImpl
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
         private val geofenceTargetDao: GeofenceTargetDao,
         private val gapRecorder: GapRecorder,
         private val settingsStore: VerificationSettingsStore,
-    ) : GeofenceRegistrar {
+    ) : GeofenceRegister {
         private val client by lazy { LocationServices.getGeofencingClient(context.applicationContext) }
 
         override suspend fun reconcile(targets: List<GeofenceTarget>) {
