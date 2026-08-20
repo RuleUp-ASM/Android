@@ -209,13 +209,11 @@ val appRoutes: List<AppRoute> =
             render = { args ->
                 VerificationLocationScreen(
                     challengeId = args[VerificationLocationPage.ARG_CHALLENGE_ID].orEmpty(),
-                    // 딥링크로 들어오는 인자라 값을 신뢰할 수 없다. LocationPin 이 범위를 강제하므로
-                    // 여기서 흡수하지 않으면 앵커 추가가 그대로 터진다.
+                    // 지도 원을 그릴 반경. 서버 설정값을 셋업 응답으로 받기 전까지 쓰는 표시용 기본값이다.
                     defaultRadiusM =
                         args[VerificationLocationPage.ARG_RADIUS]
                             ?.toFloatOrNull()
-                            ?.coerceIn(SetupAnchors.MIN_RADIUS_M, SetupAnchors.MAX_RADIUS_M)
-                            ?: SetupAnchors.MIN_RADIUS_M,
+                            ?: SetupAnchors.DEFAULT_RADIUS_M,
                     dwellMinutes = args[VerificationLocationPage.ARG_DWELL]?.toIntOrNull() ?: 60,
                     targetPackages =
                         args[VerificationLocationPage.ARG_TARGET_PACKAGES]

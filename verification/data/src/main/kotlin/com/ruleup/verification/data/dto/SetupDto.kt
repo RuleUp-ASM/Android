@@ -4,7 +4,6 @@ import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.MyLocation
-import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.entity.SetupStatus
 import kotlinx.serialization.SerialName
@@ -12,14 +11,16 @@ import kotlinx.serialization.Serializable
 
 // ---------- setup 요청 (명세 setup) ----------
 
+/**
+ * 앵커 1개. **반경 필드가 없다** — 인증 반경은 서버 설정 단일값이라 요청에 싣지 않고,
+ * 응답에서도 앵커별이 아니라 `serverRadiusM` 으로 따로 내려온다(명세 setup · my-location).
+ */
 @Serializable
 data class AnchorDto(
     @SerialName("lat")
     val lat: Double,
     @SerialName("lng")
     val lng: Double,
-    @SerialName("radiusM")
-    val radiusM: Int,
     @SerialName("label")
     val label: String? = null,
 )
@@ -49,7 +50,7 @@ data class ChallengeSetupRequest(
     val targetPackages: List<String>? = null,
 )
 
-/** 도메인 앵커/대상앱 → setup 와이어. radiusM 은 [LocationPin] 이 이미 범위를 보장하므로 반올림만 한다. */
+/** 도메인 앵커/대상앱 → setup 와이어. */
 internal fun buildChallengeSetupRequest(
     anchors: AnchorSet,
     targetPackages: List<String>,
@@ -66,7 +67,6 @@ internal fun buildChallengeSetupRequest(
                                 AnchorDto(
                                     lat = it.lat,
                                     lng = it.lng,
-                                    radiusM = it.radiusM.toInt(),
                                     label = it.label,
                                 )
                             },
@@ -83,6 +83,9 @@ data class ChallengeSetupResponse(
     val setupStatus: String? = null,
     @SerialName("missing")
     val missing: List<String>? = null,
+    // 서버 설정 인증 반경(m) — GPS 방 표시·지오펜스 등록용
+    @SerialName("serverRadiusM")
+    val serverRadiusM: Int? = null,
 )
 
 internal fun ChallengeSetupResponse.toDomain(): ChallengeSetupResult =
@@ -90,21 +93,16 @@ internal fun ChallengeSetupResponse.toDomain(): ChallengeSetupResult =
         status = SetupStatus.fromValue(setupStatus),
         // 알 수 없는 항목은 버린다(서버가 새 항목을 추가해도 안전).
         missing = missing.orEmpty().mapNotNull { SetupMissing.fromValue(it) },
+        serverRadiusM = serverRadiusM?.toFloat(),
     )
 
 // ---------- 앵커 조회 응답 (명세: GET /my-location) ----------
 
-/**
- * setup 요청과 동일한 앵커 표현을 재사용한다. radiusM 은 도메인에서 Float 로 승격.
- *
- * [LocationPin] 은 반경 범위를 생성 시점에 강제한다. 서버가 계약을 벗어난 값을 주더라도 조회가
- * 깨지면 안 되므로 경계에서 흡수한다.
- */
+/** setup 요청과 동일한 앵커 표현을 재사용한다. */
 internal fun AnchorDto.toDomain(): LocationPin =
     LocationPin(
         lat = lat,
         lng = lng,
-        radiusM = radiusM.toFloat().coerceIn(SetupAnchors.MIN_RADIUS_M, SetupAnchors.MAX_RADIUS_M),
         label = label,
     )
 
@@ -114,10 +112,13 @@ data class MyLocationResponse(
     val anchors: List<AnchorDto>? = null,
     @SerialName("appliedFrom")
     val appliedFrom: String? = null,
+    @SerialName("serverRadiusM")
+    val serverRadiusM: Int? = null,
 )
 
 internal fun MyLocationResponse.toDomain(): MyLocation =
     MyLocation(
         anchors = anchors.orEmpty().map { it.toDomain() },
         appliedFrom = appliedFrom,
+        serverRadiusM = serverRadiusM?.toFloat(),
     )

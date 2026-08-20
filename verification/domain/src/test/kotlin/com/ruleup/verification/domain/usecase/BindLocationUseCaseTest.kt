@@ -21,15 +21,17 @@ class BindLocationUseCaseTest {
                 challengeId = "c1",
                 anchors =
                     listOf(
-                        LocationPin(lat = 37.0, lng = 127.0, radiusM = 600f, label = "헬스장"),
-                        LocationPin(lat = 37.1, lng = 127.1, radiusM = 800f, label = "공원"),
+                        LocationPin(lat = 37.0, lng = 127.0, label = "헬스장"),
+                        LocationPin(lat = 37.1, lng = 127.1, label = "공원"),
                     ),
+                radiusM = 500f,
                 dwellMinutes = 60,
             )
 
             assertEquals("u1#c1", registrar.boundPrefix)
             assertEquals(listOf("u1#c1#0", "u1#c1#1"), registrar.bound.map { it.requestId })
-            assertEquals(listOf(600f, 800f), registrar.bound.map { it.radiusM })
+            // 반경은 앵커별이 아니라 서버 설정 단일값이다(인증 정책 §1.1).
+            assertEquals(listOf(500f, 500f), registrar.bound.map { it.radiusM })
             assertEquals(60, registrar.bound.first().dwellMinutes)
         }
 
@@ -40,7 +42,8 @@ class BindLocationUseCaseTest {
 
             BindLocationUseCase(registrar, FakeTokenRepository(storedUserId = null))(
                 challengeId = "c1",
-                anchors = listOf(LocationPin(lat = 37.0, lng = 127.0, radiusM = 600f, label = null)),
+                anchors = listOf(LocationPin(lat = 37.0, lng = 127.0, label = null)),
+                radiusM = 500f,
                 dwellMinutes = 60,
             )
 

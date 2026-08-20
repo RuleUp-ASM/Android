@@ -28,17 +28,18 @@ sealed interface VerificationLocationIntent : MviIntent {
         val place: Place,
     ) : VerificationLocationIntent
 
-    /** 하단 카드 [이 위치 추가] → 확인 대기 핀을 앵커 목록에 담는다(최대 10, 명세 setup). */
-    data class AddAnchor(
-        val radiusM: Float,
-    ) : VerificationLocationIntent
+    /** 하단 카드 [이 위치 추가] → 확인 대기 핀을 앵커 목록에 담는다(최대 3, 인증 정책 §1.1). */
+    data object AddAnchor : VerificationLocationIntent
 
     /** 추가된 앵커 1개 제거. */
     data class RemoveAnchor(
         val index: Int,
     ) : VerificationLocationIntent
 
-    /** [제출] → 누적 앵커 + 대상 앱을 setup 으로 함께 송신(명세 setup). READY 면 첫 앵커를 OS 지오펜스로 등록 후 종료. */
+    /**
+     * [제출] → 누적 앵커 + 대상 앱을 setup 으로 함께 송신(명세 setup).
+     * READY 면 응답의 서버 반경으로 앵커 전체를 OS 지오펜스에 등록하고 종료한다.
+     */
     data class Submit(
         val challengeId: String,
         val dwellMinutes: Int,
@@ -83,7 +84,7 @@ data class VerificationLocationState(
     val isResolving: Boolean = false,
     val places: List<Place> = emptyList(),
     val pending: PendingSelection? = null,
-    // 제출 전까지 누적한 앵커(최대 10, 명세 setup). label = 핀 이름, radiusM = 화면 기본값.
+    // 제출 전까지 누적한 앵커(최대 3, 인증 정책 §1.1). label = 핀 이름.
     val anchors: List<LocationPin> = emptyList(),
     // 직전 제출이 PENDING_SETUP 으로 떨어졌을 때의 미충족 항목(안내용).
     val missing: List<SetupMissing> = emptyList(),

@@ -133,7 +133,7 @@ fun VerificationLocationScreen(
             radiusM = defaultRadiusM,
             onMapTap = { viewModel.onIntent(VerificationLocationIntent.TapMap(lat = it.lat, lng = it.lng)) },
             modifier = Modifier.fillMaxSize(),
-            anchors = state.anchors.map { MapAnchor(lat = it.lat, lng = it.lng, radiusM = it.radiusM) },
+            anchors = state.anchors.map { MapAnchor(lat = it.lat, lng = it.lng, radiusM = defaultRadiusM) },
         )
 
         // 상단: 플로팅 검색 필 + 자동완성 목록.
@@ -200,12 +200,13 @@ fun VerificationLocationScreen(
                         canAdd = state.anchors.size < SetupAnchors.MAX_COUNT,
                         radiusM = defaultRadiusM,
                         onCancel = { viewModel.onIntent(VerificationLocationIntent.CancelSelection) },
-                        onAdd = { viewModel.onIntent(VerificationLocationIntent.AddAnchor(radiusM = defaultRadiusM)) },
+                        onAdd = { viewModel.onIntent(VerificationLocationIntent.AddAnchor) },
                     )
 
                 state.anchors.isNotEmpty() ->
                     AnchorListSheet(
                         anchors = state.anchors,
+                        radiusM = defaultRadiusM,
                         isSubmitting = state.isSubmitting,
                         onRemove = { viewModel.onIntent(VerificationLocationIntent.RemoveAnchor(it)) },
                         onSubmit = {
@@ -544,6 +545,7 @@ private fun SelectionSheet(
 @Composable
 private fun AnchorListSheet(
     anchors: List<LocationPin>,
+    radiusM: Float,
     isSubmitting: Boolean,
     onRemove: (Int) -> Unit,
     onSubmit: () -> Unit,
@@ -574,6 +576,7 @@ private fun AnchorListSheet(
                 AnchorRow(
                     number = index + 1,
                     anchor = anchor,
+                    radiusM = radiusM,
                     // 제출 중엔 삭제를 막는다(목록 고정).
                     onRemove = if (isSubmitting) null else ({ onRemove(index) }),
                 )
@@ -591,6 +594,7 @@ private fun AnchorListSheet(
 private fun AnchorRow(
     number: Int,
     anchor: LocationPin,
+    radiusM: Float,
     onRemove: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -630,7 +634,7 @@ private fun AnchorRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = "${anchor.address ?: "지도에서 선택한 위치"} · 반경 ${anchor.radiusM.toInt()}m",
+                text = "${anchor.address ?: "지도에서 선택한 위치"} · 반경 ${radiusM.toInt()}m",
                 color = RuleUpTheme.colors.textSecondary,
                 style = RuleUpTheme.typography.small,
                 maxLines = 1,

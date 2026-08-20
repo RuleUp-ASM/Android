@@ -21,7 +21,8 @@ enum class LocationBinding {
  * OS 에 사전 등록할 지오펜스 1개 (명세 §2.1). [requestId] = "{userId}#{challengeId}#{anchorIndex}"
  * (멤버 자연키 `uq_member(challenge_id, user_id)` 파생) — GEOFENCE 이벤트의 anchorId 로 서버에 보고된다.
  *
- * 반경 범위는 [SetupAnchors] 하나를 따른다 — 서버 판정 반경과 OS 트리거 반경이 어긋나면 안 된다.
+ * [radiusM] 은 서버가 내려준 인증 반경을 그대로 쓴다 — 서버 판정 반경과 OS 트리거 반경이
+ * 어긋나면 안 된다.
  */
 data class GeofenceTarget(
     val requestId: String,
@@ -34,22 +35,15 @@ data class GeofenceTarget(
 /**
  * 지도 핀 결과 페이로드 (명세 §5.3). [label]·[address] 는 표시용("우리 동네 헬스장").
  *
- * 반경은 생성 시점에 검증한다 — 범위를 벗어난 핀은 만들어지지 않는다. 서버 응답처럼 통제할 수 없는
- * 입력은 data 가 경계에서 흡수한 뒤 이 타입으로 올린다.
+ * **반경은 핀의 속성이 아니다** — 인증 반경은 참여자가 아니라 서버가 정하는 단일값이라
+ * 셋업 응답의 `serverRadiusM` 을 따른다(인증 정책 §1.1).
  */
 data class LocationPin(
     val lat: Double,
     val lng: Double,
-    val radiusM: Float,
     val label: String?,
     val address: String? = null,
-) {
-    init {
-        require(radiusM in SetupAnchors.MIN_RADIUS_M..SetupAnchors.MAX_RADIUS_M) {
-            "인증 반경은 ${SetupAnchors.MIN_RADIUS_M.toInt()}~${SetupAnchors.MAX_RADIUS_M.toInt()}m 여야 해요"
-        }
-    }
-}
+)
 
 /**
  * 제출 단위 앵커 묶음. 개수 제한을 타입이 보장한다 — [of] 를 거치지 않고는 만들 수 없어

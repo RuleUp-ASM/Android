@@ -12,7 +12,9 @@ import javax.inject.Inject
  * `(userId, challengeId)` 는 멤버 자연키(`uq_member(challenge_id, user_id)`, 재참여는 status 갱신)라
  * 멤버 단위 귀속이 보장되고, 같은 기기에서 계정을 전환해도 로컬 키가 섞이지 않는다.
  * userId 가 아직 저장되지 않은 세션(저장 도입 전 자동로그인)은 기존 관례대로 challengeId 접두로 폴백한다.
- * 변경 시 재등록도 [GeofenceRegistrar.bind] 가 멱등 처리한다(§5.4.3). 반경은 [LocationPin] 이 이미 보장한다.
+ * 변경 시 재등록도 [GeofenceRegistrar.bind] 가 멱등 처리한다(§5.4.3).
+ *
+ * [radiusM] 은 서버가 정한 인증 반경이다 — 참여자가 고르는 값이 아니다(인증 정책 §1.1).
  */
 class BindLocationUseCase
     @Inject
@@ -23,6 +25,7 @@ class BindLocationUseCase
         suspend operator fun invoke(
             challengeId: String,
             anchors: List<LocationPin>,
+            radiusM: Float,
             dwellMinutes: Int,
         ) {
             val memberKey =
@@ -36,7 +39,7 @@ class BindLocationUseCase
                         requestId = "$memberKey$REQUEST_ID_SEPARATOR$index",
                         lat = pin.lat,
                         lng = pin.lng,
-                        radiusM = pin.radiusM,
+                        radiusM = radiusM,
                         dwellMinutes = dwellMinutes,
                     )
                 }

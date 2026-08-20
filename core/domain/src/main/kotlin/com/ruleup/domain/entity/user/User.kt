@@ -9,7 +9,7 @@ import com.ruleup.domain.entity.category.Category
  * 다른 쪽 domain 을 참조하면 Gradle 순환이고, 각자 정의하면 서버 스키마가 하나인 이상 곧 어긋난다.
  *
  * @property nickname 본인 화면용. 심사 중이면 입력값, 거부되면 직전 승인본(없으면 임시 닉네임)이다.
- * @property score 티어 내 점수 0~99.
+ * @property score 회원당 누적 점수 0~2,000 (점수·티어 정책 §1). 티어 안에서 다시 매기는 점수가 아니다.
  * @property displayTier 표시·방 입장 판정에 쓰는 티어. 유예 밴드면 [tier] 보다 높을 수 있다.
  * @property lockInfo [accountStatus] 가 [AccountStatus.LOCKED] 일 때만 채워진다.
  */

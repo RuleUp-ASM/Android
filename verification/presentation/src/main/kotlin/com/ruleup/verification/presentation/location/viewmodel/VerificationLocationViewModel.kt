@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 /**
  * 지도 핀 → 셋업(앵커 바인딩) 제출(명세 setup). 지도 탭/검색으로 확인 대기 핀을 찍고([pending]),
- * 하단 카드의 [VerificationLocationIntent.AddAnchor] 로 최대 10개까지 누적한 뒤
+ * 하단 카드의 [VerificationLocationIntent.AddAnchor] 로 최대 3개까지 누적한 뒤
  * [VerificationLocationIntent.Submit] 시 setup 으로 송신한다. READY 면 앵커 전체를
  * [BindLocationUseCase] 로 OS 지오펜스 등록 후 종료한다. 탭 지점의 이름/주소는 역지오코딩으로 채운다.
  */
@@ -39,7 +39,7 @@ class VerificationLocationViewModel
         override fun onIntent(intent: VerificationLocationIntent) {
             when (intent) {
                 is VerificationLocationIntent.Init -> init(intent)
-                is VerificationLocationIntent.AddAnchor -> addAnchor(intent)
+                is VerificationLocationIntent.AddAnchor -> addAnchor()
                 is VerificationLocationIntent.RemoveAnchor -> dispatch(VerificationLocationReducerEvent.AnchorRemoved(intent.index))
                 is VerificationLocationIntent.Submit -> submit(intent)
                 is VerificationLocationIntent.Search -> search(intent)
@@ -141,8 +141,8 @@ class VerificationLocationViewModel
             dispatch(VerificationLocationReducerEvent.PendingSet(pending = null, resolving = false))
         }
 
-        // 확인 핀을 앵커 목록에 담는다(최대 10). label 은 핀 이름, 반경은 화면 기본값(제출 시 500~5000 클램프).
-        private fun addAnchor(intent: VerificationLocationIntent.AddAnchor) {
+        // 확인 핀을 앵커 목록에 담는다(최대 3). label 은 핀 이름 — 반경은 앵커의 속성이 아니다.
+        private fun addAnchor() {
             val pending = currentState.pending ?: return
             if (currentState.anchors.size >= SetupAnchors.MAX_COUNT) {
                 emitEffect(VerificationLocationEffect.ShowMessage("앵커는 최대 ${SetupAnchors.MAX_COUNT}개까지 추가할 수 있어요"))
@@ -153,7 +153,6 @@ class VerificationLocationViewModel
                     LocationPin(
                         lat = pending.lat,
                         lng = pending.lng,
-                        radiusM = intent.radiusM,
                         label = pending.name,
                         address = pending.address,
                     ),
@@ -181,10 +180,12 @@ class VerificationLocationViewModel
                     dispatch(VerificationLocationReducerEvent.Finished)
                     if (result.isReady) {
                         // 앵커 전체를 OS 지오펜스로 등록. 등록 실패는 gap 으로 보고되고 다음 reconcile 이 재시도.
+                        // 반경은 서버가 정한 값을 그대로 쓴다 — 응답에 없을 때만 폴백.
                         runCatching {
                             bindLocationUseCase(
                                 challengeId = intent.challengeId,
                                 anchors = anchors,
+                                radiusM = result.serverRadiusM ?: SetupAnchors.DEFAULT_RADIUS_M,
                                 dwellMinutes = intent.dwellMinutes,
                             )
                         }
