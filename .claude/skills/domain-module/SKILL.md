@@ -1,6 +1,6 @@
 ---
 name: domain-module
-description: RuleUp Android 레포에서 domain 레이어(entity·repository 계약·usecase·navigation Page·observability 이벤트)를 작성하는 절차. 새 도메인 모델이나 값 객체를 만들 때, Repository 인터페이스를 정의할 때, UseCase 를 만들지 말지 판단할 때, 화면 라우트(Page)를 추가할 때, 이벤트 카탈로그를 짤 때, 새 `:<feature>:domain` 모듈을 신설할 때 쓴다. "엔티티 만들어줘", "도메인 모델", "Repository 인터페이스", "유스케이스", "enum 추가", "라우트 추가", "화면 이동", "이벤트 심어줘", "domain 모듈" 같은 말이 나오면 코드를 쓰기 전에 반드시 이 스킬을 먼저 읽는다. 서버 enum 이 늘었을 때 어디로 떨어뜨릴지, 불변식을 어떤 타입으로 가둘지, Repository 와 Store·Provider·Registrar 를 어떻게 가를지 같은 이 레포 고유의 판단 기준이 여기에만 있고, 모르고 짜면 리뷰에서 통째로 되돌아온다. data·presentation 작업이어도 그 과정에서 새 entity·계약이 필요해지면 이 스킬을 읽고 domain 부터 만든다.
+description: RuleUp Android 레포에서 domain 레이어(entity·repository 계약·usecase·navigation Page·observability 이벤트)를 작성하는 절차. 새 도메인 모델이나 값 객체를 만들 때, Repository 인터페이스를 정의할 때, UseCase 를 만들지 말지 판단할 때, 화면 라우트(Page)를 추가할 때, 이벤트 카탈로그를 짤 때, 새 `:<feature>:domain` 모듈을 신설할 때 쓴다. "엔티티 만들어줘", "도메인 모델", "Repository 인터페이스", "유스케이스", "enum 추가", "라우트 추가", "화면 이동", "이벤트 심어줘", "domain 모듈" 같은 말이 나오면 코드를 쓰기 전에 반드시 이 스킬을 먼저 읽는다. 서버 enum 이 늘었을 때 어디로 떨어뜨릴지, 불변식을 어떤 타입으로 가둘지, Repository 와 Store·Provider·Register 를 어떻게 가를지 같은 이 레포 고유의 판단 기준이 여기에만 있고, 모르고 짜면 리뷰에서 통째로 되돌아온다. data·presentation 작업이어도 그 과정에서 새 entity·계약이 필요해지면 이 스킬을 읽고 domain 부터 만든다.
 ---
 
 # domain 레이어 만들기
@@ -155,6 +155,10 @@ value class RoutineDescription private constructor(
 범위 상수는 `object` 로 모은다(`ChallengeLimits.CAPACITY_MAX`, `InterestLimits.MAX`).
 **화면 위젯과 domain 검증이 같은 상수를 본다** — 숫자가 화면마다 따로 살면 한쪽만 고쳐져도 아무도 모른다.
 
+검증 결과가 통과/불통과가 아니라 **사유별로 갈리면** `of()` 가 예외를 던지는 대신 결과 타입을
+돌려준다(`Valid` / `Invalid` / `Underage` 형태의 sealed interface). 규칙이 어디에 사는지는 그대로다 —
+검증기를 UseCase 로 빼지 않고 그 값 타입 곁에 둔다.
+
 레이어 규칙: **범위 상수·불변식은 domain 타입, 입력 차단은 화면. ViewModel 에서 clamp 하지 않는다.**
 
 ### 결과가 여러 갈래면 sealed interface
@@ -224,27 +228,37 @@ interface ChallengeRepository {
 | `Store` | 로컬 보관(메모리·DataStore) | `MyChallengeStore`, `SyncPolicyStore` |
 | `Provider` | 지금 값을 물어보는 읽기 전용 | `DeviceIntroProvider`, `SyncScopeProvider` |
 | `Collector` | OS 신호를 긁어 버퍼에 넣는다 | `SignalCollector` |
-| `Registrar` | OS 에 등록·해제한다 | `GeofenceRegistrar` |
+| `Register` | OS 에 등록·해제한다 | `GeofenceRegister` |
 | `Scheduler` | 나중에 실행되도록 예약한다 | `SyncScheduler` |
 | `Notifier` | 앱 밖으로 알린다 | `SetupNotifier` |
+
+현재 코드의 `GeofenceRegistrar` 는 이 표에 맞지 않는 옛 이름이다 — 새로 만드는 것은 `Register` 로 쓴다.
 
 뒤의 다섯은 **driven adapter 포트**다 — domain 이 Android 를 모른 채 OS 능력을 쓰기 위한 구멍이고,
 KDoc 에 그 사실을 적어 둔다(`OS 신호 수집 포트(driven adapter, 명세 §1·§2)`).
 
 ## usecase — 기본은 만들지 않는다
 
-**단일 repository 위임은 UseCase 를 만들지 않는다.** 인자를 그대로 넘기거나 기본값만 지정하는
-경우도 마찬가지다. ViewModel 이 Repository 인터페이스를 직접 주입받는다.
-
-만드는 경우는 셋뿐이다:
+UseCase 는 **여러 협력자를 엮는 조립**을 위한 것이다. 만드는 경우는 둘뿐이다:
 
 | 기준 | 예 |
 |---|---|
-| repository 를 둘 이상 엮는다 | `SocialLoginUseCase` (Auth + DeviceIdentity + Token) |
+| repository·포트를 둘 이상 엮는다 | `SocialLoginUseCase` (Auth + DeviceIdentity + Token) |
 | 호출에 부수효과가 따라붙는다 | `CreateChallengeUseCase` (생성 → 셋업 알림) |
-| repository 없이 성립하는 규칙·검증·정규화 | `ValidateBirthDateUseCase` |
 
-나중에 규칙이 생기면 그때 UseCase 로 올린다. 미리 만들어 두지 않는다.
+만들지 않는 경우:
+
+- **단일 repository 위임.** 인자를 그대로 넘기거나 기본값만 지정하는 경우도 포함한다.
+  ViewModel 이 Repository 인터페이스를 직접 주입받는다.
+- **협력자 없이 성립하는 비즈니스 규칙·검증·정규화.** 이건 **entity 소관**이다. 규칙이 값에
+  붙어 있어야 그 값을 만드는 모든 경로에 규칙이 걸린다 — UseCase 로 빼면 그 UseCase 를
+  거치지 않은 경로가 규칙을 통과해 버리고, 화면이 검증기를 따로 주입받아야 한다.
+
+  나이 제한 같은 것도 `ValidateBirthDateUseCase` 가 아니라 생일 값 타입이 갖는다
+  (`RoutineDescription.of()` 가 길이 규칙을 가두는 것과 같은 형태다). 현재 코드의
+  `ValidateBirthDateUseCase` 는 이 기준으로 보면 entity 로 내려가야 하는 사례다.
+
+나중에 협력자가 늘면 그때 UseCase 로 올린다. 미리 만들어 두지 않는다.
 
 ```kotlin
 class CreateChallengeUseCase
