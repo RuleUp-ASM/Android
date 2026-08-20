@@ -55,12 +55,10 @@ import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationDetailPage
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.navigation.VerificationManualPage
-import com.ruleup.verification.domain.navigation.VerificationPendingReviewsPage
 import com.ruleup.verification.domain.navigation.VerificationProgressPage
 import com.ruleup.verification.presentation.detail.VerificationDetailScreen
 import com.ruleup.verification.presentation.location.VerificationLocationScreen
 import com.ruleup.verification.presentation.manual.VerificationManualScreen
-import com.ruleup.verification.presentation.pending.PendingReviewsScreen
 import com.ruleup.verification.presentation.progress.VerificationProgressScreen
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -196,12 +194,6 @@ val appRoutes: List<AppRoute> =
             path = VerificationManualPage.PATH,
             render = { args ->
                 VerificationManualScreen(challengeId = args[VerificationManualPage.ARG_CHALLENGE_ID].orEmpty())
-            },
-        ),
-        AppRoute(
-            path = VerificationPendingReviewsPage.PATH,
-            render = { args ->
-                PendingReviewsScreen(challengeId = args[VerificationPendingReviewsPage.ARG_CHALLENGE_ID].orEmpty())
             },
         ),
         AppRoute(

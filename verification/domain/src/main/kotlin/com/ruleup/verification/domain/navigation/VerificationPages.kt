@@ -24,20 +24,6 @@ data class VerificationManualPage(
 }
 
 /**
- * 방장/공동 관리자 확인 대기함 페이지(명세 pending-reviews). 방 홈에서 관리 권한이 있을 때 진입한다.
- */
-data class VerificationPendingReviewsPage(
-    val challengeId: String,
-) : Page {
-    override fun toRoute(): NavRoute = NavRoute(PATH, mapOf(ARG_CHALLENGE_ID to challengeId))
-
-    companion object {
-        const val PATH = AppRoutes.VERIFICATION_PENDING_REVIEWS
-        const val ARG_CHALLENGE_ID = "challengeId"
-    }
-}
-
-/**
  * 챌린지 인증 결과/실패 상세 페이지(명세 §6.2). 홈 카드에서 challengeId 와 함께 진입한다.
  * 다른 feature 는 [AppRoutes.VERIFICATION_DETAIL] 로 진입한다.
  */

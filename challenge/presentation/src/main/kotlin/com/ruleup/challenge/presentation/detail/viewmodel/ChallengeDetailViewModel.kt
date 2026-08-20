@@ -90,7 +90,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
-                ChallengeDetailIntent.OpenPendingReviews -> openPendingReviews()
+                is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
                 ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
                 is ChallengeDetailIntent.PromoteMember -> changeRole(intent.userId, RoleAction.PROMOTE)
@@ -188,6 +188,7 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.TodayResultLoaded -> state.copy(todayResult = event.result)
 
                 is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
+                is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
 
                 is ChallengeDetailReducerEvent.CrossRankingLoaded ->
                     state.copy(
@@ -739,12 +740,25 @@ class ChallengeDetailViewModel
             navigationHelper.navigateByRoute(ChallengeRankingPage(challengeId = id).toRoute())
         }
 
-        // 확인 대기함(verification)으로 이동. feature 간 직접 의존 없이 AppRoutes 경로로 라우팅한다.
-        private fun openPendingReviews() {
-            val id = currentState.detail?.challengeId ?: return
-            navigationHelper.navigateByRoute(
-                NavRoute(AppRoutes.VERIFICATION_PENDING_REVIEWS, mapOf("challengeId" to id)),
-            )
+        /**
+         * 오늘 실패 건 이의 제기(인증 정책 §5). **판정 단계가 없다** — 형식 요건만 맞으면 즉시 인용이라
+         * "접수했어요"가 아니라 결과를 바로 알린다. 요건 미달·기한 경과는 서버가 접수 자체를 막는다.
+         */
+        private fun submitAppeal(reason: String) {
+            val verificationId = currentState.todayResult?.verificationId ?: return
+            val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
+            if (currentState.isSubmittingAppeal) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.SubmittingAppeal(true))
+                runCatching { verificationRepository.submitAppeal(verificationId = verificationId, reason = reason) }
+                    .onSuccess {
+                        emitEffect(ChallengeDetailEffect.ShowMessage("이의가 받아들여졌어요. 기록을 되돌렸어요"))
+                        loadTodayResult(challengeId)
+                    }.onFailure { error ->
+                        emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의를 접수하지 못했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.SubmittingAppeal(false))
+            }
         }
 
         private fun registerApps() {
