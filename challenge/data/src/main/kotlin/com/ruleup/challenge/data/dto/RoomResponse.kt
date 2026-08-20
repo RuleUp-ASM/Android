@@ -63,14 +63,22 @@ data class RoomTopRankerResponse(
     val successRate: Double? = null,
 )
 
-internal fun RoomTopRankerResponse.toDomain(): RoomTopRanker =
-    RoomTopRanker(
-        rank = rank ?: 0,
-        userId = userId.orEmpty(),
+/**
+ * 상위 3 에는 **등재자만** 올라온다(참여 10회 이상) — [rank]·[successRate] 는 항상 있다.
+ * 없으면 미등재가 아니라 깨진 행이므로 0 등·0% 로 채우지 않고 버린다.
+ */
+internal fun RoomTopRankerResponse.toDomain(): RoomTopRanker? {
+    val rank = rank ?: return null
+    val successRate = successRate ?: return null
+    val userId = userId ?: return null
+    return RoomTopRanker(
+        rank = rank,
+        userId = userId,
         nickname = nickname.orEmpty(),
         profileImageUrl = profileImageUrl,
-        successRate = successRate ?: 0.0,
+        successRate = successRate,
     )
+}
 
 @Serializable
 data class RoomResponse(
@@ -101,7 +109,7 @@ internal fun RoomResponse.toDomain(): ChallengeRoom =
                 participantCount = summary?.participantCount ?: 0,
                 capacity = summary?.capacity ?: 0,
             ),
-        topRanking = topRanking.orEmpty().map { it.toDomain() },
+        topRanking = topRanking.orEmpty().mapNotNull { it.toDomain() },
         // 미지 값은 null — 성공·실패 어느 쪽으로도 임의로 접지 않고 표기를 생략한다
         myTodayStatus = TodayVerificationStatus.fromValue(myTodayStatus),
     )

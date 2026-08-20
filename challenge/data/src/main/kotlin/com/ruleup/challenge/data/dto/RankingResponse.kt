@@ -93,15 +93,24 @@ data class ChallengeRankEntryResponse(
     val successRate: Double? = null,
 )
 
-internal fun ChallengeRankEntryResponse.toDomain(): ChallengeRankEntry =
-    ChallengeRankEntry(
-        rank = rank ?: 0,
-        challengeId = challengeId.orEmpty(),
+/**
+ * 목록에는 **등재된 방만** 내려온다(그룹 50회·솔로 10회 이상) — 그래서 [rank]·[successRate] 는
+ * 항상 있다. 없으면 미등재가 아니라 깨진 행이므로 0 등·0% 로 채우지 않고 통째로 버린다.
+ * 랭킹 화면에 "0위 · 0%" 가 섞이면 사용자는 그 방이 꼴찌라고 읽는다.
+ */
+internal fun ChallengeRankEntryResponse.toDomain(): ChallengeRankEntry? {
+    val rank = rank ?: return null
+    val successRate = successRate ?: return null
+    val challengeId = challengeId ?: return null
+    return ChallengeRankEntry(
+        rank = rank,
+        challengeId = challengeId,
         title = title.orEmpty(),
         memberCount = memberCount ?: 0,
         totalCount = totalCount ?: 0,
-        successRate = successRate ?: 0.0,
+        successRate = successRate,
     )
+}
 
 @Serializable
 data class MyChallengeRankResponse(
@@ -142,7 +151,7 @@ data class CrossRankingResponse(
 internal fun CrossRankingResponse.toDomain(): CrossChallengeRanking =
     CrossChallengeRanking(
         myChallenge = myChallenge?.toDomain(),
-        items = items.orEmpty().map { it.toDomain() },
+        items = items.orEmpty().mapNotNull { it.toDomain() },
         updatedAt = updatedAt,
         nextCursor = nextCursor,
     )
