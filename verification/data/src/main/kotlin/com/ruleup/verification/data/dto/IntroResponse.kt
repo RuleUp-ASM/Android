@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CadenceResponse(
     @SerialName("enabled")
-    val enabled: Boolean = true,
+    val enabled: Boolean? = null,
     @SerialName("pollSec")
     val pollSec: Int? = null,
 )
@@ -52,7 +52,8 @@ data class IntroResponse(
     val sessionId: String? = null,
 )
 
-private fun CadenceResponse.toDomain(): SignalCadence = SignalCadence(enabled = enabled, pollSec = pollSec)
+// enabled 가 비어 오면 수집을 켠 것으로 본다 — 서버가 끄지 않은 신호를 임의로 끄면 인증이 빈다.
+private fun CadenceResponse.toDomain(): SignalCadence = SignalCadence(enabled = enabled ?: true, pollSec = pollSec)
 
 internal fun IntroResponse.toDomain(): SyncPolicy =
     SyncPolicy(

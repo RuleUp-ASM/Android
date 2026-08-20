@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class IntroResponse(
-    @SerialName("forceUpdate") val forceUpdate: Boolean = false,
+    @SerialName("forceUpdate") val forceUpdate: Boolean? = null,
     @SerialName("devTestMsg") val devTestMsg: String? = null,
     @SerialName("minAppVersion") val minAppVersion: String? = null,
     @SerialName("termsVersions") val termsVersions: TermsVersionsResponse? = null,
@@ -31,11 +31,12 @@ data class TermsVersionsResponse(
     @SerialName("nightPush") val nightPush: String? = null,
 )
 
-fun IntroResponse.toDomain(): IntroInfo =
+internal fun IntroResponse.toDomain(): IntroInfo =
     IntroInfo(
         versionGate =
             AppVersionGate(
-                forceUpdate = forceUpdate,
+                // 필드가 비어 오면 강제하지 않는다 — 응답 하나 빠졌다고 사용자를 앱 밖으로 밀어내면 안 된다.
+                forceUpdate = forceUpdate ?: false,
                 devTestMsg = devTestMsg,
                 minAppVersion = minAppVersion,
             ),
