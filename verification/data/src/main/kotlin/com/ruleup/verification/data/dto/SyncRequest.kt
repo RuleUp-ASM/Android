@@ -16,6 +16,10 @@ import kotlin.time.Instant
 @OptIn(ExperimentalTime::class)
 private fun Long.toIso(): String = Instant.fromEpochMilliseconds(this).toString()
 
+/**
+ * 지오펜스 전이 1건(전송 스펙 §3.2). 좌표·정확도·mock 여부는 OS 가 위치를 안 준 전이에서 null 이고,
+ * `explicitNulls=false` 라 그 경우 필드가 통째로 빠진 채 전송된다.
+ */
 @Serializable
 data class GeofenceEventRequest(
     @SerialName("requestId")
@@ -25,13 +29,13 @@ data class GeofenceEventRequest(
     @SerialName("at")
     val at: String,
     @SerialName("lat")
-    val lat: Double,
+    val lat: Double? = null,
     @SerialName("lng")
-    val lng: Double,
+    val lng: Double? = null,
     @SerialName("accuracy")
-    val accuracy: Double,
+    val accuracy: Double? = null,
     @SerialName("isMock")
-    val isMock: Boolean,
+    val isMock: Boolean? = null,
 )
 
 @Serializable
@@ -251,7 +255,7 @@ private fun VerificationSignal.toDto(): SignalRequest =
                             at = it.at.toIso(),
                             lat = it.lat,
                             lng = it.lng,
-                            accuracy = it.accuracy.toDouble(),
+                            accuracy = it.accuracy?.toDouble(),
                             isMock = it.isMock,
                         )
                     },

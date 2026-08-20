@@ -23,16 +23,19 @@ enum class ScreenEventType {
 /**
  * 지오펜스 전이 1건. [at] 은 epoch millis(elapsedRealtime 환산, 명세 §2.1).
  * [isMock] 은 처음부터 수집·전송한다(패널티 런칭의 하드 디펜던시, 명세 §7).
+ *
+ * 좌표·[accuracy]·[isMock] 은 OS 가 전이에 위치를 안 실어 보내면 **null** 이다. 기본값으로 접으면
+ * 서버가 (0, 0) 체류나 "mock 아님"으로 읽어 판정이 오염된다 — 모르는 것은 모른다고 보낸다.
  */
 data class GeofenceTransitionEvent(
     // 등록 시 부여한 지오펜스 requestId ("{userId}#{challengeId}#{index}")
     val requestId: String,
     val transition: GeofenceTransitionType,
     val at: Long,
-    val lat: Double,
-    val lng: Double,
-    val accuracy: Float,
-    val isMock: Boolean,
+    val lat: Double?,
+    val lng: Double?,
+    val accuracy: Float?,
+    val isMock: Boolean?,
 )
 
 /** 대상 앱 사용 이벤트 1건(시퀀스 그대로 전송, 누적 foregroundSec 금지, 명세 §2.2). */
