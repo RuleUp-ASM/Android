@@ -15,8 +15,8 @@ import com.ruleup.verification.data.db.health.HealthReadingEntity
 import com.ruleup.verification.data.db.health.HealthSettingsEntity
 import com.ruleup.verification.data.db.health.HealthTargetDao
 import com.ruleup.verification.data.db.health.HealthTargetEntity
-import com.ruleup.verification.data.db.health.SleepSegmentDao
-import com.ruleup.verification.data.db.health.SleepSegmentEntity
+import com.ruleup.verification.data.db.health.SleepSessionDao
+import com.ruleup.verification.data.db.health.SleepSessionEntity
 import com.ruleup.verification.data.db.usage.UsageCursorDao
 import com.ruleup.verification.data.db.usage.UsageCursorEntity
 import com.ruleup.verification.data.db.usage.UsageEventDao
@@ -38,12 +38,12 @@ import com.ruleup.verification.data.db.usage.UsageTargetEntity
         UsageTargetEntity::class,
         UsageCursorEntity::class,
         HealthReadingEntity::class,
-        SleepSegmentEntity::class,
+        SleepSessionEntity::class,
         HealthTargetEntity::class,
         HealthSettingsEntity::class,
         SignalGapEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class VerificationDatabase : RoomDatabase() {
@@ -63,7 +63,7 @@ abstract class VerificationDatabase : RoomDatabase() {
 
     abstract fun healthReadingDao(): HealthReadingDao
 
-    abstract fun sleepSegmentDao(): SleepSegmentDao
+    abstract fun sleepSessionDao(): SleepSessionDao
 
     abstract fun healthTargetDao(): HealthTargetDao
 

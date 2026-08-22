@@ -5,7 +5,7 @@ import com.ruleup.verification.data.db.geofence.GeofenceTransitionEntity
 import com.ruleup.verification.data.db.geofence.LocationSampleEntity
 import com.ruleup.verification.data.db.health.HealthReadingEntity
 import com.ruleup.verification.data.db.health.HealthTargetEntity
-import com.ruleup.verification.data.db.health.SleepSegmentEntity
+import com.ruleup.verification.data.db.health.SleepSessionEntity
 import com.ruleup.verification.data.db.usage.KIND_APP
 import com.ruleup.verification.data.db.usage.UsageEventEntity
 import com.ruleup.verification.domain.entity.AppEventType
@@ -13,14 +13,12 @@ import com.ruleup.verification.domain.entity.AppUsageEvent
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.entity.GeofenceTransitionEvent
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
-import com.ruleup.verification.domain.entity.HealthDeviceType
 import com.ruleup.verification.domain.entity.HealthMetric
-import com.ruleup.verification.domain.entity.HealthOrigin
 import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.HealthTarget
 import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.RecordingMethod
-import com.ruleup.verification.domain.entity.SleepSegment
+import com.ruleup.verification.domain.entity.SleepSession
 
 internal fun GeofenceTransitionEntity.toDomain(): GeofenceTransitionEvent =
     GeofenceTransitionEvent(
@@ -73,24 +71,24 @@ internal fun UsageEventEntity.toAppEvent(): AppUsageEvent? =
 
 internal fun HealthReadingEntity.toDomain(): HealthReading =
     HealthReading(
-        metric = metric.toHealthMetric(),
+        recordId = recordId,
         value = value,
-        unit = unit,
-        exerciseType = exerciseType,
-        origin =
-            HealthOrigin(
-                dataOrigin = dataOrigin,
-                recordingMethod = recordingMethod.toRecordingMethod(),
-                deviceType = deviceType.toHealthDeviceType(),
-            ),
-        at = occurredAt,
+        startTime = startTime,
+        endTime = endTime,
+        recordingMethod = recordingMethod.toRecordingMethod(),
+        originPackage = originPackage,
     )
 
-internal fun SleepSegmentEntity.toDomain(): SleepSegment =
-    SleepSegment(
-        startAt = startAt,
-        endAt = endAt,
-        status = status,
+internal fun SleepSessionEntity.toDomain(): SleepSession =
+    SleepSession(
+        recordId = recordId,
+        start = startAt,
+        end = endAt,
+        durationMillis = durationMillis,
+        sleepMillis = sleepMillis,
+        observedElapsedMillis = observedElapsedMillis,
+        recordingMethod = recordingMethod.toRecordingMethod(),
+        originPackage = originPackage,
     )
 
 internal fun HealthTargetEntity.toDomain(): HealthTarget =
@@ -108,10 +106,9 @@ internal fun HealthTarget.toEntity(): HealthTargetEntity =
 private fun String.toGeofenceTransitionType(): GeofenceTransitionType =
     GeofenceTransitionType.entries.find { it.name == this } ?: GeofenceTransitionType.ENTER
 
-private fun String.toHealthMetric(): HealthMetric = HealthMetric.entries.find { it.name == this } ?: HealthMetric.STEPS
+/** 버퍼에 저장된 metric 문자열 → 도메인 enum. 미인식은 STEPS 로 떨어뜨린다. */
+internal fun String.toHealthMetric(): HealthMetric = HealthMetric.entries.find { it.name == this } ?: HealthMetric.STEPS
 
 private fun String.toRecordingMethod(): RecordingMethod = RecordingMethod.entries.find { it.name == this } ?: RecordingMethod.UNKNOWN
-
-private fun String.toHealthDeviceType(): HealthDeviceType = HealthDeviceType.entries.find { it.name == this } ?: HealthDeviceType.UNKNOWN
 
 private fun String.toAppEventType(): AppEventType = AppEventType.entries.find { it.name == this } ?: AppEventType.RESUMED

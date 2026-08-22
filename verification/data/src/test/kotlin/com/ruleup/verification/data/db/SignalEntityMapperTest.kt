@@ -4,10 +4,8 @@ import com.ruleup.verification.data.db.common.toDomain
 import com.ruleup.verification.data.db.geofence.GeofenceTransitionEntity
 import com.ruleup.verification.data.db.geofence.LocationSampleEntity
 import com.ruleup.verification.data.db.health.HealthReadingEntity
-import com.ruleup.verification.data.db.health.SleepSegmentEntity
+import com.ruleup.verification.data.db.health.SleepSessionEntity
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
-import com.ruleup.verification.domain.entity.HealthDeviceType
-import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.RecordingMethod
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -73,65 +71,91 @@ class SignalEntityMapperTest {
     }
 
     @Test
-    fun `health 읽기 엔티티가 도메인 reading·origin 으로 매핑된다`() {
+    fun `health 읽기 엔티티가 도메인 reading 으로 매핑된다`() {
         val entity =
             HealthReadingEntity(
+                recordId = "hc-1",
                 metric = "DISTANCE",
                 value = 5.2,
-                unit = "km",
-                exerciseType = "RUNNING",
-                dataOrigin = "com.sec.android.app.shealth",
+                startTime = 100L,
+                endTime = 123L,
+                originPackage = "com.sec.android.app.shealth",
                 recordingMethod = "AUTO",
-                deviceType = "WATCH",
                 date = "2026-06-24",
                 occurredAt = 123L,
             )
 
         val reading = entity.toDomain()
 
-        assertEquals(HealthMetric.DISTANCE, reading.metric)
+        // recordId 는 하루치를 재전송해도 중복이 안 쌓이는 유일한 근거다.
+        assertEquals("hc-1", reading.recordId)
         assertEquals(5.2, reading.value)
-        assertEquals("RUNNING", reading.exerciseType)
-        assertEquals("com.sec.android.app.shealth", reading.origin.dataOrigin)
-        assertEquals(RecordingMethod.AUTO, reading.origin.recordingMethod)
-        assertEquals(HealthDeviceType.WATCH, reading.origin.deviceType)
-        assertEquals(123L, reading.at)
+        // 인증 창이 하루보다 좁은 챌린지가 있어 날짜만으로는 귀속이 안 된다.
+        assertEquals(100L, reading.startTime)
+        assertEquals(123L, reading.endTime)
+        assertEquals("com.sec.android.app.shealth", reading.originPackage)
+        assertEquals(RecordingMethod.AUTO, reading.recordingMethod)
     }
 
     @Test
-    fun `미인식 recordingMethod·deviceType 은 UNKNOWN 으로 떨어진다`() {
+    fun `미인식 recordingMethod 는 UNKNOWN 으로 떨어진다`() {
         val entity =
             HealthReadingEntity(
+                recordId = "hc-2",
                 metric = "STEPS",
                 value = 1000.0,
-                unit = "count",
-                exerciseType = null,
-                dataOrigin = "com.unknown.app",
+                startTime = 0L,
+                endTime = 0L,
+                originPackage = "com.unknown.app",
                 recordingMethod = "FUTURE_VALUE",
-                deviceType = "FUTURE_DEVICE",
                 date = "2026-06-24",
                 occurredAt = 0L,
             )
 
-        val origin = entity.toDomain().origin
-        assertEquals(RecordingMethod.UNKNOWN, origin.recordingMethod)
-        assertEquals(HealthDeviceType.UNKNOWN, origin.deviceType)
+        assertEquals(RecordingMethod.UNKNOWN, entity.toDomain().recordingMethod)
     }
 
     @Test
-    fun `sleep 세그먼트 엔티티가 도메인으로 매핑된다`() {
+    fun `sleep 세션 엔티티가 도메인으로 매핑된다`() {
         val entity =
-            SleepSegmentEntity(
+            SleepSessionEntity(
+                recordId = "sleep-1",
                 startAt = 100L,
                 endAt = 200L,
-                status = "DEEP",
+                durationMillis = 100L,
+                sleepMillis = 80L,
+                observedElapsedMillis = 55L,
+                originPackage = "com.sec.android.app.shealth",
+                recordingMethod = "AUTO",
                 occurredAt = 200L,
             )
 
-        val segment = entity.toDomain()
-        assertEquals(100L, segment.startAt)
-        assertEquals(200L, segment.endAt)
-        assertEquals("DEEP", segment.status)
+        val session = entity.toDomain()
+        assertEquals("sleep-1", session.recordId)
+        assertEquals(100L, session.start)
+        assertEquals(200L, session.end)
+        assertEquals(100L, session.durationMillis)
+        assertEquals(80L, session.sleepMillis)
+        assertEquals(55L, session.observedElapsedMillis)
+    }
+
+    @Test
+    fun `stage 를 못 받은 세션은 실수면 시간이 null 로 남는다`() {
+        val entity =
+            SleepSessionEntity(
+                recordId = "sleep-2",
+                startAt = 0L,
+                endAt = 100L,
+                durationMillis = 100L,
+                sleepMillis = null,
+                observedElapsedMillis = 0L,
+                originPackage = "com.unknown.app",
+                recordingMethod = "UNKNOWN",
+                occurredAt = 100L,
+            )
+
+        // 0 으로 접으면 "잠자리에 있었지만 한숨도 안 잤다"가 된다 — 서버가 durationMillis 로 대체한다.
+        assertEquals(null, entity.toDomain().sleepMillis)
     }
 
     @Test

@@ -5,10 +5,11 @@ import com.ruleup.observability.domain.api.i
 import com.ruleup.verification.data.db.common.SignalGapDao
 import com.ruleup.verification.data.db.common.toAppEvent
 import com.ruleup.verification.data.db.common.toDomain
+import com.ruleup.verification.data.db.common.toHealthMetric
 import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
 import com.ruleup.verification.data.db.geofence.LocationSampleDao
 import com.ruleup.verification.data.db.health.HealthReadingDao
-import com.ruleup.verification.data.db.health.SleepSegmentDao
+import com.ruleup.verification.data.db.health.SleepSessionDao
 import com.ruleup.verification.data.db.usage.UsageEventDao
 import com.ruleup.verification.data.signal.usage.WakeSignalProvider
 import com.ruleup.verification.domain.entity.SignalBatch
@@ -48,7 +49,7 @@ class SignalRepositoryImpl
         private val locationSampleDao: LocationSampleDao,
         private val usageEventDao: UsageEventDao,
         private val healthReadingDao: HealthReadingDao,
-        private val sleepSegmentDao: SleepSegmentDao,
+        private val sleepSessionDao: SleepSessionDao,
         private val signalGapDao: SignalGapDao,
         private val wakeSignalProvider: WakeSignalProvider,
         private val observability: Observability,
@@ -59,17 +60,17 @@ class SignalRepositoryImpl
             locationSampleDao.tagPending(collectedAt)
             usageEventDao.tagPending(collectedAt)
             healthReadingDao.tagPending(collectedAt)
-            sleepSegmentDao.tagPending(collectedAt)
+            sleepSessionDao.tagPending(collectedAt)
 
             val transitions = geofenceTransitionDao.byBatch(collectedAt)
             val locations = locationSampleDao.byBatch(collectedAt)
             val usage = usageEventDao.byBatch(collectedAt)
             val healthReadings = healthReadingDao.byBatch(collectedAt)
-            val sleepSegments = sleepSegmentDao.byBatch(collectedAt)
+            val sleepSessions = sleepSessionDao.byBatch(collectedAt)
             // 디버그 가시화(수집 경로): 이번 배치로 드레인된 신호 건수를 타입별로 남긴다(0이면 스코프/권한 미충족).
             observability.i(SYNC_LOG_TAG) {
                 "수집 드레인 — geofence=${transitions.size}, location=${locations.size}, " +
-                    "usage=${usage.size}, health=${healthReadings.size}, sleep=${sleepSegments.size}"
+                    "usage=${usage.size}, health=${healthReadings.size}, sleep=${sleepSessions.size}"
             }
             // 건수 다음으로 실제 값까지 한 줄씩(타입별 최대 30건). 어느 패키지·좌표·헬스 수치·전이인지 눈으로 확인.
             transitions.logSignalDetail(observability, "geofence") {
@@ -80,18 +81,16 @@ class SignalRepositoryImpl
             }
             usage.logSignalDetail(observability, "usage") { "usage ${it.kind}/${it.eventType} ${it.packageName}" }
             healthReadings.logSignalDetail(observability, "health") {
-                "health ${it.metric}=${it.value}${it.unit}" +
-                    (it.exerciseType?.let { e -> " ($e)" }.orEmpty()) +
-                    " ${it.date} via ${it.dataOrigin}"
+                "health ${it.metric}=${it.value} ${it.date} via ${it.originPackage}"
             }
-            sleepSegments.logSignalDetail(observability, "sleep") {
-                "sleep ${it.status} ${(it.endAt - it.startAt) / 60_000}m"
+            sleepSessions.logSignalDetail(observability, "sleep") {
+                "sleep ${(it.durationMillis) / 60_000}m (실수면 ${it.sleepMillis?.div(60_000) ?: "미상"}m) via ${it.originPackage}"
             }
             if (transitions.isEmpty() &&
                 locations.isEmpty() &&
                 usage.isEmpty() &&
                 healthReadings.isEmpty() &&
-                sleepSegments.isEmpty()
+                sleepSessions.isEmpty()
             ) {
                 return null
             }
@@ -113,14 +112,21 @@ class SignalRepositoryImpl
                     if (locations.isNotEmpty()) {
                         add(VerificationSignal.Locations(locations.map { it.toDomain() }))
                     }
-                    // HEALTH 는 readings 가 귀속 날짜(date)별로 묶인다(보통 오늘 1건).
+                    // metric 이 신호 레벨 필드라(전송 스펙 §2) 날짜뿐 아니라 metric 으로도 갈라 묶는다.
                     healthReadings
-                        .groupBy { it.date }
-                        .forEach { (date, rows) ->
-                            add(VerificationSignal.Health(date = date, readings = rows.map { it.toDomain() }))
+                        .groupBy { it.date to it.metric }
+                        .forEach { (key, rows) ->
+                            val (date, metric) = key
+                            add(
+                                VerificationSignal.Health(
+                                    date = date,
+                                    metric = metric.toHealthMetric(),
+                                    readings = rows.map { it.toDomain() },
+                                ),
+                            )
                         }
-                    if (sleepSegments.isNotEmpty()) {
-                        add(VerificationSignal.Sleep(sleepSegments.map { it.toDomain() }))
+                    if (sleepSessions.isNotEmpty()) {
+                        add(VerificationSignal.Sleep(sleepSessions.map { it.toDomain() }))
                     }
                 }
             return SignalBatch(collectedAt = collectedAt, signals = signals)
@@ -137,7 +143,7 @@ class SignalRepositoryImpl
             locationSampleDao.markSynced(collectedAt)
             usageEventDao.markSynced(collectedAt)
             healthReadingDao.markSynced(collectedAt)
-            sleepSegmentDao.markSynced(collectedAt)
+            sleepSessionDao.markSynced(collectedAt)
             signalGapDao.markSynced(collectedAt)
         }
 
@@ -147,7 +153,7 @@ class SignalRepositoryImpl
             locationSampleDao.purge(threshold)
             usageEventDao.purge(threshold)
             healthReadingDao.purge(threshold)
-            sleepSegmentDao.purge(threshold)
+            sleepSessionDao.purge(threshold)
             signalGapDao.purge(threshold)
         }
     }

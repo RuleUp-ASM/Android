@@ -76,43 +76,43 @@ enum class RecordingMethod {
     UNKNOWN,
 }
 
-/** 기록 디바이스 (Health Connect Metadata.device.type, 명세 §8.2 — WATCH 신뢰 가중↑). */
-enum class HealthDeviceType {
-    PHONE,
-    WATCH,
-    UNKNOWN,
-}
+/**
+ * Health Connect 읽은 값 1건 (전송 스펙 §2). 집계·화이트리스트 게이트·MANUAL 거부는 전부 서버가
+ * 하고, 클라는 그 판단에 필요한 입력을 빠짐없이 올리는 것까지만 책임진다.
+ *
+ * [recordId]·[recordingMethod]·[originPackage] 는 **필수 동봉**이다 — 값만 보내면 서버가 거부한다.
+ * [recordId] 는 하루치를 매 sync 재전송해도 중복이 안 쌓이는 유일한 근거다.
+ *
+ * [startTime]·[endTime] 을 함께 보내는 이유는 인증 창이 하루보다 좁은 챌린지가 있어서다 —
+ * 날짜만으로는 어느 창에 귀속되는지 정해지지 않는다.
+ */
+data class HealthReading(
+    val recordId: String,
+    // 단위는 metric 이 정한다 — DISTANCE=km · STEPS=count · EXERCISE_DURATION=분
+    val value: Double,
+    val startTime: Long,
+    val endTime: Long,
+    val recordingMethod: RecordingMethod,
+    // 기록 앱 packageName (예: com.sec.android.app.shealth)
+    val originPackage: String,
+)
 
 /**
- * 움직임 신호의 신뢰 메타데이터(명세 §6.2·§8.2). HEALTH readings 에 필수 동봉 —
- * 값만 보내면 BE 가 거부한다. BE 신뢰 게이트(화이트리스트·MANUAL 거부)의 입력.
+ * 수면 세션 1건 (전송 스펙 §5). **stage 로 쪼개지 않고 세션 단위**로 보낸다.
+ *
+ * [sleepMillis] 는 AWAKE·AWAKE_IN_BED·OUT_OF_BED 를 제외한 stage 합이다. writer 가 stage 를
+ * 주지 않으면 null 이고, 그때는 서버가 [durationMillis] 로 대체한다 — 0 으로 접으면 "안 잤다"가 된다.
  */
-data class HealthOrigin(
-    // 기록 앱 packageName (예: com.sec.android.app.shealth)
-    val dataOrigin: String,
+data class SleepSession(
+    val recordId: String,
+    val start: Long,
+    val end: Long,
+    val durationMillis: Long,
+    val sleepMillis: Long?,
+    // 읽기 시점 SystemClock.elapsedRealtime() — 시각 조작 교차검증(전송 스펙 §6.4)
+    val observedElapsedMillis: Long,
     val recordingMethod: RecordingMethod,
-    val deviceType: HealthDeviceType,
-)
-
-/** Health Connect 읽은 값 1건 (명세 §6.2). 집계·게이트 판정은 BE 가 한다. */
-data class HealthReading(
-    val metric: HealthMetric,
-    val value: Double,
-    // km / count / min
-    val unit: String,
-    // EXERCISE 계열만 채움(예: RUNNING), 그 외 null
-    val exerciseType: String?,
-    val origin: HealthOrigin,
-    // 기록 종료 epoch millis (드레인 TTL·정렬용, 전송 페이로드엔 미포함)
-    val at: Long,
-)
-
-/** 수면 세그먼트 1건 (명세 §6.2, Sleep/Health Connect SleepSessionRecord). */
-data class SleepSegment(
-    val startAt: Long,
-    val endAt: Long,
-    // SLEEPING / AWAKE / DEEP / REM 등 (Health Connect stage, 원문 그대로 보존)
-    val status: String,
+    val originPackage: String,
 )
 
 /**
@@ -156,21 +156,23 @@ sealed interface VerificationSignal {
     }
 
     /**
-     * 움직임(명세 §8). [date] 는 readings 가 귀속되는 로컬 날짜(YYYY-MM-DD).
-     * 하루치를 매 sync 마다 최신 스냅샷으로 재전송한다(누적 거리/걸음은 BE 가 최신값으로 평가).
+     * 움직임(전송 스펙 §2). [metric] 은 **신호 레벨**이라 reading 마다 반복하지 않는다.
+     * [date] 는 readings 가 귀속되는 로컬 날짜(YYYY-MM-DD). 하루치를 매 sync 마다 최신 스냅샷으로
+     * 재전송하고, 중복은 서버가 `recordId` 로 걸러낸다.
      */
     data class Health(
         val date: String,
+        val metric: HealthMetric,
         val readings: List<HealthReading>,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = readings.isEmpty()
     }
 
-    /** 수면(명세 §6.2). 익일 배치라 lag 가 길다(§2.9 maxSignalLagHours≈12h). */
+    /** 수면(전송 스펙 §5). 세션은 깬 뒤 한 번에 기록돼 약 12시간 늦게 도착한다. */
     data class Sleep(
-        val segments: List<SleepSegment>,
+        val sessions: List<SleepSession>,
     ) : VerificationSignal {
-        override val isEmpty: Boolean get() = segments.isEmpty()
+        override val isEmpty: Boolean get() = sessions.isEmpty()
     }
 }
 
