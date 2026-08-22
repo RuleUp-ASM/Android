@@ -136,6 +136,55 @@ class VerificationDtoSerializationTest {
     }
 
     @Test
+    fun `WAKE 는 시퀀스가 아니라 당일 첫 시각과 deviceSecure 로 나간다`() {
+        val batch =
+            SignalBatch(
+                collectedAt = "2026-06-21T00:00:00Z",
+                signals =
+                    listOf(
+                        VerificationSignal.Wake(
+                            firstUnlock = 1_719_600_000_000L,
+                            firstScreenOn = 1_719_599_000_000L,
+                            deviceSecure = true,
+                        ),
+                    ),
+            )
+
+        val encoded = json.encodeToString(metadata().toRequest(batch))
+        val signal = json.decodeFromString<SyncEnvelopeRequest>(encoded).signals.single()
+
+        assertEquals("WAKE", signal.type)
+        assertEquals(1_719_600_000_000L, signal.firstUnlock)
+        assertEquals(1_719_599_000_000L, signal.firstScreenOn)
+        assertEquals(true, signal.deviceSecure)
+        // 기상 판정은 "첫 잠금해제가 목표 시각 안이었나" 하나만 묻는다 — raw 시퀀스를 실어 보내지 않는다.
+        assertTrue(!encoded.contains("screenEvents"))
+    }
+
+    @Test
+    fun `잠금해제가 없으면 WAKE 는 화면 켜짐 폴백만 담는다`() {
+        val batch =
+            SignalBatch(
+                collectedAt = "2026-06-21T00:00:00Z",
+                signals =
+                    listOf(
+                        VerificationSignal.Wake(
+                            firstUnlock = null,
+                            firstScreenOn = 1_719_599_000_000L,
+                            deviceSecure = false,
+                        ),
+                    ),
+            )
+
+        val encoded = json.encodeToString(metadata().toRequest(batch))
+        val signal = json.decodeFromString<SyncEnvelopeRequest>(encoded).signals.single()
+
+        // deviceSecure=false 는 잠금을 안 건 기기라는 뜻 — 서버가 폴백을 쓸지 가르는 입력이라 함께 간다.
+        assertEquals(null, signal.firstUnlock)
+        assertEquals(false, signal.deviceSecure)
+    }
+
+    @Test
     fun `HEALTH 신호가 date·readings·origin 메타데이터와 함께 라운드트립한다`() {
         val batch =
             SignalBatch(

@@ -40,6 +40,7 @@ data class GeofenceEventRequest(
     val isMock: Boolean? = null,
 )
 
+/** 대상 앱 전후면 전이 1건(전송 스펙 §3). 페어링·합산은 서버가 한다. */
 @Serializable
 data class AppEventRequest(
     @SerialName("packageName")
@@ -47,15 +48,7 @@ data class AppEventRequest(
     @SerialName("eventType")
     val eventType: String,
     @SerialName("at")
-    val at: String,
-)
-
-@Serializable
-data class ScreenEventRequest(
-    @SerialName("event")
-    val event: String,
-    @SerialName("at")
-    val at: String,
+    val at: Long,
 )
 
 /** 보조 측위 샘플 1건(전송 스펙 §1). 3순위 좌표 가중 체류 챌린지에만 붙는다. */
@@ -112,8 +105,8 @@ data class SleepSegmentRequest(
 
 /**
  * 신호 1건 (전송 스펙 §1~§5). [type] 디스크리미네이터 + 타입별 옵셔널 필드.
- * GEOFENCE → [events], SCREEN_TIME → [appEvents]/[screenEvents], LOCATION → [points],
- * HEALTH → [date]/[readings], SLEEP → [segments].
+ * GEOFENCE → [events], SCREEN_TIME → [appEvents], WAKE → [firstUnlock]/[firstScreenOn]/[deviceSecure],
+ * LOCATION → [points], HEALTH → [date]/[readings], SLEEP → [segments].
  */
 @Serializable
 data class SignalRequest(
@@ -123,8 +116,12 @@ data class SignalRequest(
     val events: List<GeofenceEventRequest>? = null,
     @SerialName("appEvents")
     val appEvents: List<AppEventRequest>? = null,
-    @SerialName("screenEvents")
-    val screenEvents: List<ScreenEventRequest>? = null,
+    @SerialName("firstUnlock")
+    val firstUnlock: Long? = null,
+    @SerialName("firstScreenOn")
+    val firstScreenOn: Long? = null,
+    @SerialName("deviceSecure")
+    val deviceSecure: Boolean? = null,
     @SerialName("points")
     val points: List<LocationPointRequest>? = null,
     @SerialName("date")
@@ -271,16 +268,17 @@ private fun VerificationSignal.toDto(): SignalRequest =
                         AppEventRequest(
                             packageName = it.packageName,
                             eventType = it.eventType.name,
-                            at = it.at.toIso(),
+                            at = it.at,
                         )
                     },
-                screenEvents =
-                    screenEvents.map {
-                        ScreenEventRequest(
-                            event = it.event.name,
-                            at = it.at.toIso(),
-                        )
-                    },
+            )
+
+        is VerificationSignal.Wake ->
+            SignalRequest(
+                type = "WAKE",
+                firstUnlock = firstUnlock,
+                firstScreenOn = firstScreenOn,
+                deviceSecure = deviceSecure,
             )
 
         is VerificationSignal.Locations ->

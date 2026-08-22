@@ -7,7 +7,6 @@ import com.ruleup.verification.data.db.health.HealthReadingEntity
 import com.ruleup.verification.data.db.health.HealthTargetEntity
 import com.ruleup.verification.data.db.health.SleepSegmentEntity
 import com.ruleup.verification.data.db.usage.KIND_APP
-import com.ruleup.verification.data.db.usage.KIND_SCREEN
 import com.ruleup.verification.data.db.usage.UsageEventEntity
 import com.ruleup.verification.domain.entity.AppEventType
 import com.ruleup.verification.domain.entity.AppUsageEvent
@@ -21,8 +20,6 @@ import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.HealthTarget
 import com.ruleup.verification.domain.entity.LocationPoint
 import com.ruleup.verification.domain.entity.RecordingMethod
-import com.ruleup.verification.domain.entity.ScreenEvent
-import com.ruleup.verification.domain.entity.ScreenEventType
 import com.ruleup.verification.domain.entity.SleepSegment
 
 internal fun GeofenceTransitionEntity.toDomain(): GeofenceTransitionEvent =
@@ -74,17 +71,6 @@ internal fun UsageEventEntity.toAppEvent(): AppUsageEvent? =
         )
     }
 
-/** kind=SCREEN 인 행만 화면/잠금해제 이벤트로 변환(아니면 null). */
-internal fun UsageEventEntity.toScreenEvent(): ScreenEvent? =
-    if (kind != KIND_SCREEN) {
-        null
-    } else {
-        ScreenEvent(
-            event = eventType.toScreenEventType(),
-            at = occurredAt,
-        )
-    }
-
 internal fun HealthReadingEntity.toDomain(): HealthReading =
     HealthReading(
         metric = metric.toHealthMetric(),
@@ -129,5 +115,3 @@ private fun String.toRecordingMethod(): RecordingMethod = RecordingMethod.entrie
 private fun String.toHealthDeviceType(): HealthDeviceType = HealthDeviceType.entries.find { it.name == this } ?: HealthDeviceType.UNKNOWN
 
 private fun String.toAppEventType(): AppEventType = AppEventType.entries.find { it.name == this } ?: AppEventType.RESUMED
-
-private fun String.toScreenEventType(): ScreenEventType = ScreenEventType.entries.find { it.name == this } ?: ScreenEventType.UNLOCK
