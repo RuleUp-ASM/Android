@@ -29,9 +29,8 @@ internal fun GeofenceTransitionEntity.toDomain(): GeofenceTransitionEvent =
     GeofenceTransitionEvent(
         requestId = requestId,
         transition = transition.toGeofenceTransitionType(),
-        at = occurredAt,
-        lat = lat,
-        lng = lng,
+        observedAt = occurredAt,
+        observedElapsedMillis = observedElapsedMillis,
         accuracy = accuracy,
         isMock = isMock,
     )
