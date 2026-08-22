@@ -8,8 +8,8 @@ interface SyncScheduler {
     /** 30분 주기 sync 를 보장(이미 예약돼 있으면 유지). 앱 시작 시 호출. */
     fun ensureScheduled()
 
-    /** 서버 권장 간격(nextSyncAfterSec)으로 다음 주기를 동적 재설정한다. */
-    fun reschedule(nextSyncAfterSec: Int)
+    /** 서버가 내린 간격(`flushIntervalSec`)으로 다음 주기를 동적 재설정한다. */
+    fun reschedule(flushIntervalSec: Int)
 
     /**
      * push(지오펜스 발화 등) 발생 시 expedited OneTimeWork 로 즉시 catch-up flush 를 건다(전송 스펙 §0.6).

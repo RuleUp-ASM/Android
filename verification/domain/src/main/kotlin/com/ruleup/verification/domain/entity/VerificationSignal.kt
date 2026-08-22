@@ -116,15 +116,25 @@ data class SleepSession(
 )
 
 /**
- * sync 페이로드의 신호 단위 (명세 §3.2). 활성 챌린지 관련 신호로만 스코핑한다.
+ * sync 페이로드의 신호 단위 (전송 스펙 §1~§5). 활성 챌린지 관련 신호로만 스코핑한다.
  */
 sealed interface VerificationSignal {
     val isEmpty: Boolean
+
+    /**
+     * 이벤트 목록을 앞·뒤 반으로 가른다 (413 재전송용). 가를 것이 없으면 뒤쪽이 null 이다.
+     *
+     * 신호 목록이 아니라 **신호 안의 이벤트**를 가르는 게 핵심이다 — 하루치 걸음이 readings 수천 건인
+     * HEALTH 신호 하나로 들어오므로, 신호 단위로 나누면 그 한 건이 그대로 남아 상한을 다시 넘는다.
+     */
+    fun halve(): Pair<VerificationSignal, VerificationSignal?>
 
     data class GeofenceTransitions(
         val events: List<GeofenceTransitionEvent>,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = events.isEmpty()
+
+        override fun halve(): Pair<VerificationSignal, VerificationSignal?> = events.halved(::GeofenceTransitions)
     }
 
     /** 앱 사용(전송 스펙 §3). 페어링·합산은 서버가 하므로 시퀀스를 그대로 보낸다. */
@@ -132,6 +142,8 @@ sealed interface VerificationSignal {
         val appEvents: List<AppUsageEvent>,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = appEvents.isEmpty()
+
+        override fun halve(): Pair<VerificationSignal, VerificationSignal?> = appEvents.halved(::ScreenTime)
     }
 
     /**
@@ -147,12 +159,17 @@ sealed interface VerificationSignal {
         val deviceSecure: Boolean,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = firstUnlock == null && firstScreenOn == null
+
+        /** 목록이 아니라 당일 가공값 한 벌이라 가를 수 없다 — 통째로 앞쪽에 남는다. */
+        override fun halve(): Pair<VerificationSignal, VerificationSignal?> = this to null
     }
 
     data class Locations(
         val points: List<LocationPoint>,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = points.isEmpty()
+
+        override fun halve(): Pair<VerificationSignal, VerificationSignal?> = points.halved(::Locations)
     }
 
     /**
@@ -166,6 +183,10 @@ sealed interface VerificationSignal {
         val readings: List<HealthReading>,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = readings.isEmpty()
+
+        // date·metric 은 신호 레벨 값이라 양쪽 조각이 그대로 물려받는다.
+        override fun halve(): Pair<VerificationSignal, VerificationSignal?> =
+            readings.halved { Health(date = date, metric = metric, readings = it) }
     }
 
     /** 수면(전송 스펙 §5). 세션은 깬 뒤 한 번에 기록돼 약 12시간 늦게 도착한다. */
@@ -173,6 +194,8 @@ sealed interface VerificationSignal {
         val sessions: List<SleepSession>,
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = sessions.isEmpty()
+
+        override fun halve(): Pair<VerificationSignal, VerificationSignal?> = sessions.halved(::Sleep)
     }
 }
 
@@ -185,6 +208,29 @@ data class SignalBatch(
     val signals: List<VerificationSignal>,
 ) {
     val isEmpty: Boolean get() = signals.all { it.isEmpty }
+
+    /**
+     * 413 `SYNC_PAYLOAD_TOO_LARGE` 를 받았을 때 쪼갤 두 조각. 신호마다 이벤트를 반으로 갈라
+     * 앞쪽·뒤쪽 배치를 만든다.
+     *
+     * 더 쪼갤 수 없으면(모든 신호가 1건 이하) **null** 이다 — 호출자가 여기서 멈춰야 같은 요청을
+     * 무한히 되풀이하지 않는다. 두 조각은 같은 [collectedAt] 을 쓴다. 배치 키는 버퍼를 synced 로
+     * 표시하는 단위지 전송 단위가 아니고, 서버 멱등은 신호 단위로 걸린다.
+     */
+    fun split(): Pair<SignalBatch, SignalBatch>? {
+        val halves = signals.map { it.halve() }
+        val tail = halves.mapNotNull { it.second }
+        if (tail.isEmpty()) return null
+        val head = halves.map { it.first }.filterNot { it.isEmpty }
+        return SignalBatch(collectedAt, head) to SignalBatch(collectedAt, tail)
+    }
+}
+
+/** 목록을 앞(올림)·뒤로 갈라 같은 신호 타입으로 다시 감싼다. 1건 이하면 뒤쪽이 null 이다. */
+private fun <T> List<T>.halved(wrap: (List<T>) -> VerificationSignal): Pair<VerificationSignal, VerificationSignal?> {
+    if (size <= 1) return wrap(this) to null
+    val cut = (size + 1) / 2
+    return wrap(take(cut)) to wrap(drop(cut))
 }
 
 /** 움직임 수집 대상(명세 §3.2·§8). 어떤 metric 을, (운동 계열이면) 어떤 운동만 읽을지. */

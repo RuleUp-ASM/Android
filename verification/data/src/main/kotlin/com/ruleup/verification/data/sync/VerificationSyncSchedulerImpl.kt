@@ -32,9 +32,9 @@ class VerificationSyncSchedulerImpl
             )
         }
 
-        override fun reschedule(nextSyncAfterSec: Int) {
+        override fun reschedule(flushIntervalSec: Int) {
             // WorkManager 최소 주기 15분 floor 적용.
-            val minutes = (nextSyncAfterSec / SECONDS_PER_MINUTE).coerceAtLeast(MIN_INTERVAL_MIN)
+            val minutes = (flushIntervalSec / SECONDS_PER_MINUTE).coerceAtLeast(MIN_INTERVAL_MIN)
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 VerificationSyncWorker.WORK_NAME,
                 ExistingPeriodicWorkPolicy.UPDATE,

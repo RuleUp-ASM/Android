@@ -15,6 +15,12 @@ class SyncTooFrequentException(
 class InvalidSignalPayloadException : Exception("신호 페이로드가 유효하지 않습니다.")
 
 /**
+ * 페이로드가 서버 상한 초과 (명세 sync, HTTP 413 SYNC_PAYLOAD_TOO_LARGE).
+ * 배치를 반으로 갈라 재전송한다. 더 못 쪼개는데도 초과면 폐기한다 — 같은 요청을 무한히 되풀이한다.
+ */
+class SyncPayloadTooLargeException : Exception("한 번에 보낼 수 있는 신호 양을 넘었습니다.")
+
+/**
  * 수동 인증 당일 중복 제출 (명세 §3.4, HTTP 409 ALREADY_VERIFIED).
  * 오류가 아니라 "이미 인증됨"으로 안내한다(명세 §6.5).
  */

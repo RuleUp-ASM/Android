@@ -6,6 +6,9 @@ import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
+import com.ruleup.verification.domain.entity.GapReason
+import com.ruleup.verification.domain.entity.HealthMetric
+import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.LocationPoint
@@ -19,11 +22,13 @@ import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
+import com.ruleup.verification.domain.entity.RecordingMethod
 import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SignalScope
+import com.ruleup.verification.domain.entity.SyncPayloadTooLargeException
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
@@ -38,6 +43,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -142,20 +148,138 @@ class RunSyncUseCaseTest {
             assertFalse(signalRepo.markSyncedCalled)
         }
 
+    @Test
+    fun `413 이면 배치를 반으로 갈라 나눠 보낸다`() =
+        runBlocking {
+            // 다음 주기로 미루면 같은 크기로 다시 막힌다 — 이번 실행 안에서 쪼개야 신호가 나간다.
+            val signalRepo = FakeSignalRepository(drain = healthBatch(readings = 4))
+            val verificationRepo =
+                FakeVerificationRepository(
+                    maxEvents = 2,
+                    resultFor = { syncResult(challengeId = "c" + it.eventCount()) },
+                )
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
+                    verificationRepo,
+                )
+
+            val result = useCase(scope, collectedAt)
+
+            // 원본 1회(413) + 조각 2회.
+            assertEquals(3, verificationRepo.attempts)
+            assertEquals(listOf(2, 2), verificationRepo.acceptedBatches.map { it.eventCount() })
+            assertNotNull(result)
+            assertTrue(signalRepo.markSyncedCalled)
+        }
+
+    @Test
+    fun `쪼갠 조각들의 갱신이 하나로 합쳐진다`() =
+        runBlocking {
+            // 앞 조각의 updatedChallenges 를 버리면 그 챌린지의 진행률 캐시가 이번 sync 를 통째로 놓친다.
+            var seq = 0
+            val verificationRepo =
+                FakeVerificationRepository(
+                    maxEvents = 2,
+                    resultFor = { syncResult(challengeId = "c" + seq++) },
+                )
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    FakeSignalRepository(drain = healthBatch(readings = 4)),
+                    FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
+                    verificationRepo,
+                )
+
+            val result = useCase(scope, collectedAt)
+
+            assertEquals(listOf("c0", "c1"), result?.updatedChallenges?.map { it.challengeId })
+        }
+
+    @Test
+    fun `gap 은 첫 조각에만 실린다`() =
+        runBlocking {
+            // 같은 공백 구간을 조각 수만큼 되풀이해 보고할 이유가 없다 — 판정 입력이 아니라 안내용이다.
+            val verificationRepo = FakeVerificationRepository(maxEvents = 2, resultFor = { syncResult() })
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    FakeSignalRepository(drain = healthBatch(readings = 4), gaps = listOf(gap())),
+                    FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
+                    verificationRepo,
+                )
+
+            useCase(scope, collectedAt)
+
+            assertEquals(listOf(1, 0), verificationRepo.acceptedGapCounts)
+        }
+
+    @Test
+    fun `더 쪼갤 수 없는데도 413 이면 폐기한다`() =
+        runBlocking {
+            // 다음 주기에 같은 배치를 다시 보내도 결과가 같다 — 버퍼에 남겨 두면 영영 막힌다.
+            val signalRepo = FakeSignalRepository(drain = healthBatch(readings = 1))
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    signalRepo,
+                    FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
+                    FakeVerificationRepository(maxEvents = 0, resultFor = { syncResult() }),
+                )
+
+            assertFailsWith<SyncPayloadTooLargeException> { useCase(scope, collectedAt) }
+            assertTrue(signalRepo.markSyncedCalled)
+        }
+
+    private fun healthBatch(readings: Int): SignalBatch =
+        SignalBatch(
+            collectedAt = collectedAt,
+            signals =
+                listOf(
+                    VerificationSignal.Health(
+                        date = "2026-06-24",
+                        metric = HealthMetric.STEPS,
+                        readings =
+                            (1..readings).map {
+                                HealthReading(
+                                    recordId = "hc-" + it,
+                                    value = it.toDouble(),
+                                    startTime = it.toLong(),
+                                    endTime = it.toLong(),
+                                    recordingMethod = RecordingMethod.AUTO,
+                                    originPackage = "com.sec.android.app.shealth",
+                                )
+                            },
+                    ),
+                ),
+        )
+
+    private fun gap(): SignalGap =
+        SignalGap(
+            signalType = "HEALTH",
+            reason = GapReason.PERMISSION_MISSING,
+            fromMillis = 0L,
+            toMillis = 1L,
+            recoverable = true,
+        )
+
     private fun nonEmptyBatch(): SignalBatch =
         SignalBatch(
             collectedAt = collectedAt,
             signals = listOf(VerificationSignal.Locations(listOf(LocationPoint(37.0, 127.0, 5f, false, 1L)))),
         )
 
-    private fun syncResult(): SyncResult =
+    private fun syncResult(challengeId: String = "c1"): SyncResult =
         SyncResult(
             syncedAt = collectedAt,
-            nextSyncAfterSec = 1800,
+            flushIntervalSec = 1800,
+            maxPayloadBytes = 1_048_576,
             updatedChallenges =
                 listOf(
                     com.ruleup.verification.domain.entity.UpdatedChallenge(
-                        "c1",
+                        challengeId,
                         com.ruleup.verification.domain.entity.TodayStatus.SUCCESS,
                         50.0,
                     ),
@@ -216,9 +340,15 @@ class RunSyncUseCaseTest {
     private class FakeVerificationRepository(
         private val result: SyncResult? = null,
         private val error: Throwable? = null,
+        // 서버 상한 흉내 — 이벤트 수가 이 값을 넘으면 413 을 던진다. null 이면 상한 없음.
+        private val maxEvents: Int? = null,
+        private val resultFor: ((SignalBatch) -> SyncResult)? = null,
     ) : VerificationRepository {
         var syncCalled = false
         var syncedBatch: SignalBatch? = null
+        var attempts = 0
+        val acceptedBatches = mutableListOf<SignalBatch>()
+        val acceptedGapCounts = mutableListOf<Int>()
 
         override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy = error("unused")
 
@@ -228,8 +358,12 @@ class RunSyncUseCaseTest {
         ): SyncResult {
             syncCalled = true
             syncedBatch = batch
+            attempts++
             error?.let { throw it }
-            return requireNotNull(result)
+            if (maxEvents != null && batch.eventCount() > maxEvents) throw SyncPayloadTooLargeException()
+            acceptedBatches += batch
+            acceptedGapCounts += metadata.gaps.size
+            return resultFor?.invoke(batch) ?: requireNotNull(result)
         }
 
         override suspend fun getProgress(filter: ProgressFilter): ProgressSnapshot = error("unused")
@@ -283,3 +417,16 @@ class RunSyncUseCaseTest {
         ): Place? = error("unused")
     }
 }
+
+/** 배치가 실어 보내는 이벤트 총 개수 — 테스트에서 서버 상한을 흉내 낼 때 쓴다. */
+private fun SignalBatch.eventCount(): Int =
+    signals.sumOf { signal ->
+        when (signal) {
+            is VerificationSignal.GeofenceTransitions -> signal.events.size
+            is VerificationSignal.ScreenTime -> signal.appEvents.size
+            is VerificationSignal.Locations -> signal.points.size
+            is VerificationSignal.Health -> signal.readings.size
+            is VerificationSignal.Sleep -> signal.sessions.size
+            is VerificationSignal.Wake -> 1
+        }
+    }

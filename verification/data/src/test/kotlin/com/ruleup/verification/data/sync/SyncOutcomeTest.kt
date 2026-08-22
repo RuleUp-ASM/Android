@@ -1,6 +1,7 @@
 package com.ruleup.verification.data.sync
 
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
+import com.ruleup.verification.domain.entity.SyncPayloadTooLargeException
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,6 +15,11 @@ class SyncOutcomeTest {
     @Test
     fun `400 INVALID_SIGNAL_PAYLOAD 은 DISCARD - 폐기 후 success`() {
         assertEquals(SyncOutcome.DISCARD, syncOutcomeFor(InvalidSignalPayloadException()))
+    }
+
+    @Test
+    fun `쪼개도 안 되는 413 은 DISCARD - 다음 주기에 보내도 결과가 같다`() {
+        assertEquals(SyncOutcome.DISCARD, syncOutcomeFor(SyncPayloadTooLargeException()))
     }
 
     @Test
