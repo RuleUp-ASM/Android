@@ -1,6 +1,7 @@
 package com.ruleup.verification.domain.usecase
 
 import com.ruleup.verification.domain.entity.AnchorSet
+import com.ruleup.verification.domain.entity.AppealHistoryItem
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
@@ -380,6 +381,10 @@ class RunSyncUseCaseTest {
             challengeId: String,
             anchors: AnchorSet,
         ): MyLocation = error("unused")
+
+        override suspend fun uploadAppealImage(imageUri: String): String = error("unused")
+
+        override suspend fun getMyAppeals(): List<AppealHistoryItem> = error("unused")
 
         override suspend fun acknowledgeResult(verificationId: String) = error("unused")
 
