@@ -1,23 +1,6 @@
 package com.ruleup.verification.domain.entity
 
 /**
- * 인증 경로 (명세 §9.2). [MANUAL_FALLBACK] 은 잠정 성공 — 이의 윈도우 후 확정.
- */
-enum class VerifiedVia(
-    val value: String,
-) {
-    AUTO("AUTO"),
-    MANUAL("MANUAL"),
-    MANUAL_FALLBACK("MANUAL_FALLBACK"),
-    OBJECTION("OBJECTION"),
-    ;
-
-    companion object {
-        fun fromValue(value: String?): VerifiedVia? = entries.find { it.value == value }
-    }
-}
-
-/**
  * 수동 인증 제출 결과 (명세: POST /challenges/{id}/verifications).
  *
  * 제출 즉시 확정되므로 [status] 는 `DONE` 고정이고 잠정 상태가 없다 — 자동 방의 실패 구제는

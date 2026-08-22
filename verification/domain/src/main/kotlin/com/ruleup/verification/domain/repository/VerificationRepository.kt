@@ -18,7 +18,6 @@ import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.TodayResult
-import com.ruleup.verification.domain.entity.VerificationDetail
 
 /**
  * 인증 서버 포트 (명세 §3). 도메인은 본 포트만 알고, data 어댑터가 Retrofit 으로 채운다.
@@ -50,12 +49,6 @@ interface VerificationRepository {
      * 모달이 같은 응답을 쓴다. 연속 일수·이의 잔여 횟수도 여기서 온다.
      */
     suspend fun getTodayResult(challengeId: String): TodayResult
-
-    /** 챌린지 인증 여부 판단(검증 결과 + 실패 사유, 명세 3.3). */
-    suspend fun getVerificationDetail(
-        challengeId: String,
-        logDays: Int = 7,
-    ): VerificationDetail
 
     /**
      * 셋업(앵커·대상앱 바인딩) 제출(명세 setup). 모두 충족 시 [com.ruleup.verification.domain.entity.SetupStatus.READY],

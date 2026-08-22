@@ -20,7 +20,6 @@ import com.ruleup.verification.data.dto.TodayResultResponse
 import com.ruleup.verification.data.dto.UpdateMyLocationRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
-import com.ruleup.verification.data.dto.VerificationDetailResponse
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -47,13 +46,6 @@ interface VerificationApi {
     suspend fun getProgress(
         @Query("status") status: String? = null,
     ): BaseResponse<ProgressResponse>
-
-    // 3.3 챌린지 인증 여부 판단(검증 결과 + 실패 사유)
-    @GET("v1/challenges/{challengeId}/verification")
-    suspend fun getVerification(
-        @Path("challengeId") challengeId: String,
-        @Query("logDays") logDays: Int? = null,
-    ): BaseResponse<VerificationDetailResponse>
 
     // 오늘 인증 결과 + 판정 결과 모달 데이터. 구 GET /{id}/verification 을 대체하는 계약이다.
     @GET("v1/challenges/{challengeId}/verifications/today")

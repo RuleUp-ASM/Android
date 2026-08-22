@@ -46,8 +46,6 @@ object AppRoutes {
     const val MY_PROFILE_EDIT = "my/profile/edit" // 프로필 편집(마이 → 재편집)
 
     // verification
-    const val VERIFICATION_PROGRESS = "verification/progress" // 진입점 (내 챌린지 진행률 일괄)
-    const val VERIFICATION_DETAIL = "verification/detail" // 진입점 (홈 카드 → 검증 결과/실패)
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)
     const val VERIFICATION_MANUAL = "verification/manual" // 진입점 (수동 인증 제출, VF-04)
 }

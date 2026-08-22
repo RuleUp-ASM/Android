@@ -27,19 +27,6 @@ enum class TodayStatus {
     }
 }
 
-/** 챌린지 전체 진행 상태 (명세 3.3 verification.overallStatus). */
-enum class OverallStatus {
-    ON_TRACK,
-    AT_RISK,
-    FAILED,
-    COMPLETED,
-    ;
-
-    companion object {
-        fun fromValue(value: String?): OverallStatus = entries.find { it.name == value } ?: ON_TRACK
-    }
-}
-
 /**
  * 인증 실패/미충족 사유 코드 (명세 3.3 failureReason enum).
  * 미인식 코드는 [UNKNOWN] 으로 떨궈 카피/CTA 매핑이 깨지지 않게 한다(명세 §6.4).

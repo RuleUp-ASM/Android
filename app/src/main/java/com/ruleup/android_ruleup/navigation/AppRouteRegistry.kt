@@ -52,14 +52,10 @@ import com.ruleup.profile.presentation.invite.FriendInviteScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
 import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
-import com.ruleup.verification.domain.navigation.VerificationDetailPage
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.navigation.VerificationManualPage
-import com.ruleup.verification.domain.navigation.VerificationProgressPage
-import com.ruleup.verification.presentation.detail.VerificationDetailScreen
 import com.ruleup.verification.presentation.location.VerificationLocationScreen
 import com.ruleup.verification.presentation.manual.VerificationManualScreen
-import com.ruleup.verification.presentation.progress.VerificationProgressScreen
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -178,16 +174,6 @@ val appRoutes: List<AppRoute> =
             path = ChallengeSettingsPage.PATH,
             render = { args ->
                 ChallengeSettingsScreen(challengeId = args[ChallengeSettingsPage.ARG_CHALLENGE_ID].orEmpty())
-            },
-        ),
-        AppRoute(
-            path = VerificationProgressPage.PATH,
-            render = { VerificationProgressScreen() },
-        ),
-        AppRoute(
-            path = VerificationDetailPage.PATH,
-            render = { args ->
-                VerificationDetailScreen(challengeId = args[VerificationDetailPage.ARG_CHALLENGE_ID].orEmpty())
             },
         ),
         AppRoute(

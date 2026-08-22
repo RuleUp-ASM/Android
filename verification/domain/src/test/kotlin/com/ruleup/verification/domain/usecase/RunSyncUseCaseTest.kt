@@ -31,7 +31,6 @@ import com.ruleup.verification.domain.entity.SyncPayloadTooLargeException
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
-import com.ruleup.verification.domain.entity.VerificationDetail
 import com.ruleup.verification.domain.entity.VerificationSignal
 import com.ruleup.verification.domain.repository.EnvelopeMetadataProvider
 import com.ruleup.verification.domain.repository.SignalCollector
@@ -368,11 +367,6 @@ class RunSyncUseCaseTest {
         override suspend fun getProgress(filter: ProgressFilter): ProgressSnapshot = error("unused")
 
         override suspend fun getTodayResult(challengeId: String) = error("unused")
-
-        override suspend fun getVerificationDetail(
-            challengeId: String,
-            logDays: Int,
-        ): VerificationDetail = error("unused")
 
         override suspend fun setupChallenge(
             challengeId: String,
