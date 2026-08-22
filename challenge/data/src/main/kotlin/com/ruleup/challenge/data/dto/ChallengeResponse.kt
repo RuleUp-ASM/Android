@@ -31,6 +31,7 @@ import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.RoutineTemplate
+import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Tier
@@ -578,8 +579,9 @@ data class ChallengeSetupInfoResponse(
     val setupStatus: String? = null,
     @SerialName("manual")
     val manual: Boolean? = null,
-    @SerialName("verificationMethods")
-    val verificationMethods: List<String>? = null,
+    // 명세는 단수 String 이다. 서버가 배열을 주던 구 계약은 폐기됐다
+    @SerialName("verificationMethod")
+    val verificationMethod: String? = null,
     @SerialName("requiredPermissions")
     val requiredPermissions: List<String>? = null,
     @SerialName("requiresAnchors")
@@ -593,8 +595,14 @@ data class ChallengeSetupInfoResponse(
 internal fun ChallengeSetupInfoResponse.toDomain(): ChallengeSetupInfo =
     ChallengeSetupInfo(
         manual = manual ?: false,
+        // 모르면 아직 셋업 전으로 본다 — 준비됐다고 접으면 판정이 안 도는 이유를 화면이 설명 못 한다.
+        ready = setupStatus == SETUP_STATUS_READY,
+        // 미인식 값은 SELF_CHECK — 모르는 자동 인증을 처리하는 척하는 것보다 수동으로 보이는 편이 안전하다.
+        verificationMethod = VerificationMethod.fromValue(verificationMethod) ?: VerificationMethod.SELF_CHECK,
         requiredPermissions = requiredPermissions.orEmpty(),
         requiresAnchors = requiresAnchors ?: false,
         anchorsConfigured = anchorsConfigured ?: false,
         requiresTargetPackages = requiresTargetPackages ?: false,
     )
+
+private const val SETUP_STATUS_READY = "READY"
