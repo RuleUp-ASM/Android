@@ -33,7 +33,7 @@ interface SignalGapDao {
     @Insert
     suspend fun insert(entity: SignalGapEntity)
 
-    @Query("UPDATE signal_gap SET collectedAt = :key WHERE synced = 0 AND collectedAt IS NULL")
+    @Query("UPDATE signal_gap SET collectedAt = :key WHERE synced = 0")
     suspend fun tagPending(key: String)
 
     @Query("SELECT * FROM signal_gap WHERE collectedAt = :key AND synced = 0")

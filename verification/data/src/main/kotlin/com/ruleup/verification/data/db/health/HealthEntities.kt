@@ -82,7 +82,7 @@ interface HealthReadingDao {
     @Query("DELETE FROM health_reading WHERE synced = 0 AND collectedAt IS NULL")
     suspend fun deleteUntagged()
 
-    @Query("UPDATE health_reading SET collectedAt = :key WHERE synced = 0 AND collectedAt IS NULL")
+    @Query("UPDATE health_reading SET collectedAt = :key WHERE synced = 0")
     suspend fun tagPending(key: String)
 
     @Query("SELECT * FROM health_reading WHERE collectedAt = :key AND synced = 0 ORDER BY occurredAt ASC")
@@ -103,7 +103,7 @@ interface SleepSessionDao {
     @Query("DELETE FROM sleep_session WHERE synced = 0 AND collectedAt IS NULL")
     suspend fun deleteUntagged()
 
-    @Query("UPDATE sleep_session SET collectedAt = :key WHERE synced = 0 AND collectedAt IS NULL")
+    @Query("UPDATE sleep_session SET collectedAt = :key WHERE synced = 0")
     suspend fun tagPending(key: String)
 
     @Query("SELECT * FROM sleep_session WHERE collectedAt = :key AND synced = 0 ORDER BY startAt ASC")

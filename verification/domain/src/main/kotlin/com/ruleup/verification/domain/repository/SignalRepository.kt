@@ -11,6 +11,9 @@ interface SignalRepository {
     /**
      * 미전송분을 배치로 드레인한다. [collectedAt] 멱등 키를 부여해 묶고, 비어 있으면 null.
      * 200 받기 전엔 synced 미표시로 두어(중복 허용) BE 멱등이 방어한다(명세 §3.4).
+     *
+     * **앞 배치가 실패해 남은 신호도 이번 배치에 합쳐 끌어온다**(전송 스펙 「오프라인 복구」).
+     * 실패분을 남겨만 두고 다시 싣지 않으면 그 신호는 버퍼에 갇힌 채 판정에서 조용히 빠진다.
      */
     suspend fun drainPending(collectedAt: String): SignalBatch?
 
