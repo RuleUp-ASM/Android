@@ -77,6 +77,22 @@ interface VerificationRepository {
     suspend fun getMyLocation(challengeId: String): MyLocation?
 
     /**
+     * 내 인증 장소(앵커) 교체(명세: PUT /my-location). 보낸 목록으로 세트 전체를 갈아끼운다(부분 수정 아님).
+     *
+     * 성공하면 **즉시 적용**되고 그 달의 변경 1회를 소진한다. 첫 설정([setupChallenge])은 소진하지 않는다.
+     * 실패는 화면이 문구를 갈라야 하므로 도메인 예외로 온다 —
+     * [com.ruleup.verification.domain.entity.LocationLockedInWindowException](409, 익일 재시도),
+     * [com.ruleup.verification.domain.entity.SettingChangeLimitException](429, 이번 달 소진),
+     * [com.ruleup.verification.domain.entity.InvalidAnchorException](400, 좌표·개수).
+     *
+     * 언제부터 다시 바꿀 수 있는지는 [getMyLocation] 의 `nextChangeAvailableAt` 에서 읽는다.
+     */
+    suspend fun updateMyLocation(
+        challengeId: String,
+        anchors: AnchorSet,
+    ): MyLocation
+
+    /**
      * 내 스크린타임 대상 앱 조회(명세: GET /my-screen-apps). 앱 셋업/수정 재진입 시 복원용.
      * 참여(ACTIVE) 멤버만 접근한다. 대상 앱이 하나도 없으면(SCREENTIME_NOT_CONFIGURED, 미설정)
      * [null] 을 돌려준다. 그 외 실패(401/403 등)는 [com.ruleup.network.dto.ApiException] 로 전파된다.
@@ -106,6 +122,24 @@ interface VerificationRepository {
         reason: String,
         imageUrl: String? = null,
     ): AppealReceipt
+
+    /**
+     * 판정 결과를 봤다고 알린다(명세: POST /verifications/{verificationId}/ack).
+     *
+     * 호출하면 이후 `today` 응답에서 `unacknowledgedResult` 가 사라져 모달이 다시 뜨지 않는다.
+     * **멱등이라 중복 호출이 안전하다** — 실패해도 모달은 닫고 다음 진입에 다시 띄우면 되므로
+     * 호출부가 사용자에게 알릴 실패가 아니다(프론트엔드 테크스펙 4-6).
+     */
+    suspend fun acknowledgeResult(verificationId: String)
+
+    /**
+     * 수동 인증 취소(명세: DELETE /verifications/{verificationId}). 당일(KST) 안에서만 가능하다.
+     *
+     * 기한이 지나면 [com.ruleup.verification.domain.entity.CancelWindowClosedException](409) 이고,
+     * 자동 판정 건에 대고 부르면 `NOT_MANUAL_VERIFICATION`(409) 이 그대로 전파된다 — 화면이
+     * 자동 방에 취소 버튼을 두지 않는 것이 전제라 도메인 어휘로 올리지 않는다.
+     */
+    suspend fun cancelManual(verificationId: String)
 
     /** 수동 인증 제출(명세 3.4·§9). PHOTO 는 [imageUrl] 필수. [asFallback]=true 면 예비 폴백(§9.2). */
     suspend fun submitManual(

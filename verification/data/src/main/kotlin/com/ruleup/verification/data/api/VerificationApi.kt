@@ -1,7 +1,9 @@
 package com.ruleup.verification.data.api
 
 import com.ruleup.network.dto.BaseResponse
+import com.ruleup.verification.data.dto.AcknowledgeResponse
 import com.ruleup.verification.data.dto.AppealResponse
+import com.ruleup.verification.data.dto.CancelManualResponse
 import com.ruleup.verification.data.dto.ChallengeSetupRequest
 import com.ruleup.verification.data.dto.ChallengeSetupResponse
 import com.ruleup.verification.data.dto.IntroRequest
@@ -15,10 +17,12 @@ import com.ruleup.verification.data.dto.SubmitAppealRequest
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.TodayResultResponse
+import com.ruleup.verification.data.dto.UpdateMyLocationRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
 import com.ruleup.verification.data.dto.VerificationDetailResponse
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -77,6 +81,13 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<MyLocationResponse>
 
+    // 앵커 세트 교체 (PUT /my-location): 월 1회, 인증 윈도우 중에는 409 로 거부된다
+    @PUT("v1/challenges/{challengeId}/my-location")
+    suspend fun updateMyLocation(
+        @Path("challengeId") challengeId: String,
+        @Body request: UpdateMyLocationRequest,
+    ): BaseResponse<MyLocationResponse>
+
     // 스크린타임 대상 앱 조회 (GET /my-screen-apps): 셋업/수정 재진입 시 이전 선택 복원
     @GET("v1/challenges/{challengeId}/my-screen-apps")
     suspend fun getMyScreenApps(
@@ -89,6 +100,18 @@ interface VerificationApi {
         @Path("challengeId") challengeId: String,
         @Body request: UpdateScreenAppsRequest,
     ): BaseResponse<UpdateScreenAppsResponse>
+
+    // 판정 결과 확인 (POST ack): 결과 모달을 봤다는 표시. 멱등이라 중복 호출이 안전하다
+    @POST("v1/verifications/{verificationId}/ack")
+    suspend fun acknowledgeResult(
+        @Path("verificationId") verificationId: String,
+    ): BaseResponse<AcknowledgeResponse>
+
+    // 수동 인증 취소 (DELETE): 당일(KST) 안에서만. 자동 판정 건은 취소 불가
+    @DELETE("v1/verifications/{verificationId}")
+    suspend fun cancelManual(
+        @Path("verificationId") verificationId: String,
+    ): BaseResponse<CancelManualResponse>
 
     // 인증 이의 제기 (POST appeals): 판정 없이 형식 요건만 보고 자동 인용
     @POST("v1/verifications/{verificationId}/appeals")

@@ -35,3 +35,11 @@ internal fun ManualSubmitResponse.toDomain(): ManualSubmitResult =
         verifiedVia = VerifiedVia.fromValue(verifiedVia) ?: VerifiedVia.MANUAL,
         disputeClosesAt = disputeClosesAt,
     )
+
+// ---------- 수동 인증 취소 (DELETE /verifications/{verificationId}) ----------
+
+@Serializable
+data class CancelManualResponse(
+    @SerialName("canceled")
+    val canceled: Boolean? = null,
+)

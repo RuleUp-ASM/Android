@@ -2,6 +2,7 @@ package com.ruleup.verification.data.repository
 
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
+import com.ruleup.network.dto.throwOnError
 import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.ManualSubmitRequest
@@ -12,9 +13,11 @@ import com.ruleup.verification.data.dto.toDomain
 import com.ruleup.verification.data.dto.toDto
 import com.ruleup.verification.data.dto.toPlaceOrNull
 import com.ruleup.verification.data.dto.toRequest
+import com.ruleup.verification.data.dto.toUpdateRequest
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.AppealReceipt
+import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
@@ -23,6 +26,7 @@ import com.ruleup.verification.domain.entity.ImageRequiredException
 import com.ruleup.verification.domain.entity.InvalidAnchorException
 import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
+import com.ruleup.verification.domain.entity.LocationLockedInWindowException
 import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
@@ -33,6 +37,7 @@ import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException
 import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
+import com.ruleup.verification.domain.entity.SettingChangeLimitException
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SyncPayloadTooLargeException
 import com.ruleup.verification.domain.entity.SyncPolicy
@@ -128,6 +133,26 @@ class VerificationRepositoryImpl
                 if (e.code == CODE_GEOFENCE_NOT_CONFIGURED) null else throw e
             }
 
+        override suspend fun updateMyLocation(
+            challengeId: String,
+            anchors: AnchorSet,
+        ): MyLocation =
+            try {
+                api
+                    .updateMyLocation(challengeId, anchors.toUpdateRequest())
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 화면이 문구를 갈라야 하는 실패만 도메인 어휘로 올린다(명세 my-location PUT).
+                // 개수 초과는 AnchorSet 이 이미 막지만 서버가 되돌려주면 같은 인라인 안내로 흐른다.
+                when (e.code) {
+                    CODE_LOCATION_LOCKED_IN_WINDOW -> throw LocationLockedInWindowException()
+                    CODE_SETTING_CHANGE_LIMIT -> throw SettingChangeLimitException()
+                    CODE_INVALID_ANCHOR, CODE_ANCHOR_LIMIT_EXCEEDED -> throw InvalidAnchorException()
+                    else -> throw e
+                }
+            }
+
         override suspend fun getMyScreenApps(challengeId: String): MyScreenApps? =
             try {
                 api
@@ -172,6 +197,24 @@ class VerificationRepositoryImpl
                     request = SubmitAppealRequest(reason = reason, imageUrl = imageUrl),
                 ).getOrThrow()
                 .toDomain()
+
+        override suspend fun acknowledgeResult(verificationId: String) {
+            // 멱등이라 결과 플래그를 도메인으로 올리지 않는다 — 성공했으면 확인된 것이다.
+            api.acknowledgeResult(verificationId).throwOnError()
+        }
+
+        override suspend fun cancelManual(verificationId: String) {
+            try {
+                api.cancelManual(verificationId).throwOnError()
+            } catch (e: ApiException) {
+                // 기한 경과만 화면이 갈라 안내한다. 자동 판정 건 취소(NOT_MANUAL_VERIFICATION)는
+                // 화면이 그 버튼을 두지 않는 것이 전제라 그대로 전파한다.
+                when (e.code) {
+                    CODE_CANCEL_WINDOW_CLOSED -> throw CancelWindowClosedException()
+                    else -> throw e
+                }
+            }
+        }
 
         override suspend fun submitManual(
             challengeId: String,
@@ -235,6 +278,10 @@ class VerificationRepositoryImpl
             private const val CODE_IMAGE_REQUIRED = "IMAGE_REQUIRED"
             private const val CODE_FALLBACK_LIMIT_EXCEEDED = "FALLBACK_LIMIT_EXCEEDED"
             private const val CODE_INVALID_ANCHOR = "INVALID_ANCHOR"
+            private const val CODE_ANCHOR_LIMIT_EXCEEDED = "ANCHOR_LIMIT_EXCEEDED"
+            private const val CODE_LOCATION_LOCKED_IN_WINDOW = "LOCATION_LOCKED_IN_WINDOW"
+            private const val CODE_SETTING_CHANGE_LIMIT = "SETTING_CHANGE_LIMIT"
+            private const val CODE_CANCEL_WINDOW_CLOSED = "CANCEL_WINDOW_CLOSED"
             private const val CODE_GEOFENCE_NOT_CONFIGURED = "GEOFENCE_NOT_CONFIGURED"
             private const val CODE_SCREENTIME_NOT_CONFIGURED = "SCREENTIME_NOT_CONFIGURED"
             private const val CODE_SCREENTIME_CHANGE_COOLDOWN = "SCREENTIME_CHANGE_COOLDOWN"

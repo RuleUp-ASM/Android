@@ -114,6 +114,11 @@ data class MyLocationResponse(
     val appliedFrom: String? = null,
     @SerialName("serverRadiusM")
     val serverRadiusM: Int? = null,
+    // 이번 달 변경 가능 여부. PUT 응답에는 없다 — 저장하면 그 달 1회를 소진하기 때문
+    @SerialName("changeAvailable")
+    val changeAvailable: Boolean? = null,
+    @SerialName("nextChangeAvailableAt")
+    val nextChangeAvailableAt: String? = null,
 )
 
 internal fun MyLocationResponse.toDomain(): MyLocation =
@@ -121,4 +126,21 @@ internal fun MyLocationResponse.toDomain(): MyLocation =
         anchors = anchors.orEmpty().map { it.toDomain() },
         appliedFrom = appliedFrom,
         serverRadiusM = serverRadiusM?.toFloat(),
+        // 모르면 못 바꾸는 쪽으로 접는다 — 열어 두면 사용자가 눌렀다 429 를 본다.
+        changeAvailable = changeAvailable ?: false,
+        nextChangeAvailableAt = nextChangeAvailableAt,
+    )
+
+// ---------- 앵커 교체 (명세: PUT /my-location) ----------
+
+/** 앵커 세트 전체 교체 요청. 부분 수정이 아니라 보낸 목록이 곧 새 세트다(최대 3개). */
+@Serializable
+data class UpdateMyLocationRequest(
+    @SerialName("anchors")
+    val anchors: List<AnchorDto>,
+)
+
+internal fun AnchorSet.toUpdateRequest(): UpdateMyLocationRequest =
+    UpdateMyLocationRequest(
+        anchors = pins.map { AnchorDto(lat = it.lat, lng = it.lng, label = it.label) },
     )
