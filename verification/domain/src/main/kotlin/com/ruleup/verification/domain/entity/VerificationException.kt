@@ -55,6 +55,28 @@ class LocationLockedInWindowException : Exception("인증이 진행 중인 동�
 class SettingChangeLimitException : Exception("이번 달 변경 횟수를 모두 썼어요.")
 
 /**
+ * 이의 사유 형식 미달 (명세 appeals, HTTP 400 INVALID_REASON).
+ *
+ * 화면이 [AppealPolicy.MIN_REASON_LENGTH]자 하한으로 먼저 막으므로 정상 흐름에서는 오지 않는다.
+ * 도달했다면 입력 하단에 인라인으로 알린다 — 접수·이력 어디에도 남지 않아 다시 쓰면 그만이다.
+ */
+class InvalidAppealReasonException : Exception("사유를 조금 더 적어 주세요.")
+
+/**
+ * 이의 신청 기한 경과 (명세 appeals, HTTP 409 APPEAL_WINDOW_CLOSED).
+ * 실패 확정일의 다음 날 00:00 KST 를 넘겼다 — 화면은 안내 후 상태를 다시 읽어 진입점을 거둔다.
+ */
+class AppealWindowClosedException : Exception("이의 신청 기한이 지났어요.")
+
+/**
+ * 이의 대상이 실패 상태가 아님 (명세 appeals, HTTP 409 NOT_FAILED).
+ *
+ * **오류로 보여줄 실패가 아니다** — 이미 인용됐거나 성공으로 정정된 건이다. 화면은 조용히 상태만
+ * 다시 읽어 성공 표시로 바꾼다.
+ */
+class AppealNotFailedException : Exception("이미 정정된 인증이에요.")
+
+/**
  * 수동 인증 취소 기한 경과 (명세 DELETE /verifications/{id}, HTTP 409 CANCEL_WINDOW_CLOSED).
  * 당일(KST)이 지나면 취소할 수 없다 — 화면은 체크를 되돌리지 않고 사유를 안내한다.
  */

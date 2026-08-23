@@ -11,6 +11,7 @@ import com.ruleup.verification.data.dto.AcknowledgeResponse
 import com.ruleup.verification.data.dto.AnchorDto
 import com.ruleup.verification.data.dto.AppealHistoryItemResponse
 import com.ruleup.verification.data.dto.AppealImageResponse
+import com.ruleup.verification.data.dto.AppealResponse
 import com.ruleup.verification.data.dto.CancelManualResponse
 import com.ruleup.verification.data.dto.ChallengeSetupRequest
 import com.ruleup.verification.data.dto.ChallengeSetupResponse
@@ -25,6 +26,7 @@ import com.ruleup.verification.data.dto.MyLocationResponse
 import com.ruleup.verification.data.dto.MyScreenAppsResponse
 import com.ruleup.verification.data.dto.ProgressResponse
 import com.ruleup.verification.data.dto.StreakResponse
+import com.ruleup.verification.data.dto.SubmitAppealRequest
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.UpdateMyLocationRequest
@@ -32,9 +34,12 @@ import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AnchorSet
+import com.ruleup.verification.domain.entity.AppealNotFailedException
 import com.ruleup.verification.domain.entity.AppealTrack
+import com.ruleup.verification.domain.entity.AppealWindowClosedException
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.InvalidAnchorException
+import com.ruleup.verification.domain.entity.InvalidAppealReasonException
 import com.ruleup.verification.domain.entity.InvalidTargetDateException
 import com.ruleup.verification.domain.entity.LocationLockedInWindowException
 import com.ruleup.verification.domain.entity.LocationPin
@@ -190,6 +195,26 @@ class VerificationRepositoryImplTest {
         }
 
     @Test
+    fun `이의 형식 미달과 기한 경과와 이미 정정됨이 각각 다른 예외로 갈린다`() =
+        runTest {
+            // 화면이 셋을 다르게 말해야 한다 — 특히 NOT_FAILED 는 오류가 아니라 이미 정정된 건이다.
+            val cases =
+                listOf(
+                    "INVALID_REASON" to InvalidAppealReasonException::class,
+                    "APPEAL_WINDOW_CLOSED" to AppealWindowClosedException::class,
+                    "NOT_FAILED" to AppealNotFailedException::class,
+                )
+            cases.forEach { (code, expected) ->
+                val api = FakeVerificationApi(appealError = ErrorBody(code, code))
+                val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
+
+                val thrown = runCatching { repository.submitAppeal("v_1", "충분히 긴 사유입니다") }.exceptionOrNull()
+
+                assertEquals(expected, thrown!!::class, "$code 매핑")
+            }
+        }
+
+    @Test
     fun `이의 사진 업로드는 URL 만 돌려준다`() =
         runTest {
             val api = FakeVerificationApi()
@@ -264,6 +289,7 @@ class VerificationRepositoryImplTest {
         private val cancelError: ErrorBody? = null,
         private val uploadedImageUrl: String? = "https://cdn.ruleup.co.kr/appeals/1.jpg",
         private val myAppeals: MyAppealsResponse? = null,
+        private val appealError: ErrorBody? = null,
     ) : VerificationApi {
         var acknowledgedId: String? = null
         var uploadedPart: MultipartBody.Part? = null
@@ -331,8 +357,13 @@ class VerificationRepositoryImplTest {
 
         override suspend fun submitAppeal(
             verificationId: String,
-            request: com.ruleup.verification.data.dto.SubmitAppealRequest,
-        ): BaseResponse<com.ruleup.verification.data.dto.AppealResponse> = error("unused")
+            request: SubmitAppealRequest,
+        ): BaseResponse<AppealResponse> =
+            if (appealError != null) {
+                BaseResponse(success = false, data = null, error = appealError)
+            } else {
+                BaseResponse(success = true, data = AppealResponse(appealId = "ap_1"), error = null)
+            }
     }
 
     private class FakeKakaoLocalApi : KakaoLocalApi {
