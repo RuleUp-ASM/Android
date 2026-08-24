@@ -50,7 +50,7 @@ interface UsageEventDao {
     @Insert
     suspend fun insertAll(items: List<UsageEventEntity>)
 
-    @Query("UPDATE usage_event SET collectedAt = :key WHERE synced = 0 AND collectedAt IS NULL")
+    @Query("UPDATE usage_event SET collectedAt = :key WHERE synced = 0")
     suspend fun tagPending(key: String)
 
     @Query("SELECT * FROM usage_event WHERE collectedAt = :key AND synced = 0 ORDER BY occurredAt ASC")

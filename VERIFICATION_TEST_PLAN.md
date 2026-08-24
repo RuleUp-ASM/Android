@@ -108,11 +108,14 @@ adb shell cmd jobscheduler run -f com.ruleup.android_ruleup <JOB_ID>
 - 기대결과: `GET .../api/v1/places/search?q=...&lat=...&lng=...&radiusM=...` 200, 좌표 없는 결과는 제외, 최대 10개. 결과 탭 시 지도 recenter. 반경 50~1000m로 클램프. 확인 시 바인딩 완료 메시지.
 
 ### TC-11. Sync 에러/백오프
-- 절차: (a) 연속으로 sync 강제 실행(서버 429 유도). (b) 비행기모드에서 워커 실행.
+- 절차: (a) 연속으로 sync 강제 실행(서버 429 유도). (b) 비행기모드에서 워커 실행 후 네트워크를 복구하고 다시 실행.
 - 기대결과:
   - **429 SYNC_TOO_FREQUENT** → markSynced 안 함(데이터 보존) + 워커 retry.
   - **400 INVALID_SIGNAL_PAYLOAD** → 해당 배치 discard(markSynced) 후 재전송 안 함(무한루프 방지).
   - 오프라인 → 네트워크 constraint로 미실행/대기, 복구 후 재시도.
+  - **실패분 재전송(핵심)**: (b) 에서 실패한 신호가 **다음 sync 요청 본문에 다시 실려 나가야 한다.**
+    버퍼에 남아 있기만 하고 다음 배치에 안 실리면 그 신호는 영영 판정에 못 들어간다(#319).
+    확인법 — 실패 직후 요청의 신호 건수와 복구 후 요청의 신호 건수를 비교한다. 뒤쪽이 앞쪽을 포함해야 한다.
 
 ### TC-12. Render 규칙 추가 확인
 - 절차: 다양한 상태로 Progress/Detail 재확인.
