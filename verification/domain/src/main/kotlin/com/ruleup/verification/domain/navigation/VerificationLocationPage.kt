@@ -35,3 +35,10 @@ data class VerificationLocationPage(
         const val TARGET_PACKAGES_DELIMITER = ","
     }
 }
+
+/** 권한 재연결 페이지 (권한 회수 감지 → 신호별 연결 상태·재허용). */
+data object VerificationPermissionRepairPage : Page {
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    const val PATH = AppRoutes.VERIFICATION_PERMISSION_REPAIR
+}

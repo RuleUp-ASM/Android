@@ -172,7 +172,8 @@ private fun TodayVerificationCard(
         }
     }
     // 이의를 낼 수 있는 실패만 카드 테두리로 알린다(배지 없음, Figma 1134:512 상태 1).
-    val appealable = status == TodayResultStatus.FAILED && onAppealClick != null
+    val appealAction = onAppealClick?.takeIf { status == TodayResultStatus.FAILED }
+    val appealable = appealAction != null
     Column(
         modifier =
             Modifier
@@ -221,10 +222,10 @@ private fun TodayVerificationCard(
             )
         }
 
-        if (appealable && onAppealClick != null) {
+        appealAction?.let { action ->
             RuleUpPrimaryButton(
                 text = today?.appealButtonText() ?: "이의 제기",
-                onClick = onAppealClick,
+                onClick = action,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

@@ -143,7 +143,7 @@ fun ChallengeDetailScreen(
         viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
     }
     // 아직 못 물었으면(null) 막지 않는다 — 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
-    val missingTokens = state.permissions?.let { snapshot -> tokens.filter { snapshot.isGranted(it) == false } }.orEmpty()
+    val missingTokens = state.missingPermissionTokens()
     val permissionGranted = missingTokens.isEmpty()
 
     // GET setup 요구사항으로 "필요한 등록만" 유도: 권한 → (requiresTargetPackages) 앱 → (requiresAnchors) 지도 → 참여.
@@ -215,6 +215,16 @@ fun ChallengeDetailScreen(
     }
 }
 
+/**
+ * 서버가 요구한 권한 중 **실제로 꺼져 있는 것**. 아직 못 물었으면(null) 빈 목록이다 —
+ * 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
+ */
+internal fun ChallengeDetailState.missingPermissionTokens(): List<String> {
+    val snapshot = permissions ?: return emptyList()
+    val tokens = setup?.requiredPermissions ?: detail?.verification?.requiredPermissions.orEmpty()
+    return tokens.filter { snapshot.isGranted(it) == false }
+}
+
 @Composable
 private fun ChallengeDetailContent(
     state: ChallengeDetailState,
@@ -250,6 +260,22 @@ private fun ChallengeDetailContent(
                 )
             } else {
                 DetailTopBar(onBack = onBack)
+            }
+
+            // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다. 인증은 조용히 멈추므로 사용자가
+            // 스스로 알아챌 방법이 없다 — 매일 실패가 쌓이다 강퇴로 간다.
+            if (!state.isLoading && room != null && state.missingPermissionTokens().isNotEmpty()) {
+                Text(
+                    text = "인증에 필요한 권한이 꺼져 있어요 · 다시 연결하기",
+                    color = RuleUpTheme.colors.danger,
+                    style = RuleUpTheme.typography.caption,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(RuleUpTheme.colors.dangerContainer)
+                            .singleClickable { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                )
             }
 
             // 미확인 판정은 로딩이 끝난 뒤에 올린다 — 스켈레톤 위에 띄우면 뒤에 뭐가 있는지 모른 채
