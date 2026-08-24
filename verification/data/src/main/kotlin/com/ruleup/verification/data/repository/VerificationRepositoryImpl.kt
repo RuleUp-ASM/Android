@@ -34,6 +34,7 @@ import com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException
 import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SyncPayloadTooLargeException
 import com.ruleup.verification.domain.entity.SyncPolicy
 import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
@@ -64,10 +65,11 @@ class VerificationRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 429/400 은 호출자(Worker)가 백오프·폐기로 분기할 수 있도록 도메인 예외로 변환한다(명세 §3.3).
+                // 429/413/400 은 호출자가 백오프·분할·폐기로 분기할 수 있도록 도메인 예외로 변환한다(명세 sync).
                 when (e.code) {
                     CODE_SYNC_TOO_FREQUENT -> throw SyncTooFrequentException()
                     CODE_INVALID_SIGNAL_PAYLOAD -> throw InvalidSignalPayloadException()
+                    CODE_SYNC_PAYLOAD_TOO_LARGE -> throw SyncPayloadTooLargeException()
                     else -> throw e
                 }
             }
@@ -228,6 +230,7 @@ class VerificationRepositoryImpl
         companion object {
             private const val CODE_SYNC_TOO_FREQUENT = "SYNC_TOO_FREQUENT"
             private const val CODE_INVALID_SIGNAL_PAYLOAD = "INVALID_SIGNAL_PAYLOAD"
+            private const val CODE_SYNC_PAYLOAD_TOO_LARGE = "SYNC_PAYLOAD_TOO_LARGE"
             private const val CODE_ALREADY_VERIFIED = "ALREADY_VERIFIED"
             private const val CODE_IMAGE_REQUIRED = "IMAGE_REQUIRED"
             private const val CODE_FALLBACK_LIMIT_EXCEEDED = "FALLBACK_LIMIT_EXCEEDED"

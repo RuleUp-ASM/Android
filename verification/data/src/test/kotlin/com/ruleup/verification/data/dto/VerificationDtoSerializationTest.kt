@@ -26,6 +26,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -291,11 +292,29 @@ class VerificationDtoSerializationTest {
     }
 
     @Test
-    fun `sync 응답은 nextSyncAfterSec 누락 시 기본 1800초로 떨어진다`() {
-        val payload = """{ "syncedAt": "2026-06-21T00:30:00Z", "updatedChallenges": [] }"""
+    fun `sync 응답의 주기와 상한을 읽는다`() {
+        val payload =
+            """
+            { "syncedAt": "2026-06-21T00:30:00Z", "flushIntervalSec": 900,
+              "updatedChallenges": [], "maxPayloadBytes": 1048576 }
+            """.trimIndent()
+
         val result = json.decodeFromString<SyncResponse>(payload).toDomain()
 
-        assertEquals(1800, result.nextSyncAfterSec)
+        // 서버가 주기를 30분에서 바꿔 내려도 못 읽으면 클라가 계속 1800초로 돈다.
+        assertEquals(900, result.flushIntervalSec)
+        assertEquals(1_048_576, result.maxPayloadBytes)
+    }
+
+    @Test
+    fun `주기가 없으면 1800초로 떨어지고 상한은 모르는 채로 둔다`() {
+        val payload = """{ "syncedAt": "2026-06-21T00:30:00Z", "updatedChallenges": [] }"""
+
+        val result = json.decodeFromString<SyncResponse>(payload).toDomain()
+
+        assertEquals(1800, result.flushIntervalSec)
+        // 상한에 임의의 기본값을 박으면 서버가 낮춰도 클라가 그 사실을 모른 채 계속 초과 전송한다.
+        assertNull(result.maxPayloadBytes)
         assertTrue(result.updatedChallenges.isEmpty())
         assertTrue(result.ignoredSignalTypes.isEmpty())
     }
