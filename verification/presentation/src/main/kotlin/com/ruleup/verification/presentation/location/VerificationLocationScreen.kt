@@ -56,6 +56,7 @@ import com.ruleup.verification.presentation.location.map.rememberLocationPermiss
 import com.ruleup.verification.presentation.location.viewmodel.PendingSelection
 import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationEffect
 import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationIntent
+import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationState
 import com.ruleup.verification.presentation.location.viewmodel.VerificationLocationViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -123,6 +124,9 @@ fun VerificationLocationScreen(
     }
 
     val pin = state.pending?.let { MapLatLng(lat = it.lat, lng = it.lng) }
+    // 반경은 서버가 정한 값이 원본이다 — 아직 못 받았을 때만 호출자가 넘긴 값으로 그린다.
+    // 화면이 임의 값을 그리면 지도 원과 실제 판정 범위가 어긋난다.
+    val radiusM = state.serverRadiusM ?: defaultRadiusM
 
     Box(modifier = modifier.fillMaxSize()) {
         // 전체화면 지도. 탭하면 그 좌표가 확인 대기 핀으로(역지오코딩 후 주소 채움).
@@ -130,10 +134,10 @@ fun VerificationLocationScreen(
         GeofenceMap(
             initialCenter = MapLatLng(DEFAULT_LAT, DEFAULT_LNG),
             pin = pin,
-            radiusM = defaultRadiusM,
+            radiusM = radiusM,
             onMapTap = { viewModel.onIntent(VerificationLocationIntent.TapMap(lat = it.lat, lng = it.lng)) },
             modifier = Modifier.fillMaxSize(),
-            anchors = state.anchors.map { MapAnchor(lat = it.lat, lng = it.lng, radiusM = defaultRadiusM) },
+            anchors = state.anchors.map { MapAnchor(lat = it.lat, lng = it.lng, radiusM = radiusM) },
         )
 
         // 상단: 플로팅 검색 필 + 자동완성 목록.
@@ -198,7 +202,7 @@ fun VerificationLocationScreen(
                         pending = pending,
                         isResolving = state.isResolving,
                         canAdd = state.anchors.size < SetupAnchors.MAX_COUNT,
-                        radiusM = defaultRadiusM,
+                        radiusM = radiusM,
                         onCancel = { viewModel.onIntent(VerificationLocationIntent.CancelSelection) },
                         onAdd = { viewModel.onIntent(VerificationLocationIntent.AddAnchor) },
                     )
@@ -206,8 +210,12 @@ fun VerificationLocationScreen(
                 state.anchors.isNotEmpty() ->
                     AnchorListSheet(
                         anchors = state.anchors,
-                        radiusM = defaultRadiusM,
+                        radiusM = radiusM,
                         isSubmitting = state.isSubmitting,
+                        // 편집 중 이번 달 변경이 남아 있지 않으면 저장을 잠근다 — 눌러 봐야 429 다.
+                        submitEnabled = !state.isEditing || state.changeAvailable,
+                        submitLabel = if (state.isEditing) "이 장소로 바꾸기" else "이 장소로 등록",
+                        lockNotice = state.changeLockNotice(),
                         onRemove = { viewModel.onIntent(VerificationLocationIntent.RemoveAnchor(it)) },
                         onSubmit = {
                             viewModel.onIntent(
@@ -547,6 +555,9 @@ private fun AnchorListSheet(
     anchors: List<LocationPin>,
     radiusM: Float,
     isSubmitting: Boolean,
+    submitEnabled: Boolean,
+    submitLabel: String,
+    lockNotice: String?,
     onRemove: (Int) -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
@@ -582,10 +593,36 @@ private fun AnchorListSheet(
                 )
             }
         }
+        // 왜 저장할 수 없는지 버튼 위에서 먼저 말한다 — 비활성 버튼만 있으면 이유를 알 수 없다.
+        lockNotice?.let {
+            Text(
+                text = it,
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
+        }
         RuleUpPrimaryButton(
-            text = if (isSubmitting) "등록 중…" else "등록 완료 (${anchors.size})",
-            onClick = { if (!isSubmitting) onSubmit() },
+            text = if (isSubmitting) "저장 중…" else "$submitLabel (${anchors.size})",
+            enabled = submitEnabled && !isSubmitting,
+            onClick = { if (!isSubmitting && submitEnabled) onSubmit() },
         )
+    }
+}
+
+/**
+ * 변경이 잠긴 이유. 편집 중이 아니거나 이번 달 여유가 남았으면 붙이지 않는다.
+ *
+ * 언제부터 가능한지 모르면 날짜를 지어내지 않는다 — 틀린 날짜를 확정처럼 보여주는 쪽이 더 나쁘다.
+ */
+internal fun VerificationLocationState.changeLockNotice(): String? {
+    if (!isEditing || changeAvailable) return null
+    val parts = nextChangeAvailableAt?.substringBefore('T')?.split('-')?.takeIf { it.size == 3 }
+    val month = parts?.get(1)?.toIntOrNull()
+    val day = parts?.get(2)?.toIntOrNull()
+    return if (month == null || day == null) {
+        "이번 달 변경 횟수를 모두 썼어요"
+    } else {
+        "이번 달 변경 횟수를 모두 썼어요 · ${month}월 ${day}일부터 가능해요"
     }
 }
 
