@@ -32,12 +32,14 @@ class PermissionSnapshotTest {
     }
 
     @Test
-    fun `설정에서만 켤 수 있는 권한이 구분된다`() {
-        // OS 다이얼로그가 없는 권한을 "허용하기" 버튼으로 안내하면 눌러도 아무 일이 안 일어난다.
-        assertTrue(PermissionSnapshot.requiresSettings("PACKAGE_USAGE_STATS"))
-        assertTrue(PermissionSnapshot.requiresSettings("READ_SLEEP"))
-        assertFalse(PermissionSnapshot.requiresSettings("ACCESS_FINE_LOCATION"))
-        assertFalse(PermissionSnapshot.requiresSettings("POST_NOTIFICATIONS"))
+    fun `권한마다 여는 문이 다르다`() {
+        // 사용정보 접근과 Health Connect 를 한 덩어리로 묶으면 걸음 권한이 필요한 사용자를
+        // 사용정보 접근 화면으로 보내게 되고, 거기서는 아무리 켜도 그 권한이 생기지 않는다.
+        assertEquals(PermissionRequestKind.USAGE_ACCESS_SETTINGS, PermissionSnapshot.requestKindOf("PACKAGE_USAGE_STATS"))
+        assertEquals(PermissionRequestKind.HEALTH_CONNECT, PermissionSnapshot.requestKindOf("READ_SLEEP"))
+        assertEquals(PermissionRequestKind.HEALTH_CONNECT, PermissionSnapshot.requestKindOf("READ_STEPS"))
+        assertEquals(PermissionRequestKind.RUNTIME, PermissionSnapshot.requestKindOf("ACCESS_FINE_LOCATION"))
+        assertEquals(PermissionRequestKind.RUNTIME, PermissionSnapshot.requestKindOf("POST_NOTIFICATIONS"))
     }
 
     @Test

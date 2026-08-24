@@ -76,22 +76,36 @@ data class PermissionSnapshot(
             else -> null
         }?.let { !it.isDenied }
 
-    /**
-     * OS 권한 다이얼로그로 요청할 수 없는 토큰인가 — 사용정보 접근·Health Connect 가 그렇다.
-     *
-     * 이 둘은 "허용하기" 버튼으로 해결되지 않아 설정으로 보내야 하고, 그래서 화면이 다르게 안내해야
-     * 한다(프론트엔드 테크스펙 4-4).
-     */
     companion object {
-        fun requiresSettings(token: String): Boolean =
+        /**
+         * 이 권한을 **어떻게 요청해야 하는가**(프론트엔드 테크스펙 4-4).
+         *
+         * 셋이 서로 다른 문을 쓴다 — 런타임은 OS 다이얼로그, 사용정보 접근은 전용 설정 화면,
+         * Health Connect 는 자체 권한 컨트롤러다. 뭉뚱그리면 걸음 권한이 없는 사용자를 사용정보
+         * 접근 화면으로 보내게 되고, 거기서는 아무리 켜도 원하는 권한이 생기지 않는다.
+         */
+        fun requestKindOf(token: String): PermissionRequestKind =
             when (token.uppercase()) {
-                "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> true
-                "READ_DISTANCE", "HEALTH_DISTANCE", "READ_STEPS", "HEALTH_STEPS", "HEALTH" -> true
-                "READ_SLEEP", "HEALTH_SLEEP", "SLEEP" -> true
-                "READ_HEALTH_DATA_IN_BACKGROUND", "HEALTH_BACKGROUND" -> true
-                else -> false
+                "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> PermissionRequestKind.USAGE_ACCESS_SETTINGS
+                "READ_DISTANCE", "HEALTH_DISTANCE", "READ_STEPS", "HEALTH_STEPS", "HEALTH",
+                "READ_SLEEP", "HEALTH_SLEEP", "SLEEP",
+                "READ_HEALTH_DATA_IN_BACKGROUND", "HEALTH_BACKGROUND",
+                -> PermissionRequestKind.HEALTH_CONNECT
+                else -> PermissionRequestKind.RUNTIME
             }
     }
+}
+
+/**
+ * 권한을 얻는 경로. 화면이 어떤 문을 열어 줘야 하는지 가른다.
+ *
+ * [RUNTIME] 은 OS 다이얼로그로 그 자리에서 받고, 나머지 둘은 앱 밖으로 나갔다 돌아오므로 복귀 시
+ * 상태를 다시 조회해야 한다.
+ */
+enum class PermissionRequestKind {
+    RUNTIME,
+    USAGE_ACCESS_SETTINGS,
+    HEALTH_CONNECT,
 }
 
 /** 신호 공백 사유 (전송 스펙 §0.5). recoverable=false 면 서버 판정에서 제외, true 면 유예. */
