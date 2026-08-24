@@ -29,7 +29,7 @@ enum class TodayVerificationStatus(
     // 인증 창이 아직 열려 있음
     IN_PROGRESS("IN_PROGRESS"),
 
-    // 00~03시 유예 구간 — 창은 닫혔지만 확정 전
+    // 창은 닫혔지만 다음 날 00:00 KST 최종 재평가 전 — 성공·실패 양쪽으로 열려 있다
     CHECKING("CHECKING"),
 
     // 오늘 인증 완료
@@ -42,7 +42,7 @@ enum class TodayVerificationStatus(
     NOT_TARGET("NOT_TARGET"),
     ;
 
-    /** 실패로 확정됐는가. 유예·진행 중은 아직 실패가 아니다. */
+    /** 실패로 확정됐는가. 재평가 중·진행 중은 아직 실패가 아니다. */
     val isFailure: Boolean
         get() = this == FAILED
 
