@@ -1,5 +1,6 @@
 package com.ruleup.verification.presentation.permission
 
+import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import kotlin.test.Test
@@ -17,20 +18,23 @@ class PermissionRepairRowsTest {
     }
 
     @Test
-    fun `사용 정보 접근은 설정으로 보낸다`() {
-        // 런타임 다이얼로그가 없는 권한이라 "허용" 버튼으로는 아무 일도 일어나지 않는다.
-        val row = repairRows(snapshot()).single { it.label == "사용 정보 접근" }
+    fun `권한마다 여는 문이 다르다`() {
+        // 걸음·수면을 사용정보 접근 설정으로 보내면 거기서 아무리 켜도 그 권한은 생기지 않는다.
+        val rows = repairRows(snapshot()).associateBy { it.label }
 
-        assertTrue(row.settingsIntent != null)
-        assertTrue(row.runtimePermissions.isEmpty())
+        assertEquals(PermissionRequestKind.USAGE_ACCESS_SETTINGS, rows.getValue("사용 정보 접근").kind)
+        assertEquals(PermissionRequestKind.HEALTH_CONNECT, rows.getValue("걸음·거리").kind)
+        assertEquals(PermissionRequestKind.HEALTH_CONNECT, rows.getValue("수면").kind)
+        assertEquals(PermissionRequestKind.RUNTIME, rows.getValue("위치").kind)
     }
 
     @Test
-    fun `위치는 그 자리에서 다시 요청한다`() {
-        val row = repairRows(snapshot()).single { it.label == "위치" }
+    fun `런타임 권한만 요청할 권한 목록을 갖는다`() {
+        val rows = repairRows(snapshot()).associateBy { it.label }
 
-        assertEquals(null, row.settingsIntent)
-        assertTrue(row.runtimePermissions.isNotEmpty())
+        assertTrue(rows.getValue("위치").runtimePermissions.isNotEmpty())
+        assertTrue(rows.getValue("사용 정보 접근").runtimePermissions.isEmpty())
+        assertTrue(rows.getValue("걸음·거리").runtimePermissions.isEmpty())
     }
 
     private fun snapshot(location: PermissionState = PermissionState.GRANTED): PermissionSnapshot =

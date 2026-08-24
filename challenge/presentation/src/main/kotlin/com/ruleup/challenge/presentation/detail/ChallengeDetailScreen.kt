@@ -81,6 +81,10 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
+import com.ruleup.ui.permission.healthConnectAvailable
+import com.ruleup.ui.permission.healthReadPermissions
+import com.ruleup.ui.permission.rememberHealthPermissionLauncher
+import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import kotlinx.coroutines.launch
 
@@ -102,6 +106,7 @@ fun ChallengeDetailScreen(
     val permissionRequester = rememberPermissionRequester()
     val scope = rememberCoroutineScope()
     var showPermissionSheet by remember { mutableStateOf(false) }
+    val healthLauncher = rememberHealthPermissionLauncher { viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions) }
 
     androidx.compose.runtime.LaunchedEffect(challengeId) {
         viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
@@ -193,13 +198,25 @@ fun ChallengeDetailScreen(
     if (showPermissionSheet) {
         // OS 다이얼로그로 물을 수 있는 것과 설정에서만 켤 수 있는 것을 갈라 안내한다 —
         // 사용정보 접근·Health Connect 는 "허용하기" 버튼으로 해결되지 않는다.
-        val settingsTokens = missingTokens.filter { PermissionSnapshot.requiresSettings(it) }
-        val runtimeTokens = missingTokens.filterNot { PermissionSnapshot.requiresSettings(it) }
+        val byKind = missingTokens.groupBy { PermissionSnapshot.requestKindOf(it) }
+        val runtimeTokens = byKind[PermissionRequestKind.RUNTIME].orEmpty()
+        val usageTokens = byKind[PermissionRequestKind.USAGE_ACCESS_SETTINGS].orEmpty()
+        val healthTokens = byKind[PermissionRequestKind.HEALTH_CONNECT].orEmpty()
         PermissionBottomSheet(
             runtimeTokens = runtimeTokens,
-            settingsTokens = settingsTokens,
+            usageTokens = usageTokens,
+            healthTokens = healthTokens,
             onDismiss = { showPermissionSheet = false },
-            onOpenSettings = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
+            onOpenUsageSettings = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
+            onRequestHealth = {
+                // 걸음·수면은 HC 자체 권한 화면으로 — 사용정보 접근 설정으로 보내면 거기서
+                // 아무리 켜도 이 권한은 생기지 않는다.
+                if (healthConnectAvailable(context)) {
+                    healthLauncher.launch(healthReadPermissions())
+                } else {
+                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
+                }
+            },
             onAllow = {
                 scope.launch {
                     permissionRequester.request(runtimeTokens)
@@ -685,9 +702,11 @@ private fun InfoRow(
 @Composable
 private fun PermissionBottomSheet(
     runtimeTokens: List<String>,
-    settingsTokens: List<String>,
+    usageTokens: List<String>,
+    healthTokens: List<String>,
     onDismiss: () -> Unit,
-    onOpenSettings: () -> Unit,
+    onOpenUsageSettings: () -> Unit,
+    onRequestHealth: () -> Unit,
     onAllow: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -716,7 +735,7 @@ private fun PermissionBottomSheet(
                 style = RuleUpTheme.typography.body,
             )
             Spacer(Modifier.height(16.dp))
-            (runtimeTokens + settingsTokens).distinct().forEach { token ->
+            (runtimeTokens + usageTokens + healthTokens).distinct().forEach { token ->
                 PermissionRow(label = permissionLabel(token))
                 permissionPurpose(token)?.let {
                     Text(
@@ -734,12 +753,20 @@ private fun PermissionBottomSheet(
                     onClick = onAllow,
                 )
             }
-            // 사용정보 접근·Health Connect 는 런타임 다이얼로그가 없다 — 설정에서 켜고 돌아와야 한다.
-            if (settingsTokens.isNotEmpty()) {
+            // 셋은 서로 다른 문을 쓴다. 한 버튼으로 묶으면 걸음 권한이 필요한 사용자가
+            // 사용정보 접근 화면으로 떨어져 거기서 아무리 켜도 해결되지 않는다.
+            if (usageTokens.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
                 RuleUpPrimaryButton(
-                    text = "설정에서 켜기",
-                    onClick = onOpenSettings,
+                    text = "사용 정보 접근 설정 열기",
+                    onClick = onOpenUsageSettings,
+                )
+            }
+            if (healthTokens.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                RuleUpPrimaryButton(
+                    text = "헬스 커넥트 권한 허용",
+                    onClick = onRequestHealth,
                 )
             }
             Spacer(Modifier.height(4.dp))
