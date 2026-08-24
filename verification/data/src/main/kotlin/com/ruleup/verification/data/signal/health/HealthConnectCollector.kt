@@ -1,23 +1,22 @@
 package com.ruleup.verification.data.signal.health
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.ruleup.verification.data.db.health.HealthReadingDao
 import com.ruleup.verification.data.db.health.HealthReadingEntity
-import com.ruleup.verification.data.db.health.SleepSegmentDao
-import com.ruleup.verification.data.db.health.SleepSegmentEntity
+import com.ruleup.verification.data.db.health.SleepSessionDao
+import com.ruleup.verification.data.db.health.SleepSessionEntity
 import com.ruleup.verification.data.signal.common.GapRecorder
 import com.ruleup.verification.domain.entity.GapReason
-import com.ruleup.verification.domain.entity.HealthDeviceType
 import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.HealthTarget
 import com.ruleup.verification.domain.entity.RecordingMethod
@@ -29,15 +28,19 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 /**
- * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(명세 §8). Health Connect 에서 **결과값+신뢰 메타데이터만**
- * 읽어(원시 트랙 미전송, §1.5) 로컬 버퍼에 적재한다. 하루치 누적은 매 sync 마다 최신 스냅샷으로 교체한다.
+ * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(전송 스펙 §2·§5). Health Connect 에서
+ * **결과값 + 신뢰 메타데이터만** 읽어 로컬 버퍼에 적재한다. 하루치 누적은 매 sync 마다 최신
+ * 스냅샷으로 교체하고, 재전송이 중복이 되지 않는 근거는 `recordId` 다.
+ *
+ * 화이트리스트 판정·MANUAL 거부·합산은 하지 않는다 — 전부 서버 소관이고, 클라는 그 판단에 필요한
+ * 입력을 빠짐없이 올리는 것까지만 책임진다.
  */
 class HealthConnectCollector
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
         private val healthReadingDao: HealthReadingDao,
-        private val sleepSegmentDao: SleepSegmentDao,
+        private val sleepSessionDao: SleepSessionDao,
         private val gapRecorder: GapRecorder,
     ) {
         suspend fun capture(
@@ -101,8 +104,8 @@ class HealthConnectCollector
             for (target in targets) {
                 try {
                     when (target.metric) {
-                        HealthMetric.DISTANCE -> rows += readDistance(client, granted, range, date, target.exerciseType)
-                        HealthMetric.STEPS -> rows += readSteps(client, granted, range, date, target.exerciseType)
+                        HealthMetric.DISTANCE -> rows += readDistance(client, granted, range, date)
+                        HealthMetric.STEPS -> rows += readSteps(client, granted, range, date)
                         HealthMetric.EXERCISE_DURATION -> rows += readExercise(client, granted, range, date, target.exerciseType)
                     }
                 } catch (e: SecurityException) {
@@ -121,7 +124,6 @@ class HealthConnectCollector
             granted: Set<String>,
             range: TimeRangeFilter,
             date: String,
-            exerciseType: String?,
         ): List<HealthReadingEntity> {
             if (HealthPermission.getReadPermission(DistanceRecord::class) !in granted) return emptyList()
             return client
@@ -131,10 +133,9 @@ class HealthConnectCollector
                     reading(
                         metric = HealthMetric.DISTANCE,
                         value = rec.distance.inKilometers,
-                        unit = "km",
-                        exerciseType = exerciseType,
                         metadata = rec.metadata,
-                        at = rec.endTime,
+                        startTime = rec.startTime,
+                        endTime = rec.endTime,
                         date = date,
                     )
                 }
@@ -145,7 +146,6 @@ class HealthConnectCollector
             granted: Set<String>,
             range: TimeRangeFilter,
             date: String,
-            exerciseType: String?,
         ): List<HealthReadingEntity> {
             if (HealthPermission.getReadPermission(StepsRecord::class) !in granted) return emptyList()
             return client
@@ -155,10 +155,9 @@ class HealthConnectCollector
                     reading(
                         metric = HealthMetric.STEPS,
                         value = rec.count.toDouble(),
-                        unit = "count",
-                        exerciseType = exerciseType,
                         metadata = rec.metadata,
-                        at = rec.endTime,
+                        startTime = rec.startTime,
+                        endTime = rec.endTime,
                         date = date,
                     )
                 }
@@ -183,10 +182,9 @@ class HealthConnectCollector
                     reading(
                         metric = HealthMetric.EXERCISE_DURATION,
                         value = minutes,
-                        unit = "min",
-                        exerciseType = typeName,
                         metadata = rec.metadata,
-                        at = rec.endTime,
+                        startTime = rec.startTime,
+                        endTime = rec.endTime,
                         date = date,
                     )
                 }
@@ -200,60 +198,58 @@ class HealthConnectCollector
             val now = Instant.now()
             // 익일 배치라 지난밤을 포함하도록 36h 윈도우(명세 §6.2 SLEEP lag).
             val range = TimeRangeFilter.between(now.minus(Duration.ofHours(SLEEP_WINDOW_HOURS)), now)
-            val rows = ArrayList<SleepSegmentEntity>()
+            val rows = ArrayList<SleepSessionEntity>()
             try {
                 client
                     .readRecords(ReadRecordsRequest(SleepSessionRecord::class, range))
                     .records
                     .forEach { session ->
-                        if (session.stages.isEmpty()) {
-                            rows +=
-                                SleepSegmentEntity(
-                                    startAt = session.startTime.toEpochMilli(),
-                                    endAt = session.endTime.toEpochMilli(),
-                                    status = "SLEEPING",
-                                    occurredAt = session.endTime.toEpochMilli(),
-                                )
-                        } else {
-                            session.stages.forEach { stage ->
-                                rows +=
-                                    SleepSegmentEntity(
-                                        startAt = stage.startTime.toEpochMilli(),
-                                        endAt = stage.endTime.toEpochMilli(),
-                                        status = sleepStageName(stage.stage),
-                                        occurredAt = stage.endTime.toEpochMilli(),
-                                    )
-                            }
-                        }
+                        val start = session.startTime.toEpochMilli()
+                        val end = session.endTime.toEpochMilli()
+                        rows +=
+                            SleepSessionEntity(
+                                recordId = session.metadata.id,
+                                startAt = start,
+                                endAt = end,
+                                durationMillis = end - start,
+                                sleepMillis = session.sleepMillisOrNull(),
+                                observedElapsedMillis = SystemClock.elapsedRealtime(),
+                                originPackage = session.metadata.dataOrigin.packageName,
+                                recordingMethod = recordingMethodOf(session.metadata.recordingMethod).name,
+                                occurredAt = end,
+                            )
                     }
             } catch (e: SecurityException) {
                 return
             } catch (e: IllegalStateException) {
                 return
             }
-            sleepSegmentDao.deleteUntagged()
-            if (rows.isNotEmpty()) sleepSegmentDao.insertAll(rows)
+            sleepSessionDao.deleteUntagged()
+            if (rows.isNotEmpty()) sleepSessionDao.insertAll(rows)
         }
 
+        /**
+         * 전송 계약(전송 스펙 §2)에 있는 값만 담는다. 단위·운동 종류·기기 종류는 보내지 않으므로
+         * 버퍼에도 넣지 않는다 — 운동 종류는 수집 시점 필터로 이미 쓰이고 끝난다.
+         */
         private fun reading(
             metric: HealthMetric,
             value: Double,
-            unit: String,
-            exerciseType: String?,
             metadata: Metadata,
-            at: Instant,
+            startTime: Instant,
+            endTime: Instant,
             date: String,
         ): HealthReadingEntity =
             HealthReadingEntity(
+                recordId = metadata.id,
                 metric = metric.name,
                 value = value,
-                unit = unit,
-                exerciseType = exerciseType,
-                dataOrigin = metadata.dataOrigin.packageName,
+                startTime = startTime.toEpochMilli(),
+                endTime = endTime.toEpochMilli(),
+                originPackage = metadata.dataOrigin.packageName,
                 recordingMethod = recordingMethodOf(metadata.recordingMethod).name,
-                deviceType = deviceTypeOf(metadata.device?.type).name,
                 date = date,
-                occurredAt = at.toEpochMilli(),
+                occurredAt = endTime.toEpochMilli(),
             )
 
         private fun recordingMethodOf(method: Int): RecordingMethod =
@@ -262,13 +258,6 @@ class HealthConnectCollector
                 Metadata.RECORDING_METHOD_AUTOMATICALLY_RECORDED -> RecordingMethod.AUTO
                 Metadata.RECORDING_METHOD_MANUAL_ENTRY -> RecordingMethod.MANUAL
                 else -> RecordingMethod.UNKNOWN
-            }
-
-        private fun deviceTypeOf(type: Int?): HealthDeviceType =
-            when (type) {
-                Device.TYPE_PHONE -> HealthDeviceType.PHONE
-                Device.TYPE_WATCH -> HealthDeviceType.WATCH
-                else -> HealthDeviceType.UNKNOWN
             }
 
         private fun exerciseTypeName(type: Int): String =
@@ -283,21 +272,27 @@ class HealthConnectCollector
                 else -> "OTHER"
             }
 
-        private fun sleepStageName(stage: Int): String =
-            when (stage) {
-                SleepSessionRecord.STAGE_TYPE_AWAKE,
-                SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
-                -> "AWAKE"
-                SleepSessionRecord.STAGE_TYPE_LIGHT -> "LIGHT"
-                SleepSessionRecord.STAGE_TYPE_DEEP -> "DEEP"
-                SleepSessionRecord.STAGE_TYPE_REM -> "REM"
-                SleepSessionRecord.STAGE_TYPE_OUT_OF_BED -> "OUT_OF_BED"
-                SleepSessionRecord.STAGE_TYPE_SLEEPING -> "SLEEPING"
-                else -> "UNKNOWN"
-            }
+        /**
+         * 실제 수면 구간 합(전송 스펙 §5). AWAKE·AWAKE_IN_BED·OUT_OF_BED 는 뺀다.
+         * writer 가 stage 를 주지 않으면 **null** 이고 서버가 durationMillis 로 대체한다 —
+         * 0 으로 접으면 "잠자리에 있었지만 한숨도 안 잤다"는 없던 사실이 된다.
+         */
+        private fun SleepSessionRecord.sleepMillisOrNull(): Long? {
+            if (stages.isEmpty()) return null
+            return stages
+                .filterNot { it.stage in AWAKE_STAGES }
+                .sumOf { Duration.between(it.startTime, it.endTime).toMillis() }
+        }
 
         private companion object {
             const val SLEEP_WINDOW_HOURS = 36L
             const val GAP_WINDOW_MS = 30L * 60 * 1000
+
+            val AWAKE_STAGES =
+                setOf(
+                    SleepSessionRecord.STAGE_TYPE_AWAKE,
+                    SleepSessionRecord.STAGE_TYPE_AWAKE_IN_BED,
+                    SleepSessionRecord.STAGE_TYPE_OUT_OF_BED,
+                )
         }
     }

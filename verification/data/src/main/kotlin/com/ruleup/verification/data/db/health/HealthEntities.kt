@@ -8,40 +8,49 @@ import androidx.room.Query
 import androidx.room.Upsert
 
 /**
- * 움직임(HEALTH) 읽기 버퍼(명세 §8). Health Connect 는 하루치 누적이 sync 마다 갱신되므로
+ * 움직임(HEALTH) 읽기 버퍼(전송 스펙 §2). Health Connect 는 하루치 누적이 sync 마다 갱신되므로
  * 매 capture 마다 미태깅 스냅샷을 갈아끼우고(deleteUntagged→insert) 최신값을 재전송한다.
+ * 재전송이 중복 판정을 만들지 않는 근거는 [recordId] 뿐이다.
+ *
  * [date] 는 로컬 귀속 날짜(YYYY-MM-DD), [occurredAt] 은 기록 종료 epoch millis(정렬·TTL).
+ * 전송하지 않는 값(단위·운동 종류·기기 종류)은 담지 않는다.
  */
 @Entity(tableName = "health_reading")
 data class HealthReadingEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    // Health Connect metadata.id — 멱등 dedup 키
+    val recordId: String,
     // DISTANCE / STEPS / EXERCISE_DURATION
     val metric: String,
     val value: Double,
-    // km / count / min
-    val unit: String,
-    // EXERCISE 계열만 채움(예: RUNNING), 그 외 null
-    val exerciseType: String?,
-    val dataOrigin: String,
+    val startTime: Long,
+    val endTime: Long,
+    val originPackage: String,
     // AUTO / ACTIVE / MANUAL / UNKNOWN
     val recordingMethod: String,
-    // PHONE / WATCH / UNKNOWN
-    val deviceType: String,
     val date: String,
     val occurredAt: Long,
     val synced: Boolean = false,
     val collectedAt: String? = null,
 )
 
-/** 수면 세그먼트 버퍼(명세 §6.2). 익일 배치라 lag 가 길다. */
-@Entity(tableName = "sleep_segment")
-data class SleepSegmentEntity(
+/**
+ * 수면 세션 버퍼(전송 스펙 §5). stage 로 쪼개지 않고 세션 1건이 행 1개다.
+ * [sleepMillis] 는 stage 를 못 받았을 때 null — 0 으로 접으면 "안 잤다"가 된다.
+ */
+@Entity(tableName = "sleep_session")
+data class SleepSessionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val recordId: String,
     val startAt: Long,
     val endAt: Long,
-    val status: String,
+    val durationMillis: Long,
+    val sleepMillis: Long?,
+    val observedElapsedMillis: Long,
+    val originPackage: String,
+    val recordingMethod: String,
     // 정렬·TTL용(= endAt)
     val occurredAt: Long,
     val synced: Boolean = false,
@@ -87,23 +96,23 @@ interface HealthReadingDao {
 }
 
 @Dao
-interface SleepSegmentDao {
+interface SleepSessionDao {
     @Insert
-    suspend fun insertAll(items: List<SleepSegmentEntity>)
+    suspend fun insertAll(items: List<SleepSessionEntity>)
 
-    @Query("DELETE FROM sleep_segment WHERE synced = 0 AND collectedAt IS NULL")
+    @Query("DELETE FROM sleep_session WHERE synced = 0 AND collectedAt IS NULL")
     suspend fun deleteUntagged()
 
-    @Query("UPDATE sleep_segment SET collectedAt = :key WHERE synced = 0 AND collectedAt IS NULL")
+    @Query("UPDATE sleep_session SET collectedAt = :key WHERE synced = 0 AND collectedAt IS NULL")
     suspend fun tagPending(key: String)
 
-    @Query("SELECT * FROM sleep_segment WHERE collectedAt = :key AND synced = 0 ORDER BY startAt ASC")
-    suspend fun byBatch(key: String): List<SleepSegmentEntity>
+    @Query("SELECT * FROM sleep_session WHERE collectedAt = :key AND synced = 0 ORDER BY startAt ASC")
+    suspend fun byBatch(key: String): List<SleepSessionEntity>
 
-    @Query("UPDATE sleep_segment SET synced = 1 WHERE collectedAt = :key")
+    @Query("UPDATE sleep_session SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    @Query("DELETE FROM sleep_segment WHERE synced = 1 AND occurredAt < :threshold")
+    @Query("DELETE FROM sleep_session WHERE synced = 1 AND occurredAt < :threshold")
     suspend fun purge(threshold: Long)
 }
 

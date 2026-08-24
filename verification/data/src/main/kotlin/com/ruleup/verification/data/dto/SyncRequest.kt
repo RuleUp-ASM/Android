@@ -7,14 +7,9 @@ import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.VerificationSignal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 // ---------- 3.1 sync 요청 (전송 스펙 §0.1 공통 envelope) ----------
-
-/** epoch millis → ISO-8601 (BE 가 KST 로 변환해 target_date 산정, 명세 §2.10). */
-@OptIn(ExperimentalTime::class)
-private fun Long.toIso(): String = Instant.fromEpochMilliseconds(this).toString()
+// 모든 시각은 Long epoch millis 다(전송 스펙 설계 원칙 ①) — 문자열 변환을 거치지 않는다.
 
 /**
  * 지오펜스 전이 1건(전송 스펙 §1). 좌표는 계약에 없어 보내지 않는다 — 좌표가 나가는 유일한 통로는
@@ -66,47 +61,53 @@ data class LocationPointRequest(
     val at: Long,
 )
 
-/** HEALTH readings 의 신뢰 메타데이터(명세 §6.2·§8.2). 필수 동봉 — 없으면 BE 거부. */
-@Serializable
-data class HealthOriginRequest(
-    @SerialName("dataOrigin")
-    val dataOrigin: String,
-    @SerialName("recordingMethod")
-    val recordingMethod: String,
-    @SerialName("deviceType")
-    val deviceType: String,
-)
-
-/** Health Connect 읽은 값 1건(명세 §6.2). 집계·게이트는 BE. */
+/**
+ * Health Connect 읽은 값 1건(전송 스펙 §2). 집계·화이트리스트·MANUAL 거부는 서버가 한다.
+ * 신뢰 메타데이터([recordingMethod]·[originPackage])와 멱등 키([recordId])는 필수 동봉이다 —
+ * 값만 보내면 서버가 거부한다. `metric` 은 신호 레벨이라 여기서 반복하지 않는다.
+ */
 @Serializable
 data class HealthReadingRequest(
-    @SerialName("metric")
-    val metric: String,
+    @SerialName("recordId")
+    val recordId: String,
     @SerialName("value")
     val value: Double,
-    @SerialName("unit")
-    val unit: String,
-    @SerialName("exerciseType")
-    val exerciseType: String? = null,
-    @SerialName("origin")
-    val origin: HealthOriginRequest,
+    @SerialName("startTime")
+    val startTime: Long,
+    @SerialName("endTime")
+    val endTime: Long,
+    @SerialName("recordingMethod")
+    val recordingMethod: String,
+    @SerialName("originPackage")
+    val originPackage: String,
 )
 
-/** 수면 세그먼트 1건(명세 §6.2). */
+/** 수면 세션 1건(전송 스펙 §5). stage 를 쪼개지 않고 세션 단위로 보낸다. */
 @Serializable
-data class SleepSegmentRequest(
-    @SerialName("startAt")
-    val startAt: String,
-    @SerialName("endAt")
-    val endAt: String,
-    @SerialName("status")
-    val status: String,
+data class SleepSessionRequest(
+    @SerialName("recordId")
+    val recordId: String,
+    @SerialName("start")
+    val start: Long,
+    @SerialName("end")
+    val end: Long,
+    @SerialName("durationMillis")
+    val durationMillis: Long,
+    // stage 를 못 받으면 생략된다 — 서버가 durationMillis 로 대체한다
+    @SerialName("sleepMillis")
+    val sleepMillis: Long? = null,
+    @SerialName("observedElapsedMillis")
+    val observedElapsedMillis: Long,
+    @SerialName("recordingMethod")
+    val recordingMethod: String,
+    @SerialName("originPackage")
+    val originPackage: String,
 )
 
 /**
  * 신호 1건 (전송 스펙 §1~§5). [type] 디스크리미네이터 + 타입별 옵셔널 필드.
  * GEOFENCE → [events], SCREEN_TIME → [appEvents], WAKE → [firstUnlock]/[firstScreenOn]/[deviceSecure],
- * LOCATION → [points], HEALTH → [date]/[readings], SLEEP → [segments].
+ * LOCATION → [points], HEALTH → [date]/[metric]/[readings], SLEEP → [sessions].
  */
 @Serializable
 data class SignalRequest(
@@ -126,10 +127,12 @@ data class SignalRequest(
     val points: List<LocationPointRequest>? = null,
     @SerialName("date")
     val date: String? = null,
+    @SerialName("metric")
+    val metric: String? = null,
     @SerialName("readings")
     val readings: List<HealthReadingRequest>? = null,
-    @SerialName("segments")
-    val segments: List<SleepSegmentRequest>? = null,
+    @SerialName("sessions")
+    val sessions: List<SleepSessionRequest>? = null,
 )
 
 // ---------- §0.1 공통 envelope 필드 ----------
@@ -300,19 +303,16 @@ private fun VerificationSignal.toDto(): SignalRequest =
             SignalRequest(
                 type = "HEALTH",
                 date = date,
+                metric = metric.name,
                 readings =
                     readings.map {
                         HealthReadingRequest(
-                            metric = it.metric.name,
+                            recordId = it.recordId,
                             value = it.value,
-                            unit = it.unit,
-                            exerciseType = it.exerciseType,
-                            origin =
-                                HealthOriginRequest(
-                                    dataOrigin = it.origin.dataOrigin,
-                                    recordingMethod = it.origin.recordingMethod.name,
-                                    deviceType = it.origin.deviceType.name,
-                                ),
+                            startTime = it.startTime,
+                            endTime = it.endTime,
+                            recordingMethod = it.recordingMethod.name,
+                            originPackage = it.originPackage,
                         )
                     },
             )
@@ -320,12 +320,17 @@ private fun VerificationSignal.toDto(): SignalRequest =
         is VerificationSignal.Sleep ->
             SignalRequest(
                 type = "SLEEP",
-                segments =
-                    segments.map {
-                        SleepSegmentRequest(
-                            startAt = it.startAt.toIso(),
-                            endAt = it.endAt.toIso(),
-                            status = it.status,
+                sessions =
+                    sessions.map {
+                        SleepSessionRequest(
+                            recordId = it.recordId,
+                            start = it.start,
+                            end = it.end,
+                            durationMillis = it.durationMillis,
+                            sleepMillis = it.sleepMillis,
+                            observedElapsedMillis = it.observedElapsedMillis,
+                            recordingMethod = it.recordingMethod.name,
+                            originPackage = it.originPackage,
                         )
                     },
             )

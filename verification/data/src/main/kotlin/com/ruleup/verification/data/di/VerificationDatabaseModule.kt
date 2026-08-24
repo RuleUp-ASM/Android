@@ -10,7 +10,7 @@ import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
 import com.ruleup.verification.data.db.geofence.LocationSampleDao
 import com.ruleup.verification.data.db.health.HealthReadingDao
 import com.ruleup.verification.data.db.health.HealthTargetDao
-import com.ruleup.verification.data.db.health.SleepSegmentDao
+import com.ruleup.verification.data.db.health.SleepSessionDao
 import com.ruleup.verification.data.db.usage.UsageCursorDao
 import com.ruleup.verification.data.db.usage.UsageEventDao
 import com.ruleup.verification.data.db.usage.UsageTargetDao
@@ -59,7 +59,7 @@ object VerificationDatabaseModule {
     fun provideHealthReadingDao(database: VerificationDatabase): HealthReadingDao = database.healthReadingDao()
 
     @Provides
-    fun provideSleepSegmentDao(database: VerificationDatabase): SleepSegmentDao = database.sleepSegmentDao()
+    fun provideSleepSessionDao(database: VerificationDatabase): SleepSessionDao = database.sleepSessionDao()
 
     @Provides
     fun provideHealthTargetDao(database: VerificationDatabase): HealthTargetDao = database.healthTargetDao()

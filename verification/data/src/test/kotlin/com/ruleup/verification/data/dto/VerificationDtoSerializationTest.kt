@@ -7,9 +7,7 @@ import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTransitionEvent
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
-import com.ruleup.verification.domain.entity.HealthDeviceType
 import com.ruleup.verification.domain.entity.HealthMetric
-import com.ruleup.verification.domain.entity.HealthOrigin
 import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.NetworkState
@@ -18,7 +16,7 @@ import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.RecordingMethod
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
-import com.ruleup.verification.domain.entity.SleepSegment
+import com.ruleup.verification.domain.entity.SleepSession
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.VerificationSignal
 import com.ruleup.verification.domain.entity.VerifiedVia
@@ -193,62 +191,103 @@ class VerificationDtoSerializationTest {
                     listOf(
                         VerificationSignal.Health(
                             date = "2026-06-24",
+                            metric = HealthMetric.DISTANCE,
                             readings =
                                 listOf(
                                     HealthReading(
-                                        metric = HealthMetric.DISTANCE,
+                                        recordId = "hc-1",
                                         value = 5.2,
-                                        unit = "km",
-                                        exerciseType = "RUNNING",
-                                        origin =
-                                            HealthOrigin(
-                                                dataOrigin = "com.sec.android.app.shealth",
-                                                recordingMethod = RecordingMethod.AUTO,
-                                                deviceType = HealthDeviceType.WATCH,
-                                            ),
-                                        // at 은 내부 정렬용 — 페이로드엔 미포함.
-                                        at = 1_700_000_000_000L,
+                                        startTime = 1_699_999_000_000L,
+                                        endTime = 1_700_000_000_000L,
+                                        recordingMethod = RecordingMethod.AUTO,
+                                        originPackage = "com.sec.android.app.shealth",
                                     ),
                                 ),
                         ),
                     ),
             )
 
-        val decoded = json.decodeFromString<SyncEnvelopeRequest>(json.encodeToString(metadata().toRequest(batch)))
-        val signal = decoded.signals.single()
+        val encoded = json.encodeToString(metadata().toRequest(batch))
+        val signal = json.decodeFromString<SyncEnvelopeRequest>(encoded).signals.single()
         assertEquals("HEALTH", signal.type)
         assertEquals("2026-06-24", signal.date)
+        // metric 은 신호 레벨이라 reading 마다 반복하지 않는다.
+        assertEquals("DISTANCE", signal.metric)
         val reading = assertNotNull(signal.readings).single()
-        assertEquals("DISTANCE", reading.metric)
+        assertEquals("hc-1", reading.recordId)
         assertEquals(5.2, reading.value)
-        assertEquals("km", reading.unit)
-        assertEquals("RUNNING", reading.exerciseType)
-        // origin(신뢰 게이트 입력)은 필수 동봉(명세 §6.2·§8.2).
-        assertEquals("com.sec.android.app.shealth", reading.origin.dataOrigin)
-        assertEquals("AUTO", reading.origin.recordingMethod)
-        assertEquals("WATCH", reading.origin.deviceType)
+        assertEquals(1_699_999_000_000L, reading.startTime)
+        // 신뢰 게이트 입력은 필수 동봉 — 값만 보내면 서버가 거부한다.
+        assertEquals("AUTO", reading.recordingMethod)
+        assertEquals("com.sec.android.app.shealth", reading.originPackage)
+        // 보내지 않기로 한 값들이 새어 나가지 않는다.
+        assertTrue(!encoded.contains("\"unit\""))
+        assertTrue(!encoded.contains("deviceType"))
     }
 
     @Test
-    fun `SLEEP 신호 세그먼트가 epoch 에서 ISO 로 라운드트립한다`() {
+    fun `SLEEP 은 stage 를 쪼개지 않고 세션 단위로 나간다`() {
         val batch =
             SignalBatch(
                 collectedAt = "2026-06-24T00:00:00Z",
                 signals =
                     listOf(
                         VerificationSignal.Sleep(
-                            segments = listOf(SleepSegment(startAt = 0L, endAt = 3_600_000L, status = "DEEP")),
+                            sessions =
+                                listOf(
+                                    SleepSession(
+                                        recordId = "sleep-1",
+                                        start = 0L,
+                                        end = 3_600_000L,
+                                        durationMillis = 3_600_000L,
+                                        sleepMillis = 3_000_000L,
+                                        observedElapsedMillis = 987_654_321L,
+                                        recordingMethod = RecordingMethod.AUTO,
+                                        originPackage = "com.sec.android.app.shealth",
+                                    ),
+                                ),
                         ),
                     ),
             )
 
-        val decoded = json.decodeFromString<SyncEnvelopeRequest>(json.encodeToString(metadata().toRequest(batch)))
-        val signal = decoded.signals.single()
+        val encoded = json.encodeToString(metadata().toRequest(batch))
+        val signal = json.decodeFromString<SyncEnvelopeRequest>(encoded).signals.single()
         assertEquals("SLEEP", signal.type)
-        val segment = assertNotNull(signal.segments).single()
-        assertEquals("1970-01-01T00:00:00Z", segment.startAt)
-        assertEquals("1970-01-01T01:00:00Z", segment.endAt)
-        assertEquals("DEEP", segment.status)
+        val session = assertNotNull(signal.sessions).single()
+        assertEquals("sleep-1", session.recordId)
+        assertEquals(3_600_000L, session.durationMillis)
+        assertEquals(3_000_000L, session.sleepMillis)
+        assertEquals("com.sec.android.app.shealth", session.originPackage)
+    }
+
+    @Test
+    fun `stage 를 못 받은 세션은 sleepMillis 없이 나간다`() {
+        val batch =
+            SignalBatch(
+                collectedAt = "2026-06-24T00:00:00Z",
+                signals =
+                    listOf(
+                        VerificationSignal.Sleep(
+                            sessions =
+                                listOf(
+                                    SleepSession(
+                                        recordId = "sleep-2",
+                                        start = 0L,
+                                        end = 3_600_000L,
+                                        durationMillis = 3_600_000L,
+                                        sleepMillis = null,
+                                        observedElapsedMillis = 1L,
+                                        recordingMethod = RecordingMethod.UNKNOWN,
+                                        originPackage = "com.unknown.app",
+                                    ),
+                                ),
+                        ),
+                    ),
+            )
+
+        val encoded = json.encodeToString(metadata().toRequest(batch))
+        // 0 으로 접으면 "한숨도 안 잤다"가 된다 — 필드를 통째로 빼서 서버가 durationMillis 로 대체하게 둔다.
+        assertTrue(!encoded.contains("sleepMillis"))
     }
 
     @Test
