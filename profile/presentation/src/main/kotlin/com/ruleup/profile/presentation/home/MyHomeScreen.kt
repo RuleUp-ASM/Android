@@ -358,6 +358,8 @@ private fun MyHomeMenuCard(onIntent: (MyHomeIntent) -> Unit) {
         MenuRow(emoji = "🏆", label = "그룹 랭킹") { onIntent(MyHomeIntent.OpenRanking) }
         MenuDivider()
         MenuRow(emoji = "📊", label = "통계 리포트") { onIntent(MyHomeIntent.OpenStats) }
+
+        MenuRow(emoji = "🙋", label = "이의 내역") { onIntent(MyHomeIntent.OpenAppeals) }
         MenuDivider()
         MenuRow(emoji = "👥", label = "친구 초대") { onIntent(MyHomeIntent.OpenInvite) }
         MenuDivider()

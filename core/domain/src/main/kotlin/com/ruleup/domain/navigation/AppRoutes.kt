@@ -41,6 +41,7 @@ object AppRoutes {
     const val MY_TEMPERATURE = "my/temperature" // 매너 온도 상세
     const val MY_REPUTATION_HISTORY = "my/reputation/history" // 평판 히스토리
     const val MY_CALENDAR = "my/calendar" // 활동 캘린더
+    const val MY_APPEALS = "my/appeals" // 이의 내역 (내가 낸 이의)
     const val MY_STATS = "my/stats" // 통계 리포트
     const val MY_INVITE = "my/invite" // 친구 초대
     const val MY_PROFILE_EDIT = "my/profile/edit" // 프로필 편집(마이 → 재편집)

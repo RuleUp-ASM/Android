@@ -23,6 +23,9 @@ sealed interface MyHomeIntent : MviIntent {
     /** 메뉴: 활동 캘린더. */
     data object OpenCalendar : MyHomeIntent
 
+    /** 이의 내역 — 내가 낸 이의가 어떻게 됐는지. */
+    data object OpenAppeals : MyHomeIntent
+
     /** 메뉴: 그룹 랭킹 — 참여 중 그룹 챌린지를 골라 랭킹 화면으로 (1개면 바로 이동). */
     data object OpenRanking : MyHomeIntent
 

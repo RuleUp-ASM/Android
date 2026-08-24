@@ -38,12 +38,14 @@ import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
 import com.ruleup.profile.domain.navigation.FriendInvitePage
+import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyHomePage
 import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTemperaturePage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
 import com.ruleup.profile.domain.navigation.ReputationHistoryPage
+import com.ruleup.profile.presentation.appeals.MyAppealsScreen
 import com.ruleup.profile.presentation.calendar.MyCalendarScreen
 import com.ruleup.profile.presentation.edit.ProfileEditScreen
 import com.ruleup.profile.presentation.history.ReputationHistoryScreen
@@ -112,6 +114,10 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = ReputationHistoryPage.PATH,
             render = { ReputationHistoryScreen() },
+        ),
+        AppRoute(
+            path = MyAppealsPage.PATH,
+            render = { MyAppealsScreen() },
         ),
         AppRoute(
             path = MyCalendarPage.PATH,

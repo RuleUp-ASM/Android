@@ -5,6 +5,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.profile.domain.navigation.FriendInvitePage
+import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTemperaturePage
@@ -35,6 +36,7 @@ class MyHomeViewModel
                 MyHomeIntent.OpenProfileEdit -> navigationHelper.navigateByRoute(ProfileEditPage.toRoute())
                 MyHomeIntent.OpenTemperature -> navigationHelper.navigateByRoute(MyTemperaturePage.toRoute())
                 MyHomeIntent.OpenCalendar -> navigationHelper.navigateByRoute(MyCalendarPage.toRoute())
+                MyHomeIntent.OpenAppeals -> navigationHelper.navigateByRoute(MyAppealsPage.toRoute())
                 MyHomeIntent.OpenRanking -> openRanking()
                 is MyHomeIntent.SelectRankingChallenge -> {
                     dispatch(MyHomeReducerEvent.RankingPickerDismissed)

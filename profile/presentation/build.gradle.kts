@@ -36,6 +36,8 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":profile:domain"))
+    // 이의 내역은 인증 모듈 소관 개념이다 — 타입을 베끼지 않고 그쪽 domain 계약을 직접 쓴다.
+    implementation(project(":verification:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)
@@ -64,4 +66,6 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
+
+    testImplementation(kotlin("test-junit"))
 }
