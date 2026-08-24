@@ -12,7 +12,6 @@ import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.LocationPoint
-import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.MyScreenApps
@@ -407,10 +406,8 @@ class RunSyncUseCaseTest {
 
         override suspend fun submitManual(
             challengeId: String,
-            method: ManualMethod,
             targetDate: String?,
-            imageUrl: String?,
-            asFallback: Boolean,
+            note: String?,
         ): ManualSubmitResult = error("unused")
 
         override suspend fun searchPlaces(

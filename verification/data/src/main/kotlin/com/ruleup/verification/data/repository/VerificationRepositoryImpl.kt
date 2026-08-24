@@ -21,13 +21,11 @@ import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
-import com.ruleup.verification.domain.entity.FallbackLimitExceededException
-import com.ruleup.verification.domain.entity.ImageRequiredException
 import com.ruleup.verification.domain.entity.InvalidAnchorException
 import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
+import com.ruleup.verification.domain.entity.InvalidTargetDateException
 import com.ruleup.verification.domain.entity.LocationLockedInWindowException
-import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.MyScreenApps
@@ -218,35 +216,26 @@ class VerificationRepositoryImpl
 
         override suspend fun submitManual(
             challengeId: String,
-            method: ManualMethod,
             targetDate: String?,
-            imageUrl: String?,
-            asFallback: Boolean,
+            note: String?,
         ): ManualSubmitResult =
             try {
                 api
                     .submitManual(
                         challengeId = challengeId,
-                        request =
-                            ManualSubmitRequest(
-                                method = method.value,
-                                targetDate = targetDate,
-                                imageUrl = imageUrl,
-                                asFallback = asFallback,
-                            ),
+                        request = ManualSubmitRequest(targetDate = targetDate, note = note),
                     ).getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 409 중복/한도초과·400 이미지누락은 화면이 안내·분기할 수 있도록 도메인 예외로 변환(명세 §3.4·§6.5·§9.2).
+                // 화면이 문구를 갈라야 하는 실패만 도메인 어휘로 올린다(명세 수동 인증 제출).
+                // 자동 방 제출(NOT_MANUAL_CHALLENGE)은 화면이 그 버튼을 두지 않는 것이 전제라 전파한다.
                 when (e.code) {
                     CODE_ALREADY_VERIFIED -> throw AlreadyVerifiedException()
-                    CODE_IMAGE_REQUIRED -> throw ImageRequiredException()
-                    CODE_FALLBACK_LIMIT_EXCEEDED -> throw FallbackLimitExceededException()
+                    CODE_INVALID_TARGET_DATE -> throw InvalidTargetDateException()
                     else -> throw e
                 }
             }
 
-        // 카카오 로컬 키워드 검색을 앱에서 직접 호출(명세 §5.2). x=경도, y=위도. radiusM 없으면 전국.
         override suspend fun searchPlaces(
             query: String,
             lat: Double?,
@@ -275,8 +264,7 @@ class VerificationRepositoryImpl
             private const val CODE_INVALID_SIGNAL_PAYLOAD = "INVALID_SIGNAL_PAYLOAD"
             private const val CODE_SYNC_PAYLOAD_TOO_LARGE = "SYNC_PAYLOAD_TOO_LARGE"
             private const val CODE_ALREADY_VERIFIED = "ALREADY_VERIFIED"
-            private const val CODE_IMAGE_REQUIRED = "IMAGE_REQUIRED"
-            private const val CODE_FALLBACK_LIMIT_EXCEEDED = "FALLBACK_LIMIT_EXCEEDED"
+            private const val CODE_INVALID_TARGET_DATE = "INVALID_TARGET_DATE"
             private const val CODE_INVALID_ANCHOR = "INVALID_ANCHOR"
             private const val CODE_ANCHOR_LIMIT_EXCEEDED = "ANCHOR_LIMIT_EXCEEDED"
             private const val CODE_LOCATION_LOCKED_IN_WINDOW = "LOCATION_LOCKED_IN_WINDOW"

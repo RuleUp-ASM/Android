@@ -19,6 +19,7 @@ import com.ruleup.verification.data.dto.ManualSubmitResponse
 import com.ruleup.verification.data.dto.MyLocationResponse
 import com.ruleup.verification.data.dto.MyScreenAppsResponse
 import com.ruleup.verification.data.dto.ProgressResponse
+import com.ruleup.verification.data.dto.StreakResponse
 import com.ruleup.verification.data.dto.SyncEnvelopeRequest
 import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.UpdateMyLocationRequest
@@ -28,13 +29,12 @@ import com.ruleup.verification.data.dto.VerificationDetailResponse
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
-import com.ruleup.verification.domain.entity.FallbackLimitExceededException
 import com.ruleup.verification.domain.entity.InvalidAnchorException
+import com.ruleup.verification.domain.entity.InvalidTargetDateException
 import com.ruleup.verification.domain.entity.LocationLockedInWindowException
 import com.ruleup.verification.domain.entity.LocationPin
-import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.SettingChangeLimitException
-import com.ruleup.verification.domain.entity.VerifiedVia
+import com.ruleup.verification.domain.entity.TodayResultStatus
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,67 +48,54 @@ class VerificationRepositoryImplTest {
             val api = FakeVerificationApi(manualError = ErrorBody("ALREADY_VERIFIED", "이미 인증함"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
-            assertFailsWith<AlreadyVerifiedException> {
-                repository.submitManual("c1", ManualMethod.SELF_CHECK)
-            }
+            assertFailsWith<AlreadyVerifiedException> { repository.submitManual("c1") }
         }
 
     @Test
-    fun `수동 제출 성공은 결과를 매핑한다`() =
+    fun `수동 제출 성공은 취소 키와 연속 기록을 매핑한다`() =
         runTest {
             val api =
                 FakeVerificationApi(
                     manualSuccess =
                         ManualSubmitResponse(
-                            targetDate = "2026-06-21",
-                            status = "SUCCESS",
-                            method = "SELF_CHECK",
-                            progressRate = 60.0,
+                            verificationId = "v_11",
+                            targetDate = "2026-07-25",
+                            status = "DONE",
+                            streak = StreakResponse(before = 6, after = 7),
+                            scoreNote = "MANUAL_NO_SCORE",
                         ),
                 )
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
-            val result = repository.submitManual("c1", ManualMethod.SELF_CHECK)
+            val result = repository.submitManual("c1")
 
-            assertEquals("2026-06-21", result.targetDate)
-            assertEquals(ManualMethod.SELF_CHECK, result.method)
-            assertEquals(60.0, result.progressRate)
-            // verifiedVia 누락 시 보수적으로 MANUAL(명세 §9.2).
-            assertEquals(VerifiedVia.MANUAL, result.verifiedVia)
+            // verificationId 가 없으면 방금 한 체크를 되돌릴 경로가 없다.
+            assertEquals("v_11", result.verificationId)
+            assertEquals("2026-07-25", result.targetDate)
+            // 제출 즉시 확정 — 잠정 상태가 없다.
+            assertEquals(TodayResultStatus.DONE, result.status)
+            assertEquals(7, result.streak?.after)
+            assertEquals("MANUAL_NO_SCORE", result.scoreNote)
         }
 
     @Test
-    fun `예비 폴백 409 FALLBACK_LIMIT_EXCEEDED 는 도메인 예외로 변환된다`() =
+    fun `자정을 넘긴 수동 제출은 도메인 예외로 변환된다`() =
         runTest {
-            val api = FakeVerificationApi(manualError = ErrorBody("FALLBACK_LIMIT_EXCEEDED", "한도 초과"))
+            // 화면을 열어 둔 채 날짜가 바뀌면 실제로 난다 — 일반 오류 문구로 뭉개면 왜 막혔는지 알 수 없다.
+            val api = FakeVerificationApi(manualError = ErrorBody("INVALID_TARGET_DATE", "오늘이 아님"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
-            assertFailsWith<FallbackLimitExceededException> {
-                repository.submitManual("c1", ManualMethod.SELF_CHECK, asFallback = true)
-            }
+            assertFailsWith<InvalidTargetDateException> { repository.submitManual("c1") }
         }
 
     @Test
-    fun `예비 폴백 성공은 verifiedVia·disputeClosesAt 을 매핑한다`() =
+    fun `자동 방 수동 제출은 도메인 어휘로 올리지 않는다`() =
         runTest {
-            val api =
-                FakeVerificationApi(
-                    manualSuccess =
-                        ManualSubmitResponse(
-                            targetDate = "2026-06-24",
-                            status = "SUCCESS",
-                            method = "SELF_CHECK",
-                            progressRate = 50.0,
-                            verifiedVia = "MANUAL_FALLBACK",
-                            disputeClosesAt = "2026-06-25T00:00:00Z",
-                        ),
-                )
+            // 화면이 자동 방에 체크 버튼을 두지 않는 것이 전제다 — 도달하면 프로그래밍 오류다.
+            val api = FakeVerificationApi(manualError = ErrorBody("NOT_MANUAL_CHALLENGE", "자동 방"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi())
 
-            val result = repository.submitManual("c1", ManualMethod.SELF_CHECK, asFallback = true)
-
-            assertEquals(VerifiedVia.MANUAL_FALLBACK, result.verifiedVia)
-            assertEquals("2026-06-25T00:00:00Z", result.disputeClosesAt)
+            assertFailsWith<ApiException> { repository.submitManual("c1") }
         }
 
     @Test

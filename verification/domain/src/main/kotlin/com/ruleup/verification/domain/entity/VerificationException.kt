@@ -27,15 +27,12 @@ class SyncPayloadTooLargeException : Exception("한 번에 보낼 수 있는 신
 class AlreadyVerifiedException : Exception("오늘은 이미 인증했습니다.")
 
 /**
- * PHOTO 제출 시 imageUrl 누락 (명세 §3.4, HTTP 400 IMAGE_REQUIRED).
+ * 수동 인증 제출 기한 경과 (명세 POST /challenges/{id}/verifications, HTTP 400 INVALID_TARGET_DATE).
+ *
+ * 수동 인증은 당일(KST) 마감이다. 화면을 열어 둔 채 자정을 넘기면 실제로 발생하므로 일반 오류
+ * 문구로 뭉개지 않는다 — 사용자는 방금까지 되던 버튼이 왜 막혔는지 알 수 없다.
  */
-class ImageRequiredException : Exception("사진 인증에는 이미지가 필요합니다.")
-
-/**
- * 예비 수동 폴백 주1회 한도 초과 (명세 §9.2, HTTP 409 FALLBACK_LIMIT_EXCEEDED).
- * 이미 이번 주 폴백을 썼으면 그냥 NO_SIGNAL_RECEIVED 실패로 떨어진다 — 화면은 한도 안내.
- */
-class FallbackLimitExceededException : Exception("이번 주 수동 인증 횟수를 모두 사용했어요.")
+class InvalidTargetDateException : Exception("오늘이 지나 체크할 수 없어요.")
 
 /**
  * 셋업 앵커가 유효하지 않음 (명세 setup·my-location, HTTP 400 INVALID_ANCHOR·ANCHOR_LIMIT_EXCEEDED).

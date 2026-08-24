@@ -6,7 +6,6 @@ import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.LocationPin
-import com.ruleup.verification.domain.entity.ManualMethod
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.MyScreenApps
@@ -141,13 +140,21 @@ interface VerificationRepository {
      */
     suspend fun cancelManual(verificationId: String)
 
-    /** 수동 인증 제출(명세 3.4·§9). PHOTO 는 [imageUrl] 필수. [asFallback]=true 면 예비 폴백(§9.2). */
+    /**
+     * 수동 인증 제출(명세: POST /challenges/{id}/verifications). **수동 방에서만 쓴다** —
+     * 자동 방의 실패 구제는 이의 제기가 담당하고, 자동 방에 대고 부르면 `NOT_MANUAL_CHALLENGE`(409)
+     * 가 그대로 전파된다(화면이 그 버튼을 두지 않는 것이 전제다).
+     *
+     * [targetDate] 를 비우면 서버가 오늘로 잡는다. 오늘이 아닌 날짜는
+     * [com.ruleup.verification.domain.entity.InvalidTargetDateException](400) 이고,
+     * 같은 날 두 번째 제출은 [com.ruleup.verification.domain.entity.AlreadyVerifiedException](409) 이다.
+     *
+     * [note] 는 기록용 메모라 서버가 검증하지 않는다.
+     */
     suspend fun submitManual(
         challengeId: String,
-        method: ManualMethod,
         targetDate: String? = null,
-        imageUrl: String? = null,
-        asFallback: Boolean = false,
+        note: String? = null,
     ): ManualSubmitResult
 
     /**
