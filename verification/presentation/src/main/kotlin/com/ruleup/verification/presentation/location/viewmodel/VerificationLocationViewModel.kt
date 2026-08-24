@@ -4,7 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.AnchorSet
+import com.ruleup.verification.domain.entity.InvalidAnchorException
+import com.ruleup.verification.domain.entity.LocationLockedInWindowException
 import com.ruleup.verification.domain.entity.LocationPin
+import com.ruleup.verification.domain.entity.SettingChangeLimitException
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.repository.VerificationRepository
@@ -57,6 +60,15 @@ class VerificationLocationViewModel
         ): VerificationLocationState =
             when (event) {
                 VerificationLocationReducerEvent.CheckingDone -> state.copy(isChecking = false)
+                is VerificationLocationReducerEvent.ExistingLoaded ->
+                    state.copy(
+                        isChecking = false,
+                        isEditing = true,
+                        anchors = event.anchors,
+                        serverRadiusM = event.serverRadiusM,
+                        changeAvailable = event.changeAvailable,
+                        nextChangeAvailableAt = event.nextChangeAvailableAt,
+                    )
                 VerificationLocationReducerEvent.Submitting -> state.copy(isSubmitting = true, missing = emptyList())
                 VerificationLocationReducerEvent.Finished -> state.copy(isSubmitting = false)
                 VerificationLocationReducerEvent.Searching -> state.copy(isSearching = true)
@@ -76,14 +88,25 @@ class VerificationLocationViewModel
                 is VerificationLocationReducerEvent.MissingUpdated -> state.copy(missing = event.missing)
             }
 
-        // 진입 게이트: 앵커 조회로 등록 여부 확인. 이미 등록돼 있으면 재등록하지 않고 종료(뒤로가기),
-        // 미등록(null)일 때만 지도 등록 UI 를 연다. 조회 자체 실패는 등록을 막지 않도록 미등록처럼 진행한다.
+        /**
+         * 진입 게이트: 앵커 조회로 등록 여부를 확인한다.
+         *
+         * 이미 등록돼 있으면 **핀을 복원해 편집 모드로 연다** — 종전에는 "이미 등록돼 있어요" 하고
+         * 되돌려보내서 이사·헬스장 변경 같은 상황에서 사용자가 할 수 있는 게 없었다.
+         * 조회 자체가 실패하면 최초 등록처럼 진행한다(등록을 막지 않는다).
+         */
         private fun init(intent: VerificationLocationIntent.Init) {
             viewModelScope.launch {
                 val existing = runCatching { verificationRepository.getMyLocation(intent.challengeId) }.getOrNull()
-                if (existing != null) {
-                    emitEffect(VerificationLocationEffect.ShowMessage("이미 인증 장소가 등록돼 있어요"))
-                    navigationHelper.navigateToBack()
+                if (existing != null && existing.anchors.isNotEmpty()) {
+                    dispatch(
+                        VerificationLocationReducerEvent.ExistingLoaded(
+                            anchors = existing.anchors,
+                            serverRadiusM = existing.serverRadiusM,
+                            changeAvailable = existing.changeAvailable,
+                            nextChangeAvailableAt = existing.nextChangeAvailableAt,
+                        ),
+                    )
                 } else {
                     dispatch(VerificationLocationReducerEvent.CheckingDone)
                 }
@@ -168,37 +191,108 @@ class VerificationLocationViewModel
                 emitEffect(VerificationLocationEffect.ShowMessage("앵커를 1개 이상 추가해 주세요"))
                 return
             }
+            if (currentState.isEditing && !currentState.changeAvailable) {
+                emitEffect(VerificationLocationEffect.ShowMessage(changeLockedMessage(currentState.nextChangeAvailableAt)))
+                return
+            }
             viewModelScope.launch {
                 dispatch(VerificationLocationReducerEvent.Submitting)
-                runCatching {
-                    verificationRepository.setupChallenge(
-                        challengeId = intent.challengeId,
-                        anchors = AnchorSet.of(anchors),
-                        targetPackages = intent.targetPackages,
-                    )
-                }.onSuccess { result ->
-                    dispatch(VerificationLocationReducerEvent.Finished)
-                    if (result.isReady) {
-                        // 앵커 전체를 OS 지오펜스로 등록. 등록 실패는 gap 으로 보고되고 다음 reconcile 이 재시도.
-                        // 반경은 서버가 정한 값을 그대로 쓴다 — 응답에 없을 때만 폴백.
-                        runCatching {
-                            bindLocationUseCase(
-                                challengeId = intent.challengeId,
-                                anchors = anchors,
-                                radiusM = result.serverRadiusM ?: SetupAnchors.DEFAULT_RADIUS_M,
-                                dwellMinutes = intent.dwellMinutes,
-                            )
-                        }
-                        emitEffect(VerificationLocationEffect.ShowMessage("장소가 등록됐어요"))
-                        navigationHelper.navigateToBack()
-                    } else {
-                        dispatch(VerificationLocationReducerEvent.MissingUpdated(result.missing))
-                        emitEffect(VerificationLocationEffect.ShowMessage(missingMessage(result.missing)))
-                    }
-                }.onFailure { error ->
-                    dispatch(VerificationLocationReducerEvent.Finished)
-                    emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "셋업 제출에 실패했어요"))
+                if (currentState.isEditing) {
+                    replaceAnchors(intent, anchors)
+                } else {
+                    submitSetup(intent, anchors)
                 }
+            }
+        }
+
+        /** 최초 등록(명세 POST /setup). 월 변경 횟수를 소진하지 않는다. */
+        private suspend fun submitSetup(
+            intent: VerificationLocationIntent.Submit,
+            anchors: List<LocationPin>,
+        ) {
+            runCatching {
+                verificationRepository.setupChallenge(
+                    challengeId = intent.challengeId,
+                    anchors = AnchorSet.of(anchors),
+                    targetPackages = intent.targetPackages,
+                )
+            }.onSuccess { result ->
+                dispatch(VerificationLocationReducerEvent.Finished)
+                if (result.isReady) {
+                    bindAndFinish(intent, anchors, result.serverRadiusM, "장소가 등록됐어요")
+                } else {
+                    dispatch(VerificationLocationReducerEvent.MissingUpdated(result.missing))
+                    emitEffect(VerificationLocationEffect.ShowMessage(missingMessage(result.missing)))
+                }
+            }.onFailure { error ->
+                dispatch(VerificationLocationReducerEvent.Finished)
+                emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "셋업 제출에 실패했어요"))
+            }
+        }
+
+        /**
+         * 앵커 교체(명세 PUT /my-location). 세트 전체를 갈아끼우고 그 달의 변경 1회를 소진한다.
+         *
+         * 실패는 화면이 각각 다르게 말해야 한다 — 인증 창 중이면 익일 재시도, 이번 달 소진이면
+         * 언제부터 가능한지, 좌표·개수 오류면 입력을 고치라고.
+         */
+        private suspend fun replaceAnchors(
+            intent: VerificationLocationIntent.Submit,
+            anchors: List<LocationPin>,
+        ) {
+            runCatching {
+                verificationRepository.updateMyLocation(
+                    challengeId = intent.challengeId,
+                    anchors = AnchorSet.of(anchors),
+                )
+            }.onSuccess { updated ->
+                dispatch(VerificationLocationReducerEvent.Finished)
+                bindAndFinish(intent, anchors, updated.serverRadiusM, "인증 장소를 바꿨어요")
+            }.onFailure { error ->
+                dispatch(VerificationLocationReducerEvent.Finished)
+                val message =
+                    when (error) {
+                        is LocationLockedInWindowException -> "인증이 진행 중인 동안에는 바꿀 수 없어요. 내일 다시 시도해 주세요"
+                        is SettingChangeLimitException -> changeLockedMessage(currentState.nextChangeAvailableAt)
+                        is InvalidAnchorException -> "장소가 유효하지 않아요. 위치를 다시 선택해 주세요"
+                        else -> error.message ?: "인증 장소를 바꾸지 못했어요"
+                    }
+                emitEffect(VerificationLocationEffect.ShowMessage(message))
+            }
+        }
+
+        /**
+         * 저장된 앵커를 OS 지오펜스에 등록하고 화면을 닫는다.
+         *
+         * 반경은 **서버가 정한 값**을 그대로 쓴다 — 응답에 없을 때만 폴백한다. 화면이 임의 값으로
+         * 등록하면 지도에 그린 원과 실제 판정 범위가 어긋난다.
+         */
+        private suspend fun bindAndFinish(
+            intent: VerificationLocationIntent.Submit,
+            anchors: List<LocationPin>,
+            serverRadiusM: Float?,
+            message: String,
+        ) {
+            // 등록 실패는 gap 으로 보고되고 다음 reconcile 이 재시도한다.
+            runCatching {
+                bindLocationUseCase(
+                    challengeId = intent.challengeId,
+                    anchors = anchors,
+                    radiusM = serverRadiusM ?: SetupAnchors.DEFAULT_RADIUS_M,
+                    dwellMinutes = intent.dwellMinutes,
+                )
+            }
+            emitEffect(VerificationLocationEffect.ShowMessage(message))
+            navigationHelper.navigateToBack()
+        }
+
+        /** 월 1회 소진 안내. 언제부터 가능한지 모르면 날짜를 지어내지 않는다. */
+        private fun changeLockedMessage(nextAt: String?): String {
+            val day = nextAt?.substringBefore('T')?.split('-')?.takeIf { it.size == 3 }
+            return if (day == null) {
+                "이번 달 변경 횟수를 모두 썼어요"
+            } else {
+                "이번 달 변경 횟수를 모두 썼어요. ${day[1].toInt()}월 ${day[2].toInt()}일부터 다시 바꿀 수 있어요"
             }
         }
 

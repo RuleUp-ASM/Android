@@ -37,8 +37,10 @@ sealed interface VerificationLocationIntent : MviIntent {
     ) : VerificationLocationIntent
 
     /**
-     * [제출] → 누적 앵커 + 대상 앱을 setup 으로 함께 송신(명세 setup).
-     * READY 면 응답의 서버 반경으로 앵커 전체를 OS 지오펜스에 등록하고 종료한다.
+     * [제출] → 누적 앵커를 저장한다.
+     *
+     * **최초 등록이면 `POST /setup`, 이미 등록된 상태면 `PUT /my-location`** 이다. 둘은 같은 화면을
+     * 쓰지만 다른 계약이다 — 최초 설정은 월 변경 횟수를 소진하지 않고, 교체는 소진한다.
      */
     data class Submit(
         val challengeId: String,
@@ -86,6 +88,15 @@ data class VerificationLocationState(
     val pending: PendingSelection? = null,
     // 제출 전까지 누적한 앵커(최대 3, 인증 정책 §1.1). label = 핀 이름.
     val anchors: List<LocationPin> = emptyList(),
+    // 이미 등록된 앵커를 편집 중인가. true 면 저장이 PUT(교체)이고 월 1회를 소진한다.
+    val isEditing: Boolean = false,
+    // 서버가 정한 인증 반경(m). 지도 원·목록 문구가 이 값을 쓴다 — 화면이 임의 값을 그리면
+    // 실제 판정 범위와 어긋난다. 아직 못 받았으면 null.
+    val serverRadiusM: Float? = null,
+    // 이번 달 앵커 변경이 가능한지(월 1회). 편집 진입일 때만 의미가 있다.
+    val changeAvailable: Boolean = true,
+    // 다음 변경 가능 시각(ISO). 소진했을 때만 채워진다.
+    val nextChangeAvailableAt: String? = null,
     // 직전 제출이 PENDING_SETUP 으로 떨어졌을 때의 미충족 항목(안내용).
     val missing: List<SetupMissing> = emptyList(),
 ) : UiState {
@@ -97,6 +108,14 @@ data class VerificationLocationState(
 sealed interface VerificationLocationReducerEvent : ReducerEvent {
     /** 앵커 조회 완료(미등록 확인) → 로딩 해제하고 지도 등록 UI 노출. */
     data object CheckingDone : VerificationLocationReducerEvent
+
+    /** 등록된 앵커를 불러와 편집 모드로 연다(재진입·변경 동선). */
+    data class ExistingLoaded(
+        val anchors: List<LocationPin>,
+        val serverRadiusM: Float?,
+        val changeAvailable: Boolean,
+        val nextChangeAvailableAt: String?,
+    ) : VerificationLocationReducerEvent
 
     data object Submitting : VerificationLocationReducerEvent
 
