@@ -4,18 +4,6 @@ import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
 
-/** 수동 인증 제출 페이지(명세 §6.5, VF-04). 자동 판정 불가 방식의 당일 제출. */
-data class VerificationManualPage(
-    val challengeId: String,
-) : Page {
-    override fun toRoute(): NavRoute = NavRoute(PATH, mapOf(ARG_CHALLENGE_ID to challengeId))
-
-    companion object {
-        const val PATH = AppRoutes.VERIFICATION_MANUAL
-        const val ARG_CHALLENGE_ID = "challengeId"
-    }
-}
-
 /**
  * 지도 핀(좌표 바인딩) 페이지(명세 §5). 챌린지 생성/참여 시 GPS 루틴이면 진입한다.
  */

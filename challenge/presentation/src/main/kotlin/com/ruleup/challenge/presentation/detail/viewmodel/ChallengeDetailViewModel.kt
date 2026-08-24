@@ -37,9 +37,12 @@ import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.ScreenKey
 import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AppealNotFailedException
 import com.ruleup.verification.domain.entity.AppealWindowClosedException
+import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.InvalidAppealReasonException
+import com.ruleup.verification.domain.entity.InvalidTargetDateException
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -96,6 +99,8 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 is ChallengeDetailIntent.PickAppealImage -> uploadAppealImage(intent.imageUri)
+                ChallengeDetailIntent.SubmitManualCheck -> submitManualCheck()
+                ChallengeDetailIntent.CancelManualCheck -> cancelManualCheck()
                 ChallengeDetailIntent.RefreshPermissions -> refreshPermissions()
                 ChallengeDetailIntent.DismissAppeal -> dispatch(ChallengeDetailReducerEvent.AppealReset)
                 ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
@@ -199,6 +204,7 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.AppealImageUploading -> state.copy(isUploadingAppealImage = event.uploading)
                 is ChallengeDetailReducerEvent.AppealImageUploaded -> state.copy(appealImageUrl = event.imageUrl)
                 is ChallengeDetailReducerEvent.AppealReasonRejected -> state.copy(appealReasonError = event.message)
+                is ChallengeDetailReducerEvent.ManualChecking -> state.copy(isManualChecking = event.checking)
                 is ChallengeDetailReducerEvent.PermissionsCaptured -> state.copy(permissions = event.permissions)
                 ChallengeDetailReducerEvent.AppealReset ->
                     state.copy(appealImageUrl = null, isUploadingAppealImage = false, appealReasonError = null)
@@ -831,6 +837,54 @@ class ChallengeDetailViewModel
                 else -> emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의를 접수하지 못했어요"))
             }
         }
+
+        /**
+         * 수동 방 오늘 인증 체크(명세 POST /challenges/{id}/verifications).
+         *
+         * 제출 즉시 확정이라 "접수했어요"가 아니라 결과를 바로 알린다. 실패하면 today 를 다시 읽어
+         * **화면 상태를 서버 사실로 되돌린다** — 눌렀는데 안 된 채 체크된 것처럼 남으면 사용자는
+         * 인증한 줄 알고 하루를 넘긴다.
+         */
+        private fun submitManualCheck() {
+            if (currentState.isManualChecking) return
+            val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(true))
+                runCatching { verificationRepository.submitManual(challengeId) }
+                    .onSuccess { emitEffect(ChallengeDetailEffect.ShowMessage("오늘 인증을 체크했어요")) }
+                    .onFailure { emitEffect(ChallengeDetailEffect.ShowMessage(manualCheckMessage(it))) }
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(false))
+                loadTodayResult(challengeId)
+            }
+        }
+
+        /**
+         * 수동 체크 해제(명세 DELETE /verifications/{id}). 당일(KST) 안에서만 된다.
+         *
+         * 잘못 누른 체크를 되돌릴 경로가 없으면 사용자는 하루를 거짓으로 남긴다.
+         */
+        private fun cancelManualCheck() {
+            if (currentState.isManualChecking) return
+            val verificationId = currentState.todayResult?.verificationId ?: return
+            val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(true))
+                runCatching { verificationRepository.cancelManual(verificationId) }
+                    .onSuccess { emitEffect(ChallengeDetailEffect.ShowMessage("오늘 체크를 해제했어요")) }
+                    .onFailure { emitEffect(ChallengeDetailEffect.ShowMessage(manualCheckMessage(it))) }
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(false))
+                loadTodayResult(challengeId)
+            }
+        }
+
+        /** 수동 체크 실패 문구. 셋 다 사용자가 아는 사실이 달라 같은 말로 뭉개지 않는다. */
+        private fun manualCheckMessage(error: Throwable): String =
+            when (error) {
+                is AlreadyVerifiedException -> "오늘은 이미 인증했어요"
+                is InvalidTargetDateException -> "오늘이 지나 체크할 수 없어요"
+                is CancelWindowClosedException -> "오늘이 지나 해제할 수 없어요"
+                else -> error.message ?: "잠시 후 다시 시도해 주세요"
+            }
 
         /** 권한 현황을 OS 에 다시 묻는다. 실패하면 직전 값을 유지한다 — 모른다고 참여를 막지 않는다. */
         private fun refreshPermissions() {
