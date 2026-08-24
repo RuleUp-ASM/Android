@@ -25,7 +25,6 @@ import com.ruleup.verification.data.dto.SyncResponse
 import com.ruleup.verification.data.dto.UpdateMyLocationRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
-import com.ruleup.verification.data.dto.VerificationDetailResponse
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
@@ -222,11 +221,6 @@ class VerificationRepositoryImplTest {
         override suspend fun getProgress(status: String?): BaseResponse<ProgressResponse> = error("unused")
 
         override suspend fun getTodayResult(challengeId: String) = error("unused")
-
-        override suspend fun getVerification(
-            challengeId: String,
-            logDays: Int?,
-        ): BaseResponse<VerificationDetailResponse> = error("unused")
 
         override suspend fun submitManual(
             challengeId: String,

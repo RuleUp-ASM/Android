@@ -3,7 +3,6 @@ package com.ruleup.verification.data.dto
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
-import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTransitionEvent
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
@@ -19,7 +18,6 @@ import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SleepSession
 import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.entity.VerificationSignal
-import com.ruleup.verification.domain.entity.VerifiedVia
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -362,72 +360,5 @@ class VerificationDtoSerializationTest {
         // 도로명 주소·카테고리 그룹명 우선.
         assertEquals("서울 강남구 테헤란로", places.single().address)
         assertEquals("헬스장", places.single().category)
-    }
-
-    @Test
-    fun `검증 상세 응답의 failureReason 과 today 상태가 매핑된다`() {
-        val payload =
-            """
-            {
-              "challengeId": "c-1", "title": "헬스장 가기", "status": "ACTIVE",
-              "verification": {
-                "overallStatus": "AT_RISK", "progressRate": 50.0,
-                "successDays": 5, "targetDays": 10, "remainingDays": 5,
-                "today": { "isTarget": true, "status": "FAILED", "failureReason": "OUT_OF_GEOFENCE" },
-                "methods": [ { "method": "GPS", "detail": { "insideGeofence": false, "dwellMinutes": 12 } } ],
-                "dailyLogs": [ { "date": "2026-06-20", "status": "SUCCESS", "method": "GPS" } ]
-              }
-            }
-            """.trimIndent()
-        val detail = json.decodeFromString<VerificationDetailResponse>(payload).toDomain()
-
-        assertEquals("c-1", detail.challengeId)
-        assertEquals(TodayStatus.FAILED, detail.today.status)
-        assertEquals(FailureReason.OUT_OF_GEOFENCE, detail.today.failureReason)
-        // supported 누락 → Android 기본 true.
-        assertTrue(detail.methods.single().supported)
-        assertEquals(
-            false,
-            detail.methods
-                .single()
-                .detail
-                ?.insideGeofence,
-        )
-        assertEquals(TodayStatus.SUCCESS, detail.dailyLogs.single().status)
-    }
-
-    @Test
-    fun `검증 상세 today 의 verifiedVia·disputeClosesAt 과 HEALTH 근거가 매핑된다`() {
-        val payload =
-            """
-            {
-              "challengeId": "c-1", "title": "러닝 3km", "status": "ACTIVE",
-              "verification": {
-                "overallStatus": "ON_TRACK", "progressRate": 50.0,
-                "today": {
-                  "isTarget": true, "status": "SUCCESS",
-                  "verifiedVia": "MANUAL_FALLBACK", "disputeClosesAt": "2026-06-25T00:00:00Z",
-                  "evidence": { "distanceKm": 5.2, "steps": 8000, "healthOrigin": "com.sec.android.app.shealth" }
-                },
-                "methods": [
-                  { "method": "HEALTH",
-                    "detail": { "metric": "DISTANCE", "value": 5.2, "goal": 3.0,
-                                "dataOrigin": "com.sec.android.app.shealth", "recordingMethod": "AUTO" } }
-                ]
-              }
-            }
-            """.trimIndent()
-        val detail = json.decodeFromString<VerificationDetailResponse>(payload).toDomain()
-
-        // 예비 폴백 잠정 성공 상태(명세 §9.2).
-        assertEquals(VerifiedVia.MANUAL_FALLBACK, detail.today.verifiedVia)
-        assertEquals("2026-06-25T00:00:00Z", detail.today.disputeClosesAt)
-        assertEquals(5.2, detail.today.evidence?.distanceKm)
-        assertEquals(8000, detail.today.evidence?.steps)
-        // HEALTH method detail(명세 §8 신뢰 메타데이터 포함).
-        val health = detail.methods.single().detail
-        assertEquals("DISTANCE", health?.metric)
-        assertEquals(3.0, health?.goal)
-        assertEquals("AUTO", health?.recordingMethod)
     }
 }
