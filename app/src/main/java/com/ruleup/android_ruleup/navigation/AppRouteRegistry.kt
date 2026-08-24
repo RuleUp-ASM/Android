@@ -55,7 +55,9 @@ import com.ruleup.profile.presentation.stats.MyStatsScreen
 import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
+import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
 import com.ruleup.verification.presentation.location.VerificationLocationScreen
+import com.ruleup.verification.presentation.permission.PermissionRepairScreen
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -179,6 +181,10 @@ val appRoutes: List<AppRoute> =
             render = { args ->
                 ChallengeSettingsScreen(challengeId = args[ChallengeSettingsPage.ARG_CHALLENGE_ID].orEmpty())
             },
+        ),
+        AppRoute(
+            path = VerificationPermissionRepairPage.PATH,
+            render = { PermissionRepairScreen() },
         ),
         AppRoute(
             path = VerificationLocationPage.PATH,

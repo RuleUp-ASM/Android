@@ -47,5 +47,6 @@ object AppRoutes {
     const val MY_PROFILE_EDIT = "my/profile/edit" // 프로필 편집(마이 → 재편집)
 
     // verification
+    const val VERIFICATION_PERMISSION_REPAIR = "verification/permission-repair" // 진입점 (권한 회수 복구)
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)
 }

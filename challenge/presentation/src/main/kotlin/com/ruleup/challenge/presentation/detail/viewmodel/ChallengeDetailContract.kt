@@ -83,6 +83,9 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
+    /** 권한 재연결 화면으로 — 인증에 필요한 권한이 끊겼을 때. */
+    data object OpenPermissionRepair : ChallengeDetailIntent
+
     /** 수동 방 오늘 인증 체크(명세 POST /challenges/{id}/verifications). */
     data object SubmitManualCheck : ChallengeDetailIntent
 

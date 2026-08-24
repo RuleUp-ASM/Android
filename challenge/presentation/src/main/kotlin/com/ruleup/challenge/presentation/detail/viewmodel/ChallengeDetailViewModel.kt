@@ -43,6 +43,7 @@ import com.ruleup.verification.domain.entity.AppealWindowClosedException
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.InvalidAppealReasonException
 import com.ruleup.verification.domain.entity.InvalidTargetDateException
+import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -99,6 +100,8 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 is ChallengeDetailIntent.PickAppealImage -> uploadAppealImage(intent.imageUri)
+                ChallengeDetailIntent.OpenPermissionRepair ->
+                    navigationHelper.navigateByRoute(VerificationPermissionRepairPage.toRoute())
                 ChallengeDetailIntent.SubmitManualCheck -> submitManualCheck()
                 ChallengeDetailIntent.CancelManualCheck -> cancelManualCheck()
                 ChallengeDetailIntent.RefreshPermissions -> refreshPermissions()
