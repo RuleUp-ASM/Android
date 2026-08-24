@@ -95,7 +95,7 @@ class VerificationDtoSerializationTest {
     }
 
     @Test
-    fun `SignalBatch 를 sync 요청으로 매핑하면 epoch 가 ISO 로 변환되고 라운드트립한다`() {
+    fun `SignalBatch 를 sync 요청으로 매핑하면 GEOFENCE 계약대로 라운드트립한다`() {
         val batch =
             SignalBatch(
                 collectedAt = "2026-06-21T00:00:00Z",
@@ -107,9 +107,8 @@ class VerificationDtoSerializationTest {
                                     GeofenceTransitionEvent(
                                         requestId = "member-1",
                                         transition = GeofenceTransitionType.DWELL,
-                                        at = 0L,
-                                        lat = 37.49,
-                                        lng = 127.02,
+                                        observedAt = 1_719_600_000_000L,
+                                        observedElapsedMillis = 987_654_321L,
                                         accuracy = 12.5f,
                                         isMock = false,
                                     ),
@@ -123,13 +122,17 @@ class VerificationDtoSerializationTest {
         val decoded = json.decodeFromString<SyncEnvelopeRequest>(encoded)
 
         val signal = decoded.signals.single()
-        assertEquals("GEOFENCE_TRANSITION", signal.type)
+        assertEquals("GEOFENCE", signal.type)
         val event = assertNotNull(signal.events).single()
-        assertEquals("member-1", event.requestId)
+        assertEquals("member-1", event.anchorId)
         assertEquals("DWELL", event.transition)
-        // epoch 0 → ISO. isMock 은 처음부터 전송(명세 §7).
-        assertEquals("1970-01-01T00:00:00Z", event.at)
+        // 시각은 전부 epoch millis 다(전송 스펙 설계 원칙 ①).
+        assertEquals(1_719_600_000_000L, event.observedAt)
+        assertEquals(987_654_321L, event.observedElapsedMillis)
         assertEquals(false, event.isMock)
+        // 좌표는 계약에 없다 — 전이 이벤트로 위치가 새어 나가면 안 된다.
+        assertTrue(!encoded.contains("\"lat\""))
+        assertTrue(!encoded.contains("\"lng\""))
     }
 
     @Test

@@ -43,7 +43,7 @@ import com.ruleup.verification.data.db.usage.UsageTargetEntity
         HealthSettingsEntity::class,
         SignalGapEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false,
 )
 abstract class VerificationDatabase : RoomDatabase() {

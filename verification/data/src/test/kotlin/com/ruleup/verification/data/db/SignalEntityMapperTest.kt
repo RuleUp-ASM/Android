@@ -20,37 +20,36 @@ class SignalEntityMapperTest {
             GeofenceTransitionEntity(
                 requestId = "member-1",
                 transition = "DWELL",
-                lat = 37.49,
-                lng = 127.02,
                 accuracy = 10.5f,
                 isMock = true,
                 occurredAt = 123_456L,
+                observedElapsedMillis = 98_765L,
             )
 
         val event = entity.toDomain()
 
         assertEquals("member-1", event.requestId)
         assertEquals(GeofenceTransitionType.DWELL, event.transition)
-        assertEquals(123_456L, event.at)
-        assertEquals(37.49, event.lat)
-        // isMock 은 처음부터 보존·전송(명세 §7).
+        assertEquals(123_456L, event.observedAt)
+        // 벽시계와 monotonic 을 함께 올려야 서버가 시각 조작을 대조할 수 있다(전송 스펙 §6.4).
+        assertEquals(98_765L, event.observedElapsedMillis)
+        assertEquals(10.5f, event.accuracy)
         assertTrue(event.isMock == true)
     }
 
     @Test
-    fun `위치 없는 전이는 좌표를 지어내지 않는다`() {
+    fun `위치 없는 전이는 정확도와 mock 여부를 지어내지 않는다`() {
         val entity =
             GeofenceTransitionEntity(
                 requestId = "member-1",
                 transition = "ENTER",
                 occurredAt = 123_456L,
+                observedElapsedMillis = 98_765L,
             )
 
         val event = entity.toDomain()
 
-        // (0, 0) 으로 접으면 서버가 기니만 체류로 읽는다 — 모르는 값은 null 로 올린다.
-        assertEquals(null, event.lat)
-        assertEquals(null, event.lng)
+        // 0m·"mock 아님"으로 접으면 없던 사실이 판정에 들어간다 — 모르는 값은 null 로 올린다.
         assertEquals(null, event.accuracy)
         assertEquals(null, event.isMock)
     }
@@ -141,11 +140,10 @@ class SignalEntityMapperTest {
             GeofenceTransitionEntity(
                 requestId = "m",
                 transition = "UNKNOWN_FUTURE",
-                lat = 0.0,
-                lng = 0.0,
                 accuracy = 0f,
                 isMock = false,
                 occurredAt = 0L,
+                observedElapsedMillis = 0L,
             )
 
         assertEquals(GeofenceTransitionType.ENTER, entity.toDomain().transition)

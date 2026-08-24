@@ -17,21 +17,23 @@ import kotlin.time.Instant
 private fun Long.toIso(): String = Instant.fromEpochMilliseconds(this).toString()
 
 /**
- * 지오펜스 전이 1건(전송 스펙 §3.2). 좌표·정확도·mock 여부는 OS 가 위치를 안 준 전이에서 null 이고,
- * `explicitNulls=false` 라 그 경우 필드가 통째로 빠진 채 전송된다.
+ * 지오펜스 전이 1건(전송 스펙 §1). 좌표는 계약에 없어 보내지 않는다 — 좌표가 나가는 유일한 통로는
+ * [LocationPointRequest] 다.
+ *
+ * 정확도·mock 여부는 OS 가 위치를 안 준 전이에서 null 이고, `explicitNulls=false` 라 그 경우
+ * 필드가 통째로 빠진 채 전송된다.
  */
 @Serializable
 data class GeofenceEventRequest(
-    @SerialName("requestId")
-    val requestId: String,
+    // 등록 시 부여한 지오펜스 requestId
+    @SerialName("anchorId")
+    val anchorId: String,
     @SerialName("transition")
     val transition: String,
-    @SerialName("at")
-    val at: String,
-    @SerialName("lat")
-    val lat: Double? = null,
-    @SerialName("lng")
-    val lng: Double? = null,
+    @SerialName("observedAt")
+    val observedAt: Long,
+    @SerialName("observedElapsedMillis")
+    val observedElapsedMillis: Long,
     @SerialName("accuracy")
     val accuracy: Double? = null,
     @SerialName("isMock")
@@ -56,6 +58,7 @@ data class ScreenEventRequest(
     val at: String,
 )
 
+/** 보조 측위 샘플 1건(전송 스펙 §1). 3순위 좌표 가중 체류 챌린지에만 붙는다. */
 @Serializable
 data class LocationPointRequest(
     @SerialName("lat")
@@ -67,7 +70,7 @@ data class LocationPointRequest(
     @SerialName("isMock")
     val isMock: Boolean,
     @SerialName("at")
-    val at: String,
+    val at: Long,
 )
 
 /** HEALTH readings 의 신뢰 메타데이터(명세 §6.2·§8.2). 필수 동봉 — 없으면 BE 거부. */
@@ -108,8 +111,8 @@ data class SleepSegmentRequest(
 )
 
 /**
- * 신호 1건 (명세 §3.2). [type] 디스크리미네이터 + 타입별 옵셔널 필드.
- * GEOFENCE_TRANSITION → [events], SCREEN_TIME → [appEvents]/[screenEvents], LOCATION → [points],
+ * 신호 1건 (전송 스펙 §1~§5). [type] 디스크리미네이터 + 타입별 옵셔널 필드.
+ * GEOFENCE → [events], SCREEN_TIME → [appEvents]/[screenEvents], LOCATION → [points],
  * HEALTH → [date]/[readings], SLEEP → [segments].
  */
 @Serializable
@@ -246,15 +249,14 @@ private fun VerificationSignal.toDto(): SignalRequest =
     when (this) {
         is VerificationSignal.GeofenceTransitions ->
             SignalRequest(
-                type = "GEOFENCE_TRANSITION",
+                type = "GEOFENCE",
                 events =
                     events.map {
                         GeofenceEventRequest(
-                            requestId = it.requestId,
+                            anchorId = it.requestId,
                             transition = it.transition.name,
-                            at = it.at.toIso(),
-                            lat = it.lat,
-                            lng = it.lng,
+                            observedAt = it.observedAt,
+                            observedElapsedMillis = it.observedElapsedMillis,
                             accuracy = it.accuracy?.toDouble(),
                             isMock = it.isMock,
                         )
@@ -291,7 +293,7 @@ private fun VerificationSignal.toDto(): SignalRequest =
                             lng = it.lng,
                             accuracy = it.accuracy.toDouble(),
                             isMock = it.isMock,
-                            at = it.at.toIso(),
+                            at = it.at,
                         )
                     },
             )

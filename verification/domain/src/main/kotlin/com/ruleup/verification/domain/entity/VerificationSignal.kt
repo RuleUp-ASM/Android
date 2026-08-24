@@ -21,19 +21,23 @@ enum class ScreenEventType {
 }
 
 /**
- * 지오펜스 전이 1건. [at] 은 epoch millis(elapsedRealtime 환산, 명세 §2.1).
- * [isMock] 은 처음부터 수집·전송한다(패널티 런칭의 하드 디펜던시, 명세 §7).
+ * 지오펜스 전이 1건 (전송 스펙 §1). **좌표는 담지 않는다** — 계약에 lat/lng 가 없고, 좌표가 나가는
+ * 유일한 통로는 3순위 좌표 가중 체류 챌린지에만 붙는 [LocationPoint] 다.
  *
- * 좌표·[accuracy]·[isMock] 은 OS 가 전이에 위치를 안 실어 보내면 **null** 이다. 기본값으로 접으면
- * 서버가 (0, 0) 체류나 "mock 아님"으로 읽어 판정이 오염된다 — 모르는 것은 모른다고 보낸다.
+ * [observedElapsedMillis] 는 수신 시점 monotonic 시각이다. 같은 부팅 세션 안에서 [observedAt]
+ * 간격과 대조해 시각 조작을 잡는 입력이라(전송 스펙 §6.4) 벽시계와 함께 반드시 실어 보낸다.
+ *
+ * [accuracy]·[isMock] 은 OS 가 전이에 위치를 안 실어 보내면 **null** 이다. 기본값으로 접으면
+ * 서버가 정확도 0m·"mock 아님"이라는 없던 사실로 읽어 판정이 오염된다.
  */
 data class GeofenceTransitionEvent(
-    // 등록 시 부여한 지오펜스 requestId ("{userId}#{challengeId}#{index}")
+    // 등록 시 부여한 지오펜스 requestId ("{userId}#{challengeId}#{index}") — 와이어의 anchorId
     val requestId: String,
     val transition: GeofenceTransitionType,
-    val at: Long,
-    val lat: Double?,
-    val lng: Double?,
+    // 발생 시각 epoch millis (triggeringLocation.time 우선, 없으면 수신 시각)
+    val observedAt: Long,
+    // 수신 시점 SystemClock.elapsedRealtime()
+    val observedElapsedMillis: Long,
     val accuracy: Float?,
     val isMock: Boolean?,
 )

@@ -72,8 +72,7 @@ class SignalRepositoryImpl
             }
             // 건수 다음으로 실제 값까지 한 줄씩(타입별 최대 30건). 어느 패키지·좌표·헬스 수치·전이인지 눈으로 확인.
             transitions.logSignalDetail(observability, "geofence") {
-                "geofence ${it.transition} req=${it.requestId} " +
-                    "(${"%.5f".format(it.lat)}, ${"%.5f".format(it.lng)}) acc=${it.accuracy}m mock=${it.isMock}"
+                "geofence ${it.transition} req=${it.requestId} at=${it.occurredAt} acc=${it.accuracy}m mock=${it.isMock}"
             }
             locations.logSignalDetail(observability, "location") {
                 "location (${"%.5f".format(it.lat)}, ${"%.5f".format(it.lng)}) acc=${it.accuracy}m mock=${it.isMock}"

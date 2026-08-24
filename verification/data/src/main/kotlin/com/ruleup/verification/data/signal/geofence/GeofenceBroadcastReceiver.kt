@@ -3,6 +3,7 @@ package com.ruleup.verification.data.signal.geofence
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.ruleup.verification.data.db.common.verificationDatabase
@@ -14,8 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
- * 지오펜스 전이 수신(명세 §2.1). 즉시 isMock 을 포함해 Room geofence_transition 에 적재한다
+ * 지오펜스 전이 수신(전송 스펙 §1). 즉시 Room geofence_transition 에 적재한다
  * (앱이 죽어도 보존 → sync 가 드레인). 에러(GEOFENCE_NOT_AVAILABLE=위치 꺼짐 등)는 무시한다.
+ *
+ * 벽시계(`observedAt`)와 monotonic 시각(`observedElapsedMillis`)을 **수신 시점에 함께** 찍는다.
+ * 둘의 간격이 어긋나면 시각 조작이라 서버가 대조하는데(전송 스펙 §6.4), 나중에 재구성할 수 없는
+ * 값이라 여기서 놓치면 영영 못 채운다.
  */
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(
@@ -29,12 +34,11 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
         val fences = event.triggeringGeofences ?: return
         if (fences.isEmpty()) return
 
-        // 위치가 없는 전이도 신호로서 유효하다(어느 펜스를 언제 넘었는지). 다만 좌표·정확도·mock 여부는
-        // 지어내지 않고 null 로 둔다 — (0, 0)은 기니만의 실제 좌표라 결측이 아니라 알리바이가 된다.
+        // 위치가 없는 전이도 신호로서 유효하다(어느 펜스를 언제 넘었는지). 다만 정확도·mock 여부는
+        // 지어내지 않고 null 로 둔다 — 0m·"mock 아님"으로 접으면 없던 사실이 판정에 들어간다.
         val location = event.triggeringLocation
         val occurredAt = location?.time ?: System.currentTimeMillis()
-        val lat = location?.latitude
-        val lng = location?.longitude
+        val observedElapsedMillis = SystemClock.elapsedRealtime()
         val accuracy = location?.accuracy
         val isMock = location?.isMockCompat()
 
@@ -47,11 +51,10 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         GeofenceTransitionEntity(
                             requestId = fence.requestId,
                             transition = type.name,
-                            lat = lat,
-                            lng = lng,
                             accuracy = accuracy,
                             isMock = isMock,
                             occurredAt = occurredAt,
+                            observedElapsedMillis = observedElapsedMillis,
                         ),
                     )
                 }
