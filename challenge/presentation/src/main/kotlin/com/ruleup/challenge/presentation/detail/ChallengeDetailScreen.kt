@@ -1,5 +1,7 @@
 package com.ruleup.challenge.presentation.detail
 
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -79,6 +81,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
+import com.ruleup.verification.domain.entity.PermissionSnapshot
 import kotlinx.coroutines.launch
 
 /**
@@ -135,7 +138,13 @@ fun ChallengeDetailScreen(
             ?.verification
             ?.requiredPermissions
             .orEmpty()
-    val permissionGranted = challengePermissionsGranted(context, tokens)
+    // 권한 현황은 저장하지 않고 매번 OS 에 다시 묻는다 — 설정에서 끄고 돌아오는 경로가 있다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
+    }
+    // 아직 못 물었으면(null) 막지 않는다 — 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
+    val missingTokens = state.permissions?.let { snapshot -> tokens.filter { snapshot.isGranted(it) == false } }.orEmpty()
+    val permissionGranted = missingTokens.isEmpty()
 
     // GET setup 요구사항으로 "필요한 등록만" 유도: 권한 → (requiresTargetPackages) 앱 → (requiresAnchors) 지도 → 참여.
     // 수동 인증(manual)이거나 셋업 정보가 없으면 바로 참여.
@@ -182,14 +191,20 @@ fun ChallengeDetailScreen(
     )
 
     if (showPermissionSheet) {
+        // OS 다이얼로그로 물을 수 있는 것과 설정에서만 켤 수 있는 것을 갈라 안내한다 —
+        // 사용정보 접근·Health Connect 는 "허용하기" 버튼으로 해결되지 않는다.
+        val settingsTokens = missingTokens.filter { PermissionSnapshot.requiresSettings(it) }
+        val runtimeTokens = missingTokens.filterNot { PermissionSnapshot.requiresSettings(it) }
         PermissionBottomSheet(
-            tokens = tokens,
+            runtimeTokens = runtimeTokens,
+            settingsTokens = settingsTokens,
             onDismiss = { showPermissionSheet = false },
+            onOpenSettings = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
             onAllow = {
                 scope.launch {
-                    permissionRequester.request(tokens)
-                    if (challengePermissionsGranted(context, tokens)) {
-                        // 권한이 확보되면 시트를 닫는다. 버튼은 리컴포지션 시 권한 재확인으로 다음 단계로 전환된다.
+                    permissionRequester.request(runtimeTokens)
+                    viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
+                    if (challengePermissionsGranted(context, runtimeTokens)) {
                         showPermissionSheet = false
                     } else {
                         messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")
@@ -635,8 +650,10 @@ private fun InfoRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PermissionBottomSheet(
-    tokens: List<String>,
+    runtimeTokens: List<String>,
+    settingsTokens: List<String>,
     onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit,
     onAllow: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -665,14 +682,32 @@ private fun PermissionBottomSheet(
                 style = RuleUpTheme.typography.body,
             )
             Spacer(Modifier.height(16.dp))
-            tokens.distinct().forEach { token ->
+            (runtimeTokens + settingsTokens).distinct().forEach { token ->
                 PermissionRow(label = permissionLabel(token))
+                permissionPurpose(token)?.let {
+                    Text(
+                        text = it,
+                        color = RuleUpTheme.colors.textMuted,
+                        style = RuleUpTheme.typography.caption,
+                        modifier = Modifier.padding(start = 30.dp, bottom = 4.dp),
+                    )
+                }
             }
             Spacer(Modifier.height(20.dp))
-            RuleUpPrimaryButton(
-                text = "허용하기",
-                onClick = onAllow,
-            )
+            if (runtimeTokens.isNotEmpty()) {
+                RuleUpPrimaryButton(
+                    text = "허용하기",
+                    onClick = onAllow,
+                )
+            }
+            // 사용정보 접근·Health Connect 는 런타임 다이얼로그가 없다 — 설정에서 켜고 돌아와야 한다.
+            if (settingsTokens.isNotEmpty()) {
+                Spacer(Modifier.height(8.dp))
+                RuleUpPrimaryButton(
+                    text = "설정에서 켜기",
+                    onClick = onOpenSettings,
+                )
+            }
             Spacer(Modifier.height(4.dp))
             Box(
                 modifier =
@@ -691,6 +726,21 @@ private fun PermissionBottomSheet(
         }
     }
 }
+
+/**
+ * 권한별 이유 고지(프론트엔드 테크스펙 4-1). **수집 범위를 요청 전에 좁혀서 알린다** —
+ * "위치 권한"만 보면 사용자는 상시 추적을 상상한다.
+ */
+private fun permissionPurpose(token: String): String? =
+    when (token.uppercase()) {
+        "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> "등록한 장소 도착만 확인해요 · 이동 경로는 저장하지 않아요"
+        "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> "앱을 열지 않아도 도착을 확인하려면 필요해요"
+        "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> "고른 앱의 사용 시간만 읽어요 · 화면 내용은 보지 않아요"
+        "READ_STEPS", "HEALTH_STEPS", "HEALTH", "READ_DISTANCE", "HEALTH_DISTANCE" -> "걸음·거리 기록만 읽어요"
+        "READ_SLEEP", "HEALTH_SLEEP", "SLEEP" -> "수면 기록만 읽어요"
+        "POST_NOTIFICATIONS", "NOTIFICATION" -> "판정 결과와 권한 복구 안내를 보내요"
+        else -> null
+    }
 
 @Composable
 private fun PermissionRow(label: String) {

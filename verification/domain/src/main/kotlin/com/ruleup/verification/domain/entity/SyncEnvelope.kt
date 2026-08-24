@@ -51,7 +51,48 @@ data class PermissionSnapshot(
     val healthSteps: PermissionState,
     val healthSleep: PermissionState,
     val healthBackground: PermissionState,
-)
+) {
+    /**
+     * 서버가 내려준 권한 토큰(`setup.requiredPermissions`)이 실제로 허용됐는가.
+     *
+     * **런타임 권한이 아닌 것도 여기서 판단한다** — 사용정보 접근·Health Connect 는 시스템
+     * `checkSelfPermission` 으로는 알 수 없어서, 화면이 그 둘을 "요청 불가"로 흘려보내면 권한 없이
+     * 참여가 성립해 버린다(매일 NO_SIGNAL_RECEIVED 로 실패한다).
+     *
+     * 앱이 모르는 토큰은 **null** 이다 — 서버가 토큰을 추가했을 때 그 하나 때문에 참여를 막지 않는다.
+     * 모르는 것을 거부로 접으면 구버전 앱이 통째로 잠긴다.
+     */
+    fun isGranted(token: String): Boolean? =
+        when (token.uppercase()) {
+            "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> location
+            "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> backgroundLocation
+            "ACTIVITY_RECOGNITION", "PHYSICAL_ACTIVITY" -> activityRecognition
+            "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> usageStats
+            "POST_NOTIFICATIONS", "NOTIFICATION" -> postNotifications
+            "READ_DISTANCE", "HEALTH_DISTANCE" -> healthDistance
+            "READ_STEPS", "HEALTH_STEPS", "HEALTH" -> healthSteps
+            "READ_SLEEP", "HEALTH_SLEEP", "SLEEP" -> healthSleep
+            "READ_HEALTH_DATA_IN_BACKGROUND", "HEALTH_BACKGROUND" -> healthBackground
+            else -> null
+        }?.let { !it.isDenied }
+
+    /**
+     * OS 권한 다이얼로그로 요청할 수 없는 토큰인가 — 사용정보 접근·Health Connect 가 그렇다.
+     *
+     * 이 둘은 "허용하기" 버튼으로 해결되지 않아 설정으로 보내야 하고, 그래서 화면이 다르게 안내해야
+     * 한다(프론트엔드 테크스펙 4-4).
+     */
+    companion object {
+        fun requiresSettings(token: String): Boolean =
+            when (token.uppercase()) {
+                "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> true
+                "READ_DISTANCE", "HEALTH_DISTANCE", "READ_STEPS", "HEALTH_STEPS", "HEALTH" -> true
+                "READ_SLEEP", "HEALTH_SLEEP", "SLEEP" -> true
+                "READ_HEALTH_DATA_IN_BACKGROUND", "HEALTH_BACKGROUND" -> true
+                else -> false
+            }
+    }
+}
 
 /** 신호 공백 사유 (전송 스펙 §0.5). recoverable=false 면 서버 판정에서 제외, true 면 유예. */
 enum class GapReason {
