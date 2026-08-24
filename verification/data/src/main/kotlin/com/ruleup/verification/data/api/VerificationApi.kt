@@ -2,6 +2,7 @@ package com.ruleup.verification.data.api
 
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.verification.data.dto.AcknowledgeResponse
+import com.ruleup.verification.data.dto.AppealImageResponse
 import com.ruleup.verification.data.dto.AppealResponse
 import com.ruleup.verification.data.dto.CancelManualResponse
 import com.ruleup.verification.data.dto.ChallengeSetupRequest
@@ -10,6 +11,7 @@ import com.ruleup.verification.data.dto.IntroRequest
 import com.ruleup.verification.data.dto.IntroResponse
 import com.ruleup.verification.data.dto.ManualSubmitRequest
 import com.ruleup.verification.data.dto.ManualSubmitResponse
+import com.ruleup.verification.data.dto.MyAppealsResponse
 import com.ruleup.verification.data.dto.MyLocationResponse
 import com.ruleup.verification.data.dto.MyScreenAppsResponse
 import com.ruleup.verification.data.dto.ProgressResponse
@@ -20,11 +22,14 @@ import com.ruleup.verification.data.dto.TodayResultResponse
 import com.ruleup.verification.data.dto.UpdateMyLocationRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsResponse
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -104,6 +109,17 @@ interface VerificationApi {
     suspend fun cancelManual(
         @Path("verificationId") verificationId: String,
     ): BaseResponse<CancelManualResponse>
+
+    // 이의 증빙 사진 업로드 (POST /appeals/images): 반환 URL 을 이의 제출 body 에 넣는다
+    @Multipart
+    @POST("v1/appeals/images")
+    suspend fun uploadAppealImage(
+        @Part image: MultipartBody.Part,
+    ): BaseResponse<AppealImageResponse>
+
+    // 내가 낸 이의 이력 (GET /users/me/appeals): 마이 허브의 이의 제기 현황
+    @GET("v1/users/me/appeals")
+    suspend fun getMyAppeals(): BaseResponse<MyAppealsResponse>
 
     // 인증 이의 제기 (POST appeals): 판정 없이 형식 요건만 보고 자동 인용
     @POST("v1/verifications/{verificationId}/appeals")

@@ -2,7 +2,9 @@ package com.ruleup.verification.data.repository
 
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
+import com.ruleup.network.dto.requireField
 import com.ruleup.network.dto.throwOnError
+import com.ruleup.network.image.ImageReader
 import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.ManualSubmitRequest
@@ -16,6 +18,7 @@ import com.ruleup.verification.data.dto.toRequest
 import com.ruleup.verification.data.dto.toUpdateRequest
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AnchorSet
+import com.ruleup.verification.domain.entity.AppealHistoryItem
 import com.ruleup.verification.domain.entity.AppealReceipt
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
@@ -43,6 +46,9 @@ import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.repository.VerificationRepository
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 class VerificationRepositoryImpl
@@ -50,6 +56,7 @@ class VerificationRepositoryImpl
     constructor(
         private val api: VerificationApi,
         private val kakaoLocalApi: KakaoLocalApi,
+        private val imageReader: ImageReader,
     ) : VerificationRepository {
         override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy =
             api
@@ -184,6 +191,27 @@ class VerificationRepositoryImpl
                     verificationId = verificationId,
                     request = SubmitAppealRequest(reason = reason, imageUrl = imageUrl),
                 ).getOrThrow()
+                .toDomain()
+
+        override suspend fun uploadAppealImage(imageUri: String): String {
+            val image = imageReader.read(imageUri)
+            val part =
+                MultipartBody.Part.createFormData(
+                    name = "image",
+                    filename = "appeal_image",
+                    body = image.bytes.toRequestBody(image.mimeType.toMediaType()),
+                )
+            return api
+                .uploadAppealImage(part)
+                .getOrThrow()
+                .imageUrl
+                .requireField("imageUrl")
+        }
+
+        override suspend fun getMyAppeals(): List<AppealHistoryItem> =
+            api
+                .getMyAppeals()
+                .getOrThrow()
                 .toDomain()
 
         override suspend fun acknowledgeResult(verificationId: String) {

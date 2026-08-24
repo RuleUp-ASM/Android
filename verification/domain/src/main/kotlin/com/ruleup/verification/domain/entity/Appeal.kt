@@ -50,3 +50,22 @@ data class AppealReceipt(
     val track: AppealTrack?,
     val restored: AppealRestored?,
 )
+
+/**
+ * 이의 제기 이력 1건 (명세: GET /users/me/appeals `history[]`).
+ *
+ * 접수된 건은 즉시 인용되므로 **계류·기각 상태가 존재하지 않고**, 형식 미달(사유 10자 미만)은 접수
+ * 자체가 안 되어 이력에도 없다. 그래서 `result`(ACCEPTED 고정)를 타입으로 옮기지 않는다.
+ *
+ * 잔여 구제권(`credits`)도 없다 — 횟수 한도가 폐기됐다(챌린지 정책 §7.2).
+ */
+data class AppealHistoryItem(
+    val appealId: String,
+    // 신청일 (YYYY-MM-DD)
+    val date: String,
+    val challengeId: String,
+    val routineTitle: String,
+    val reason: String,
+    // 운영 로그용 트랙 — 어느 쪽이든 결과는 인용이라 화면에 구분해 보여줄 이유가 없다
+    val track: AppealTrack?,
+)

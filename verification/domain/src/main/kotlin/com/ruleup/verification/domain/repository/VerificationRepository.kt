@@ -1,11 +1,11 @@
 package com.ruleup.verification.domain.repository
 
 import com.ruleup.verification.domain.entity.AnchorSet
+import com.ruleup.verification.domain.entity.AppealHistoryItem
 import com.ruleup.verification.domain.entity.AppealReceipt
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
-import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.ManualSubmitResult
 import com.ruleup.verification.domain.entity.MyLocation
 import com.ruleup.verification.domain.entity.MyScreenApps
@@ -46,14 +46,16 @@ interface VerificationRepository {
 
     /**
      * 오늘 인증 결과(명세 GET verifications/today). 방 상세의 "오늘 내 인증" 카드와 판정 결과
-     * 모달이 같은 응답을 쓴다. 연속 일수·이의 잔여 횟수도 여기서 온다.
+     * 모달이 같은 응답을 쓴다. 연속 일수와 이의 신청 가능 기한도 여기서 온다 — 잔여 횟수는 없다
+     * (한도 폐기).
      */
     suspend fun getTodayResult(challengeId: String): TodayResult
 
     /**
      * 셋업(앵커·대상앱 바인딩) 제출(명세 setup). 모두 충족 시 [com.ruleup.verification.domain.entity.SetupStatus.READY],
      * 미충족 시 missing[] 과 함께 PENDING_SETUP. 앵커 미입력이면 [anchors] 를 비워 location 을 생략한다.
-     * 반경 범위(500~5000m)·개수(최대 10)는 [AnchorSet]·[LocationPin] 이 생성 시점에 보장한다.
+     * 앵커 개수(최대 [com.ruleup.verification.domain.entity.SetupAnchors.MAX_COUNT]개)는 [AnchorSet] 이
+     * 생성 시점에 보장한다. 반경은 서버 설정 단일값이라 요청에 싣지 않는다.
      */
     suspend fun setupChallenge(
         challengeId: String,
@@ -132,6 +134,25 @@ interface VerificationRepository {
      * 자동 방에 취소 버튼을 두지 않는 것이 전제라 도메인 어휘로 올리지 않는다.
      */
     suspend fun cancelManual(verificationId: String)
+
+    /**
+     * 이의 증빙 사진 업로드(명세: POST /appeals/images). 반환된 URL 을 [submitAppeal] 의 `imageUrl` 로 넣는다.
+     *
+     * 사진은 **선택 항목이고 진위 확인에 쓰이지 않는다**(이의는 판정하지 않는다). 그래서 업로드 실패는
+     * 도메인 어휘로 올리지 않는다 — 형식·크기 오류 어느 쪽이든 화면이 할 일은 "사진 없이 제출 가능"
+     * 안내 하나로 같다.
+     *
+     * [imageUri] 는 플랫폼 이미지 소스(content URI 등) 문자열이고, 바이트로 읽는 것은 data 어댑터 몫이다.
+     */
+    suspend fun uploadAppealImage(imageUri: String): String
+
+    /**
+     * 내가 낸 이의 이력(명세: GET /users/me/appeals). 최신순.
+     *
+     * 접수된 건은 즉시 인용되므로 계류·기각이 없고, 형식 미달은 접수 자체가 안 되어 이력에 남지 않는다.
+     * 식별자가 없는 행은 버린다 — 한 행 때문에 현황 화면 전체가 죽지 않게 한다.
+     */
+    suspend fun getMyAppeals(): List<AppealHistoryItem>
 
     /**
      * 수동 인증 제출(명세: POST /challenges/{id}/verifications). **수동 방에서만 쓴다** —
