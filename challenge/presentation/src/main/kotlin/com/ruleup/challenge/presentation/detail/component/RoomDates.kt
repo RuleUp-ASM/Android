@@ -87,3 +87,21 @@ internal fun periodLabel(
     val weeks = (days + 6) / 7
     return "$range · ${weeks}주"
 }
+
+/**
+ * 이의 신청 마감일 문구 — "오늘" / "내일" / "7월 26일".
+ *
+ * 서버가 주는 `eligibleUntil` 은 **경계 시각**(실패 확정일 다음 날 00:00 KST)이라 그 날짜를 그대로
+ * 쓰면 하루 늦게 안내한다. 낼 수 있는 마지막 날은 경계 하루 전이다.
+ */
+internal fun appealDeadlineLabel(
+    eligibleUntil: String,
+    today: LocalDate = LocalDate.now(),
+): String? {
+    val boundary = parseDateOrNull(isoDatePart(eligibleUntil)) ?: return null
+    return when (val lastDay = boundary.minusDays(1)) {
+        today -> "오늘"
+        today.plusDays(1) -> "내일"
+        else -> "${lastDay.monthValue}월 ${lastDay.dayOfMonth}일"
+    }
+}

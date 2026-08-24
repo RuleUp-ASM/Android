@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail.component
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,9 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
+import com.ruleup.designsystem.component.StatusChip
+import com.ruleup.designsystem.component.StatusChipTone
 import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
@@ -159,12 +163,16 @@ private fun AppealDialog(
 }
 
 /**
- * 오늘 내 인증 (Figma 1134:189).
+ * 오늘 내 인증 (Figma `1134:143` · 실패 변형 `1134:512`).
  *
  * 상태는 인증 모듈의 오늘 결과([today])를 먼저 쓴다 — room 의 `myTodayStatus` 는 상태 하나뿐이라
  * "몇 시에 인증됐는지"·"창이 언제까지인지"를 말해 주지 못한다. 오늘 결과 조회가 실패하면 room 값으로
  * 떨어지고, 그마저 앱이 모르는 값이면 카드를 그리지 않는다 — 모르는 상태를 성공이나 실패로 접어
  * 보여주는 쪽이 아무것도 안 보여주는 것보다 나쁘다.
+ *
+ * 실패는 **두 얼굴**이다. 아직 이의할 수 있으면 붉은 배지 대신 카드 톤으로만 알리고 마감 시각과 함께
+ * 진입점을 준다. 기한이 지나면 그때 `실패 확정` 배지가 붙는다 — 되돌릴 수 있는 실패와 끝난 실패를
+ * 같은 얼굴로 보여주면 사용자는 아직 남은 기회를 모른 채 넘긴다.
  */
 @Composable
 private fun TodayVerificationCard(
@@ -172,58 +180,122 @@ private fun TodayVerificationCard(
     today: TodayResult?,
     onAppealClick: (() -> Unit)?,
 ) {
+    val status = today?.status ?: roomStatus?.toResultStatus() ?: return
+    val colors = RuleUpTheme.colors
     val label: String
     val color: Color
-    when (today?.status ?: roomStatus?.toResultStatus()) {
-        null -> return
+    when (status) {
         TodayResultStatus.DONE -> {
             label = "인증 완료"
-            color = RuleUpTheme.colors.success
+            color = colors.success
         }
         // 인증 창이 아직 열려 있다. 실패가 아니므로 경고색을 쓰지 않는다.
         TodayResultStatus.IN_PROGRESS -> {
             label = "인증 진행 중"
-            color = RuleUpTheme.colors.brand
+            color = colors.brand
         }
-        // 00~03시 유예 구간 — 창은 닫혔지만 아직 실패가 아니다.
+        // 창은 닫혔지만 성공·실패 양쪽으로 열려 있는 구간이다. 실패로 보이게 하지 않는다.
         TodayResultStatus.CHECKING -> {
-            label = "판정 대기 중"
+            label = "검사중"
             color = RuleUpPalette.StatusWarn
         }
         TodayResultStatus.FAILED -> {
             label = "인증 실패"
-            color = RuleUpTheme.colors.danger
+            color = colors.danger
         }
         TodayResultStatus.NOT_TARGET -> {
-            label = "오늘은 쉬는 날"
-            color = RuleUpTheme.colors.textMuted
+            label = "인증 불필요"
+            color = colors.textMuted
         }
     }
-    Row(
-        modifier = Modifier.ruleUpCardSurface(),
-        verticalAlignment = Alignment.CenterVertically,
+    // 이의를 낼 수 있는 실패만 카드 테두리로 알린다(배지 없음, Figma 1134:512 상태 1).
+    val appealable = status == TodayResultStatus.FAILED && onAppealClick != null
+    Column(
+        modifier =
+            Modifier
+                .ruleUpCardSurface()
+                .then(
+                    if (appealable) {
+                        Modifier.border(1.dp, colors.dangerContainer, RuleUpTheme.shapes.card)
+                    } else {
+                        Modifier
+                    },
+                ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = "오늘 내 인증",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.cardTitle,
-        )
-        Spacer(Modifier.weight(1f))
-        today?.todayDetail()?.let {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "오늘 내 인증",
+                color = colors.textPrimary,
+                style = RuleUpTheme.typography.cardTitle,
+            )
+            Spacer(Modifier.weight(1f))
+            today?.todayDetail()?.let {
+                Text(
+                    text = it,
+                    color = colors.textSecondary,
+                    style = RuleUpTheme.typography.caption,
+                )
+                Spacer(Modifier.width(8.dp))
+            }
+            // 이의 가능 구간에는 실패 배지를 달지 않는다 — 아직 끝난 결과가 아니다.
+            if (status == TodayResultStatus.FAILED && !appealable) {
+                StatusChip(text = "실패 확정", tone = StatusChipTone.Danger)
+            } else {
+                Text(
+                    text = label,
+                    color = color,
+                    style = RuleUpTheme.typography.bodyBold,
+                )
+            }
+        }
+
+        todayNote(status, today)?.let {
             Text(
                 text = it,
-                color = RuleUpTheme.colors.textSecondary,
+                color = colors.textSecondary,
                 style = RuleUpTheme.typography.caption,
             )
-            Spacer(Modifier.width(8.dp))
         }
-        Text(
-            text = label,
-            color = color,
-            style = RuleUpTheme.typography.bodyBold,
-        )
+
+        if (appealable && onAppealClick != null) {
+            RuleUpPrimaryButton(
+                text = today?.appealButtonText() ?: "이의 제기",
+                onClick = onAppealClick,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }
+
+/**
+ * 상태 아래에 붙는 안내 문구 (프론트엔드 테크스펙 4-8).
+ *
+ * 실패는 사유를 먼저 말한다 — 자동 인증은 신호가 비는 것만으로도 실패하므로, 사유 없이 "실패"만
+ * 남으면 사용자는 자기가 뭘 잘못했는지 알 수 없다.
+ */
+private fun todayNote(
+    status: TodayResultStatus,
+    today: TodayResult?,
+): String? =
+    when (status) {
+        // 다음 날 00:00 KST 최종 재평가 구간. 미완료나 실패로 읽히지 않게 계산 중임을 밝힌다.
+        TodayResultStatus.CHECKING -> "최종 결과를 계산하고 있어요"
+        TodayResultStatus.NOT_TARGET -> "오늘은 인증하는 날이 아니에요"
+        TodayResultStatus.DONE ->
+            today
+                ?.streak
+                ?.after
+                ?.takeIf { it > 0 }
+                ?.let { "${it}일 연속 성공 중이에요" }
+        TodayResultStatus.FAILED ->
+            buildList {
+                today?.failureReason?.let { add(it.failureText()) }
+                // 끊긴 연속 기록은 사실만 말한다(재촉하지 않는다).
+                today?.streak?.takeIf { it.before > 0 && it.after == 0 }?.let { add("연속 ${it.before}일이 끊겼어요") }
+            }.takeIf { it.isNotEmpty() }?.joinToString(" · ")
+        TodayResultStatus.IN_PROGRESS -> null
+    }
 
 /**
  * 상태 옆에 붙는 보조 문구. 성공이면 확정 시각("06:24"), 진행 중이면 인증 창이다 —
@@ -235,6 +307,12 @@ private fun TodayResult.todayDetail(): String? =
         TodayResultStatus.IN_PROGRESS -> window
         else -> null
     }
+
+/** 이의 진입 버튼 문구. 마감 시각을 버튼에 실어 "언제까지"를 놓치지 않게 한다(Figma 1134:512). */
+private fun TodayResult.appealButtonText(): String {
+    val until = appeal?.eligibleUntil?.let { appealDeadlineLabel(it) }
+    return if (until == null) "이의 제기" else "이의 제기 · ${until}까지"
+}
 
 /** room 의 상태를 오늘 결과의 상태로 옮긴다. 두 계약은 같은 어휘를 쓴다. */
 private fun TodayVerificationStatus.toResultStatus(): TodayResultStatus =
