@@ -14,4 +14,8 @@ data class MyLocation(
     val appliedFrom: String?,
     // 서버 설정 인증 반경(m) — 지도 원 표시·지오펜스 등록이 이 값을 쓴다
     val serverRadiusM: Float? = null,
+    // 이번 달에 앵커를 바꿀 수 있는지(월 1회). 모르면 false — 못 바꾸는데 열어 두면 눌렀다 429 를 본다
+    val changeAvailable: Boolean = false,
+    // 다음 변경 가능 시각(ISO-8601). 이번 달 여유가 남아 있으면 null
+    val nextChangeAvailableAt: String? = null,
 )

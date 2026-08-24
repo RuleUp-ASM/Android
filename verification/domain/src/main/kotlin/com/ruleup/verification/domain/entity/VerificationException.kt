@@ -38,10 +38,30 @@ class ImageRequiredException : Exception("사진 인증에는 이미지가 필�
 class FallbackLimitExceededException : Exception("이번 주 수동 인증 횟수를 모두 사용했어요.")
 
 /**
- * 셋업 앵커가 유효하지 않음 (명세 setup, HTTP 400 INVALID_ANCHOR).
- * 반경 범위(500~5000m)·개수(최대 10) 위반 등 — 화면은 입력 수정 안내.
+ * 셋업 앵커가 유효하지 않음 (명세 setup·my-location, HTTP 400 INVALID_ANCHOR·ANCHOR_LIMIT_EXCEEDED).
+ * 좌표 범위 오류나 개수(최대 3) 초과 — 화면은 앵커 목록 상단에 인라인으로 안내한다.
  */
 class InvalidAnchorException : Exception("앵커 위치가 유효하지 않습니다.")
+
+/**
+ * 인증 장소 변경이 인증 윈도우 중에 들어옴 (명세 my-location PUT, HTTP 409 LOCATION_LOCKED_IN_WINDOW).
+ * 그날 판정을 흔들 수 없어 거부된다 — 화면은 **익일 재시도**를 안내한다.
+ */
+class LocationLockedInWindowException : Exception("인증이 진행 중인 동안에는 장소를 바꿀 수 없어요.")
+
+/**
+ * 이번 달 변경 횟수 소진 (명세 my-location PUT, HTTP 429 SETTING_CHANGE_LIMIT).
+ *
+ * 언제부터 다시 바꿀 수 있는지는 이 예외가 아니라 `GET /my-location` 의 `nextChangeAvailableAt`
+ * 에서 읽는다 — 공통 에러 본문에 그 필드를 실을 자리가 없다.
+ */
+class SettingChangeLimitException : Exception("이번 달 변경 횟수를 모두 썼어요.")
+
+/**
+ * 수동 인증 취소 기한 경과 (명세 DELETE /verifications/{id}, HTTP 409 CANCEL_WINDOW_CLOSED).
+ * 당일(KST)이 지나면 취소할 수 없다 — 화면은 체크를 되돌리지 않고 사유를 안내한다.
+ */
+class CancelWindowClosedException : Exception("오늘이 지나 취소할 수 없어요.")
 
 /**
  * 스크린타임 대상 앱 변경 쿨다운 (명세 my-screen-apps PUT, HTTP 429 SCREENTIME_CHANGE_COOLDOWN).

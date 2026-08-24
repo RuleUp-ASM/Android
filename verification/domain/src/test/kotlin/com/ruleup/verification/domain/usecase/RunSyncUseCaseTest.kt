@@ -383,6 +383,15 @@ class RunSyncUseCaseTest {
 
         override suspend fun getMyLocation(challengeId: String): MyLocation? = error("unused")
 
+        override suspend fun updateMyLocation(
+            challengeId: String,
+            anchors: AnchorSet,
+        ): MyLocation = error("unused")
+
+        override suspend fun acknowledgeResult(verificationId: String) = error("unused")
+
+        override suspend fun cancelManual(verificationId: String) = error("unused")
+
         override suspend fun getMyScreenApps(challengeId: String): MyScreenApps? = error("unused")
 
         override suspend fun updateMyScreenApps(

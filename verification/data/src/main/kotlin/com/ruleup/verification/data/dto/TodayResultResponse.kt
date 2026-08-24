@@ -88,3 +88,12 @@ internal fun TodayResultResponse.toDomain(): TodayResult =
                 )
             },
     )
+
+// ---------- 판정 결과 확인 (POST /verifications/{verificationId}/ack) ----------
+
+/** 멱등 응답 — 이미 확인한 건을 다시 불러도 `true` 로 온다. */
+@Serializable
+data class AcknowledgeResponse(
+    @SerialName("acknowledged")
+    val acknowledged: Boolean? = null,
+)
