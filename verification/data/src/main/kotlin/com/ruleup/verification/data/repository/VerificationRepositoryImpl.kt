@@ -38,7 +38,6 @@ import com.ruleup.verification.domain.entity.MyScreenApps
 import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.ProgressFilter
 import com.ruleup.verification.domain.entity.ProgressSnapshot
-import com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException
 import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SettingChangeLimitException
@@ -178,7 +177,8 @@ class VerificationRepositoryImpl
                 // 429 쿨다운·400 형식 위반은 화면이 안내로 분기하도록 도메인 예외로 변환(명세 my-screen-apps).
                 // 그 외(403/401 등)는 그대로 전파한다.
                 when (e.code) {
-                    CODE_SCREENTIME_CHANGE_COOLDOWN -> throw ScreenAppChangeCooldownException()
+                    // 앵커 변경과 같은 월 1회 규칙이다 — 코드도 예외도 하나로 모은다.
+                    CODE_SETTING_CHANGE_LIMIT -> throw SettingChangeLimitException()
                     CODE_INVALID_APP -> throw InvalidScreenAppException()
                     else -> throw e
                 }
@@ -307,7 +307,6 @@ class VerificationRepositoryImpl
             private const val CODE_CANCEL_WINDOW_CLOSED = "CANCEL_WINDOW_CLOSED"
             private const val CODE_GEOFENCE_NOT_CONFIGURED = "GEOFENCE_NOT_CONFIGURED"
             private const val CODE_SCREENTIME_NOT_CONFIGURED = "SCREENTIME_NOT_CONFIGURED"
-            private const val CODE_SCREENTIME_CHANGE_COOLDOWN = "SCREENTIME_CHANGE_COOLDOWN"
             private const val CODE_INVALID_APP = "INVALID_APP"
         }
     }

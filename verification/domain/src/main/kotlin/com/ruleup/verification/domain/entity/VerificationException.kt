@@ -83,12 +83,6 @@ class AppealNotFailedException : Exception("이미 정정된 인증이에요.")
 class CancelWindowClosedException : Exception("오늘이 지나 취소할 수 없어요.")
 
 /**
- * 스크린타임 대상 앱 변경 쿨다운 (명세 my-screen-apps PUT, HTTP 429 SCREENTIME_CHANGE_COOLDOWN).
- * 최근 변경 직후 재변경 제한 — 화면은 "잠시 후 다시 시도" 안내.
- */
-class ScreenAppChangeCooldownException : Exception("대상 앱을 방금 변경해 잠시 후 다시 시도할 수 있어요.")
-
-/**
  * 대상 앱 세트가 유효하지 않음 (명세 my-screen-apps PUT, HTTP 400 INVALID_APP).
  * 패키지명 형식 오류·중복·개수(1~10) 초과 — 화면은 선택 수정 안내.
  */

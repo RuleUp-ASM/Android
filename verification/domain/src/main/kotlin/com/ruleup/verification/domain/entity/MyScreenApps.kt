@@ -28,10 +28,17 @@ data class MyScreenApps(
     val pending: PendingScreenApps?,
 )
 
-/** PUT /my-screen-apps 접수 결과 (명세 response). */
+/**
+ * PUT /my-screen-apps 접수 결과 (명세 response).
+ *
+ * 저장하면 그 달의 변경 1회를 소진하므로 [nextChangeAvailableAt] 은 **항상** 내려온다(다음 달 1일
+ * 00:00 KST). 화면이 "언제부터 다시 바꿀 수 있는지"를 말할 유일한 원천이다.
+ */
 data class ScreenAppsUpdate(
     // 접수된 앱 세트
     val apps: List<ScreenApp>,
+    // 다음 변경 가능 시각(ISO-8601). 이번 저장으로 월 1회를 소진했다
+    val nextChangeAvailableAt: String? = null,
     // 적용 시작 시각(익일 00:00, ISO-8601)
     val appliedFrom: String,
 )
