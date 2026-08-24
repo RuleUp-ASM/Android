@@ -83,6 +83,12 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
+    /** 수동 방 오늘 인증 체크(명세 POST /challenges/{id}/verifications). */
+    data object SubmitManualCheck : ChallengeDetailIntent
+
+    /** 수동 체크 해제(명세 DELETE /verifications/{id}). 당일 안에서만 된다. */
+    data object CancelManualCheck : ChallengeDetailIntent
+
     /**
      * 권한 현황 재조회. 화면 진입·설정에서 복귀할 때마다 부른다 — 권한 상태는 저장하지 않고
      * 매번 OS 에 다시 묻는다(프론트엔드 테크스펙 4-5).
@@ -246,6 +252,8 @@ data class ChallengeDetailState(
     val appealReasonError: String? = null,
     // 지금 이 기기의 권한 현황. 런타임 권한만이 아니라 사용정보 접근·Health Connect 까지 포함한다.
     val permissions: PermissionSnapshot? = null,
+    // 수동 체크 제출·해제 진행 중(중복 탭 차단).
+    val isManualChecking: Boolean = false,
     // 방장 클레임 요청 중(버튼 중복 탭 방지). 선착순이라 두 번 눌러도 한 번만 나간다.
     val isClaimingOwner: Boolean = false,
     // 이의 제출 중(중복 탭 방지).
@@ -441,6 +449,10 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     ) : ChallengeDetailReducerEvent
 
     data object AppealReset : ChallengeDetailReducerEvent
+
+    data class ManualChecking(
+        val checking: Boolean,
+    ) : ChallengeDetailReducerEvent
 
     data class PermissionsCaptured(
         val permissions: PermissionSnapshot,

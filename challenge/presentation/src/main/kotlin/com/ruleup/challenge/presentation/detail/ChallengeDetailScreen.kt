@@ -462,6 +462,14 @@ private fun RoomDetailTabs(
                         )
                     },
                     onDismissAppeal = { onIntent(ChallengeDetailIntent.DismissAppeal) },
+                    // 수동 방에서만 체크 CTA 를 넘긴다 — 자동 방의 실패 구제는 이의 제기가 담당한다.
+                    onManualCheck =
+                        { onIntent(ChallengeDetailIntent.SubmitManualCheck) }
+                            .takeIf { state.setup?.manual == true },
+                    onManualUncheck =
+                        { onIntent(ChallengeDetailIntent.CancelManualCheck) }
+                            .takeIf { state.setup?.manual == true && state.todayResult?.verificationId != null },
+                    isManualChecking = state.isManualChecking,
                     extraSections = {
                         val myWatchers = state.watchers
                         if (myWatchers != null) {

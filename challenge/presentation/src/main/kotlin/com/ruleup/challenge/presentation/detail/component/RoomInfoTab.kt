@@ -55,6 +55,10 @@ internal fun RoomInfoTab(
     onRegisterApps: (() -> Unit)? = null,
     onRegisterAnchor: (() -> Unit)? = null,
     onSubmitAppeal: ((reason: String) -> Unit)? = null,
+    // 수동 방일 때만 넘어온다 — 자동 방에 보조 수동 버튼을 두지 않는 것이 확정 규칙이다.
+    onManualCheck: (() -> Unit)? = null,
+    onManualUncheck: (() -> Unit)? = null,
+    isManualChecking: Boolean = false,
     isSubmittingAppeal: Boolean = false,
     appealImageUrl: String? = null,
     isUploadingAppealImage: Boolean = false,
@@ -77,6 +81,9 @@ internal fun RoomInfoTab(
         TodayVerificationCard(
             roomStatus = room.myTodayStatus,
             today = today,
+            onManualCheck = onManualCheck,
+            onManualUncheck = onManualUncheck,
+            isManualChecking = isManualChecking,
             // 이의는 실패 확정 건에만, 그것도 대상 인증 건 ID 를 알 때만 낼 수 있다.
             onAppealClick =
                 { appealOpen = true }
@@ -132,6 +139,9 @@ private fun TodayVerificationCard(
     roomStatus: TodayVerificationStatus?,
     today: TodayResult?,
     onAppealClick: (() -> Unit)?,
+    onManualCheck: (() -> Unit)? = null,
+    onManualUncheck: (() -> Unit)? = null,
+    isManualChecking: Boolean = false,
 ) {
     val status = today?.status ?: roomStatus?.toResultStatus() ?: return
     val colors = RuleUpTheme.colors
@@ -217,6 +227,29 @@ private fun TodayVerificationCard(
                 onClick = onAppealClick,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+
+        // 수동 방의 체크·해제. 자동 방에는 onManual* 이 넘어오지 않아 아무것도 그리지 않는다.
+        when {
+            status == TodayResultStatus.DONE && onManualUncheck != null ->
+                Text(
+                    text = if (isManualChecking) "해제하는 중…" else "체크 해제",
+                    color = colors.textMuted,
+                    style = RuleUpTheme.typography.caption,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .singleClickable(enabled = !isManualChecking, onClick = onManualUncheck)
+                            .padding(vertical = 8.dp),
+                )
+
+            status == TodayResultStatus.IN_PROGRESS && onManualCheck != null ->
+                RuleUpPrimaryButton(
+                    text = if (isManualChecking) "체크하는 중…" else "오늘 인증 체크",
+                    onClick = onManualCheck,
+                    enabled = !isManualChecking,
+                    modifier = Modifier.fillMaxWidth(),
+                )
         }
     }
 }

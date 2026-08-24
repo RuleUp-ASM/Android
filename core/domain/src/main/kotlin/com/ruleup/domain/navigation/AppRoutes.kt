@@ -48,5 +48,4 @@ object AppRoutes {
 
     // verification
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)
-    const val VERIFICATION_MANUAL = "verification/manual" // 진입점 (수동 인증 제출, VF-04)
 }
