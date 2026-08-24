@@ -13,6 +13,7 @@ import com.ruleup.verification.data.signal.health.HealthPermissions
 import com.ruleup.verification.data.signal.usage.hasUsageAccess
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
+import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -26,8 +27,8 @@ class PermissionSnapshotProvider
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-    ) {
-        suspend fun capture(): PermissionSnapshot {
+    ) : PermissionStatusProvider {
+        override suspend fun capture(): PermissionSnapshot {
             val hc = healthConnectGranted()
             return PermissionSnapshot(
                 location = context.statusOf(Manifest.permission.ACCESS_FINE_LOCATION),

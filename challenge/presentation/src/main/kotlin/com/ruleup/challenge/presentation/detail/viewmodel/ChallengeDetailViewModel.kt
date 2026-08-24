@@ -40,6 +40,7 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.AppealNotFailedException
 import com.ruleup.verification.domain.entity.AppealWindowClosedException
 import com.ruleup.verification.domain.entity.InvalidAppealReasonException
+import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -60,6 +61,7 @@ class ChallengeDetailViewModel
         private val roomRepository: RoomRepository,
         private val watcherRepository: WatcherRepository,
         private val verificationRepository: VerificationRepository,
+        private val permissionStatusProvider: PermissionStatusProvider,
         private val exploreRepository: ExploreRepository,
         private val tokenRepository: TokenRepository,
         private val observability: Observability,
@@ -94,6 +96,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 is ChallengeDetailIntent.PickAppealImage -> uploadAppealImage(intent.imageUri)
+                ChallengeDetailIntent.RefreshPermissions -> refreshPermissions()
                 ChallengeDetailIntent.DismissAppeal -> dispatch(ChallengeDetailReducerEvent.AppealReset)
                 ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
                 is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
@@ -196,6 +199,7 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.AppealImageUploading -> state.copy(isUploadingAppealImage = event.uploading)
                 is ChallengeDetailReducerEvent.AppealImageUploaded -> state.copy(appealImageUrl = event.imageUrl)
                 is ChallengeDetailReducerEvent.AppealReasonRejected -> state.copy(appealReasonError = event.message)
+                is ChallengeDetailReducerEvent.PermissionsCaptured -> state.copy(permissions = event.permissions)
                 ChallengeDetailReducerEvent.AppealReset ->
                     state.copy(appealImageUrl = null, isUploadingAppealImage = false, appealReasonError = null)
 
@@ -825,6 +829,14 @@ class ChallengeDetailViewModel
                 }
 
                 else -> emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의를 접수하지 못했어요"))
+            }
+        }
+
+        /** 권한 현황을 OS 에 다시 묻는다. 실패하면 직전 값을 유지한다 — 모른다고 참여를 막지 않는다. */
+        private fun refreshPermissions() {
+            viewModelScope.launch {
+                runCatching { permissionStatusProvider.capture() }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.PermissionsCaptured(it)) }
             }
         }
 
