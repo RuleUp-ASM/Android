@@ -42,13 +42,16 @@ data class UpdateScreenAppsRequest(
     val apps: List<ScreenAppDto>,
 )
 
-/** PUT 응답(명세): 접수된 세트 + 익일 적용 시각. */
+/** PUT 응답(명세): 접수된 세트 + 익일 적용 시각 + 다음 변경 가능 시각. */
 @Serializable
 data class UpdateScreenAppsResponse(
     @SerialName("apps")
     val apps: List<ScreenAppDto>? = null,
     @SerialName("appliedFrom")
     val appliedFrom: String? = null,
+    // 저장으로 월 1회를 소진하므로 항상 내려온다(다음 달 1일 00:00 KST)
+    @SerialName("nextChangeAvailableAt")
+    val nextChangeAvailableAt: String? = null,
 )
 
 internal fun ScreenAppDto.toDomain(): ScreenApp =
@@ -79,5 +82,6 @@ internal fun MyScreenAppsResponse.toDomain(): MyScreenApps =
 internal fun UpdateScreenAppsResponse.toDomain(): ScreenAppsUpdate =
     ScreenAppsUpdate(
         apps = apps.orEmpty().map { it.toDomain() },
+        nextChangeAvailableAt = nextChangeAvailableAt,
         appliedFrom = appliedFrom.orEmpty(),
     )
