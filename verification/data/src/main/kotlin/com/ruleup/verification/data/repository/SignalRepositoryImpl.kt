@@ -5,12 +5,12 @@ import com.ruleup.observability.domain.api.i
 import com.ruleup.verification.data.db.common.SignalGapDao
 import com.ruleup.verification.data.db.common.toAppEvent
 import com.ruleup.verification.data.db.common.toDomain
-import com.ruleup.verification.data.db.common.toScreenEvent
 import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
 import com.ruleup.verification.data.db.geofence.LocationSampleDao
 import com.ruleup.verification.data.db.health.HealthReadingDao
 import com.ruleup.verification.data.db.health.SleepSegmentDao
 import com.ruleup.verification.data.db.usage.UsageEventDao
+import com.ruleup.verification.data.signal.usage.WakeSignalProvider
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.VerificationSignal
@@ -50,6 +50,7 @@ class SignalRepositoryImpl
         private val healthReadingDao: HealthReadingDao,
         private val sleepSegmentDao: SleepSegmentDao,
         private val signalGapDao: SignalGapDao,
+        private val wakeSignalProvider: WakeSignalProvider,
         private val observability: Observability,
     ) : SignalRepository {
         override suspend fun drainPending(collectedAt: String): SignalBatch? {
@@ -96,16 +97,19 @@ class SignalRepositoryImpl
             }
 
             val appEvents = usage.mapNotNull { it.toAppEvent() }
-            val screenEvents = usage.mapNotNull { it.toScreenEvent() }
+            // WAKE 는 배치가 아니라 당일 전체에서 뽑는다 — 첫 잠금해제는 하루 한 번뿐이라
+            // 그 이벤트가 앞선 배치로 나갔으면 이후 sync 에서 값이 사라진다.
+            val wake = wakeSignalProvider.collect()
 
             val signals =
                 buildList<VerificationSignal> {
                     if (transitions.isNotEmpty()) {
                         add(VerificationSignal.GeofenceTransitions(transitions.map { it.toDomain() }))
                     }
-                    if (appEvents.isNotEmpty() || screenEvents.isNotEmpty()) {
-                        add(VerificationSignal.ScreenTime(appEvents = appEvents, screenEvents = screenEvents))
+                    if (appEvents.isNotEmpty()) {
+                        add(VerificationSignal.ScreenTime(appEvents = appEvents))
                     }
+                    if (wake != null) add(wake)
                     if (locations.isNotEmpty()) {
                         add(VerificationSignal.Locations(locations.map { it.toDomain() }))
                     }

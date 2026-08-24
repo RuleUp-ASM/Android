@@ -14,7 +14,7 @@ enum class AppEventType {
     STOPPED,
 }
 
-/** 화면/잠금해제 이벤트 (WAKE 판정용, 명세 §2.2 / §3.2). */
+/** 화면/잠금해제 이벤트 종류 (WAKE 판정용, 전송 스펙 §4). 로컬 버퍼의 분류 키로만 쓴다. */
 enum class ScreenEventType {
     UNLOCK,
     SCREEN_ON,
@@ -46,12 +46,6 @@ data class GeofenceTransitionEvent(
 data class AppUsageEvent(
     val packageName: String,
     val eventType: AppEventType,
-    val at: Long,
-)
-
-/** 화면/잠금해제 이벤트 1건. */
-data class ScreenEvent(
-    val event: ScreenEventType,
     val at: Long,
 )
 
@@ -133,11 +127,26 @@ sealed interface VerificationSignal {
         override val isEmpty: Boolean get() = events.isEmpty()
     }
 
+    /** 앱 사용(전송 스펙 §3). 페어링·합산은 서버가 하므로 시퀀스를 그대로 보낸다. */
     data class ScreenTime(
         val appEvents: List<AppUsageEvent>,
-        val screenEvents: List<ScreenEvent>,
     ) : VerificationSignal {
-        override val isEmpty: Boolean get() = appEvents.isEmpty() && screenEvents.isEmpty()
+        override val isEmpty: Boolean get() = appEvents.isEmpty()
+    }
+
+    /**
+     * 기상(전송 스펙 §4). 화면 이벤트 시퀀스가 아니라 **당일 첫 시각만 가공해** 올린다 —
+     * 기상 판정은 "첫 잠금해제가 목표 시각 안이었나" 하나만 묻기 때문이다.
+     *
+     * [deviceSecure] 가 false 면 잠금을 걸지 않은 기기라 [firstUnlock] 이 영영 나오지 않는다.
+     * 서버가 [firstScreenOn] 폴백을 쓸지 가르는 입력이라 값이 없어도 함께 보낸다.
+     */
+    data class Wake(
+        val firstUnlock: Long?,
+        val firstScreenOn: Long?,
+        val deviceSecure: Boolean,
+    ) : VerificationSignal {
+        override val isEmpty: Boolean get() = firstUnlock == null && firstScreenOn == null
     }
 
     data class Locations(
