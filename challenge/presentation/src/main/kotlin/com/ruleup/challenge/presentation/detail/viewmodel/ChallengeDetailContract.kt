@@ -240,7 +240,7 @@ data class ChallengeDetailState(
     val crossRanking: CrossChallengeRanking? = null,
     val isCrossRankingLoading: Boolean = false,
     // 오늘 인증 결과(인증 모듈). room 의 myTodayStatus 보다 자세해서 인증 시각·실패 사유·연속 일수·
-    // 이의 잔여 횟수를 여기서 가져온다. 조회 실패는 흡수하고 room 값으로 떨어진다.
+    // 이의 신청 기한을 여기서 가져온다(잔여 횟수는 없다 — 한도 폐기). 조회 실패는 흡수하고 room 값으로 떨어진다.
     val todayResult: TodayResult? = null,
     // 이번 진입에서 판정 결과 모달을 이미 닫았는지. ack 가 실패해도 모달을 다시 올리지 않기 위한
     // 화면 로컬 플래그다 — 서버는 다음 진입에 같은 미확인 판정을 다시 내려준다.

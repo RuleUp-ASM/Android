@@ -4,7 +4,8 @@ package com.ruleup.verification.domain.entity
  * 오늘 인증 상태 (명세: GET /challenges/{id}/verifications/today `status`).
  *
  * 판정 이전 구간이 둘로 나뉘는 게 핵심이다 — [IN_PROGRESS] 는 인증 창이 아직 열려 있는 상태이고,
- * [CHECKING] 은 창은 닫혔지만 00~03시 유예로 확정 전인 상태다. 둘 다 **실패가 아니다.**
+ * [CHECKING] 은 창은 닫혔지만 **다음 날 00:00 KST 최종 재평가**가 끝나기 전인 상태다.
+ * 둘 다 **실패가 아니다** — 검사중은 성공·실패 양쪽으로 열려 있다.
  */
 enum class TodayResultStatus(
     val value: String,
@@ -16,7 +17,7 @@ enum class TodayResultStatus(
     NOT_TARGET("NOT_TARGET"),
     ;
 
-    /** 실패로 확정됐는가 — 이의 제기 안내의 조건. 유예 구간은 아직 실패가 아니다. */
+    /** 실패로 확정됐는가 — 이의 제기 안내의 조건. 재평가 중([CHECKING])은 아직 실패가 아니다. */
     val isFailure: Boolean
         get() = this == FAILED
 
@@ -69,7 +70,7 @@ data class TodayResult(
     val status: TodayResultStatus?,
     // 인증 창 표시 문구 — 자동은 시간대("06:00-07:00"), 수동은 "자정 마감"
     val window: String?,
-    // 확정 시각 — 성공은 즉시, 실패는 03:00
+    // 확정 시각 — 성공은 조건 충족 즉시, 실패는 귀속일 다음 날 00:00 KST
     val confirmedAt: String?,
     val failureReason: FailureReason?,
     val streak: VerificationStreak?,
