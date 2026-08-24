@@ -280,8 +280,13 @@ private fun CalendarDayStatus?.dotColor(isSelected: Boolean): Color =
         CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
         CalendarDayStatus.PARTIAL -> RuleUpPalette.StatusWarn
         CalendarDayStatus.FAILED -> RuleUpTheme.colors.danger
-        CalendarDayStatus.PENDING -> if (isSelected) RuleUpPalette.BgSurface else RuleUpTheme.colors.brand
-        CalendarDayStatus.NOT_TARGET, null -> Color.Transparent
+        // 검사중은 최종 재평가 구간이라 실패가 아니다. 미확정 색을 함께 쓰고 범례를 늘리지 않는다
+        // (프론트엔드 테크스펙: 장시간 구간 범례를 추가하지 않고 카드에서만 안내).
+        CalendarDayStatus.IN_PROGRESS,
+        CalendarDayStatus.CHECKING,
+        -> if (isSelected) RuleUpPalette.BgSurface else RuleUpTheme.colors.brand
+        // 판정 대상일만 내려오므로 null 은 비대상일이거나 모르는 값이다 — 어느 쪽이든 칠하지 않는다.
+        null -> Color.Transparent
     }
 
 @Composable
@@ -381,15 +386,18 @@ private fun DayDetailCard(
 private fun DayItemRow(item: CalendarDayItem) {
     val (statusLabel, statusColor) =
         when (item.status) {
-            DayItemStatus.SUCCESS ->
+            DayItemStatus.DONE ->
                 buildString {
-                    item.verifiedAt?.let { append("${it.timeLabel()} ") }
+                    item.confirmedAt?.let { append("${it.timeLabel()} ") }
                     append("완료")
                 } to RuleUpTheme.colors.success
 
             DayItemStatus.FAILED -> (item.failureReason?.failureLabel() ?: "실패") to RuleUpTheme.colors.danger
-            DayItemStatus.PENDING -> "판정 대기" to RuleUpPalette.StatusWarn
-            DayItemStatus.NOT_REQUIRED -> "인증 불필요" to RuleUpTheme.colors.textMuted
+            // 검사중을 실패처럼 보이게 하지 않는다 — 성공·실패 양쪽으로 열려 있는 상태다.
+            DayItemStatus.CHECKING -> "결과 계산 중" to RuleUpPalette.StatusWarn
+            DayItemStatus.IN_PROGRESS -> "진행 중" to RuleUpTheme.colors.brand
+            // 모르는 상태는 완료·실패 어느 쪽으로도 접지 않고 표기를 생략한다.
+            null -> "" to RuleUpTheme.colors.textMuted
         }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(text = item.category?.let(::categoryEmoji) ?: "🎯", style = RuleUpTheme.typography.section)

@@ -6,6 +6,7 @@ import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayDetail
 import com.ruleup.profile.domain.entity.CalendarDayItem
 import com.ruleup.profile.domain.entity.CalendarDayStatus
+import com.ruleup.profile.domain.entity.DayItemAppeal
 import com.ruleup.profile.domain.entity.DayItemStatus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -15,7 +16,7 @@ import kotlinx.serialization.Serializable
 data class CalendarDayResponse(
     @SerialName("date")
     val date: String? = null,
-    // ALL_DONE / PARTIAL / FAILED / PENDING / NOT_TARGET
+    // ALL_DONE / PARTIAL / FAILED / CHECKING / IN_PROGRESS
     @SerialName("status")
     val status: String? = null,
     @SerialName("successCount")
@@ -58,16 +59,34 @@ data class CalendarDayItemResponse(
     // RoutineOutcome 카테고리 스냅샷 (예: WAKE_UP)
     @SerialName("category")
     val category: String? = null,
-    // SUCCESS / FAILED / PENDING / NOT_REQUIRED
+    // IN_PROGRESS / CHECKING / DONE / FAILED
     @SerialName("status")
     val status: String? = null,
-    // AUTO / MANUAL / MANUAL_FALLBACK
+    // 이의 신청 대상 인증 건 ID
+    @SerialName("verificationId")
+    val verificationId: String? = null,
+    // AUTO / MANUAL
     @SerialName("verifiedVia")
     val verifiedVia: String? = null,
-    @SerialName("verifiedAt")
-    val verifiedAt: String? = null,
+    @SerialName("confirmedAt")
+    val confirmedAt: String? = null,
     @SerialName("failureReason")
     val failureReason: String? = null,
+    // FAILED 일 때만 내려온다
+    @SerialName("appeal")
+    val appeal: DayItemAppealResponse? = null,
+)
+
+/**
+ * 명세에는 `remainingThisMonth`·`ineligibleReason` 도 있지만 읽지 않는다 — 이의 횟수 한도가
+ * 폐기돼(챌린지 정책 §7.2) 잔여 횟수 개념이 없고, 사유는 `eligible`·`eligibleUntil` 로 이미 드러난다.
+ */
+@Serializable
+data class DayItemAppealResponse(
+    @SerialName("eligible")
+    val eligible: Boolean? = null,
+    @SerialName("eligibleUntil")
+    val eligibleUntil: String? = null,
 )
 
 @Serializable
@@ -89,9 +108,18 @@ internal fun CalendarDayDetailResponse.toDomain(): CalendarDayDetail =
                     title = item.title.orEmpty(),
                     category = item.category?.let(Category::fromValue),
                     status = DayItemStatus.fromValue(item.status),
+                    verificationId = item.verificationId,
                     verifiedVia = item.verifiedVia,
-                    verifiedAt = item.verifiedAt,
+                    confirmedAt = item.confirmedAt,
                     failureReason = item.failureReason,
+                    appeal =
+                        item.appeal?.let {
+                            DayItemAppeal(
+                                // 모르면 못 내는 쪽으로 접는다 — 열어 두면 눌렀다 409 를 본다.
+                                eligible = it.eligible ?: false,
+                                eligibleUntil = it.eligibleUntil,
+                            )
+                        },
                 )
             },
     )
