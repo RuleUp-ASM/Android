@@ -25,6 +25,13 @@ data object MyCalendarPage : Page {
     const val PATH = AppRoutes.MY_CALENDAR
 }
 
+/** 이의 내역 페이지 (마이 홈 메뉴 → 내가 낸 이의). */
+data object MyAppealsPage : Page {
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    const val PATH = AppRoutes.MY_APPEALS
+}
+
 /** 통계 리포트 페이지 (마이 홈 메뉴 → 주간/월간/연간). */
 data object MyStatsPage : Page {
     override fun toRoute(): NavRoute = NavRoute(PATH)
