@@ -90,6 +90,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
+                ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
                 is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
                 ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
@@ -186,6 +187,7 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.CrossRankingLoading -> state.copy(isCrossRankingLoading = event.loading)
 
                 is ChallengeDetailReducerEvent.TodayResultLoaded -> state.copy(todayResult = event.result)
+                ChallengeDetailReducerEvent.ResultAcknowledged -> state.copy(resultAcknowledged = true)
 
                 is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
                 is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
@@ -738,6 +740,24 @@ class ChallengeDetailViewModel
         private fun openRanking() {
             val id = currentState.detail?.challengeId ?: return
             navigationHelper.navigateByRoute(ChallengeRankingPage(challengeId = id).toRoute())
+        }
+
+        /**
+         * 판정 결과 모달 확인(명세 POST /verifications/{id}/ack).
+         *
+         * **모달은 ack 결과와 무관하게 먼저 닫는다.** 실패해도 사용자가 할 수 있는 일이 없고, 서버는
+         * 다음 진입에 같은 미확인 판정을 다시 내려준다 — 모달이 사용자를 가두는 상황을 만들지 않는
+         * 것이 계약이다(프론트엔드 테크스펙 4-1).
+         */
+        private fun acknowledgeResult() {
+            val verificationId = currentState.todayResult?.unacknowledged?.verificationId
+            dispatch(ChallengeDetailReducerEvent.ResultAcknowledged)
+            if (verificationId == null) return
+            viewModelScope.launch {
+                // 조용히 실패하고 1회만 자동 재시도한다(프론트엔드 테크스펙 4-6).
+                runCatching { verificationRepository.acknowledgeResult(verificationId) }
+                    .onFailure { runCatching { verificationRepository.acknowledgeResult(verificationId) } }
+            }
         }
 
         /**

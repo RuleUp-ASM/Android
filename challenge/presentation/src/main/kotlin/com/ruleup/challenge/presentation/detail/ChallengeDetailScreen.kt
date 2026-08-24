@@ -58,6 +58,7 @@ import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
 import com.ruleup.challenge.presentation.detail.component.RoomTabRow
+import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
 import com.ruleup.challenge.presentation.detail.component.WatcherSection
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
@@ -231,6 +232,16 @@ private fun ChallengeDetailContent(
                 )
             } else {
                 DetailTopBar(onBack = onBack)
+            }
+
+            // 미확인 판정은 로딩이 끝난 뒤에 올린다 — 스켈레톤 위에 띄우면 뒤에 뭐가 있는지 모른 채
+            // 결과부터 마주친다(프론트엔드 테크스펙 4-1 「모달 순서」).
+            val unacknowledged = state.todayResult?.takeIf { !state.isLoading && !state.resultAcknowledged && it.unacknowledged != null }
+            if (unacknowledged != null) {
+                VerificationResultModal(
+                    today = unacknowledged,
+                    onConfirm = { onIntent(ChallengeDetailIntent.AcknowledgeResult) },
+                )
             }
 
             when {
