@@ -19,12 +19,15 @@ import com.ruleup.verification.data.dto.toUpdateRequest
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.AppealHistoryItem
+import com.ruleup.verification.domain.entity.AppealNotFailedException
 import com.ruleup.verification.domain.entity.AppealReceipt
+import com.ruleup.verification.domain.entity.AppealWindowClosedException
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.DeviceIntro
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.InvalidAnchorException
+import com.ruleup.verification.domain.entity.InvalidAppealReasonException
 import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.InvalidSignalPayloadException
 import com.ruleup.verification.domain.entity.InvalidTargetDateException
@@ -186,12 +189,23 @@ class VerificationRepositoryImpl
             reason: String,
             imageUrl: String?,
         ): AppealReceipt =
-            api
-                .submitAppeal(
-                    verificationId = verificationId,
-                    request = SubmitAppealRequest(reason = reason, imageUrl = imageUrl),
-                ).getOrThrow()
-                .toDomain()
+            try {
+                api
+                    .submitAppeal(
+                        verificationId = verificationId,
+                        request = SubmitAppealRequest(reason = reason, imageUrl = imageUrl),
+                    ).getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 셋 다 화면이 다르게 말해야 하는 실패다 — 특히 NOT_FAILED 는 오류가 아니라
+                // "이미 정정됨"이라 실패처럼 보여주면 안 된다(명세 appeals).
+                when (e.code) {
+                    CODE_INVALID_REASON -> throw InvalidAppealReasonException()
+                    CODE_APPEAL_WINDOW_CLOSED -> throw AppealWindowClosedException()
+                    CODE_NOT_FAILED -> throw AppealNotFailedException()
+                    else -> throw e
+                }
+            }
 
         override suspend fun uploadAppealImage(imageUri: String): String {
             val image = imageReader.read(imageUri)
@@ -283,6 +297,9 @@ class VerificationRepositoryImpl
             private const val CODE_SYNC_PAYLOAD_TOO_LARGE = "SYNC_PAYLOAD_TOO_LARGE"
             private const val CODE_ALREADY_VERIFIED = "ALREADY_VERIFIED"
             private const val CODE_INVALID_TARGET_DATE = "INVALID_TARGET_DATE"
+            private const val CODE_INVALID_REASON = "INVALID_REASON"
+            private const val CODE_APPEAL_WINDOW_CLOSED = "APPEAL_WINDOW_CLOSED"
+            private const val CODE_NOT_FAILED = "NOT_FAILED"
             private const val CODE_INVALID_ANCHOR = "INVALID_ANCHOR"
             private const val CODE_ANCHOR_LIMIT_EXCEEDED = "ANCHOR_LIMIT_EXCEEDED"
             private const val CODE_LOCATION_LOCKED_IN_WINDOW = "LOCATION_LOCKED_IN_WINDOW"

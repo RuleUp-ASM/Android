@@ -108,8 +108,10 @@ interface VerificationRepository {
      * 인증 이의 제기(명세 POST /verifications/{verificationId}/appeals).
      *
      * **판정이 없다** — 형식 요건(사유 [AppealPolicy.MIN_REASON_LENGTH]자 이상)만 맞으면 즉시 인용된다.
-     * 요건 미달·기한 경과·비실패 건은 접수 자체가 되지 않고 [com.ruleup.network.dto.ApiException]
-     * 으로 전파된다(`INVALID_REASON` / `APPEAL_WINDOW_CLOSED` / `NOT_FAILED`).
+     * 요건 미달·기한 경과·비실패 건은 접수 자체가 되지 않고 화면이 각각 다르게 말해야 하므로 도메인
+     * 예외로 온다 — [com.ruleup.verification.domain.entity.InvalidAppealReasonException](400),
+     * [com.ruleup.verification.domain.entity.AppealWindowClosedException](409),
+     * [com.ruleup.verification.domain.entity.AppealNotFailedException](409, **오류가 아니라 이미 정정됨**).
      */
     suspend fun submitAppeal(
         verificationId: String,

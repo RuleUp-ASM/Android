@@ -1,5 +1,8 @@
 package com.ruleup.challenge.presentation.detail
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -402,6 +405,11 @@ private fun RoomDetailTabs(
     onConfirmLeave: () -> Unit,
     onConfirmDelete: () -> Unit,
 ) {
+    // 이의 증빙 사진 선택. 고른 즉시 올려 두고 제출 때는 URL 만 실어 보낸다.
+    val appealImagePicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
+        }
     Column(modifier = Modifier.fillMaxSize()) {
         if (state.selectedTab == RoomTab.INFO) {
             RoomInfoHeader(
@@ -430,6 +438,15 @@ private fun RoomDetailTabs(
                             .takeIf { state.setup?.requiresAnchors == true },
                     onSubmitAppeal = { reason -> onIntent(ChallengeDetailIntent.SubmitAppeal(reason)) },
                     isSubmittingAppeal = state.isSubmittingAppeal,
+                    appealImageUrl = state.appealImageUrl,
+                    isUploadingAppealImage = state.isUploadingAppealImage,
+                    appealReasonError = state.appealReasonError,
+                    onPickAppealImage = {
+                        appealImagePicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                        )
+                    },
+                    onDismissAppeal = { onIntent(ChallengeDetailIntent.DismissAppeal) },
                     extraSections = {
                         val myWatchers = state.watchers
                         if (myWatchers != null) {

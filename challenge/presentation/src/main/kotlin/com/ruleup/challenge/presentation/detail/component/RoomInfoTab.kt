@@ -12,10 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +35,6 @@ import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.verification.domain.entity.AppealPolicy
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 
@@ -60,6 +56,11 @@ internal fun RoomInfoTab(
     onRegisterAnchor: (() -> Unit)? = null,
     onSubmitAppeal: ((reason: String) -> Unit)? = null,
     isSubmittingAppeal: Boolean = false,
+    appealImageUrl: String? = null,
+    isUploadingAppealImage: Boolean = false,
+    appealReasonError: String? = null,
+    onPickAppealImage: () -> Unit = {},
+    onDismissAppeal: () -> Unit = {},
     extraSections: @Composable () -> Unit = {},
 ) {
     // 이의 입력 다이얼로그 열림 여부. 실패 카드에서만 열린다.
@@ -94,72 +95,24 @@ internal fun RoomInfoTab(
         extraSections()
     }
 
-    if (appealOpen && onSubmitAppeal != null) {
-        AppealDialog(
+    if (appealOpen && onSubmitAppeal != null && today != null) {
+        AppealSheet(
+            today = today,
             submitting = isSubmittingAppeal,
+            imageUrl = appealImageUrl,
+            uploadingImage = isUploadingAppealImage,
+            reasonError = appealReasonError,
+            onPickImage = onPickAppealImage,
             onSubmit = { reason ->
                 appealOpen = false
                 onSubmitAppeal(reason)
             },
-            onDismiss = { appealOpen = false },
+            onDismiss = {
+                appealOpen = false
+                onDismissAppeal()
+            },
         )
     }
-}
-
-/**
- * 이의 입력 (인증 정책 §5.2).
- *
- * **판정을 기다리는 신청서가 아니다** — 형식 요건만 맞으면 바로 인용된다. 그래서 "검토해 드릴게요"
- * 같은 문구를 쓰지 않는다. 사유 [AppealPolicy.MIN_REASON_LENGTH]자 하한은 서버도 400 으로 막으므로
- * 여기서 먼저 잠가 왕복을 없앤다.
- */
-@Composable
-private fun AppealDialog(
-    submitting: Boolean,
-    onSubmit: (reason: String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var reason by remember { mutableStateOf("") }
-    val trimmed = reason.trim()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("이의 제기", style = RuleUpTheme.typography.cardTitle) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "왜 인증이 됐어야 하는지 알려주세요. 확인되면 기록을 바로 되돌려요.",
-                    color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.body,
-                )
-                OutlinedTextField(
-                    value = reason,
-                    onValueChange = { reason = it },
-                    placeholder = { Text("예: 지하철 구간에서 GPS 가 끊겨 체류 기록이 빠졌어요") },
-                    minLines = 3,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Text(
-                    text = "${trimmed.length} / 최소 ${AppealPolicy.MIN_REASON_LENGTH}자",
-                    color =
-                        if (trimmed.length < AppealPolicy.MIN_REASON_LENGTH) {
-                            RuleUpTheme.colors.textMuted
-                        } else {
-                            RuleUpTheme.colors.brandStrong
-                        },
-                    style = RuleUpTheme.typography.caption,
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSubmit(trimmed) },
-                enabled = !submitting && trimmed.length >= AppealPolicy.MIN_REASON_LENGTH,
-            ) {
-                Text(if (submitting) "보내는 중…" else "제출")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
-    )
 }
 
 /**

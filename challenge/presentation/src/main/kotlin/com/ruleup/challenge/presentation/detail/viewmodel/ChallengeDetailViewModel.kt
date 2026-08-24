@@ -37,6 +37,9 @@ import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.ScreenKey
 import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.entity.AppealNotFailedException
+import com.ruleup.verification.domain.entity.AppealWindowClosedException
+import com.ruleup.verification.domain.entity.InvalidAppealReasonException
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -90,6 +93,8 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
                 ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
+                is ChallengeDetailIntent.PickAppealImage -> uploadAppealImage(intent.imageUri)
+                ChallengeDetailIntent.DismissAppeal -> dispatch(ChallengeDetailReducerEvent.AppealReset)
                 ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
                 is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
@@ -188,6 +193,11 @@ class ChallengeDetailViewModel
 
                 is ChallengeDetailReducerEvent.TodayResultLoaded -> state.copy(todayResult = event.result)
                 ChallengeDetailReducerEvent.ResultAcknowledged -> state.copy(resultAcknowledged = true)
+                is ChallengeDetailReducerEvent.AppealImageUploading -> state.copy(isUploadingAppealImage = event.uploading)
+                is ChallengeDetailReducerEvent.AppealImageUploaded -> state.copy(appealImageUrl = event.imageUrl)
+                is ChallengeDetailReducerEvent.AppealReasonRejected -> state.copy(appealReasonError = event.message)
+                ChallengeDetailReducerEvent.AppealReset ->
+                    state.copy(appealImageUrl = null, isUploadingAppealImage = false, appealReasonError = null)
 
                 is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
                 is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
@@ -769,15 +779,71 @@ class ChallengeDetailViewModel
             val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
             if (currentState.isSubmittingAppeal) return
             viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.AppealReasonRejected(null))
                 dispatch(ChallengeDetailReducerEvent.SubmittingAppeal(true))
-                runCatching { verificationRepository.submitAppeal(verificationId = verificationId, reason = reason) }
-                    .onSuccess {
-                        emitEffect(ChallengeDetailEffect.ShowMessage("이의가 받아들여졌어요. 기록을 되돌렸어요"))
-                        loadTodayResult(challengeId)
-                    }.onFailure { error ->
-                        emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의를 접수하지 못했어요"))
-                    }
+                runCatching {
+                    verificationRepository.submitAppeal(
+                        verificationId = verificationId,
+                        reason = reason,
+                        imageUrl = currentState.appealImageUrl,
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.AppealReset)
+                    emitEffect(ChallengeDetailEffect.ShowMessage("이의가 받아들여졌어요. 기록을 되돌렸어요"))
+                    loadTodayResult(challengeId)
+                }.onFailure { error ->
+                    handleAppealFailure(error, challengeId)
+                }
                 dispatch(ChallengeDetailReducerEvent.SubmittingAppeal(false))
+            }
+        }
+
+        /**
+         * 이의 제출 실패 분기(프론트엔드 테크스펙 4-7).
+         *
+         * `NOT_FAILED` 는 **오류로 보여주지 않는다** — 이미 정정된 건이라 사용자가 할 일이 없다.
+         * 조용히 상태만 다시 읽으면 카드가 성공으로 바뀌면서 스스로 설명된다.
+         */
+        private fun handleAppealFailure(
+            error: Throwable,
+            challengeId: String,
+        ) {
+            when (error) {
+                is InvalidAppealReasonException ->
+                    dispatch(ChallengeDetailReducerEvent.AppealReasonRejected(error.message))
+
+                is AppealWindowClosedException -> {
+                    emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의 신청 기한이 지났어요"))
+                    // 기한이 지났으면 진입점 자체가 사라져야 한다.
+                    dispatch(ChallengeDetailReducerEvent.AppealReset)
+                    loadTodayResult(challengeId)
+                }
+
+                is AppealNotFailedException -> {
+                    dispatch(ChallengeDetailReducerEvent.AppealReset)
+                    loadTodayResult(challengeId)
+                }
+
+                else -> emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의를 접수하지 못했어요"))
+            }
+        }
+
+        /**
+         * 증빙 사진 업로드(명세 POST /appeals/images).
+         *
+         * 실패해도 제출을 막지 않는다 — 사진은 선택 항목이고 진위 확인에 쓰이지도 않는다. 그래서
+         * "사진 없이도 낼 수 있다"를 함께 알린다.
+         */
+        private fun uploadAppealImage(imageUri: String) {
+            if (currentState.isUploadingAppealImage) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.AppealImageUploading(true))
+                runCatching { verificationRepository.uploadAppealImage(imageUri) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.AppealImageUploaded(it)) }
+                    .onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage("사진을 올리지 못했어요. 사진 없이도 제출할 수 있어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.AppealImageUploading(false))
             }
         }
 

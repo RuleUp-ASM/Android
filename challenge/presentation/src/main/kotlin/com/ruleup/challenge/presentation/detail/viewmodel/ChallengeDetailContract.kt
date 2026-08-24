@@ -82,6 +82,14 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
+    /** 이의 증빙 사진 선택. 고른 즉시 올려 두고 제출 때 URL 만 실어 보낸다. */
+    data class PickAppealImage(
+        val imageUri: String,
+    ) : ChallengeDetailIntent
+
+    /** 이의 시트를 닫는다. 다음에 열 때 사진·오류 표시가 남지 않도록 비운다. */
+    data object DismissAppeal : ChallengeDetailIntent
+
     /** 판정 결과 모달 확인. ack 를 보내고 모달을 닫는다. */
     data object AcknowledgeResult : ChallengeDetailIntent
 
@@ -224,6 +232,11 @@ data class ChallengeDetailState(
     // 이번 진입에서 판정 결과 모달을 이미 닫았는지. ack 가 실패해도 모달을 다시 올리지 않기 위한
     // 화면 로컬 플래그다 — 서버는 다음 진입에 같은 미확인 판정을 다시 내려준다.
     val resultAcknowledged: Boolean = false,
+    // 이의 시트에 첨부된 사진의 업로드 결과 URL. 제출 body 에 그대로 실린다.
+    val appealImageUrl: String? = null,
+    val isUploadingAppealImage: Boolean = false,
+    // 사유 입력 하단에 인라인으로 붙는 오류. 서버가 형식을 되돌려줬을 때만 채운다.
+    val appealReasonError: String? = null,
     // 방장 클레임 요청 중(버튼 중복 탭 방지). 선착순이라 두 번 눌러도 한 번만 나간다.
     val isClaimingOwner: Boolean = false,
     // 이의 제출 중(중복 탭 방지).
@@ -405,6 +418,20 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
 
     /** 오늘 인증 결과 도착(인증 모듈). 실패해도 방 렌더를 막지 않으므로 성공 시에만 온다. */
     data object ResultAcknowledged : ChallengeDetailReducerEvent
+
+    data class AppealImageUploading(
+        val uploading: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class AppealImageUploaded(
+        val imageUrl: String?,
+    ) : ChallengeDetailReducerEvent
+
+    data class AppealReasonRejected(
+        val message: String?,
+    ) : ChallengeDetailReducerEvent
+
+    data object AppealReset : ChallengeDetailReducerEvent
 
     data class TodayResultLoaded(
         val result: TodayResult,
