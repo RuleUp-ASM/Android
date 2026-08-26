@@ -64,7 +64,7 @@ class InvalidAppealReasonException : Exception("사유를 조금 더 적어 주�
 
 /**
  * 이의 신청 기한 경과 (명세 appeals, HTTP 409 APPEAL_WINDOW_CLOSED).
- * 실패 확정일의 다음 날 00:00 KST 를 넘겼다 — 화면은 안내 후 상태를 다시 읽어 진입점을 거둔다.
+ * 기한은 실패 확정 시각과 같은 귀속일 이틀 뒤 00:00 KST 다 — 화면은 안내 후 상태를 다시 읽어 진입점을 거둔다.
  */
 class AppealWindowClosedException : Exception("이의 신청 기한이 지났어요.")
 

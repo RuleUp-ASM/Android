@@ -29,7 +29,7 @@ enum class TodayVerificationStatus(
     // 인증 창이 아직 열려 있음
     IN_PROGRESS("IN_PROGRESS"),
 
-    // 창은 닫혔지만 다음 날 00:00 KST 최종 재평가 전 — 성공·실패 양쪽으로 열려 있다
+    // 귀속일은 끝났고 확정 전 — 늦게 오는 신호를 받는 유예 구간이라 성공·실패 양쪽으로 열려 있다
     CHECKING("CHECKING"),
 
     // 오늘 인증 완료

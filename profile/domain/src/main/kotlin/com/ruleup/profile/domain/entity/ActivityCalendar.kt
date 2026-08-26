@@ -81,7 +81,7 @@ enum class DayItemStatus(
  */
 data class DayItemAppeal(
     val eligible: Boolean,
-    // 신청 마감 시각(ISO-8601). 실패 확정일의 다음 날 00:00 KST
+    // 신청 마감 경계(ISO-8601). 실패 확정과 같은 시각이라 귀속일 이틀 뒤 00:00 KST 가 내려온다
     val eligibleUntil: String?,
 )
 
