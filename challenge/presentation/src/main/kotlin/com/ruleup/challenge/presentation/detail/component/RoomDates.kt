@@ -92,7 +92,7 @@ internal fun periodLabel(
  * 이의 신청 마감일 문구 — "오늘" / "내일" / "7월 26일".
  *
  * 서버가 주는 `eligibleUntil` 은 **경계 시각**이라 그 날짜를 그대로 쓰면 하루 늦게 안내한다.
- * 판정은 귀속일 당일에 나오고 이의는 다음 날까지 — 낼 수 있는 마지막 날은 경계 하루 전이다.
+ * 기한 경계는 실패 확정과 같은 시각(귀속일 이틀 뒤 00:00 KST)이라, 낼 수 있는 마지막 날은 그 하루 전이다.
  */
 internal fun appealDeadlineLabel(
     eligibleUntil: String,
