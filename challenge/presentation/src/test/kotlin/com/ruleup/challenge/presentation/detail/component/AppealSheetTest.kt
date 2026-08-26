@@ -36,7 +36,7 @@ class AppealSheetTest {
 
     @Test
     fun `마감 안내는 경계 시각이 아니라 낼 수 있는 마지막 날을 쓴다`() {
-        // eligibleUntil 은 다음 날 00:00 경계라 그대로 쓰면 하루 늦게 안내한다.
+        // eligibleUntil 은 경계 시각이라 그대로 쓰면 하루 늦게 안내한다.
         val text = today(eligibleUntil = "2026-07-27T00:00:00+09:00").appealDeadlineText()
 
         assertTrue(text!!.endsWith("까지"))

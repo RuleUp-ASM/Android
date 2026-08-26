@@ -34,7 +34,7 @@ class TodayVerificationCopyTest {
 
     @Test
     fun `이의 마감은 경계 시각이 아니라 낼 수 있는 마지막 날로 안내한다`() {
-        // eligibleUntil 은 실패 확정일 다음 날 00:00 경계다. 그 날짜를 그대로 쓰면 하루 늦게 안내한다.
+        // eligibleUntil 은 경계 시각이다. 그 날짜를 그대로 쓰면 이의 가능일을 하루 늦게 안내한다.
         val today = LocalDate.of(2026, 7, 26)
 
         assertEquals("오늘", appealDeadlineLabel("2026-07-27T00:00:00+09:00", today))

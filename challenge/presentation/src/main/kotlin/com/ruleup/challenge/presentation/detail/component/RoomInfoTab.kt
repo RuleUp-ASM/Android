@@ -266,7 +266,7 @@ private fun todayNote(
     today: TodayResult?,
 ): String? =
     when (status) {
-        // 다음 날 00:00 KST 최종 재평가 구간. 미완료나 실패로 읽히지 않게 계산 중임을 밝힌다.
+        // 최종 판정을 계산 중인 구간. 미완료나 실패로 읽히지 않게 계산 중임을 밝힌다.
         TodayResultStatus.CHECKING -> "최종 결과를 계산하고 있어요"
         TodayResultStatus.NOT_TARGET -> "오늘은 인증하는 날이 아니에요"
         TodayResultStatus.DONE ->
