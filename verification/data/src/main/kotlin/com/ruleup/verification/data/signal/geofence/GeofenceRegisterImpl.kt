@@ -122,13 +122,15 @@ class GeofenceRegisterImpl
         private fun buildRequest(targets: List<GeofenceTarget>): GeofencingRequest {
             val fences =
                 targets.map { target ->
+                    val loiteringDelay = target.dwellMinutes * MILLIS_PER_MINUTE
                     Geofence
                         .Builder()
                         .setRequestId(target.requestId)
                         .setCircularRegion(target.lat, target.lng, target.radiusM)
                         .setExpirationDuration(Geofence.NEVER_EXPIRE)
                         // DWELL 이 OS 에서 직접 "체류 임계 도달"을 쏜다(명세 §2.1).
-                        .setLoiteringDelay(target.dwellMinutes * MILLIS_PER_MINUTE)
+                        .setLoiteringDelay(loiteringDelay)
+                        .setNotificationResponsiveness(geofenceResponsivenessFor(loiteringDelay))
                         .setTransitionTypes(
                             Geofence.GEOFENCE_TRANSITION_ENTER or
                                 Geofence.GEOFENCE_TRANSITION_EXIT or
@@ -147,4 +149,26 @@ class GeofenceRegisterImpl
             private const val MILLIS_PER_MINUTE = 60_000
             private const val SIGNAL_TYPE_GEOFENCE = "GEOFENCE"
         }
+    }
+
+// 배칭 허용 기본치 5분(Google 권고 수준). 30분 주기 전송보다 한참 짧아 전달 지연에 묻힌다.
+internal const val DEFAULT_GEOFENCE_RESPONSIVENESS_MS = 5 * 60_000
+
+/**
+ * 통지 지연 허용치 — 클수록 Play Services 가 지오펜스 검사를 다른 위치 작업과 묶어(배칭)
+ * 위치 하드웨어를 덜 깨운다. 지정하지 않으면 기본 0(=최대한 빨리)이라 배칭이 아예 꺼진다.
+ *
+ * 늦게 배달돼도 판정은 멀쩡하다 — 전이 시각은 배달 시점이 아니라 fix 시각(`location.time`)에서
+ * 오고, 전송은 어차피 30분 주기다.
+ *
+ * 다만 [loiteringDelayMillis] 를 넘기면 DWELL 통지가 체류 임계 도달보다 늦게 잡힐 수 있어 체류 목표가
+ * 짧은 방이 손해를 본다. `dwellMinutes` 는 서버가 챌린지별로 내려주는 값이라 하한을 가정할 수 없으므로,
+ * 기본값을 쓰되 체류 목표가 그보다 짧으면 거기에 맞춘다. 체류 목표가 없는 펜스(0)는 DWELL 을 쏘지
+ * 않으므로 깎을 이유가 없다.
+ */
+internal fun geofenceResponsivenessFor(loiteringDelayMillis: Int): Int =
+    if (loiteringDelayMillis > 0) {
+        minOf(DEFAULT_GEOFENCE_RESPONSIVENESS_MS, loiteringDelayMillis)
+    } else {
+        DEFAULT_GEOFENCE_RESPONSIVENESS_MS
     }
