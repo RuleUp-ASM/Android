@@ -43,9 +43,26 @@ class VerificationSyncWorker
         private val progressCacheStore: ProgressCacheStore,
         private val syncScheduler: SyncScheduler,
         private val settingsStore: VerificationSettingsStore,
+        private val syncGate: SyncGate,
         private val observability: Observability,
     ) : CoroutineWorker(appContext, params) {
         override suspend fun doWork(): Result {
+            // 주기 work 와 catch-up 은 unique name 이 달라 WorkManager 가 겹침을 막지 못한다(#355).
+            // 겹치면 뒤 실행의 tagPending 이 앞 실행의 배치를 덮어써 같은 신호가 두 번 나간다.
+            if (!syncGate.tryEnter()) {
+                // 버리지 않고 재시도한다 — catch-up 의 존재 이유가 전달 지연 단축이라, 겹쳤다고
+                // 다음 주기(최대 30분)까지 미루면 목적이 사라진다.
+                observability.i(LOG_TAG) { "sync 건너뜀 — 다른 실행이 드레인 중, 백오프 재시도" }
+                return Result.retry()
+            }
+            return try {
+                runSync()
+            } finally {
+                syncGate.leave()
+            }
+        }
+
+        private suspend fun runSync(): Result {
             val scope = syncScopeProvider.currentScope()
             // 디버그 가시화: 이번 sync 의 수집 스코프(타깃이 비면 수집기가 전부 생략됨).
             observability.i(LOG_TAG) {
