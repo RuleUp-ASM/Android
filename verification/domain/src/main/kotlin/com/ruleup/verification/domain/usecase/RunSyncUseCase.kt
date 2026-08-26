@@ -25,6 +25,10 @@ import javax.inject.Inject
  *
  * 활성 챌린지가 있으면 신호·gap 이 없어도 빈 envelope 를 전송한다(전송 스펙 §0.5 — 서버가 공백 사유·
  * 권한 현황으로 NO_SIGNAL 을 판정). 활성 챌린지도 보낼 것도 없으면 null 을 반환한다(전송 생략).
+ *
+ * **동시에 두 번 돌리면 안 된다.** 드레인이 tagPending(전체 미전송분에 배치키 부여) → byBatch →
+ * markSynced 순서라, 겹치면 뒤 실행이 앞 실행의 배치를 자기 키로 덮어써 같은 신호가 두 번 나간다.
+ * 실행 경로가 Worker 하나뿐이라 직렬화는 거기서 건다(SyncGate, #355).
  */
 class RunSyncUseCase
     @Inject
