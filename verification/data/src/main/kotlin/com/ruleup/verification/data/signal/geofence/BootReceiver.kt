@@ -23,8 +23,8 @@ class BootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent,
     ) {
-        val action = intent.action
-        if (action != Intent.ACTION_BOOT_COMPLETED && action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
+        // LOCKED_BOOT_COMPLETED 는 받지 않는다 — DB 가 자격증명 암호화 저장소라 잠금해제 전엔 못 연다.
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
 
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
