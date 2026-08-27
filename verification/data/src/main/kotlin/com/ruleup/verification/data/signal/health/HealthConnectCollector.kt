@@ -28,12 +28,9 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 /**
- * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(전송 스펙 §2·§5). Health Connect 에서
- * **결과값 + 신뢰 메타데이터만** 읽어 로컬 버퍼에 적재한다. 하루치 누적은 매 sync 마다 최신
+ * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(전송 스펙 §2·§5). 하루치 누적은 매 sync 마다 최신
  * 스냅샷으로 교체하고, 재전송이 중복이 되지 않는 근거는 `recordId` 다.
- *
- * 화이트리스트 판정·MANUAL 거부·합산은 하지 않는다 — 전부 서버 소관이고, 클라는 그 판단에 필요한
- * 입력을 빠짐없이 올리는 것까지만 책임진다.
+ * 화이트리스트·MANUAL 거부·합산은 서버 소관 — 클라는 그 판단의 입력을 빠짐없이 올리는 데까지만 책임진다.
  */
 class HealthConnectCollector
     @Inject
@@ -273,9 +270,8 @@ class HealthConnectCollector
             }
 
         /**
-         * 실제 수면 구간 합(전송 스펙 §5). AWAKE·AWAKE_IN_BED·OUT_OF_BED 는 뺀다.
-         * writer 가 stage 를 주지 않으면 **null** 이고 서버가 durationMillis 로 대체한다 —
-         * 0 으로 접으면 "잠자리에 있었지만 한숨도 안 잤다"는 없던 사실이 된다.
+         * 실제 수면 구간 합(전송 스펙 §5). writer 가 stage 를 안 주면 null 이고 서버가 durationMillis 로
+         * 대체한다 — 0 으로 접으면 "잠자리에 있었지만 한숨도 안 잤다"는 없던 사실이 된다.
          */
         private fun SleepSessionRecord.sleepMillisOrNull(): Long? {
             if (stages.isEmpty()) return null

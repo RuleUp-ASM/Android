@@ -16,11 +16,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
  * 진행 바. Figma `ProgressBar`(node `1177:181`).
- *
- * 높이 4, 반경 2, 트랙은 `border/line` · 채움은 `primary/600`.
- *
- * @param progress 0f~1f. 범위를 벗어난 값은 잘라 낸다 — 계산 실수로 채움이 트랙을 넘어 그려지면
- *   레이아웃이 밀린다.
+ * @param progress 0f~1f. 벗어난 값은 잘라 낸다 — 채움이 트랙을 넘어 그려지면 레이아웃이 밀린다.
  */
 @Composable
 fun RuleUpProgressBar(
@@ -48,7 +44,7 @@ fun RuleUpProgressBar(
 
 private val BAR_HEIGHT = 4.dp
 
-// Figma 컴포넌트 반경. 모양 토큰에는 2가 없다 — Figma 에 아직 반경 변수가 없어 토큰으로 올리지 않았다.
+// Figma 에 반경 변수가 없어 모양 토큰으로 올리지 않았다.
 private val BAR_SHAPE = RoundedCornerShape(2.dp)
 
 @Preview

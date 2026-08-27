@@ -88,7 +88,7 @@ sealed interface CreateChallengeIntent : MviIntent {
         val value: String,
     ) : CreateChallengeIntent
 
-    /** 인증 방식 선택. AUTO → MANUAL 단방향만 허용된다. */
+    /** 인증 방식 선택. 초안이 AUTO 로 온 루틴이면 확인 화면에서 오갈 수 있다. */
     data class SetVerificationType(
         val type: VerificationType,
     ) : CreateChallengeIntent

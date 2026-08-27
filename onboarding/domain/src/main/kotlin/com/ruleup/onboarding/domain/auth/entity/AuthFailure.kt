@@ -1,10 +1,8 @@
 package com.ruleup.onboarding.domain.auth.entity
 
 /**
- * 인증·가입에서 화면이 구분해야 하는 실패. 서버 에러 코드를 도메인 어휘로 옮긴 값이다.
- *
- * presentation 이 서버 코드 문자열을 직접 보게 두면 `core:network` 의 `ApiException` 에 의존하게
- * 되고, 코드가 바뀔 때마다 화면을 뒤져야 한다. data 가 여기로 번역하고 화면은 이 enum 만 본다.
+ * 인증·가입에서 화면이 구분해야 하는 실패. data 가 서버 에러 코드를 여기로 옮기고 화면은 이 enum 만
+ * 본다 — 화면이 `core:network` 의 `ApiException` 과 코드 문자열에 묶이지 않는다.
  */
 enum class AuthFailure {
     /** 인가 코드·id_token 검증 실패. */

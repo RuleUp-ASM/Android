@@ -21,10 +21,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * 로컬 버퍼 DB/DAO 를 Hilt 그래프에 제공한다.
- * 리시버와 동일 인스턴스를 쓰도록 [verificationDatabase] 홀더 접근자를 거친다.
- */
+/** 리시버와 동일 인스턴스를 쓰도록 [verificationDatabase] 홀더 접근자를 거친다. */
 @Module
 @InstallIn(SingletonComponent::class)
 object VerificationDatabaseModule {

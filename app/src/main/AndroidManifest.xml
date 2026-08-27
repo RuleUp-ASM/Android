@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 네트워크: Ktor API 호출 + Firebase Analytics 업로드에 필수 -->
+    <!-- 네트워크: Retrofit API 호출 + FCM·Crashlytics·Amplitude 업로드에 필수 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -50,7 +50,7 @@
                  감시자 초대 /w/{token} 은 여기 없다 — 비유저 감시자를 포함해 웹 동의 페이지가
                  수락을 담당하므로, 앱 설치 여부와 무관하게 브라우저로 열려야 한다.
 
-                 앱 화면으로 직결되는 URL 은 없다. 알림 탭은 MainActivity 를 명시한 인텐트 + extra 로
+                 앱 화면으로 직결되는 URL 은 없다. 알림 탭은 MainActivity 를 명시한 인텐트로
                  처리하므로(#179) 필터가 필요 없고, 그 덕에 **웹페이지가 앱 화면을 여는 경로가 0** 이다. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -84,7 +84,7 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- FCM 수신(공지 fan-out 등 Push Outbox 메시지) → 시스템 알림 + 딥링크 진입. -->
+        <!-- FCM 수신. 데이터 전용 메시지만 오고, 지금은 알림을 띄우는 type 이 없다(RuleUpMessagingService). -->
         <service
             android:name=".push.RuleUpMessagingService"
             android:exported="false">
@@ -94,7 +94,7 @@
         </service>
 
         <!-- WorkManager 기본 이니셜라이저 제거 → App(Configuration.Provider)로 on-demand 초기화.
-             Metro 주입 WorkerFactory 를 쓰기 위함(명세 §3). -->
+             Hilt 주입 WorkerFactory 를 쓰기 위함(명세 §3). -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

@@ -10,14 +10,10 @@ import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
  * UI 는 이 인터페이스로 provider 별 로그인만 트리거하고, 결과는 [rememberOAuthLauncher] 콜백으로 받는다.
  */
 interface OAuthLauncher {
-    /** 주어진 [provider] 로그인 플로우를 시작한다. */
     fun launch(provider: OAuthProvider)
 }
 
-/**
- * 현재 플랫폼의 [OAuthLauncher] 를 생성한다.
- * @param onResult 인가 성공 시 [OAuthAuthorization], 실패/취소 시 예외를 담은 [Result].
- */
+/** 인가 결과를 [onResult] 로 돌려준다. 사용자가 취소한 경우도 예외를 담은 실패 [Result] 다. */
 @Composable
 fun rememberOAuthLauncher(onResult: (Result<OAuthAuthorization>) -> Unit): OAuthLauncher {
     val launcher = rememberLauncherForActivityResult(OAuthContract()) { onResult(it) }

@@ -68,7 +68,7 @@ private const val LOAD_MORE_PREFETCH = 3
 // 카드 노출로 인정하는 최소 체류 시간(기능 스펙 9번 — 제안값이라 데이터팀 합의 후 조정).
 private const val IMPRESSION_DWELL_MS = 1_000L
 
-/** 챌린지 둘러보기(Figma 02 · 챌린지 둘러보기). 필터(AND) + 정렬 7종 + 커서 무한 스크롤. */
+/** 챌린지 둘러보기(Figma 02 · 챌린지 둘러보기). 필터(AND) + 정렬 6종 + 커서 무한 스크롤. */
 @Composable
 fun ExploreListScreen(
     category: String?,
@@ -316,12 +316,8 @@ private fun ChallengeList(
         if (shouldLoadMore) currentOnIntent(ExploreListIntent.LoadMore)
     }
 
-    /*
-     * 카드 노출 로깅. 기준은 **뷰포트 50% 이상 · 1초 이상**이다(기능 스펙 9번).
-     *
-     * collectLatest 가 핵심이다 — 보이는 카드 집합이 1초 안에 바뀌면 직전 대기가 취소되므로,
-     * 빠르게 스크롤해 지나간 카드는 노출로 세지 않는다. 세션 내 중복 제거는 ViewModel 이 한다.
-     */
+    // 노출 기준은 뷰포트 50% 이상 · 1초 이상이다(기능 스펙 9번).
+    // collectLatest 라 1초 안에 스크롤로 지나간 카드는 대기가 취소돼 세지 않는다.
     LaunchedEffect(listState) {
         snapshotFlow {
             val info = listState.layoutInfo

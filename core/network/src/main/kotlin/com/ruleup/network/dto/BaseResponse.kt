@@ -23,14 +23,13 @@ data class ErrorBody(
     val code: String,
     @SerialName("message")
     val message: String,
-    // rate limit(429) 등에서 재시도까지 남은 초. 없으면 null.
+    // 429 등에서 재시도까지 남은 초.
     @SerialName("retryAfterSeconds")
     val retryAfterSeconds: Int? = null,
-    // 같은 code 안에서 분기를 가르는 세부 사유. 챌린지 가입의 409 JOIN_BLOCKED 처럼 코드 하나에
-    // 여러 원인이 묶인 계약에서 쓴다.
+    // code 하나에 여러 원인이 묶인 계약(챌린지 가입의 409 JOIN_BLOCKED 등)에서 분기를 가르는 키.
     @SerialName("reason")
     val reason: String? = null,
-    // REJOIN_COOLDOWN 계열에서 재시도 가능 시각(ISO). 없으면 null.
+    // REJOIN_COOLDOWN 계열의 재시도 가능 시각(ISO).
     @SerialName("rejoinAvailableAt")
     val rejoinAvailableAt: String? = null,
 )
@@ -61,7 +60,7 @@ class ApiException(
     val code: String,
     message: String,
     val retryAfterSeconds: Int? = null,
-    // ErrorBody.reason 과 같은 의미 — code 하나에 여러 원인이 묶인 계약의 분기 키.
+    // ErrorBody.reason 그대로 — code 안에서 분기를 가르는 키.
     val reason: String? = null,
     val rejoinAvailableAt: String? = null,
 ) : Exception(message)

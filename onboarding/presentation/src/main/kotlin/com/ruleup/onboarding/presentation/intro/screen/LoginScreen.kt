@@ -202,9 +202,6 @@ private data class SocialProvider(
 /**
  * 소셜 로그인 버튼 목록. 카카오는 브랜드 고정색이라 상수지만, Google 버튼은 surface/text/border 를
  * 쓰므로 테마에 따라 라이트·다크로 바뀐다.
- *
- * 네이버·Apple 은 MVP 범위 밖이라 뺐다. OAuthActivity 가 구현한 건 카카오·구글뿐이라 눌러도
- * "미지원 provider" 로 끝나던 버튼들이다.
  */
 @Composable
 private fun socialProviders(): List<SocialProvider> =

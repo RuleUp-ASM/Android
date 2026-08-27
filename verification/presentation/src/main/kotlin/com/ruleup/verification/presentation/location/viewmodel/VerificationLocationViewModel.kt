@@ -18,10 +18,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 지도 핀 → 셋업(앵커 바인딩) 제출(명세 setup). 지도 탭/검색으로 확인 대기 핀을 찍고([pending]),
- * 하단 카드의 [VerificationLocationIntent.AddAnchor] 로 최대 3개까지 누적한 뒤
- * [VerificationLocationIntent.Submit] 시 setup 으로 송신한다. READY 면 앵커 전체를
- * [BindLocationUseCase] 로 OS 지오펜스 등록 후 종료한다. 탭 지점의 이름/주소는 역지오코딩으로 채운다.
+ * 지도 핀 → 앵커 바인딩 제출(명세 setup · my-location). 확인 대기 핀을 최대 3개까지 누적한 뒤 제출하고,
+ * 서버가 READY 를 주면 앵커 전체를 [BindLocationUseCase] 로 OS 지오펜스에 등록하고 화면을 닫는다.
  */
 @HiltViewModel
 class VerificationLocationViewModel
@@ -89,11 +87,8 @@ class VerificationLocationViewModel
             }
 
         /**
-         * 진입 게이트: 앵커 조회로 등록 여부를 확인한다.
-         *
-         * 이미 등록돼 있으면 **핀을 복원해 편집 모드로 연다** — 종전에는 "이미 등록돼 있어요" 하고
-         * 되돌려보내서 이사·헬스장 변경 같은 상황에서 사용자가 할 수 있는 게 없었다.
-         * 조회 자체가 실패하면 최초 등록처럼 진행한다(등록을 막지 않는다).
+         * 진입 게이트: 이미 등록돼 있으면 핀을 복원해 편집 모드로 연다 — 되돌려보내면 이사·헬스장 변경에서
+         * 사용자가 할 수 있는 게 없다. 조회가 실패하면 최초 등록처럼 진행한다(등록을 막지 않는다).
          */
         private fun init(intent: VerificationLocationIntent.Init) {
             viewModelScope.launch {
@@ -140,7 +135,6 @@ class VerificationLocationViewModel
                 }
         }
 
-        // 검색 결과 선택: 진행 중 검색·역지오코딩을 끊고 그 좌표를 확인 대기 핀으로.
         private fun selectPlace(intent: VerificationLocationIntent.SelectPlace) {
             searchJob?.cancel()
             resolveJob?.cancel()
@@ -164,7 +158,7 @@ class VerificationLocationViewModel
             dispatch(VerificationLocationReducerEvent.PendingSet(pending = null, resolving = false))
         }
 
-        // 확인 핀을 앵커 목록에 담는다(최대 3). label 은 핀 이름 — 반경은 앵커의 속성이 아니다.
+        // label 은 핀 이름이다 — 반경은 서버 설정이라 앵커의 속성이 아니다.
         private fun addAnchor() {
             val pending = currentState.pending ?: return
             if (currentState.anchors.size >= SetupAnchors.MAX_COUNT) {
@@ -183,7 +177,7 @@ class VerificationLocationViewModel
             )
         }
 
-        // 누적 앵커를 setup 으로 송신. READY 면 앵커 전체를 OS 지오펜스로 등록 후 종료, PENDING_SETUP 이면 미충족 안내.
+        // 최초 등록이면 setup, 편집 중이면 my-location 교체 — 후자만 그 달의 변경 1회를 소진한다.
         private fun submit(intent: VerificationLocationIntent.Submit) {
             if (currentState.isSubmitting) return
             val anchors = currentState.anchors
@@ -232,9 +226,7 @@ class VerificationLocationViewModel
 
         /**
          * 앵커 교체(명세 PUT /my-location). 세트 전체를 갈아끼우고 그 달의 변경 1회를 소진한다.
-         *
-         * 실패는 화면이 각각 다르게 말해야 한다 — 인증 창 중이면 익일 재시도, 이번 달 소진이면
-         * 언제부터 가능한지, 좌표·개수 오류면 입력을 고치라고.
+         * 실패는 화면이 각각 다르게 말해야 한다 — 익일 재시도인지, 다음 달인지, 입력을 고치라는 건지.
          */
         private suspend fun replaceAnchors(
             intent: VerificationLocationIntent.Submit,
@@ -262,10 +254,8 @@ class VerificationLocationViewModel
         }
 
         /**
-         * 저장된 앵커를 OS 지오펜스에 등록하고 화면을 닫는다.
-         *
-         * 반경은 **서버가 정한 값**을 그대로 쓴다 — 응답에 없을 때만 폴백한다. 화면이 임의 값으로
-         * 등록하면 지도에 그린 원과 실제 판정 범위가 어긋난다.
+         * 저장된 앵커를 OS 지오펜스에 등록하고 화면을 닫는다. 반경은 서버가 정한 값을 그대로 쓴다(없을 때만
+         * 폴백) — 화면이 임의 값으로 등록하면 지도에 그린 원과 실제 판정 범위가 어긋난다.
          */
         private suspend fun bindAndFinish(
             intent: VerificationLocationIntent.Submit,

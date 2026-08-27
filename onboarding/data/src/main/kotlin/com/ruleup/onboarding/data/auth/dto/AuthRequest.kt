@@ -28,10 +28,8 @@ data class SocialLoginAuthRequest(
 )
 
 /**
- * 공통 기기 정보 객체. 로그인·가입 양쪽에 동반한다.
- *
- * [platform] 은 기본값을 두지 않는다 — `Json(encodeDefaults=false)` 에서 값이 기본값과 같으면
- * 직렬화에서 빠져 "ANDROID" 가 누락된다.
+ * 로그인·가입에 동반하는 기기 정보. [platform] 에 기본값을 두면 기본 설정(`encodeDefaults=false`)이
+ * 같은 값을 빼버려 "ANDROID" 가 누락된다.
  */
 @Serializable
 data class DeviceInfoRequest(
@@ -65,7 +63,6 @@ data class PermissionsRequest(
     val screenTime: String? = null,
 )
 
-/** 약관 항목 하나의 동의 여부와 버전. */
 @Serializable
 data class AgreementConsentRequest(
     @SerialName("agreed")

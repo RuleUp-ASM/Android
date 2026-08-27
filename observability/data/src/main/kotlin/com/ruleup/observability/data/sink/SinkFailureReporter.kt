@@ -7,18 +7,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 싱크 실패 집계.
+ * 싱크 실패 집계. 남지 않으면 *"수집이 조용히 멈춘 상태"* 와 *"이벤트가 원래 없는 상태"* 가 구분되지
+ * 않아 `google-services.json` 누락 같은 사고를 배포 몇 주 뒤에야 알게 된다.
  *
- * 프로덕션에서 파이프라인 실패를 삼키기로 한 이상, **그 사실은 반드시 어딘가 남아야 한다.**
- * 남지 않으면 *"수집이 조용히 멈춘 상태"* 와 *"이벤트가 원래 없는 상태"* 가 구분되지 않는다 —
- * `google-services.json` 누락 같은 사고가 배포 몇 주 뒤에야 발견된다.
- *
- * **첫 발생은 풍부하게, 이후는 카운터.** `(싱크, 예외 타입)` 조합마다 처음 한 번만
- * `recordException` 으로 스택·기기·OS 를 남기고, 그 뒤로는 수만 센다. 초당 수천 번 실패해도
- * Crashlytics 로 가는 건 1건이고 원인 파악에 필요한 정보는 확보된다.
- *
- * **파이프라인을 거치지 않는다.** Crashlytics 를 직접 부른다 — 고장난 경로로 신호를 보낼 수 없고,
- * 관측자가 Observability 를 다시 부르면 무한 재귀가 된다.
+ * **첫 발생만** `recordException` 으로 남기고 이후는 센다 — 초당 수천 번 실패해도 Crashlytics 로 가는
+ * 건 1건이다. Crashlytics 를 직접 부르는 건 고장난 파이프라인으로 신호를 보낼 수 없어서다(무한 재귀).
  */
 @Singleton
 class SinkFailureReporter

@@ -1,10 +1,8 @@
 package com.ruleup.observability.domain.model
 
 /**
- * TTI 측정의 결말. 우선순위는 [TIMEOUT] > [ABANDONED] > [COMPLETED] 다.
- *
- * 타임아웃과 이탈은 원래 독립 사건이지만(타임아웃이면서 전 단계가 기록된 경우도 있다),
- * 분석에서 한 축으로 묶어 보는 게 실용적이라 더 구체적인 쪽을 남긴다.
+ * TTI 측정의 결말. 우선순위는 [TIMEOUT] > [ABANDONED] > [COMPLETED] 다 —
+ * 원래 독립 사건이지만 분석에서 한 축으로 묶어 보려고 더 구체적인 쪽만 남긴다.
  */
 enum class TtiOutcome {
     /** [TtiPage.timelines] 가 전부 기록됐다. */
@@ -18,13 +16,8 @@ enum class TtiOutcome {
 }
 
 /**
- * TTI 를 쪼개는 단계.
- *
- * 총 시간만 재면 "느리다"까지밖에 모른다. 단계가 있어야 **네트워크가 느린지, 렌더가 느린지,
- * 이미지가 늦게 오는지**가 갈린다.
- *
- * [IMAGE_LOADED] 를 별도로 두는 이유는 사용자 인지 때문이다 — 텍스트가 다 떠도 이미지가 비어 있으면
- * "아직 안 뜬 화면"으로 인식한다.
+ * TTI 를 쪼개는 단계. 총 시간만 재면 "느리다"까지밖에 모른다 —
+ * 네트워크가 느린지, 렌더가 느린지, 이미지가 늦게 오는지는 단계가 있어야 갈린다.
  */
 enum class TtiTimeline {
     /** 화면 골격이 그려지기까지. */
@@ -39,7 +32,7 @@ enum class TtiTimeline {
     /** 응답을 화면에 반영하기까지. */
     VIEW_BINDING,
 
-    /** 이미지 로딩 완료까지. */
+    /** 이미지 로딩 완료까지. 텍스트가 다 떠도 이미지가 비면 사용자는 "안 뜬 화면"으로 인식한다. */
     IMAGE_LOADED,
 }
 

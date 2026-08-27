@@ -2,7 +2,6 @@ package com.ruleup.verification.domain.entity
 
 /** 스크린타임 측정 대상 앱 1개 (명세 my-screen-apps). */
 data class ScreenApp(
-    // Android 패키지명(측정 키)
     val packageName: String,
     // 바인딩 시점의 앱 이름 스냅샷(앱 삭제 후에도 표시용)
     val appName: String,
@@ -35,7 +34,6 @@ data class MyScreenApps(
  * 00:00 KST). 화면이 "언제부터 다시 바꿀 수 있는지"를 말할 유일한 원천이다.
  */
 data class ScreenAppsUpdate(
-    // 접수된 앱 세트
     val apps: List<ScreenApp>,
     // 다음 변경 가능 시각(ISO-8601). 이번 저장으로 월 1회를 소진했다
     val nextChangeAvailableAt: String? = null,

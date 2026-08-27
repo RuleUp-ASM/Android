@@ -134,7 +134,6 @@ class FakeAuthRepository : AuthRepository {
     }
 }
 
-/** 고정 식별자를 돌려주는 기기 식별자 테스트 더블. */
 class FakeDeviceIdentityRepository(
     private val identity: DeviceIdentity = DeviceIdentity(deviceId = "device-1", installationId = "install-1"),
 ) : DeviceIdentityRepository {

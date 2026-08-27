@@ -261,11 +261,7 @@ private fun WeekdayHeader() {
     }
 }
 
-/**
- * 6주 캘린더 그리드. 탭하면 [onStartSelect](시작일만 변경), 한 날짜에서 다른 날짜로 드래그하면
- * [onRangeSelect](시작~종료 범위 선택)을 호출한다. 드래그 히트테스트를 위해 각 셀의 window 좌표
- * Rect 를 [onGloballyPositioned] 로 기록하고, 제스처 지점이 포함된 셀의 날짜를 찾는다.
- */
+/** 드래그 히트테스트용으로 각 셀의 window 좌표 Rect 를 기록하고, 제스처 지점이 든 셀의 날짜를 찾는다. */
 @Composable
 private fun CalendarGrid(
     year: Int,
@@ -335,7 +331,7 @@ private fun CalendarGrid(
     }
 }
 
-/** 시작/종료일은 그라데이션 원, 사이 구간은 옅은 indigo 띠로 칠한다. ISO 문자열은 사전순 비교가 날짜순과 같다. */
+/** ISO 문자열은 사전순 비교가 날짜순과 같아 그대로 범위를 가린다. */
 @Composable
 private fun DayCell(
     cell: CalendarCell,
@@ -370,7 +366,6 @@ private fun DayCell(
     }
 }
 
-/** 캘린더 한 칸의 날짜 숫자. 시작/종료일(edge)은 그라데이션 원 안에 흰 글씨로, 그 외는 요일별 색으로 칠한다. */
 @Composable
 private fun DayNumber(
     cell: CalendarCell,

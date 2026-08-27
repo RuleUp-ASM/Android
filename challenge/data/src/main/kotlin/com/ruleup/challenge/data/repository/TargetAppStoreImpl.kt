@@ -4,11 +4,7 @@ import com.ruleup.challenge.domain.repository.TargetAppStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * [TargetAppStore] 인메모리 구현(프로세스 싱글톤).
- *
- * challengeId → 등록한 대상 앱 패키지명 목록. 세션 동안 보관하며, 영속이 필요하면 DataStore 백업으로 교체.
- */
+/** challengeId → 등록한 대상 앱 패키지명. 세션 동안만 들고 있어 프로세스가 죽으면 사라진다. */
 @Singleton
 class TargetAppStoreImpl
     @Inject

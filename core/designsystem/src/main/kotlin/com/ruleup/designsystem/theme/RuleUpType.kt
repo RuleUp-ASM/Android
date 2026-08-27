@@ -7,21 +7,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * 디자인 기준 폰트는 Pretendard 다(Figma 는 Noto Sans KR 로 그리고 `구현: Pretendard` 로 표기).
- *
- * 폰트 리소스(`res/font`)가 아직 번들되지 않아 시스템 Sans-serif 로 폴백한다. **그동안
- * [RuleUpTypography.numberXl] 계열의 `Black`(w900) 은 한글 시스템 폰트에 해당 굵기가 없어 Bold 로
- * 떨어진다** — 숫자 강조가 디자인만큼 두껍게 나오지 않는다. 번들되면 이 상수만 교체하면 된다.
+ * 디자인 기준은 Pretendard 지만 `res/font` 에 아직 번들되지 않아 시스템 Sans-serif 로 폴백한다.
+ * 그동안 `Number*` 의 `Black`(w900)은 한글 시스템 폰트에 없어 Bold 로 떨어진다 — 숫자 강조가 얇게 나온다.
  */
 val RuleUpFontFamily: FontFamily = FontFamily.SansSerif
 
 /**
- * Figma `🎨 00 · 디자인 시스템 · 타이포 스케일`(node `1177:71`)의 스타일 21종.
- *
- * 이름은 Figma 의 `RuleUp/…` 스타일명을 그대로 옮겼다.
- *
- * `Number*` 는 **숫자 강조 전용**이다(점수·일수). 본문 축과 굵기가 달라서 따로 두는데, 본문에
- * 쓰면 Black 이 문장을 짓눌러 읽기 어려워진다.
+ * Figma `🎨 00 · 디자인 시스템 · 타이포 스케일`(node `1177:71`)의 21종. 이름은 `RuleUp/…` 스타일명 그대로다.
+ * `number*` 는 점수·일수 전용 — 본문에 쓰면 Black 이 문장을 짓눌러 읽기 어려워진다.
  */
 @Immutable
 data class RuleUpTypography(
@@ -74,10 +67,8 @@ val defaultRuleUpTypography =
     )
 
 /**
- * Figma 는 21종 전부 `lineHeight 100%` · `letterSpacing 0` 이다. 그대로 옮긴다.
- *
- * 예전 스케일은 1.4~1.5배였다. **한글 여러 줄에서는 1.0배가 상당히 좁으므로 실기기 확인이
- * 필요하다** — 값이 디자이너 의도가 아니라 Figma 기본값일 수 있다.
+ * Figma 가 21종 전부 `lineHeight 100%` · `letterSpacing 0` 이라 그대로 옮긴다.
+ * 다만 한글 여러 줄에서 1.0배는 좁다 — 디자이너 의도가 아니라 Figma 기본값일 수 있어 실기기 확인이 필요하다.
  */
 private fun ruleUpTextStyle(
     fontWeight: FontWeight,

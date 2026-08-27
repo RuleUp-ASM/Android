@@ -23,7 +23,7 @@ data class SyncBackoff(
 
 /**
  * 서버 정책(전송 스펙 §0.3 settings). Phase 0 응답 + 이후 sync 응답 델타로 갱신된다.
- * MVP 는 [flushIntervalSec] 만 스케줄에 적용하고 cadence/backoff 는 보관(점진 적용).
+ * MVP 는 [flushIntervalSec] 만 스케줄에 적용한다 — cadence/backoff 는 보관도 하지 않는다(점진 적용).
  */
 data class SyncPolicy(
     val flushIntervalSec: Int,

@@ -5,7 +5,6 @@ import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
-/** 홈 카드 필터 탭. */
 enum class HomeFilter {
     /** 진행 중 (전체 내 챌린지). */
     ACTIVE,
@@ -22,7 +21,6 @@ sealed interface HomeIntent : MviIntent {
     /** 하단 탭 "챌린지" → 탐색 메인. */
     data object OpenExplore : HomeIntent
 
-    /** 하단 탭 "마이" → 마이 홈. */
     data object OpenMy : HomeIntent
 
     data class OpenChallenge(
@@ -43,13 +41,10 @@ data class HomeState(
     val isEmpty: Boolean
         get() = !isLoading && challenges.isEmpty()
 
-    /** 진행 중 개수. */
     val activeCount: Int get() = challenges.size
 
-    /** 오늘 할 일 개수. */
     val todayCount: Int get() = challenges.count { it.todayTarget }
 
-    /** 현재 필터로 거른 카드. */
     val visibleChallenges: List<HomeChallengeUi>
         get() =
             when (filter) {

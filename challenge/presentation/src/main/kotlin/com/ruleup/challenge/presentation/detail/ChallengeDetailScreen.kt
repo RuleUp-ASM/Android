@@ -569,26 +569,19 @@ private fun RoomDetailTabs(
     }
 }
 
-/**
- * 상단바 ⋯ 메뉴. 자주 쓰지 않는 관리 동작만 담는다.
- *
- * 공지는 제품에서 빠져 진입점을 두지 않는다. 공지 화면·라우트는 아직 코드에 남아 있으나 방
- * 상세 어디에서도 이어지지 않는다.
- */
+/** 공지는 제품에서 빠져 진입점을 두지 않는다 — 화면도 라우트도 남아 있지 않다. */
 private fun roomMenuItems(
     myRole: MemberRole,
     onIntent: (ChallengeDetailIntent) -> Unit,
 ): List<RoomMenuItem> =
     buildList {
-        // 확인 대기함은 없앴다 — 이의에 판정 단계가 없어져 방장이 처리할 항목 자체가 사라졌다
-        // (챌린지 정책 §7.1 "방장은 이의를 판정하지 않는다").
+        // 확인 대기함은 없앴다 — 이의에 판정 단계가 없어 방장이 처리할 항목이 없다(챌린지 정책 §7.1).
         // 설정 변경은 방장 전용이다 — 공동 관리자는 규칙을 바꿀 수 없다.
         if (myRole.isOwner) {
             add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
         }
     }
 
-/** 방 홈 멤버 섹션의 파괴적 액션 확인 대상. */
 private enum class MemberConfirm { LEAVE, DELETE }
 
 @Composable

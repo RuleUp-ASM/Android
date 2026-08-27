@@ -32,22 +32,18 @@ class App :
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
-    // 앱 시작 시 30분 주기 sync 예약을 보장하기 위한 스케줄러.
     @Inject
     lateinit var syncScheduler: SyncScheduler
 
-    // Phase 0 인트로(전송 스펙 §0.3): 로그인 상태면 정적 프로필+권한 스냅샷을 보내고 서버 정책을 받는다.
     @Inject
     lateinit var submitDeviceIntro: SubmitDeviceIntroUseCase
 
     @Inject
     lateinit var tokenRepository: TokenRepository
 
-    // 콜드스타트 지오펜스 reconcile(명세 §2.3): 로컬 보존 목표를 OS 에 재등록해 등록 실패·휘발을 보정한다.
     @Inject
     lateinit var geofenceRegister: GeofenceRegister
 
-    // FCM 토큰 서버 등록(기기 1대 = 토큰 1개 upsert). 앱 시작 + onNewToken 경로가 공유한다.
     @Inject
     lateinit var pushTokenRegister: PushTokenRegister
 
@@ -76,15 +72,14 @@ class App :
             observability.i("KakaoMap") { "등록용 키해시 = ${Utility.getKeyHash(this)} / 패키지 = $packageName" }
         }
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
-        // 지도 SDK(v2)는 로그인 SDK 와 별개로 초기화한다. 같은 네이티브 앱키를 쓴다(:core:map 이 MapView 사용).
-        // 카카오 지도 네이티브 라이브러리(libK3fAndroid.so)는 arm64-v8a/armeabi-v7a 만 제공 → x86_64 에뮬레이터에선
-        // init 이 MissingLibraryException 을 던진다. 앱 전체가 죽지 않도록 방어한다(지도 화면만 비활성, 나머지 정상).
+        // 지도 SDK(v2)는 로그인 SDK 와 별개로 초기화하며 같은 네이티브 앱키를 쓴다.
+        // libK3fAndroid.so 가 arm64/armeabi 만 있어 x86_64 에뮬레이터에선 init 이 던진다 — 지도만 비활성.
         runCatching { KakaoMapSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY) }
             .onFailure { observability.w("KakaoMap", it) { "KakaoMapSdk init 실패(미지원 ABI 가능성) — 지도 비활성" } }
         // 30분 주기 자동인증 sync 예약(이미 예약돼 있으면 유지). WorkManager 를 여기서 처음 깨운다.
         syncScheduler.ensureScheduled()
 
-        // 콜드스타트 지오펜스 reconcile — OS 등록 실패/휘발분을 앱 시작마다 재등록한다. 실패는 다음 시작이 보정.
+        // 콜드스타트 지오펜스 reconcile(명세 §2.3) — 로컬 보존 목표를 OS 에 재등록해 등록 실패·휘발을 보정한다.
         appScope.launch {
             runCatching { geofenceRegister.reconcilePersisted() }
                 .onFailure { observability.w("GeofenceReconcile", it) { "콜드스타트 지오펜스 reconcile 실패" } }
@@ -103,9 +98,8 @@ class App :
             pushTokenRegister.registerCurrentToken()
         }
 
-        // 사용자 식별자를 분석 SDK 에 반영한다. isLoggedIn 이 아니라 userId 를 구독하는 이유는
-        // 갱신 응답이 userId 를 안 주는 서버 배포본에서 로그인 상태여도 이 값이 비어 있을 수 있기
-        // 때문이다(TokenRepository.userId KDoc 참고).
+        // isLoggedIn 이 아니라 userId 를 구독한다 — 갱신 응답이 userId 를 안 주는 배포본에서는
+        // 로그인 상태여도 이 값이 비어 있다(TokenRepository.userId KDoc).
         appScope.launch {
             tokenRepository.userId.collect { userIdentitySync.setUser(it) }
         }

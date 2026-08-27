@@ -1,12 +1,6 @@
 package com.ruleup.domain.navigation
 
-/**
- * 단일 네비게이션 플로우에 흘려보내는 신호.
- *
- * - [GoToDestPage]: 특정 [NavRoute] 로 전진 이동.
- * - [ReplaceStack]: 백스택을 목적지의 시작 스택으로 통째로 교체.
- * - [Back]: 시스템/하드웨어 백 키와 동일하게 한 단계 뒤로 이동.
- */
+/** 단일 네비게이션 플로우에 흘려보내는 신호. */
 sealed interface NavSignal {
     data class GoToDestPage(
         val route: NavRoute,

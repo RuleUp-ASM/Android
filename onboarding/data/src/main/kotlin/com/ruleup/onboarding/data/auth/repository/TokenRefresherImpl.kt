@@ -11,11 +11,8 @@ import retrofit2.HttpException
 import javax.inject.Inject
 
 /**
- * [TokenRefresher] 구현. 기존 `POST /auth/refresh`([AuthApi.refreshToken]) 를 재사용한다.
- *
- * 세션 만료(refreshToken 거절)만 `null` 로 좁혀 반환하고, 그 외 오류는 그대로 전파한다.
- * - HTTP 401 또는 `SESSION_EXPIRED` → 세션 만료 → `null`(호출자가 토큰 정리)
- * - 그 밖(네트워크·5xx·응답 파손 등) → 예외 전파 → 세션 유지, 재시도만 포기
+ * [TokenRefresher] 구현. HTTP 401·`SESSION_EXPIRED` 만 세션 만료로 보고 `null`(호출자가 토큰 정리),
+ * 그 밖(네트워크·5xx·응답 파손)은 전파해 세션을 유지한 채 재시도만 포기한다.
  */
 class TokenRefresherImpl
     @Inject

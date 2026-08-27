@@ -62,7 +62,6 @@ fun TermsContent(
 
         val allChecked = checked.containsAll(AgreementType.entries)
 
-        // 전체 동의
         Column(
             modifier =
                 Modifier
@@ -80,7 +79,6 @@ fun TermsContent(
             )
         }
 
-        // 개별 약관 6종
         Column(
             modifier =
                 Modifier

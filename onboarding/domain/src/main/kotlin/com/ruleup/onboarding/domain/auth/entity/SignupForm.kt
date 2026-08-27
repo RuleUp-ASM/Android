@@ -25,8 +25,8 @@ data class SignupForm(
     val localImageUri: String? = null,
 ) {
     /**
-     * 화면도 같은 상한으로 선택을 막지만 그건 UX 이지 정합성이 아니다. 이 폼은 **송신 전용**이라
-     * (서버 응답이 이 타입으로 들어오지 않는다) 여기서 던지는 예외는 언제나 우리 코드의 버그다.
+     * 이 폼은 **송신 전용**이라(서버 응답이 이 타입으로 들어오지 않는다) 여기서 던지는 예외는 언제나
+     * 우리 코드의 버그다. 화면도 같은 상한으로 선택을 막지만 그건 UX 이지 정합성이 아니다.
      */
     init {
         require(interestCategories.size <= InterestLimits.MAX) {

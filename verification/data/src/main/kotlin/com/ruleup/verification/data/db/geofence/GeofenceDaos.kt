@@ -6,12 +6,8 @@ import androidx.room.Query
 import androidx.room.Upsert
 
 /**
- * 미전송분 드레인 패턴: tagPending(배치키 부여) → byBatch(조회) → markSynced(확정). (명세 §2.4·§3.4)
- *
- * **tagPending 은 미전송 행 전부를 다시 끌어온다** — 앞 배치가 실패해 키만 붙은 채 남은 행도 포함한다.
- * 미태깅 행으로 좁히면 전송 실패분이 어떤 배치에도 다시 실리지 않아 버퍼에 갇힌다(#319).
- * 드레인 도중 새로 들어온 행이 이번 배치에 안 섞이는 것은 byBatch 의 키 조건이 이미 보장한다.
- * 재전송이 안전한 근거는 서버 멱등이다 — HEALTH·SLEEP 은 recordId, 나머지는 (userId, signalType, observedAt).
+ * 미전송분 드레인: tagPending(배치키) → byBatch → markSynced(명세 §2.4·§3.4). **미태깅 행으로 좁히면
+ * 전송 실패분이 버퍼에 갇힌다**(#319) — 재전송이 안전한 근거는 서버 멱등(recordId · userId+signalType+observedAt).
  */
 @Dao
 interface GeofenceTransitionDao {

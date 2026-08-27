@@ -37,8 +37,8 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 /**
  * 방 상세 상단바 (Figma 1134:156).
  *
- * 제목은 방 이름이다. 오른쪽 ⋯ 에는 공지·확인 대기함·챌린지 수정처럼 **자주 쓰지 않는 관리 동작**만
- * 모은다 — 세 탭 어디서나 같은 자리에 있어야 하므로 본문이 아니라 상단바가 자리다.
+ * 제목은 방 이름이다. 오른쪽 ⋯ 에는 **자주 쓰지 않는 관리 동작**만 모은다 — 세 탭 어디서나 같은
+ * 자리에 있어야 하므로 본문이 아니라 상단바가 자리다.
  */
 @Composable
 internal fun RoomAppBar(
@@ -226,7 +226,7 @@ private fun RoomProgressBar(rate: Double?) {
     }
 }
 
-/** 정보 · 피드 · 랭킹 탭 (Figma 1134:181). 선택된 탭은 굵은 글씨 + 하단 인디케이터로 구분한다. */
+/** 정보 · 피드 · 랭킹 탭 (Figma 1134:181). */
 @Composable
 internal fun RoomTabRow(
     selected: RoomTab,
@@ -319,7 +319,6 @@ internal fun <T> RoomSegmentedControl(
     }
 }
 
-/** 방 상세 안에서 반복되는 "제목 + 우측 링크" 행. */
 @Composable
 internal fun RoomSectionHeader(
     title: String,
@@ -374,7 +373,6 @@ internal fun RoomAvatar(
     }
 }
 
-/** 방 상세 각 탭이 공유하는 빈 상태·안내 문구 블록. */
 @Composable
 internal fun RoomEmptyState(
     message: String,

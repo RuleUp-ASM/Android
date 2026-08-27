@@ -4,10 +4,8 @@ import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import javax.inject.Inject
 
 /**
- * 로그아웃 유스케이스.
- *
- * 1) 서버에 현재 기기 refreshToken revoke 를 요청한다(명세 4.5). 실패해도 로컬 로그아웃은 진행한다.
- * 2) 로컬에 저장된 토큰을 모두 삭제한다.
+ * 로그아웃. 서버에 현재 기기 refreshToken revoke 를 요청(명세 4.5)한 뒤 로컬 토큰을 지운다 —
+ * revoke 가 실패해도 로컬 로그아웃은 진행한다.
  */
 class LogoutUseCase
     @Inject

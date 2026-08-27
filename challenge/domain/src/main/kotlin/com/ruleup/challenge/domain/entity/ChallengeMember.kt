@@ -2,7 +2,7 @@ package com.ruleup.challenge.domain.entity
 
 import com.ruleup.domain.entity.user.Tier
 
-/** 멤버 역할 (명세 role). OWNER(방장) / MANAGER(공동 관리자) / MEMBER(일반) / NONE(비멤버). */
+/** 멤버 역할 (명세 role). */
 enum class MemberRole(
     val value: String,
 ) {
@@ -20,7 +20,6 @@ enum class MemberRole(
     val isOwner: Boolean
         get() = this == OWNER
 
-    /** 공동 관리자인가. */
     val isManager: Boolean
         get() = this == MANAGER
 
@@ -101,7 +100,6 @@ enum class JoinBlockReason(
     val isAlreadyJoined: Boolean
         get() = this == ALREADY_JOINED
 
-    /** 초대 전용이라 막힌 경우. */
     val isPrivateInviteOnly: Boolean
         get() = this == PRIVATE_INVITE_ONLY
 

@@ -38,7 +38,7 @@ class SignalCollectorImpl
 
         override suspend fun capture(scope: SignalScope) {
             captureLocation()
-            // SCREEN_TIME + WAKE 증분 수집(Phase 3). 대상 패키지는 스코프에서, WAKE 는 패키지 무관.
+            // 대상 앱은 스코프에서 거르고 WAKE(화면·잠금해제)는 패키지 무관하게 전부 담는다.
             usageEventCollector.collect(scope.targetPackages)
             // 움직임·수면(명세 §8). HC 가용 시에만 수집(미설치/미지원이면 collector 내부에서 생략).
             if (scope.healthTargets.isNotEmpty() || scope.sleepRequested) {

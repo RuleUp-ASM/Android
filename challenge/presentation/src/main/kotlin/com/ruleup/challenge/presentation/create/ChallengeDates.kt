@@ -17,10 +17,9 @@ internal object ChallengeDates {
 
     fun todayIso(): String = today().toString()
 
-    /** ISO(yyyy-MM-dd) 문자열을 LocalDate 로 파싱. 실패 시 null. */
     fun parse(iso: String): LocalDate? = runCatching { LocalDate.parse(iso) }.getOrNull()
 
-    /** [iso] 에 [days]일을 더한 ISO 날짜. 파싱 실패 시 입력을 그대로 돌려준다. */
+    /** 파싱 실패 시 입력을 그대로 돌려준다. */
     fun plusDays(
         iso: String,
         days: Int,
@@ -54,7 +53,6 @@ internal object ChallengeDates {
         return "$month.$day $dayLabel"
     }
 
-    /** 기간 프리셋 라벨: 7→1주, 14→2주, 28→4주, 90→3개월, 그 외 "n일". */
     fun durationLabel(durationDays: Int): String =
         when (durationDays) {
             7 -> "1주"
@@ -65,7 +63,7 @@ internal object ChallengeDates {
         }
 
     /**
-     * 캘린더 한 페이지(6주 = 42칸). 표시 월 밖의 날짜는 inMonth=false.
+     * 캘린더 한 페이지(6주 = 42칸).
      * @param month 0-based(0=1월 ~ 11=12월).
      */
     fun monthCells(

@@ -62,7 +62,6 @@ import com.ruleup.verification.domain.entity.ScreenApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** 대상 앱 1개(표시 라벨 + 패키지명 + 아이콘·카테고리·주간 사용 시간). */
 private data class AppEntry(
     val packageName: String,
     val label: String,
@@ -73,10 +72,8 @@ private data class AppEntry(
 )
 
 /**
- * 대상 앱 등록 화면(피그마 "01 · 인증 셋업 UX 시안" ③, Android 앱 선택기 참고). 설치된 실행 가능한
- * 앱을 아이콘·주간 사용 시간과 함께 나열하고, 검색·카테고리 필터 칩으로 좁혀 고른 앱을 저장한다(로컬).
- * 상세 화면의 "앱 등록하기" 로 진입하며, 진입 플로우가 권한 → 앱 등록 순으로 게이팅되어 사용정보 접근
- * 권한이 이미 허용된 상태다(중도 회수 등 실패 시 사용 시간만 숨긴다).
+ * 대상 앱 등록(피그마 "01 · 인증 셋업 UX 시안" ③). 상세의 "앱 등록하기" 로만 들어온다.
+ * 진입 전에 사용정보 접근 권한이 게이팅돼 있다 — 중도 회수 등으로 빠지면 사용 시간만 숨긴다.
  */
 @Composable
 fun ChallengeTargetsScreen(
@@ -102,12 +99,10 @@ fun ChallengeTargetsScreen(
         }
     }
 
-    // 설치된 실행 가능한 앱 목록 + 카테고리 + 최근 1주 사용 시간 조회(메인 스레드 밖에서).
     LaunchedEffect(Unit) {
         apps = withContext(Dispatchers.IO) { loadApps(context) }
     }
 
-    // 진입 시 서버에 바인딩된 대상 앱 조회 → 복원되면 선택 상태를 시드한다.
     LaunchedEffect(Unit) {
         viewModel.onIntent(ChallengeTargetsIntent.Load(challengeId))
     }
@@ -245,9 +240,8 @@ fun ChallengeTargetsScreen(
 }
 
 /**
- * 설치된 실행 가능한 앱 + 카테고리(현지화 제목) + 최근 1주 사용 시간을 모은다. 시스템/자기 자신 제외.
  * queryAndAggregateUsageStats(PACKAGE_USAGE_STATS)는 상세 CTA 의 권한 게이팅 뒤에서만 도달하므로
- * lint 를 억제하고, 중도 회수 등 실패 시 0(캡션 숨김)으로 둔다.
+ * lint 를 억제한다 — 중도 회수 등으로 실패하면 사용 시간이 0(캡션 숨김)이 된다.
  */
 @SuppressLint("MissingPermission")
 private fun loadApps(context: Context): List<AppEntry> {
@@ -340,7 +334,6 @@ private fun TargetsTopBar(
     }
 }
 
-/** 앱 이름 검색 필드(시안 ③). */
 @Composable
 private fun SearchField(
     query: String,
@@ -450,7 +443,7 @@ private fun CategoryChip(
     )
 }
 
-/** 선택한 앱 칩 행(시안 ③): 미니 아이콘 + 라벨 + 해제 ×. 스크롤 없이 선택 확인·해제. */
+/** 스크롤 없이 선택을 확인하고 해제할 수 있게 고른 앱을 칩으로 편다. */
 @Composable
 private fun SelectedAppChips(
     apps: List<AppEntry>,
@@ -494,7 +487,6 @@ private fun SelectedAppChips(
     }
 }
 
-/** 앱 리스트 1행(시안 ③): 아이콘 + 라벨/주간 사용 시간 + 라운드 체크. 선택 시 행 하이라이트. */
 @Composable
 private fun AppRow(
     app: AppEntry,
@@ -560,7 +552,6 @@ private fun AppRow(
     }
 }
 
-/** 앱 아이콘. 로드 실패 시 브랜드 톤 배경에 첫 글자 폴백. */
 @Composable
 private fun AppIcon(
     app: AppEntry,

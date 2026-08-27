@@ -60,7 +60,6 @@ fun InterestContent(
 
         SelectionCounter(count = selected.size)
 
-        // 관심 분야 칩 (3열 그리드)
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -155,7 +154,6 @@ private fun InterestChip(
     }
 }
 
-/** SVG 정보 아이콘이 달린 안내 박스. */
 @Composable
 private fun InfoRow(text: String) {
     Row(

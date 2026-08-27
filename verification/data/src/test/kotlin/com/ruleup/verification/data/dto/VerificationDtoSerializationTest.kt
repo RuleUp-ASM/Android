@@ -27,10 +27,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * Phase 0 수용 기준: DTO 직렬화/매핑 라운드트립.
- * (서버 응답의 미인식/누락 필드가 안전한 기본값으로 떨어지는지도 함께 검증)
- */
+/** DTO 직렬화·매핑 라운드트립. 서버 응답의 미인식·누락 필드가 안전한 값으로 떨어지는지까지 본다. */
 class VerificationDtoSerializationTest {
     private val json =
         Json {

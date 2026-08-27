@@ -38,7 +38,7 @@ enum class TodayVerificationStatus(
     // 실패 확정
     FAILED("FAILED"),
 
-    // 오늘은 판정 대상일이 아님 (반복 요일 밖)
+    // 오늘은 판정 대상일이 아님 — 실패가 아니다
     NOT_TARGET("NOT_TARGET"),
     ;
 

@@ -39,8 +39,7 @@ const val ONBOARDING_TOTAL_STEPS = 6
 /**
  * 온보딩 6단계 공통 골격 — AppBar(뒤로 + n/6) · 진행바 · 본문 · 하단 CTA.
  *
- * 진행 표시를 점(dot)에서 **막대**로 바꿨다. 6단계에서 점을 쓰면 지금 어디쯤인지 한눈에 안 들어오고,
- * 디자인도 채워지는 막대다.
+ * 진행 표시는 점이 아니라 **막대**다 — 6단계에서 점을 쓰면 지금 어디쯤인지 한눈에 안 들어온다.
  *
  * @param step 화면 문구(`n/6`)·진행률·로깅이 같은 값을 본다. Int 가 아니라 enum 으로 받아
  *   단계 이름과 번호가 갈라지지 않게 한다.
@@ -134,7 +133,6 @@ private fun OnboardingTopBar(
     }
 }
 
-/** 현재 단계 비율만큼 채워지는 3dp 막대. */
 @Composable
 private fun OnboardingProgress(step: Int) {
     Box(

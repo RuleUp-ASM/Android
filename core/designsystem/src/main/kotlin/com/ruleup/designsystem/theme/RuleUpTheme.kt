@@ -16,13 +16,8 @@ private val LocalRuleUpShapes = staticCompositionLocalOf { defaultRuleUpShapes }
 private val LocalRuleUpSpacing = staticCompositionLocalOf { defaultRuleUpSpacing }
 
 /**
- * 테마 진입점.
- *
- * MaterialTheme 과 동일한 패턴으로, 하위 컴포저블은 [RuleUpTheme] 접근자(object)를 통해
- * 색·타이포·모양·간격 토큰을 읽는다.
- *
- * **라이트 고정이다.** 다크 스킴을 받지 않는 이유는 Figma 에 다크 토큰이 없어서다 — 예전엔
- * 시스템 설정을 따라갔는데, 그 값들이 디자인에 근거가 없어 다크모드 기기만 다른 화면을 봤다.
+ * 테마 진입점. 하위 컴포저블은 [RuleUpTheme] 접근자로 토큰을 읽는다.
+ * 라이트 고정이다 — Figma 에 다크 토큰이 없어, 시스템 설정을 따라가면 근거 없는 색이 다크 기기에만 나간다.
  */
 @Composable
 fun RuleUpTheme(

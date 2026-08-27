@@ -17,7 +17,7 @@ data class DeviceProfileRequest(
     val lowRam: Boolean,
 )
 
-/** 인트로 요청(§0.3). deviceProfile + appVersion + 최초 권한 스냅샷. */
+/** 인트로 요청(전송 스펙 §0.3). */
 @Serializable
 data class IntroRequest(
     @SerialName("deviceProfile")

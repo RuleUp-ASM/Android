@@ -37,10 +37,8 @@ sealed interface AttrValue {
 }
 
 /**
- * 이벤트에 붙는 구조화 속성. 삽입 순서를 보존한다.
- *
- * [equals] 는 내부 맵의 동등성을 따른다. 페이로드 팩토리의 출력을 그대로 고정하는
- * 골든 테스트가 이 성질에 의존한다.
+ * 이벤트에 붙는 구조화 속성. 삽입 순서를 보존하고 [equals] 는 내부 맵을 따른다 —
+ * 페이로드 팩토리의 출력을 고정하는 골든 테스트가 이 성질에 의존한다.
  */
 @JvmInline
 value class Attributes private constructor(
@@ -54,9 +52,7 @@ value class Attributes private constructor(
 }
 
 /**
- * [attributes] 안에서 쓰는 빌더.
- *
- * 키를 `String` 으로 받는다 — 호출부는 언제나 리터럴을 쓰므로 [AttrKey] 로 감싸는 게 잡음이다.
+ * [attributes] 안에서 쓰는 빌더. 키를 `String` 으로 받는 건 호출부가 언제나 리터럴이어서고,
  * 값 타입별 오버로드라 `Map<String, Any>` 와 달리 **넣는 순간 타입이 고정된다.**
  */
 class AttributesBuilder

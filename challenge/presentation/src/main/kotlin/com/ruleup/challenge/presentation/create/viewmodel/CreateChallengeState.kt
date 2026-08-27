@@ -77,8 +77,8 @@ data class CreateChallengeState(
         get() = mode.isGroup
 
     /**
-     * 자동 인증을 고를 수 있는지. 초안이 AUTO 로 왔을 때만 true 다 —
-     * 수동으로 바꾼 뒤에는 되돌릴 수 없다(단방향 전환).
+     * 자동 인증을 고를 수 있는지. 기준은 **초안**이라 수동으로 바꿨어도 다시 켤 수 있다 —
+     * 단방향 잠금은 생성 이후 수정 화면의 규칙이다.
      */
     val canUseAuto: Boolean
         get() = original?.verification?.type?.isAuto == true

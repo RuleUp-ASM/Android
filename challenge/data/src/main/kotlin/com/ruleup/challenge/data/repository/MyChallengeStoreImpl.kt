@@ -5,12 +5,7 @@ import com.ruleup.challenge.domain.repository.MyChallengeStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * [MyChallengeStore] 인메모리 구현(프로세스 싱글톤).
- *
- * 생성/참여 직후 홈이 즉시 보여줄 수 있도록 세션 동안 보관한다. challengeId 로 dedup 하고
- * 최근 추가가 앞에 오도록 역순으로 반환한다. 영속이 필요하면 DataStore 백업으로 교체.
- */
+/** 생성·참여 직후 홈이 즉시 보여줄 수 있도록 세션 동안만 들고 있는다 — 프로세스가 죽으면 사라진다. */
 @Singleton
 class MyChallengeStoreImpl
     @Inject

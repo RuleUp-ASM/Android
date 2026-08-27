@@ -28,13 +28,11 @@ class PushTokenRegister
         private val tokenRepository: TokenRepository,
         private val observability: Observability,
     ) {
-        /** 현재 토큰을 조회해 등록한다 (앱 시작 경로). */
         suspend fun registerCurrentToken() {
             runCatching { register(fetchToken()) }
                 .onFailure { observability.w(TAG, it) { "FCM 토큰 조회/등록 실패" } }
         }
 
-        /** 새로 발급된 토큰을 등록한다 (onNewToken 경로). */
         suspend fun register(fcmToken: String) {
             // 미로그인 상태면 서버가 유저를 특정할 수 없다 — 로그인 후 앱 시작 경로가 재등록한다.
             if (!tokenRepository.isLoggedIn.first()) return

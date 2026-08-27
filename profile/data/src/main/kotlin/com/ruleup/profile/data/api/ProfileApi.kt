@@ -31,9 +31,7 @@ interface ProfileApi {
 
     /**
      * 내 프로필 조회. 로그인 응답과 같은 user 스키마에 생일·성별·약관 동의가 더 붙는다.
-     *
-     * 아래 [getProfile] 은 구 엔드포인트라 응답 스키마가 다르다. 마이페이지가 아직 매너 온도·닉네임
-     * 변경 이력을 쓰고 있어 함께 남긴다.
+     * 아래 [getProfile] 은 구 엔드포인트 — 매너 온도·닉네임 변경 이력이 거기에만 있어 함께 남긴다.
      */
     @GET("v1/users/me")
     suspend fun getMyProfile(): BaseResponse<MyProfileResponse>

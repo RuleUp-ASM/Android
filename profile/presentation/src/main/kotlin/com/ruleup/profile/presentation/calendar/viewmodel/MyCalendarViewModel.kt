@@ -14,8 +14,7 @@ import javax.inject.Inject
 
 /**
  * 활동 캘린더 ViewModel. day status 는 서버 판정 값 그대로 렌더링한다.
- * 과거 월은 확정 후 변하지 않으므로(스펙: 과거 월 캐시) 세션 동안 메모리에 캐시하고,
- * 당월만 재진입 시 다시 조회한다.
+ * 과거 월은 확정 후 변하지 않아 세션 동안 캐시하고(스펙: 과거 월 캐시), 당월만 재진입마다 다시 조회한다.
  */
 @HiltViewModel
 class MyCalendarViewModel

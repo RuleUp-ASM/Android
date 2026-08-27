@@ -10,7 +10,7 @@ import com.ruleup.challenge.domain.entity.VerificationConfig
  *
  * 무엇을 등록해야 하는지는 [VerificationConfig.method] 가 결정한다. 서버의
  * [com.ruleup.challenge.domain.entity.ChallengeSetupInfo] 도 같은 기준으로
- * `requiresAnchors`(GPS_PRESENCE) / `requiresTargetPackages`(SCREEN_TIME) 를 계산하므로, 방식만 알면
+ * `requiresAnchors`(GPS_PRESENCE·GPS_AVOID) / `requiresTargetPackages`(SCREEN_TIME_MAX·MIN) 를 계산하므로, 방식만 알면
  * 추가 조회 없이 같은 결론에 도달한다.
  *
  * 구현(challenge:data)은 "무슨 알림"만 결정하고, 실제 발송·딥링크는 PushNotificationHelper 에 위임한다.

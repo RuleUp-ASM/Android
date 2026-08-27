@@ -15,20 +15,15 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Qualifier
 import javax.inject.Singleton
 
-/** 기기·설치 식별자 저장소. 토큰 저장소와 구분하는 한정자다. */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class DeviceStore
 
 /**
- * 식별자 전용 `DataStore<Preferences>`.
+ * 식별자 전용 `DataStore<Preferences>`. 토큰 저장소와 파일을 나눈다 — 한 파일이면
+ * `TokenRepository.clear()` 가 식별자까지 날려 로그아웃할 때마다 새 설치처럼 보인다.
  *
- * 토큰 저장소와 파일을 나눈다 — 로그아웃은 토큰을 지우지만 기기·설치 식별자는 살아남아야 한다.
- * 한 파일에 두면 `TokenRepository.clear()` 가 식별자까지 날려, 로그아웃할 때마다 새 설치처럼
- * 보이게 된다.
- *
- * 손상 시 빈 값으로 복구한다. 식별자는 재생성 가능하고(재로그인이 필요할 뿐) 여기서 실패하면
- * 로그인 자체가 막히기 때문이다.
+ * 손상 시 빈 값으로 복구한다 — 식별자는 재생성 가능하지만, 여기서 실패하면 로그인 자체가 막힌다.
  */
 @Module
 @InstallIn(SingletonComponent::class)

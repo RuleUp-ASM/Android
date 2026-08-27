@@ -82,9 +82,8 @@ private fun HomeContent(
         ) {
             HomeHeader()
 
-            // 챌린지가 하나도 없으면 **화면 전체를 빈 상태로** 바꾼다(Figma 1134:2033).
-            // 스트릭 카드와 필터 탭을 남겨 두면 "0/0" 을 채운 껍데기만 보여주는 꼴이라,
-            // 처음 들어온 사람이 무엇부터 해야 할지 알 수 없다.
+            // 스트릭 카드·필터 탭을 남기면 "0/0" 껍데기만 보여 처음 들어온 사람이 뭘 할지 모른다.
+            // 그래서 화면 전체를 빈 상태로 바꾼다(Figma 1134:2033).
             if (state.isEmpty) {
                 HomeEmptyState(
                     modifier = Modifier.weight(1f),
@@ -136,7 +135,6 @@ private fun HomeContent(
 
 /**
  * 홈 빈 상태 (Figma 1134:2051).
- *
  * 다음 행동을 둘로만 좁힌다 — 남의 방에 들어가거나, 내가 만들거나. 둘 중 뭘 해도 홈이 채워진다.
  */
 @Composable

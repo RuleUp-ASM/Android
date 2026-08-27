@@ -29,6 +29,6 @@ data class StatsReport(
     // 평균 연속 성공일
     val avgStreak: Double,
     val series: List<StatsPoint>,
-    // 규칙 기반 인사이트 1줄 (없으면 null)
+    // 규칙 기반 인사이트 1줄.
     val insight: String?,
 )

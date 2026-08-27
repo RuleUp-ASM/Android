@@ -17,12 +17,8 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
- * 기본 CTA 버튼. Figma `Button/Primary`(node `1177:179`).
- *
- * 단색 `primary/600` 채움에 반경 12, 좌우 24 · 상하 13 패딩, 라벨은 `Card Title`(14 Bold) 흰색이다.
- * 예전 구현은 그라데이션이었는데 Figma 에 그런 토큰이 없다.
- *
- * 높이를 고정하지 않는다 — 패딩으로 잡아야 글자 크기 설정을 키운 기기에서 라벨이 잘리지 않는다.
+ * 기본 CTA 버튼. Figma `Button/Primary`(node `1177:179`) — 그라데이션 토큰은 Figma 에 없다.
+ * 높이를 고정하지 않는다 — 패딩으로 잡아야 글자 크기를 키운 기기에서 라벨이 잘리지 않는다.
  */
 @Composable
 fun RuleUpPrimaryButton(

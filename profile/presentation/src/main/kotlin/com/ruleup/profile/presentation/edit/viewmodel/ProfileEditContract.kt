@@ -25,7 +25,6 @@ sealed interface ProfileEditIntent : MviIntent {
         val uri: String,
     ) : ProfileEditIntent
 
-    /** 프로필 사진 제거. */
     data object RemoveImage : ProfileEditIntent
 
     /** 저장 — 닉네임 변경 시 선검사(4.6) 후 변경 필드만 PATCH. */
@@ -107,7 +106,6 @@ sealed interface ProfileEditReducerEvent : ReducerEvent {
         val saving: Boolean,
     ) : ProfileEditReducerEvent
 
-    /** 저장 성공 — 원본 프로필 갱신. */
     data class Saved(
         val profile: Profile,
     ) : ProfileEditReducerEvent

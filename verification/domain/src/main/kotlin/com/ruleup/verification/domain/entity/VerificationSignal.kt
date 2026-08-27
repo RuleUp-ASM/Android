@@ -184,7 +184,6 @@ sealed interface VerificationSignal {
     ) : VerificationSignal {
         override val isEmpty: Boolean get() = readings.isEmpty()
 
-        // date·metric 은 신호 레벨 값이라 양쪽 조각이 그대로 물려받는다.
         override fun halve(): Pair<VerificationSignal, VerificationSignal?> =
             readings.halved { Health(date = date, metric = metric, readings = it) }
     }
@@ -226,7 +225,6 @@ data class SignalBatch(
     }
 }
 
-/** 목록을 앞(올림)·뒤로 갈라 같은 신호 타입으로 다시 감싼다. 1건 이하면 뒤쪽이 null 이다. */
 private fun <T> List<T>.halved(wrap: (List<T>) -> VerificationSignal): Pair<VerificationSignal, VerificationSignal?> {
     if (size <= 1) return wrap(this) to null
     val cut = (size + 1) / 2

@@ -25,8 +25,8 @@ object NetworkModule {
     /** app 계층이 BuildConfig.DEBUG 로 채워 주입하는 HTTP 로깅 on/off 플래그. */
     const val DEBUG_LOGGING = "network_debug_logging"
 
-    // Authorization 헤더를 붙이면 안 되는 공개(비인증) 엔드포인트 경로 조각(명세 /auth/*).
-    // 로그아웃은 액세스 토큰이 필요하므로 제외한다.
+    // 명세 /auth/* 중 헤더를 붙이면 안 되는 비인증 엔드포인트.
+    // 로그아웃은 액세스 토큰이 필요하므로 여기 넣지 않는다.
     private val NO_AUTH_PATHS =
         listOf(
             "/auth/oauth",
@@ -51,14 +51,12 @@ object NetworkModule {
         @Named(DEBUG_LOGGING) debugLogging: Boolean,
         observability: Observability,
     ): OkHttpClient {
-        // 저장된 accessToken 이 있으면 매 요청마다 Authorization 헤더로 주입한다.
-        // 단, 로그인/가입/토큰갱신 같은 공개(비인증) 엔드포인트에는 헤더를 붙이지 않는다.
-        // (만료된 토큰이 로그인 요청에 실려 나가면 백엔드 JWT 필터가 401 로 막아버린다.)
+        // 만료된 토큰이 NO_AUTH_PATHS 요청에 실려 나가면 백엔드 JWT 필터가 401 로 막아버린다.
         val authInterceptor =
             Interceptor { chain ->
                 val original = chain.request()
                 val skipAuth = NO_AUTH_PATHS.any { original.url.encodedPath.contains(it) }
-                // 캐시 스냅샷을 먼저 읽어 워커 스레드 블로킹을 피하고, 콜드(앱 재시작 직후 첫 요청)일 때만 1회 블로킹 조회한다.
+                // 캐시가 비는 건 앱 재시작 직후 첫 요청뿐 — 그때만 한 번 블로킹한다.
                 val token = tokenRepository.cachedAccessToken() ?: runBlocking { tokenRepository.getAccessToken() }
                 val request =
                     if (!token.isNullOrBlank() && !skipAuth) {
@@ -76,10 +74,8 @@ object NetworkModule {
             OkHttpClient
                 .Builder()
                 .addInterceptor(authInterceptor)
-                // 401(accessToken 만료) 시 refreshToken 으로 재발급 후 원요청을 자동 재시도한다.
                 .authenticator(tokenAuthenticator)
 
-        // BODY 로깅은 디버그 빌드에서만 장착한다. 디버그에서도 인증 헤더는 마스킹.
         if (debugLogging) {
             val loggingInterceptor =
                 HttpLoggingInterceptor { message -> observability.d("HttpClient") { message } }
@@ -101,8 +97,8 @@ object NetworkModule {
         json: Json,
         @BaseUrl baseUrl: String,
     ): Retrofit {
-        // Retrofit 은 baseUrl 이 trailing slash 로 끝나길 강제한다. local.properties 의 BASE_URL 에
-        // 슬래시를 빠뜨려도 앱이 시작부터 죽지 않도록, 비어있지 않으면 보정한다(빈 값은 그대로 fail-fast).
+        // Retrofit 은 trailing slash 를 강제한다 — local.properties 의 BASE_URL 에서 빠뜨려도 죽지 않게 보정한다.
+        // 빈 값은 보정하지 않고 그대로 던져 설정 누락을 바로 드러낸다.
         val normalized = if (baseUrl.isNotBlank() && !baseUrl.endsWith("/")) "$baseUrl/" else baseUrl
         return Retrofit
             .Builder()

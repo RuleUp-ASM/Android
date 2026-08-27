@@ -439,7 +439,6 @@ private fun WeeklyCountSection(
     }
 }
 
-/** 주간 횟수 슬라이더의 값 범위. 명세 1~7. */
 private val weeklyCountRange =
     ChallengeLimits.WEEKLY_COUNT_MIN.toFloat()..ChallengeLimits.WEEKLY_COUNT_MAX.toFloat()
 

@@ -7,7 +7,6 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface ReputationHistoryIntent : MviIntent {
-    /** 화면 진입 시 히스토리 조회. */
     data object Load : ReputationHistoryIntent
 
     data object Back : ReputationHistoryIntent

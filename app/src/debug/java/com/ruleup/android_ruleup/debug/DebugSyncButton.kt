@@ -45,8 +45,7 @@ fun DebugSyncButton(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val observability = LocalObservability.current
 
-    // catch-up 작업 상태를 로그로 노출(ENQUEUED→RUNNING→SUCCEEDED/FAILED). enqueue 후 워커가 실제로 도는지,
-    // 실패면 몇 번째 시도인지 눈으로 확인한다. 결과는 오버레이/Logcat 의 'VerifySync' 태그로 뜬다.
+    // 워커가 실제로 도는지·몇 번째 시도인지 눈으로 확인하려고 상태 전이를 로그로 흘린다.
     LaunchedEffect(Unit) {
         WorkManager
             .getInstance(context)
@@ -95,7 +94,6 @@ fun DebugSyncButton(modifier: Modifier = Modifier) {
     }
 }
 
-// HC 사용 가능하면 권한 요청(콜백에서 이어짐), 미지원 기기면 건너뛰고 사용량 확인·수집으로.
 private fun requestHealthThenCollect(
     context: Context,
     observability: Observability,
@@ -140,7 +138,6 @@ private fun runtimePermissions(): Array<String> =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
     }.toTypedArray()
 
-// 포그라운드 위치는 허용됐고 백그라운드 위치만 아직 미허용인가(API29+).
 private fun needsBackgroundLocation(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
     val fineGranted =

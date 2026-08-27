@@ -8,9 +8,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * `GET /v1/intro` 응답. 누락 필드는 안전한 기본값으로 떨어진다.
- *
- * `recommendAppVersion` 은 없다 — 업데이트 정책이 예외 없이 강제라 권장 버전 개념 자체가 빠졌다.
+ * `GET /v1/intro` 응답. 누락 필드는 안전한 기본값으로 떨어진다. `recommendAppVersion` 은 없다 —
+ * 업데이트 정책이 예외 없이 강제라 권장 버전 개념 자체가 빠졌다.
  */
 @Serializable
 data class IntroResponse(

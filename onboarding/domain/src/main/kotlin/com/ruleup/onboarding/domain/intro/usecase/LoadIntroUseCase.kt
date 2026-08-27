@@ -21,14 +21,11 @@ sealed interface IntroGate {
 }
 
 /**
- * 앱 진입 게이트를 판정한다(GET /v1/intro).
+ * 앱 진입 게이트를 판정한다(GET /v1/intro). 판정까지 여기서 끝내야 진입을 막는 조건이 화면 쪽으로
+ * 흩어지지 않는다.
  *
- * 게이트가 걸렸는지까지 여기서 정한다 — 호출부가 `versionGate.forceUpdate` 를 직접 보면 진입을
- * 막는 조건이 화면 쪽에 흩어지고, 정책이 바뀔 때 그 자리들을 따라다녀야 한다.
- *
- * 버전 게이트 API 장애가 앱 실행 자체를 막지 않도록 **페일오픈**한다 — 네트워크·서버 오류면
- * [IntroGate.Pass] 로 떨어져 정상 흐름을 이어간다. 약관 버전도 함께 못 받게 되지만, 가입 화면이
- * [com.ruleup.domain.entity.user.TermsVersions.FALLBACK_VERSION] 으로 진행하고 서버가 재검증한다.
+ * 게이트 API 장애가 앱 실행을 막지 않도록 **페일오픈**한다 — 오류면 [IntroGate.Pass] 다. 약관 버전도
+ * 함께 못 받지만 가입 화면이 `TermsVersions.FALLBACK_VERSION` 으로 진행하고 서버가 재검증한다.
  */
 class LoadIntroUseCase
     @Inject

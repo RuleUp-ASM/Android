@@ -23,7 +23,7 @@ sealed interface OnboardingIntent : MviIntent {
         val digits: String,
     ) : OnboardingIntent
 
-    /** 성별 선택. 같은 값을 다시 고르면 해제된다(= 건너뛴 것과 같은 상태). */
+    /** 성별 선택. 필수 입력이라 해제는 없다 — 같은 값을 다시 골라도 선택이 유지된다. */
     data class SetGender(
         val gender: Gender,
     ) : OnboardingIntent

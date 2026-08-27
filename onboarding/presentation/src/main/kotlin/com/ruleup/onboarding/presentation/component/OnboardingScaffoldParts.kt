@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/** 화면 하단 고정 CTA 영역. */
 @Composable
 fun BottomBar(
     modifier: Modifier = Modifier,

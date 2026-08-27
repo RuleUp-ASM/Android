@@ -49,17 +49,14 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var tokenRepository: TokenRepository
 
-    // 프레임 jank 측정. 창 단위로 묶어 성능 채널로 내보낸다([JankTracker]).
     private var jankStats: JankStats? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // @AndroidEntryPoint 의 필드 주입은 super.onCreate() 에서 일어난다.
         // 주입된 의존을 쓰는 코드는 반드시 그 뒤에 와야 한다.
         super.onCreate(savedInstanceState)
-        // 딥링크는 인증보다 먼저 도착한다. 목적지는 보관만 하고, 스플래시가 자동 로그인을 마친 뒤
-        // 꺼내 간다([PendingDeepLink]). 세션 없이 목적지를 띄우면 401 → 토큰 정리 → 로그인 화면으로
-        // 튕기면서 딥링크가 유실된다.
-        // 알림 탭도 App Link 도 URI 로 온다 — 해석은 한 갈래다.
+        // 딥링크는 인증보다 먼저 도착한다 — 목적지는 보관만 하고 스플래시가 꺼내 간다([PendingDeepLink]).
+        // 알림 탭도 App Link 도 URI 로 온다. 해석은 한 갈래다.
         pendingDeepLink.set(resolveStartRoute(intent?.data, observability))
         observeSessionEnd()
         val startStack = startStack()
@@ -112,7 +109,6 @@ class MainActivity : ComponentActivity() {
         jankStats?.isTrackingEnabled = false
     }
 
-    // 앱이 떠 있는 동안 들어온 진입 처리. 해석할 수 없거나 미등록 path 는 무시된다.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

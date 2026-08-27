@@ -20,13 +20,11 @@ import javax.inject.Singleton
 /**
  * [DeviceIdentityRepository] 구현.
  *
- * `deviceId` 는 `ANDROID_ID` 를 쓴다. Android 8+ 에서 (앱 서명키 + 사용자 + 기기) 단위라
- * **앱 재설치에는 살아남고 기기 교체·초기화에는 바뀐다** — 단일 활성 기기 정책이 원하는 성질과
- * 정확히 맞는다. 듀얼앱·멀티유저 프로필에서 값이 갈리는 것도 "다른 사용 맥락 = 다른 기기"라 의도에
- * 부합한다.
+ * `deviceId` 는 `ANDROID_ID`. Android 8+ 에서 (서명키 + 사용자 + 기기) 단위라 재설치에는 살아남고
+ * 기기 교체·초기화에는 바뀐다 — 단일 활성 기기 정책이 원하는 성질과 같다.
  *
- * `installationId` 는 앱이 만든 UUID 다. 정의상 재설치하면 새 값이어야 하므로 백업에서 제외한다
- * (`backup_rules.xml` · `data_extraction_rules.xml`). 복원되면 동일 설치 다계정 차단이 헛돈다.
+ * `installationId` 는 앱이 만든 UUID 라 백업에서 제외한다(`backup_rules.xml` ·
+ * `data_extraction_rules.xml`). 복원되면 동일 설치 다계정 차단이 헛돈다.
  */
 @Singleton
 class DeviceIdentityRepositoryImpl
@@ -44,9 +42,8 @@ class DeviceIdentityRepositoryImpl
             )
 
         /**
-         * 읽을 수 없거나 알려진 불량값이면 null. 그 경우 호출부가 UUID 폴백으로 내려간다 —
-         * 폴백은 재설치에 살아남지 못해 세션이 한 번 끊기지만, ANDROID_ID 를 못 읽는 예외적인
-         * 기기에 한정된다.
+         * 읽을 수 없거나 알려진 불량값이면 null — 호출부가 UUID 폴백으로 내려간다. 폴백은 재설치에
+         * 살아남지 못해 세션이 한 번 끊긴다.
          */
         private fun androidId(): String? =
             runCatching {

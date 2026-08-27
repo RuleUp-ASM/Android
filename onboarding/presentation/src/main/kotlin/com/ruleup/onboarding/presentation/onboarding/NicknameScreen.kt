@@ -131,7 +131,6 @@ private fun NicknamePreviewCard(
     }
 }
 
-/** 닉네임 입력 필드 + 글자 수 + 유효성 안내. */
 @Composable
 private fun NicknameField(
     nickname: String,
@@ -188,7 +187,6 @@ private fun NicknameField(
     }
 }
 
-/** 입력 필드 우측의 ✓/✕ 뱃지. */
 @Composable
 private fun StatusBadge(valid: Boolean) {
     Box(
@@ -207,7 +205,6 @@ private fun StatusBadge(valid: Boolean) {
     }
 }
 
-/** 입력 필드 아래의 유효성 메시지. 실패 사유(문자/길이)에 맞는 문구를 보여준다. */
 @Composable
 private fun NicknameStatusMessage(validation: NicknameValidation) {
     val valid = validation.isValid
@@ -228,7 +225,6 @@ private fun NicknameStatusMessage(validation: NicknameValidation) {
     }
 }
 
-/** 닉네임 규칙 안내 박스. */
 @Composable
 private fun NicknameRules(nickname: String) {
     val inRange = NickNameUtil.inRange(nickname)

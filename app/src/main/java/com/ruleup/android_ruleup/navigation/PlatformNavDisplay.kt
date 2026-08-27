@@ -34,7 +34,6 @@ fun PlatformNavDisplay(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
             ),
-        // 단일 GenericNavKey 디스패처. 실제 화면 결정은 [appRouteByPath] 가 담당한다.
         entryProvider =
             entryProvider {
                 entry<GenericNavKey> { navKey ->

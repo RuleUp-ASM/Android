@@ -11,9 +11,7 @@ import javax.inject.Inject
 
 /**
  * 이의 내역 ViewModel (명세 GET /users/me/appeals).
- *
- * 접수된 이의는 즉시 인용되므로 계류·기각 상태가 없고, 형식 미달은 접수 자체가 안 되어 이력에도
- * 남지 않는다 — 그래서 상태 필터도 페이지네이션도 없는 단순 목록이다.
+ * 접수 즉시 인용이라 계류·기각이 없고 형식 미달은 이력에 없다 — 그래서 필터도 페이지네이션도 없다.
  */
 @HiltViewModel
 class MyAppealsViewModel

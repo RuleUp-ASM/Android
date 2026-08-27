@@ -4,19 +4,13 @@ import com.ruleup.domain.entity.category.Category
 
 /**
  * 일자 종합 상태 (명세 days[].status — 서버 판정, 클라 재계산 없음).
- *
- * 판정 대상일만 내려오므로 "대상 아님" 값이 없다 — 응답에 없는 날짜가 곧 비대상일이다.
+ * "대상 아님" 값이 없는 건 판정 대상일만 내려오기 때문이다 — 응답에 없는 날짜가 곧 비대상일이다.
  */
 enum class CalendarDayStatus(
     val value: String,
 ) {
-    // 대상 전부 성공
     ALL_DONE("ALL_DONE"),
-
-    // 일부 성공
     PARTIAL("PARTIAL"),
-
-    // 전부 실패
     FAILED("FAILED"),
 
     // 최종 재평가 중 — 실패가 아니다
@@ -27,10 +21,7 @@ enum class CalendarDayStatus(
     ;
 
     companion object {
-        /**
-         * 미인식 값은 **null** 이다. 캘린더 셀은 상태별로 색을 칠하므로 모르는 값을 특정 상태로
-         * 접으면 그 날짜에 대해 거짓말을 하게 된다 — 표기를 생략하는 편이 낫다.
-         */
+        /** 미인식 값은 null — 캘린더 셀을 특정 색으로 칠하면 그 날짜에 대해 거짓말을 하게 된다. */
         fun fromValue(value: String?): CalendarDayStatus? = entries.find { it.value == value }
     }
 }
@@ -75,9 +66,7 @@ enum class DayItemStatus(
 
 /**
  * 일자 상세의 이의 가능 여부 (명세 items[].appeal — FAILED 일 때만).
- *
- * 잔여 횟수(`remainingThisMonth`)와 `LIMIT_EXCEEDED` 사유는 읽지 않는다 — 이의 횟수 한도가
- * 폐기됐다(챌린지 정책 §7.2). 명세 예시가 구 구제권 모델 잔재다.
+ * `remainingThisMonth`·`LIMIT_EXCEEDED` 는 읽지 않는다 — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2).
  */
 data class DayItemAppeal(
     val eligible: Boolean,

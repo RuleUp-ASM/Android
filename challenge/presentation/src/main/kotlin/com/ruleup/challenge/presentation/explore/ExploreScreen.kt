@@ -139,7 +139,6 @@ private fun ExploreContent(
     }
 }
 
-/** 추천 루틴 섹션: 제목 + 카드 목록(카테고리 아이콘·제목·추천 사유). 탭 시 템플릿 초안 생성. */
 @Composable
 private fun SectionHeader(
     title: String,

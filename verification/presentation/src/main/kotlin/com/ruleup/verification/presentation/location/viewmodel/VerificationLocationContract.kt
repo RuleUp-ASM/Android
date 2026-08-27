@@ -31,16 +31,13 @@ sealed interface VerificationLocationIntent : MviIntent {
     /** 하단 카드 [이 위치 추가] → 확인 대기 핀을 앵커 목록에 담는다(최대 3, 인증 정책 §1.1). */
     data object AddAnchor : VerificationLocationIntent
 
-    /** 추가된 앵커 1개 제거. */
     data class RemoveAnchor(
         val index: Int,
     ) : VerificationLocationIntent
 
     /**
-     * [제출] → 누적 앵커를 저장한다.
-     *
-     * **최초 등록이면 `POST /setup`, 이미 등록된 상태면 `PUT /my-location`** 이다. 둘은 같은 화면을
-     * 쓰지만 다른 계약이다 — 최초 설정은 월 변경 횟수를 소진하지 않고, 교체는 소진한다.
+     * [제출] → 누적 앵커를 저장한다. **최초 등록이면 `POST /setup`, 이미 등록됐으면 `PUT /my-location`**
+     * — 같은 화면이지만 다른 계약이다. 최초 설정은 월 변경 횟수를 소진하지 않고, 교체는 소진한다.
      */
     data class Submit(
         val challengeId: String,
@@ -138,7 +135,6 @@ sealed interface VerificationLocationReducerEvent : ReducerEvent {
         val anchor: LocationPin,
     ) : VerificationLocationReducerEvent
 
-    /** 앵커 1개 제거. */
     data class AnchorRemoved(
         val index: Int,
     ) : VerificationLocationReducerEvent
