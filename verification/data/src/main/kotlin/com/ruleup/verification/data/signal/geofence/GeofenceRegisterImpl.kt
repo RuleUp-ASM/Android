@@ -21,8 +21,8 @@ import javax.inject.Inject
  * GeofencingClient 로 활성 좌표를 OS 에 사전 등록(zero-touch presence, 명세 §2.1).
  * reconcile 은 차집합만 제거하고 새 목표 전체를 멱등 등록한다(재부팅 후 전부 재등록).
  *
- * 지오펜싱 API 호출은 모두 [Context.hasFineLocation] 가드 뒤에서 일어나고 SecurityException 을 삼키므로
- * 권한 lint(MissingPermission)를 클래스 단위로 억제한다.
+ * 등록만 [Context.hasFineLocation] 가드 뒤에 있다. 해제는 권한이 필요 없고 전부 runCatching 안이라
+ * 가드를 두지 않는다 — 그래서 권한 lint(MissingPermission)를 클래스 단위로 억제한다.
  */
 @SuppressLint("MissingPermission")
 class GeofenceRegisterImpl
