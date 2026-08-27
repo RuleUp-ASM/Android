@@ -6,6 +6,8 @@ import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Upsert
+import com.ruleup.verification.domain.entity.HealthMetric
+import com.ruleup.verification.domain.entity.RecordingMethod
 
 /**
  * 움직임(HEALTH) 읽기 버퍼(전송 스펙 §2). 하루치 누적이 sync 마다 갱신되므로 미태깅 스냅샷을
@@ -18,14 +20,12 @@ data class HealthReadingEntity(
     val id: Long = 0,
     // Health Connect metadata.id — 멱등 dedup 키
     val recordId: String,
-    // DISTANCE / STEPS / EXERCISE_DURATION
-    val metric: String,
+    val metric: HealthMetric,
     val value: Double,
     val startTime: Long,
     val endTime: Long,
     val originPackage: String,
-    // AUTO / ACTIVE / MANUAL / UNKNOWN
-    val recordingMethod: String,
+    val recordingMethod: RecordingMethod,
     val date: String,
     val occurredAt: Long,
     val synced: Boolean = false,
@@ -47,7 +47,7 @@ data class SleepSessionEntity(
     val sleepMillis: Long?,
     val observedElapsedMillis: Long,
     val originPackage: String,
-    val recordingMethod: String,
+    val recordingMethod: RecordingMethod,
     // 정렬·TTL용(= endAt)
     val occurredAt: Long,
     val synced: Boolean = false,

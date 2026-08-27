@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import com.ruleup.verification.data.db.usage.KIND_APP
 import com.ruleup.verification.data.db.usage.UsageCursorDao
 import com.ruleup.verification.data.db.usage.UsageCursorEntity
 import com.ruleup.verification.data.db.usage.UsageEventDao
 import com.ruleup.verification.data.db.usage.UsageEventEntity
+import com.ruleup.verification.data.db.usage.UsageEventKind
 import com.ruleup.verification.data.signal.common.GapRecorder
 import com.ruleup.verification.domain.entity.GapReason
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -55,11 +55,11 @@ class UsageEventCollector
                 events.getNextEvent(event)
                 val mapping = usageMappingOf(event.eventType) ?: continue
                 // 앱 사용 이벤트는 대상 패키지만(WAKE/화면 이벤트는 패키지 무관 전부).
-                if (mapping.kind == KIND_APP && event.packageName !in targetPackages) continue
+                if (mapping.kind == UsageEventKind.APP && event.packageName !in targetPackages) continue
                 buffer.add(
                     UsageEventEntity(
                         kind = mapping.kind,
-                        packageName = if (mapping.kind == KIND_APP) event.packageName else "",
+                        packageName = if (mapping.kind == UsageEventKind.APP) event.packageName else "",
                         eventType = mapping.eventType,
                         occurredAt = event.timeStamp,
                     ),

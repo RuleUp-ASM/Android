@@ -1,9 +1,9 @@
 package com.ruleup.verification.data.db
 
 import com.ruleup.verification.data.db.common.toAppEvent
-import com.ruleup.verification.data.db.usage.KIND_APP
-import com.ruleup.verification.data.db.usage.KIND_SCREEN
 import com.ruleup.verification.data.db.usage.UsageEventEntity
+import com.ruleup.verification.data.db.usage.UsageEventKind
+import com.ruleup.verification.data.db.usage.UsageEventType
 import com.ruleup.verification.domain.entity.AppEventType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,9 +14,9 @@ class UsageEntityMapperTest {
     fun `APP 행은 앱 사용 이벤트로 매핑된다`() {
         val app =
             UsageEventEntity(
-                kind = KIND_APP,
+                kind = UsageEventKind.APP,
                 packageName = "com.example.shop",
-                eventType = "RESUMED",
+                eventType = UsageEventType.RESUMED,
                 occurredAt = 10L,
             )
 
@@ -31,12 +31,26 @@ class UsageEntityMapperTest {
         // 화면·잠금해제는 SCREEN_TIME 에 섞지 않는다 — 당일 첫 시각만 뽑아 WAKE 로 따로 나간다.
         val screen =
             UsageEventEntity(
-                kind = KIND_SCREEN,
+                kind = UsageEventKind.SCREEN,
                 packageName = "",
-                eventType = "UNLOCK",
+                eventType = UsageEventType.UNLOCK,
                 occurredAt = 20L,
             )
 
         assertNull(screen.toAppEvent())
+    }
+
+    @Test
+    fun `APP 행이어도 화면 이벤트면 AppEventType 을 지어내지 않는다`() {
+        // 예전 폴백(`?: RESUMED`)이 살아나면 잠금해제 한 번이 앱 실행으로 둔갑해 사용 시간에 섞인다.
+        val broken =
+            UsageEventEntity(
+                kind = UsageEventKind.APP,
+                packageName = "com.example.shop",
+                eventType = UsageEventType.UNLOCK,
+                occurredAt = 30L,
+            )
+
+        assertNull(broken.toAppEvent())
     }
 }

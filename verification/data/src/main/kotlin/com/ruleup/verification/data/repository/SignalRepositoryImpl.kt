@@ -5,7 +5,6 @@ import com.ruleup.observability.domain.api.i
 import com.ruleup.verification.data.db.common.SignalGapDao
 import com.ruleup.verification.data.db.common.toAppEvent
 import com.ruleup.verification.data.db.common.toDomain
-import com.ruleup.verification.data.db.common.toHealthMetric
 import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
 import com.ruleup.verification.data.db.geofence.LocationSampleDao
 import com.ruleup.verification.data.db.health.HealthReadingDao
@@ -118,7 +117,7 @@ class SignalRepositoryImpl
                             add(
                                 VerificationSignal.Health(
                                     date = date,
-                                    metric = metric.toHealthMetric(),
+                                    metric = metric,
                                     readings = rows.map { it.toDomain() },
                                 ),
                             )

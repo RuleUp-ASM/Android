@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.ruleup.verification.data.db.geofence.GeofenceTargetDao
 import com.ruleup.verification.data.db.geofence.GeofenceTargetEntity
 import com.ruleup.verification.data.db.geofence.GeofenceTransitionDao
@@ -46,6 +47,7 @@ import com.ruleup.verification.data.db.usage.UsageTargetEntity
     version = 8,
     exportSchema = false,
 )
+@TypeConverters(VerificationTypeConverters::class)
 abstract class VerificationDatabase : RoomDatabase() {
     abstract fun geofenceTransitionDao(): GeofenceTransitionDao
 

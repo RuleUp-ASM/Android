@@ -212,7 +212,7 @@ class HealthConnectCollector
                                 sleepMillis = session.sleepMillisOrNull(),
                                 observedElapsedMillis = SystemClock.elapsedRealtime(),
                                 originPackage = session.metadata.dataOrigin.packageName,
-                                recordingMethod = recordingMethodOf(session.metadata.recordingMethod).name,
+                                recordingMethod = recordingMethodOf(session.metadata.recordingMethod),
                                 occurredAt = end,
                             )
                     }
@@ -239,12 +239,12 @@ class HealthConnectCollector
         ): HealthReadingEntity =
             HealthReadingEntity(
                 recordId = metadata.id,
-                metric = metric.name,
+                metric = metric,
                 value = value,
                 startTime = startTime.toEpochMilli(),
                 endTime = endTime.toEpochMilli(),
                 originPackage = metadata.dataOrigin.packageName,
-                recordingMethod = recordingMethodOf(metadata.recordingMethod).name,
+                recordingMethod = recordingMethodOf(metadata.recordingMethod),
                 date = date,
                 occurredAt = endTime.toEpochMilli(),
             )

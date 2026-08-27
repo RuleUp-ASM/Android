@@ -3,7 +3,7 @@ package com.ruleup.verification.data.signal.usage
 import android.app.KeyguardManager
 import android.content.Context
 import com.ruleup.verification.data.db.usage.UsageEventDao
-import com.ruleup.verification.domain.entity.ScreenEventType
+import com.ruleup.verification.data.db.usage.UsageEventType
 import com.ruleup.verification.domain.entity.VerificationSignal
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.ZoneId
@@ -24,8 +24,8 @@ class WakeSignalProvider
         /** 당일 첫 시각이 하나도 없으면 null — 보낼 것이 없는 신호는 배치에 넣지 않는다. */
         suspend fun collect(): VerificationSignal.Wake? {
             val since = startOfTodayKst()
-            val firstUnlock = usageEventDao.firstScreenEventAt(ScreenEventType.UNLOCK.name, since)
-            val firstScreenOn = usageEventDao.firstScreenEventAt(ScreenEventType.SCREEN_ON.name, since)
+            val firstUnlock = usageEventDao.firstScreenEventAt(UsageEventType.UNLOCK, since)
+            val firstScreenOn = usageEventDao.firstScreenEventAt(UsageEventType.SCREEN_ON, since)
             if (firstUnlock == null && firstScreenOn == null) return null
 
             return VerificationSignal.Wake(

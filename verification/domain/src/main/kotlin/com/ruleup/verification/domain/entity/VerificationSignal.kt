@@ -14,12 +14,6 @@ enum class AppEventType {
     STOPPED,
 }
 
-/** 화면/잠금해제 이벤트 종류 (WAKE 판정용, 전송 스펙 §4). 로컬 버퍼의 분류 키로만 쓴다. */
-enum class ScreenEventType {
-    UNLOCK,
-    SCREEN_ON,
-}
-
 /**
  * 지오펜스 전이 1건 (전송 스펙 §1). **좌표는 담지 않는다** — 계약에 lat/lng 가 없고, 좌표가 나가는
  * 유일한 통로는 3순위 좌표 가중 체류 챌린지에만 붙는 [LocationPoint] 다.
