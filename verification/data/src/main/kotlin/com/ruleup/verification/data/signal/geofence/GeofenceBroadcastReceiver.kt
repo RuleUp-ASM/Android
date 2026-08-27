@@ -18,9 +18,9 @@ import kotlinx.coroutines.launch
  * 지오펜스 전이 수신(전송 스펙 §1). 즉시 Room geofence_transition 에 적재한다
  * (앱이 죽어도 보존 → sync 가 드레인). 에러(GEOFENCE_NOT_AVAILABLE=위치 꺼짐 등)는 무시한다.
  *
- * 벽시계(`observedAt`)와 monotonic 시각(`observedElapsedMillis`)을 **수신 시점에 함께** 찍는다.
- * 둘의 간격이 어긋나면 시각 조작이라 서버가 대조하는데(전송 스펙 §6.4), 나중에 재구성할 수 없는
- * 값이라 여기서 놓치면 영영 못 채운다.
+ * `occurredAt` 은 **fix 시각**이라 배달이 배칭으로 늦어도 밀리지 않는다(#357). 반면
+ * `observedElapsedMillis` 는 수신 시점 monotonic 이고 나중에 재구성할 수 없다 — 서버는 둘을
+ * 대조해 시각 조작을 본다(전송 스펙 §6.4).
  */
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
     override fun onReceive(
