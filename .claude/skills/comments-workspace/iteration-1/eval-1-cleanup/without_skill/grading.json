@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "되풀이 주석 전멸",
+      "passed": true,
+      "evidence": "12개 전부 삭제, 잔여 0"
+    },
+    {
+      "text": "매직넘버 상수화",
+      "passed": true,
+      "evidence": "CACHE_TTL_MILLIS = 7L * 24 * 60 * 60 * 1000"
+    },
+    {
+      "text": "남은 주석 3개 이하",
+      "passed": true,
+      "evidence": "0개"
+    },
+    {
+      "text": "동작 불변",
+      "passed": true,
+      "evidence": "동일"
+    },
+    {
+      "text": "근거 없는 사실 미창작",
+      "passed": true,
+      "evidence": "7일 근거·null 의미 2건을 질문으로 정리"
+    }
+  ]
+}

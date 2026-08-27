@@ -1,0 +1,84 @@
+{
+  "skill_name": "comments",
+  "iteration": 2,
+  "configurations": {
+    "with_skill": {
+      "pass_rate": 0.9523809523809523,
+      "mean_duration_seconds": 185.05,
+      "mean_tokens": 66769.25,
+      "per_eval": [
+        {
+          "eval_id": "eval-1-cleanup",
+          "pass_rate": 1.0,
+          "passed": 6,
+          "total": 6,
+          "duration_seconds": 82.1,
+          "total_tokens": 45870
+        },
+        {
+          "eval_id": "eval-2-review",
+          "pass_rate": 1.0,
+          "passed": 4,
+          "total": 4,
+          "duration_seconds": 211.0,
+          "total_tokens": 68625
+        },
+        {
+          "eval_id": "eval-3-feature-waitlist",
+          "pass_rate": 1.0,
+          "passed": 6,
+          "total": 6,
+          "duration_seconds": 340.2,
+          "total_tokens": 102253
+        },
+        {
+          "eval_id": "eval-4-bugfix-reconcile",
+          "pass_rate": 0.8,
+          "passed": 4,
+          "total": 5,
+          "duration_seconds": 106.9,
+          "total_tokens": 50329
+        }
+      ]
+    },
+    "without_skill": {
+      "pass_rate": 0.8095238095238095,
+      "mean_duration_seconds": 181.2,
+      "mean_tokens": 63354.5,
+      "per_eval": [
+        {
+          "eval_id": "eval-1-cleanup",
+          "pass_rate": 0.6666666666666666,
+          "passed": 4,
+          "total": 6,
+          "duration_seconds": 58.4,
+          "total_tokens": 37822
+        },
+        {
+          "eval_id": "eval-2-review",
+          "pass_rate": 1.0,
+          "passed": 4,
+          "total": 4,
+          "duration_seconds": 227.5,
+          "total_tokens": 72735
+        },
+        {
+          "eval_id": "eval-3-feature-waitlist",
+          "pass_rate": 0.8333333333333334,
+          "passed": 5,
+          "total": 6,
+          "duration_seconds": 300.8,
+          "total_tokens": 90355
+        },
+        {
+          "eval_id": "eval-4-bugfix-reconcile",
+          "pass_rate": 0.8,
+          "passed": 4,
+          "total": 5,
+          "duration_seconds": 138.1,
+          "total_tokens": 52506
+        }
+      ]
+    }
+  }
+}
