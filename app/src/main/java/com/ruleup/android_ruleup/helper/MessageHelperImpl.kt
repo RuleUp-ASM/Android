@@ -3,7 +3,6 @@ package com.ruleup.android_ruleup.helper
 import android.content.Context
 import android.util.Log
 import com.ruleup.domain.helper.MessageHelper
-import com.ruleup.domain.message.IconType
 import com.ruleup.domain.message.MessageEffect
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
@@ -23,21 +22,11 @@ class MessageHelperImpl
             emit(MessageEffect.ShowToastMsg(toastMsg))
         }
 
-        override fun showSnackBar(
-            iconType: IconType,
-            messageText: String,
-            callToActionText: String?,
-            onClickCTA: (() -> Unit)?,
-        ) {
+        override fun showSnackBar(messageText: String) {
             emit(MessageEffect.ShowSnackBarError(messageText))
         }
 
-        override fun showSnackBar(
-            iconType: IconType,
-            messageRes: Int,
-            callToActionText: String?,
-            onClickCTA: (() -> Unit)?,
-        ) {
+        override fun showSnackBar(messageRes: Int) {
             emit(MessageEffect.ShowSnackBarError(context.getString(messageRes)))
         }
 
@@ -57,18 +46,6 @@ class MessageHelperImpl
                     onClickButton = onClickButton,
                 ),
             )
-        }
-
-        override fun showTwoButtonDialog(
-            titleText: String?,
-            descText: String,
-            cantIgnore: Boolean,
-            leftButtonText: String,
-            onClickLeftButton: (() -> Unit)?,
-            rightButtonText: String,
-            onClickRightButton: (() -> Unit)?,
-        ) {
-            // 미구현 — 호출해도 아무 다이얼로그도 뜨지 않는다.
         }
 
         private fun emit(messageEffect: MessageEffect) {

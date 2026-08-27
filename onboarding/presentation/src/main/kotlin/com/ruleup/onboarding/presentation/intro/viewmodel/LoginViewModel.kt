@@ -3,7 +3,6 @@ package com.ruleup.onboarding.presentation.intro.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.domain.message.IconType
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
@@ -109,10 +108,8 @@ class LoginViewModel
                         // 편집 등 막힌 기능은 각 화면이 ACCOUNT_LOCKED 로 안내한다.
                         is LoginOutcome.GoHomeReadOnly -> {
                             messageHelper.showSnackBar(
-                                iconType = IconType.ERROR,
-                                messageText =
-                                    result.lockInfo?.let { "계정이 잠겨 있어요 (해제: ${it.unlockAt})" }
-                                        ?: "계정이 잠겨 열람만 가능해요",
+                                result.lockInfo?.let { "계정이 잠겨 있어요 (해제: ${it.unlockAt})" }
+                                    ?: "계정이 잠겨 열람만 가능해요",
                             )
                             navigationHelper.navigateTo(HomePage)
                         }
@@ -120,7 +117,6 @@ class LoginViewModel
                         // 복원 중 닉네임을 선점당했다. 바꾸기 전엔 홈으로 보내지 않는다.
                         is LoginOutcome.ResetNickname -> {
                             messageHelper.showSnackBar(
-                                iconType = IconType.ERROR,
                                 messageText = "'${result.currentNickname}' 을(를) 다른 분이 쓰고 있어요. 새 닉네임을 정해주세요",
                             )
                             navigationHelper.navigateTo(OnboardingNicknamePage)
