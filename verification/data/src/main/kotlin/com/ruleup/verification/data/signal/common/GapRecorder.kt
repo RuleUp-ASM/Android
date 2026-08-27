@@ -27,7 +27,7 @@ class GapRecorder
             gapDao.insert(
                 SignalGapEntity(
                     signalType = signalType,
-                    reason = reason.name,
+                    reason = reason,
                     fromMillis = fromMillis,
                     toMillis = toMillis,
                     recoverable = recoverable,

@@ -6,6 +6,7 @@ import com.ruleup.verification.data.db.geofence.LocationSampleEntity
 import com.ruleup.verification.data.db.health.HealthReadingEntity
 import com.ruleup.verification.data.db.health.SleepSessionEntity
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
+import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.RecordingMethod
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -75,12 +76,12 @@ class SignalEntityMapperTest {
         val entity =
             HealthReadingEntity(
                 recordId = "hc-1",
-                metric = "DISTANCE",
+                metric = HealthMetric.DISTANCE,
                 value = 5.2,
                 startTime = 100L,
                 endTime = 123L,
                 originPackage = "com.sec.android.app.shealth",
-                recordingMethod = "AUTO",
+                recordingMethod = RecordingMethod.AUTO,
                 date = "2026-06-24",
                 occurredAt = 123L,
             )
@@ -98,24 +99,6 @@ class SignalEntityMapperTest {
     }
 
     @Test
-    fun `미인식 recordingMethod 는 UNKNOWN 으로 떨어진다`() {
-        val entity =
-            HealthReadingEntity(
-                recordId = "hc-2",
-                metric = "STEPS",
-                value = 1000.0,
-                startTime = 0L,
-                endTime = 0L,
-                originPackage = "com.unknown.app",
-                recordingMethod = "FUTURE_VALUE",
-                date = "2026-06-24",
-                occurredAt = 0L,
-            )
-
-        assertEquals(RecordingMethod.UNKNOWN, entity.toDomain().recordingMethod)
-    }
-
-    @Test
     fun `sleep 세션 엔티티가 도메인으로 매핑된다`() {
         val entity =
             SleepSessionEntity(
@@ -126,7 +109,7 @@ class SignalEntityMapperTest {
                 sleepMillis = 80L,
                 observedElapsedMillis = 55L,
                 originPackage = "com.sec.android.app.shealth",
-                recordingMethod = "AUTO",
+                recordingMethod = RecordingMethod.AUTO,
                 occurredAt = 200L,
             )
 
@@ -150,7 +133,7 @@ class SignalEntityMapperTest {
                 sleepMillis = null,
                 observedElapsedMillis = 0L,
                 originPackage = "com.unknown.app",
-                recordingMethod = "UNKNOWN",
+                recordingMethod = RecordingMethod.UNKNOWN,
                 occurredAt = 100L,
             )
 

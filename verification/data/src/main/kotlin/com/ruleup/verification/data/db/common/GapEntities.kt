@@ -18,8 +18,7 @@ data class SignalGapEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val signalType: String,
-    // GapReason.name
-    val reason: String,
+    val reason: GapReason,
     val fromMillis: Long,
     val toMillis: Long,
     val recoverable: Boolean,
@@ -49,7 +48,7 @@ interface SignalGapDao {
 internal fun SignalGapEntity.toDomain(): SignalGap =
     SignalGap(
         signalType = signalType,
-        reason = runCatching { GapReason.valueOf(reason) }.getOrDefault(GapReason.PERMISSION_MISSING),
+        reason = reason,
         fromMillis = fromMillis,
         toMillis = toMillis,
         recoverable = recoverable,

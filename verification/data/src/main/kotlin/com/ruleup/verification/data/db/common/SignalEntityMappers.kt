@@ -6,9 +6,8 @@ import com.ruleup.verification.data.db.geofence.LocationSampleEntity
 import com.ruleup.verification.data.db.health.HealthReadingEntity
 import com.ruleup.verification.data.db.health.HealthTargetEntity
 import com.ruleup.verification.data.db.health.SleepSessionEntity
-import com.ruleup.verification.data.db.usage.KIND_APP
 import com.ruleup.verification.data.db.usage.UsageEventEntity
-import com.ruleup.verification.domain.entity.AppEventType
+import com.ruleup.verification.data.db.usage.UsageEventKind
 import com.ruleup.verification.domain.entity.AppUsageEvent
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.entity.GeofenceTransitionEvent
@@ -17,7 +16,6 @@ import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.HealthTarget
 import com.ruleup.verification.domain.entity.LocationPoint
-import com.ruleup.verification.domain.entity.RecordingMethod
 import com.ruleup.verification.domain.entity.SleepSession
 
 internal fun GeofenceTransitionEntity.toDomain(): GeofenceTransitionEvent =
@@ -58,14 +56,10 @@ internal fun GeofenceTarget.toEntity(): GeofenceTargetEntity =
     )
 
 internal fun UsageEventEntity.toAppEvent(): AppUsageEvent? =
-    if (kind != KIND_APP) {
+    if (kind != UsageEventKind.APP) {
         null
     } else {
-        AppUsageEvent(
-            packageName = packageName,
-            eventType = eventType.toAppEventType(),
-            at = occurredAt,
-        )
+        eventType.appEventType?.let { AppUsageEvent(packageName = packageName, eventType = it, at = occurredAt) }
     }
 
 internal fun HealthReadingEntity.toDomain(): HealthReading =
@@ -74,7 +68,7 @@ internal fun HealthReadingEntity.toDomain(): HealthReading =
         value = value,
         startTime = startTime,
         endTime = endTime,
-        recordingMethod = recordingMethod.toRecordingMethod(),
+        recordingMethod = recordingMethod,
         originPackage = originPackage,
     )
 
@@ -86,7 +80,7 @@ internal fun SleepSessionEntity.toDomain(): SleepSession =
         durationMillis = durationMillis,
         sleepMillis = sleepMillis,
         observedElapsedMillis = observedElapsedMillis,
-        recordingMethod = recordingMethod.toRecordingMethod(),
+        recordingMethod = recordingMethod,
         originPackage = originPackage,
     )
 
@@ -105,8 +99,4 @@ internal fun HealthTarget.toEntity(): HealthTargetEntity =
 private fun String.toGeofenceTransitionType(): GeofenceTransitionType =
     GeofenceTransitionType.entries.find { it.name == this } ?: GeofenceTransitionType.ENTER
 
-internal fun String.toHealthMetric(): HealthMetric = HealthMetric.entries.find { it.name == this } ?: HealthMetric.STEPS
-
-private fun String.toRecordingMethod(): RecordingMethod = RecordingMethod.entries.find { it.name == this } ?: RecordingMethod.UNKNOWN
-
-private fun String.toAppEventType(): AppEventType = AppEventType.entries.find { it.name == this } ?: AppEventType.RESUMED
+private fun String.toHealthMetric(): HealthMetric = HealthMetric.entries.find { it.name == this } ?: HealthMetric.STEPS

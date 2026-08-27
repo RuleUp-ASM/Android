@@ -6,10 +6,27 @@ import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Upsert
+import com.ruleup.verification.domain.entity.AppEventType
 
-/** usage_event.kind 구분: 대상 앱 전후면(APP) vs 화면/잠금해제(SCREEN). */
-internal const val KIND_APP = "APP"
-internal const val KIND_SCREEN = "SCREEN"
+/** usage_event 행 구분: 대상 앱 전후면(APP) vs 화면/잠금해제(SCREEN). */
+enum class UsageEventKind {
+    APP,
+    SCREEN,
+}
+
+/**
+ * usage_event.eventType. 한 컬럼에 두 계열이 섞이므로 [UsageEventKind] 별 값 집합의 합집합이다.
+ * [appEventType] 이 있는 값만 APP 행에 오고, 없는 값(UNLOCK·SCREEN_ON)은 SCREEN 행에만 온다.
+ */
+enum class UsageEventType(
+    val appEventType: AppEventType?,
+) {
+    RESUMED(AppEventType.RESUMED),
+    PAUSED(AppEventType.PAUSED),
+    STOPPED(AppEventType.STOPPED),
+    UNLOCK(null),
+    SCREEN_ON(null),
+}
 
 /**
  * 스크린타임/WAKE 버퍼(명세 §2.2). 시스템이 며칠 내 정리하므로 매 sync 마다 커서~now 를 누적 적재한다.
@@ -19,12 +36,10 @@ internal const val KIND_SCREEN = "SCREEN"
 data class UsageEventEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    // APP | SCREEN
-    val kind: String,
+    val kind: UsageEventKind,
     // APP 일 때만 채움(SCREEN 은 "")
     val packageName: String,
-    // APP: RESUMED/PAUSED/STOPPED · SCREEN: UNLOCK/SCREEN_ON
-    val eventType: String,
+    val eventType: UsageEventType,
     val occurredAt: Long,
     val synced: Boolean = false,
     val collectedAt: String? = null,
@@ -68,7 +83,7 @@ interface UsageEventDao {
             "WHERE kind = 'SCREEN' AND eventType = :eventType AND occurredAt >= :since",
     )
     suspend fun firstScreenEventAt(
-        eventType: String,
+        eventType: UsageEventType,
         since: Long,
     ): Long?
 
