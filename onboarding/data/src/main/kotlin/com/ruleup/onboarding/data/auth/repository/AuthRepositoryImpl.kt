@@ -92,10 +92,8 @@ class AuthRepositoryImpl
     }
 
 /**
- * 인증 계열 호출을 감싸 실패를 [AuthException] 으로 통일한다.
- *
- * 네트워크 오류([IOException])는 재시도로 풀릴 수 있어 따로 구분한다 — 서버가 준 에러와 섞으면
- * 화면이 "다시 시도"를 권할지 "로그인부터 다시"를 권할지 정할 수 없다.
+ * 인증 계열 호출의 실패를 [AuthException] 으로 통일한다. 네트워크 오류([IOException])만 따로 구분한다 —
+ * 서버가 준 에러와 섞으면 화면이 "다시 시도"를 권할지 "로그인부터 다시"를 권할지 정할 수 없다.
  */
 private suspend fun <T> mapAuthFailure(block: suspend () -> T): T =
     try {

@@ -28,9 +28,8 @@ import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * 30분 주기 sync 실행기(명세 §3.1). Hilt(@HiltWorker)가 의존성을 주입하고
- * HiltWorkerFactory 가 인스턴스화한다.
- * 결과 매핑: 성공/폐기(400)→success, 429/일시오류→retry(백오프). 멱등 키 collectedAt 는 매 실행 stamp.
+ * 30분 주기 sync 실행기(명세 §3.1). 결과 매핑: 성공·폐기(400)→success, 429·일시오류→retry(백오프).
+ * 멱등 키 collectedAt 는 매 실행 stamp 한다.
  */
 @HiltWorker
 class VerificationSyncWorker
@@ -64,7 +63,7 @@ class VerificationSyncWorker
 
         private suspend fun runSync(): Result {
             val scope = syncScopeProvider.currentScope()
-            // 디버그 가시화: 이번 sync 의 수집 스코프(타깃이 비면 수집기가 전부 생략됨).
+            // 타깃이 비면 수집기가 전부 생략된다 — 스코프를 먼저 남긴다.
             observability.i(LOG_TAG) {
                 "sync 시작 — scope: geofence=${scope.activeRequestIds.size}, " +
                     "usage=${scope.targetPackages.size}, health=${scope.healthTargets.size}, " +
@@ -74,7 +73,6 @@ class VerificationSyncWorker
             return try {
                 val result = runSyncUseCase(scope, collectedAt)
                 if (result != null) {
-                    // updatedChallenges → 진행률 캐시, flushIntervalSec → 다음 주기 동적 조정.
                     progressCacheStore.upsert(result.updatedChallenges)
                     syncScheduler.reschedule(result.flushIntervalSec)
                     // 진단 heartbeat 앵커(전송 스펙 §0.7) — 다음 envelope 에 마지막 성공 flush 시각으로 동봉.
@@ -85,7 +83,6 @@ class VerificationSyncWorker
                             "상한=${result.maxPayloadBytes ?: "미수신"}"
                     }
                 } else {
-                    // 활성 챌린지도 신호·gap 도 없어 전송 생략.
                     observability.i(LOG_TAG) { "sync 전송 생략 — 활성 챌린지·신호·gap 0" }
                 }
                 Result.success()

@@ -8,7 +8,6 @@ package com.ruleup.verification.domain.entity
  * 성공 응답의 [anchors] 는 항상 1개 이상이다.
  */
 data class MyLocation(
-    // 바인딩된 앵커 목록(1개 이상)
     val anchors: List<LocationPin>,
     // 앵커 마지막 적용 시각(ISO-8601). 적용 이력 없으면 null
     val appliedFrom: String?,

@@ -7,10 +7,8 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface MyTemperatureIntent : MviIntent {
-    /** 화면 진입 시 온도 상세 조회. */
     data object Load : MyTemperatureIntent
 
-    /** 평판 히스토리로 이동. */
     data object OpenHistory : MyTemperatureIntent
 
     data object Back : MyTemperatureIntent

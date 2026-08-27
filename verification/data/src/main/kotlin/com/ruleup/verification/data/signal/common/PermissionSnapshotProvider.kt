@@ -81,7 +81,6 @@ class PermissionSnapshotProvider
             }
 
         private companion object {
-            // androidx.health 백그라운드 읽기 권한 문자열(grant 집합과 비교).
             const val PERMISSION_HEALTH_BACKGROUND = "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
         }
     }

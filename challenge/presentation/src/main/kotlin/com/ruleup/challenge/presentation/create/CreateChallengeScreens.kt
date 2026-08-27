@@ -20,10 +20,7 @@ import com.ruleup.ui.helper.LocalMessageHelper
 private fun sharedCreateChallengeViewModel(): CreateChallengeViewModel =
     hiltViewModel(viewModelStoreOwner = rememberActivityViewModelStoreOwner())
 
-/**
- * ViewModel 의 단발성 효과 처리: 에러 토스트 + AUTO 권한 요청.
- * 권한 요청은 OS 다이얼로그가 끝날 때까지 suspend 되며, 허용 결과를 [CreateChallengeIntent.PermissionsResult] 로 되돌린다.
- */
+/** 권한 요청은 OS 다이얼로그가 끝날 때까지 suspend 되며, 허용 결과를 [CreateChallengeIntent.PermissionsResult] 로 되돌린다. */
 @Composable
 private fun CollectEffects(viewModel: CreateChallengeViewModel) {
     val messageHelper = LocalMessageHelper.current

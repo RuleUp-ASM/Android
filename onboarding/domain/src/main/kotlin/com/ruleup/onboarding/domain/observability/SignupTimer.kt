@@ -9,7 +9,7 @@ import javax.inject.Singleton
  * 로그인 화면과 온보딩 마지막 단계가 서로 다른 ViewModel 이라 값을 넘길 자리가 없다. 가입 흐름은
  * 앱 전체에 하나뿐이므로 싱글턴에 시작 시각만 들고 있는다.
  *
- * 시작 기록이 없으면 [elapsedMillis] 가 null 이다 — 0 을 돌려주면 "0초 만에 가입"이라는 없는 표본이
+ * 시작 기록이 없으면 [consumeElapsedMillis] 가 null 이다 — 0 을 돌려주면 "0초 만에 가입"이라는 없는 표본이
  * 집계에 섞인다.
  */
 @Singleton

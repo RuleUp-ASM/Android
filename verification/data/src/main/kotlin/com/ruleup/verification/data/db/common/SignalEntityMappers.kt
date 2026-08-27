@@ -57,7 +57,6 @@ internal fun GeofenceTarget.toEntity(): GeofenceTargetEntity =
         dwellMinutes = dwellMinutes,
     )
 
-/** kind=APP 인 행만 앱 사용 이벤트로 변환(아니면 null). */
 internal fun UsageEventEntity.toAppEvent(): AppUsageEvent? =
     if (kind != KIND_APP) {
         null
@@ -106,7 +105,6 @@ internal fun HealthTarget.toEntity(): HealthTargetEntity =
 private fun String.toGeofenceTransitionType(): GeofenceTransitionType =
     GeofenceTransitionType.entries.find { it.name == this } ?: GeofenceTransitionType.ENTER
 
-/** 버퍼에 저장된 metric 문자열 → 도메인 enum. 미인식은 STEPS 로 떨어뜨린다. */
 internal fun String.toHealthMetric(): HealthMetric = HealthMetric.entries.find { it.name == this } ?: HealthMetric.STEPS
 
 private fun String.toRecordingMethod(): RecordingMethod = RecordingMethod.entries.find { it.name == this } ?: RecordingMethod.UNKNOWN

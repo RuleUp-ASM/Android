@@ -60,9 +60,8 @@ interface UsageEventDao {
     suspend fun markSynced(key: String)
 
     /**
-     * 당일 첫 화면 이벤트 시각(전송 스펙 §4 WAKE). **미전송분만이 아니라 [since] 이후 전부**를 본다 —
-     * 첫 잠금해제는 하루 한 번뿐이라 그 이벤트가 앞선 배치로 이미 나갔으면 이후 sync 마다 값이
-     * 사라진다. 같은 값을 다시 올리는 편이 맞다(서버가 신호 단위로 멱등 처리).
+     * 당일 첫 화면 이벤트 시각(전송 스펙 §4 WAKE). **미전송분이 아니라 [since] 이후 전부**를 본다 —
+     * 첫 잠금해제는 하루 한 번뿐이라, 앞선 배치로 이미 나갔으면 이후 sync 에서 값이 사라진다(서버는 멱등).
      */
     @Query(
         "SELECT MIN(occurredAt) FROM usage_event " +

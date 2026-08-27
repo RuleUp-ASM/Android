@@ -10,17 +10,11 @@ import com.ruleup.observability.domain.model.AttrValue
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * [ObsEvent] → Firebase Analytics 이벤트 이름·파라미터 매핑.
+ * [ObsEvent] → Firebase Analytics 매핑. Firebase 제약을 **여기서 흡수한다** — 이름 40자·키 40자·
+ * 값 100자·이벤트당 파라미터 25개, 값 타입은 `String`·`Long`·`Double` 뿐이라 `Boolean` 은 0/1 `Long` 이다.
  *
- * Firebase 제약을 **여기서 흡수한다.** 도메인 페이로드는 이 제약을 모르고, 알아서도 안 된다.
- * - 이벤트 이름: snake_case, 40자 이하
- * - 파라미터: 이벤트당 25개 이하, 키 40자 이하, 문자열 값 100자 이하
- *
- * 값 타입은 `String`·`Long`·`Double`·`Bundle` 만 지원하므로 [AttrValue] 를 그에 맞게 매핑한다.
- * `Boolean` 은 0/1 `Long` 이다.
- *
- * **절단은 조용히 일어난다.** 100자에서 잘린 값은 분석에서 다른 값과 뭉치는데, 그 사실이
- * 어디에도 안 남는다. [truncated] 카운터를 `ObservabilityDiagnostics` 가 노출해 인스펙터가 읽는다.
+ * **절단은 조용히 일어난다.** 잘린 값은 분석에서 다른 값과 뭉치므로 [truncated] 로 세어
+ * `ObservabilityDiagnostics` 가 인스펙터에 노출한다.
  */
 internal object FirebaseEventMapper {
     private const val MAX_NAME = 40

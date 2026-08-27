@@ -12,10 +12,8 @@ import javax.inject.Singleton
 
 /**
  * Play Integrity verdict 토큰 채집(전송 스펙 §6.5). best-effort — 미지원/실패면 null(envelope 에서 생략).
- *
- * - graded: 하드 차단이 아니라 서버가 신뢰도 하향에 쓴다. 클라 판정은 무가치하고 서버가 구글 공개키로 검증.
- * - 쿼터: 매 flush 호출 금지(§6.5). [COOLDOWN_MS] 동안 캐시 토큰을 재사용한다(세션/주기당 1회).
- * - nonce: 재생 방지용. 정식 운영은 서버 발급 nonce 바인딩이 필요(현재는 클라 nonce — Phase 2 보강).
+ * 쿼터 때문에 매 flush 요청은 금지라 [COOLDOWN_MS] 동안 캐시 토큰을 재사용한다. 검증은 전부 서버 몫이다.
+ * nonce 는 아직 클라 발급이다 — 정식 운영은 서버 발급 nonce 바인딩이 필요(§6.5, Phase 2).
  */
 @Singleton
 class IntegrityTokenProvider

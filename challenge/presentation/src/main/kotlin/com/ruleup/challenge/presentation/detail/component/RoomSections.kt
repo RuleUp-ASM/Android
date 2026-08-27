@@ -33,9 +33,7 @@ import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import java.util.Locale
 
-// 방 홈 섹션 모음 (그룹 챌린지 ACTIVE 멤버 전용 — GET room 성공 시 상세에 확장 렌더링).
-// 요약 3카드 스타일은 피그마 "챌린지 상세 그룹"(420:321) 시안, 공지·랭킹 섹션은 시안 부재로
-// 기존 디자인 시스템 토큰으로 구성했다.
+// 방 홈(그룹 챌린지 ACTIVE 멤버 전용 — GET room 성공 시 상세에 확장 렌더링)에서만 쓰인다.
 
 /** 성공률 0~1 → 표시용 백분율. 0.92 → "92", 0.925 → "92.5". */
 internal fun Double.toPercentText(): String {
@@ -48,12 +46,8 @@ internal fun Double.toPercentText(): String {
 }
 
 /**
- * 멤버 섹션: 인원/정원 + 멤버 목록(닉네임·역할 뱃지·매너온도) + 하단 탈퇴/삭제 액션.
- * 디자인 시안 부재 — 방 홈 섹션 카드 컨벤션을 따른다.
- *
- * 탈퇴는 비방장만, 삭제는 방장 + 참여자(방장 제외) 0명일 때만 노출한다(서버 규칙과 동일).
- * 방장은 각 멤버 행의 관리 메뉴로 공동 관리자 임명/해제·방장 위임을 수행한다.
- * 실제 실행은 확인 다이얼로그를 거쳐 콜백으로 올려보낸다.
+ * 탈퇴·삭제 노출 조건은 서버 규칙과 같다 — 삭제는 방장 + 참여자(본인 제외) 0명일 때만이다.
+ * 디자인 시안이 없어 방 홈 섹션 카드 컨벤션을 따른다.
  */
 @Composable
 internal fun RoomMemberSection(
@@ -89,9 +83,7 @@ internal fun RoomMemberSection(
         members.forEach { member ->
             MemberRow(
                 member = member,
-                // 방장은 방장 자신(OWNER)을 제외한 멤버를 관리한다.
                 ownerManage = myRole.isOwner && !member.role.isOwner,
-                // 관리자는 본인 행에서만 스스로 관리자 해제(self-DEMOTE)할 수 있다.
                 selfDemote = myRole.isManager && member.role.isManager && member.userId == myUserId,
                 actionEnabled = actionEnabled,
                 onPromote = { onPromote(member.userId) },
@@ -184,10 +176,6 @@ private fun MemberRow(
     }
 }
 
-/**
- * 멤버 관리 메뉴("⋯"). [selfDemote] 면 관리자 본인의 "관리자 그만두기"만,
- * 아니면 방장이 대상 역할에 따라 임명/해제·방장 위임 항목을 노출한다.
- */
 @Composable
 private fun MemberManageMenu(
     role: MemberRole,
@@ -253,7 +241,6 @@ private fun MemberManageMenu(
     }
 }
 
-/** 대기 중인 방장 위임 요청 배너 + 취소. */
 @Composable
 private fun DelegationBanner(
     text: String,
@@ -287,7 +274,6 @@ private fun DelegationBanner(
     }
 }
 
-/** 방장/관리자만 뱃지를 노출하고, 일반 멤버는 뱃지를 생략한다. */
 @Composable
 private fun RoleBadge(role: MemberRole) {
     val label =

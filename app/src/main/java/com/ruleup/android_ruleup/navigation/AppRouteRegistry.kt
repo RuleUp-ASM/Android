@@ -255,7 +255,6 @@ val appRoutes: List<AppRoute> =
         ),
     )
 
-/** 1단계(닉네임)를 뿌리로, 뒤이은 단계를 순서대로 쌓는다. */
 private fun onboardingStack(vararg paths: String): List<GenericNavKey> =
     listOf(GenericNavKey(OnboardingNicknamePage.PATH)) + paths.map { GenericNavKey(it) }
 

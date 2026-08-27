@@ -9,10 +9,8 @@ sealed interface ObsPayload {
     val attrs: Attributes
 
     /**
-     * 게이트 판정 축. 진단 외 채널은 [Severity.INFO] 다.
-     *
-     * floor 는 **채널별로 독립**이므로 이 기본값이 진단 채널의 floor 에 걸려 죽지 않는다.
-     * [com.ruleup.observability.domain.port.Policy.isEnabled] 참고.
+     * 게이트 판정 축. 진단 외 채널은 [Severity.INFO] 다 — floor 가 **채널별로 독립**이라
+     * 이 기본값이 진단 채널 floor 에 걸려 죽지 않는다([com.ruleup.observability.domain.port.Policy.isEnabled]).
      */
     val severity: Severity get() = Severity.INFO
 

@@ -39,9 +39,8 @@ data class OnboardingState(
         val initial = OnboardingState()
 
         /**
-         * 생년월일 입력 자릿수(YYYYMMDD). **도메인 규칙이 아니라 입력 위젯의 형식**이다 —
-         * 검증은 [com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase] 가 연·월·일을
-         * 따로 받아서 한다. 화면과 ViewModel 이 같은 값을 봐야 해서 여기 둔다.
+         * 생년월일 입력 자릿수(YYYYMMDD). **도메인 규칙이 아니라 입력 위젯의 형식**이다 — 검증은
+         * `ValidateBirthDateUseCase` 가 연·월·일을 따로 받아서 한다.
          */
         const val BIRTH_DATE_LENGTH = 8
     }

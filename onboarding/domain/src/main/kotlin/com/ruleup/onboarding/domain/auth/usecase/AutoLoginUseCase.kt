@@ -7,14 +7,7 @@ import com.ruleup.onboarding.domain.observability.OnboardingEvents
 import com.ruleup.onboarding.domain.observability.SessionExpiredTrigger
 import javax.inject.Inject
 
-/**
- * 자동 로그인 유스케이스.
- *
- * 저장된 refreshToken 으로 앱 토큰을 재발급(명세 4.4)해 세션을 복구한다.
- * - refreshToken 이 없으면 → false (로그인 필요).
- * - 재발급 성공 → 새 토큰을 저장하고 true (홈 진입).
- * - 재발급 실패(만료·서버 오류 등) → 로컬 토큰을 정리하고 false (로그인 필요).
- */
+/** 자동 로그인. 저장된 refreshToken 으로 앱 토큰을 재발급(명세 4.4)해 세션을 복구한다. */
 class AutoLoginUseCase
     @Inject
     constructor(
@@ -27,8 +20,7 @@ class AutoLoginUseCase
             return runCatching { authRepository.refreshToken(refreshToken) }
                 .fold(
                     onSuccess = {
-                        // 갱신 응답이 userId 를 함께 주므로 여기서 세션이 완성된다 — 예전엔 이 값이
-                        // 비어 프로필 조회로 따로 메워야 했다.
+                        // 갱신 응답이 userId 를 함께 줘서 프로필 조회 없이 세션이 완성된다.
                         tokenRepository.saveTokens(it.token, it.userId)
                         true
                     },
@@ -39,12 +31,8 @@ class AutoLoginUseCase
                         if (latest != null && latest != refreshToken) {
                             true
                         } else {
-                            // 여기가 세션이 실제로 끊긴 지점이다 — 자진 로그아웃은 refreshToken 이 이미
-                            // 없어 위에서 일찍 빠지므로 여기 오지 않는다.
-                            //
-                            // 다른 기기 로그인 때문인지 단순 만료인지는 **계약상 구분할 수 없다**.
-                            // 서버가 둘 다 401 SESSION_EXPIRED 로 내려서, 트리거 분리는 응답에
-                            // 사유가 실린 뒤에나 가능하다.
+                            // 세션이 실제로 끊긴 지점. 다른 기기 로그인 때문인지 단순 만료인지는
+                            // 서버가 둘 다 401 SESSION_EXPIRED 로 내려 구분할 수 없다.
                             observability.log(Channel.BUSINESS) {
                                 OnboardingEvents.sessionExpired(SessionExpiredTrigger.EXPIRED)
                             }

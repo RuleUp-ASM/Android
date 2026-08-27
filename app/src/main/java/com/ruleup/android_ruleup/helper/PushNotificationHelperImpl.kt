@@ -20,12 +20,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 /**
- * [PushNotificationHelper] 안드로이드 구현. NotificationManager 로 시스템 알림을 띄우고,
- * 탭하면 **[MainActivity] 를 명시한 인텐트**로 진입시킨다.
+ * [PushNotificationHelper] 안드로이드 구현. 탭하면 **[MainActivity] 를 명시한 인텐트**로 진입한다.
  *
- * 예전에는 암시적 `ACTION_VIEW` + URL 이었다. 우리 앱이 만드는 알림인데 URL 을 경유해 매니페스트
- * 라우팅을 타는 구조였고, 그 대가로 `pathPrefix="/app"` 이 필요했다 — 검증된 도메인이라
- * **아무 웹페이지나 같은 URL 로 앱 화면을 열 수 있었다.** 목적지를 extra 로 실으면 그 표면이 사라진다.
+ * 암시적 `ACTION_VIEW` 로 두면 매니페스트에 `pathPrefix="/app"` 필터가 필요하고, 그 순간
+ * 아무 웹페이지나 같은 URL 로 앱 화면을 열 수 있게 된다(#179).
  */
 class PushNotificationHelperImpl
     @Inject

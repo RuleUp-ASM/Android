@@ -37,14 +37,8 @@ import com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsViewModel
 import com.ruleup.verification.domain.entity.AppealHistoryItem
 
 /**
- * 이의 내역 (Figma `1134:2291`).
- *
- * Figma 상단의 챌린지별 "이번 달 N회 남음" 카드와 하단의 "챌린지마다 한 달 3회까지"는 **만들지 않는다**
- * — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2). 남은 한도를 세어 보여주면 있지도 않은 제약을
- * 사용자에게 만들어 주게 된다.
- *
- * 상태 배지가 `인용` 하나뿐인 것도 계약 그대로다. 접수되면 즉시 인용되므로 계류·기각이 없고,
- * 형식 미달은 접수 자체가 안 되어 이력에 남지 않는다.
+ * 이의 내역 (Figma `1134:2291`). Figma 의 "이번 달 N회 남음"·"한 달 3회까지"는 만들지 않는다 —
+ * 이의 횟수 한도가 폐기돼(챌린지 정책 §7.2) 남은 한도를 세면 없는 제약을 만들어 주게 된다.
  */
 @Composable
 fun MyAppealsScreen(

@@ -68,7 +68,7 @@ private data class SortOption(
     val description: String,
 )
 
-/** 05 · 챌린지 정렬 시트. 7종 중 하나를 선택하면 즉시 적용된다(방향은 정의로 고정, 미노출). */
+/** 05 · 챌린지 정렬 시트. 명세 6종 중 하나를 고르면 즉시 적용된다(방향은 정의로 고정, 미노출). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ExploreSortSheet(

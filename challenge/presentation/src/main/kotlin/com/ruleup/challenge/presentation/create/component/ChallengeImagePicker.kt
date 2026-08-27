@@ -20,20 +20,14 @@ import java.io.File
  * 선택/촬영된 이미지의 URI(문자열)는 [rememberChallengeImagePicker] 의 콜백으로 전달된다.
  */
 interface ChallengeImagePicker {
-    /** 카메라 앱을 띄워 사진을 촬영한다. */
     fun launchCamera()
 
-    /** 갤러리(사진 선택기)를 띄운다. */
     fun launchGallery()
 }
 
-/**
- * 현재 플랫폼의 [ChallengeImagePicker] 를 생성한다.
- * @param onImagePick 선택/촬영 성공 시 이미지 URI 문자열을 받는 콜백.
- */
+/** @param onImagePick 선택/촬영 성공 시 이미지 URI 문자열을 받는 콜백. */
 @Composable
 fun rememberChallengeImagePicker(onImagePick: (String) -> Unit): ChallengeImagePicker {
-    // 프리뷰(@Preview)에서는 no-op 을 돌려준다.
     if (LocalInspectionMode.current) return NoOpChallengeImagePicker
 
     val context = LocalContext.current
@@ -66,7 +60,6 @@ fun rememberChallengeImagePicker(onImagePick: (String) -> Unit): ChallengeImageP
     }
 }
 
-/** 프리뷰용 no-op 피커. */
 private object NoOpChallengeImagePicker : ChallengeImagePicker {
     override fun launchCamera() = Unit
 

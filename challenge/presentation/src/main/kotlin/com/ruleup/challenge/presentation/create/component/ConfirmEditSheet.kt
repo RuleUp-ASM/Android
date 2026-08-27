@@ -298,13 +298,10 @@ private fun PeriodEditor(
     }
 }
 
-/** 주간 횟수 슬라이더의 값 범위. 명세 1~7. */
 private val weeklyCountRange =
     ChallengeLimits.WEEKLY_COUNT_MIN.toFloat()..ChallengeLimits.WEEKLY_COUNT_MAX.toFloat()
 
 /**
- * 주간 횟수 슬라이더 (1~7).
- *
  * 눈금이 7칸뿐이라 [Slider] 의 `steps` 로 딱 떨어지게 잡고, 숫자 라벨을 직접 탭해도 선택되게 둔다 —
  * 슬라이더 손잡이만으로 한 칸을 정확히 맞추는 건 손가락으로 하기 번거롭다.
  */

@@ -12,11 +12,8 @@ import kotlinx.serialization.Serializable
 // 모든 시각은 Long epoch millis 다(전송 스펙 설계 원칙 ①) — 문자열 변환을 거치지 않는다.
 
 /**
- * 지오펜스 전이 1건(전송 스펙 §1). 좌표는 계약에 없어 보내지 않는다 — 좌표가 나가는 유일한 통로는
- * [LocationPointRequest] 다.
- *
- * 정확도·mock 여부는 OS 가 위치를 안 준 전이에서 null 이고, `explicitNulls=false` 라 그 경우
- * 필드가 통째로 빠진 채 전송된다.
+ * 지오펜스 전이 1건(전송 스펙 §1). 좌표가 나가는 유일한 통로는 [LocationPointRequest] 다.
+ * 정확도·mock 은 OS 가 위치를 안 준 전이에서 null 이고, `explicitNulls=false` 라 필드째 빠져 나간다.
  */
 @Serializable
 data class GeofenceEventRequest(

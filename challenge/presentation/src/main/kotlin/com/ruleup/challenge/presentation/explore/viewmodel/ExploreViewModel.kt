@@ -111,7 +111,6 @@ class ExploreViewModel
                     dispatch(ExploreReducerEvent.TrendingLoading)
                     retryOnce { exploreRepository.getTrending() }
                         .onSuccess { snapshot ->
-                            // 서버는 Top 20 을 주지만 탐색 메인은 상위 5개만 노출한다(API 명세).
                             val shown = snapshot.items.take(TRENDING_MAIN_COUNT)
                             dispatch(
                                 ExploreReducerEvent.TrendingLoaded(

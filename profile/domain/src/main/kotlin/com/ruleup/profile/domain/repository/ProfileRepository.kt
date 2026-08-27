@@ -8,20 +8,12 @@ import com.ruleup.profile.domain.entity.Profile
 
 /**
  * 계정 프로필 계약 (명세 4.6~4.11). 구현은 :profile:data.
- *
- * 계정 정보의 소유자는 profile 이다. 온보딩은 최초 설정을 하고 지나가는 단계라 이 계약을
- * 빌려 쓴다(:onboarding:domain → :profile:domain).
+ * 계정 정보의 소유자가 profile 이라 온보딩이 이 계약을 빌려 쓴다(:onboarding:domain → :profile:domain).
  */
 interface ProfileRepository {
     /**
-     * 내 프로필 조회 (GET /api/v1/users/me).
-     *
-     * 로그인 응답의 `user` 는 홈 진입용 최소 정보라 생일·성별·약관 동의가 없다. 앱 재시작이나
-     * 프로필 편집 후 최신 상태가 필요할 때 쓴다.
-     *
-     * 레거시 [getProfile] 과 공존한다 — 그쪽은 아직 구 엔드포인트(`GET /v1/profile`)를 보고 있고
-     * 매너 온도·닉네임 변경 이력처럼 새 응답에 없는 필드를 마이페이지가 쓰고 있다. 마이페이지
-     * 계약 정합화에서 하나로 합친다.
+     * 내 프로필 조회 (GET /api/v1/users/me). 로그인 응답에 없는 생일·성별·약관 동의가 여기 있다.
+     * 매너 온도·닉네임 변경 이력은 아직 이 응답에 없어 레거시 [getProfile] 과 공존한다.
      */
     suspend fun getMyProfile(): MyProfile
 

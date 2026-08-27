@@ -24,8 +24,7 @@ private const val SYNC_LOG_TAG = "VerifySync"
 // 상세 로그 폭주 방지: 타입별 최대 이만큼만 값까지 찍고 나머지는 "…외 N건" 으로 줄인다.
 private const val MAX_DETAIL_PER_TYPE = 30
 
-// 드레인된 행의 실제 값을 한 줄씩 'VerifySync' 로 남긴다(디버그 오버레이/Logcat).
-// line(it) 은 게이트를 통과한 뒤에만 평가된다 — Timber 시절의 treeCount 가드가 필요 없어졌다.
+// line(it) 은 로그 게이트를 통과한 뒤에만 평가된다 — Timber 시절의 treeCount 가드가 필요 없어졌다.
 private fun <T> List<T>.logSignalDetail(
     observability: Observability,
     type: String,
@@ -55,7 +54,7 @@ class SignalRepositoryImpl
         private val observability: Observability,
     ) : SignalRepository {
         override suspend fun drainPending(collectedAt: String): SignalBatch? {
-            // 미드레인 행에 배치키를 부여(드레인 도중 새로 들어온 행은 null 로 남아 다음 배치로).
+            // 미전송 행 전부에 이번 배치키를 부여한다 — 앞 배치가 실패해 키만 남은 행도 다시 싣는다(#319).
             geofenceTransitionDao.tagPending(collectedAt)
             locationSampleDao.tagPending(collectedAt)
             usageEventDao.tagPending(collectedAt)
@@ -67,12 +66,11 @@ class SignalRepositoryImpl
             val usage = usageEventDao.byBatch(collectedAt)
             val healthReadings = healthReadingDao.byBatch(collectedAt)
             val sleepSessions = sleepSessionDao.byBatch(collectedAt)
-            // 디버그 가시화(수집 경로): 이번 배치로 드레인된 신호 건수를 타입별로 남긴다(0이면 스코프/권한 미충족).
+            // 건수가 0이면 스코프가 비었거나 권한이 없다는 뜻이다.
             observability.i(SYNC_LOG_TAG) {
                 "수집 드레인 — geofence=${transitions.size}, location=${locations.size}, " +
                     "usage=${usage.size}, health=${healthReadings.size}, sleep=${sleepSessions.size}"
             }
-            // 건수 다음으로 실제 값까지 한 줄씩(타입별 최대 30건). 어느 패키지·좌표·헬스 수치·전이인지 눈으로 확인.
             transitions.logSignalDetail(observability, "geofence") {
                 "geofence ${it.transition} req=${it.requestId} at=${it.occurredAt} acc=${it.accuracy}m mock=${it.isMock}"
             }

@@ -66,7 +66,6 @@ fun PhotoContent(
             subtitle = "그룹 멤버들에게 보여요",
         )
 
-        // 메인 아바타 + 카메라 뱃지
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             Box(
                 modifier =
@@ -93,7 +92,6 @@ fun PhotoContent(
                     )
                 }
 
-                // 사진 변경 뱃지(카메라) — 항상 노출
                 Box(
                     modifier =
                         Modifier
@@ -115,7 +113,6 @@ fun PhotoContent(
             }
         }
 
-        // 카메라 / 갤러리 카드
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp),

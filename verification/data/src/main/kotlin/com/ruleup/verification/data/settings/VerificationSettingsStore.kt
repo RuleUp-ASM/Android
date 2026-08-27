@@ -15,12 +15,8 @@ import javax.inject.Qualifier
 annotation class VerificationPrefs
 
 /**
- * 자동인증 클라이언트 상태 영속(전송 스펙 §0.1·§0.3·§0.7).
- *
- * - 부팅 세션: [bootSessionId] 와 부팅 epoch 앵커([bootEpochAnchor])를 보관해, 재부팅으로 앵커가 바뀌면
- *   새 세션 id 를 발급한다(§6.4 시각 위조 방어 — 같은 부팅 세션 내 점프 탐지의 기준).
- * - 진단 앵커: 마지막 성공 flush·지오펜스 재등록 시각(§0.7 heartbeat).
- * - 서버 정책: Phase 0(로그인) 응답으로 받은 flushIntervalSec(§0.3). 미수신이면 null.
+ * 자동인증 클라이언트 상태 영속(전송 스펙 §0.1·§0.3·§0.7 — 부팅 세션·진단 앵커·서버 정책).
+ * 부팅 epoch 앵커가 바뀌면 새 세션 id 를 발급한다 — 서버는 같은 세션 안의 시각 점프로 위조를 본다(§6.4).
  */
 class VerificationSettingsStore
     @Inject

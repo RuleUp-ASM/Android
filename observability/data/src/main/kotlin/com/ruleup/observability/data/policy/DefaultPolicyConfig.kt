@@ -4,10 +4,7 @@ import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.BuildProfile
 import com.ruleup.observability.domain.model.Severity
 
-/**
- * 컴파일 기본 설정. 에셋·원격 설정이 도착하기 전까지 쓰인다.
- *
- */
+/** 컴파일 기본 설정. 에셋·원격 설정이 도착하기 전까지 쓰인다. */
 internal fun defaultPolicyConfig(profile: BuildProfile): PolicyConfig =
     PolicyConfig.of(
         channelFloors =

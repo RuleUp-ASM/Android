@@ -93,5 +93,4 @@ internal object VerificationDatabaseHolder {
         }
 }
 
-/** DI 모듈·리시버 공용 DB 접근자(단일 인스턴스). */
 internal fun verificationDatabase(context: Context): VerificationDatabase = VerificationDatabaseHolder.get(context)

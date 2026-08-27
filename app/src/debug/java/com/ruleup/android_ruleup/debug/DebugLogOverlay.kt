@@ -184,7 +184,6 @@ private fun toggle(
     }
 }
 
-// 태그에 더해 화면까지 붙인다 — Timber 시절엔 없던 정보다.
 private fun InspectorLog.Entry.format(): String =
     buildString {
         tag?.let { append("$it: ") }

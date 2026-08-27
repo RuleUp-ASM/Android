@@ -106,7 +106,7 @@ Navigation3 기반. 경로 문자열은 한 곳에만 존재한다.
 - `AppRoute.isLoginRequired` **기본값은 `true`** 이고, 이건 의도적이다. 공개로 열려면 명시적으로 꺼야 하며, 그 순간 `AppRouteAccessPolicyTest` 가 실패해 리뷰를 강제한다.
 - 화면 이동은 ViewModel 이 `NavigationHelper.navigateTo(page)` / `navigateByRoute(route)` / `navigateToBack()` 로 한다. 백스택 교체(`replaceStackWith`)는 스플래시→딥링크 목적지 같은 경우만.
 - 딥링크는 인증보다 먼저 도착하므로 `PendingDeepLink` 에 보류했다가 자동 로그인 성공 후 1회 소비한다(`consumeFor`). 목적지를 백스택에 먼저 깔지 않는다.
-- 외부 진입은 App Links `https://android.ruleup.co.kr/inv/...`(친구 초대) 하나뿐이다. 알림 탭은 MainActivity 를 명시한 인텐트 + extra 로 처리한다 — 웹페이지가 앱 화면을 직접 여는 경로는 없다.
+- 외부 진입은 App Links `https://android.ruleup.co.kr/inv/...`(친구 초대) 하나뿐이다. 알림 탭은 MainActivity 를 명시한 인텐트에 딥링크 URI 를 실어 처리한다 — 웹페이지가 앱 화면을 직접 여는 경로는 없다.
 - `MainActivity` 는 `launchMode="singleTask"`. standard 로 바꾸면 인스턴스가 중복되어 싱글톤 `NavigationHelper` 신호를 두 NavHost 가 나눠 먹는 버그가 재발한다(#94).
 
 # 크로스 커팅

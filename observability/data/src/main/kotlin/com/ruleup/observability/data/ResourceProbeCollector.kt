@@ -13,18 +13,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 기기 자원 스냅샷을 뜬다. **느렸던 순간의 상태를 붙여 두기 위한 것**이다.
+ * 기기 자원 스냅샷. [ActivityManager.getMemoryInfo] 가 바인더 호출이라 **트리거별 최소 간격**을 두고
+ * 걸리면 null 을 준다 — jank 창마다(스크롤 중이면 5초마다) 부르면 jank 를 재려다 jank 를 만든다.
  *
- * `JankWindow` 만으로는 "느렸다"까지밖에 모른다. 그때 힙이 한계에 붙어 있었는지, 시스템이
- * 저메모리였는지가 있어야 원인 방향이 잡힌다. [ProbeTrigger] 가 그 연결을 명시한다.
- *
- * ## 쓰로틀이 필수다
- * [ActivityManager.getMemoryInfo] 는 바인더 호출이다. jank 창이 닫힐 때마다(스크롤 중이면 5초마다)
- * 부르면 **관측이 관측 대상을 바꾼다** — jank 를 재려다 jank 를 만든다. 그래서 트리거별로
- * 최소 간격을 두고, 걸리면 null 을 돌려준다.
- *
- * 기준선이 없으면 "jank 때 힙 120MB" 는 해석할 수 없다. 그래서 정상 구간의
- * [ProbeTrigger.PERIODIC] 표본을 **더 긴 간격으로** 함께 뜬다.
+ * [ProbeTrigger.PERIODIC] 표본은 기준선용이다. 없으면 "jank 때 힙 120MB" 를 해석할 수 없다.
  */
 @Singleton
 class ResourceProbeCollector
@@ -62,9 +54,7 @@ class ResourceProbeCollector
         }
 
         /**
-         * 직전 표본 이후 이 프로세스가 쓴 CPU 비율.
-         *
-         * `/proc` 을 뒤지지 않고 [Process.getElapsedCpuTime] 델타만 쓴다 — 바인더도 파일 IO 도 없다.
+         * 직전 표본 이후 이 프로세스가 쓴 CPU 비율. `/proc` 대신 [Process.getElapsedCpuTime] 델타만 써 IO 가 없다.
          * **멀티코어에서 100을 넘을 수 있다**(4코어를 다 쓰면 400). 첫 호출은 기준점이 없어 null.
          */
         private fun cpuPercentSinceLastProbe(nowNanos: Long): Double? {
@@ -83,7 +73,6 @@ class ResourceProbeCollector
             when (trigger) {
                 // 느린 순간은 자주 오므로 짧게. 그래도 창(5초)마다는 아니다.
                 ProbeTrigger.JANK_DETECTED, ProbeTrigger.TTI_SLOW -> ANOMALY_INTERVAL_MILLIS
-                // 기준선은 드물어도 된다.
                 ProbeTrigger.PERIODIC -> BASELINE_INTERVAL_MILLIS
             } * NANOS_PER_MILLI
 

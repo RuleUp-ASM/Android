@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/** 챌린지 생성 화면 상단 바: 뒤로(‹) + 제목 (+ 우측 보조 액션). */
 @Composable
 fun CreateChallengeTopBar(
     title: String,
@@ -66,7 +65,6 @@ fun CreateChallengeTopBar(
     }
 }
 
-/** 섹션 라벨(11sp 트래킹) + 우측 보조 슬롯. */
 @Composable
 fun SectionLabel(
     text: String,
@@ -87,7 +85,6 @@ fun SectionLabel(
     }
 }
 
-/** 작은 캡슐 배지 (선택/필수/추천/AI 선택 등). */
 @Composable
 fun SmallBadge(
     text: String,
@@ -112,7 +109,7 @@ fun SmallBadge(
     }
 }
 
-/** 브랜드 그라데이션 스위치 (44×26). */
+/** 이름과 달리 그라데이션이 아니다 — Figma 에 그라데이션 토큰이 없어 단색 brand 로 칠한다. */
 @Composable
 fun GradientSwitch(
     checked: Boolean,
@@ -146,7 +143,6 @@ fun GradientSwitch(
     }
 }
 
-/** 안내 한 줄(이모지 + 문구) 박스. */
 @Composable
 fun InfoNote(
     emoji: String,

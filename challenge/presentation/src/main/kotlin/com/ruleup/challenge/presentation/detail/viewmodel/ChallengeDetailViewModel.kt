@@ -410,7 +410,7 @@ class ChallengeDetailViewModel
                     ),
                 )
             }
-            // 공지 상세를 읽고 돌아오면 미읽음 수가 바뀌므로 방 홈도 함께 재조회한다.
+            // 다른 화면에서 돌아왔을 때 방 홈이 옛 상태로 남지 않도록 함께 재조회한다.
             if (currentState.room != null) loadRoom(id)
         }
 

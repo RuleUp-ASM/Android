@@ -36,7 +36,6 @@ internal fun OnboardingFlowPreview(content: @Composable () -> Unit) {
     }
 }
 
-/** 프로필 설정 화면 상단 제목 + 보조 설명. */
 @Composable
 fun SectionHeader(
     title: String,
@@ -60,7 +59,6 @@ fun SectionHeader(
     }
 }
 
-/** 화면 하단의 안내 박스(아이콘 + 설명). */
 @Composable
 fun InfoBox(
     background: Color,
@@ -85,7 +83,6 @@ fun InfoBox(
     }
 }
 
-/** 필수/선택 배지. 권한·약관 등 프로필 설정 단계들이 공유한다. */
 @Composable
 fun RequirementBadge(
     required: Boolean,
@@ -110,7 +107,6 @@ fun RequirementBadge(
     }
 }
 
-/** 카드 내부 항목 사이의 가로 구분선. */
 @Composable
 fun RowDivider(modifier: Modifier = Modifier) {
     Box(

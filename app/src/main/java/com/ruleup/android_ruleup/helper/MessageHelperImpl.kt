@@ -68,7 +68,7 @@ class MessageHelperImpl
             rightButtonText: String,
             onClickRightButton: (() -> Unit)?,
         ) {
-            // TBD
+            // 미구현 — 호출해도 아무 다이얼로그도 뜨지 않는다.
         }
 
         private fun emit(messageEffect: MessageEffect) {

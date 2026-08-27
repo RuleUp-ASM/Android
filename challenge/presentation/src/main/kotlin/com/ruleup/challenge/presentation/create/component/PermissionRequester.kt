@@ -20,7 +20,6 @@ interface PermissionRequester {
     suspend fun request(tokens: List<String>): Set<String>
 }
 
-/** 현재 플랫폼의 [PermissionRequester] 를 생성한다. */
 @Composable
 fun rememberPermissionRequester(): PermissionRequester {
     // 프리뷰에서는 no-op(전부 허용 처리).
@@ -64,7 +63,6 @@ fun rememberPermissionRequester(): PermissionRequester {
     }
 }
 
-/** 콜백 기반 RequestMultiplePermissions 결과를 suspend 로 브리지한다. */
 private class AndroidPermissionHolder {
     private var deferred: CompletableDeferred<Map<String, Boolean>>? = null
 
@@ -82,8 +80,7 @@ private class AndroidPermissionHolder {
 }
 
 /**
- * 토큰들이 모두 이미 허용돼 있는지(런타임 권한 한정) 확인한다.
- * 매핑되지 않는 토큰(usage/health 등 특수권한)은 런타임 권한이 아니므로 여기선 허용으로 간주한다.
+ * 런타임 권한만 본다 — 매핑되지 않는 토큰(usage/health 등 특수권한)은 허용으로 간주한다.
  * 상세 화면이 "참여하기" 시 권한 허용 모달을 띄울지 판단하는 데 쓴다.
  */
 fun challengePermissionsGranted(

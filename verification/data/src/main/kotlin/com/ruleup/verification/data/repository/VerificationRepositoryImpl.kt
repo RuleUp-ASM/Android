@@ -282,7 +282,7 @@ class VerificationRepositoryImpl
                     radiusM = radiusM,
                 ).toDomain()
 
-        // 카카오 로컬 좌표→주소(명세 §5.3). x=경도, y=위도. 결과 없으면 null.
+        // 카카오 로컬 좌표→주소(명세 §5.3).
         override suspend fun reverseGeocode(
             lat: Double,
             lng: Double,

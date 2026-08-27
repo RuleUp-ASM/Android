@@ -52,7 +52,6 @@ object WatcherInviteSharer {
             buttonTitle = card.buttonLabel,
         )
 
-    // 카카오톡 미설치: 카카오 웹 공유 페이지를 브라우저로 연다.
     private fun shareViaWeb(
         context: Context,
         template: TextTemplate,

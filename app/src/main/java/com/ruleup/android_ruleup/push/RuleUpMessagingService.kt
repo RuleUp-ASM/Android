@@ -47,8 +47,7 @@ class RuleUpMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
         when (val type = data["type"]) {
-            // 무음 쪽지(인증 스펙 관할): 알림을 띄우지 않는다. 셋업/권한 재확인은
-            // 상세 화면 ON_RESUME 재조회가 이미 담당 — 백그라운드 선반영은 후속 고도화 여지.
+            // 무음 쪽지: 알림 없음. 셋업/권한 재확인은 상세 화면 ON_RESUME 재조회가 담당한다.
             TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
 
             // 명세 규칙 3: 모르는 type 은 조용히 버린다.

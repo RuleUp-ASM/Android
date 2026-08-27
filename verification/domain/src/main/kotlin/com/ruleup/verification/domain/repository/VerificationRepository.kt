@@ -95,7 +95,7 @@ interface VerificationRepository {
 
     /**
      * 스크린타임 대상 앱 세트 교체(명세: PUT /my-screen-apps). 항상 익일 00:00 부터 적용된다.
-     * 쿨다운은 [com.ruleup.verification.domain.entity.ScreenAppChangeCooldownException](429) 로 분기한다.
+     * 이번 달 변경 횟수를 다 썼으면 [com.ruleup.verification.domain.entity.SettingChangeLimitException](429) 이다.
      * 중복·개수(1~10)는 [ScreenAppSet] 이 생성 시점에 보장하고, 서버가 되돌려주는 형식 위반은
      * [com.ruleup.verification.domain.entity.InvalidScreenAppException](400) 이다.
      */

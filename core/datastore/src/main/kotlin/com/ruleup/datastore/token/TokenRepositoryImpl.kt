@@ -22,17 +22,8 @@ import javax.inject.Inject
 private const val TAG = "TokenStore"
 
 /**
- * 토큰 저장소. **저장소 고장이 앱 고장이 되지 않게** 하는 것이 이 구현의 절반이다.
- *
- * DataStore 의 읽기·쓰기는 `IOException` 을 던진다. 그런데 이 저장소를 읽는 자리들이 하나같이
- * 예외를 감당하지 못한다 — OkHttp 인터셉터의 `runBlocking`, `App.onCreate` 의 `first()`,
- * 세션 종료를 구독하는 컴포지션 스코프. 그래서 여기서 끊고 **"저장된 게 없다"로 환원**한다.
- *
- * 환원의 의미는 로그아웃이다. 사용자는 다시 로그인하면 되고, 그건 재설치보다 훨씬 낫다.
- * 다만 조용히 넘기면 빈도를 알 수 없으므로 전부 관측 채널로 올린다.
- *
- * 파일 손상 자체의 복구는 `DataStoreModule` 의 corruptionHandler 가 맡는다 — 그쪽은 파일을
- * 갈아엎고, 이쪽은 그 외의 읽기·쓰기 실패를 덮는다.
+ * 토큰 저장소. DataStore 의 `IOException` 을 여기서 끊고 "저장된 게 없다"(= 로그아웃)로 환원한다 —
+ * 읽는 쪽(인터셉터 `runBlocking`·`App.onCreate` 의 `first()`)이 예외를 감당하지 못한다.
  */
 class TokenRepositoryImpl
     @Inject
@@ -40,15 +31,13 @@ class TokenRepositoryImpl
         private val dataStore: DataStore<Preferences>,
         private val observability: Observability,
     ) : TokenRepository {
-        // 인터셉터의 동기 조회용 accessToken 스냅샷. 저장/조회/삭제 시 갱신한다.
+        // 인터셉터가 코루틴 없이 읽어 가는 스냅샷. 저장·조회·삭제마다 같이 갱신한다.
         @Volatile
         private var cachedAccess: String? = null
 
         /**
-         * 읽기 경로의 단일 입구. 모든 조회가 이걸 거친다.
-         *
-         * `IOException` 만 삼킨다 — 취소나 프로그래밍 오류까지 덮으면 진짜 버그가
-         * "로그인 안 됨"으로 위장된다.
+         * 읽기 경로의 단일 입구. `IOException` 만 삼킨다 —
+         * 취소나 프로그래밍 오류까지 덮으면 진짜 버그가 "로그인 안 됨"으로 위장된다.
          */
         private val preferences: Flow<Preferences> =
             dataStore.data.catch { cause ->
@@ -57,12 +46,10 @@ class TokenRepositoryImpl
                 emit(emptyPreferences())
             }
 
-        // refreshToken 존재 여부로 로그인 상태를 반영하는 reactive Flow.
         override val isLoggedIn: Flow<Boolean> =
             preferences.map { prefs -> prefs[KEY_REFRESH] != null }
 
-        // userId 자체를 관찰한다. 로그인·갱신 모두 한 번의 edit 으로 함께 쓰지만, 갱신 응답이
-        // userId 를 안 주는 배포본에서는 비어 있을 수 있어 사용자 귀속이 필요한 쪽은 이 Flow 를 본다.
+        // 갱신 응답이 userId 를 안 주는 배포본에서는 비어 있을 수 있다 — 사용자 귀속이 필요한 쪽은 이 Flow 를 본다.
         override val userId: Flow<String?> =
             preferences.map { prefs -> prefs[KEY_USER_ID] }
 
@@ -89,11 +76,9 @@ class TokenRepositoryImpl
             write("saveTokens") { prefs ->
                 prefs[KEY_ACCESS] = token.accessToken
                 prefs[KEY_REFRESH] = token.refreshToken
-                // null 이면 건드리지 않는다. 갱신 응답이 userId 를 안 주는 배포본에서 덮어 비우면
-                // 사용자 귀속이 끊긴다.
+                // 갱신 응답이 userId 를 안 주는 배포본에서 null 로 덮으면 사용자 귀속이 끊긴다.
                 userId?.let { prefs[KEY_USER_ID] = it }
-                // 갱신에 성공했다는 건 이 기기에 유효한 세션이 있었다는 뜻이다. 플래그가 생기기 전에
-                // 로그인한 사용자도 여기서 채워진다.
+                // 갱신 성공 = 이 기기에 세션이 있었다는 뜻이라, 플래그가 생기기 전에 로그인한 사용자도 여기서 채워진다.
                 prefs[KEY_EVER_LOGGED_IN] = true
             }
         }
@@ -123,11 +108,8 @@ class TokenRepositoryImpl
         }
 
         /**
-         * 쓰기 경로의 단일 입구. `IOException` 을 **호출부로 전파하지 않는다.**
-         *
-         * 전파하면 `AutoLoginUseCase` 가 `saveTokens` 를 `runCatching` 밖(`fold` 의 `onSuccess`)에서
-         * 부르는 탓에 진입 판정이 끝나지 않고 **스플래시에서 멈춘다.** 저장에 실패한
-         * 세션은 다음 실행에서 로그아웃으로 나타나므로, 여기서는 기록만 남기고 흐름을 살린다.
+         * 쓰기 경로의 단일 입구. `IOException` 을 호출부로 전파하지 않는다 —
+         * 전파하면 `AutoLoginUseCase` 의 진입 판정이 끝나지 않아 스플래시에서 멈춘다.
          */
         private suspend fun write(
             op: String,

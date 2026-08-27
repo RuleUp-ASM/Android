@@ -53,7 +53,6 @@ object ChallengeEvents {
         },
     )
 
-    /** 목록 화면 진입. */
     fun exploreListView(
         entry: ExploreListEntry,
         sort: ExploreSort,

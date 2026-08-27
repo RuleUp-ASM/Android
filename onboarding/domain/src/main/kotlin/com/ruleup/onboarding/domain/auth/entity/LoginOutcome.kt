@@ -29,9 +29,7 @@ sealed interface LoginOutcome {
     ) : LoginOutcome
 
     /**
-     * 닉네임 재설정 강제. 복원 과정에서 기존 닉네임을 남이 선점한 경우다
-     * (`nicknameStatus=CONFLICT`).
-     *
+     * 닉네임 재설정 강제. 복원 중 기존 닉네임을 남이 선점한 경우(`nicknameStatus=CONFLICT`)이며,
      * 세션은 이미 저장됐지만 **닉네임을 바꾸기 전엔 홈으로 보내지 않는다.**
      *
      * @property currentNickname 선점당한 기존 닉네임. 표시용이며 타인에게는 임시 닉네임이 보인다.

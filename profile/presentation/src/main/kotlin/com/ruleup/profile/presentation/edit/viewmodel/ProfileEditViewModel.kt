@@ -18,9 +18,8 @@ import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 /**
- * 프로필 편집 ViewModel (마이 홈 → 재편집).
- * 닉네임 30일 제한(nicknameChangeableAfter)·LLM 검수·이미지 모더레이션은 서버 파이프라인이 담당 —
- * 화면은 선검사(4.6)와 변경 필드만 PATCH 한다. 이미지는 선택 즉시 업로드/제거로 반영한다.
+ * 프로필 편집 ViewModel. 닉네임 30일 제한·LLM 검수·이미지 모더레이션은 서버 파이프라인이 판정한다 —
+ * 화면은 선검사(4.6) 후 변경 필드만 PATCH 하고, 이미지는 선택 즉시 업로드/제거로 반영한다.
  */
 @HiltViewModel
 class ProfileEditViewModel

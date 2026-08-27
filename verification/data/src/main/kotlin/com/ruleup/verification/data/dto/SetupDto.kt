@@ -98,7 +98,6 @@ internal fun ChallengeSetupResponse.toDomain(): ChallengeSetupResult =
 
 // ---------- 앵커 조회 응답 (명세: GET /my-location) ----------
 
-/** setup 요청과 동일한 앵커 표현을 재사용한다. */
 internal fun AnchorDto.toDomain(): LocationPin =
     LocationPin(
         lat = lat,

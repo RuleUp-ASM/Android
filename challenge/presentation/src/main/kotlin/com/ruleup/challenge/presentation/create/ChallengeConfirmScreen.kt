@@ -139,7 +139,6 @@ private fun ConfirmAppBar(
     }
 }
 
-/** 무엇을 만드는지 한눈에. 인증 방식·모드 칩 + 제목 + 설명. */
 @Composable
 private fun HeaderCard(
     state: CreateChallengeState,
@@ -343,10 +342,6 @@ private fun CreateChallengeState.verificationSummary(): String {
     return listOf(paramPart, verificationLabel()).filter { it.isNotBlank() }.joinToString(" · ")
 }
 
-/**
- * 빈도·기간. 빈도는 초안이 준 값 그대로다 — 생성 요청 계약에 `weeklyCount` 가 없어 고칠 수단이 없다.
- * 기간만 시트에서 바꾼다.
- */
 private fun CreateChallengeState.frequencyPeriodSummary(): String {
     val frequency = if (weeklyCount >= 7) "매일" else "주 ${weeklyCount}회"
     if (period.start.isBlank()) return "$frequency · 기간 미정"

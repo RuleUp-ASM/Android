@@ -11,7 +11,6 @@ sealed interface MyStatsIntent : MviIntent {
     /** 화면 진입 — 기본 기간(월간) 조회. */
     data object Load : MyStatsIntent
 
-    /** 기간 탭 전환 (주간/월간/연간). */
     data class SelectPeriod(
         val period: StatsPeriod,
     ) : MyStatsIntent

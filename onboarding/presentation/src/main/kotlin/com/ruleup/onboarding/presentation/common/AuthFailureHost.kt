@@ -16,13 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
- * [AuthFailureUi] 를 실제 화면으로 그린다.
- *
- * 무게별 표현을 한곳에 모은다 — 화면마다 다이얼로그를 새로 만들면 같은 실패가 어디서는 토스트,
- * 어디서는 전체 화면으로 갈린다.
- *
- * 토스트는 여기서 그리지 않는다. 컴포지션 밖(MessageHelper)에서 띄우는 게 자연스러워 호출부가
- * 처리하고, 이 컴포저블은 화면을 덮는 두 종류만 맡는다.
+ * [AuthFailureUi] 를 실제 화면으로 그린다. 화면마다 다이얼로그를 새로 만들면 같은 실패가 어디서는
+ * 토스트, 어디서는 전체 화면으로 갈린다. 토스트만 컴포지션 밖(MessageHelper) 소관이라 여기 없다.
  */
 @Composable
 fun AuthFailureHost(

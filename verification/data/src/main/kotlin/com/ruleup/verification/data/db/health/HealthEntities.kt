@@ -8,12 +8,9 @@ import androidx.room.Query
 import androidx.room.Upsert
 
 /**
- * 움직임(HEALTH) 읽기 버퍼(전송 스펙 §2). Health Connect 는 하루치 누적이 sync 마다 갱신되므로
- * 매 capture 마다 미태깅 스냅샷을 갈아끼우고(deleteUntagged→insert) 최신값을 재전송한다.
- * 재전송이 중복 판정을 만들지 않는 근거는 [recordId] 뿐이다.
- *
- * [date] 는 로컬 귀속 날짜(YYYY-MM-DD), [occurredAt] 은 기록 종료 epoch millis(정렬·TTL).
- * 전송하지 않는 값(단위·운동 종류·기기 종류)은 담지 않는다.
+ * 움직임(HEALTH) 읽기 버퍼(전송 스펙 §2). 하루치 누적이 sync 마다 갱신되므로 미태깅 스냅샷을
+ * 갈아끼우고(deleteUntagged→insert) 최신값을 재전송한다 — 중복 판정을 막는 근거는 [recordId] 뿐이다.
+ * [date] 는 로컬 귀속 날짜(YYYY-MM-DD). 전송하지 않는 값(단위·운동 종류·기기 종류)은 담지 않는다.
  */
 @Entity(tableName = "health_reading")
 data class HealthReadingEntity(

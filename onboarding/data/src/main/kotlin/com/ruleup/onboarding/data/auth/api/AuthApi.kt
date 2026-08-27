@@ -14,7 +14,7 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface AuthApi {
-    // OAuth 로그인 (provider: kakao / google …). base(.../api/) + auth/oauth → /api/v1/auth/oauth/{provider}.
+    // OAuth 로그인 (provider: kakao / google). base(.../api/) + v1/... → /api/v1/auth/oauth/{provider}.
     @POST("v1/auth/oauth/{provider}")
     suspend fun socialLogin(
         @Path("provider") provider: String,

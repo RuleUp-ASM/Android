@@ -13,7 +13,6 @@ sealed interface FriendInviteIntent : MviIntent {
     /** 카카오톡 공유 (사용자 본인 발신). */
     data object ShareKakao : FriendInviteIntent
 
-    /** 링크 복사. */
     data object CopyLink : FriendInviteIntent
 
     data object Back : FriendInviteIntent

@@ -47,13 +47,10 @@ import com.ruleup.verification.presentation.R
 import kotlinx.coroutines.tasks.await
 
 /**
- * 카카오 지도 기반 위치 선택(명세 §5.3). 지도를 탭하면 그 좌표를 [onMapTap] 으로 올려보내고(확인 대기),
- * 외부에서 [pin] 이 정해지면(탭 역지오코딩·검색 결과) 그 자리에 핀 + 반경 원을 그리고 카메라가 따라간다.
- * [pin] 이 null 이면 핀/원을 지운다(아직 선택 전·취소).
- * [anchors] 는 이미 담아둔 앵커들 — 각각 번호(1부터) 핀 + 반경 원으로 고정 표시된다.
- *
- * Kakao [MapView] 는 GLSurfaceView 기반 네이티브 뷰라 [AndroidView] 로 감싸고, 호스트의
- * resume/pause 를 전달해야 한다(카카오 가이드, 미전달 시 렌더링 크래시).
+ * 카카오 지도 기반 위치 선택(명세 §5.3). [pin] 은 확인 대기 핀(null 이면 지운다), [anchors] 는 이미 담아둔
+ * 앵커로 번호(1부터) 핀 + 반경 원으로 고정 표시된다.
+ * Kakao [MapView] 는 GLSurfaceView 기반이라 [AndroidView] 로 감싸고 호스트 resume/pause 를 전달해야 한다
+ * (카카오 가이드 — 미전달 시 렌더링 크래시).
  */
 @Composable
 fun GeofenceMap(
@@ -81,7 +78,6 @@ fun GeofenceMap(
     }
     val objects = remember { GeofenceMapObjects() }
 
-    // 지도 시작/정리(컴포저블 수명 1회). getPosition/getZoomLevel 로 최초 카메라를 잡는다.
     DisposableEffect(Unit) {
         runCatching {
             mapView.start(
@@ -97,7 +93,6 @@ fun GeofenceMap(
                 object : KakaoMapReadyCallback() {
                     override fun onMapReady(kakaoMap: KakaoMap) {
                         objects.kakaoMap = kakaoMap
-                        // 탭한 좌표를 화면으로 올려보낸다(확인 대기 핀 → 카드, 명세 §5.3).
                         kakaoMap.setOnMapClickListener { _, position, _, _ ->
                             currentOnMapTap(MapLatLng(position.latitude, position.longitude))
                         }
@@ -119,7 +114,6 @@ fun GeofenceMap(
         onDispose { objects.kakaoMap = null }
     }
 
-    // 호스트 resume/pause 를 MapView 에 전달.
     DisposableEffect(lifecycleOwner) {
         val observer =
             LifecycleEventObserver { _, event ->
@@ -135,7 +129,6 @@ fun GeofenceMap(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    // 외부 pin/radius/anchors 변경 → 카메라·핀·원 동기화. pin 이 null 이면 핀/원을 지운다.
     LaunchedEffect(pin, radiusM, anchors) {
         val kakaoMap = objects.kakaoMap ?: return@LaunchedEffect
         if (pin != null) {
@@ -151,9 +144,7 @@ fun GeofenceMap(
 
 /**
  * KakaoMap·핀·원 참조를 recomposition/콜백 간 보관한다(컴포지션 밖 SDK 호출용).
- * 핀은 생성 후 [Label.moveTo] 로 이동, 원은 반경이 바뀔 수 있으니 매번 지우고 다시 그린다.
- * [pin] 이 null 이면 둘 다 레이어에서 제거한다(선택 전·취소).
- * 앵커(등록된 인증 장소)는 번호 텍스트 핀 + 반경 원 묶음으로, 목록이 바뀌면 전체를 다시 그린다.
+ * 핀은 [Label.moveTo] 로 옮기지만 원은 반경이 바뀔 수 있어 매번 지우고 다시 그린다.
  */
 private class GeofenceMapObjects {
     var kakaoMap: KakaoMap? = null

@@ -20,10 +20,8 @@ import java.io.File
  * 선택/촬영된 이미지의 URI(문자열)는 [rememberProfileImagePicker] 의 콜백으로 전달된다.
  */
 interface ProfileImagePicker {
-    /** 카메라 앱을 띄워 사진을 촬영한다. */
     fun launchCamera()
 
-    /** 갤러리(사진 선택기)를 띄운다. */
     fun launchGallery()
 }
 
@@ -63,14 +61,12 @@ fun rememberProfileImagePicker(onImagePicked: (String) -> Unit): ProfileImagePic
     }
 }
 
-/** 프리뷰용 no-op 피커. */
 private object NoOpProfileImagePicker : ProfileImagePicker {
     override fun launchCamera() = Unit
 
     override fun launchGallery() = Unit
 }
 
-/** 카메라 촬영 결과를 받을 캐시 파일을 만들고 FileProvider URI 로 변환한다. */
 private fun createCameraImageUri(context: Context): Uri {
     val cameraDir = File(context.cacheDir, "camera").apply { mkdirs() }
     val imageFile = File.createTempFile("profile_", ".jpg", cameraDir)

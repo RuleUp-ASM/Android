@@ -55,7 +55,6 @@ class RunSyncUseCase
             val metadata = envelopeMetadataProvider.capture(scope)
             val merged = metadata.copy(gaps = metadata.gaps + bufferedGaps)
 
-            // 활성 챌린지가 있으면 빈 envelope 도 전송한다. 활성 챌린지도 신호·gap 도 없을 때만 생략.
             if (metadata.activeChallengeIds.isEmpty() && effectiveBatch.isEmpty && merged.gaps.isEmpty()) return null
 
             // 4) 전송(413 이면 반으로 갈라 재전송).

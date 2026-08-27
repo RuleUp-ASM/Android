@@ -92,7 +92,6 @@ class FakeChallengeRepository(
     override suspend fun claimOwner(challengeId: String) = throw NotImplementedError()
 }
 
-/** 셋업 알림 호출을 기록만 하는 테스트 더블. */
 class RecordingSetupNotifier : SetupNotifier {
     data class Call(
         val challengeId: String,

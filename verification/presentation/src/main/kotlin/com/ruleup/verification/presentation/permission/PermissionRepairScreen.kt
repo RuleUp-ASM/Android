@@ -42,13 +42,8 @@ import com.ruleup.verification.presentation.permission.viewmodel.PermissionRepai
 import com.ruleup.verification.presentation.permission.viewmodel.PermissionRepairViewModel
 
 /**
- * 권한 재연결 (Figma `1134:997`).
- *
- * 권한이 끊기면 인증이 **조용히** 멈춘다. 앱은 sync 의 `gaps[]` 로 서버에 알리지만 사용자는 매일
- * 실패가 쌓이는 이유를 모른 채 강퇴까지 간다. 이 화면이 그 사이를 메운다.
- *
- * 끊긴 것만 보여주지 않고 **살아 있는 신호도 함께** 나열한다 — "무엇이 문제인지"만큼 "무엇은
- * 멀쩡한지"가 원인을 좁혀 준다.
+ * 권한 재연결(Figma `1134:997`). 권한이 끊기면 인증이 조용히 멈추고, 사용자는 실패가 쌓이는 이유를
+ * 모른 채 강퇴까지 간다. 끊긴 것만이 아니라 살아 있는 신호도 함께 세워야 원인이 좁혀진다.
  */
 @Composable
 fun PermissionRepairScreen(

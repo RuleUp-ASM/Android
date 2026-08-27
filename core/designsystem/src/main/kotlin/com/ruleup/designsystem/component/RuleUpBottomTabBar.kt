@@ -31,12 +31,7 @@ import com.ruleup.designsystem.R
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 하단 탭 항목. 루트 화면(홈·탐색·챌린지·마이)이 공유한다.
- *
- * 순서가 곧 화면 배치다 — 가운데 생성 버튼을 기준으로 앞 둘([HOME]·[EXPLORE])과 뒤 둘
- * ([CHALLENGE]·[MY])로 갈린다.
- */
+/** 하단 탭 항목. 루트 화면(홈·탐색·챌린지·마이)이 공유한다. */
 enum class RuleUpBottomTab(
     val label: String,
     @DrawableRes val iconRes: Int,
@@ -48,11 +43,7 @@ enum class RuleUpBottomTab(
 }
 
 /**
- * 화면 하단 고정 탭 바 (Figma 1134:2062).
- *
- * **생성 버튼이 바 안에 들어있다.** 예전처럼 우측 하단에 따로 띄우면 목록 마지막 카드를 가리고,
- * 화면마다 위치가 조금씩 달라진다. 가운데 고정이면 어느 탭에서든 같은 자리다.
- *
+ * 화면 하단 고정 탭 바 (Figma 1134:2062). 생성 버튼을 바 밖(우측 하단)으로 빼면 목록 마지막 카드를 가린다.
  * [onTabClick] 은 현재 선택된 탭이 아닌 탭을 눌렀을 때만 호출된다.
  */
 @Composable

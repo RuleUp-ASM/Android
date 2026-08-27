@@ -117,7 +117,6 @@ data class TokenRefreshResponse(
 )
 
 internal fun SocialLoginAuthResponse.toOAuthResult(): OAuthResult {
-    // isNewUser 가 비어 오면 signupToken 유무로 판별한다.
     val isNew = isNewUser ?: (signupToken != null)
     return if (isNew) {
         OAuthResult.NewUser(
@@ -153,9 +152,8 @@ internal fun OAuthProfileResponse?.toDomain(): OAuthProfile =
     )
 
 /**
- * 필수인 건 `id` 와 `nickname` 뿐이다. 나머지는 미지 값·누락을 안전한 기본으로 떨어뜨린다 —
- * 티어나 계정 상태가 하나 빠졌다고 로그인을 실패시키면, 서버가 enum 을 확장할 때 구버전 앱이
- * 통째로 막힌다.
+ * 필수는 `id`·`nickname` 뿐이다. 나머지를 안전한 기본으로 떨어뜨려야, 서버가 enum 을 넓힐 때
+ * 구버전 앱이 로그인부터 막히지 않는다.
  */
 internal fun UserResponse.toDomain(): User =
     User(
@@ -202,10 +200,8 @@ internal fun TokenRefreshResponse.toRefreshedSession(): RefreshedSession =
     )
 
 /**
- * 실패 응답의 `error.code` 를 [AuthFailure] 로 옮긴다.
- *
- * 모르는 코드는 [AuthFailure.UNKNOWN] 이다 — 서버가 코드를 추가해도 앱이 터지지 않고 일반 안내로
- * 떨어진다.
+ * 실패 응답의 `error.code` 를 [AuthFailure] 로 옮긴다. 모르는 코드는 [AuthFailure.UNKNOWN] 이라,
+ * 서버가 코드를 추가해도 앱이 터지지 않고 일반 안내로 떨어진다.
  */
 internal fun ApiException.toAuthFailure(): AuthFailure = AUTH_FAILURE_CODES[code] ?: AuthFailure.UNKNOWN
 

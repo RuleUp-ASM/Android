@@ -19,9 +19,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 홈 ViewModel. 진입 시 서버 "내 챌린지 목록"(GET /challenges)을 기준으로, 진행률
- * (verification/progress)과 로컬 "내 챌린지"를 병합해 카드로 노출한다.
- * 목록·진행률 조회가 실패해도(아직 챌린지 없음 등) 나머지 소스만으로 렌더되도록 실패를 흡수한다.
+ * 홈 ViewModel. 서버 목록·진행률·로컬 "내 챌린지"를 병합해 카드로 노출한다.
+ * 각 조회 실패는 흡수한다 — 하나가 죽어도 나머지 소스만으로 홈이 그려져야 한다.
  */
 @HiltViewModel
 class HomeViewModel
@@ -66,13 +65,12 @@ class HomeViewModel
             }
 
         private fun load() {
-            // 이미 로드 중이면 중복 실행하지 않는다(재진입 시 요청 폭주 방지).
             if (loadJob?.isActive == true) return
             loadJob =
                 viewModelScope.launch {
-                    // 첫 로드만 로딩 스피너를 띄우고, 데이터가 이미 있으면 깜빡임 없이 백그라운드 새로고침한다.
+                    // 데이터가 이미 있으면 스피너를 띄우지 않는다 — 재진입마다 화면이 깜빡인다.
                     if (currentState.challenges.isEmpty()) dispatch(HomeReducerEvent.Loading)
-                    // 서로 독립인 두 조회를 병렬로 실행해 첫 렌더 지연을 줄인다(각 실패는 흡수).
+                    // 서로 독립인 두 조회라 병렬로 돌린다. 각 실패는 기본값으로 흡수한다.
                     val (myChallenges, progress) =
                         coroutineScope {
                             val challenges = async { runCatching { challengeRepository.getMyChallenges() }.getOrDefault(emptyList()) }

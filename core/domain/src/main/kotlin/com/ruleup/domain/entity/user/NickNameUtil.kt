@@ -11,20 +11,15 @@ object NickNameUtil {
     const val MIN_LENGTH = 2
     const val MAX_LENGTH = 12
 
-    // 한글 음절(가-힣) + 단일 자/모음(ㄱ-ㅎ, ㅏ-ㅣ) + 영문 + 숫자 허용. 특수문자·공백 불가.
     private val NICKNAME_REGEX = Regex("^[가-힣ㄱ-ㅎㅏ-ㅣa-zA-Z0-9]+$")
 
-    // 모음만 나열한 닉네임(ㅏㅏㅏ). 자음만 나열(ㄱㄱㄱㄱ)은 허용이라 문자 집합으로는 갈라지지 않는다.
     private val VOWELS_ONLY_REGEX = Regex("^[ㅏ-ㅣ]+$")
 
     fun inRange(name: String): Boolean = name.length in MIN_LENGTH..MAX_LENGTH
 
     fun isValidName(name: String): Boolean = NICKNAME_REGEX.matches(name) && !VOWELS_ONLY_REGEX.matches(name)
 
-    /**
-     * 입력값을 검증해 실패 "사유"까지 구분해 돌려준다.
-     * 문자 종류를 길이보다 먼저 보므로, 특수문자가 섞이면 길이 안내가 아니라 문자 안내가 나간다.
-     */
+    /** 문자 종류를 길이보다 먼저 본다 — 특수문자가 섞이면 길이 안내가 아니라 문자 안내가 나간다. */
     fun validate(name: String): NicknameValidation =
         when {
             name.isEmpty() -> NicknameValidation.OUT_OF_RANGE
@@ -33,7 +28,6 @@ object NickNameUtil {
             else -> NicknameValidation.VALID
         }
 
-    /** 검증 결과에 맞는 안내 문구. */
     fun message(validation: NicknameValidation): String =
         when (validation) {
             NicknameValidation.VALID -> "사용 가능한 닉네임이에요"

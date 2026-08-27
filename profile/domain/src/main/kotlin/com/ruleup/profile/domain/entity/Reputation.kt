@@ -58,7 +58,6 @@ data class ReputationMilestone(
 
 /** 평판 히스토리 (명세: GET /me/reputation/history). */
 data class ReputationHistory(
-    // 역대 최고 온도
     val peakTemperature: Double,
     val peakAchievedAt: String,
     val milestones: List<ReputationMilestone>,

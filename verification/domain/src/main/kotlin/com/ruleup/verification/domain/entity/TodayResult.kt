@@ -48,7 +48,7 @@ data class UnacknowledgedResult(
 /**
  * 이의 제기 가능 여부 (명세 `appeal`). `FAILED` 일 때만 내려온다.
  *
- * [eligibleUntil] 은 **실패 확정 후 1일**이다(인증 정책 §5.2 · 챌린지 정책 §7.2). 횟수 한도는
+ * [eligibleUntil] 은 실패 확정과 같은 시각(귀속일 이틀 뒤 00:00 KST)인 **경계**다. 횟수 한도는
  * 없어졌으므로 "몇 회 남음"을 세지 않는다 — 남용은 이상탐지가 잡는다.
  */
 data class AppealChance(

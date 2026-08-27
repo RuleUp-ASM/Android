@@ -32,7 +32,6 @@ fun AppNavHost(
             when (signal) {
                 is NavSignal.GoToDestPage -> {
                     handleNavRoute(signal.route, backStack, observability)
-                    // 목적지 페이지 이동마다 관측 컨텍스트를 갱신하고 화면 진입을 기록한다.
                     screenTracker.onScreenEntered(signal.route.path)
                 }
 
@@ -54,11 +53,6 @@ fun AppNavHost(
 
 private const val TAG = "[Navigation]"
 
-/**
- * NavRoute 한 건을 받아 백스택에 push.
- * [AppRoute.isRoot] 페이지는 기존 스택을 모두 비우고 단일 키로 시작한다(가입 완료 → 홈 등).
- * 미등록 path 는 무시 + 경고 로그.
- */
 fun handleNavRoute(
     route: NavRoute,
     backStack: NavBackStack<NavKey>,
@@ -73,9 +67,8 @@ fun handleNavRoute(
     val navKey = GenericNavKey.of(route)
 
     if (appRoute.isRoot) {
-        // 이미 그 루트 단독이면 그대로 둔다. 다시 세우면 화면이 재생성되어 진행 중인 일이
-        // 처음부터 다시 돈다 — 스플래시에서 자동 로그인이 실패하는 순간 세션 종료 감시가
-        // 스플래시를 다시 요청하는데, 그때 판정이 두 번 겹친다.
+        // 이미 그 루트 단독이면 그대로 둔다 — 다시 세우면 화면이 재생성돼 스플래시의 자동 로그인
+        // 판정이 두 번 겹친다(자동 로그인 실패 → 세션 종료 감시가 스플래시를 다시 요청하는 경로).
         if (backStack.size == 1 && backStack.first() == navKey) return
         backStack.clear()
         backStack.add(navKey)

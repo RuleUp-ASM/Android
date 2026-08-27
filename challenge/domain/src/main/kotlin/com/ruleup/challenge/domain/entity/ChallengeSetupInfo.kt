@@ -14,13 +14,13 @@ data class ChallengeSetupInfo(
     val manual: Boolean,
     // 셋업이 끝나 평가 대상에 들어갔는지(setupStatus == READY).
     val ready: Boolean,
-    // 이 챌린지의 인증 방식. requiresAnchors·requiresTargetPackages 가 여기서 파생된다.
+    // 이 챌린지의 인증 방식. 아래 두 플래그는 서버가 따로 내려준다 — 여기서 파생하지 않는다.
     val verificationMethod: VerificationMethod,
     val requiredPermissions: List<String>,
-    // GPS_PRESENCE 방식이면 true — 인증 장소(지도 앵커) 바인딩 필요.
+    // 장소 방식(GPS_PRESENCE·GPS_AVOID)이면 true — 인증 장소(지도 앵커) 바인딩 필요.
     val requiresAnchors: Boolean,
     // 내 앵커가 이미 바인딩됐는지(재진입 시 true 가능).
     val anchorsConfigured: Boolean,
-    // SCREEN_TIME 방식이면 true — 대상 앱 선택 필요.
+    // 사용 시간 방식(SCREEN_TIME_MAX·MIN)이면 true — 대상 앱 선택 필요.
     val requiresTargetPackages: Boolean,
 )

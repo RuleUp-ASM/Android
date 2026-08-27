@@ -26,7 +26,6 @@ class VerificationSyncSchedulerImpl
         override fun ensureScheduled() {
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 VerificationSyncWorker.WORK_NAME,
-                // 이미 예약돼 있으면 유지(앱 시작마다 리셋하지 않음).
                 ExistingPeriodicWorkPolicy.KEEP,
                 buildRequest(DEFAULT_INTERVAL_MIN),
             )
@@ -61,11 +60,9 @@ class VerificationSyncSchedulerImpl
             const val CATCH_UP_WORK_NAME = "verification_sync_catchup"
 
             /**
-             * push 트리거용 expedited catch-up. Hilt 그래프에 접근 못 하는 BroadcastReceiver 도
-             * WorkManager 싱글톤으로 직접 호출할 수 있도록 static 으로 노출한다(전송 스펙 §0.6).
-             *
-             * 기본 [ExistingWorkPolicy.KEEP] 은 연쇄 발화 시 폭주를 막는다(운영 경로). 디버그의 수동 트리거처럼
-             * "지금 새로 돌려라"가 필요하면 [ExistingWorkPolicy.REPLACE] 로 대기/재시도 중인 작업을 갈아끼운다.
+             * push 트리거용 expedited catch-up(전송 스펙 §0.6). Hilt 그래프에 접근 못 하는 BroadcastReceiver 도
+             * 부를 수 있도록 static 이다. 기본 KEEP 은 연쇄 발화 폭주를 막는다 — "지금 새로"가 필요한
+             * 디버그 트리거만 REPLACE 로 대기·재시도 중인 작업을 갈아끼운다.
              */
             fun enqueueCatchUp(
                 context: Context,

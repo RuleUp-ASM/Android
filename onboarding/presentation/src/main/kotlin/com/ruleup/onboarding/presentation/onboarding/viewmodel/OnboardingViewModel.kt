@@ -55,10 +55,8 @@ class OnboardingViewModel
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<OnboardingIntent, OnboardingState, OnboardingReducerEvent, OnboardingEffect>(OnboardingState.initial) {
         /**
-         * 닉네임 입력 스트림.
-         *
-         * 타이핑마다 확인 API 를 부르면 무인증 엔드포인트에 부하가 걸리고 응답이 뒤바뀐 순서로
-         * 도착한다. 500ms 로 묶고 같은 값은 걸러 마지막 입력만 확인한다.
+         * 닉네임 입력 스트림. 타이핑마다 확인 API 를 부르면 무인증 엔드포인트에 부하가 걸리고 응답이
+         * 뒤바뀐 순서로 도착해, 500ms 로 묶고 같은 값은 걸러 마지막 입력만 확인한다.
          */
         private val nicknameInput = MutableSharedFlow<String>(extraBufferCapacity = 1)
 

@@ -30,7 +30,6 @@ private const val FRIEND_INVITE_SEGMENT = "inv"
  */
 private const val APP_LINK_HOST = "android.ruleup.co.kr"
 
-/** 친구 초대 링크(/inv/{code}) 여부. 라우팅이 아니라 "앱 실행"으로만 처리한다. */
 private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEND_INVITE_SEGMENT
 
 /**
@@ -73,14 +72,10 @@ fun NavRoute.toAppLinkUri(): Uri =
 fun startStack(): List<NavKey> = listOf(GenericNavKey(SplashPage.PATH))
 
 /**
- * 콜드스타트 딥링크의 **목적지**를 해석한다. 이동은 인증 판정 뒤에 일어난다.
+ * 콜드스타트 딥링크의 **목적지**만 해석한다. 백스택을 여기서 세우지 않는 근거는 PendingDeepLink KDoc.
  *
- * 여기서 백스택을 만들지 않는 이유는, 세션이 없는 채로 화면을 띄우면 그 화면이 곧바로 API 를
- * 호출해 401 을 받기 때문이다. 토큰 정리까지 이어지면 사용자는 목적지가 아니라 **로그인 화면으로
- * 튕기고 딥링크는 유실된다.**
- *
- * 해석할 수 없으면 null — 호출부는 스플래시에서 시작해 자동 로그인 결과로 홈/인트로를 분기한다.
- * **인트로로 직행시키지 않는다**: 이미 로그인한 사용자를 온보딩 첫 화면에 떨어뜨릴 이유가 없다.
+ * 해석할 수 없으면 null — 호출부는 스플래시에서 시작한다. **인트로로 직행시키지 않는다**:
+ * 이미 로그인한 사용자를 온보딩 첫 화면에 떨어뜨릴 이유가 없다.
  */
 fun resolveStartRoute(
     uri: Uri?,
@@ -99,10 +94,6 @@ fun resolveStartRoute(
     return route
 }
 
-/**
- * 앱 실행 중 들어온 새 deep-link 를 처리할 [NavRoute] 로 변환.
- * 해석할 수 없거나 미등록 path 면 null 반환 (호출부가 무시 결정).
- */
 fun resolveNewIntentRoute(
     uri: Uri,
     observability: Observability,

@@ -69,7 +69,6 @@ private fun SplashContent(modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(28.dp),
         ) {
-            // 로고 박스 (흰 카드 + "R")
             Box(
                 modifier =
                     Modifier
@@ -89,7 +88,6 @@ private fun SplashContent(modifier: Modifier = Modifier) {
                 )
             }
 
-            // 타이틀 + 서브카피
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -109,7 +107,6 @@ private fun SplashContent(modifier: Modifier = Modifier) {
                 )
             }
 
-            // 진행 점 3개
             Row(
                 modifier = Modifier.padding(top = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -129,11 +126,8 @@ private fun SplashContent(modifier: Modifier = Modifier) {
 }
 
 /**
- * 강제 업데이트 다이얼로그.
- *
- * **닫을 수 없다** — 뒤로가기·바깥 탭으로 닫히면 게이트를 우회해 구버전으로 앱을 계속 쓰게 된다.
- * 그래서 `onDismissRequest` 를 비우고 [DialogProperties] 로 두 경로를 모두 막는다. 버튼도 스토어
- * 이동 하나뿐이다.
+ * 강제 업데이트 다이얼로그. **닫을 수 없다** — 닫히면 게이트를 우회해 구버전으로 계속 쓰게 되므로
+ * `onDismissRequest` 를 비우고 [DialogProperties] 로 뒤로가기·바깥 탭을 모두 막는다.
  */
 @Composable
 private fun ForceUpdateDialog(
@@ -171,10 +165,8 @@ private fun ForceUpdateDialog(
 }
 
 /**
- * 강제 업데이트 안내 문구.
- *
- * 서버가 최소 버전을 주면 그 값을 그대로 보여준다 — 명세가 이 필드를 "x.x.x 이상으로 업데이트해
- * 주세요" 표시용으로 정의한다. 못 받았을 때만 일반 문구로 떨어진다.
+ * 강제 업데이트 안내 문구. 명세가 최소 버전 필드를 "x.x.x 이상으로 업데이트해 주세요" 표시용으로
+ * 정의하므로 받은 값을 그대로 넣고, 못 받았을 때만 일반 문구로 떨어진다.
  */
 private fun updateMessage(minAppVersion: String?): String =
     minAppVersion

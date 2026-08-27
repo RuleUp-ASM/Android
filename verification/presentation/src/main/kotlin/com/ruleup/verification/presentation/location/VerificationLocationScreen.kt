@@ -62,11 +62,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * 지도 위치 선택 화면(명세 §5, 피그마 "01 · 인증 셋업 UX 시안" ①②). 네이버·카카오 지도식 —
- * 뒤로가기를 품은 플로팅 검색 필에서 검색하거나 지도를 탭하면 핀 + 인증 반경이 그려지고,
- * 하단 바텀시트에서 장소를 확인해 [이 위치 추가]로 담는다. 담아둔 앵커는 지도에 번호 핀 +
- * 반경 원으로 표시되고, 앵커 목록 시트에서 삭제·제출한다. 브랜드/지점 키워드는 카카오 로컬로
- * 자동완성(§5.2)된다. 초기 카메라는 서울 시청 — 사용자가 검색/탭/현재위치로 옮긴다.
+ * 지도 위치 선택 화면(명세 §5, 피그마 "01 · 인증 셋업 UX 시안" ①②). 검색·지도 탭으로 찍은 핀을
+ * 하단 시트에서 확인해 앵커로 담고, 앵커 목록 시트에서 삭제·제출한다. 자동완성은 카카오 로컬(§5.2).
  */
 @Composable
 fun VerificationLocationScreen(
@@ -100,7 +97,6 @@ fun VerificationLocationScreen(
         viewModel.onIntent(VerificationLocationIntent.Init(challengeId))
     }
 
-    // 확인 전에는 지도 대신 로딩만 노출.
     if (state.isChecking) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = RuleUpTheme.colors.brand)
@@ -108,7 +104,6 @@ fun VerificationLocationScreen(
         return
     }
 
-    // 입력이 멈추면(디바운스) 카카오 로컬 자동완성. 공백이면 목록을 닫는다.
     LaunchedEffect(query) {
         if (suppressSearch) {
             suppressSearch = false
@@ -129,8 +124,6 @@ fun VerificationLocationScreen(
     val radiusM = state.serverRadiusM ?: defaultRadiusM
 
     Box(modifier = modifier.fillMaxSize()) {
-        // 전체화면 지도. 탭하면 그 좌표가 확인 대기 핀으로(역지오코딩 후 주소 채움).
-        // 담아둔 앵커는 번호 핀 + 반경 원으로 함께 표시된다.
         GeofenceMap(
             initialCenter = MapLatLng(DEFAULT_LAT, DEFAULT_LNG),
             pin = pin,
@@ -140,7 +133,6 @@ fun VerificationLocationScreen(
             anchors = state.anchors.map { MapAnchor(lat = it.lat, lng = it.lng, radiusM = radiusM) },
         )
 
-        // 상단: 플로팅 검색 필 + 자동완성 목록.
         Column(
             modifier =
                 Modifier
@@ -164,7 +156,6 @@ fun VerificationLocationScreen(
                 SearchResults(
                     places = state.places,
                     onPlaceClick = { place ->
-                        // 결과 선택: 디바운스 재검색 1회 건너뛰고 입력칸을 이름으로 채운 뒤 핀 요청.
                         suppressSearch = true
                         query = place.name
                         viewModel.onIntent(VerificationLocationIntent.SelectPlace(place))
@@ -173,7 +164,6 @@ fun VerificationLocationScreen(
             }
         }
 
-        // 하단: 현재 위치 FAB + 상태별 바텀시트. FAB 는 시트에 가리지 않게 시트 위에 얹는다.
         Column(
             modifier =
                 Modifier
@@ -232,10 +222,7 @@ fun VerificationLocationScreen(
     }
 }
 
-/**
- * 뒤로가기를 품은 플로팅 검색 필(시안 ①, 네이버 지도식). 입력 중엔 지우기 버튼,
- * 검색 중엔 스피너, 그 외엔 검색 아이콘을 트레일링으로 보여준다.
- */
+/** 뒤로가기를 품은 플로팅 검색 필(시안 ①, 네이버 지도식). */
 @Composable
 private fun FloatingSearchPill(
     query: String,
@@ -432,9 +419,7 @@ private fun SheetContainer(
 }
 
 /**
- * 핀 위치 확인 시트(시안 ①·명세 §5.3). 장소명·카테고리·주소와 인증 반경 안내를 보여주고
- * [이 위치 추가]로 앵커 목록에 담는다. 역지오코딩 중([isResolving])이거나 앵커가 가득 차면
- * ([canAdd]=false) 추가 버튼을 잠근다.
+ * 핀 위치 확인 시트(시안 ①·명세 §5.3). 역지오코딩 중이거나 앵커가 가득 차면 추가 버튼을 잠근다.
  */
 @Composable
 private fun SelectionSheet(
@@ -532,7 +517,6 @@ private fun SelectionSheet(
                     style = RuleUpTheme.typography.labelMedium,
                 )
             }
-            // 주소 확인 전(resolving)·앵커 가득 차면 추가 차단.
             val enabled = !isResolving && canAdd
             RuleUpPrimaryButton(
                 text = "이 위치 추가",
@@ -547,8 +531,8 @@ private fun SelectionSheet(
 }
 
 /**
- * 앵커 목록 시트(시안 ②·명세 setup). 담아둔 앵커를 번호 뱃지 + 이름/주소로 보여주고(개별 삭제),
- * [등록 완료]로 setup 을 송신한다. 제출 중([isSubmitting])엔 삭제·재제출을 막는다.
+ * 앵커 목록 시트(시안 ②). 담아둔 앵커를 번호 뱃지 + 이름/주소로 보여주고 개별 삭제한다.
+ * 제출은 최초 등록이면 setup, 편집 중이면 my-location 교체다 — 그래서 라벨이 [submitLabel] 로 갈린다.
  */
 @Composable
 private fun AnchorListSheet(
@@ -588,7 +572,6 @@ private fun AnchorListSheet(
                     number = index + 1,
                     anchor = anchor,
                     radiusM = radiusM,
-                    // 제출 중엔 삭제를 막는다(목록 고정).
                     onRemove = if (isSubmitting) null else ({ onRemove(index) }),
                 )
             }
@@ -610,9 +593,8 @@ private fun AnchorListSheet(
 }
 
 /**
- * 변경이 잠긴 이유. 편집 중이 아니거나 이번 달 여유가 남았으면 붙이지 않는다.
- *
- * 언제부터 가능한지 모르면 날짜를 지어내지 않는다 — 틀린 날짜를 확정처럼 보여주는 쪽이 더 나쁘다.
+ * 변경이 잠긴 이유(편집 중 + 이번 달 소진일 때만). 언제부터 가능한지 모르면 날짜를 지어내지 않는다 —
+ * 틀린 날짜를 확정처럼 보여주는 쪽이 더 나쁘다.
  */
 internal fun VerificationLocationState.changeLockNotice(): String? {
     if (!isEditing || changeAvailable) return null
@@ -691,6 +673,7 @@ private fun AnchorRow(
     }
 }
 
+// 초기 카메라 — 서울 시청. 사용자가 검색·탭·현재위치로 옮긴다.
 private const val DEFAULT_LAT = 37.5665
 private const val DEFAULT_LNG = 126.9780
 
