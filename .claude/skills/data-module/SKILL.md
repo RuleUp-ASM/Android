@@ -128,7 +128,8 @@ interface RankingApi {
   본문 없는 응답(`success` 만 오는 경우)은 `BaseResponse<EmptyData>`.
 - 경로는 **선행 슬래시 없이** `v1/...` 으로 쓴다. base URL 이 `.../api/` 로 끝나므로
   `/v1/...` 로 쓰면 `/api` 가 잘려 나간다.
-- 각 함수 위에 한 줄 주석으로 실제 최종 경로를 남긴다. base URL 조합이 눈에 안 보이기 때문이다.
+- 각 함수 위에 한 줄 주석으로 실제 최종 경로를 남긴다. base URL 조합이 눈에 안 보이기 때문이다
+  (comments 스킬 ② — 코드 밖에 있는 계약).
 
 ### dto/`<Concept>`Request.kt
 
