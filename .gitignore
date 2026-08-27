@@ -16,6 +16,7 @@ build/
 /.idea/deploymentTargetSelector.xml
 /.idea/misc.xml
 /.idea/artifacts
+/.idea/appInsightsSettings.xml
 
 # Local config
 /local.properties

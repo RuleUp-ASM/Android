@@ -1,0 +1,26 @@
+{
+  "skill_name": "data-module",
+  "evals": [
+    {
+      "id": 0,
+      "name": "add-endpoint-to-flat-module",
+      "prompt": "challenge 방 상세에 공지 탭을 붙이려고 하는데 서버 API가 나왔어. GET /api/v1/challenges/{challengeId}/notices 이고 응답이 이래.\n\n{\"success\":true,\"data\":{\"items\":[{\"noticeId\":\"n_01\",\"title\":\"이번 주 인증 안내\",\"content\":\"매일 밤 12시 전까지...\",\"authorNickname\":\"방장\",\"pinned\":true,\"createdAt\":\"2026-08-19T10:00:00Z\"}],\"hasNext\":false,\"nextCursor\":null}}\n\ncursor 쿼리파라미터로 페이징하고 size는 기본 20이야. 이거 앱에 붙여줘",
+      "expected_output": "challenge/data 는 flat 유지. api/ChallengeNoticeApi.kt(또는 기존 ChallengeApi 확장), dto/NoticeResponse.kt(전 필드 nullable + toDomain 동거), repository/NoticeRepositoryImpl.kt, 기존 ChallengeNetworkModule·ChallengeRepositoryModule 에 함수 추가(새 DI 파일 생성 X)",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "new-data-module-two-concepts",
+      "prompt": "알림 기능을 새로 만들 거라서 notification feature 모듈을 팔 거야. 지금은 data 레이어부터 세팅하고 싶어.\n\nAPI가 두 종류인데 하나는 알림함이고 (GET /api/v1/notifications?cursor=&size=, POST /api/v1/notifications/{id}/read) 다른 하나는 알림 설정이야 (GET /api/v1/notification-settings, PATCH /api/v1/notification-settings).\n\n설정 응답은 {\"success\":true,\"data\":{\"pushEnabled\":true,\"marketingEnabled\":false,\"quietHoursStart\":\"22:00\",\"quietHoursEnd\":\"08:00\"}} 이고 PATCH는 같은 필드를 부분 전송해. 알림함 응답은 {\"success\":true,\"data\":{\"items\":[{\"notificationId\":\"ntf_1\",\"type\":\"CHALLENGE_INVITE\",\"title\":\"초대가 도착했어요\",\"body\":\"...\",\"read\":false,\"createdAt\":\"2026-08-19T10:00:00Z\",\"deepLink\":\"...\"}],\"hasNext\":true,\"nextCursor\":\"eyJ...\"}} 야.\n\ndata 모듈 만들어줘",
+      "expected_output": ":notification:data 신설. 개념 2개이므로 inbox/{api,dto,repository} + settings/{api,dto,repository} + 루트 di/. build.gradle.kts(serialization 플러그인 포함), settings.gradle.kts include, app/build.gradle.kts 의존 추가까지 언급",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "nullable-mapping-judgment",
+      "prompt": "마이탭에 친구 목록 넣을 건데 응답에 필드가 좀 많아. GET /api/v1/friends 이고\n\n{\"success\":true,\"data\":{\"items\":[{\"userId\":\"u_9\",\"nickname\":\"러너\",\"profileImageUrl\":null,\"tier\":\"GOLD\",\"score\":1420,\"ongoingChallengeCount\":3,\"canInvite\":true,\"blocked\":false,\"lastActiveAt\":\"2026-08-18T22:10:00Z\"}],\"totalFriendCount\":12}}\n\ntier는 서버가 나중에 등급 더 추가할 수도 있다고 하더라. profile/data에 붙여줘",
+      "expected_output": "Response 전 필드 nullable. userId 는 requireField, nickname orEmpty, score/count 는 ?: 0, tier 는 Tier.fromValue 폴백(requireField 아님), canInvite/blocked 같은 권한 플래그는 안전한 쪽(canInvite ?: false, blocked ?: true 계열) 으로 처리",
+      "files": []
+    }
+  ]
+}
