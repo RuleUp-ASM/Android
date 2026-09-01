@@ -16,6 +16,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // VerificationRepository 대역을 challenge·profile·home presentation 이 함께 쓴다.
+    testFixtures {
+        enable = true
+    }
 }
 
 kotlin {
@@ -35,4 +40,7 @@ dependencies {
 
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.kotlinx.coroutines.test)
+
+    // core:domain 은 api 라 fixture 컴파일 경로에 오지만, coroutines 는 implementation 이다.
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
 }
