@@ -243,7 +243,8 @@ internal fun ChallengeDetailState.missingPermissionTokens(): List<String> {
 }
 
 @Composable
-private fun ChallengeDetailContent(
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+internal fun ChallengeDetailContent(
     state: ChallengeDetailState,
     ctaLabel: String,
     onIntent: (ChallengeDetailIntent) -> Unit,
