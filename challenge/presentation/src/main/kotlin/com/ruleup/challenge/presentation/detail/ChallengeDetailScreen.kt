@@ -332,30 +332,7 @@ internal fun ChallengeDetailContent(
                         onConfirmDelete = { confirmAction = MemberConfirm.DELETE },
                     )
 
-                else ->
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(horizontal = 20.dp)
-                                .padding(top = 8.dp, bottom = 120.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        DetailHero(detail)
-                        DetailInfoCard(detail)
-                        // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
-                        val myWatchers = state.watchers
-                        if (myWatchers != null) {
-                            WatcherSection(
-                                watchers = myWatchers.watchers,
-                                limit = myWatchers.limit,
-                                isInviting = state.isInvitingWatcher,
-                                onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-                                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
-                            )
-                        }
-                    }
+                else -> PublicDetailBody(state = state, detail = detail, onIntent = onIntent)
             }
         }
 
@@ -610,6 +587,41 @@ private fun MemberConfirmDialog(
             }
         },
     )
+}
+
+/**
+ * 비참여자가 보는 공개 상세 본문. 방 홈(참여자)과 갈래가 다르고 길어서 떼어 둔다 —
+ * 바깥 [ChallengeDetailContent] 는 로딩·실패·방 홈·공개 상세 네 갈래를 고르는 일만 남는다.
+ */
+@Composable
+private fun PublicDetailBody(
+    state: ChallengeDetailState,
+    detail: ChallengeDetail,
+    onIntent: (ChallengeDetailIntent) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(top = 8.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        DetailHero(detail)
+        DetailInfoCard(detail)
+        // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
+        val myWatchers = state.watchers
+        if (myWatchers != null) {
+            WatcherSection(
+                watchers = myWatchers.watchers,
+                limit = myWatchers.limit,
+                isInviting = state.isInvitingWatcher,
+                onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
+                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
+            )
+        }
+    }
 }
 
 /** [title] 이 없는 건 아직 상세를 못 받은 동안뿐이다 — 그때만 일반 명칭으로 버틴다. */
