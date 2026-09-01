@@ -328,6 +328,7 @@ class ChallengeDetailViewModel
             when (reason) {
                 JoinBlockReason.FREE_LIMIT -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 JoinBlockReason.TIER_GATE -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
+                JoinBlockReason.FULL -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
                 JoinBlockReason.CHALLENGE_COMPLETED -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
                 else -> Unit
             }

@@ -276,7 +276,7 @@ private fun ChallengeDetailContent(
                     onBack = onBack,
                 )
             } else {
-                DetailTopBar(onBack = onBack)
+                DetailTopBar(title = detail?.title, onBack = onBack)
             }
 
             // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다. 인증은 조용히 멈추므로 사용자가
@@ -414,6 +414,7 @@ private fun ChallengeDetailContent(
                     ?.gate
                     ?.minTier
                     ?.value,
+            capacity = state.detail?.capacity,
             onAction = { onIntent(ChallengeDetailIntent.FollowJoinBlockAction) },
             onDismiss = { onIntent(ChallengeDetailIntent.DismissJoinBlock) },
         )
@@ -610,9 +611,13 @@ private fun MemberConfirmDialog(
     )
 }
 
+/** [title] 이 없는 건 아직 상세를 못 받은 동안뿐이다 — 그때만 일반 명칭으로 버틴다. */
 @Composable
-private fun DetailTopBar(onBack: () -> Unit) {
-    RuleUpTopBar(title = "챌린지", onBack = onBack)
+private fun DetailTopBar(
+    title: String?,
+    onBack: () -> Unit,
+) {
+    RuleUpTopBar(title = title ?: "챌린지", onBack = onBack)
 }
 
 @Composable
@@ -865,6 +870,7 @@ private fun JoinBlockedSheet(
     block: JoinBlock,
     myTier: String?,
     requiredTier: String?,
+    capacity: Int?,
     onAction: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -875,10 +881,15 @@ private fun JoinBlockedSheet(
                     (block.rejoinAvailableAt?.take(10)?.let { "$it 부터 다시 참여할 수 있어요" } ?: "조금 뒤에 다시 시도해 주세요")
 
             JoinBlockReason.FREE_LIMIT ->
-                "동시에 3개까지 참여할 수 있어요" to "참여 중인 챌린지를 정리하면 새로 들어올 수 있어요"
+                "무료로는 3개까지 함께할 수 있어요" to "지금 3개에 참여 중이에요. 하나를 마치거나 정리하면 새로 시작할 수 있어요."
 
             JoinBlockReason.FULL ->
-                "정원이 찼어요" to "자리가 나면 다시 참여할 수 있어요"
+                "정원이 다 찼어요" to
+                    (
+                        capacity
+                            ?.let { "이 방은 ${it}명이 모두 모였어요. 비슷한 챌린지를 둘러보세요." }
+                            ?: "정원이 모두 찼어요. 비슷한 챌린지를 둘러보세요."
+                    )
 
             JoinBlockReason.TIER_GATE ->
                 "티어 조건을 만족하지 않아요" to
@@ -895,8 +906,9 @@ private fun JoinBlockedSheet(
         }
     val actionLabel =
         when (block.reason) {
-            JoinBlockReason.FREE_LIMIT -> "참여 중인 챌린지 보기"
+            JoinBlockReason.FREE_LIMIT -> "내 챌린지 관리"
             JoinBlockReason.TIER_GATE -> "내 티어 보기"
+            JoinBlockReason.FULL -> "비슷한 챌린지 보기"
             JoinBlockReason.CHALLENGE_COMPLETED -> "다른 챌린지 찾기"
             else -> null
         }
