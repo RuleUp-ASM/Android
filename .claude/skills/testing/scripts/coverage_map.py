@@ -87,6 +87,7 @@ def gap_targets(path: Path, text: str) -> list[tuple[str, str]]:
     if name.endswith("RepositoryImpl.kt"):
         return [(path.stem, "RepositoryImpl — 모듈 층")]
     if "/presentation/" in posix and name.endswith("Screen.kt"):
+        # 화면의 검증 대상은 상태 호이스팅된 <Screen>Content 다 — 테스트 파일도 그 이름을 따른다.
         return [(path.stem, "화면 — UI 층")]
     if "/domain/" in posix and ("/entity/" in posix or "/model/" in posix):
         found = []
@@ -128,7 +129,11 @@ def main() -> int:
             count = len(TEST_FN.findall(text))
             grid[module_of(path, root)][layer] += count
             files_by_layer[layer] += 1
-            tested_names.add(path.name[: -len("Test.kt")])
+            covered = path.name[: -len("Test.kt")]
+            tested_names.add(covered)
+            # ChallengeDetailContentTest 는 ChallengeDetailScreen 을 덮는다.
+            if covered.endswith("Content"):
+                tested_names.add(covered[: -len("Content")] + "Screen")
         else:
             for target, reason in gap_targets(path, text):
                 production.append((path, module_of(path, root), target, reason))

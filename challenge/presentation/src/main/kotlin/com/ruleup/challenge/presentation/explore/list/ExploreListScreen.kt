@@ -82,7 +82,8 @@ fun ExploreListScreen(
 }
 
 @Composable
-private fun ExploreListContent(
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+internal fun ExploreListContent(
     state: ExploreListState,
     onIntent: (ExploreListIntent) -> Unit,
     modifier: Modifier = Modifier,

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ChallengeField
 import com.ruleup.challenge.domain.entity.ChallengeLimits
+import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -86,7 +88,8 @@ fun ChallengeSettingsScreen(
 }
 
 @Composable
-private fun ChallengeSettingsContent(
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+internal fun ChallengeSettingsContent(
     state: ChallengeSettingsState,
     onIntent: (ChallengeSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
@@ -115,59 +118,71 @@ private fun ChallengeSettingsContent(
                     )
                 }
 
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp),
-                ) {
-                    state.moderationLockedSeconds?.let { seconds ->
-                        item { ModerationLockNote(seconds = seconds) }
-                    }
-                    item { TitleSection(state = state, onIntent = onIntent) }
-                    item { DescriptionSection(state = state, onIntent = onIntent) }
-                    item { CoverSection(state = state, onIntent = onIntent) }
-                    item { CategorySection(state = state) }
-                    item { CapacitySection(state = state, onIntent = onIntent) }
-                    if (state.loaded.config.mode.isGroup) {
-                        item { VisibilitySection(state = state, onIntent = onIntent) }
-                        item { MinTierSection(state = state, onIntent = onIntent) }
-                    } else {
-                        item { RankingVisibleSection(state = state, onIntent = onIntent) }
-                    }
-                    item { WeeklyCountSection(state = state, onIntent = onIntent) }
-                    if (state.params.isNotEmpty()) {
-                        item { ParamsSection(state = state, onIntent = onIntent) }
-                    }
-                    item { VerificationSection(state = state, onIntent = onIntent) }
-                    item { WatcherPenaltySection(state = state, onIntent = onIntent) }
-                    item {
-                        InfoNote(
-                            emoji = "🔒",
-                            text = "잠긴 항목은 시작 전이고 방에 나 혼자일 때만 바꿀 수 있어요",
-                            background = RuleUpPalette.Primary50,
-                            textColor = RuleUpTheme.colors.textSlate,
-                        )
-                    }
-                }
-
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(RuleUpTheme.colors.surface)
-                            .navigationBarsPadding()
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
-                ) {
-                    RuleUpPrimaryButton(
-                        text = if (state.isSaving) "저장하는 중…" else "저장",
-                        // 아무것도 안 바꿨으면 열지 않는다 — 빈 PATCH 는 제목·설명을 괜히 재심사에 걸리게 한다.
-                        enabled = state.hasChanges && !state.isSaving && state.moderationLockedSeconds == null,
-                        onClick = { onIntent(ChallengeSettingsIntent.Save) },
-                    )
-                }
-            }
+            else -> ChallengeSettingsForm(state = state, loaded = state.loaded, onIntent = onIntent)
         }
+    }
+}
+
+/**
+ * 불러오기가 끝난 뒤의 편집 본문. 폼과 저장 버튼이 한 덩어리라 [ChallengeSettingsContent] 는
+ * 로딩·실패·편집 세 갈래를 고르는 일만 남는다.
+ */
+@Composable
+private fun ColumnScope.ChallengeSettingsForm(
+    state: ChallengeSettingsState,
+    // 설정을 받은 뒤에만 그리는 폼이다 — 그 사실을 시그니처에 드러낸다.
+    loaded: ChallengeSettings,
+    onIntent: (ChallengeSettingsIntent) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.weight(1f).fillMaxWidth(),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        state.moderationLockedSeconds?.let { seconds ->
+            item { ModerationLockNote(seconds = seconds) }
+        }
+        item { TitleSection(state = state, onIntent = onIntent) }
+        item { DescriptionSection(state = state, onIntent = onIntent) }
+        item { CoverSection(state = state, onIntent = onIntent) }
+        item { CategorySection(state = state) }
+        item { CapacitySection(state = state, onIntent = onIntent) }
+        if (loaded.config.mode.isGroup) {
+            item { VisibilitySection(state = state, onIntent = onIntent) }
+            item { MinTierSection(state = state, onIntent = onIntent) }
+        } else {
+            item { RankingVisibleSection(state = state, onIntent = onIntent) }
+        }
+        item { WeeklyCountSection(state = state, onIntent = onIntent) }
+        if (state.params.isNotEmpty()) {
+            item { ParamsSection(state = state, onIntent = onIntent) }
+        }
+        item { VerificationSection(state = state, onIntent = onIntent) }
+        item { WatcherPenaltySection(state = state, onIntent = onIntent) }
+        item {
+            InfoNote(
+                emoji = "🔒",
+                text = "잠긴 항목은 시작 전이고 방에 나 혼자일 때만 바꿀 수 있어요",
+                background = RuleUpPalette.Primary50,
+                textColor = RuleUpTheme.colors.textSlate,
+            )
+        }
+    }
+
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(RuleUpTheme.colors.surface)
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+    ) {
+        RuleUpPrimaryButton(
+            text = if (state.isSaving) "저장하는 중…" else "저장",
+            // 아무것도 안 바꿨으면 열지 않는다 — 빈 PATCH 는 제목·설명을 괜히 재심사에 걸리게 한다.
+            enabled = state.hasChanges && !state.isSaving && state.moderationLockedSeconds == null,
+            onClick = { onIntent(ChallengeSettingsIntent.Save) },
+        )
     }
 }
 

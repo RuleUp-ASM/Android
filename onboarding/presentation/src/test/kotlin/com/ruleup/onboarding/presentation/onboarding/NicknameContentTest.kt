@@ -1,25 +1,15 @@
 package com.ruleup.onboarding.presentation.onboarding
 
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import com.ruleup.designsystem.SingleClickGuard
-import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.test.RecordingNavigationHelper
-import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
-import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.LocalObservability
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.shadows.ShadowSystemClock
-import java.time.Duration
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -87,48 +77,12 @@ class NicknameContentTest {
         nicknameAvailable: Boolean? = null,
         nickname: String = "",
         onIntent: (OnboardingIntent) -> Unit = {},
-    ): RecordingNavigationHelper {
-        val nav = RecordingNavigationHelper()
-        compose.setContent {
-            RuleUpTheme {
-                // 화면이 소비하는 CompositionLocal 은 테스트가 직접 채운다 — 값이 없으면
-                // 렌더 전에 error() 로 죽어 무엇이 문제인지 화면 코드처럼 보인다.
-                CompositionLocalProvider(
-                    LocalNavigationHelper provides nav,
-                    LocalObservability provides testObservability(),
-                ) {
-                    NicknameContent(
-                        onIntent = onIntent,
-                        nickname = nickname,
-                        nicknameAvailable = nicknameAvailable,
-                    )
-                }
-            }
+    ): RecordingNavigationHelper =
+        compose.renderOnboarding {
+            NicknameContent(
+                onIntent = onIntent,
+                nickname = nickname,
+                nicknameAvailable = nicknameAvailable,
+            )
         }
-        return nav
-    }
-}
-
-/**
- * 전역 [SingleClickGuard] 를 넘겨 누른다.
- *
- * 가드는 `SystemClock.elapsedRealtime()` 을 보는데 Robolectric 은 **테스트마다 시계를 되감는다.**
- * 반면 가드의 마지막 클릭 시각은 `object` 필드라 테스트를 건너 남는다. 그래서 매번 같은 양만
- * 전진시키면 두 번째 테스트부터 차이가 0 이하가 되어 클릭이 조용히 삼켜진다 — 하나만 돌리면
- * 통과하는데 클래스 전체를 돌리면 깨지는, 원인을 찾기 가장 어려운 형태다.
- *
- * 그래서 클릭할 때마다 **누적**해서 민다. 되감긴 시계에서도 직전 테스트가 남긴 값보다 항상 앞선다.
- */
-private object ClickClock {
-    private var elapsed = 0L
-
-    fun advance() {
-        elapsed += SingleClickGuard.DEFAULT_THROTTLE_MILLIS * 4
-        ShadowSystemClock.advanceBy(Duration.ofMillis(elapsed))
-    }
-}
-
-private fun SemanticsNodeInteraction.clickPastGuard() {
-    ClickClock.advance()
-    performClick()
 }

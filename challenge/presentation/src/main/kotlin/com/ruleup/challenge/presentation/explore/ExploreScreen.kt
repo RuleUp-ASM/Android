@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,7 +67,8 @@ fun ExploreScreen(
 }
 
 @Composable
-private fun ExploreContent(
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+internal fun ExploreContent(
     state: ExploreState,
     onIntent: (ExploreIntent) -> Unit,
     modifier: Modifier = Modifier,
@@ -88,23 +90,7 @@ private fun ExploreContent(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             // 인기와 카테고리는 독립적으로 그린다 — 한쪽이 실패해도 다른 쪽은 그대로 보여야 한다.
-            if (state.isTrendingLoading || !state.hideTrendingSection) {
-                SectionHeader(title = "실시간 인기", onSeeAll = { onIntent(ExploreIntent.OpenTrendingAll) })
-                Text(
-                    text = "최근 24시간 참여 기준 · 1시간마다 갱신 · 그룹 챌린지만",
-                    color = RuleUpTheme.colors.textMuted,
-                    style = RuleUpTheme.typography.caption,
-                )
-                if (state.isTrendingLoading) {
-                    TrendingSkeleton()
-                } else {
-                    TrendingCard(
-                        trending = state.trending,
-                        onClick = { onIntent(ExploreIntent.OpenChallenge(it)) },
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-            }
+            TrendingSection(state = state, onIntent = onIntent)
 
             SectionHeader(title = "카테고리 탐색", onSeeAll = { onIntent(ExploreIntent.OpenCategoryAll) })
             when {
@@ -136,6 +122,34 @@ private fun ExploreContent(
                 }
             },
         )
+    }
+}
+
+/**
+ * 실시간 인기 섹션. 카테고리 섹션과 **서로 독립**이라 한쪽이 실패해도 다른 쪽은 그대로 보인다 —
+ * 그 독립성이 코드 구조에도 드러나게 각각 떼어 둔다.
+ */
+@Composable
+private fun ColumnScope.TrendingSection(
+    state: ExploreState,
+    onIntent: (ExploreIntent) -> Unit,
+) {
+    if (state.isTrendingLoading || !state.hideTrendingSection) {
+        SectionHeader(title = "실시간 인기", onSeeAll = { onIntent(ExploreIntent.OpenTrendingAll) })
+        Text(
+            text = "최근 24시간 참여 기준 · 1시간마다 갱신 · 그룹 챌린지만",
+            color = RuleUpTheme.colors.textMuted,
+            style = RuleUpTheme.typography.caption,
+        )
+        if (state.isTrendingLoading) {
+            TrendingSkeleton()
+        } else {
+            TrendingCard(
+                trending = state.trending,
+                onClick = { onIntent(ExploreIntent.OpenChallenge(it)) },
+            )
+        }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
