@@ -1,0 +1,82 @@
+Split: 12 train, 8 test (holdout=0.4)
+
+============================================================
+Iteration 1/5
+Description: RuleUp Android 레포에서 테스트를 설계·작성·감사하고 TEST_STRATEGY.md 를 갱신하는 절차. 케이스(엔티티·값객체·매퍼) · 모듈(UseCase·Repository 구현·ViewModel) · UI(Robolectric Compose) · 통합(모듈 경계·네비게이션·직렬화) · 인수(실서버 사용자 스토리) 다섯 층의 경계, 이름 규칙, 상태 경로와 에러 요인을 빠짐없이 열거하는 방법이 여기에만 있다. "테스트 짜줘", "테스트 케이스", "커버리지", "이거 테스트 어떻게 해", "UI 테스트", "통합 테스트", "인수 테스트", "빠진 테스트 찾아줘", "테스트 전략" 같은 말이 나오면 테스트 파일을 열기 전에 반드시 이 스킬을 먼저 읽는다. 명시적 요청이 아니어도 마찬가지다 — 새 엔티티·UseCase·ViewModel·화면을 만들거나 버그를 고치는 작업은 테스트도 같이 쓰게 되므로 코드를 쓰기 전에 읽고, PR 리뷰에서 남의 테스트를 평가할 때도 이 기준으로 판정한다. 층을 잘못 고르면 조합 폭발을 만들거나 리뷰에서 통째로 되돌아온다.
+============================================================
+Train: 19/36 correct, precision=100% recall=6% accuracy=53% (66.7s)
+  [FAIL] rate=0/3 expected=True: 새로 만든 JoinBlockReason enum 값이 6개인데 나중에 서버에서 하나 더 늘어나면 자동으로 걸
+  [FAIL] rate=0/3 expected=True: 실제 서버 붙여서 챌린지 만들고 참여하는것까지 한번에 돌려보는 테스트 만들수 있을까? 배포 전에 한번씩 돌리
+  [FAIL] rate=1/3 expected=True: profile/data 에 CalendarResponse 매퍼 추가했어. 서버가 필드 안주는 경우가 있는데 
+  [FAIL] rate=0/3 expected=True: PR 올라온거 보는데 테스트 이름들이 다 `test1` `test2` 이런식이야. 이거 리뷰에서 뭐라고 코멘
+  [FAIL] rate=0/3 expected=True: ChallengeSettingsViewModel 테스트 좀 추가해줘
+  [FAIL] rate=0/3 expected=True: verification/domain 에 SignalBatch 쪼개는 로직 새로 넣었는데 이거 테스트 어떻게 
+  [PASS] rate=0/3 expected=False: 챌린지 방 나가기 API 붙여야돼. DELETE /challenges/{id}/members/me 이고 응답
+  [PASS] rate=0/3 expected=False: CI 에서 androidTest 도 같이 돌리려면 워크플로 어떻게 추가해야돼? 에뮬레이터 띄우는거 필요하지?
+  [PASS] rate=0/3 expected=False: 홈 화면 진입할때 렉이 걸리는것 같은데 어디서 시간을 잡아먹는지 측정해볼 방법 없을까
+  [PASS] rate=0/3 expected=False: ./gradlew test 돌렸는데 :app:testDebugUnitTest 에서 google-service
+  [PASS] rate=0/3 expected=False: ChallengeDetailViewModel 이 1000줄 넘어가서 좀 쪼개고 싶은데 어떻게 나누는게 좋을까
+  [PASS] rate=0/3 expected=False: 챌린지 생성할때 주간 횟수 범위가 1~7 인데 이 상수를 domain 어디에 두는게 맞아?
+Test : 13/24 correct, precision=100% recall=8% accuracy=54% (0.0s)
+  [FAIL] rate=0/3 expected=True: onboarding 쪽에 빠진 테스트 있으면 찾아줘
+  [FAIL] rate=1/3 expected=True: ExploreScreen 화면 테스트 만들어줘. 필터 눌렀을때 제대로 반응하는지 확인하고 싶음
+  [FAIL] rate=0/3 expected=True: 우리 앱 테스트가 지금 어디까지 커버되는지 정리해서 문서로 남기고 싶어. 나중에 품질 지표로 쓰게
+  [FAIL] rate=0/3 expected=True: TokenAuthenticator 401 갱신되는 부분이 지금 검증이 하나도 안되어있는것 같은데 확인 좀
+  [PASS] rate=0/3 expected=False: ktlintCheck 에서 자꾸 걸리는데 max line length 를 140 으로 올릴수 있나? .edi
+  [PASS] rate=0/3 expected=False: https://www.figma.com/design/JDWCrvnTlAyrtzMI2MtpcC/RuleUp-디
+  [PASS] rate=0/3 expected=False: RunSyncUseCase 에 주석이 너무 많이 달려있어서 정리하고 싶어
+  [PASS] rate=0/3 expected=False: verification 쪽 지오펜스가 실기기에서 잘 안잡히는데 에뮬레이터로 위치 모킹해서 확인하는 adb 명
+
+Improving description...
+Proposed (29.9s): RuleUp Android 레포에서 "이게 맞는지 확인"이 필요한 모든 순간에 사용한다. 테스트를 써달라·추가해달라는 직접 요청은 물론, 방금 만들거나 고친 것(엔티티·값객체·매퍼·UseCase·Repository·ViewModel·화면·도메인 로직)을 검증하게 해달라, 어떤 케이스·경계값·null·에러 상황을 봐야 하냐, 값이나 분기가 나중에 늘면 자동으로 걸리게 하고 싶다, 실서버로 사용자 플로우를 한 번 관통시켜 보고 싶다, PR 에 올라온 남의 테스트나 테스트 이름이 이상한데 뭐라고 코멘트할까, 빠진 게 뭐냐(커버리지·감사) — 전부 이 스킬에서 시작한다.
+
+다섯 층(케이스·모듈·UI·통합·인수) 중 어디에 둘지, 이름을 어떻게 지을지, 경로를 빠짐없이 열거하는 법, 무엇을 테스트하지 않을지, TEST_STRATEGY.md 갱신 절차가 여기에만 있다. 테스트 파일을 열거나 코드를 쓰기 전에 먼저 읽어라.
+
+빌드·Gradle 설정 실패, CI 워크플로 구성, 성능 측정, 순수 리팩터링/코드 배치 질문에는 쓰지 않는다.
+
+============================================================
+Iteration 2/5
+Description: RuleUp Android 레포에서 "이게 맞는지 확인"이 필요한 모든 순간에 사용한다. 테스트를 써달라·추가해달라는 직접 요청은 물론, 방금 만들거나 고친 것(엔티티·값객체·매퍼·UseCase·Repository·ViewModel·화면·도메인 로직)을 검증하게 해달라, 어떤 케이스·경계값·null·에러 상황을 봐야 하냐, 값이나 분기가 나중에 늘면 자동으로 걸리게 하고 싶다, 실서버로 사용자 플로우를 한 번 관통시켜 보고 싶다, PR 에 올라온 남의 테스트나 테스트 이름이 이상한데 뭐라고 코멘트할까, 빠진 게 뭐냐(커버리지·감사) — 전부 이 스킬에서 시작한다.
+
+다섯 층(케이스·모듈·UI·통합·인수) 중 어디에 둘지, 이름을 어떻게 지을지, 경로를 빠짐없이 열거하는 법, 무엇을 테스트하지 않을지, TEST_STRATEGY.md 갱신 절차가 여기에만 있다. 테스트 파일을 열거나 코드를 쓰기 전에 먼저 읽어라.
+
+빌드·Gradle 설정 실패, CI 워크플로 구성, 성능 측정, 순수 리팩터링/코드 배치 질문에는 쓰지 않는다.
+============================================================
+Train: 19/36 correct, precision=100% recall=6% accuracy=53% (63.1s)
+  [FAIL] rate=1/3 expected=True: 실제 서버 붙여서 챌린지 만들고 참여하는것까지 한번에 돌려보는 테스트 만들수 있을까? 배포 전에 한번씩 돌리
+  [FAIL] rate=0/3 expected=True: 새로 만든 JoinBlockReason enum 값이 6개인데 나중에 서버에서 하나 더 늘어나면 자동으로 걸
+  [FAIL] rate=0/3 expected=True: PR 올라온거 보는데 테스트 이름들이 다 `test1` `test2` 이런식이야. 이거 리뷰에서 뭐라고 코멘
+  [FAIL] rate=0/3 expected=True: profile/data 에 CalendarResponse 매퍼 추가했어. 서버가 필드 안주는 경우가 있는데 
+  [FAIL] rate=0/3 expected=True: ChallengeSettingsViewModel 테스트 좀 추가해줘
+  [PASS] rate=0/3 expected=False: 챌린지 방 나가기 API 붙여야돼. DELETE /challenges/{id}/members/me 이고 응답
+  [FAIL] rate=0/3 expected=True: verification/domain 에 SignalBatch 쪼개는 로직 새로 넣었는데 이거 테스트 어떻게 
+  [PASS] rate=0/3 expected=False: CI 에서 androidTest 도 같이 돌리려면 워크플로 어떻게 추가해야돼? 에뮬레이터 띄우는거 필요하지?
+  [PASS] rate=0/3 expected=False: ./gradlew test 돌렸는데 :app:testDebugUnitTest 에서 google-service
+  [PASS] rate=0/3 expected=False: 홈 화면 진입할때 렉이 걸리는것 같은데 어디서 시간을 잡아먹는지 측정해볼 방법 없을까
+  [PASS] rate=0/3 expected=False: ChallengeDetailViewModel 이 1000줄 넘어가서 좀 쪼개고 싶은데 어떻게 나누는게 좋을까
+  [PASS] rate=0/3 expected=False: 챌린지 생성할때 주간 횟수 범위가 1~7 인데 이 상수를 domain 어디에 두는게 맞아?
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: ExploreScreen 화면 테스트 만들어줘. 필터 눌렀을때 제대로 반응하는지 확인하고 싶음
+  [FAIL] rate=0/3 expected=True: onboarding 쪽에 빠진 테스트 있으면 찾아줘
+  [FAIL] rate=0/3 expected=True: 우리 앱 테스트가 지금 어디까지 커버되는지 정리해서 문서로 남기고 싶어. 나중에 품질 지표로 쓰게
+  [FAIL] rate=0/3 expected=True: TokenAuthenticator 401 갱신되는 부분이 지금 검증이 하나도 안되어있는것 같은데 확인 좀
+  [PASS] rate=0/3 expected=False: ktlintCheck 에서 자꾸 걸리는데 max line length 를 140 으로 올릴수 있나? .edi
+  [PASS] rate=0/3 expected=False: RunSyncUseCase 에 주석이 너무 많이 달려있어서 정리하고 싶어
+  [PASS] rate=0/3 expected=False: https://www.figma.com/design/JDWCrvnTlAyrtzMI2MtpcC/RuleUp-디
+  [PASS] rate=0/3 expected=False: verification 쪽 지오펜스가 실기기에서 잘 안잡히는데 에뮬레이터로 위치 모킹해서 확인하는 adb 명
+
+Improving description...
+Proposed (12.4s): RuleUp Android 레포에서 **코드가 의도대로 동작하는지 검증하는 장치**를 만들거나 평가할 때 쓴다. "테스트 짜줘/추가해줘"처럼 명시적일 때는 물론, 방금 추가·수정한 것(엔티티·enum·값객체·DTO 매퍼·UseCase·Repository·ViewModel·Composable·도메인 로직)을 "같이 검증하게 해줘", "어떤 케이스를 봐야 하냐", "경계값·null·서버가 필드를 안 줄 때는", "나중에 값이 늘면 자동으로 걸리게", "실서버로 사용자 플로우를 관통시켜 보고 싶다", "남의 테스트/테스트 이름을 리뷰해야 한다", "빠진 테스트가 뭐냐" — 이런 요청은 전부 여기서 시작한다. 테스트 파일을 열거나 한 줄이라도 쓰기 전에 먼저 읽어라.
+
+여기에만 있는 것: 다섯 층(케이스·모듈·UI·통합·인수) 중 어디에 둘지, 한국어 테스트 이름 규칙, 경로를 타입에서 빠짐없이 뽑는 법, 무엇을 테스트하지 않을지, TEST_STRATEGY.md 갱신.
+
+빌드/Gradle 실패, CI 워크플로, 성능 측정, 순수 리팩터링·코드 배치 질문에는 쓰지 않는다.
+
+============================================================
+Iteration 3/5
+Description: RuleUp Android 레포에서 **코드가 의도대로 동작하는지 검증하는 장치**를 만들거나 평가할 때 쓴다. "테스트 짜줘/추가해줘"처럼 명시적일 때는 물론, 방금 추가·수정한 것(엔티티·enum·값객체·DTO 매퍼·UseCase·Repository·ViewModel·Composable·도메인 로직)을 "같이 검증하게 해줘", "어떤 케이스를 봐야 하냐", "경계값·null·서버가 필드를 안 줄 때는", "나중에 값이 늘면 자동으로 걸리게", "실서버로 사용자 플로우를 관통시켜 보고 싶다", "남의 테스트/테스트 이름을 리뷰해야 한다", "빠진 테스트가 뭐냐" — 이런 요청은 전부 여기서 시작한다. 테스트 파일을 열거나 한 줄이라도 쓰기 전에 먼저 읽어라.
+
+여기에만 있는 것: 다섯 층(케이스·모듈·UI·통합·인수) 중 어디에 둘지, 한국어 테스트 이름 규칙, 경로를 타입에서 빠짐없이 뽑는 법, 무엇을 테스트하지 않을지, TEST_STRATEGY.md 갱신.
+
+빌드/Gradle 실패, CI 워크플로, 성능 측정, 순수 리팩터링·코드 배치 질문에는 쓰지 않는다.
+============================================================

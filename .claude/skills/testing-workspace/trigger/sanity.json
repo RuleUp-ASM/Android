@@ -1,0 +1,5 @@
+[
+  {"query": "ChallengeSettingsViewModel 테스트 좀 추가해줘", "should_trigger": true},
+  {"query": "onboarding 쪽에 빠진 테스트 있으면 찾아줘", "should_trigger": true},
+  {"query": "챌린지 방 나가기 API 붙여야돼. DELETE /challenges/{id}/members/me 이고 응답은 204야", "should_trigger": false}
+]

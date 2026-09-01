@@ -1,0 +1,48 @@
+{
+  "eval_id": 3,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+      "passed": true,
+      "evidence": "toml robolectric 핀: True"
+    },
+    {
+      "text": "isIncludeAndroidResources = true 를 설정했다",
+      "passed": true,
+      "evidence": "isIncludeAndroidResources=True"
+    },
+    {
+      "text": "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+      "passed": true,
+      "evidence": "properties sdk=True, @Config sdk=False"
+    },
+    {
+      "text": "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+      "passed": true,
+      "evidence": "RobolectricTestRunner=True"
+    },
+    {
+      "text": "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+      "passed": true,
+      "evidence": "테스트 위치: ['challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailJoinBlockTest.kt', 'challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailScreenTest.kt']"
+    },
+    {
+      "text": "setContent 안을 RuleUpTheme 으로 감쌌다",
+      "passed": true,
+      "evidence": "RuleUpTheme=True"
+    },
+    {
+      "text": "색·간격·폰트 같은 스타일 값을 단언하지 않는다",
+      "passed": true,
+      "evidence": "스타일 단언 없음"
+    },
+    {
+      "text": "조작 → Intent 를 검증하는 테스트가 최소 하나 있다",
+      "passed": true,
+      "evidence": "performClick=True"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}
