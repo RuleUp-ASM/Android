@@ -76,6 +76,7 @@ dependencies {
     testImplementation(testFixtures(project(":core:domain")))
     testImplementation(testFixtures(project(":observability:domain")))
     testImplementation(testFixtures(project(":verification:domain")))
+    testImplementation(testFixtures(project(":challenge:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
     testImplementation(libs.robolectric)
