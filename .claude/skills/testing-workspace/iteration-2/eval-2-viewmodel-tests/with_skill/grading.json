@@ -1,0 +1,48 @@
+{
+  "eval_id": 2,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "Dispatchers.setMain 과 resetMain 을 @Before/@After 에 세웠다",
+      "passed": true,
+      "evidence": "setMain=True, resetMain=True"
+    },
+    {
+      "text": "build.gradle.kts 에 kotlinx-coroutines-test 를 추가했다 (버전 카탈로그 경유)",
+      "passed": true,
+      "evidence": "gradle 에 coroutines-test"
+    },
+    {
+      "text": "NavigationHelper 대역을 만들어 화면 이동 여부를 검증한다",
+      "passed": true,
+      "evidence": "NavigationHelper 대역 정의됨"
+    },
+    {
+      "text": "effect 를 단독 first() 로 기다리지 않는다 (수집 job/toList 사용 — 무한대기 회피)",
+      "passed": true,
+      "evidence": "bare first()=False, 수집자=False"
+    },
+    {
+      "text": "목킹 라이브러리(mockk·mockito)를 새로 도입하지 않았다",
+      "passed": true,
+      "evidence": "목킹 라이브러리 없음"
+    },
+    {
+      "text": "모든 @Test 이름이 백틱 한국어 문장이다",
+      "passed": true,
+      "evidence": "33개 테스트, 한글 33개"
+    },
+    {
+      "text": "State 전체를 통째로 assertEquals 하지 않는다",
+      "passed": true,
+      "evidence": "State 통째 비교 없음"
+    },
+    {
+      "text": "실패 경로(예외 → 화면 상태)를 최소 하나 검증한다",
+      "passed": true,
+      "evidence": "실패 경로 검증 흔적"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}

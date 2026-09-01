@@ -16,6 +16,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // 인증 포트 대역을 onboarding:presentation 이 함께 쓴다 — UseCase 가 final 이라
+    // 화면 테스트도 실제 UseCase 를 대역 위에 세워야 한다.
+    testFixtures {
+        enable = true
+    }
 }
 
 kotlin {
@@ -36,5 +42,9 @@ dependencies {
     implementation(libs.javax.inject)
 
     testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":onboarding:domain")))
+
+    // coroutines 가 implementation 이라 testFixtures 컴파일 경로엔 오지 않는다.
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
     testImplementation(testFixtures(project(":observability:domain")))
 }

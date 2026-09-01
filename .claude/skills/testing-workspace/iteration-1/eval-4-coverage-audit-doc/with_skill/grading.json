@@ -1,0 +1,48 @@
+{
+  "eval_id": 4,
+  "run": "with_skill",
+  "expectations": [
+    {
+      "text": "루트 경로에 TEST_STRATEGY.md 를 만들었다",
+      "passed": true,
+      "evidence": "파일: ['TEST_STRATEGY.md', 'NOTES.md']"
+    },
+    {
+      "text": "층 × 모듈 커버리지 격자(표)가 있다",
+      "passed": true,
+      "evidence": "층 격자 표 존재"
+    },
+    {
+      "text": "미검증 목록이 '왜 안 했는지'를 항목마다 담는다",
+      "passed": true,
+      "evidence": "미검증 사유 열 존재"
+    },
+    {
+      "text": "미검증 목록이 '무엇이 있어야 풀리는지'를 담는다",
+      "passed": true,
+      "evidence": "해소 조건 존재"
+    },
+    {
+      "text": "인수 시나리오 ↔ 하위 테스트 매핑 절이 있다",
+      "passed": true,
+      "evidence": "인수 시나리오 절 존재"
+    },
+    {
+      "text": "VERIFICATION_TEST_PLAN.md 를 베끼지 않고 참조한다",
+      "passed": true,
+      "evidence": "기존 문서 참조=True"
+    },
+    {
+      "text": "실행 명령에 모듈 스코프 형태(:module:testDebugUnitTest)를 포함한다",
+      "passed": true,
+      "evidence": "모듈 스코프 실행 명령 존재"
+    },
+    {
+      "text": "빈 구멍을 실제 레포 파일 경로로 짚는다 (일반론이 아니라)",
+      "passed": false,
+      "evidence": "실존하는 레포 경로 0개 / 언급 3개"
+    }
+  ],
+  "passed": 7,
+  "total": 8
+}
