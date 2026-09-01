@@ -16,6 +16,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // ChallengeRepository 대역을 challenge:presentation·home:presentation 이 함께 쓴다.
+    testFixtures {
+        enable = true
+    }
 }
 
 kotlin {
@@ -33,4 +38,5 @@ dependencies {
     implementation(libs.javax.inject)
 
     testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":challenge:domain")))
 }

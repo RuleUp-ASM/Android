@@ -34,6 +34,7 @@ class FakeVerificationRepository(
     private val myLocation: ((String) -> MyLocation?)? = null,
     private val myScreenApps: ((String) -> MyScreenApps?)? = null,
     private val places: ((String) -> List<Place>)? = null,
+    private val updateScreenApps: ((String, ScreenAppSet) -> ScreenAppsUpdate)? = null,
 ) : VerificationRepository {
     /** 어떤 메서드가 몇 번 불렸는지. "안 불렀다"도 계약이라 호출 자체를 남긴다. */
     val calls = mutableListOf<String>()
@@ -87,7 +88,7 @@ class FakeVerificationRepository(
     override suspend fun updateMyScreenApps(
         challengeId: String,
         apps: ScreenAppSet,
-    ): ScreenAppsUpdate = throw NotImplementedError()
+    ): ScreenAppsUpdate = answer("updateMyScreenApps") { requireNotNull(updateScreenApps)(challengeId, apps) }
 
     override suspend fun submitAppeal(
         verificationId: String,

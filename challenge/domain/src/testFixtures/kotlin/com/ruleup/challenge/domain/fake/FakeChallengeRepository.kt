@@ -1,17 +1,21 @@
 package com.ruleup.challenge.domain.fake
 
+import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeDraft
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengePenalties
 import com.ruleup.challenge.domain.entity.ChallengePeriod
+import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
+import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.ModerationState
+import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationConfig
@@ -28,10 +32,22 @@ import com.ruleup.domain.entity.category.Category
 class FakeChallengeRepository(
     private val draftResult: DraftResult? = null,
     private val created: CreatedChallenge? = null,
+    private val settings: ((String) -> ChallengeSettings)? = null,
+    private val detail: ((String) -> ChallengeDetail)? = null,
+    private val update: ((ChallengeUpdate) -> ChallengeUpdateResult)? = null,
+    private val uploadImage: ((String) -> String)? = null,
+    private val myChallenges: (() -> List<MyChallenge>)? = null,
 ) : ChallengeRepository {
     var lastCommand: CreateChallengeCommand? = null
         private set
     var lastIdempotencyKey: String? = null
+        private set
+
+    /** 어떤 메서드가 몇 번 불렸는지. "안 보냈다"도 계약이라 호출 자체를 남긴다. */
+    val calls = mutableListOf<String>()
+
+    /** 마지막으로 보낸 수정 내용. 바뀐 것만 실어 보내는지 볼 때 쓴다. */
+    var lastUpdate: ChallengeUpdate? = null
         private set
 
     override suspend fun getRoutineTemplates() = throw NotImplementedError()
@@ -49,18 +65,31 @@ class FakeChallengeRepository(
         return requireNotNull(created)
     }
 
-    override suspend fun uploadImage(imageUri: String) = throw NotImplementedError()
+    override suspend fun uploadImage(imageUri: String): String {
+        calls += "uploadImage"
+        return requireNotNull(uploadImage) { "uploadImage 를 준비하지 않았다" }(imageUri)
+    }
 
-    override suspend fun getChallenge(challengeId: String) = throw NotImplementedError()
+    override suspend fun getChallenge(challengeId: String): ChallengeDetail {
+        calls += "getChallenge"
+        return requireNotNull(detail) { "getChallenge 를 준비하지 않았다" }(challengeId)
+    }
 
     override suspend fun getSetupInfo(challengeId: String) = throw NotImplementedError()
 
-    override suspend fun getSettings(challengeId: String) = throw NotImplementedError()
+    override suspend fun getSettings(challengeId: String): ChallengeSettings {
+        calls += "getSettings"
+        return requireNotNull(settings) { "getSettings 를 준비하지 않았다" }(challengeId)
+    }
 
     override suspend fun update(
         challengeId: String,
         update: ChallengeUpdate,
-    ) = throw NotImplementedError()
+    ): ChallengeUpdateResult {
+        calls += "update"
+        lastUpdate = update
+        return requireNotNull(this.update) { "update 를 준비하지 않았다" }(update)
+    }
 
     override suspend fun delete(challengeId: String) = throw NotImplementedError()
 
@@ -68,7 +97,10 @@ class FakeChallengeRepository(
 
     override suspend fun getMembers(challengeId: String) = throw NotImplementedError()
 
-    override suspend fun getMyChallenges() = throw NotImplementedError()
+    override suspend fun getMyChallenges(): List<MyChallenge> {
+        calls += "getMyChallenges"
+        return requireNotNull(myChallenges) { "getMyChallenges 를 준비하지 않았다" }()
+    }
 
     override suspend fun leaveChallenge(challengeId: String) = throw NotImplementedError()
 
