@@ -1,9 +1,9 @@
 # RuleUp 테스트 전략
 
-마지막 갱신: 2026-09-01 · 현황 표는 `.claude/skills/testing/scripts/coverage_map.py` 출력
+마지막 갱신: 2026-09-02 · 현황 표는 `.claude/skills/testing/scripts/coverage_map.py` 출력
 
-이 문서의 중심은 커버리지 숫자가 아니라 **미검증 목록**이다. 숫자만 있는 문서는 늘어나는 걸 보며
-안심하게 만들 뿐, 다음에 뭘 해야 하는지 말해주지 않는다.
+이 문서의 중심은 커버리지 숫자가 아니라 **3절 미검증 목록**이다. 숫자만 있는 문서는 늘어나는 걸
+보며 안심하게 만들 뿐, 다음에 뭘 해야 하는지 말해주지 않는다.
 
 verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를 따로 본다.
 
@@ -52,61 +52,61 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 테스트 파일 수: 케이스 51, 모듈 32, UI 23, 통합 5, 인수 1
 
+테스트 파일 수: 케이스 51, 모듈 32, UI 23, 통합 5, 인수 1
+
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 
-**표가 말하지 않는 것 하나** — `:app` 의 18건 중 8건은 `src/androidTest` 라 CI(`./gradlew test`)가
-돌리지 않는다. 딥링크 파서 테스트가 여기 있어서, 외부 진입점 회귀가 초록불로 지나간다.
+**표가 말하지 않는 것** — `:app` 의 통합 18건 중 8건은 `src/androidTest` 라 CI(`./gradlew test`)가
+돌리지 않는다. 딥링크 파서 테스트가 여기 있어서 **외부 진입점 회귀가 초록불로 지나간다.**
 
 ## 3. 미검증 — 알면서 안 하고 있는 것
 
-품질 논의는 이 절에서 한다. 채운 항목은 지우지 말고 4절로 옮긴다 — 무엇을 언제 메웠는지가
-다음 판단의 근거다.
+품질 논의는 이 절에서 한다. 각 항목은 *무엇을 못 잡는가 · 왜 안 했나 · 풀리는 조건*을 적는다.
+
+### 코드로 메울 수 있는 것
 
 | 무엇 | 못 잡는 위험 | 왜 안 했나 | 풀리는 조건 |
 |---|---|---|---|
-| 화면 3건 (UI 층) — ChallengeTargets · Splash · VerificationLocation | 상태가 화면에 잘못 그려져도 모른다. "대기 중"이 "실패"로 보이는 종류의 오독 | 이 12건은 **상태 호이스팅된 `Content` 컴포저블이 아예 없다** — 화면을 쪼개는 리팩터링이 선행한다(가시성만 여는 것과 다른 크기의 변경이다) | 화면 분리 합의 |
-| RepositoryImpl 8건 | DTO 매핑이 조용히 기본값을 넣는다. `?:` 로 접힌 값은 예외 없이 틀린 값이 된다 | 에러 번역(가장 위험한 축)만 먼저 덮었다 | 모듈별 테스트 소스셋 신설 + 응답 샘플 확보 |
+| RepositoryImpl 8건 (Room·Watcher·Auth·DeviceIdentity·Intro·MyPage·Profile·Signal) | 매핑은 덮었지만 **impl 의 조립·예외 변환**은 안 덮였다 | 위험이 큰 축(Challenge 에러 번역·Explore)부터 먼저 했다 | 이어서 진행 |
+| `ChallengeDetailViewModel` 의 나머지 전이 | 방 탭·이의·감시자·권한 경로 | 1005줄에 협력자 11종 — 가입 경로만 덮었다. 한 파일에 다 넣으면 무엇이 깨졌는지 읽기 어려워진다 | 경로별로 나눠 진행 |
+| 화면 3건 (ChallengeTargets·Splash·VerificationLocation) | 상태별 렌더 | 순수 함수(`filterApps`·`updateMessage`)는 덮었고, 나머지는 Context·런처가 얽혀 화면 분리가 선행한다 | 화면 분리 합의 |
 | `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 없다 | 테스트 의존성 선언 |
-| ChallengeDetailViewModel 의 나머지 전이 | 1005줄에 협력자 11종 — 가입 경로만 덮었고 방 탭·이의·감시자·권한 전이가 남았다 | 한 파일에 다 넣으면 무엇이 깨졌는지 읽기 어려워진다 | 경로별로 나눠 진행 |
-| OnboardingViewModel | 6단계 입력 전이 | 아직 손대지 않았다 | 이어서 진행 |
-| 대상 앱 줄임말 검색 | 사용자가 "카톡"으로 못 찾고 등록을 포기하면 자동 인증이 성립하지 않는다 | 부분 일치라 줄임말·초성이 안 걸린다. 매칭 방식을 바꿀지는 기획 판단이라 현재 동작만 못 박았다 | 기획 확인 |
-| 활동 캘린더 오류 표시 | 조회 실패와 "기록 없는 달"이 같아 보인다 | ViewModel 은 errorMessage 를 채우는데 화면에 그리는 자리가 없다 | 디자인 확인 |
-| 관심 단계 문구 | 디자인과 코드가 다른 채로 나간다 | Figma `1134:1725` 는 `어떤 습관에 관심 있나요?` / `탐색 추천에 사용해요…`, 코드는 `어떤 챌린지에 관심 있나요?` / `선택한 분야 기반으로…`. 어느 쪽이 맞는지는 기획 판단이라 테스트로 한쪽을 못 박지 않았다 | 기획 확인 |
-| 런타임 권한 다이얼로그·지오펜스 | 권한 거부 후 복구 동선이 막혀도 모른다 | Robolectric 이 못 흉내낸다 | 에뮬레이터 CI 워크플로 |
-| 계측 테스트가 CI 밖 | `androidTest` 8건이 한 번도 실행되지 않는다 | `test.yml` 이 `./gradlew test` 만 돈다 | 위와 같은 워크플로 |
-| 인수 시나리오 4건 (참여·인증·이의·초대) | 서버가 계약을 바꾸면 배포 후에 안다 | 기반은 세웠고(탐색 4건) 나머지 스토리는 서버 상태를 만들고 되돌리는 절차가 더 필요하다 | 삭제 API 확인 후 이어서 |
 
-## 4. 이번에 메운 것
+### 판단이 필요한 것 — 코드로는 못 정한다
 
-| 무엇 | 언제 |
-|---|---|
-| ViewModel·Compose 실행 기반 (#373) | 2026-09-01 |
-| profile ViewModel 8건 (#374) | 2026-09-01 |
-| challenge ViewModel 5건 (#375) | 2026-09-01 |
-| onboarding·home ViewModel 4건 · challenge:data 에러 번역 (#376) | 2026-09-01 |
-| 탐색 응답 매핑 기본값 (#386) | 2026-09-02 |
-| **인수 테스트 기반 + 탐색 스토리 4건** (#387) | 2026-09-02 |
-| 마이 탭 화면 5건 · 로그인·권한·랭킹 3건 · 초대·편집 2건 (#390~#392) | 2026-09-02 |
-| 좌표 바인딩·생성·가입 ViewModel (#393~#395) | 2026-09-02 |
-| 응답 매핑 — 탐색·설정·인증·마이홈·장소·인트로·랭킹·방 (#396~) | 2026-09-02 |
-| 화면 14건 (UI 층) — 온보딩 6 · 홈 · 탐색 · 목록 · 상세 · 생성 2 · 설정 (#384) | 2026-09-01 |
+전부 이슈로 올려 뒀다. **각 항목의 현재 동작은 테스트가 못 박고 있는데, 그건 "이게 옳다"가
+아니라 "지금 이렇다"를 기록한 것이다** — 판단이 서면 해당 테스트도 함께 뒤집어야 한다.
 
-47건이 "안 쓴 게 아니라 못 쓰는" 상태였다 — `viewModelScope` 가 `Dispatchers.Main` 을 쓰는데
-JVM 테스트엔 Main 이 없었고, Robolectric 은 버전 카탈로그에 아예 없었다.
+| 이슈 | 무엇 | 판단 주체 |
+|---|---|---|
+| [#399](https://github.com/RuleUp-ASM/Android/issues/399) | 관심 단계 문구가 Figma 와 다르다 (`습관` vs `챌린지`) | 기획 |
+| [#400](https://github.com/RuleUp-ASM/Android/issues/400) | 로그인 화면 문구가 Figma 와 다르다 (`계속하기` vs `시작하기`) | 기획 |
+| [#401](https://github.com/RuleUp-ASM/Android/issues/401) | 모르는 참여 형태를 매퍼마다 다르게 접는다 — 같은 챌린지가 목록과 상세에서 다르게 보인다 | 정책 |
+| [#402](https://github.com/RuleUp-ASM/Android/issues/402) | `setCapacity` 가 ViewModel 에서 clamp — `CLAUDE.md` 검증 계층 규칙과 어긋난다 | 설계 |
+| [#403](https://github.com/RuleUp-ASM/Android/issues/403) | 활동 캘린더에 조회 실패를 알리는 자리가 없다 — 실패와 "기록 없는 달"이 같아 보인다 | 디자인 |
+| [#404](https://github.com/RuleUp-ASM/Android/issues/404) | 대상 앱 검색이 줄임말을 못 찾는다 — 못 찾으면 등록을 포기하고 자동 인증이 성립하지 않는다 | 기획 |
 
-## 5. 인수 시나리오 ↔ 하위 테스트
+### 환경이 필요한 것
 
-인수가 깨졌는데 하위 층이 전부 초록이었다면 **하위 층에 구멍이 있다**는 뜻이고, 그 구멍이 다음 작업이다.
+| 무엇 | 왜 안 했나 | 풀리는 조건 |
+|---|---|---|
+| 런타임 권한 다이얼로그·지오펜스 | Robolectric 이 못 흉내낸다 | 에뮬레이터 CI 워크플로 |
+| 계측 테스트 8건이 CI 밖 | `test.yml` 이 `./gradlew test` 만 돈다 | 위와 같은 워크플로 |
+| **인수 테스트 실행 확인** | 기반은 세웠고 4건이 있으나 `DEV_TOKEN_SECRET` 이 없어 **실서버에 붙여 돌려본 적이 없다** | 시크릿을 가진 사람이 1회 실행 |
+
+## 4. 인수 시나리오 ↔ 하위 테스트
+
+인수가 깨졌는데 하위 층이 전부 초록이었다면 **하위 층에 구멍이 있다**는 뜻이고, 그게 다음 작업이다.
 
 | 스토리 | 상태 | 미리 잡아주는 하위 테스트 |
 |---|---|---|
-| 로그인 → 첫 화면 진입 | 미구축 | `SplashViewModelTest`(진입 순서·딥링크) · `LoginViewModelTest`(결과 4갈래) · `AutoLoginUseCaseTest` |
-| 챌린지 생성 → 내 목록에 보임 | 미구축 | `CreateChallengeCommandTest`(입력 규칙) · `CreateChallengeUseCaseTest`(조립) · `HomeChallengeMergeTest`(병합) |
-| 초대 링크로 참여 → 방 진입 | 미구축 | `ChallengeRepositoryErrorMappingTest`(가입 거절 사유) · `NavRouteUriParserTest`(딥링크, **CI 밖**) |
-| 인증 제출 → 오늘 상태가 바뀜 | 미구축 | `RunSyncUseCaseTest` · `VerificationRepositoryImplTest` · `TodayStatusTest` |
-| 인증 실패 → 이의 → 상태가 바뀜 | 미구축 | `AppealSheetTest` · `MyAppealsViewModelTest`(재시도) |
+| 로그인 → 첫 화면 진입 | 하위만 | `SplashViewModelTest`(진입 순서·딥링크) · `LoginViewModelTest`(결과 4갈래) · `AuthResponseMappingTest` |
+| 탐색 목록·인기 조회 | **인수 있음** | `ExploreAcceptanceTest` · `ExploreListViewModelTest` · `ExploreResponseMappingTest` |
+| 챌린지 생성 → 내 목록에 보임 | 하위만 | `CreateChallengeCommandTest` · `CreateChallengeViewModelTest` · `HomeChallengeMergeTest` |
+| 초대 링크로 참여 → 방 진입 | 하위만 | `ChallengeDetailJoinTest` · `ChallengeRepositoryErrorMappingTest` · `NavRouteUriParserTest`(**CI 밖**) |
+| 인증 제출 → 오늘 상태가 바뀜 | 하위만 | `RunSyncUseCaseTest` · `SubmitDeviceIntroUseCaseTest` · `TodayStatusTest` |
 
-## 6. 돌리는 법
+## 5. 돌리는 법
 
 ```bash
 ./gradlew test                      # 케이스·모듈·UI·통합 (CI 와 동일)
@@ -125,8 +125,8 @@ RULEUP_ACCEPTANCE=1 DEV_TOKEN_SECRET=... \
 켜지 않으면 **실패가 아니라 건너뜀**이다 — 리포트에 "건너뜀"으로 남아야 존재가 드러난다.
 실패로 두면 사람들이 무시하는 법을 배우고, 아예 빼면 있다는 걸 아무도 모른다.
 
-인수 테스트는 기본 CI 에서 빼고 수동/야간으로만 돌린다 — 실서버 상태를 바꾸므로
-PR 마다 돌리면 데이터가 쌓이고 CI 가 남의 네트워크 사정에 인질이 된다.
+인수 테스트는 기본 CI 에서 뺀다 — 실서버 상태를 바꾸므로 PR 마다 돌리면 데이터가 쌓이고
+CI 가 남의 네트워크 사정에 인질이 된다.
 
 ## 갱신 규칙
 
