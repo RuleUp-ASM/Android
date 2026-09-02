@@ -67,6 +67,27 @@ fun PermissionRepairScreen(
     val rows = state.permissions?.let(::repairRows).orEmpty()
     val broken = rows.filter { !it.granted }
 
+    PermissionRepairContent(
+        rows = rows,
+        broken = broken,
+        onIntent = viewModel::onIntent,
+        onFix = { row -> requestFix(row, context, runtimeLauncher, healthLauncher, healthAvailable) },
+        modifier = modifier,
+    )
+}
+
+/**
+ * 상태를 받아 그리기만 한다. 권한 요청은 Context·런처가 필요해 바깥이 맡고, 여기서는
+ * **무엇을 고치겠다고 눌렀는지**만 [onFix] 로 올린다 — 그래야 렌더 규칙을 테스트할 수 있다.
+ */
+@Composable
+internal fun PermissionRepairContent(
+    rows: List<RepairRow>,
+    broken: List<RepairRow>,
+    onIntent: (PermissionRepairIntent) -> Unit,
+    onFix: (RepairRow) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -74,7 +95,7 @@ fun PermissionRepairScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "인증 연결 끊김", onBack = { viewModel.onIntent(PermissionRepairIntent.Back) })
+        RuleUpTopBar(title = "인증 연결 끊김", onBack = { onIntent(PermissionRepairIntent.Back) })
 
         Column(
             modifier =
@@ -119,30 +140,41 @@ fun PermissionRepairScreen(
                 rows.forEach { row ->
                     PermissionStatusRow(
                         row = row,
-                        onFix = {
-                            when (row.kind) {
-                                PermissionRequestKind.RUNTIME ->
-                                    row.runtimePermissions
-                                        .takeIf { it.isNotEmpty() }
-                                        ?.let { runtimeLauncher.launch(it.toTypedArray()) }
-
-                                PermissionRequestKind.USAGE_ACCESS_SETTINGS ->
-                                    context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-
-                                // 미지원 기기는 요청 화면이 뜨지 않는다 — 앱 정보로 보내 사용자가
-                                // 헬스 커넥트 설치·연결을 확인하게 한다.
-                                PermissionRequestKind.HEALTH_CONNECT ->
-                                    if (healthAvailable) {
-                                        healthLauncher.launch(healthReadPermissions())
-                                    } else {
-                                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
-                                    }
-                            }
-                        },
+                        onFix = { onFix(row) },
                     )
                 }
             }
         }
+    }
+}
+
+/**
+ * 권한 종류마다 여는 곳이 다르다 — 런타임은 OS 다이얼로그, 사용기록은 설정 화면, 헬스는 HC
+ * 자체 화면이다. 미지원 기기는 HC 요청 화면이 뜨지 않으므로 앱 정보로 보내 사용자가 설치·연결을
+ * 확인하게 한다.
+ */
+private fun requestFix(
+    row: RepairRow,
+    context: android.content.Context,
+    runtimeLauncher: androidx.activity.result.ActivityResultLauncher<Array<String>>,
+    healthLauncher: androidx.activity.result.ActivityResultLauncher<Set<String>>,
+    healthAvailable: Boolean,
+) {
+    when (row.kind) {
+        PermissionRequestKind.RUNTIME ->
+            row.runtimePermissions
+                .takeIf { it.isNotEmpty() }
+                ?.let { runtimeLauncher.launch(it.toTypedArray()) }
+
+        PermissionRequestKind.USAGE_ACCESS_SETTINGS ->
+            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+
+        PermissionRequestKind.HEALTH_CONNECT ->
+            if (healthAvailable) {
+                healthLauncher.launch(healthReadPermissions())
+            } else {
+                context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
+            }
     }
 }
 
