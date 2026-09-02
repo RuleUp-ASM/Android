@@ -112,6 +112,7 @@ def main() -> int:
     grid = defaultdict(lambda: defaultdict(int))   # module -> layer -> @Test 수
     files_by_layer = defaultdict(int)
     tested_names: set[str] = set()                 # "CreateChallengeCommand" 처럼 Test 를 뗀 이름
+    referenced_types: set[str] = set()             # 테스트 본문이 실제로 세우는 타입
     production: list[tuple[Path, str, str, str]] = []  # (path, module, 대상 이름, 이유)
 
     for path in walk_kt(root):
@@ -134,11 +135,16 @@ def main() -> int:
             # ChallengeDetailContentTest 는 ChallengeDetailScreen 을 덮는다.
             if covered.endswith("Content"):
                 tested_names.add(covered[: -len("Content")] + "Screen")
+            # 파일명이 대상과 다른 테스트도 있다(ChallengeRepositoryErrorMappingTest 등).
+            # 본문에서 실제로 그 타입을 세우는 테스트는 덮은 것으로 본다 — 이름으로만 세면
+            # 덮여 있는데 구멍으로 잡히고, 그러면 목록이 거짓말이라 아무도 안 본다.
+            referenced_types.update(re.findall(r"\b([A-Z]\w+(?:RepositoryImpl|UseCase|ViewModel))\b", text))
         else:
             for target, reason in gap_targets(path, text):
                 production.append((path, module_of(path, root), target, reason))
 
-    gaps = [(p, m, t, r) for p, m, t, r in production if t not in tested_names]
+    covered = tested_names | referenced_types
+    gaps = [(p, m, t, r) for p, m, t, r in production if t not in covered]
 
     if not args.gaps:
         print("## 층 × 모듈 커버리지\n")
