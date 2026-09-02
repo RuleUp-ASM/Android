@@ -34,6 +34,7 @@ class FakeVerificationRepository(
     private val myLocation: ((String) -> MyLocation?)? = null,
     private val myScreenApps: ((String) -> MyScreenApps?)? = null,
     private val places: ((String) -> List<Place>)? = null,
+    private val submitIntro: ((DeviceIntro) -> SyncPolicy)? = null,
     private val updateScreenApps: ((String, ScreenAppSet) -> ScreenAppsUpdate)? = null,
 ) : VerificationRepository {
     /** 어떤 메서드가 몇 번 불렸는지. "안 불렀다"도 계약이라 호출 자체를 남긴다. */
@@ -67,7 +68,7 @@ class FakeVerificationRepository(
         radiusM: Int?,
     ): List<Place> = answer("searchPlaces") { requireNotNull(places)(query) }
 
-    override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy = throw NotImplementedError()
+    override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy = answer("submitIntro") { requireNotNull(submitIntro)(intro) }
 
     override suspend fun sync(
         metadata: EnvelopeMetadata,
