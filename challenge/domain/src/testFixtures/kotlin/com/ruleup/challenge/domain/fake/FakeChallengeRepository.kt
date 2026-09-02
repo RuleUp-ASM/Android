@@ -7,6 +7,7 @@ import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengePenalties
 import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeSettings
+import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
@@ -14,6 +15,7 @@ import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
 import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DraftResult
+import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.RoleAction
@@ -37,6 +39,10 @@ class FakeChallengeRepository(
     private val update: ((ChallengeUpdate) -> ChallengeUpdateResult)? = null,
     private val uploadImage: ((String) -> String)? = null,
     private val myChallenges: (() -> List<MyChallenge>)? = null,
+    // 초안 생성 실패를 재현한다 — 폴백(정상 응답)과 예외는 화면에서 다르게 다뤄진다.
+    private val draftError: Throwable? = null,
+    private val join: ((String) -> JoinResult)? = null,
+    private val setupInfo: ((String) -> ChallengeSetupInfo)? = null,
 ) : ChallengeRepository {
     var lastCommand: CreateChallengeCommand? = null
         private set
@@ -52,7 +58,11 @@ class FakeChallengeRepository(
 
     override suspend fun getRoutineTemplates() = throw NotImplementedError()
 
-    override suspend fun createDraft(description: RoutineDescription): DraftResult = requireNotNull(draftResult)
+    override suspend fun createDraft(description: RoutineDescription): DraftResult {
+        calls += "createDraft"
+        draftError?.let { throw it }
+        return requireNotNull(draftResult)
+    }
 
     override suspend fun createDraftFromTemplate(templateId: Long): DraftResult.Ok = requireNotNull(draftResult) as DraftResult.Ok
 
@@ -60,6 +70,7 @@ class FakeChallengeRepository(
         command: CreateChallengeCommand,
         idempotencyKey: String,
     ): CreatedChallenge {
+        calls += "create"
         lastCommand = command
         lastIdempotencyKey = idempotencyKey
         return requireNotNull(created)
@@ -75,7 +86,10 @@ class FakeChallengeRepository(
         return requireNotNull(detail) { "getChallenge 를 준비하지 않았다" }(challengeId)
     }
 
-    override suspend fun getSetupInfo(challengeId: String) = throw NotImplementedError()
+    override suspend fun getSetupInfo(challengeId: String): ChallengeSetupInfo {
+        calls += "getSetupInfo"
+        return requireNotNull(setupInfo) { "getSetupInfo 를 준비하지 않았다" }(challengeId)
+    }
 
     override suspend fun getSettings(challengeId: String): ChallengeSettings {
         calls += "getSettings"
@@ -93,7 +107,10 @@ class FakeChallengeRepository(
 
     override suspend fun delete(challengeId: String) = throw NotImplementedError()
 
-    override suspend fun join(challengeId: String) = throw NotImplementedError()
+    override suspend fun join(challengeId: String): JoinResult {
+        calls += "join"
+        return requireNotNull(join) { "join 을 준비하지 않았다" }(challengeId)
+    }
 
     override suspend fun getMembers(challengeId: String) = throw NotImplementedError()
 
