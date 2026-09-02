@@ -85,6 +85,22 @@ fun ProfileEditScreen(
         }
     }
 
+    ProfileEditContent(
+        state = state,
+        onIntent = viewModel::onIntent,
+        onPickImage = { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+        modifier = modifier,
+    )
+}
+
+/** 상태를 받아 그리기만 한다 — 사진 고르기는 런처가 필요해 바깥이 맡는다. */
+@Composable
+internal fun ProfileEditContent(
+    state: ProfileEditState,
+    onIntent: (ProfileEditIntent) -> Unit,
+    onPickImage: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -94,8 +110,8 @@ fun ProfileEditScreen(
     ) {
         EditTopBar(
             isSaving = state.isSaving,
-            onBack = { viewModel.onIntent(ProfileEditIntent.Back) },
-            onSave = { viewModel.onIntent(ProfileEditIntent.Save) },
+            onBack = { onIntent(ProfileEditIntent.Back) },
+            onSave = { onIntent(ProfileEditIntent.Save) },
         )
 
         when {
@@ -116,12 +132,8 @@ fun ProfileEditScreen(
             else ->
                 EditBody(
                     state = state,
-                    onIntent = viewModel::onIntent,
-                    onPickImage = {
-                        imagePicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                        )
-                    },
+                    onIntent = onIntent,
+                    onPickImage = onPickImage,
                 )
         }
     }

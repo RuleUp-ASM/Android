@@ -44,6 +44,7 @@ import com.ruleup.profile.domain.entity.FriendInvitee
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteEffect
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteIntent
+import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteState
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
 
@@ -87,6 +88,16 @@ fun FriendInviteScreen(
         }
     }
 
+    FriendInviteContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — 공유·복사는 Context·클립보드가 필요해 바깥이 맡는다. */
+@Composable
+internal fun FriendInviteContent(
+    state: FriendInviteState,
+    onIntent: (FriendInviteIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -94,7 +105,7 @@ fun FriendInviteScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "친구 초대", onBack = { viewModel.onIntent(FriendInviteIntent.Back) })
+        RuleUpTopBar(title = "친구 초대", onBack = { onIntent(FriendInviteIntent.Back) })
 
         when {
             state.isLoading ->
@@ -114,8 +125,8 @@ fun FriendInviteScreen(
             else ->
                 InviteBody(
                     invitation = state.invitation!!,
-                    onShareKakao = { viewModel.onIntent(FriendInviteIntent.ShareKakao) },
-                    onCopyLink = { viewModel.onIntent(FriendInviteIntent.CopyLink) },
+                    onShareKakao = { onIntent(FriendInviteIntent.ShareKakao) },
+                    onCopyLink = { onIntent(FriendInviteIntent.CopyLink) },
                 )
         }
     }
