@@ -40,6 +40,7 @@ import com.ruleup.profile.domain.entity.StatsPoint
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
+import com.ruleup.profile.presentation.stats.viewmodel.MyStatsState
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
 
 // 막대 그라데이션 (피그마 435:250 — violet 계열)
@@ -57,6 +58,16 @@ fun MyStatsScreen(
         viewModel.onIntent(MyStatsIntent.Load)
     }
 
+    MyStatsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+@Composable
+internal fun MyStatsContent(
+    state: MyStatsState,
+    onIntent: (MyStatsIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -64,7 +75,7 @@ fun MyStatsScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "통계", onBack = { viewModel.onIntent(MyStatsIntent.Back) })
+        RuleUpTopBar(title = "통계", onBack = { onIntent(MyStatsIntent.Back) })
 
         Column(
             modifier =
@@ -77,7 +88,7 @@ fun MyStatsScreen(
         ) {
             PeriodTabs(
                 selected = state.period,
-                onSelect = { viewModel.onIntent(MyStatsIntent.SelectPeriod(it)) },
+                onSelect = { onIntent(MyStatsIntent.SelectPeriod(it)) },
             )
 
             when {
@@ -107,7 +118,7 @@ fun MyStatsScreen(
                         )
                     }
 
-                else -> StatsBody(report = state.report!!)
+                else -> StatsBody(report = state.report)
             }
         }
     }
