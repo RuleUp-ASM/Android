@@ -167,8 +167,9 @@ private fun ForceUpdateDialog(
 /**
  * 강제 업데이트 안내 문구. 명세가 최소 버전 필드를 "x.x.x 이상으로 업데이트해 주세요" 표시용으로
  * 정의하므로 받은 값을 그대로 넣고, 못 받았을 때만 일반 문구로 떨어진다.
+ *
+ * 못 받았을 때 버전을 지어내지 않는 것이 계약이라 테스트에서 검증한다 — 그래서 internal 이다.
  */
-// 테스트에서 문구 규칙을 검증하려고 연다 — 버전을 못 받았을 때 지어내지 않는 것이 계약이다.
 internal fun updateMessage(minAppVersion: String?): String =
     minAppVersion
         ?.takeIf { it.isNotBlank() }
