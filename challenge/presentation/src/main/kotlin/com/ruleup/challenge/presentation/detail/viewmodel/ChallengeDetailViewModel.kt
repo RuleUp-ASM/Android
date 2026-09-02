@@ -36,6 +36,11 @@ import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.ScreenKey
 import com.ruleup.observability.domain.model.TtiTimeline
+import com.ruleup.report.domain.entity.ReportContext
+import com.ruleup.report.domain.entity.ReportException
+import com.ruleup.report.domain.entity.ReportFailure
+import com.ruleup.report.domain.entity.ReportTarget
+import com.ruleup.report.domain.repository.ReportRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.AlreadyVerifiedException
 import com.ruleup.verification.domain.entity.AppealNotFailedException
@@ -70,6 +75,7 @@ class ChallengeDetailViewModel
         private val tokenRepository: TokenRepository,
         private val observability: Observability,
         private val targetAppStore: TargetAppStore,
+        private val reportRepository: ReportRepository,
         private val navigationHelper: NavigationHelper,
         private val ttiTracker: TtiTracker,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
@@ -83,6 +89,12 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
                 ChallengeDetailIntent.Proceed -> join()
                 ChallengeDetailIntent.CloneChallenge -> clone()
+
+                ChallengeDetailIntent.OpenReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetOpened)
+                is ChallengeDetailIntent.SelectReportReason ->
+                    dispatch(ChallengeDetailReducerEvent.ReportReasonSelected(intent.reason))
+                ChallengeDetailIntent.SubmitReport -> submitReport()
+                ChallengeDetailIntent.DismissReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetDismissed)
 
                 ChallengeDetailIntent.OpenSettings ->
                     currentState.detail?.challengeId?.let {
@@ -214,6 +226,26 @@ class ChallengeDetailViewModel
 
                 is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
                 is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
+
+                ChallengeDetailReducerEvent.ReportSheetOpened -> state.copy(isReportSheetOpen = true)
+
+                ChallengeDetailReducerEvent.ReportSheetDismissed ->
+                    // 다음에 열 때 지난 선택이 남지 않게 비운다.
+                    state.copy(
+                        isReportSheetOpen = false,
+                        selectedReportReason = null,
+                        isSubmittingReport = false,
+                        reportResult = null,
+                    )
+
+                is ChallengeDetailReducerEvent.ReportReasonSelected ->
+                    state.copy(selectedReportReason = event.reason)
+
+                is ChallengeDetailReducerEvent.SubmittingReport ->
+                    state.copy(isSubmittingReport = event.submitting)
+
+                is ChallengeDetailReducerEvent.ReportAccepted ->
+                    state.copy(isSubmittingReport = false, reportResult = event.result)
 
                 is ChallengeDetailReducerEvent.CrossRankingLoaded ->
                     state.copy(
@@ -990,6 +1022,38 @@ class ChallengeDetailViewModel
                 ),
             )
         }
+
+        /**
+         * 챌린지 신고. 사유 제약(부정 인증 의심 불가)은 [ReportTarget.Challenge] 가 갖고 있으므로
+         * 여기서 다시 검사하지 않는다 — 두 곳에서 검사하면 한쪽만 고쳐진다.
+         *
+         * 실패해도 시트를 닫지 않는다. 접수가 안 됐는데 닫히면 사용자는 신고된 줄 안다.
+         */
+        private fun submitReport() {
+            val challengeId = currentState.detail?.challengeId ?: return
+            val reason = currentState.selectedReportReason ?: return
+            // 진행 중이거나 이미 접수된 뒤면 보내지 않는다. 접수는 전건 적재라 한 번 더 나가면
+            // 신고가 한 건 더 쌓인다 — 진행 플래그만 보면 첫 접수가 끝난 직후의 두 번째 탭이 통과한다.
+            if (currentState.isSubmittingReport || currentState.reportResult != null) return
+
+            dispatch(ChallengeDetailReducerEvent.SubmittingReport(true))
+            viewModelScope.launch {
+                runCatching {
+                    reportRepository.report(
+                        ReportTarget.Challenge(
+                            challengeId = challengeId,
+                            reason = reason,
+                            context = ReportContext.CHALLENGE_DETAIL,
+                        ),
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.ReportAccepted(it))
+                }.onFailure {
+                    dispatch(ChallengeDetailReducerEvent.SubmittingReport(false))
+                    emitEffect(ChallengeDetailEffect.ShowMessage(it.reportMessage()))
+                }
+            }
+        }
     }
 
 /**
@@ -1004,3 +1068,15 @@ private fun WatcherInvitation.inviteCard(challengeTitle: String): WatcherInviteC
             description = "[$challengeTitle]에서 약속을 지키는지 지켜봐 주세요. 실패하면 알림이 가요.",
             buttonLabel = "수락하기",
         )
+
+/**
+ * 신고 실패를 사용자 문구로 옮긴다. 정지는 재시도로 풀리지 않으므로 다시 시도를 권하지 않는다.
+ */
+private fun Throwable.reportMessage(): String =
+    when ((this as? ReportException)?.failure) {
+        ReportFailure.SUSPENDED -> "지금은 신고 기능을 사용할 수 없어요."
+        ReportFailure.ACCOUNT_LOCKED -> "지금은 둘러보기만 할 수 있어요."
+        ReportFailure.TARGET_NOT_FOUND -> "이미 사라진 챌린지예요."
+        ReportFailure.NETWORK -> "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요."
+        else -> "신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요."
+    }

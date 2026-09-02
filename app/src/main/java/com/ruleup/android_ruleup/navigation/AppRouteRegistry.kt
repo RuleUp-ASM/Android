@@ -53,6 +53,8 @@ import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.profile.presentation.invite.FriendInviteScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
 import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
+import com.ruleup.report.domain.navigation.BlockListPage
+import com.ruleup.report.presentation.blocklist.BlockListScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
@@ -118,6 +120,10 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = MyAppealsPage.PATH,
             render = { MyAppealsScreen() },
+        ),
+        AppRoute(
+            path = BlockListPage.PATH,
+            render = { BlockListScreen() },
         ),
         AppRoute(
             path = MyCalendarPage.PATH,

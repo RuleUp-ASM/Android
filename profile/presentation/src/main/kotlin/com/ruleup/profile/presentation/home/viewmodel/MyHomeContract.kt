@@ -34,6 +34,14 @@ sealed interface MyHomeIntent : MviIntent {
 
     data object OpenInvite : MyHomeIntent
 
+    /**
+     * 메뉴: 신고한 사용자·챌린지.
+     *
+     * Figma 는 설정 허브 안에 두지만 앱에 설정 화면이 아직 없어 마이 홈에 직접 단다 —
+     * 진입점이 없으면 차단을 풀 방법이 사라진다.
+     */
+    data object OpenBlocks : MyHomeIntent
+
     /** 메뉴: 설정 — 스펙 범위 밖이라 진입점만(준비 중 안내). */
     data object OpenSettings : MyHomeIntent
 
