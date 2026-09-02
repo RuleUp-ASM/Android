@@ -55,6 +55,8 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.ReportDoneSheet
+import com.ruleup.challenge.presentation.detail.component.ReportReasonSheet
 import com.ruleup.challenge.presentation.detail.component.RoomAppBar
 import com.ruleup.challenge.presentation.detail.component.RoomFeedTab
 import com.ruleup.challenge.presentation.detail.component.RoomInfoHeader
@@ -77,9 +79,10 @@ import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
-import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.report.domain.entity.HiddenEffect
+import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.permission.healthConnectAvailable
 import com.ruleup.ui.permission.healthReadPermissions
@@ -277,7 +280,13 @@ internal fun ChallengeDetailContent(
                     onBack = onBack,
                 )
             } else {
-                DetailTopBar(title = detail?.title, onBack = onBack)
+                // 비멤버도 ⋯ 를 갖는다 — 부적절한 챌린지를 만나는 건 탐색으로 들어온 쪽이고,
+                // 여기 메뉴가 없으면 신고할 방법 자체가 없다.
+                RoomAppBar(
+                    title = detail?.title ?: "챌린지",
+                    menuItems = listOf(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) }),
+                    onBack = onBack,
+                )
             }
 
             // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다. 인증은 조용히 멈추므로 사용자가
@@ -376,6 +385,28 @@ internal fun ChallengeDetailContent(
                     )
                 }
             }
+        }
+    }
+
+    if (state.isReportSheetOpen) {
+        val result = state.reportResult
+        if (result == null) {
+            ReportReasonSheet(
+                title = "이 챌린지를 신고할까요?",
+                description = "신고하면 탐색 목록에서 바로 빠져요. 참여 중이면 이름과 이미지만 가려져요.",
+                // 부정 인증 의심은 사람의 행위라 여기 없다. 목록을 화면에서 추리지 않고 domain 이 준다.
+                reasons = ReportReason.forChallenge,
+                selected = state.selectedReportReason,
+                submitting = state.isSubmittingReport,
+                onSelect = { onIntent(ChallengeDetailIntent.SelectReportReason(it)) },
+                onSubmit = { onIntent(ChallengeDetailIntent.SubmitReport) },
+                onDismiss = { onIntent(ChallengeDetailIntent.DismissReport) },
+            )
+        } else {
+            ReportDoneSheet(
+                effectMessage = result.hiddenEffect.doneMessage(),
+                onDismiss = { onIntent(ChallengeDetailIntent.DismissReport) },
+            )
         }
     }
 
@@ -559,6 +590,8 @@ private fun roomMenuItems(
         if (myRole.isOwner) {
             add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
         }
+        // 방장에게도 남겨 둔다. 신고하면 내 화면에서 가려질 뿐이고, 막을 이유는 서버에도 없다.
+        add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
     }
 
 private enum class MemberConfirm { LEAVE, DELETE }
@@ -622,15 +655,6 @@ private fun PublicDetailBody(
             )
         }
     }
-}
-
-/** [title] 이 없는 건 아직 상세를 못 받은 동안뿐이다 — 그때만 일반 명칭으로 버틴다. */
-@Composable
-private fun DetailTopBar(
-    title: String?,
-    onBack: () -> Unit,
-) {
-    RuleUpTopBar(title = title ?: "챌린지", onBack = onBack)
 }
 
 @Composable
@@ -958,3 +982,17 @@ private fun JoinBlockedSheet(
         }
     }
 }
+
+/**
+ * 서버가 내려준 가림 효과를 완료 문구로 옮긴다.
+ *
+ * 모르는 값이면 효과를 말하지 않고 접수 사실만 알린다 — 접수는 이미 끝났으므로 문구를 몰라
+ * 실패처럼 보이게 하면 사용자가 같은 대상을 다시 신고한다.
+ */
+private fun HiddenEffect?.doneMessage(): String =
+    when (this) {
+        HiddenEffect.USER_CONTENT_MASKED -> "이 사람의 글과 프로필이 임시 이름으로 가려졌어요."
+        HiddenEffect.CHALLENGE_HIDDEN -> "이 챌린지가 탐색 목록에서 빠졌어요."
+        HiddenEffect.CHALLENGE_MASKED -> "참여 중인 챌린지라 이름과 이미지만 가렸어요. 나가려면 방에서 직접 나가주세요."
+        null -> "접수됐어요. 검토에 참고할게요."
+    }

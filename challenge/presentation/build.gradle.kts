@@ -47,6 +47,8 @@ dependencies {
     implementation(project(":challenge:domain"))
     // 대상 앱 설정은 verification 소관 — 그쪽 domain 계약을 직접 쓴다(core 포트 복제 제거).
     implementation(project(":verification:domain"))
+    // 신고 계약만 쓴다 — 신고 대상·사유 제약이 그쪽 domain 타입에 들어 있다.
+    implementation(project(":report:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)

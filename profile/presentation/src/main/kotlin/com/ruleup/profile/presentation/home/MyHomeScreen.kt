@@ -375,6 +375,8 @@ private fun MyHomeMenuCard(onIntent: (MyHomeIntent) -> Unit) {
         MenuDivider()
         MenuRow(emoji = "👥", label = "친구 초대") { onIntent(MyHomeIntent.OpenInvite) }
         MenuDivider()
+        MenuRow(emoji = "🚫", label = "신고한 사용자 · 챌린지") { onIntent(MyHomeIntent.OpenBlocks) }
+        MenuDivider()
         MenuRow(emoji = "⚙️", label = "설정") { onIntent(MyHomeIntent.OpenSettings) }
     }
 }

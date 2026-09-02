@@ -11,6 +11,7 @@ import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTemperaturePage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
 import com.ruleup.profile.domain.repository.MyPageRepository
+import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -46,6 +47,7 @@ class MyHomeViewModel
                 MyHomeIntent.DismissRankingPicker -> dispatch(MyHomeReducerEvent.RankingPickerDismissed)
                 MyHomeIntent.OpenStats -> navigationHelper.navigateByRoute(MyStatsPage.toRoute())
                 MyHomeIntent.OpenInvite -> navigationHelper.navigateByRoute(FriendInvitePage.toRoute())
+                MyHomeIntent.OpenBlocks -> navigationHelper.navigateTo(BlockListPage)
                 MyHomeIntent.OpenSettings -> emitEffect(MyHomeEffect.ShowMessage("설정은 준비 중이에요"))
                 MyHomeIntent.OpenHomeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 MyHomeIntent.OpenChallengeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))

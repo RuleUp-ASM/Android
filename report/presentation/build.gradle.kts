@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ruleup.profile.presentation"
+    namespace = "com.ruleup.report.presentation"
     compileSdk = 37
 
     defaultConfig {
@@ -42,10 +42,6 @@ kotlin {
 dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
-    implementation(project(":profile:domain"))
-    // 이의 내역은 인증 모듈 소관 개념이다 — 타입을 베끼지 않고 그쪽 domain 계약을 직접 쓴다.
-    implementation(project(":verification:domain"))
-    // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다. 화면 자체는 :report:presentation 소관.
     implementation(project(":report:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -61,17 +57,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    // 프로필 이미지 로딩
-    implementation(libs.coil.compose)
-    implementation(libs.coil.network)
-
-    // 활동 캘린더 월 그리드
-    implementation(libs.kizitonwose.calendar.compose)
-
-    // 친구 초대: QR 렌더링(클라 생성) + 카카오톡 공유(사용자 본인 발신)
-    implementation(libs.zxing.core)
-    implementation(libs.kakao.share)
-
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
@@ -79,8 +64,6 @@ dependencies {
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(testFixtures(project(":core:domain")))
-    testImplementation(testFixtures(project(":observability:domain")))
-    testImplementation(testFixtures(project(":verification:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
     testImplementation(libs.robolectric)

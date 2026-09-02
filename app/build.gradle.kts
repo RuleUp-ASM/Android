@@ -117,6 +117,7 @@ dependencies {
 
     implementation(project(":report:domain"))
     implementation(project(":report:data"))
+    implementation(project(":report:presentation"))
 
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.androidx.compose.bom))

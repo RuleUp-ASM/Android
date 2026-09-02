@@ -13,6 +13,8 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
+import com.ruleup.report.domain.entity.ReportReason
+import com.ruleup.report.domain.entity.ReportResult
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -115,6 +117,20 @@ sealed interface ChallengeDetailIntent : MviIntent {
     data class SubmitAppeal(
         val reason: String,
     ) : ChallengeDetailIntent
+
+    /** 이 챌린지를 신고하는 시트를 연다. 멤버든 아니든 열 수 있다. */
+    data object OpenReport : ChallengeDetailIntent
+
+    /** 신고 사유 선택. 고르기 전에는 제출 버튼이 눌리지 않는다. */
+    data class SelectReportReason(
+        val reason: ReportReason,
+    ) : ChallengeDetailIntent
+
+    /** 고른 사유로 신고를 접수한다. 성공하면 완료 시트로 바뀐다. */
+    data object SubmitReport : ChallengeDetailIntent
+
+    /** 신고 시트(사유 선택·완료 공용)를 닫는다. */
+    data object DismissReport : ChallengeDetailIntent
 
     /** (방 홈, 방장 전용) 챌린지 수정 화면으로 이동. */
     data object OpenSettings : ChallengeDetailIntent
@@ -261,6 +277,13 @@ data class ChallengeDetailState(
     val isClaimingOwner: Boolean = false,
     // 이의 제출 중(중복 탭 방지).
     val isSubmittingAppeal: Boolean = false,
+    // 신고 시트가 열려 있는지. 사유 선택과 완료를 한 플래그로 가르지 않는 이유는 reportResult 참고.
+    val isReportSheetOpen: Boolean = false,
+    val selectedReportReason: ReportReason? = null,
+    val isSubmittingReport: Boolean = false,
+    // 접수 결과. null 이 아니면 완료 시트를 띄운다 — 접수는 끝났고 되돌릴 수 없으므로
+    // 사유 선택 화면으로 되돌아갈 수 있게 두지 않는다.
+    val reportResult: ReportResult? = null,
 ) : UiState {
     /**
      * 참여 버튼을 아예 숨길지. 비공개 방은 초대 링크가 유일한 입장 경로라 버튼을 노출하지 않는다 —
@@ -471,5 +494,21 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
 
     data class SubmittingAppeal(
         val submitting: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data object ReportSheetOpened : ChallengeDetailReducerEvent
+
+    data object ReportSheetDismissed : ChallengeDetailReducerEvent
+
+    data class ReportReasonSelected(
+        val reason: ReportReason,
+    ) : ChallengeDetailReducerEvent
+
+    data class SubmittingReport(
+        val submitting: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class ReportAccepted(
+        val result: ReportResult,
     ) : ChallengeDetailReducerEvent
 }

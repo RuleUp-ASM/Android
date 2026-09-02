@@ -7,10 +7,7 @@ import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
-import com.ruleup.challenge.domain.entity.JoinBlockReason
-import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.JoinNote
-import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.VerificationConfig
@@ -28,6 +25,13 @@ import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.test.FakeClock
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.report.domain.entity.HiddenEffect
+import com.ruleup.report.domain.entity.ReportContext
+import com.ruleup.report.domain.entity.ReportException
+import com.ruleup.report.domain.entity.ReportFailure
+import com.ruleup.report.domain.entity.ReportReason
+import com.ruleup.report.domain.entity.ReportResult
+import com.ruleup.report.domain.entity.ReportTarget
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
@@ -42,19 +46,16 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * 챌린지 가입. **거절 사유가 곧 다음 화면을 정한다** — 이미 참여 중이면 알릴 게 없어 조용히
- * 방으로 전환하고, 정원·재입장 대기 같은 사유는 시트로 알린다. 뭉개면 이미 들어와 있는
- * 사용자에게 "참여할 수 없다"는 시트가 뜬다.
- *
- * 이 파일은 가입 경로만 본다 — 상세 화면(1000줄)의 나머지 전이는 대상이 넓어 별도 단위다.
+ * 챌린지 신고. 접수는 되돌릴 수 없고 서버가 결과를 알려주지 않으므로, **잘못 보내지 않는 것**과
+ * **보냈는지 확실히 알려주는 것** 두 가지가 이 흐름의 전부다.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ChallengeDetailJoinTest {
+class ChallengeDetailReportTest {
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -62,98 +63,118 @@ class ChallengeDetailJoinTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun `상세를 못 받았으면 가입을 시도하지 않는다`() =
+    fun `상세를 못 받았으면 신고를 보내지 않는다`() =
         runTest {
-            // 어느 방에 들어갈지 모르는 상태다 — 보내면 서버가 튕긴다.
-            val repo = FakeChallengeRepository()
-            val viewModel = viewModel(repo)
+            // 어느 챌린지인지 모르는 상태다 — 보내면 서버가 대상 오류로 튕긴다.
+            val reports = FakeReportRepository()
+            val model = viewModel(reports = reports)
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            model.onIntent(ChallengeDetailIntent.OpenReport)
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
 
-            assertTrue(repo.calls.none { it == "join" })
+            assertEquals(emptyList(), reports.reported)
         }
 
     @Test
-    fun `정원이 찼으면 그 사유로 차단 시트를 띄운다`() =
+    fun `사유를 고르지 않으면 신고를 보내지 않는다`() =
         runTest {
-            val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.FULL) }))
-            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
+            val reports = FakeReportRepository()
+            val model = loaded(reports)
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+
+            assertEquals(emptyList(), reports.reported)
+        }
+
+    @Test
+    fun `고른 사유로 이 챌린지를 상세 화면 맥락에서 신고한다`() =
+        runTest {
+            val reports = FakeReportRepository()
+            val model = loaded(reports)
+
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.INAPPROPRIATE))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+
+            val target = reports.reported.single() as ReportTarget.Challenge
+            assertEquals("ch1", target.challengeId)
+            assertEquals(ReportReason.INAPPROPRIATE, target.reason)
+            assertEquals(ReportContext.CHALLENGE_DETAIL, target.context)
+        }
+
+    @Test
+    fun `접수에 성공하면 가림 효과를 담아 완료로 넘어간다`() =
+        runTest {
+            val reports = FakeReportRepository(result = ReportResult("r-9", HiddenEffect.CHALLENGE_MASKED))
+            val model = loaded(reports)
+
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
 
             assertEquals(
-                JoinBlockReason.FULL,
-                viewModel.uiState.value.joinBlock
-                    ?.reason,
+                "r-9",
+                model.uiState.value.reportResult
+                    ?.reportId,
             )
-        }
-
-    @Test
-    fun `재입장 대기는 언제부터 가능한지 함께 싣는다`() =
-        runTest {
-            val viewModel =
-                viewModel(
-                    repo(
-                        join = {
-                            throw JoinBlockedException(
-                                reason = JoinBlockReason.REJOIN_COOLDOWN,
-                                rejoinAvailableAt = "2026-09-08T00:00:00Z",
-                            )
-                        },
-                    ),
-                )
-            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
-
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
-
             assertEquals(
-                "2026-09-08T00:00:00Z",
-                viewModel.uiState.value.joinBlock
-                    ?.rejoinAvailableAt,
+                HiddenEffect.CHALLENGE_MASKED,
+                model.uiState.value.reportResult
+                    ?.hiddenEffect,
             )
+            assertFalse(model.uiState.value.isSubmittingReport)
         }
 
     @Test
-    fun `이미 참여 중이면 차단 시트를 띄우지 않는다`() =
+    fun `두 번 눌러도 한 번만 접수된다`() =
         runTest {
-            // 알릴 게 없다 — 시트를 띄우면 들어와 있는 사용자가 "참여할 수 없다"를 본다.
-            val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.ALREADY_JOINED) }))
-            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
+            // 접수는 전건 적재라 두 번 보내면 신고가 두 건 쌓인다.
+            val reports = FakeReportRepository()
+            val model = loaded(reports)
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
 
-            assertNull(viewModel.uiState.value.joinBlock)
+            assertEquals(1, reports.reported.size)
         }
 
     @Test
-    fun `차단 시트를 닫으면 상태에서 지운다`() =
+    fun `접수에 실패하면 완료로 넘어가지 않는다`() =
         runTest {
-            val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.FULL) }))
-            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
-            assertNotNull(viewModel.uiState.value.joinBlock)
+            // 접수가 안 됐는데 완료가 뜨면 사용자는 신고된 줄 안다.
+            val reports = FakeReportRepository(error = ReportException(ReportFailure.SUSPENDED, "정지"))
+            val model = loaded(reports)
 
-            viewModel.onIntent(ChallengeDetailIntent.DismissJoinBlock)
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
 
-            assertNull(viewModel.uiState.value.joinBlock)
+            assertNull(model.uiState.value.reportResult)
+            assertTrue(model.uiState.value.isReportSheetOpen)
+            assertFalse(model.uiState.value.isSubmittingReport)
         }
 
     @Test
-    fun `가입에 성공하면 상세를 다시 받는다`() =
+    fun `시트를 닫으면 지난 선택과 접수 결과가 남지 않는다`() =
         runTest {
-            // 정원·자격은 수시로 변한다 — 캐시를 그대로 두면 방금 들어간 방이 여전히 "참여하기"로 보인다.
-            val repo =
-                repo(join = { JoinResult(countFromCycle = null, requiredPermissions = emptyList(), personalSetupRequired = false) })
-            val viewModel = viewModel(repo)
-            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
-            val before = repo.calls.count { it == "getChallenge" }
+            // 다음에 열었을 때 지난 사유가 골라져 있으면 실수로 그대로 보낸다.
+            val model = loaded(FakeReportRepository())
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            model.onIntent(ChallengeDetailIntent.DismissReport)
 
-            assertTrue(repo.calls.count { it == "getChallenge" } > before)
+            assertFalse(model.uiState.value.isReportSheetOpen)
+            assertNull(model.uiState.value.selectedReportReason)
+            assertNull(model.uiState.value.reportResult)
         }
 
-    private fun repo(join: (String) -> JoinResult) = FakeChallengeRepository(detail = { detail() }, join = join)
+    /** 상세를 받아 두고 신고 시트까지 연 상태. 신고는 이 지점부터만 성립한다. */
+    private fun loaded(reports: FakeReportRepository): ChallengeDetailViewModel {
+        val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), reports = reports)
+        model.onIntent(ChallengeDetailIntent.Load("ch1"))
+        model.onIntent(ChallengeDetailIntent.OpenReport)
+        return model
+    }
 
     private fun detail() =
         ChallengeDetail(
@@ -201,7 +222,6 @@ class ChallengeDetailJoinTest {
 
     private fun viewModel(
         repo: FakeChallengeRepository = FakeChallengeRepository(),
-        nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         reports: FakeReportRepository = FakeReportRepository(),
     ): ChallengeDetailViewModel {
         val observability = testObservability()
@@ -216,7 +236,7 @@ class ChallengeDetailJoinTest {
             observability = observability,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
-            navigationHelper = nav,
+            navigationHelper = RecordingNavigationHelper(),
             ttiTracker = TtiTracker(FakeClock(), observability),
         )
     }

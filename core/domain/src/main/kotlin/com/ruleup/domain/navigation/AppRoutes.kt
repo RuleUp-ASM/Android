@@ -45,6 +45,7 @@ object AppRoutes {
     const val MY_STATS = "my/stats" // 통계 리포트
     const val MY_INVITE = "my/invite" // 친구 초대
     const val MY_PROFILE_EDIT = "my/profile/edit" // 프로필 편집(마이 → 재편집)
+    const val MY_BLOCKS = "my/blocks" // 신고한 사용자·챌린지 (마이 → 차단 목록·해제)
 
     // verification
     const val VERIFICATION_PERMISSION_REPAIR = "verification/permission-repair" // 진입점 (권한 회수 복구)

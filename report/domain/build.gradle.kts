@@ -25,7 +25,8 @@ kotlin {
 }
 
 dependencies {
-    // core:domain 도 coroutines 도 쓰지 않는다 — 신고·차단은 1회 조회뿐이라 Flow 가 없고,
-    // 공유 커널(Category·Tier) 타입도 시그니처에 나오지 않는다.
+    // Page/NavRoute 가 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
+    api(project(":core:domain"))
+
     testImplementation(kotlin("test-junit"))
 }
