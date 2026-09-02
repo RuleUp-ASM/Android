@@ -150,6 +150,15 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.konsist)
+
+    // 인수 테스트는 앱이 실제로 쓰는 Retrofit api·DTO 를 그대로 써서 실서버를 두드린다 —
+    // 서버가 계약을 바꾸면 역직렬화에서 터지는 것이 목적이다.
+    testImplementation(kotlin("test-junit"))
+    testImplementation(libs.retrofit)
+    testImplementation(libs.retrofit.converter.kotlinx.serialization)
+    testImplementation(libs.okhttp)
+    testImplementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
