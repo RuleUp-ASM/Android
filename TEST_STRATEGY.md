@@ -31,26 +31,26 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | – | 18 | – | 18 |
-| `:challenge:data` | 10 | – | – | – | – | 10 |
+| `:app` | – | – | – | 18 | 4 | 22 |
+| `:challenge:data` | 23 | – | – | – | – | 23 |
 | `:challenge:domain` | 28 | 4 | – | – | – | 32 |
-| `:challenge:presentation` | 15 | 45 | 24 | – | – | 84 |
+| `:challenge:presentation` | 21 | 51 | 30 | – | – | 102 |
 | `:core:datastore` | – | 13 | – | – | – | 13 |
 | `:core:domain` | 17 | – | – | – | – | 17 |
 | `:home:presentation` | 8 | 7 | 6 | – | – | 21 |
 | `:observability:data` | 20 | – | – | – | – | 20 |
 | `:observability:domain` | 11 | – | – | – | – | 11 |
-| `:onboarding:data` | 4 | – | – | – | – | 4 |
+| `:onboarding:data` | 11 | – | – | – | – | 11 |
 | `:onboarding:domain` | 8 | 30 | – | – | – | 38 |
-| `:onboarding:presentation` | – | 12 | 25 | – | – | 37 |
-| `:profile:data` | 3 | – | – | – | – | 3 |
-| `:profile:presentation` | 4 | 60 | – | – | – | 64 |
+| `:onboarding:presentation` | – | 12 | 30 | – | – | 42 |
+| `:profile:data` | 8 | – | – | – | – | 8 |
+| `:profile:presentation` | 4 | 60 | 38 | – | – | 102 |
 | `:verification:data` | 40 | 15 | – | – | – | 55 |
-| `:verification:domain` | 22 | 11 | – | – | – | 33 |
-| `:verification:presentation` | 7 | 4 | – | – | – | 11 |
-| **합계** | **197** | **201** | **55** | **18** | **0** | **471** |
+| `:verification:domain` | 22 | 14 | – | – | – | 36 |
+| `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
+| **합계** | **228** | **216** | **107** | **18** | **4** | **573** |
 
-테스트 파일 수: 케이스 40, 모듈 28, UI 13, 통합 5, 인수 0
+테스트 파일 수: 케이스 45, 모듈 31, UI 23, 통합 5, 인수 1
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 
@@ -64,10 +64,11 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 무엇 | 못 잡는 위험 | 왜 안 했나 | 풀리는 조건 |
 |---|---|---|---|
-| 화면 13건 (UI 층) | 상태가 화면에 잘못 그려져도 모른다. "대기 중"이 "실패"로 보이는 종류의 오독 | 이 12건은 **상태 호이스팅된 `Content` 컴포저블이 아예 없다** — 화면을 쪼개는 리팩터링이 선행한다(가시성만 여는 것과 다른 크기의 변경이다) | 화면 분리 합의 |
-| RepositoryImpl 10건 | DTO 매핑이 조용히 기본값을 넣는다. `?:` 로 접힌 값은 예외 없이 틀린 값이 된다 | 에러 번역(가장 위험한 축)만 먼저 덮었다 | 모듈별 테스트 소스셋 신설 + 응답 샘플 확보 |
+| 화면 3건 (UI 층) — ChallengeTargets · Splash · VerificationLocation | 상태가 화면에 잘못 그려져도 모른다. "대기 중"이 "실패"로 보이는 종류의 오독 | 이 12건은 **상태 호이스팅된 `Content` 컴포저블이 아예 없다** — 화면을 쪼개는 리팩터링이 선행한다(가시성만 여는 것과 다른 크기의 변경이다) | 화면 분리 합의 |
+| RepositoryImpl 8건 | DTO 매핑이 조용히 기본값을 넣는다. `?:` 로 접힌 값은 예외 없이 틀린 값이 된다 | 에러 번역(가장 위험한 축)만 먼저 덮었다 | 모듈별 테스트 소스셋 신설 + 응답 샘플 확보 |
 | `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 없다 | 테스트 의존성 선언 |
-| ViewModel 4건 (CreateChallenge·ChallengeDetail·Onboarding·VerificationLocation) | 생성·상세는 각각 600·1000줄로 앱에서 가장 복잡한 전이를 담는다 | 크기 때문에 별도 작업 단위로 뺐다 | 이어서 진행 |
+| ChallengeDetailViewModel 의 나머지 전이 | 1005줄에 협력자 11종 — 가입 경로만 덮었고 방 탭·이의·감시자·권한 전이가 남았다 | 한 파일에 다 넣으면 무엇이 깨졌는지 읽기 어려워진다 | 경로별로 나눠 진행 |
+| OnboardingViewModel | 6단계 입력 전이 | 아직 손대지 않았다 | 이어서 진행 |
 | 관심 단계 문구 | 디자인과 코드가 다른 채로 나간다 | Figma `1134:1725` 는 `어떤 습관에 관심 있나요?` / `탐색 추천에 사용해요…`, 코드는 `어떤 챌린지에 관심 있나요?` / `선택한 분야 기반으로…`. 어느 쪽이 맞는지는 기획 판단이라 테스트로 한쪽을 못 박지 않았다 | 기획 확인 |
 | 런타임 권한 다이얼로그·지오펜스 | 권한 거부 후 복구 동선이 막혀도 모른다 | Robolectric 이 못 흉내낸다 | 에뮬레이터 CI 워크플로 |
 | 계측 테스트가 CI 밖 | `androidTest` 8건이 한 번도 실행되지 않는다 | `test.yml` 이 `./gradlew test` 만 돈다 | 위와 같은 워크플로 |
@@ -83,6 +84,8 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | onboarding·home ViewModel 4건 · challenge:data 에러 번역 (#376) | 2026-09-01 |
 | 탐색 응답 매핑 기본값 (#386) | 2026-09-02 |
 | **인수 테스트 기반 + 탐색 스토리 4건** (#387) | 2026-09-02 |
+| 마이 탭 화면 5건 · 로그인·권한·랭킹 3건 · 초대·편집 2건 (#390~#392) | 2026-09-02 |
+| 좌표 바인딩·생성·가입 ViewModel (#393~) | 2026-09-02 |
 | 화면 14건 (UI 층) — 온보딩 6 · 홈 · 탐색 · 목록 · 상세 · 생성 2 · 설정 (#384) | 2026-09-01 |
 
 47건이 "안 쓴 게 아니라 못 쓰는" 상태였다 — `viewModelScope` 가 `Dispatchers.Main` 을 쓰는데
