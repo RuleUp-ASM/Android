@@ -40,6 +40,7 @@ import com.ruleup.challenge.domain.entity.MyRank
 import com.ruleup.challenge.domain.entity.RankingEntry
 import com.ruleup.challenge.domain.entity.RankingPolicy
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingIntent
+import com.ruleup.challenge.presentation.ranking.viewmodel.RankingState
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingViewModel
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
@@ -69,6 +70,16 @@ fun RankingScreen(
         viewModel.onIntent(RankingIntent.Load(challengeId))
     }
 
+    RankingContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+@Composable
+internal fun RankingContent(
+    state: RankingState,
+    onIntent: (RankingIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -76,7 +87,7 @@ fun RankingScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RankingTopBar(onBack = { viewModel.onIntent(RankingIntent.Back) })
+        RankingTopBar(onBack = { onIntent(RankingIntent.Back) })
 
         when {
             state.isLoading ->
