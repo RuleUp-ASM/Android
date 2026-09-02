@@ -74,14 +74,17 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 ### 판단이 필요한 것 — 코드로는 못 정한다
 
-| 무엇 | 상황 | 필요한 판단 |
+전부 이슈로 올려 뒀다. **각 항목의 현재 동작은 테스트가 못 박고 있는데, 그건 "이게 옳다"가
+아니라 "지금 이렇다"를 기록한 것이다** — 판단이 서면 해당 테스트도 함께 뒤집어야 한다.
+
+| 이슈 | 무엇 | 판단 주체 |
 |---|---|---|
-| 관심 단계 문구 | Figma `1134:1725` 는 `어떤 습관에 관심 있나요?`, 코드는 `어떤 챌린지에 관심 있나요?` | 기획 |
-| 로그인 화면 문구 | Figma `1134:1670` 은 `카카오로 계속하기`, 코드는 `카카오로 시작하기` | 기획 |
-| 참여 형태 기본값 | 모르는 값을 설정 매퍼는 `SOLO`, 상세 매퍼는 `GROUP` 으로 접는다 — 같은 미지 값이 화면마다 다르게 보인다 | 정책 |
-| 대상 앱 줄임말 검색 | 부분 일치라 `카톡` 으로 `카카오톡` 을 못 찾는다. 못 찾으면 등록을 포기하고 자동 인증이 성립하지 않는다 | 기획 |
-| 활동 캘린더 오류 표시 | ViewModel 은 `errorMessage` 를 채우는데 화면에 그리는 자리가 없다 — 조회 실패와 "기록 없는 달"이 같아 보인다 | 디자인 |
-| `ChallengeSettingsViewModel.setCapacity` | ViewModel 에서 clamp 한다 — `CLAUDE.md` 의 "범위는 domain 타입, 입력 차단은 화면" 과 어긋난다 | 설계 |
+| [#399](https://github.com/RuleUp-ASM/Android/issues/399) | 관심 단계 문구가 Figma 와 다르다 (`습관` vs `챌린지`) | 기획 |
+| [#400](https://github.com/RuleUp-ASM/Android/issues/400) | 로그인 화면 문구가 Figma 와 다르다 (`계속하기` vs `시작하기`) | 기획 |
+| [#401](https://github.com/RuleUp-ASM/Android/issues/401) | 모르는 참여 형태를 매퍼마다 다르게 접는다 — 같은 챌린지가 목록과 상세에서 다르게 보인다 | 정책 |
+| [#402](https://github.com/RuleUp-ASM/Android/issues/402) | `setCapacity` 가 ViewModel 에서 clamp — `CLAUDE.md` 검증 계층 규칙과 어긋난다 | 설계 |
+| [#403](https://github.com/RuleUp-ASM/Android/issues/403) | 활동 캘린더에 조회 실패를 알리는 자리가 없다 — 실패와 "기록 없는 달"이 같아 보인다 | 디자인 |
+| [#404](https://github.com/RuleUp-ASM/Android/issues/404) | 대상 앱 검색이 줄임말을 못 찾는다 — 못 찾으면 등록을 포기하고 자동 인증이 성립하지 않는다 | 기획 |
 
 ### 환경이 필요한 것
 
