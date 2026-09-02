@@ -40,6 +40,7 @@ import com.ruleup.profile.domain.entity.ReputationMilestone
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.history.viewmodel.ReputationHistoryIntent
+import com.ruleup.profile.presentation.history.viewmodel.ReputationHistoryState
 import com.ruleup.profile.presentation.history.viewmodel.ReputationHistoryViewModel
 
 // 히어로 그라데이션 (피그마 435:395 — rose → amber)
@@ -57,6 +58,16 @@ fun ReputationHistoryScreen(
         viewModel.onIntent(ReputationHistoryIntent.Load)
     }
 
+    ReputationHistoryContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+@Composable
+internal fun ReputationHistoryContent(
+    state: ReputationHistoryState,
+    onIntent: (ReputationHistoryIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -64,7 +75,7 @@ fun ReputationHistoryScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "평판 히스토리", onBack = { viewModel.onIntent(ReputationHistoryIntent.Back) })
+        RuleUpTopBar(title = "평판 히스토리", onBack = { onIntent(ReputationHistoryIntent.Back) })
 
         when {
             state.isLoading ->
@@ -81,7 +92,7 @@ fun ReputationHistoryScreen(
                     )
                 }
 
-            else -> HistoryBody(history = state.history!!)
+            else -> HistoryBody(history = state.history)
         }
     }
 }

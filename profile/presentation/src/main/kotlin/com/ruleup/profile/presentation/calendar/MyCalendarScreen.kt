@@ -49,6 +49,7 @@ import com.ruleup.profile.domain.entity.CalendarDayItem
 import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarIntent
+import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarState
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -74,6 +75,16 @@ fun MyCalendarScreen(
         viewModel.onIntent(MyCalendarIntent.Load)
     }
 
+    MyCalendarContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+@Composable
+internal fun MyCalendarContent(
+    state: MyCalendarState,
+    onIntent: (MyCalendarIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -81,7 +92,7 @@ fun MyCalendarScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "활동 캘린더", onBack = { viewModel.onIntent(MyCalendarIntent.Back) })
+        RuleUpTopBar(title = "활동 캘린더", onBack = { onIntent(MyCalendarIntent.Back) })
 
         val month = runCatching { YearMonth.parse(state.month) }.getOrNull()
         if (month == null) {
@@ -102,15 +113,15 @@ fun MyCalendarScreen(
         ) {
             MonthHeader(
                 month = month,
-                onPrev = { viewModel.onIntent(MyCalendarIntent.ChangeMonth(-1)) },
-                onNext = { viewModel.onIntent(MyCalendarIntent.ChangeMonth(1)) },
+                onPrev = { onIntent(MyCalendarIntent.ChangeMonth(-1)) },
+                onNext = { onIntent(MyCalendarIntent.ChangeMonth(1)) },
             )
             MonthGrid(
                 month = month,
                 days = state.days,
                 selectedDate = state.selectedDate,
                 isLoading = state.isLoading,
-                onSelect = { viewModel.onIntent(MyCalendarIntent.SelectDate(it)) },
+                onSelect = { onIntent(MyCalendarIntent.SelectDate(it)) },
             )
             Legend()
             state.selectedDate?.let { selected ->

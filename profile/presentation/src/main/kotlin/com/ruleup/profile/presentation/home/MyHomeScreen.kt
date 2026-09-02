@@ -51,6 +51,7 @@ import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeEffect
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
+import com.ruleup.profile.presentation.home.viewmodel.MyHomeState
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeViewModel
 import com.ruleup.ui.helper.LocalMessageHelper
 
@@ -83,6 +84,17 @@ fun MyHomeScreen(
         }
     }
 
+    MyHomeContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun MyHomeContent(
+    state: MyHomeState,
+    onIntent: (MyHomeIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier =
             modifier
@@ -113,15 +125,15 @@ fun MyHomeScreen(
                             .padding(bottom = 88.dp),
                 ) {
                     MyHomeHero(
-                        home = state.home!!,
-                        onClick = { viewModel.onIntent(MyHomeIntent.OpenProfileEdit) },
+                        home = state.home,
+                        onClick = { onIntent(MyHomeIntent.OpenProfileEdit) },
                     )
                     Column(
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        MyHomeCountsRow(home = state.home!!)
-                        MyHomeMenuCard(onIntent = viewModel::onIntent)
+                        MyHomeCountsRow(home = state.home)
+                        MyHomeMenuCard(onIntent = onIntent)
                     }
                 }
         }
@@ -130,8 +142,8 @@ fun MyHomeScreen(
             selected = RuleUpBottomTab.MY,
             onTabClick = { tab ->
                 when (tab) {
-                    RuleUpBottomTab.HOME -> viewModel.onIntent(MyHomeIntent.OpenHomeTab)
-                    RuleUpBottomTab.EXPLORE -> viewModel.onIntent(MyHomeIntent.OpenChallengeTab)
+                    RuleUpBottomTab.HOME -> onIntent(MyHomeIntent.OpenHomeTab)
+                    RuleUpBottomTab.EXPLORE -> onIntent(MyHomeIntent.OpenChallengeTab)
                     // TODO(#269): "내 챌린지" 목적지 미정.
                     RuleUpBottomTab.CHALLENGE -> Unit
                     RuleUpBottomTab.MY -> Unit
@@ -145,7 +157,7 @@ fun MyHomeScreen(
     if (picker != null) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            onDismissRequest = { viewModel.onIntent(MyHomeIntent.DismissRankingPicker) },
+            onDismissRequest = { onIntent(MyHomeIntent.DismissRankingPicker) },
             sheetState = sheetState,
             containerColor = RuleUpTheme.colors.surface,
         ) {
@@ -170,7 +182,7 @@ fun MyHomeScreen(
                                 .clip(RoundedCornerShape(12.dp))
                                 .singleClickable(
                                     onClick = {
-                                        viewModel.onIntent(MyHomeIntent.SelectRankingChallenge(challenge.challengeId))
+                                        onIntent(MyHomeIntent.SelectRankingChallenge(challenge.challengeId))
                                     },
                                 ).padding(horizontal = 4.dp, vertical = 13.dp),
                         verticalAlignment = Alignment.CenterVertically,
