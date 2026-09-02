@@ -115,6 +115,9 @@ dependencies {
     implementation(project(":verification:data"))
     implementation(project(":verification:presentation"))
 
+    implementation(project(":report:domain"))
+    implementation(project(":report:data"))
+
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
