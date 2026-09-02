@@ -62,7 +62,24 @@ import com.ruleup.verification.domain.entity.ScreenApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-private data class AppEntry(
+/**
+ * 이름·카테고리로 앱 목록을 좁힌다.
+ *
+ * 검색어는 **부분 일치·대소문자 무시**다 — 사용자는 "카톡"처럼 일부만 치고, 영문 앱은 대문자로
+ * 시작하는 경우가 많다. 카테고리를 선언하지 않은 앱([AppEntry.category] 가 null)은 특정
+ * 카테고리를 골랐을 때 빠진다 — 어디에도 속하지 않는다고 아무 데나 넣으면 목록이 거짓이 된다.
+ */
+internal fun filterApps(
+    apps: List<AppEntry>,
+    query: String,
+    category: String?,
+): List<AppEntry> =
+    apps.filter { app ->
+        (query.isBlank() || app.label.contains(query.trim(), ignoreCase = true)) &&
+            (category == null || app.category == category)
+    }
+
+internal data class AppEntry(
     val packageName: String,
     val label: String,
     val icon: ImageBitmap?,
@@ -119,13 +136,7 @@ fun ChallengeTargetsScreen(
                 .distinct()
                 .sorted()
         }
-    val filtered =
-        remember(loaded, query, selectedCategory) {
-            loaded.orEmpty().filter { app ->
-                (query.isBlank() || app.label.contains(query.trim(), ignoreCase = true)) &&
-                    (selectedCategory == null || app.category == selectedCategory)
-            }
-        }
+    val filtered = remember(loaded, query, selectedCategory) { filterApps(loaded.orEmpty(), query, selectedCategory) }
     val selectedApps = loaded.orEmpty().filter { selected[it.packageName] == true }
 
     Box(
