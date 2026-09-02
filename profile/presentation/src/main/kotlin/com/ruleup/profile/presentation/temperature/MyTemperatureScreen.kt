@@ -42,6 +42,7 @@ import com.ruleup.profile.domain.entity.ReputationDetail
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.temperature.viewmodel.MyTemperatureIntent
+import com.ruleup.profile.presentation.temperature.viewmodel.MyTemperatureState
 import com.ruleup.profile.presentation.temperature.viewmodel.MyTemperatureViewModel
 
 // 온도 히어로/진행 바 그라데이션 (피그마 434:311 — amber → rose)
@@ -59,6 +60,16 @@ fun MyTemperatureScreen(
         viewModel.onIntent(MyTemperatureIntent.Load)
     }
 
+    MyTemperatureContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+@Composable
+internal fun MyTemperatureContent(
+    state: MyTemperatureState,
+    onIntent: (MyTemperatureIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -66,7 +77,7 @@ fun MyTemperatureScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "매너 온도", onBack = { viewModel.onIntent(MyTemperatureIntent.Back) })
+        RuleUpTopBar(title = "매너 온도", onBack = { onIntent(MyTemperatureIntent.Back) })
 
         when {
             state.isLoading ->
@@ -85,8 +96,8 @@ fun MyTemperatureScreen(
 
             else ->
                 TemperatureBody(
-                    detail = state.detail!!,
-                    onOpenHistory = { viewModel.onIntent(MyTemperatureIntent.OpenHistory) },
+                    detail = state.detail,
+                    onOpenHistory = { onIntent(MyTemperatureIntent.OpenHistory) },
                 )
         }
     }
