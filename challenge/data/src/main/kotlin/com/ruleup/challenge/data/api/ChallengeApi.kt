@@ -3,6 +3,8 @@ package com.ruleup.challenge.data.api
 import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationPreviewResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
@@ -195,6 +197,24 @@ interface ChallengeApi {
     suspend fun clone(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<TemplateDraftResponse>
+
+    // 멤버 초대 링크 발급 (비공개 그룹 방의 방장만 — 토큰 7일 만료)
+    @POST("v1/challenges/{challengeId}/invitations")
+    suspend fun createChallengeInvitation(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeInvitationResponse>
+
+    // 초대 링크 미리보기 (로그인 필수 · 토큰을 소모하지 않는다)
+    @GET("v1/challenges/invitations/{token}")
+    suspend fun getChallengeInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<ChallengeInvitationPreviewResponse>
+
+    // 초대 수락 가입 (토큰은 여기서 소모된다)
+    @POST("v1/challenges/invitations/{token}/accept")
+    suspend fun acceptChallengeInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<JoinResponse>
 
     // 감시자: 초대 생성 (토큰 7일 만료, 무료 3명 초과 시 에러)
     @POST("v1/challenges/{challengeId}/watchers/invitations")

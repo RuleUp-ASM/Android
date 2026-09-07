@@ -55,6 +55,9 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
 
+    /** (방장) 비공개 방 멤버 초대 링크 발급 후 공유. 공개 방·솔로 방에는 노출하지 않는다. */
+    data object InviteMember : ChallengeDetailIntent
+
     /** (방 상세) 상단 탭 전환. 아직 안 받아온 탭이면 그때 조회한다. */
     data class SelectTab(
         val tab: RoomTab,
@@ -164,6 +167,15 @@ sealed interface ChallengeDetailEffect : MviEffect {
      */
     data class ShareWatcherInvite(
         val card: WatcherInviteCard,
+        val inviteUrl: String,
+    ) : ChallengeDetailEffect
+
+    /**
+     * 멤버 초대 링크 공유. 감시자 초대와 카드 문구가 달라 이펙트를 갈라 둔다 —
+     * 감시자는 "지켜봐 달라"이고 멤버는 "같이 하자"다.
+     */
+    data class ShareMemberInvite(
+        val challengeTitle: String,
         val inviteUrl: String,
     ) : ChallengeDetailEffect
 

@@ -103,6 +103,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
+                ChallengeDetailIntent.InviteMember -> inviteMember()
                 is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
                 ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
                 ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
@@ -958,6 +959,29 @@ class ChallengeDetailViewModel
             viewModelScope.launch {
                 runCatching { watcherRepository.getWatchers(challengeId) }
                     .onSuccess { dispatch(ChallengeDetailReducerEvent.WatchersLoaded(it)) }
+            }
+        }
+
+        /**
+         * 멤버 초대 링크 발급 → 카카오톡 공유. 비공개 그룹 방의 방장만 도달한다(화면이 버튼을 가린다).
+         *
+         * 발급 실패는 서버 문구를 그대로 쓴다 — `NOT_PRIVATE_CHALLENGE` 처럼 화면이 이미 막았어야
+         * 하는 경우라, 여기서 다시 번역할 문구가 없다.
+         */
+        private fun inviteMember() {
+            val detail = currentState.detail ?: return
+            viewModelScope.launch {
+                runCatching { challengeRepository.createInvitation(detail.challengeId) }
+                    .onSuccess {
+                        emitEffect(
+                            ChallengeDetailEffect.ShareMemberInvite(
+                                challengeTitle = detail.title,
+                                inviteUrl = it.inviteUrl,
+                            ),
+                        )
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "초대 링크를 만들지 못했어요"))
+                    }
             }
         }
 

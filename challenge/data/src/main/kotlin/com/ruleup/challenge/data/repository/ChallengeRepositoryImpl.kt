@@ -10,6 +10,8 @@ import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
 import com.ruleup.challenge.data.dto.toRequestBody
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeInvitation
+import com.ruleup.challenge.domain.entity.ChallengeInvitationPreview
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeNotEditableException
 import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
@@ -181,6 +183,35 @@ class ChallengeRepositoryImpl
                     )
                 }
                 if (e.code == CODE_CHALLENGE_NOT_FOUND) throw ChallengeNotFoundException()
+                throw e
+            }
+
+        override suspend fun createInvitation(challengeId: String): ChallengeInvitation =
+            api
+                .createChallengeInvitation(challengeId)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getInvitation(token: String): ChallengeInvitationPreview =
+            api
+                .getChallengeInvitation(token)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun acceptInvitation(token: String): JoinResult =
+            try {
+                api
+                    .acceptChallengeInvitation(token)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 가입과 같은 게이트를 통과하므로 실패 형식도 같다 — 화면이 문구를 재사용한다.
+                if (e.code == CODE_JOIN_BLOCKED) {
+                    throw JoinBlockedException(
+                        reason = JoinBlockReason.fromValue(e.reason),
+                        rejoinAvailableAt = e.rejoinAvailableAt,
+                    )
+                }
                 throw e
             }
 

@@ -74,6 +74,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewMod
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
+import com.ruleup.challenge.presentation.invite.MemberInviteSharer
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
@@ -124,6 +125,16 @@ fun ChallengeDetailScreen(
                         WatcherInviteSharer.share(
                             context = context,
                             card = effect.card,
+                            inviteUrl = effect.inviteUrl,
+                        )
+                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
+                }
+
+                is ChallengeDetailEffect.ShareMemberInvite -> {
+                    val shared =
+                        MemberInviteSharer.share(
+                            context = context,
+                            challengeTitle = effect.challengeTitle,
                             inviteUrl = effect.inviteUrl,
                         )
                     if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
@@ -547,6 +558,12 @@ private fun RoomDetailTabs(
                                 myUserId = state.myUserId,
                                 actionEnabled = !state.isMemberActionLoading,
                                 delegationBanner = delegationBanner,
+                                // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
+                                canInviteMember =
+                                    room.myRole.isOwner &&
+                                        state.detail?.visibility?.isPrivate == true &&
+                                        state.detail.mode.isGroup,
+                                onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
                                 onLeave = onConfirmLeave,
                                 onDelete = onConfirmDelete,
                                 onPromote = { onIntent(ChallengeDetailIntent.PromoteMember(it)) },

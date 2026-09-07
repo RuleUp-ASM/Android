@@ -1,6 +1,8 @@
 package com.ruleup.challenge.domain.repository
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeInvitation
+import com.ruleup.challenge.domain.entity.ChallengeInvitationPreview
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
@@ -106,6 +108,29 @@ interface ChallengeRepository {
      * 게이트에 막히면 [com.ruleup.challenge.domain.entity.JoinBlockedException] 이 던져진다.
      */
     suspend fun join(challengeId: String): JoinResult
+
+    /**
+     * 멤버 초대 링크 발급(명세: POST /challenges/{id}/invitations). **비공개 그룹 방의 방장만** 된다 —
+     * 공개 방·솔로 방은 서버가 `NOT_PRIVATE_CHALLENGE` 로 막는다.
+     *
+     * 응답의 `inviteUrl` 을 그대로 공유한다. 클라가 경로를 조립하지 않는다.
+     */
+    suspend fun createInvitation(challengeId: String): ChallengeInvitation
+
+    /**
+     * 초대 링크 미리보기(명세: GET /challenges/invitations/{token}). **로그인 필수**다.
+     *
+     * 조회만 하고 토큰을 소모하지 않는다 — 수락은 [acceptInvitation] 에서 일어난다.
+     */
+    suspend fun getInvitation(token: String): ChallengeInvitationPreview
+
+    /**
+     * 초대 수락 가입(명세: POST /challenges/invitations/{token}/accept). 토큰은 여기서 소모된다.
+     *
+     * 게이트에 막히면 [com.ruleup.challenge.domain.entity.JoinBlockedException] 이 던져진다 —
+     * 미리보기의 `joinable` 과 같은 사유 체계다.
+     */
+    suspend fun acceptInvitation(token: String): JoinResult
 
     /**
      * 챌린지 멤버 목록 조회(명세 GET members). 승인제 폐기로 status 필터 없이 확정 멤버만 반환한다.

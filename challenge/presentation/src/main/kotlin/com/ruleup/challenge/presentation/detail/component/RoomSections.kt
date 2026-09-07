@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -58,6 +59,9 @@ internal fun RoomMemberSection(
     myUserId: String?,
     actionEnabled: Boolean,
     delegationBanner: String?,
+    // 비공개 그룹 방의 방장만 — 초대 링크가 유일한 입장 경로다
+    canInviteMember: Boolean,
+    onInviteMember: () -> Unit,
     onLeave: () -> Unit,
     onDelete: () -> Unit,
     onPromote: (String) -> Unit,
@@ -89,6 +93,19 @@ internal fun RoomMemberSection(
                 onPromote = { onPromote(member.userId) },
                 onDemote = { onDemote(member.userId) },
                 onRequestDelegation = { onRequestDelegation(member.userId) },
+            )
+        }
+
+        if (canInviteMember) {
+            RuleUpPrimaryButton(
+                text = "초대 링크 공유",
+                enabled = actionEnabled,
+                onClick = onInviteMember,
+            )
+            Text(
+                text = "비공개 방은 초대 링크로만 들어올 수 있어요 · 링크는 7일 뒤 만료돼요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
             )
         }
 

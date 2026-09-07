@@ -4,6 +4,8 @@ import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationPreviewResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
@@ -140,6 +142,12 @@ class FailingChallengeApi(
     ): BaseResponse<WatchingUpdateResponse> = failed()
 
     override suspend fun acceptWatcherInvitation(token: String): BaseResponse<WatcherAcceptResponse> = failed()
+
+    override suspend fun createChallengeInvitation(challengeId: String): BaseResponse<ChallengeInvitationResponse> = failed()
+
+    override suspend fun getChallengeInvitation(token: String): BaseResponse<ChallengeInvitationPreviewResponse> = failed()
+
+    override suspend fun acceptChallengeInvitation(token: String): BaseResponse<JoinResponse> = failed()
 
     override suspend fun getRoom(challengeId: String): BaseResponse<RoomResponse> = failed()
 

@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
+import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
@@ -15,10 +16,12 @@ private const val TAG = "[DeepLink]"
 // App Links 경로 규약.
 // - /app/{path}?{args} : 앱 화면 직결(푸시 알림 등). 화면이 늘어도 매니페스트를 고치지 않도록 접두사 하나로 묶는다.
 // - /inv/{code}        : 친구 초대. 화면이 아니라 "앱 실행"으로만 받는다.
+// - /c/{token}         : 챌린지 멤버 초대 — 비공개 방의 유일한 입장 경로.
 // - /w/{token}         : 감시자 초대 — 인앱 수락 화면으로 연결한다(웹 동의는 폐지).
 private const val APP_SEGMENT = "app"
 private const val FRIEND_INVITE_SEGMENT = "inv"
 private const val WATCHER_INVITE_SEGMENT = "w"
+private const val CHALLENGE_INVITE_SEGMENT = "c"
 
 /**
  * 앱 화면 주소의 호스트. 알림이 자기 목적지를 조립할 때 쓴다.
@@ -39,11 +42,19 @@ private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEN
  *
  * 토큰이 없으면 null — 세그먼트가 하나뿐인 `/w` 로 들어오면 수락할 대상이 없다.
  */
-private fun Uri.toWatcherAcceptRoute(): NavRoute? {
+private fun Uri.toWatcherAcceptRoute(): NavRoute? = tokenRoute(WATCHER_INVITE_SEGMENT)?.let { WatcherAcceptPage(it).toRoute() }
+
+/** 챌린지 멤버 초대 `/c/{token}` 을 미리보기 화면 경로로 옮긴다. */
+private fun Uri.toChallengeInviteRoute(): NavRoute? = tokenRoute(CHALLENGE_INVITE_SEGMENT)?.let { ChallengeInvitePage(it).toRoute() }
+
+/**
+ * `/{segment}/{token}` 에서 토큰만 꺼낸다. 없으면 null — 세그먼트 하나뿐인 링크는 가리키는
+ * 대상이 없어 화면을 띄워도 빈 오류만 보여 준다.
+ */
+private fun Uri.tokenRoute(segment: String): String? {
     val segments = pathSegments ?: return null
-    if (segments.firstOrNull() != WATCHER_INVITE_SEGMENT) return null
-    val token = segments.getOrNull(1)?.takeIf { it.isNotBlank() } ?: return null
-    return WatcherAcceptPage(token).toRoute()
+    if (segments.firstOrNull() != segment) return null
+    return segments.getOrNull(1)?.takeIf { it.isNotBlank() }
 }
 
 /**
@@ -99,7 +110,8 @@ fun resolveStartRoute(
     // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다. 가입 시 inviteCode 서버 전달은
     // auth 스펙(inviteCode 필드) 개정 후 후속.
     if (uri.isFriendInvite()) return null
-    // 감시자 초대는 화면이 있다 — 로그인 뒤에 열리도록 보류 대상으로 넘긴다.
+    // 초대 링크들은 화면이 있다 — 로그인 뒤에 열리도록 보류 대상으로 넘긴다.
+    uri.toChallengeInviteRoute()?.let { return it }
     uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
     if (route == null || appRouteByPath[route.path] == null) {
@@ -116,6 +128,7 @@ fun resolveNewIntentRoute(
 ): NavRoute? {
     // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태) — 무시.
     if (uri.isFriendInvite()) return null
+    uri.toChallengeInviteRoute()?.let { return it }
     uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
     if (route == null || appRouteByPath[route.path] == null) {

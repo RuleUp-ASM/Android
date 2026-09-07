@@ -35,6 +35,7 @@ object AppRoutes {
     const val CHALLENGE_EXPLORE = "challenge/explore" // 진입점 (하단 탭 → 탐색 메인)
     const val CHALLENGE_EXPLORE_LIST = "challenge/explore/list" // 챌린지 둘러보기(필터+정렬 목록)
     const val CHALLENGE_RANKING = "challenge/ranking" // 그룹 랭킹(방 홈 → 랭킹)
+    const val CHALLENGE_INVITE = "challenge/invite" // 진입점 (멤버 초대 링크 /c/{token})
     const val CHALLENGE_WATCHER_ACCEPT = "challenge/watcher/accept" // 진입점 (감시자 초대 링크 /w/{token})
     const val CHALLENGE_SETTINGS = "challenge/settings" // 챌린지 수정(방장 전용, 방 설정 → 수정)
 

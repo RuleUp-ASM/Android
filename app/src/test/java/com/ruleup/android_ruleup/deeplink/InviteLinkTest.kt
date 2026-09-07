@@ -2,6 +2,7 @@ package com.ruleup.android_ruleup.deeplink
 
 import android.app.Application
 import android.net.Uri
+import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.observability.domain.test.testObservability
 import org.junit.Test
@@ -12,15 +13,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * 감시자 초대 링크 `/w/{token}`.
+ * 외부에서 들어오는 초대 링크 세 갈래 — `/inv`(친구) · `/c`(챌린지 멤버) · `/w`(감시자).
  *
- * 이 링크는 **앱 밖에서 오는 유일한 감시자 진입 경로**다 — 토큰을 잘못 잘라내면 수락이 통째로
- * 막히고, 사용자에게는 "초대가 잘못됐다"로 보인다.
+ * 셋이 같은 도메인이라 **접두사 하나로 갈린다.** 잘못 갈라지면 감시자가 방에 가입되거나 그 반대가
+ * 되고, 토큰을 잘못 잘라내면 수락이 통째로 막힌 채 "초대가 잘못됐다"로만 보인다.
  */
 @RunWith(RobolectricTestRunner::class)
 // 실제 App 은 카카오 SDK 초기화까지 한다 — URI 파싱만 보는 테스트가 그것 때문에 죽으면 안 된다.
 @Config(application = Application::class)
-class WatcherInviteLinkTest {
+class InviteLinkTest {
     @Test
     fun `초대 링크는 토큰을 그대로 실어 수락 화면으로 간다`() {
         val route = resolveStartRoute(uri("https://android.ruleup.co.kr/w/wtk_8f3a"), testObservability())
@@ -41,6 +42,24 @@ class WatcherInviteLinkTest {
         val route = resolveNewIntentRoute(uri("https://android.ruleup.co.kr/w/wtk_1"), testObservability())
 
         assertEquals(WatcherAcceptPage.PATH, route?.path)
+    }
+
+    @Test
+    fun `챌린지 초대 링크는 토큰을 그대로 실어 초대 화면으로 간다`() {
+        val route = resolveStartRoute(uri("https://android.ruleup.co.kr/c/cinv_9d2f"), testObservability())
+
+        assertEquals(ChallengeInvitePage.PATH, route?.path)
+        assertEquals("cinv_9d2f", route?.args?.get(ChallengeInvitePage.ARG_TOKEN))
+    }
+
+    @Test
+    fun `챌린지 초대와 감시자 초대는 서로 다른 화면으로 간다`() {
+        // 접두사 하나로 갈린다 — 섞이면 감시자가 방에 가입되거나 그 반대가 된다.
+        val challenge = resolveStartRoute(uri("https://android.ruleup.co.kr/c/t1"), testObservability())
+        val watcher = resolveStartRoute(uri("https://android.ruleup.co.kr/w/t1"), testObservability())
+
+        assertEquals(ChallengeInvitePage.PATH, challenge?.path)
+        assertEquals(WatcherAcceptPage.PATH, watcher?.path)
     }
 
     @Test
