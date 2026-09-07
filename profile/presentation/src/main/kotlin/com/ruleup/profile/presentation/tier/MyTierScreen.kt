@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,13 +37,14 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.MyTier
 import com.ruleup.profile.domain.entity.ScoreChange
-import com.ruleup.profile.domain.entity.ScoreChangeReason
 import com.ruleup.profile.domain.entity.TierDemotion
 import com.ruleup.profile.presentation.common.accentColor
 import com.ruleup.profile.presentation.common.dateDotLabel
+import com.ruleup.profile.presentation.common.deltaLabel
 import com.ruleup.profile.presentation.common.label
 import com.ruleup.profile.presentation.common.scoreRangeLabel
 import com.ruleup.profile.presentation.common.thousandsLabel
+import com.ruleup.profile.presentation.common.titleLabel
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierIntent
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierState
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierViewModel
@@ -299,9 +301,11 @@ private fun RecentChangesCard(
         changes.forEach { change ->
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = change.reason.label,
+                    text = change.titleLabel,
                     color = RuleUpTheme.colors.textPrimary,
                     style = RuleUpTheme.typography.small,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
@@ -319,30 +323,6 @@ private fun RecentChangesCard(
         }
     }
 }
-
-/**
- * 사유 라벨.
- *
- * 명세의 `recentChanges[]` 에는 챌린지 제목이 없고 `challengeId` 만 온다 — Figma(1134:1588)가
- * 루틴 이름을 보여 주므로 서버에 `challengeTitle` 추가를 요청해 둔 상태다. 그때까지는 사유만 쓴다.
- */
-private val ScoreChangeReason?.label: String
-    get() =
-        when (this) {
-            ScoreChangeReason.CYCLE_SUCCESS -> "사이클 성공"
-            ScoreChangeReason.CYCLE_FAIL -> "사이클 실패"
-            ScoreChangeReason.LEAVE -> "중도 탈퇴"
-            ScoreChangeReason.KICK_FAIL -> "연속 실패로 강퇴"
-            ScoreChangeReason.KICK_PERMISSION -> "권한 미허용으로 강퇴"
-            ScoreChangeReason.CHEAT -> "부정행위 검출"
-            ScoreChangeReason.APPEAL_RESTORE -> "이의 인용으로 복원"
-            // 모르는 사유는 증감폭만 남긴다 — 아무 라벨에나 접으면 그 행에 대해 거짓말이 된다.
-            null -> "점수 변동"
-        }
-
-/** +8 / −5. 음수 기호는 하이픈이 아니라 U+2212 를 써야 숫자와 같은 높이로 붙는다. */
-private val ScoreChange.deltaLabel: String
-    get() = if (delta < 0) "−${-delta}" else "+$delta"
 
 /** 카드 한 장. 티어 화면의 섹션은 전부 같은 흰 배경 + 라운드다(Figma 1134:1537). */
 @Composable

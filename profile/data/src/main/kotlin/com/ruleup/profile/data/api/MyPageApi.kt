@@ -7,6 +7,7 @@ import com.ruleup.profile.data.dto.FriendInvitationResponse
 import com.ruleup.profile.data.dto.MyChallengesSliceResponse
 import com.ruleup.profile.data.dto.MyHomeResponse
 import com.ruleup.profile.data.dto.MyTierResponse
+import com.ruleup.profile.data.dto.ScoreChangesResponse
 import com.ruleup.profile.data.dto.StatsResponse
 import com.ruleup.profile.data.dto.TierHistoryResponse
 import retrofit2.http.GET
@@ -34,6 +35,12 @@ interface MyPageApi {
     suspend fun getTierHistory(
         @Query("months") months: Int? = null,
     ): BaseResponse<TierHistoryResponse>
+
+    // 점수 변동 이력 — size 는 서버 고정 50이라 보내지 않는다. cursor 는 불투명 문자열
+    @GET("v1/me/tier/changes")
+    suspend fun getScoreChanges(
+        @Query("cursor") cursor: String? = null,
+    ): BaseResponse<ScoreChangesResponse>
 
     // 활동 캘린더 월 조회 (판정 대상일만 내려옴)
     @GET("v1/me/calendar")

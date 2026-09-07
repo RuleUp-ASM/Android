@@ -12,6 +12,7 @@ import com.ruleup.profile.domain.navigation.MyAgreementsPage
 import com.ruleup.profile.domain.navigation.MySanctionsPage
 import com.ruleup.profile.domain.navigation.MyWatchingPage
 import com.ruleup.profile.domain.repository.AccountRepository
+import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,6 +32,7 @@ class SettingsViewModel
     @Inject
     constructor(
         private val accountRepository: AccountRepository,
+        private val profileRepository: ProfileRepository,
         private val logoutUseCase: LogoutUseCase,
         private val withdrawUseCase: WithdrawUseCase,
         private val navigationHelper: NavigationHelper,
@@ -65,6 +67,7 @@ class SettingsViewModel
                 is SettingsReducerEvent.Loaded ->
                     state.copy(
                         isLoading = false,
+                        provider = event.provider,
                         reconsentCount = event.reconsentCount,
                         hasActiveSanction = event.hasActiveSanction,
                     )
@@ -80,18 +83,22 @@ class SettingsViewModel
 
         private fun load() {
             viewModelScope.launch {
-                val (agreements, sanctions) =
+                // 셋은 서로 독립이라 함께 던진다. 하나가 실패해도 나머지 행은 그대로 그린다 —
+                // 제재 조회가 막혔다고 로그아웃까지 못 하게 만들 이유가 없다.
+                val (agreements, sanctions, profile) =
                     coroutineScope {
                         val a = async { runCatching { accountRepository.getAgreements() }.getOrNull() }
                         val s = async { runCatching { accountRepository.getSanctions() }.getOrNull() }
-                        a.await() to s.await()
+                        val p = async { runCatching { profileRepository.getMyProfile() }.getOrNull() }
+                        Triple(a.await(), s.await(), p.await())
                     }
-                if (agreements == null && sanctions == null) {
+                if (agreements == null && sanctions == null && profile == null) {
                     dispatch(SettingsReducerEvent.LoadFinished)
                     return@launch
                 }
                 dispatch(
                     SettingsReducerEvent.Loaded(
+                        provider = profile?.user?.provider,
                         reconsentCount = agreements?.reconsentRequired?.size ?: 0,
                         hasActiveSanction = sanctions?.activeSanction != null,
                     ),

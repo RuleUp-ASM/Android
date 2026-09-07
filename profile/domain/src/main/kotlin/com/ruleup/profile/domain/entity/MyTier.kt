@@ -59,14 +59,37 @@ data class TierDemotion(
     val demoteAt: Int,
 )
 
-/** 최근 점수 변동 1건 (명세 `recentChanges[]` — 서버 고정 최근 10건). */
+/**
+ * 점수 변동 1건. `GET /me/tier` 의 `recentChanges[]`(최근 10건)와
+ * `GET /me/tier/changes`(전체 목록)가 **같은 구조**를 쓴다.
+ *
+ * [challengeTitle] 은 명세 2026-09-07 신규다. **null 일 수 있다** — 완료된 방은 원본이 하드
+ * 삭제되어 이력 테이블에서 읽고, 그것도 없으면 서버가 이름을 못 채운다. 화면은 그때 사유와
+ * 변동폭만 그린다.
+ */
 data class ScoreChange(
     // YYYY-MM-DD (KST)
     val date: String,
     val reason: ScoreChangeReason?,
-    // 변동을 일으킨 챌린지. 계정 단위 사유면 null
+    // 변동을 일으킨 챌린지. 계정 단위 사유(가입 10점 등)면 null
     val challengeId: String?,
+    val challengeTitle: String?,
     val delta: Int,
+)
+
+/**
+ * 점수 변동 이력 한 페이지 (명세: GET /me/tier/changes — 2026-09-07 신규).
+ *
+ * `GET /me/tier/history` 와 **다른 API 다.** 그쪽은 그래프 원천(월말 스냅샷)이라 사유·변동폭이
+ * 없다. 그래프는 기간으로 읽고 이력은 건수로 읽어 페이징 단위가 달라 합치지 않는다.
+ *
+ * 페이지 크기는 서버 고정 50이라 인자로 받지 않는다. [nextCursor] 가 null 이면 마지막이다.
+ */
+data class ScoreChangePage(
+    val items: List<ScoreChange>,
+    val nextCursor: String?,
+    // 보관 일수 — 정책 §5 로 365. 목록 끝의 "1년치만 보관해요" 문구에 쓴다
+    val retentionDays: Int?,
 )
 
 /**

@@ -3,6 +3,7 @@ package com.ruleup.profile.data.dto
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.MyTier
 import com.ruleup.profile.domain.entity.ScoreChange
+import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.ScoreChangeReason
 import com.ruleup.profile.domain.entity.TierBest
 import com.ruleup.profile.domain.entity.TierDemotion
@@ -39,6 +40,8 @@ data class ScoreChangeResponse(
     val reason: String? = null,
     @SerialName("challengeId")
     val challengeId: String? = null,
+    @SerialName("challengeTitle")
+    val challengeTitle: String? = null,
     @SerialName("delta")
     val delta: Int? = null,
 )
@@ -97,9 +100,30 @@ internal fun ScoreChangeResponse.toDomain(): ScoreChange? {
         date = date,
         reason = ScoreChangeReason.fromValue(reason),
         challengeId = challengeId,
+        // 완료 방은 원본이 하드 삭제돼 서버도 이름을 못 채운다. 화면이 사유만 그린다.
+        challengeTitle = challengeTitle?.takeIf { it.isNotBlank() },
         delta = delta ?: 0,
     )
 }
+
+// ---------- 점수 변동 이력 (GET /me/tier/changes) ----------
+@Serializable
+data class ScoreChangesResponse(
+    @SerialName("items")
+    val items: List<ScoreChangeResponse>? = null,
+    @SerialName("nextCursor")
+    val nextCursor: String? = null,
+    @SerialName("retentionDays")
+    val retentionDays: Int? = null,
+)
+
+internal fun ScoreChangesResponse.toDomain(): ScoreChangePage =
+    ScoreChangePage(
+        // 날짜 없는 행은 버린다 — 언제 일어난 변동인지 모르면 목록에 세울 자리가 없다.
+        items = items.orEmpty().mapNotNull { it.toDomain() },
+        nextCursor = nextCursor?.takeIf { it.isNotBlank() },
+        retentionDays = retentionDays,
+    )
 
 // ---------- 티어 히스토리 (GET /me/tier/history) ----------
 @Serializable

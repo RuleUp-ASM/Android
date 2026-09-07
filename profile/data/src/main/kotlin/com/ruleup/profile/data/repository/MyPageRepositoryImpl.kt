@@ -10,6 +10,7 @@ import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.MyTier
+import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.domain.entity.TierHistory
 import com.ruleup.profile.domain.repository.MyPageRepository
@@ -41,6 +42,12 @@ class MyPageRepositoryImpl
         override suspend fun getTierHistory(months: Int): TierHistory =
             api
                 .getTierHistory(months)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getScoreChanges(cursor: String?): ScoreChangePage =
+            api
+                .getScoreChanges(cursor)
                 .getOrThrow()
                 .toDomain()
 

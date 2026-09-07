@@ -22,6 +22,7 @@ internal fun myChallenge(
     end: String = "2026-07-13",
     leftType: LeftType? = null,
     leftAt: String? = null,
+    successRate: Double? = null,
 ) = MyChallenge(
     challengeId = id,
     title = title,
@@ -40,6 +41,7 @@ internal fun myChallenge(
     ownerType = OwnerType.USER,
     leftType = leftType,
     leftAt = leftAt,
+    successRate = successRate,
 )
 
 internal fun page(

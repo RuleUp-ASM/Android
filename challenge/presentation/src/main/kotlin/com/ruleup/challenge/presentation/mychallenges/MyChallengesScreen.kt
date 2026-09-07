@@ -61,8 +61,10 @@ import com.ruleup.verification.domain.entity.ProgressSnapshot
 /**
  * 내 챌린지 (Figma 1134:1205 · 1162:2 · 빈 상태 1134:2085). 하단 「챌린지」 탭의 루트 화면.
  *
- * Figma 의 완료 카드에 있는 「최종 88%」는 그리지 않는다 — `GET /challenges` 응답에 최종 성공률이
- * 없다(BE 확인 요청). 진행 중 카드의 달성률은 인증 진행률에서 오므로 그 조회가 실패하면 비운다.
+ * 완료 카드의 「최종 88%」는 목록 응답의 `successRate` 다(명세 2026-09-07 신규). **판정 이력이
+ * 없으면 서버가 null 을 주고 그 줄은 그리지 않는다** — 0% 로 접으면 하루도 판정받지 못하고 끝난
+ * 방과 전부 실패한 방이 같아 보인다. 진행 중 카드의 달성률은 인증 진행률에서 오므로 그 조회가
+ * 실패하면 비운다.
  */
 @Composable
 fun MyChallengesScreen(
@@ -371,6 +373,14 @@ private fun FinishedCard(
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                 )
+                challenge.finalSuccessLabel?.let { label ->
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = label,
+                        color = RuleUpTheme.colors.textPrimary,
+                        style = RuleUpTheme.typography.captionBold,
+                    )
+                }
             }
             FinishedBadge(challenge = challenge)
         }
@@ -473,6 +483,15 @@ private val MyChallenge.compositionLabel: String
         val who = if (mode.isGroup) "그룹 ${participantCount}명" else "솔로"
         return "$who · 주 ${weeklyCount}일"
     }
+
+/**
+ * "최종 88%" (Figma 1162:2). 표본이 없으면 **null 이라 줄 자체가 사라진다.**
+ *
+ * 반올림해 정수로 줄인다 — 0.875 를 87.5% 로 보여 줄 자리가 카드에 없고, 사용자가 이 숫자로
+ * 하는 일은 방들을 견주는 것뿐이라 소수점이 판단을 바꾸지 않는다.
+ */
+private val MyChallenge.finalSuccessLabel: String?
+    get() = successRate?.let { "최종 ${Math.round(it * 100)}%" }
 
 /** "6.2 – 7.13" / 이탈이면 "5.1 – 5.20 중단" (Figma 1162:2). */
 private val MyChallenge.finishedSubtitle: String

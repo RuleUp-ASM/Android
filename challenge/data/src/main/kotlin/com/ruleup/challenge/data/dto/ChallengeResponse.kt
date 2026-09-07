@@ -562,6 +562,8 @@ data class MyChallengeResponse(
     val leftType: String? = null,
     @SerialName("leftAt")
     val leftAt: String? = null,
+    @SerialName("successRate")
+    val successRate: Double? = null,
 )
 
 internal fun MyChallengeResponse.toDomain(): MyChallenge =
@@ -584,6 +586,8 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         ownerType = OwnerType.fromValue(ownerType),
         leftType = LeftType.fromValue(leftType),
         leftAt = leftAt,
+        // 표본이 없으면 서버가 비운다. 0 으로 접으면 「전부 실패」로 읽힌다.
+        successRate = successRate?.coerceIn(0.0, 1.0),
     )
 
 @Serializable

@@ -6,6 +6,7 @@ import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.MyTier
+import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.domain.entity.TierHistory
 
@@ -29,6 +30,14 @@ interface MyPageRepository {
      * 매번 12를 적어 넣게 하면 보관 기간이 바뀔 때 고칠 자리가 흩어진다.
      */
     suspend fun getTierHistory(months: Int = MAX_HISTORY_MONTHS): TierHistory
+
+    /**
+     * 점수 변동 이력 (명세: GET /me/tier/changes — 2026-09-07 신규).
+     *
+     * [getTierHistory] 와 원천이 다르다 — 이쪽은 변동 건 하나하나이고 그쪽은 월말 스냅샷이다.
+     * 페이지 크기는 서버 고정 50이라 인자로 받지 않는다. [cursor] 가 없으면 첫 페이지다.
+     */
+    suspend fun getScoreChanges(cursor: String? = null): ScoreChangePage
 
     /** [month] = YYYY-MM. */
     suspend fun getCalendar(month: String): ActivityCalendar

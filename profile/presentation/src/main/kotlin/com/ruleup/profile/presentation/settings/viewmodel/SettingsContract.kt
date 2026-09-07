@@ -1,5 +1,6 @@
 package com.ruleup.profile.presentation.settings.viewmodel
 
+import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -49,6 +50,8 @@ enum class SettingsDialog {
 
 data class SettingsState(
     val isLoading: Boolean,
+    // 연결된 소셜 제공자. 모르면 null 이라 「연결된 계정」 행이 제공자 이름 없이 그려진다
+    val provider: SocialProvider?,
     // 재동의가 필요한 약관이 있으면 「약관 · 개인정보」 행에 표시한다
     val reconsentCount: Int,
     // 효력 중인 제재가 있으면 「제재 이력」 행에 표시한다
@@ -60,6 +63,7 @@ data class SettingsState(
         val initial =
             SettingsState(
                 isLoading = true,
+                provider = null,
                 reconsentCount = 0,
                 hasActiveSanction = false,
                 dialog = null,
@@ -70,6 +74,7 @@ data class SettingsState(
 
 sealed interface SettingsReducerEvent : ReducerEvent {
     data class Loaded(
+        val provider: SocialProvider?,
         val reconsentCount: Int,
         val hasActiveSanction: Boolean,
     ) : SettingsReducerEvent

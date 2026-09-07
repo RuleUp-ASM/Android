@@ -34,6 +34,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsDialog
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsEffect
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsIntent
@@ -44,8 +45,9 @@ import com.ruleup.ui.helper.LocalMessageHelper
 /**
  * 설정 허브 (Figma 1134:2164).
  *
- *
- * 「연결된 계정」은 그리지 않는다 — `GET /users/me` 응답에 소셜 제공자가 없다(BE 확인 요청).
+ * 「연결된 계정」은 `GET /users/me` 의 `provider` 로 그린다(명세 2026-09-07 신규). **연결을 끊거나
+ * 갈아 끼우는 수단은 없다** — 소셜 계정이 곧 로그인 수단이라 떼면 들어올 길이 사라진다. 그래서
+ * 이 행은 누를 수 없는 표기다.
  */
 @Composable
 fun SettingsScreen(
@@ -124,6 +126,8 @@ internal fun SettingsContent(
 
             SectionLabel("계정")
             MenuCard {
+                ConnectedAccountRow(provider = state.provider)
+                MenuDivider()
                 MenuRow(
                     label = "약관 · 개인정보",
                     onClick = { onIntent(SettingsIntent.OpenAgreements) },
@@ -243,6 +247,44 @@ private fun MenuCard(content: @Composable ColumnScope.() -> Unit) {
 private fun MenuDivider() {
     HorizontalDivider(color = RuleUpTheme.colors.border)
 }
+
+/**
+ * 「연결된 계정 · 카카오」. 누를 수 없는 표기 행이다.
+ *
+ * 제공자를 모르면(구버전 서버·미지 값) **「연결됨」까지만 말한다** — 카카오로 가입한 사람에게
+ * 구글이라고 말하느니 이름을 비우는 편이 낫다.
+ */
+@Composable
+private fun ConnectedAccountRow(provider: SocialProvider?) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "연결된 계정",
+            color = RuleUpTheme.colors.textPrimary,
+            style = RuleUpTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = provider.label,
+            color = RuleUpTheme.colors.textSecondary,
+            style = RuleUpTheme.typography.small,
+        )
+    }
+}
+
+private val SocialProvider?.label: String
+    get() =
+        when (this) {
+            SocialProvider.KAKAO -> "카카오"
+            SocialProvider.GOOGLE -> "구글"
+            null -> "연결됨"
+        }
 
 @Composable
 private fun MenuRow(
