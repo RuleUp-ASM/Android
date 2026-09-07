@@ -74,6 +74,9 @@ object NetworkModule {
             OkHttpClient
                 .Builder()
                 .addInterceptor(authInterceptor)
+                // 4xx 업무 오류 본문을 Retrofit 이 읽게 한다(#417). authenticator 뒤에 오는 최종
+                // 응답만 보므로 401 재발급 경로는 건드리지 않는다.
+                .addInterceptor(ErrorBodyInterceptor())
                 .authenticator(tokenAuthenticator)
 
         if (debugLogging) {

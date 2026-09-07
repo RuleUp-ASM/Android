@@ -31,12 +31,13 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | 6 | 18 | 4 | 28 |
-| `:challenge:data` | 44 | – | – | – | – | 44 |
+| `:app` | – | – | 6 | 18 | 14 | 38 |
+| `:challenge:data` | 48 | – | – | – | – | 48 |
 | `:challenge:domain` | 28 | 4 | – | – | – | 32 |
 | `:challenge:presentation` | 37 | 69 | 56 | – | – | 162 |
 | `:core:datastore` | – | 13 | – | – | – | 13 |
 | `:core:domain` | 17 | – | – | – | – | 17 |
+| `:core:network` | 5 | – | – | – | – | 5 |
 | `:home:presentation` | 8 | 7 | 6 | – | – | 21 |
 | `:observability:data` | 20 | – | – | – | – | 20 |
 | `:observability:domain` | 11 | – | – | – | – | 11 |
@@ -51,9 +52,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:verification:data` | 55 | 15 | – | – | – | 70 |
 | `:verification:domain` | 22 | 14 | – | – | – | 36 |
 | `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
-| **합계** | **339** | **269** | **172** | **18** | **4** | **802** |
+| **합계** | **348** | **269** | **172** | **18** | **14** | **821** |
 
-테스트 파일 수: 케이스 62, 모듈 41, UI 33, 통합 5, 인수 1
+테스트 파일 수: 케이스 63, 모듈 41, UI 33, 통합 5, 인수 2
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 
@@ -71,7 +72,6 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | RepositoryImpl 9건 (Room·Watcher·Auth·DeviceIdentity·Intro·MyPage·Profile·Account·Signal) | 매핑은 덮었지만 **impl 의 조립·예외 변환**은 안 덮였다 | 위험이 큰 축(Challenge 에러 번역·Explore)부터 먼저 했다 | 이어서 진행 |
 | `ChallengeDetailViewModel` 의 나머지 전이 | 방 탭·이의·감시자·권한 경로 | 1005줄에 협력자 11종 — 가입 경로만 덮었다. 한 파일에 다 넣으면 무엇이 깨졌는지 읽기 어려워진다 | 경로별로 나눠 진행 |
 | 화면 3건 (ChallengeTargets·Splash·VerificationLocation) | 상태별 렌더 | 순수 함수(`filterApps`·`updateMessage`)는 덮었고, 나머지는 Context·런처가 얽혀 화면 분리가 선행한다 | 화면 분리 합의 |
-| `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 없다 | 테스트 의존성 선언 |
 
 ### 판단이 필요한 것 — 코드로는 못 정한다
 
@@ -93,8 +93,8 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 |---|---|---|
 | 런타임 권한 다이얼로그·지오펜스 | Robolectric 이 못 흉내낸다 | 에뮬레이터 CI 워크플로 |
 | 계측 테스트 8건이 CI 밖 | `test.yml` 이 `./gradlew test` 만 돈다 | 위와 같은 워크플로 |
-| **인수 테스트 실행 확인** | 기반은 세웠고 4건이 있으나 `DEV_TOKEN_SECRET` 이 없어 **실서버에 붙여 돌려본 적이 없다** | 시크릿을 가진 사람이 1회 실행 |
-| **2026-09-07 신규 계약 13종의 응답 형태** | 경로 존재(401)는 확인했지만 **필드 이름·nullable 은 대조하지 못했다**. 서버가 다른 이름을 쓰면 화면이 통째로 빈칸이 된다 | 위와 같은 이유 — 인증 요청을 보낼 수 없다 | `DEV_TOKEN_SECRET` 확보 후 인수 테스트에 tier·stats·agreements·sanctions·watching·invitations 추가 |
+| ~~인수 테스트 실행 확인~~ | — | **2026-09-07 해소.** 시크릿을 받아 스테이징에서 14건 전부 통과시켰다. 그 과정에서 하네스 버그 둘(봉투 미해제·`dev/tokens` 경로 이중 `/api`)과 `#417`(4xx 미변환)을 잡았다 | — |
+| `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 **생겼다**(`ErrorBodyInterceptorTest`) — 이제 막는 건 시간뿐이다 | 이어서 진행 |
 
 ## 4. 인수 시나리오 ↔ 하위 테스트
 
@@ -107,7 +107,8 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | 챌린지 생성 → 내 목록에 보임 | 하위만 | `CreateChallengeCommandTest` · `CreateChallengeViewModelTest` · `HomeChallengeMergeTest` |
 | 초대 링크로 참여 → 방 진입 | 하위만 | `ChallengeInviteViewModelTest` · `ChallengeInviteContentTest` · `InviteLinkTest`(딥링크 세 갈래) · `ChallengeDetailJoinTest` |
 | 감시자 초대 링크로 수락 → 통지 수신 대상이 됨 | 하위만 | `WatcherAcceptViewModelTest`(수락 전/후 분리) · `InviteLinkTest` · `WatchingViewModelTest`(수신 끄기) |
-| 매너 온도 폐기 후 티어가 화면 전체에서 일관 | 하위만 | `MyTierResponseMappingTest` · `MyTierContentTest`(유예 밴드) · `MyHomeResponseMappingTest` |
+| 매너 온도 폐기 후 티어가 화면 전체에서 일관 | **인수 있음** | `AccountContractAcceptanceTest` · `MyTierResponseMappingTest` · `MyTierContentTest`(유예 밴드) |
+| 약관 재동의·철회가 사유별로 갈린다 | **인수 있음** | `AccountContractAcceptanceTest`(철회 금지·버전 불일치) · `AgreementsViewModelTest` · `ErrorBodyInterceptorTest` |
 | 인증 제출 → 오늘 상태가 바뀜 | 하위만 | `RunSyncUseCaseTest` · `SubmitDeviceIntroUseCaseTest` · `TodayStatusTest` |
 
 ## 5. 돌리는 법

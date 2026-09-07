@@ -48,3 +48,46 @@ class WatchingResponseTest {
         assertEquals(false, update.pushEnabled)
     }
 }
+
+/**
+ * 감시자 목록 응답의 키 이름.
+ *
+ * 명세는 `watchers` 인데 **실서버는 `items` 로 내린다**(2026-09-07 확인). 한쪽만 읽으면 목록이
+ * 통째로 비어 화면이 "감시자가 없다"고 조용히 거짓말한다 — 지정해 둔 사람이 사라진 것처럼 보인다.
+ */
+class WatchersResponseKeyTest {
+    @Test
+    fun `서버가 items 로 내려도 목록을 읽는다`() {
+        val watchers =
+            WatchersResponse(items = listOf(WatcherResponse(watcherId = "w1", status = "ACTIVE"))).toDomain()
+
+        assertEquals(listOf("w1"), watchers.watchers.map { it.watcherId })
+    }
+
+    @Test
+    fun `명세대로 watchers 로 내려도 목록을 읽는다`() {
+        val watchers =
+            WatchersResponse(watchers = listOf(WatcherResponse(watcherId = "w1", status = "ACTIVE"))).toDomain()
+
+        assertEquals(listOf("w1"), watchers.watchers.map { it.watcherId })
+    }
+
+    @Test
+    fun `한도를 안 주면 무제한으로 본다`() {
+        // 실제 응답에 slots 가 없다. 임의의 숫자를 넣으면 없는 제한을 화면이 지어낸다.
+        val watchers = WatchersResponse(items = emptyList()).toDomain()
+
+        assertEquals(null, watchers.limit)
+    }
+
+    @Test
+    fun `구독 중이면 무료 한도가 와도 무제한으로 본다`() {
+        val watchers =
+            WatchersResponse(
+                slots = WatcherSlotsResponse(used = 5, freeLimit = 3, subscribed = true),
+                items = emptyList(),
+            ).toDomain()
+
+        assertEquals(null, watchers.limit)
+    }
+}

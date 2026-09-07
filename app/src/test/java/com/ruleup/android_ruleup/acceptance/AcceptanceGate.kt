@@ -1,6 +1,7 @@
 package com.ruleup.android_ruleup.acceptance
 
 import com.ruleup.android_ruleup.BuildConfig
+import com.ruleup.network.di.ErrorBodyInterceptor
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -85,7 +86,8 @@ object AcceptanceGate {
         val request =
             Request
                 .Builder()
-                .url(baseUrl() + "api/v1/dev/tokens")
+                // baseUrl 이 이미 `.../api/` 로 끝난다 — 여기에 `api/` 를 또 붙이면 경로가 두 겹이 된다.
+                .url(baseUrl() + "v1/dev/tokens")
                 .header("X-Dev-Secret", System.getenv(SECRET).orEmpty())
                 .post(body.toRequestBody("application/json".toMediaType()))
                 .build()
@@ -95,7 +97,10 @@ object AcceptanceGate {
                 "개발용 토큰 경로가 404 다. 시크릿이 다르거나 이 환경에 배포되지 않았다 — 서버가 둘을 구분해 주지 않는다."
             }
             check(response.isSuccessful) { "개발용 토큰 발급 실패: ${response.code} ${response.body?.string()}" }
-            return json.decodeFromString(DevToken.serializer(), response.body!!.string())
+            // 이 경로도 앱의 다른 API 와 같은 `{success, data, error}` 봉투에 담겨 온다 —
+            // 벗기지 않으면 accessToken 이 최상위에 없어 역직렬화가 터진다.
+            val envelope = json.decodeFromString(DevTokenEnvelope.serializer(), response.body!!.string())
+            return checkNotNull(envelope.data) { "개발용 토큰 응답에 data 가 없다" }
         }
     }
 
@@ -104,12 +109,21 @@ object AcceptanceGate {
             .Builder()
             .connectTimeout(20, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
+            // 앱의 NetworkModule 과 같은 인터셉터를 단다 — 여기서만 4xx 를 다르게 다루면
+            // "테스트에서만 맞는" 에러 계약을 검증하게 된다(#417).
+            .addInterceptor(ErrorBodyInterceptor())
             .apply {
                 auth?.let { attach ->
                     addInterceptor { chain -> chain.proceed(attach(chain.request().newBuilder()).build()) }
                 }
             }.build()
 }
+
+/** `{success, data, error}` 봉투. 앱의 `BaseResponse` 와 같은 형식이다. */
+@Serializable
+data class DevTokenEnvelope(
+    @SerialName("data") val data: DevToken? = null,
+)
 
 @Serializable
 data class DevToken(

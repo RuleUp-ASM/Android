@@ -119,6 +119,16 @@ data class WatcherSlotsResponse(
     val subscribed: Boolean? = null,
 )
 
+/**
+ * 감시자 목록 응답.
+ *
+ * **서버는 목록을 `items` 로 내린다** — 명세(2026-07-25)의 `watchers` 와 다르다(2026-09-07 실서버
+ * 확인). 계약이 어느 쪽으로 정리될지 몰라 둘 다 받는다. 한쪽만 읽으면 목록이 통째로 비고,
+ * 화면은 "감시자가 없다"고 조용히 거짓말한다.
+ *
+ * `slots` 도 실제 응답에 없다 — 한도를 모르면 [ChallengeWatchers.limit] 이 null 이 되어 무제한으로
+ * 표시된다. 테크 스펙(인원 무제한)과 같은 결과라 그대로 둔다.
+ */
 @Serializable
 data class WatchersResponse(
     @SerialName("challengeId")
@@ -130,13 +140,15 @@ data class WatchersResponse(
     val limit: Int? = null,
     @SerialName("watchers")
     val watchers: List<WatcherResponse>? = null,
+    @SerialName("items")
+    val items: List<WatcherResponse>? = null,
 )
 
 internal fun WatchersResponse.toDomain(): ChallengeWatchers =
     ChallengeWatchers(
         // 구독 중이면 한도가 없다 — freeLimit 이 와도 무제한으로 본다.
         limit = if (slots?.subscribed == true) null else slots?.freeLimit ?: limit,
-        watchers = watchers.orEmpty().map { it.toDomain() },
+        watchers = (watchers ?: items).orEmpty().map { it.toDomain() },
     )
 
 // 초대 링크 진입(GET /watchers/invitations/{token})과 수락은 웹 동의 페이지가 담당한다 — 앱 DTO 없음.
