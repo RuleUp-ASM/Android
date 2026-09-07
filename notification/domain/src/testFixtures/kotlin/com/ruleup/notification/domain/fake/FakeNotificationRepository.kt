@@ -20,6 +20,8 @@ class FakeNotificationRepository(
     private val unread: (() -> UnreadSummary)? = null,
     private val settings: (() -> NotificationSettings)? = null,
     private val update: ((NotificationSettingsUpdate) -> NotificationSettingsResult)? = null,
+    // 음소거 실패를 재현할 때만 준다. 기본은 성공(서버가 멱등 204 를 준다)
+    private val mute: ((String, Boolean) -> Unit)? = null,
 ) : NotificationRepository {
     val calls = mutableListOf<String>()
 
@@ -75,6 +77,7 @@ class FakeNotificationRepository(
         muted: Boolean,
     ) {
         calls += "setMuted"
+        mute?.invoke(challengeId, muted)
         mutes += challengeId to muted
     }
 }

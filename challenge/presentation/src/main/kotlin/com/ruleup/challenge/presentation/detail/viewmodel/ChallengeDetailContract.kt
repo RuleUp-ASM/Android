@@ -64,6 +64,16 @@ sealed interface ChallengeDetailIntent : MviIntent {
         val tab: RoomTab,
     ) : ChallengeDetailIntent
 
+    /**
+     * (정보 탭) 이 챌린지의 알림 음소거 전환.
+     *
+     * 알림 3계층의 ③이다 — 마스터·그룹을 켜 둔 채 이 방만 조용히 하고 싶을 때 쓴다.
+     * 알림 센터 적재는 막지 않는다(테크 스펙 2번 절대 규칙).
+     */
+    data class ToggleMute(
+        val muted: Boolean,
+    ) : ChallengeDetailIntent
+
     /** (솔로 정보 탭) 캘린더 월 이동. `+1` 이면 다음 달, `-1` 이면 이전 달. */
     data class ShiftCalendarMonth(
         val offset: Long,
@@ -249,6 +259,9 @@ data class ChallengeDetailState(
     val pendingDelegationNickname: String? = null,
     // 현재 사용자 ID. 멤버 목록에서 "내 행"을 식별해 관리자 본인 해제(self-DEMOTE)를 노출하는 데 쓴다.
     val myUserId: String? = null,
+    // 이 방의 알림 음소거 여부. null 이면 아직 모른다 — 조회 실패 시 토글을 그리지 않는다
+    val isMuted: Boolean? = null,
+    val isMuteSubmitting: Boolean = false,
     // 솔로 캘린더가 보고 있는 달 YYYY-MM. 화면 진입 시 이번 달로 채워진다.
     val calendarMonth: String? = null,
     // 그 달의 판정 기록. 조회 실패·미참여면 null 이라 캘린더가 날짜만 그린다
@@ -361,6 +374,14 @@ data class JoinBlock(
 sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     data class Loading(
         val challengeId: String,
+    ) : ChallengeDetailReducerEvent
+
+    data class MuteLoaded(
+        val muted: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class MuteSubmitting(
+        val submitting: Boolean,
     ) : ChallengeDetailReducerEvent
 
     /** 월 이동. 목록은 비우고 새 달을 읽는다 — 이전 달 색이 남으면 잘못된 기록으로 읽힌다. */

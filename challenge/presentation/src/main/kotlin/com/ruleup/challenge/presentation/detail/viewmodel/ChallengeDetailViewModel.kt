@@ -31,6 +31,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.notification.domain.repository.NotificationRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
@@ -77,6 +78,7 @@ class ChallengeDetailViewModel
         private val observability: Observability,
         private val targetAppStore: TargetAppStore,
         private val reportRepository: ReportRepository,
+        private val notificationRepository: NotificationRepository,
         private val navigationHelper: NavigationHelper,
         private val ttiTracker: TtiTracker,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
@@ -108,6 +110,8 @@ class ChallengeDetailViewModel
                 is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
 
                 is ChallengeDetailIntent.ShiftCalendarMonth -> shiftCalendarMonth(intent.offset)
+
+                is ChallengeDetailIntent.ToggleMute -> toggleMute(intent.muted)
                 ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
                 ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
                 is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
@@ -209,6 +213,11 @@ class ChallengeDetailViewModel
                         isThreadsPaging = false,
                         threadsError = event.message,
                     )
+
+                is ChallengeDetailReducerEvent.MuteLoaded ->
+                    state.copy(isMuted = event.muted, isMuteSubmitting = false)
+
+                is ChallengeDetailReducerEvent.MuteSubmitting -> state.copy(isMuteSubmitting = event.submitting)
 
                 is ChallengeDetailReducerEvent.CalendarMonthChanged ->
                     // 이전 달 색이 남으면 잘못된 기록으로 읽힌다 — 목록을 비우고 다시 받는다.
@@ -485,6 +494,40 @@ class ChallengeDetailViewModel
             loadRanking(challengeId)
             loadTodayResult(challengeId)
             loadCalendar(challengeId)
+            loadMuteState(challengeId)
+        }
+
+        /**
+         * 이 방이 음소거인지. **실패를 흡수한다** — 알림 설정을 못 읽으면 토글을 아예 그리지 않는다.
+         * 모르는 상태를 「켜짐」으로 그리면 사용자가 껐다고 믿은 방에서 푸시가 계속 온다.
+         */
+        private fun loadMuteState(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { notificationRepository.getSettings() }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(it.isMuted(challengeId)))
+                    }
+            }
+        }
+
+        /**
+         * 음소거 전환. 서버가 멱등(204)이라 재시도해도 안전하다.
+         *
+         * **낙관적으로 먼저 바꾸지 않는다** — 실패하면 껐다고 믿은 방에서 푸시가 계속 오는데,
+         * 화면만 꺼진 것처럼 보이면 사용자가 원인을 찾을 길이 없다.
+         */
+        private fun toggleMute(muted: Boolean) {
+            val challengeId = currentState.detail?.challengeId ?: return
+            if (currentState.isMuteSubmitting) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
+                runCatching { notificationRepository.setMuted(challengeId, muted) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted)) }
+                    .onFailure {
+                        dispatch(ChallengeDetailReducerEvent.MuteSubmitting(false))
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "알림 설정을 바꾸지 못했어요"))
+                    }
+            }
         }
 
         /**

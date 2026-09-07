@@ -63,6 +63,7 @@ import com.ruleup.challenge.presentation.detail.component.RoomInfoHeader
 import com.ruleup.challenge.presentation.detail.component.RoomInfoTab
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
+import com.ruleup.challenge.presentation.detail.component.RoomMuteSection
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
 import com.ruleup.challenge.presentation.detail.component.RoomTabRow
 import com.ruleup.challenge.presentation.detail.component.SoloMonthCalendar
@@ -536,6 +537,15 @@ private fun RoomDetailTabs(
                             .takeIf { state.setup?.manual == true && state.todayResult?.verificationId != null },
                     isManualChecking = state.isManualChecking,
                     extraSections = {
+                        // 상태를 모르면 그리지 않는다 — 「켜짐」으로 보이면 껐다고 믿은 방에서
+                        // 푸시가 계속 온다.
+                        state.isMuted?.let { muted ->
+                            RoomMuteSection(
+                                muted = muted,
+                                enabled = !state.isMuteSubmitting,
+                                onToggle = { onIntent(ChallengeDetailIntent.ToggleMute(it)) },
+                            )
+                        }
                         // 솔로 방에만 월 캘린더를 편다 — 그룹은 같은 자리를 랭킹·피드가 쓴다.
                         if (!detail.mode.isGroup) {
                             SoloMonthCalendar(

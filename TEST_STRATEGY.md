@@ -34,7 +34,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:app` | – | – | 15 | 14 | 16 | 45 |
 | `:challenge:data` | 48 | – | – | – | – | 48 |
 | `:challenge:domain` | 33 | 4 | – | – | – | 37 |
-| `:challenge:presentation` | 37 | 69 | 64 | – | – | 170 |
+| `:challenge:presentation` | 37 | 75 | 64 | – | – | 176 |
 | `:core:datastore` | – | 13 | – | – | – | 13 |
 | `:core:domain` | 19 | – | – | – | – | 19 |
 | `:core:network` | 5 | – | – | – | – | 5 |
@@ -55,9 +55,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:verification:data` | 55 | 15 | – | – | – | 70 |
 | `:verification:domain` | 22 | 14 | – | – | – | 36 |
 | `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
-| **합계** | **377** | **291** | **202** | **14** | **16** | **906** |
+| **합계** | **377** | **297** | **202** | **14** | **16** | **912** |
 
-테스트 파일 수: 케이스 67, 모듈 43, UI 36, 통합 5, 인수 2
+테스트 파일 수: 케이스 67, 모듈 44, UI 36, 통합 5, 인수 2
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 

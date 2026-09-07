@@ -3,6 +3,7 @@ package com.ruleup.challenge.presentation.detail.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -351,4 +354,51 @@ private fun Dot(color: Color) {
                 .clip(CircleShape)
                 .background(color),
     )
+}
+
+/**
+ * 이 방의 알림 음소거 (알림 3계층의 ③).
+ *
+ * 마스터·그룹을 켜 둔 채 **이 방만** 조용히 하고 싶을 때 쓴다. 끈다고 기록이 사라지지 않는다 —
+ * 알림 센터 적재는 어떤 설정으로도 막히지 않는 것이 절대 규칙이고, 그 사실을 말해 두지 않으면
+ * 사용자는 끄면 고지까지 놓친다고 여겨 켜 둔 채 앱 전체 알림을 차단한다.
+ *
+ * 상태를 모르면(설정 조회 실패) 이 줄을 그리지 않는다 — 모르는 값을 「켜짐」으로 그리면 껐다고
+ * 믿은 방에서 푸시가 계속 온다.
+ */
+@Composable
+internal fun RoomMuteSection(
+    muted: Boolean,
+    enabled: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(RuleUpTheme.colors.surface)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "이 챌린지 알림 끄기",
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.bodyMedium,
+            )
+            Text(
+                text = "푸시만 멈춰요 · 알림함에는 그대로 쌓여요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
+        }
+        Switch(
+            checked = muted,
+            onCheckedChange = onToggle,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(checkedTrackColor = RuleUpTheme.colors.brand),
+        )
+    }
 }

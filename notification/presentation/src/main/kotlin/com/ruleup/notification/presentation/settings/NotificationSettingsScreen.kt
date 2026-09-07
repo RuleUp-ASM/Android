@@ -208,7 +208,7 @@ private fun SettingsBody(
             SectionLabel("음소거 중인 챌린지")
             SettingsCard {
                 Text(
-                    text = "${settings.mutedChallengeIds.size}개 챌린지의 알림을 끄고 있어요. 해제는 챌린지 방에서 할 수 있어요.",
+                    text = "${settings.mutedChallengeIds.size}개 챌린지의 알림을 끄고 있어요. 켜고 끄기는 각 챌린지 방에서 해요 — 여기서는 방 이름을 알 수 없어요.",
                     color = RuleUpTheme.colors.textSecondary,
                     style = RuleUpTheme.typography.small,
                     modifier = Modifier.padding(16.dp),

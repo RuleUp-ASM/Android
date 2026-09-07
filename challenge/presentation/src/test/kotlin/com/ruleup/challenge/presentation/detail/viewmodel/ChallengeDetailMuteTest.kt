@@ -7,10 +7,7 @@ import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
-import com.ruleup.challenge.domain.entity.JoinBlockReason
-import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.JoinNote
-import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.VerificationConfig
@@ -25,6 +22,8 @@ import com.ruleup.challenge.presentation.fake.FakeTargetAppStore
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.notification.domain.entity.NotificationGroupSettings
+import com.ruleup.notification.domain.entity.NotificationSettings
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.test.FakeClock
@@ -43,19 +42,18 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * 챌린지 가입. **거절 사유가 곧 다음 화면을 정한다** — 이미 참여 중이면 알릴 게 없어 조용히
- * 방으로 전환하고, 정원·재입장 대기 같은 사유는 시트로 알린다. 뭉개면 이미 들어와 있는
- * 사용자에게 "참여할 수 없다"는 시트가 뜬다.
+ * 방별 알림 음소거 — 알림 3계층의 ③.
  *
- * 이 파일은 가입 경로만 본다 — 상세 화면(1000줄)의 나머지 전이는 대상이 넓어 별도 단위다.
+ * 이 토글이 지키는 건 **틀린 상태를 그리지 않는 것**이다. 껐다고 믿은 방에서 푸시가 계속 오면
+ * 사용자는 원인을 찾을 길이 없고, 결국 앱 전체 알림을 차단해 강퇴·잠금 고지까지 잃는다.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ChallengeDetailJoinTest {
+class ChallengeDetailMuteTest {
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -63,98 +61,87 @@ class ChallengeDetailJoinTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun `상세를 못 받았으면 가입을 시도하지 않는다`() =
+    fun `상세를 열면 이 방이 음소거인지 함께 읽는다`() =
         runTest {
-            // 어느 방에 들어갈지 모르는 상태다 — 보내면 서버가 튕긴다.
-            val repo = FakeChallengeRepository()
-            val viewModel = viewModel(repo)
+            val viewModel = viewModel(notifications = repo(settings(muted = listOf("ch1"))))
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
-            assertTrue(repo.calls.none { it == "join" })
+            assertEquals(true, viewModel.uiState.value.isMuted)
         }
 
     @Test
-    fun `정원이 찼으면 그 사유로 차단 시트를 띄운다`() =
+    fun `음소거가 아니면 꺼진 상태로 그린다`() =
         runTest {
-            val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.FULL) }))
+            val viewModel = viewModel(notifications = repo(settings(muted = emptyList())))
+
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
-
-            assertEquals(
-                JoinBlockReason.FULL,
-                viewModel.uiState.value.joinBlock
-                    ?.reason,
-            )
+            assertEquals(false, viewModel.uiState.value.isMuted)
         }
 
     @Test
-    fun `재입장 대기는 언제부터 가능한지 함께 싣는다`() =
+    fun `설정을 못 읽으면 토글을 그리지 않는다`() =
         runTest {
-            val viewModel =
-                viewModel(
-                    repo(
-                        join = {
-                            throw JoinBlockedException(
-                                reason = JoinBlockReason.REJOIN_COOLDOWN,
-                                rejoinAvailableAt = "2026-09-08T00:00:00Z",
-                            )
-                        },
-                    ),
-                )
+            // 모르는 상태를 「켜짐」으로 그리면 껐다고 믿은 방에서 푸시가 계속 온다.
+            val viewModel = viewModel(notifications = FakeNotificationRepository())
+
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
-
-            assertEquals(
-                "2026-09-08T00:00:00Z",
-                viewModel.uiState.value.joinBlock
-                    ?.rejoinAvailableAt,
-            )
+            assertNull(viewModel.uiState.value.isMuted)
         }
 
     @Test
-    fun `이미 참여 중이면 차단 시트를 띄우지 않는다`() =
+    fun `토글을 켜면 서버에 음소거를 등록한다`() =
         runTest {
-            // 알릴 게 없다 — 시트를 띄우면 들어와 있는 사용자가 "참여할 수 없다"를 본다.
-            val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.ALREADY_JOINED) }))
+            val notifications = repo(settings(muted = emptyList()))
+            val viewModel = viewModel(notifications = notifications)
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
 
-            assertNull(viewModel.uiState.value.joinBlock)
+            assertEquals(listOf("ch1" to true), notifications.mutes)
+            assertEquals(true, viewModel.uiState.value.isMuted)
         }
 
     @Test
-    fun `차단 시트를 닫으면 상태에서 지운다`() =
+    fun `서버가 거절하면 화면 상태를 바꾸지 않는다`() =
         runTest {
-            val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.FULL) }))
+            // 화면만 꺼진 것처럼 보이면 사용자가 원인을 찾을 길이 없다.
+            val notifications =
+                repo(settings(muted = emptyList()), mute = { _, _ -> throw IllegalStateException("서버 오류") })
+            val viewModel = viewModel(notifications = notifications)
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
-            assertNotNull(viewModel.uiState.value.joinBlock)
 
-            viewModel.onIntent(ChallengeDetailIntent.DismissJoinBlock)
+            viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
 
-            assertNull(viewModel.uiState.value.joinBlock)
+            assertEquals(false, viewModel.uiState.value.isMuted)
+            assertFalse(viewModel.uiState.value.isMuteSubmitting)
         }
 
     @Test
-    fun `가입에 성공하면 상세를 다시 받는다`() =
+    fun `상세를 아직 못 받았으면 토글해도 보내지 않는다`() =
         runTest {
-            // 정원·자격은 수시로 변한다 — 캐시를 그대로 두면 방금 들어간 방이 여전히 "참여하기"로 보인다.
-            val repo =
-                repo(join = { JoinResult(countFromCycle = null, requiredPermissions = emptyList(), personalSetupRequired = false) })
-            val viewModel = viewModel(repo)
-            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
-            val before = repo.calls.count { it == "getChallenge" }
+            // 어느 방을 끌지 모르는 상태다 — 보내면 엉뚱한 방이 조용해진다.
+            val notifications = repo(settings(muted = emptyList()))
+            val viewModel = viewModel(notifications = notifications)
 
-            viewModel.onIntent(ChallengeDetailIntent.Proceed)
+            viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
 
-            assertTrue(repo.calls.count { it == "getChallenge" } > before)
+            assertTrue(notifications.mutes.isEmpty())
         }
 
-    private fun repo(join: (String) -> JoinResult) = FakeChallengeRepository(detail = { detail() }, join = join)
+    private fun repo(
+        settings: NotificationSettings,
+        mute: ((String, Boolean) -> Unit)? = null,
+    ) = FakeNotificationRepository(settings = { settings }, mute = mute)
+
+    private fun settings(muted: List<String>) =
+        NotificationSettings(
+            pushEnabled = true,
+            groups = NotificationGroupSettings(account = true, challenge = true, marketing = true),
+            mutedChallengeIds = muted,
+        )
 
     private fun detail() =
         ChallengeDetail(
@@ -201,7 +188,8 @@ class ChallengeDetailJoinTest {
         )
 
     private fun viewModel(
-        repo: FakeChallengeRepository = FakeChallengeRepository(),
+        notifications: FakeNotificationRepository = FakeNotificationRepository(),
+        repo: FakeChallengeRepository = FakeChallengeRepository(detail = { detail() }),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         reports: FakeReportRepository = FakeReportRepository(),
     ): ChallengeDetailViewModel {
@@ -217,8 +205,7 @@ class ChallengeDetailJoinTest {
             observability = observability,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
-            // 음소거 상태는 부가 정보다 — 준비하지 않으면 조회가 실패하고 토글이 그려지지 않는다.
-            notificationRepository = FakeNotificationRepository(),
+            notificationRepository = notifications,
             navigationHelper = nav,
             ttiTracker = TtiTracker(FakeClock(), observability),
         )
