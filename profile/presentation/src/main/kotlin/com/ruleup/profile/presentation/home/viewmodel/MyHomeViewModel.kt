@@ -8,7 +8,7 @@ import com.ruleup.profile.domain.navigation.FriendInvitePage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyStatsPage
-import com.ruleup.profile.domain.navigation.MyTemperaturePage
+import com.ruleup.profile.domain.navigation.MyTierPage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
 import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.report.domain.navigation.BlockListPage
@@ -18,7 +18,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 마이 홈 ViewModel. GET /me/home 일괄 조회로 온도·카운트·프로필을 렌더링하고 메뉴 진입점을 제공한다.
+ * 마이 홈 ViewModel. GET /me/home 으로 티어·카운트·프로필을, GET /me/stats 로 전체 성공률을 받아
+ * 합쳐 그린다(Figma 1134:1353 의 카운트 행이 두 응답에 걸쳐 있다).
  * 그룹 랭킹은 challengeId 단위(방 내부 스펙 재사용)라, 참여 중 그룹 챌린지를 골라 진입시킨다.
  */
 @HiltViewModel
@@ -35,7 +36,7 @@ class MyHomeViewModel
                 MyHomeIntent.Load -> load(force = false)
                 MyHomeIntent.Refresh -> load(force = true)
                 MyHomeIntent.OpenProfileEdit -> navigationHelper.navigateByRoute(ProfileEditPage.toRoute())
-                MyHomeIntent.OpenTemperature -> navigationHelper.navigateByRoute(MyTemperaturePage.toRoute())
+                MyHomeIntent.OpenTier -> navigationHelper.navigateByRoute(MyTierPage.toRoute())
                 MyHomeIntent.OpenCalendar -> navigationHelper.navigateByRoute(MyCalendarPage.toRoute())
                 MyHomeIntent.OpenAppeals -> navigationHelper.navigateByRoute(MyAppealsPage.toRoute())
                 MyHomeIntent.OpenRanking -> openRanking()
@@ -48,6 +49,10 @@ class MyHomeViewModel
                 MyHomeIntent.OpenStats -> navigationHelper.navigateByRoute(MyStatsPage.toRoute())
                 MyHomeIntent.OpenInvite -> navigationHelper.navigateByRoute(FriendInvitePage.toRoute())
                 MyHomeIntent.OpenBlocks -> navigationHelper.navigateTo(BlockListPage)
+                MyHomeIntent.OpenWatchers -> emitEffect(MyHomeEffect.ShowMessage("감시자 관리는 준비 중이에요"))
+                MyHomeIntent.OpenNotificationSettings ->
+                    emitEffect(MyHomeEffect.ShowMessage("알림 설정은 준비 중이에요"))
+
                 MyHomeIntent.OpenSettings -> emitEffect(MyHomeEffect.ShowMessage("설정은 준비 중이에요"))
                 MyHomeIntent.OpenHomeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 MyHomeIntent.OpenChallengeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
@@ -63,6 +68,8 @@ class MyHomeViewModel
 
                 is MyHomeReducerEvent.Loaded ->
                     state.copy(isLoading = false, home = event.home, errorMessage = null)
+
+                is MyHomeReducerEvent.StatsLoaded -> state.copy(stats = event.stats)
 
                 is MyHomeReducerEvent.Failed ->
                     state.copy(isLoading = false, errorMessage = event.message)
@@ -86,6 +93,11 @@ class MyHomeViewModel
                             dispatch(MyHomeReducerEvent.Failed(it.message ?: "마이 정보를 불러오지 못했어요"))
                         }
                     }
+            }
+            // 성공률만 쓰는 부수 조회라 실패를 삼킨다 — 이것 때문에 마이 홈이 오류 화면이 되면 안 된다.
+            viewModelScope.launch {
+                runCatching { myPageRepository.getStats() }
+                    .onSuccess { dispatch(MyHomeReducerEvent.StatsLoaded(it)) }
             }
         }
 

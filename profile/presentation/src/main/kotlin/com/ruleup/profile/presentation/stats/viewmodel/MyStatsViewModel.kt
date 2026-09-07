@@ -2,7 +2,6 @@ package com.ruleup.profile.presentation.stats.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.profile.domain.entity.StatsPeriod
 import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -10,7 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 통계 리포트 ViewModel. 집계는 서버 온디맨드 — 기간 탭 전환마다 조회한다. */
+/** 통계 리포트 ViewModel. 지표 5종이 고정이라 조회는 진입 시 한 번이다. */
 @HiltViewModel
 class MyStatsViewModel
     @Inject
@@ -22,8 +21,7 @@ class MyStatsViewModel
         ) {
         override fun onIntent(intent: MyStatsIntent) {
             when (intent) {
-                MyStatsIntent.Load -> if (currentState.report == null) load(currentState.period)
-                is MyStatsIntent.SelectPeriod -> if (intent.period != currentState.period) load(intent.period)
+                MyStatsIntent.Load -> load()
                 MyStatsIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -33,26 +31,21 @@ class MyStatsViewModel
             event: MyStatsReducerEvent,
         ): MyStatsState =
             when (event) {
-                is MyStatsReducerEvent.Loading ->
-                    state.copy(isLoading = true, period = event.period, errorMessage = null)
+                MyStatsReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
 
                 is MyStatsReducerEvent.Loaded ->
-                    if (state.period == event.period) {
-                        state.copy(isLoading = false, report = event.report, errorMessage = null)
-                    } else {
-                        // 탭 연타로 기간이 이미 바뀌었으면 늦은 응답은 버린다.
-                        state
-                    }
+                    state.copy(isLoading = false, report = event.report, errorMessage = null)
 
                 is MyStatsReducerEvent.Failed ->
                     state.copy(isLoading = false, errorMessage = event.message)
             }
 
-        private fun load(period: StatsPeriod) {
-            dispatch(MyStatsReducerEvent.Loading(period))
+        private fun load() {
+            if (currentState.report != null) return
+            dispatch(MyStatsReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { myPageRepository.getStats(period) }
-                    .onSuccess { dispatch(MyStatsReducerEvent.Loaded(period, it)) }
+                runCatching { myPageRepository.getStats() }
+                    .onSuccess { dispatch(MyStatsReducerEvent.Loaded(it)) }
                     .onFailure { dispatch(MyStatsReducerEvent.Failed(it.message ?: "통계를 불러오지 못했어요")) }
             }
         }

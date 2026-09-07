@@ -2,9 +2,10 @@ package com.ruleup.profile.presentation.stats
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import com.ruleup.profile.domain.entity.StatsPeriod
+import com.ruleup.profile.domain.entity.CycleResult
+import com.ruleup.profile.domain.entity.CycleWeek
 import com.ruleup.profile.domain.entity.StatsReport
-import com.ruleup.profile.presentation.clickPastGuard
+import com.ruleup.profile.domain.entity.StatsStreak
 import com.ruleup.profile.presentation.renderScreen
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsState
@@ -12,23 +13,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import kotlin.test.assertTrue
 
 /**
- * 통계 리포트. 기간 탭이 이 화면의 본체라 **어느 기간을 보고 있는지**가 분명해야 하고,
- * 탭을 누르면 그 기간이 의도로 올라가야 한다 — 안 올라가면 화면이 이전 기간 숫자를 계속 보여 준다.
+ * 통계 리포트. 지표가 **표본 없음**일 때가 이 화면의 함정이다 — 0% 로 그리면 아무것도 안 한 사람과
+ * 전부 실패한 사람이 같은 화면을 본다.
  */
 @RunWith(RobolectricTestRunner::class)
 class MyStatsContentTest {
     @get:Rule
     val compose = createComposeRule()
-
-    @Test
-    fun `기간 탭 세 종을 모두 보여 준다`() {
-        render(MyStatsState.initial)
-
-        StatsPeriod.entries.forEach { compose.onNodeWithText(it.label).assertExists() }
-    }
 
     @Test
     fun `불러오는 중에는 실패 문구를 띄우지 않는다`() {
@@ -39,46 +32,52 @@ class MyStatsContentTest {
 
     @Test
     fun `조회에 실패하면 사유를 보여 준다`() {
-        render(MyStatsState.initial.copy(isLoading = false, errorMessage = "집계에 실패했어요"))
+        render(MyStatsState.initial.copy(isLoading = false, errorMessage = "네트워크가 끊겼어요"))
 
-        compose.onNodeWithText("집계에 실패했어요").assertExists()
+        compose.onNodeWithText("네트워크가 끊겼어요").assertExists()
     }
 
     @Test
-    fun `사유를 모르는 실패도 빈 화면으로 두지 않는다`() {
-        render(MyStatsState.initial.copy(isLoading = false, errorMessage = null))
+    fun `판정된 인증이 없으면 0퍼센트 대신 그 사실을 말한다`() {
+        render(MyStatsState.initial.copy(isLoading = false, report = report(successRate = null)))
 
-        compose.onNodeWithText("통계를 불러오지 못했어요").assertExists()
+        compose.onNodeWithText("아직 판정된 인증이 없어요").assertExists()
     }
 
     @Test
-    fun `기간 탭을 누르면 그 기간이 의도로 올라간다`() {
-        // 안 올라가면 화면이 이전 기간 숫자를 계속 보여 준다.
-        val intents = mutableListOf<MyStatsIntent>()
-        render(MyStatsState.initial) { intents += it }
+    fun `성공률은 퍼센트로 보여 준다`() {
+        render(MyStatsState.initial.copy(isLoading = false, report = report(successRate = 0.87)))
 
-        compose.onNodeWithText(StatsPeriod.WEEKLY.label).clickPastGuard()
-
-        assertTrue(intents.contains(MyStatsIntent.SelectPeriod(StatsPeriod.WEEKLY)))
+        compose.onNodeWithText("87").assertExists()
     }
 
     @Test
-    fun `리포트를 받으면 실패 문구를 띄우지 않는다`() {
+    fun `지나간 주가 없으면 빈 그리드 대신 그 사실을 말한다`() {
+        render(MyStatsState.initial.copy(isLoading = false, report = report(cycles = emptyList())))
+
+        compose.onNodeWithText("아직 지나간 주가 없어요").assertExists()
+    }
+
+    @Test
+    fun `연속 성공과 최고 연속을 함께 보여 준다`() {
+        // 지금 끊겼다는 사실만 보이면 사용자는 자기 최고 기록을 잃은 줄 안다.
         render(MyStatsState.initial.copy(isLoading = false, report = report()))
 
-        compose.onNodeWithText("통계를 불러오지 못했어요").assertDoesNotExist()
+        compose.onNodeWithText("연속 성공").assertExists()
+        compose.onNodeWithText("최고 연속").assertExists()
     }
 
-    private fun report() =
-        StatsReport(
-            period = StatsPeriod.MONTHLY,
-            totalCompleted = 3,
-            avgCompletionRate = 72,
-            mannerDelta = 1.2,
-            avgStreak = 4.0,
-            series = emptyList(),
-            insight = null,
-        )
+    private fun report(
+        successRate: Double? = 0.87,
+        cycles: List<CycleWeek> = listOf(CycleWeek(week = "2026-W27", result = CycleResult.SUCCESS)),
+    ) = StatsReport(
+        successRate = successRate,
+        totalSuccessCount = 142,
+        streak = StatsStreak(current = 6, best = 21),
+        cycles12w = cycles,
+        completedCount = 24,
+        weeklyScoreDelta = 5,
+    )
 
     private fun render(
         state: MyStatsState,

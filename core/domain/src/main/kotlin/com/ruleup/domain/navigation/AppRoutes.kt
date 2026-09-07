@@ -38,8 +38,8 @@ object AppRoutes {
 
     // profile (마이)
     const val MY_HOME = "my/home" // 진입점 (하단 MY 탭 → 마이 홈)
-    const val MY_TEMPERATURE = "my/temperature" // 매너 온도 상세
-    const val MY_REPUTATION_HISTORY = "my/reputation/history" // 평판 히스토리
+    const val MY_TIER = "my/tier" // 내 티어 상세 (점수·구간·최근 변동)
+    const val MY_TIER_HISTORY = "my/tier/history" // 티어 히스토리 (월말 스냅샷·역대 최고)
     const val MY_CALENDAR = "my/calendar" // 활동 캘린더
     const val MY_APPEALS = "my/appeals" // 이의 내역 (내가 낸 이의)
     const val MY_STATS = "my/stats" // 통계 리포트

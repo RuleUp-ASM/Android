@@ -42,17 +42,17 @@ import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyHomePage
 import com.ruleup.profile.domain.navigation.MyStatsPage
-import com.ruleup.profile.domain.navigation.MyTemperaturePage
+import com.ruleup.profile.domain.navigation.MyTierHistoryPage
+import com.ruleup.profile.domain.navigation.MyTierPage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
-import com.ruleup.profile.domain.navigation.ReputationHistoryPage
 import com.ruleup.profile.presentation.appeals.MyAppealsScreen
 import com.ruleup.profile.presentation.calendar.MyCalendarScreen
 import com.ruleup.profile.presentation.edit.ProfileEditScreen
-import com.ruleup.profile.presentation.history.ReputationHistoryScreen
 import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.profile.presentation.invite.FriendInviteScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
-import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
+import com.ruleup.profile.presentation.tier.MyTierHistoryScreen
+import com.ruleup.profile.presentation.tier.MyTierScreen
 import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.report.presentation.blocklist.BlockListScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
@@ -110,12 +110,12 @@ val appRoutes: List<AppRoute> =
             render = { MyHomeScreen() },
         ),
         AppRoute(
-            path = MyTemperaturePage.PATH,
-            render = { MyTemperatureScreen() },
+            path = MyTierPage.PATH,
+            render = { MyTierScreen() },
         ),
         AppRoute(
-            path = ReputationHistoryPage.PATH,
-            render = { ReputationHistoryScreen() },
+            path = MyTierHistoryPage.PATH,
+            render = { MyTierHistoryScreen() },
         ),
         AppRoute(
             path = MyAppealsPage.PATH,

@@ -4,18 +4,18 @@ import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
 
-/** 매너 온도 상세 페이지 (마이 홈 메뉴 → 현재 온도·다음 구간 진행·최근 변동). */
-data object MyTemperaturePage : Page {
+/** 내 티어 페이지 (마이 홈 티어 카드 → 점수·구간표·최근 변동 10건). */
+data object MyTierPage : Page {
     override fun toRoute(): NavRoute = NavRoute(PATH)
 
-    const val PATH = AppRoutes.MY_TEMPERATURE
+    const val PATH = AppRoutes.MY_TIER
 }
 
-/** 평판 히스토리 페이지 (온도 상세 → 역대 최고·마일스톤 피드). */
-data object ReputationHistoryPage : Page {
+/** 티어 히스토리 페이지 (내 티어 → 월말 스냅샷·역대 최고). */
+data object MyTierHistoryPage : Page {
     override fun toRoute(): NavRoute = NavRoute(PATH)
 
-    const val PATH = AppRoutes.MY_REPUTATION_HISTORY
+    const val PATH = AppRoutes.MY_TIER_HISTORY
 }
 
 /** 활동 캘린더 페이지 (마이 홈 메뉴 → 월 단위 일자별 상태). */

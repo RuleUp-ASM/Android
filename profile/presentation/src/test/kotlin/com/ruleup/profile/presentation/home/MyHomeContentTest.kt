@@ -2,7 +2,9 @@ package com.ruleup.profile.presentation.home
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NicknameStatus
+import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.MyHomeCounts
@@ -29,8 +31,8 @@ class MyHomeContentTest {
     fun `프로필을 받으면 닉네임과 집계를 보여 준다`() {
         render(MyHomeState.initial.copy(isLoading = false, home = home(nickname = "지현")))
 
-        compose.onNodeWithText("지현의 도전").assertExists()
-        compose.onNodeWithText("완주").assertExists()
+        compose.onNodeWithText("지현").assertExists()
+        compose.onNodeWithText("완료").assertExists()
         compose.onNodeWithText("진행 중").assertExists()
     }
 
@@ -96,8 +98,12 @@ class MyHomeContentTest {
         nickname = nickname,
         nicknameStatus = nicknameStatus,
         profileImageUrl = null,
-        mannerTemperature = 36.5,
-        counts = MyHomeCounts(completed = 2, inProgress = 1, groups = 1),
+        tier = Tier.GOLD,
+        score = 370,
+        displayTier = Tier.GOLD,
+        counts = MyHomeCounts(inProgress = 1, completed = 2, left = 0),
+        accountStatus = AccountStatus.ACTIVE,
+        lockInfo = null,
     )
 
     private fun group(id: String) = GroupChallengeSummary(challengeId = id, title = "아침 러닝")
