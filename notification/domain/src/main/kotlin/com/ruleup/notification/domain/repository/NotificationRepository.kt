@@ -19,8 +19,14 @@ interface NotificationRepository {
      *
      * **페이지 크기는 서버 고정 50**이라 인자로 받지 않는다. [cursor] 가 없으면 첫 페이지다.
      * 잘못된 커서는 서버가 400 `CURSOR_INVALID` 로 막으므로 클라가 보정하지 않는다.
+     *
+     * [tab] 은 알림과 운영자 공지를 가른다. **읽음 지점이 탭별로 따로 보관**되므로 응답의
+     * 기준선도 요청한 탭의 것이고, 두 탭의 미읽음을 섞어 세면 안 된다.
      */
-    suspend fun getNotifications(cursor: String? = null): NotificationPage
+    suspend fun getNotifications(
+        tab: NotificationTab = NotificationTab.NOTIFICATION,
+        cursor: String? = null,
+    ): NotificationPage
 
     /**
      * 읽음 지점 갱신(명세: PUT /notifications/read).

@@ -19,6 +19,10 @@ import javax.inject.Inject
  *   사이에 적재된 알림이 화면에 뜬 적 없이 읽음 처리되어 레드닷이 영영 안 뜬다.
  *
  * 개별 읽음 API 는 없다 — 항목을 눌러도 읽음 상태는 바뀌지 않는다.
+ *
+ * 운영자 공지는 별도 API 가 아니라 **같은 목록의 `tab=ANNOUNCEMENT`** 다(2026-09-07 확정,
+ * 구 `GET /announcements` 폐기). 읽음 지점이 탭별로 따로 보관되므로 읽음 처리도 탭마다 한 번씩
+ * 보낸다 — [readTabs] 가 그 "한 번"을 지킨다.
  */
 @HiltViewModel
 class NotificationCenterViewModel
@@ -29,9 +33,23 @@ class NotificationCenterViewModel
     ) : MviViewModel<NotificationCenterIntent, NotificationCenterState, NotificationCenterReducerEvent, NotificationCenterEffect>(
             NotificationCenterState.initial,
         ) {
+        /**
+         * 이번 세션에서 읽음 처리를 이미 보낸 탭.
+         *
+         * 상태가 아니라 여기 두는 이유 — 화면이 그릴 값이 아니고, 상태에 넣으면 탭을 오갈 때마다
+         * 다시 읽음 요청이 나간다. 서버는 과거 id 를 무시하지만 보내지 않는 편이 옳다.
+         */
+        private val readTabs = mutableSetOf<NotificationTab>()
+
         override fun onIntent(intent: NotificationCenterIntent) {
             when (intent) {
                 NotificationCenterIntent.Load -> load()
+
+                is NotificationCenterIntent.SelectTab -> {
+                    if (intent.tab == currentState.tab) return
+                    dispatch(NotificationCenterReducerEvent.TabChanged(intent.tab))
+                    load()
+                }
                 NotificationCenterIntent.LoadMore -> loadMore()
 
                 is NotificationCenterIntent.Open -> {
@@ -53,6 +71,9 @@ class NotificationCenterViewModel
         ): NotificationCenterState =
             when (event) {
                 NotificationCenterReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
+
+                is NotificationCenterReducerEvent.TabChanged ->
+                    NotificationCenterState.initial.copy(tab = event.tab)
 
                 is NotificationCenterReducerEvent.Loaded ->
                     state.copy(
@@ -79,9 +100,10 @@ class NotificationCenterViewModel
 
         private fun load() {
             if (!currentState.isLoading && currentState.items.isNotEmpty()) return
+            val tab = currentState.tab
             dispatch(NotificationCenterReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { notificationRepository.getNotifications() }
+                runCatching { notificationRepository.getNotifications(tab) }
                     .onSuccess { page ->
                         dispatch(
                             NotificationCenterReducerEvent.Loaded(
@@ -91,7 +113,7 @@ class NotificationCenterViewModel
                                 retentionDays = page.retentionDays,
                             ),
                         )
-                        markRead(page.readMarker)
+                        markRead(tab, page.readMarker)
                     }.onFailure {
                         dispatch(NotificationCenterReducerEvent.Failed(it.message ?: "알림을 불러오지 못했어요"))
                     }
@@ -102,19 +124,24 @@ class NotificationCenterViewModel
          * 읽음 처리. 실패해도 화면에는 알리지 않는다 — 사용자가 할 수 있는 일이 없고, 다음 진입에서
          * 다시 시도된다. 대신 레드닷이 한 번 더 뜰 뿐이다.
          */
-        private fun markRead(lastNotificationId: String?) {
+        private fun markRead(
+            tab: NotificationTab,
+            lastNotificationId: String?,
+        ) {
             val marker = lastNotificationId ?: return
+            if (!readTabs.add(tab)) return
             viewModelScope.launch {
-                runCatching { notificationRepository.markRead(NotificationTab.NOTIFICATION, marker) }
+                runCatching { notificationRepository.markRead(tab, marker) }
             }
         }
 
         private fun loadMore() {
             val cursor = currentState.nextCursor ?: return
             if (currentState.isLoadingMore) return
+            val tab = currentState.tab
             dispatch(NotificationCenterReducerEvent.LoadingMore(true))
             viewModelScope.launch {
-                runCatching { notificationRepository.getNotifications(cursor) }
+                runCatching { notificationRepository.getNotifications(tab, cursor) }
                     .onSuccess {
                         dispatch(NotificationCenterReducerEvent.MoreLoaded(it.items, it.nextCursor))
                     }.onFailure {

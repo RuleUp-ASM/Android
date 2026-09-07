@@ -26,6 +26,9 @@ class FakeNotificationRepository(
     /** 어떤 커서로 물었는지. 첫 페이지는 null 이다. */
     val cursors = mutableListOf<String?>()
 
+    /** 어떤 탭을 물었는지. 공지 탭이 알림 탭과 섞이지 않는지 보는 자리다. */
+    val tabs = mutableListOf<NotificationTab>()
+
     /** 읽음 처리에 보낸 값. 응답에 담겼던 최신 id 여야 한다. */
     val readMarkers = mutableListOf<Pair<NotificationTab, String>>()
 
@@ -33,9 +36,13 @@ class FakeNotificationRepository(
 
     val mutes = mutableListOf<Pair<String, Boolean>>()
 
-    override suspend fun getNotifications(cursor: String?): NotificationPage {
+    override suspend fun getNotifications(
+        tab: NotificationTab,
+        cursor: String?,
+    ): NotificationPage {
         calls += "getNotifications"
         cursors += cursor
+        tabs += tab
         return requireNotNull(page) { "getNotifications 를 준비하지 않았다" }(cursor)
     }
 

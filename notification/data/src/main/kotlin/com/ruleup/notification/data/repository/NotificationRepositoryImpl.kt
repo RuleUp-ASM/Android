@@ -22,9 +22,12 @@ class NotificationRepositoryImpl
     constructor(
         private val api: NotificationApi,
     ) : NotificationRepository {
-        override suspend fun getNotifications(cursor: String?): NotificationPage =
+        override suspend fun getNotifications(
+            tab: NotificationTab,
+            cursor: String?,
+        ): NotificationPage =
             api
-                .getNotifications(cursor)
+                .getNotifications(tab = tab.value, cursor = cursor)
                 .getOrThrow()
                 .toDomain()
 
@@ -47,6 +50,9 @@ class NotificationRepositoryImpl
          *
          * 기준선을 아예 안 주는 서버(구 계약)에서는 첫 페이지의 `unreadCount` 를 그대로 쓴다.
          * 그때는 챌린지별로 나눌 근거가 없어 총계만 남는다.
+         *
+         * **알림 탭만 센다.** 운영자 공지는 읽음 지점이 따로 보관되고 레드닷·챌린지 카운터의
+         * 대상도 아니다(테크 스펙 5-2) — 섞어 세면 공지 하나로 챌린지 카드에 숫자가 뜬다.
          */
         override suspend fun getUnreadSummary(): UnreadSummary {
             var cursor: String? = null
@@ -54,7 +60,11 @@ class NotificationRepositoryImpl
             val byChallenge = mutableMapOf<String, Int>()
 
             repeat(NotificationPage.MAX_UNREAD_PAGES) { page ->
-                val response = api.getNotifications(cursor).getOrThrow().toDomain()
+                val response =
+                    api
+                        .getNotifications(tab = NotificationTab.NOTIFICATION.value, cursor = cursor)
+                        .getOrThrow()
+                        .toDomain()
                 val serverCount = response.serverUnreadCount
                 if (page == 0 && response.lastReadNotificationId == null && serverCount != null) {
                     return UnreadSummary(total = serverCount, byChallenge = emptyMap())

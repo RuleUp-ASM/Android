@@ -117,8 +117,15 @@ class RuleUpSchemeResolverTest {
     }
 
     @Test
-    fun `화면이 없는 타입은 폴백하지 않고 제자리에 둔다`() {
-        // 인증 상세 화면이 없다 — 판정 결과는 방 상세의 오늘 카드에서 본다.
+    fun `부정행위 검출 알림은 제재 이력으로 간다`() {
+        // 검출은 자동 제재(CHALLENGE_KICK)로 제재 이력에 남는다. 전용 화면은 아직 없다.
+        assertEquals(AppRoutes.MY_SANCTIONS, resolver.resolve("ruleup://mypage/cheat-history")?.path)
+    }
+
+    @Test
+    fun `폐기된 인증 상세 링크는 제자리에 둔다`() {
+        // 2026-09-07 개정으로 VERIFICATION_RESULT 는 방 상세로 간다. 이 링크를 실은 옛 알림이
+        // 보관 6개월 동안 남아 있으므로 받아만 두고 버린다 — 없는 화면으로 보내면 빈 화면이다.
         assertNull(resolver.resolve("ruleup://verification/v_88"))
     }
 

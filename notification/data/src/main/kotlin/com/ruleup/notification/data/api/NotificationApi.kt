@@ -19,9 +19,14 @@ interface NotificationApi {
     /**
      * 알림 센터 목록. **`size` 를 보내지 않는다** — 서버가 50으로 고정했고 요청 파라미터로 받지
      * 않는다(명세 2026-09-07).
+     *
+     * [tab] 은 알림(`NOTIFICATION`)과 운영자 공지(`ANNOUNCEMENT`)를 가른다. 공지를 알림 레코드로
+     * 흡수하기로 확정되면서 구 `GET /announcements` 가 폐기되고 이 필터로 통합됐다(2026-09-07).
+     * 읽음 지점도 탭별로 따로 보관되므로 응답의 `lastReadNotificationId` 는 **요청한 탭의 값**이다.
      */
     @GET("v1/notifications")
     suspend fun getNotifications(
+        @Query("tab") tab: String? = null,
         @Query("cursor") cursor: String? = null,
     ): BaseResponse<NotificationPageResponse>
 

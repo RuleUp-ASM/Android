@@ -41,6 +41,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.notification.domain.entity.Notification
 import com.ruleup.notification.domain.entity.NotificationGroup
+import com.ruleup.notification.domain.entity.NotificationTab
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterEffect
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterIntent
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterState
@@ -53,6 +54,9 @@ import com.ruleup.ui.helper.LocalNavigationHelper
  *
  * **모든 알림은 푸시 여부와 무관하게 여기 쌓인다** — 푸시를 못 받았거나 야간에 밀린 알림도
  * 반드시 있다. 그래서 이 화면이 비어 보이면 그건 정말 알림이 없는 것이다.
+ *
+ * 상단 탭은 **알림 / 공지** 둘뿐이다. 운영자 공지는 별도 API 가 아니라 같은 목록의
+ * `tab=ANNOUNCEMENT` 다(2026-09-07 확정) — 읽음 지점도 탭별로 따로 보관된다.
  *
  * Figma 와 다르게 간 곳
  * - **유형 필터 칩을 두지 않는다** — 명세가 "유형 탭 필터는 없다(P2)"로 확정했다
@@ -99,6 +103,7 @@ internal fun NotificationCenterContent(
                 .statusBarsPadding(),
     ) {
         RuleUpTopBar(title = "알림", onBack = { onIntent(NotificationCenterIntent.Back) })
+        TabBar(selected = state.tab, onSelect = { onIntent(NotificationCenterIntent.SelectTab(it)) })
 
         when {
             state.isLoading ->
@@ -115,7 +120,7 @@ internal fun NotificationCenterContent(
                     )
                 }
 
-            state.items.isEmpty() -> EmptyState()
+            state.items.isEmpty() -> EmptyState(tab = state.tab)
 
             else -> NotificationList(state = state, onIntent = onIntent)
         }
@@ -123,20 +128,76 @@ internal fun NotificationCenterContent(
 }
 
 @Composable
-private fun EmptyState() {
+private fun TabBar(
+    selected: NotificationTab,
+    onSelect: (NotificationTab) -> Unit,
+) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+        NotificationTab.entries.forEach { tab ->
+            TabItem(
+                label = tab.label,
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TabItem(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.singleClickable(onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = label,
+            color = if (selected) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,
+            style = if (selected) RuleUpTheme.typography.labelMedium else RuleUpTheme.typography.small,
+            modifier = Modifier.padding(vertical = 12.dp),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .background(if (selected) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.border),
+        )
+    }
+}
+
+private val NotificationTab.label: String
+    get() =
+        when (this) {
+            NotificationTab.NOTIFICATION -> "알림"
+            NotificationTab.ANNOUNCEMENT -> "공지"
+        }
+
+@Composable
+private fun EmptyState(tab: NotificationTab) {
     Column(
         modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "아직 알림이 없어요",
+            text = if (tab == NotificationTab.ANNOUNCEMENT) "아직 공지가 없어요" else "아직 알림이 없어요",
             color = RuleUpTheme.colors.textPrimary,
             style = RuleUpTheme.typography.cardTitle,
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = "판정 결과나 챌린지 소식이 생기면 여기에 쌓여요",
+            text =
+                if (tab == NotificationTab.ANNOUNCEMENT) {
+                    "운영자가 보내는 소식이 여기에 쌓여요"
+                } else {
+                    "판정 결과나 챌린지 소식이 생기면 여기에 쌓여요"
+                },
             color = RuleUpTheme.colors.textMuted,
             style = RuleUpTheme.typography.small,
             textAlign = TextAlign.Center,

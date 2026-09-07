@@ -50,7 +50,9 @@ class RuleUpSchemeResolver
                 "challenge" -> challengeRoute(rest)
 
                 "verification" ->
-                    // 인증 상세 화면이 따로 없다 — 판정 결과는 방 상세의 오늘 카드에서 본다.
+                    // 폐기된 링크다. `VERIFICATION_RESULT` 는 2026-09-07 개정으로
+                    // `ruleup://challenge/{id}` 를 쓴다 — 인증 상세 화면이 없어 빈 화면으로 갔다.
+                    // 이미 적재된 옛 알림이 6개월 보관 동안 남아 있으므로 받아만 두고 버린다.
                     null
 
                 "appeal" -> NavRoute(AppRoutes.MY_APPEALS)
@@ -77,6 +79,12 @@ class RuleUpSchemeResolver
                 "tier" -> NavRoute(AppRoutes.MY_TIER)
                 "account", "security" -> NavRoute(AppRoutes.MY_SETTINGS)
                 "nickname", "profile" -> NavRoute(AppRoutes.MY_PROFILE_EDIT)
+
+                // 부정행위 검출 이력 전용 화면이 아직 없다. 검출은 자동 제재(CHALLENGE_KICK)로
+                // 제재 이력에 남으므로 그리로 보낸다 — 탭이 아무 일도 안 하는 것보다 낫다.
+                // 정책 §2-10 이 요구하는 「이의 진입」과 기한 경과 안내는 이 화면에 없다(미구현).
+                "cheat-history" -> NavRoute(AppRoutes.MY_SANCTIONS)
+
                 null -> NavRoute(AppRoutes.MY_HOME)
                 else -> null
             }
