@@ -5,11 +5,8 @@ import com.ruleup.domain.navigation.NavRoute
 import kotlinx.serialization.Serializable
 
 /**
- * Navigation3 의 단일 백스택 엔트리 타입.
- *
- * 모든 destination 이 본 타입 하나로 표현되며, 실제 화면 분기는 [path] 값으로 결정한다.
- * [args] 는 NavRoute.args 와 동일한 String 맵 형태로 보존되어, 백스택 직렬화/복원 시
- * Navigation3 의 typed-route 메커니즘이 그대로 동작한다.
+ * Navigation3 의 유일한 백스택 엔트리 타입. 화면 분기는 [path] 로 한다.
+ * 백스택은 직렬화되어 복원되므로 [args] 도 NavRoute.args 와 같은 String 맵으로 보존한다.
  */
 @Serializable
 data class GenericNavKey(

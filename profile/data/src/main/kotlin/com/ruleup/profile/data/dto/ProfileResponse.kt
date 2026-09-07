@@ -1,0 +1,104 @@
+package com.ruleup.profile.data.dto
+
+import com.ruleup.domain.entity.category.InterestLimits
+import com.ruleup.domain.entity.category.toCategories
+import com.ruleup.network.dto.requireField
+import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.NicknameCheck
+import com.ruleup.profile.domain.entity.NicknameCheckReason
+import com.ruleup.profile.domain.entity.Profile
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+// ---------- 4.6 닉네임 검사 ----------
+@Serializable
+data class NicknameCheckResponse(
+    @SerialName("valid")
+    val valid: Boolean? = null,
+    @SerialName("available")
+    val available: Boolean? = null,
+    @SerialName("reason")
+    val reason: String? = null,
+    // RECENTLY_RELEASED 일 때만 오는 잠금 해제 시각(ISO).
+    @SerialName("availableAt")
+    val availableAt: String? = null,
+)
+
+internal fun NicknameCheckResponse.toDomain(): NicknameCheck =
+    NicknameCheck(
+        valid = valid ?: false,
+        available = available ?: false,
+        reason = NicknameCheckReason.fromValue(reason),
+        availableAt = availableAt,
+    )
+
+// ---------- 4.7 관심 카테고리 마스터 ----------
+@Serializable
+data class CategoriesResponse(
+    @SerialName("maxSelectable")
+    val maxSelectable: Int? = null,
+    @SerialName("categories")
+    val categories: List<CategoryResponse>? = null,
+)
+
+@Serializable
+data class CategoryResponse(
+    @SerialName("code")
+    val code: String? = null,
+    @SerialName("label")
+    val label: String? = null,
+    @SerialName("emoji")
+    val emoji: String? = null,
+)
+
+internal fun CategoriesResponse.toDomain(): CategoryCatalog =
+    CategoryCatalog(
+        maxSelectable = maxSelectable ?: InterestLimits.MAX,
+        categories = categories?.mapNotNull { it.code }.toCategories(),
+    )
+
+// ---------- 4.8 / 4.9 프로필 ----------
+@Serializable
+data class ProfileResponse(
+    @SerialName("id")
+    val id: String? = null,
+    @SerialName("nickname")
+    val nickname: String? = null,
+    @SerialName("email")
+    val email: String? = null,
+    @SerialName("profileImageUrl")
+    val profileImageUrl: String? = null,
+    @SerialName("nicknameChangedAt")
+    val nicknameChangedAt: String? = null,
+    @SerialName("nicknameChangeableAfter")
+    val nicknameChangeableAfter: String? = null,
+    @SerialName("mannerTemperature")
+    val mannerTemperature: Double? = null,
+    @SerialName("interestCategories")
+    val interestCategories: List<String>? = null,
+    @SerialName("createdAt")
+    val createdAt: String? = null,
+)
+
+internal fun ProfileResponse.toDomain(): Profile =
+    Profile(
+        id = id.requireField("id"),
+        nickname = nickname.requireField("nickname"),
+        email = email,
+        profileImageUrl = profileImageUrl,
+        nicknameChangedAt = nicknameChangedAt,
+        nicknameChangeableAfter = nicknameChangeableAfter,
+        mannerTemperature = mannerTemperature ?: 36.5,
+        interestCategories = interestCategories.toCategories(),
+        createdAt = createdAt.requireField("createdAt"),
+    )
+
+// ---------- 프로필 이미지 등록 ----------
+@Serializable
+data class ProfileImageResponse(
+    @SerialName("imageUrl")
+    val imageUrl: String? = null,
+    // PENDING 고정 — 등록 즉시 자동 모더레이션이 돌지만 기능 제한은 없다.
+    @SerialName("status")
+    val status: String? = null,
+)

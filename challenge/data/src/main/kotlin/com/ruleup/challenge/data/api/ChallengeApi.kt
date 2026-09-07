@@ -1,0 +1,285 @@
+package com.ruleup.challenge.data.api
+
+import com.ruleup.challenge.data.dto.ChallengeCalendarResponse
+import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
+import com.ruleup.challenge.data.dto.ChallengeDetailResponse
+import com.ruleup.challenge.data.dto.ChallengeImageResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationPreviewResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
+import com.ruleup.challenge.data.dto.ChallengeMembersResponse
+import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
+import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
+import com.ruleup.challenge.data.dto.CreateChallengeRequest
+import com.ruleup.challenge.data.dto.CreateChallengeResponse
+import com.ruleup.challenge.data.dto.CrossRankingResponse
+import com.ruleup.challenge.data.dto.DelegationActionRequest
+import com.ruleup.challenge.data.dto.DelegationRequestBody
+import com.ruleup.challenge.data.dto.DelegationResolutionResponse
+import com.ruleup.challenge.data.dto.DelegationResponse
+import com.ruleup.challenge.data.dto.DeleteChallengeResponse
+import com.ruleup.challenge.data.dto.DraftRequest
+import com.ruleup.challenge.data.dto.DraftResponse
+import com.ruleup.challenge.data.dto.ExploreChallengesResponse
+import com.ruleup.challenge.data.dto.JoinResponse
+import com.ruleup.challenge.data.dto.LeaveChallengeResponse
+import com.ruleup.challenge.data.dto.MemberRoleActionRequest
+import com.ruleup.challenge.data.dto.MemberRoleResponse
+import com.ruleup.challenge.data.dto.MyChallengesResponse
+import com.ruleup.challenge.data.dto.OwnerClaimResponse
+import com.ruleup.challenge.data.dto.RankingResponse
+import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
+import com.ruleup.challenge.data.dto.RoomResponse
+import com.ruleup.challenge.data.dto.RoutineTemplatesResponse
+import com.ruleup.challenge.data.dto.TemplateDraftResponse
+import com.ruleup.challenge.data.dto.ThreadsResponse
+import com.ruleup.challenge.data.dto.TrendingChallengesResponse
+import com.ruleup.challenge.data.dto.UpdateChallengeResponse
+import com.ruleup.challenge.data.dto.WatcherAcceptResponse
+import com.ruleup.challenge.data.dto.WatcherInvitationResponse
+import com.ruleup.challenge.data.dto.WatchersResponse
+import com.ruleup.challenge.data.dto.WatchingListResponse
+import com.ruleup.challenge.data.dto.WatchingUpdateRequest
+import com.ruleup.challenge.data.dto.WatchingUpdateResponse
+import com.ruleup.network.dto.BaseResponse
+import kotlinx.serialization.json.JsonObject
+import okhttp3.MultipartBody
+import retrofit2.http.Body
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Multipart
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Part
+import retrofit2.http.Path
+import retrofit2.http.Query
+
+interface ChallengeApi {
+    // 생성 화면 추천 루틴 — 파라미터 없음, 서버가 항상 3개를 보장한다(구 limit 폐기).
+    @GET("v1/challenges/recommendations")
+    suspend fun getRoutineTemplates(): BaseResponse<RoutineTemplatesResponse>
+
+    // 경로 B: 설명 입력 → LLM 5-Step 초안. result=FALLBACK 도 200 이다.
+    @POST("v1/challenges/draft")
+    suspend fun createDraft(
+        @Body request: DraftRequest,
+    ): BaseResponse<DraftResponse>
+
+    // 경로 A: 추천 루틴 탭 → 템플릿 기본값 초안 (LLM 미경유, draft 와 동일 스키마)
+    @POST("v1/challenges/recommendation/by-template")
+    suspend fun createDraftFromTemplate(
+        @Body request: RecommendByTemplateRequest,
+    ): BaseResponse<TemplateDraftResponse>
+
+    // 챌린지 최종 생성. Idempotency-Key 는 필수 — 재시도가 두 번째 방을 만들지 않게 한다.
+    @POST("v1/challenges")
+    suspend fun create(
+        @Header("Idempotency-Key") idempotencyKey: String,
+        @Body request: CreateChallengeRequest,
+    ): BaseResponse<CreateChallengeResponse>
+
+    // 공개 상세 (멤버 전용 내부는 /room). 비공개·솔로·없음은 전부 404 로 존재를 숨긴다.
+    @GET("v1/challenges/{challengeId}")
+    suspend fun getChallenge(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeDetailResponse>
+
+    // 챌린지 최초 조회 (GET setup): 셋업 단계에서 무엇을 바인딩해야 하는지 요구사항 조회
+    @GET("v1/challenges/{challengeId}/setup")
+    suspend fun getSetup(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeSetupInfoResponse>
+
+    // 방장 전용 설정 조회 — 수정 폼이 쓸 현재 설정 전체 + editableFields + version
+    @GET("v1/challenges/{challengeId}/settings")
+    suspend fun getSettings(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeSettingsResponse>
+
+    // 챌린지 수정 (방장). 본문은 "넣은 키만 변경"이라 JsonObject 로 직접 조립한다.
+    @PATCH("v1/challenges/{challengeId}")
+    suspend fun update(
+        @Path("challengeId") challengeId: String,
+        @Body request: JsonObject,
+    ): BaseResponse<UpdateChallengeResponse>
+
+    // 챌린지 삭제 — 응답에 penaltyApplied(탈퇴 패널티 트리거 여부)
+    @DELETE("v1/challenges/{challengeId}")
+    suspend fun delete(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<DeleteChallengeResponse>
+
+    // 챌린지 참여 신청 (승인제 폐기 — 성공 시 즉시 ACTIVE, requiredPermissions 반환)
+    @POST("v1/challenges/{challengeId}/members")
+    suspend fun join(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<JoinResponse>
+
+    // 멤버 목록 조회 (승인제 폐기 — status 필터 없음)
+    @GET("v1/challenges/{challengeId}/members")
+    suspend fun getMembers(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeMembersResponse>
+
+    // 챌린지 탈퇴 (본인) — 응답 penaltyApplied
+    @DELETE("v1/challenges/{challengeId}/members/me")
+    suspend fun leaveChallenge(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<LeaveChallengeResponse>
+
+    // 공동 관리자 임명/해제 — { action: PROMOTE/DEMOTE }
+    @PATCH("v1/challenges/{challengeId}/members/{userId}/role")
+    suspend fun changeMemberRole(
+        @Path("challengeId") challengeId: String,
+        @Path("userId") userId: String,
+        @Body request: MemberRoleActionRequest,
+    ): BaseResponse<MemberRoleResponse>
+
+    // 봇방장 방 클레임 — 선착순, 바디 없음(토큰으로 식별). 밀리면 409 OWNER_ALREADY_EXISTS
+    @POST("v1/challenges/{challengeId}/owner/claim")
+    suspend fun claimOwner(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<OwnerClaimResponse>
+
+    // 방장 위임 요청 생성 — { targetUserId }
+    @POST("v1/challenges/{challengeId}/delegation")
+    suspend fun requestDelegation(
+        @Path("challengeId") challengeId: String,
+        @Body request: DelegationRequestBody,
+    ): BaseResponse<DelegationResponse>
+
+    // 방장 위임 요청 응답 — { action: ACCEPT/REJECT/CANCEL }
+    @PATCH("v1/challenges/{challengeId}/delegation/{delegationId}")
+    suspend fun respondDelegation(
+        @Path("challengeId") challengeId: String,
+        @Path("delegationId") delegationId: String,
+        @Body request: DelegationActionRequest,
+    ): BaseResponse<DelegationResolutionResponse>
+
+    // 3.9 챌린지 대표 이미지 업로드 (생성/수정 전 호출, challengeId 불필요)
+    @Multipart
+    @POST("v1/challenges/image")
+    suspend fun uploadImage(
+        @Part image: MultipartBody.Part,
+    ): BaseResponse<ChallengeImageResponse>
+
+    // 내 챌린지 목록 조회 (GET /challenges): filter 로 진행 중·완료·이탈 탭이 갈린다
+    @GET("v1/challenges")
+    suspend fun getMyChallenges(
+        @Query("filter") filter: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<MyChallengesResponse>
+
+    // 탐색: 실시간 인기 (서버가 Top 20 반환 · 홈은 상위 5개 사용). category 를 주면 카테고리별 인기.
+    @GET("v1/challenges/trending")
+    suspend fun getTrending(
+        @Query("category") category: String? = null,
+    ): BaseResponse<TrendingChallengesResponse>
+
+    // 탐색: 카테고리별 진행 중 공개 그룹 챌린지 수 조회
+    @GET("v1/challenge-categories")
+    suspend fun getCategories(): BaseResponse<ChallengeCategoriesResponse>
+
+    // 탐색: 둘러보기 (① 노출 제외 → ② 필터 AND → ③ 정렬 → 커서 페이지네이션).
+    // 티어 컷은 값 대신 eligibleOnly 로 — 서버가 토큰 사용자의 표시 티어 기준으로 계산한다.
+    @GET("v1/challenges/explore")
+    suspend fun explore(
+        @Query("categories") categories: String? = null,
+        @Query("verifyType") verifyType: String? = null,
+        @Query("eligibleOnly") eligibleOnly: Boolean? = null,
+        @Query("sort") sort: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<ExploreChallengesResponse>
+
+    // 탐색: 템플릿 복제 → 생성 모듈의 draft 와 동일 스키마로 초안을 만든다.
+    @POST("v1/challenges/{challengeId}/clone")
+    suspend fun clone(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<TemplateDraftResponse>
+
+    // 멤버 초대 링크 발급 (비공개 그룹 방의 방장만 — 토큰 7일 만료)
+    @POST("v1/challenges/{challengeId}/invitations")
+    suspend fun createChallengeInvitation(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeInvitationResponse>
+
+    // 초대 링크 미리보기 (로그인 필수 · 토큰을 소모하지 않는다)
+    @GET("v1/challenges/invitations/{token}")
+    suspend fun getChallengeInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<ChallengeInvitationPreviewResponse>
+
+    // 초대 수락 가입 (토큰은 여기서 소모된다)
+    @POST("v1/challenges/invitations/{token}/accept")
+    suspend fun acceptChallengeInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<JoinResponse>
+
+    // 감시자: 초대 생성 (토큰 7일 만료, 무료 3명 초과 시 에러)
+    @POST("v1/challenges/{challengeId}/watchers/invitations")
+    suspend fun createWatcherInvitation(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<WatcherInvitationResponse>
+
+    // 감시자: 내 감시자 목록 조회 (참여자 본인 기준)
+    @GET("v1/challenges/{challengeId}/watchers")
+    suspend fun getWatchers(
+        @Path("challengeId") challengeId: String,
+        @Query("status") status: String? = null,
+    ): BaseResponse<WatchersResponse>
+
+    // 감시자: 내가 감시자로 등록된 관계 목록 (마이 「내가 받는 알림」)
+    @GET("v1/users/me/watching")
+    suspend fun getWatching(): BaseResponse<WatchingListResponse>
+
+    // 감시자: 내 감시 항목 수신 설정 (pushEnabled = 푸시만 / revoke = 완전 수신거부)
+    @PATCH("v1/users/me/watching/{watcherId}")
+    suspend fun updateWatching(
+        @Path("watcherId") watcherId: String,
+        @Body request: WatchingUpdateRequest,
+    ): BaseResponse<WatchingUpdateResponse>
+
+    // 감시자: 초대 수락 (인앱 전용 — 로그인 필수, 수락이 곧 수신 동의)
+    @POST("v1/watchers/invitations/{token}/accept")
+    suspend fun acceptWatcherInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<WatcherAcceptResponse>
+
+    // 방 홈 일괄 조회 (ACTIVE 멤버 전용 — 비멤버 403 NOT_A_MEMBER)
+    @GET("v1/challenges/{challengeId}/room")
+    suspend fun getRoom(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<RoomResponse>
+
+    // 방 스레드 피드 (ACTIVE 멤버 전용 — 커서 페이징, size 기본 20·최대 50)
+    @GET("v1/challenges/{challengeId}/threads")
+    suspend fun getThreads(
+        @Path("challengeId") challengeId: String,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<ThreadsResponse>
+
+    // 방 안 랭킹 조회 (참여일 이후 전체 성공률 — 10회 이상 등재, 미달은 rank=null)
+    @GET("v1/challenges/{challengeId}/ranking")
+    suspend fun getRanking(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<RankingResponse>
+
+    // 챌린지 월 캘린더 (판정 대상일만 내려옴 — /me/calendar 와 status enum 이 다르다)
+    @GET("v1/challenges/{challengeId}/calendar")
+    suspend fun getCalendar(
+        @Path("challengeId") challengeId: String,
+        @Query("month") month: String,
+    ): BaseResponse<ChallengeCalendarResponse>
+
+    // 방 밖 랭킹 조회 (같은 모드의 방끼리 — 하루 1회 03시 배치 스냅샷)
+    @GET("v1/rankings/challenges")
+    suspend fun getCrossRanking(
+        @Query("mode") mode: String,
+        @Query("challengeId") challengeId: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<CrossRankingResponse>
+}

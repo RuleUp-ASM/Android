@@ -1,4 +1,4 @@
-import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.library)
@@ -7,54 +7,45 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-val localProperties =
-    Properties().apply {
-        val f = rootProject.file("local.properties")
-        if (f.exists()) f.inputStream().use { load(it) }
-    }
-
-val baseUrl: String =
-    localProperties.getProperty("BASE_URL")?.trim().orEmpty()
-
 android {
     namespace = "com.ruleup.network"
-    compileSdk {
-        version =
-            release(37) {
-                minorApiLevel = 0
-            }
-    }
+    compileSdk = 37
 
     defaultConfig {
-        minSdk = 24
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-
-        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+        minSdk = 26
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures {
-        buildConfig = true
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
 dependencies {
     implementation(project(":core:domain"))
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-    testImplementation(libs.junit)
-    implementation(libs.hilt.android)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.coroutines.core)
+    implementation(project(":observability:domain"))
+    // TokenAuthenticator 가 갱신 토큰(Token)을 직접 다룬다.
+
+    // Retrofit/OkHttp/Json 은 NetworkModule 의 @Provides 시그니처와 data 모듈의 API 생성에 노출되므로 api.
+    api(libs.retrofit)
+    api(libs.retrofit.converter.kotlinx.serialization)
+    api(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.core.ktx)
+
+    implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
+
+    // 에러 본문 인터셉터가 실제 OkHttp 응답을 다루므로 유닛 테스트에도 okhttp 가 필요하다.
+    testImplementation(libs.junit)
+    testImplementation(kotlin("test-junit"))
+    testImplementation(libs.okhttp)
 }

@@ -1,7 +1,8 @@
 package com.ruleup.android_ruleup.navigation
 
-import android.widget.Toast
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
@@ -16,22 +17,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.rememberNavBackStack
-import com.ruleup.domain.IntroPromisePage
+import com.ruleup.android_ruleup.BuildConfig
+import com.ruleup.android_ruleup.debug.DebugLogOverlay
+import com.ruleup.android_ruleup.debug.DebugSyncButton
+import com.ruleup.designsystem.rememberSingleClick
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.message.MessageEffect
+import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.theme.RuleUpTheme
 import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun RootComposable(
     modifier: Modifier = Modifier,
-    startStack: List<NavKey> = listOf(GenericNavKey(IntroPromisePage.PATH)),
+    startStack: List<NavKey> = listOf(GenericNavKey(SplashPage.PATH)),
 ) {
     val snackBarHostState = remember { SnackbarHostState() }
     var oneButtonDialogEffect by remember {
@@ -39,12 +44,9 @@ fun RootComposable(
     }
 
     RuleUpTheme {
-        val backStack = rememberNavBackStack(*startStack.toTypedArray())
-        val navigationHelper = LocalNavigationHelper.current
+        val backStack = rememberAppBackStack(startStack)
         val messageHelper = LocalMessageHelper.current
-
-        val currentKey = backStack.lastOrNull() as? GenericNavKey
-        val currentRoute = currentKey?.let { appRouteByPath[it.path] }
+        val navigationHelper = LocalNavigationHelper.current
 
         val onShowOneButtonDialog =
             remember<(MessageEffect.ShowOneButtonDialog) -> Unit> {
@@ -63,29 +65,18 @@ fun RootComposable(
                 },
                 title =
                     dialog.titleText?.let { titleText ->
-                        {
-                            Text(
-                                text = titleText,
-                                maxLines = Int.MAX_VALUE,
-                            )
-                        }
+                        { Text(text = titleText, maxLines = Int.MAX_VALUE) }
                     },
-                text = {
-                    Text(
-                        text = dialog.descText,
-                        maxLines = Int.MAX_VALUE,
-                    )
-                },
+                text = { Text(text = dialog.descText, maxLines = Int.MAX_VALUE) },
                 confirmButton = {
                     TextButton(
-                        onClick = {
-                            dialog.onClickButton?.invoke()
-                            oneButtonDialogEffect = null
-                        },
+                        onClick =
+                            rememberSingleClick {
+                                dialog.onClickButton?.invoke()
+                                oneButtonDialogEffect = null
+                            },
                     ) {
-                        Text(
-                            text = dialog.buttonText,
-                        )
+                        Text(text = dialog.buttonText)
                     }
                 },
                 properties =
@@ -96,14 +87,29 @@ fun RootComposable(
             )
         }
 
-        Scaffold(
-            modifier = modifier.fillMaxSize(),
-            snackbarHost = { SnackbarHost(snackBarHostState) },
-        ) { innerPadding ->
-            AppNavHost(
-                backStack = backStack,
-                modifier = Modifier.padding(innerPadding),
-            )
+        Box(modifier = modifier.fillMaxSize()) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                snackbarHost = { SnackbarHost(snackBarHostState) },
+            ) { innerPadding ->
+                AppNavHost(
+                    backStack = backStack,
+                    modifier = Modifier.padding(innerPadding),
+                )
+            }
+
+            // 디버그 빌드 전용: 우측 상단 반투명 로그 오버레이. 포인터 입력이 없어 터치를 통과시킨다.
+            if (BuildConfig.DEBUG) {
+                DebugLogOverlay()
+                // 좌하단 "수집·동기화" 트리거. 결과는 위 오버레이에 'VerifySync' 로 뜬다.
+                DebugSyncButton(
+                    modifier =
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .navigationBarsPadding()
+                            .padding(12.dp),
+                )
+            }
         }
     }
 }
@@ -114,28 +120,15 @@ private fun MessageEffect(
     snackBarHostState: SnackbarHostState,
     onShowOneButtonDialog: (MessageEffect.ShowOneButtonDialog) -> Unit,
 ) {
-    val appContext = LocalContext.current.applicationContext
+    val showToast = rememberShowToast()
     val currentOnShowOneButtonDialog by rememberUpdatedState(onShowOneButtonDialog)
 
     LaunchedEffect(Unit) {
         messageEffectFlow.collect { effect ->
             when (effect) {
-                is MessageEffect.ShowToastMsg -> {
-                    Toast
-                        .makeText(
-                            appContext,
-                            effect.message,
-                            Toast.LENGTH_LONG,
-                        ).show()
-                }
-
-                is MessageEffect.ShowSnackBarError -> {
-                    snackBarHostState.showSnackbar(effect.message)
-                }
-
-                is MessageEffect.ShowOneButtonDialog -> {
-                    currentOnShowOneButtonDialog(effect)
-                }
+                is MessageEffect.ShowToastMsg -> showToast(effect.message)
+                is MessageEffect.ShowSnackBarError -> snackBarHostState.showSnackbar(effect.message)
+                is MessageEffect.ShowOneButtonDialog -> currentOnShowOneButtonDialog(effect)
             }
         }
     }

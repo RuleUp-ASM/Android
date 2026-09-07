@@ -1,0 +1,22 @@
+{
+  "eval_id": 2,
+  "eval_name": "리뷰 — 남길 것과 뺄 것",
+  "prompt": "(iteration-1 과 동일) 지오펜스 두 파일 주석 리뷰",
+  "assertions": [
+    {
+      "text": "주석을 개별로 지목해 판정했다"
+    },
+    {
+      "text": "'안 고른 대안'을 남기라고 판정했다"
+    },
+    {
+      "text": "빼자고 한 주석마다 근거를 댔다"
+    },
+    {
+      "text": "geofenceResponsivenessFor 의 12줄 KDoc 이 길다고 지적했다"
+    },
+    {
+      "text": "주석 개수를 판정 기준으로 삼지 않았다"
+    }
+  ]
+}

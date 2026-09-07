@@ -1,0 +1,40 @@
+package com.ruleup.verification.data.signal.geofence
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import com.ruleup.verification.domain.repository.GeofenceRegister
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * 재부팅 후 지오펜스 재등록(명세 §2.3 휘발 대응). OS 등록은 부팅 시 소멸하므로 로컬에 보존한
+ * 목표(geofence_target)를 읽어 전부 재등록한다.
+ */
+@AndroidEntryPoint
+class BootReceiver : BroadcastReceiver() {
+    @Inject
+    lateinit var geofenceRegister: GeofenceRegister
+
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
+        // LOCKED_BOOT_COMPLETED 는 받지 않는다 — DB 가 자격증명 암호화 저장소라 잠금해제 전엔 못 연다.
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                geofenceRegister.reconcilePersisted()
+            } catch (t: Throwable) {
+                // 재등록 실패는 다음 콜드스타트 reconcile 이 보정한다.
+            } finally {
+                pending.finish()
+            }
+        }
+    }
+}

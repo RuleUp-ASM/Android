@@ -1,17 +1,50 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    id("java-library")
-    alias(libs.plugins.jetbrains.kotlin.jvm)
+    alias(libs.plugins.android.library)
 }
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+
+android {
+    namespace = "com.ruleup.onboarding.domain"
+    compileSdk = 37
+
+    defaultConfig {
+        minSdk = 26
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    // 인증 포트 대역을 onboarding:presentation 이 함께 쓴다 — UseCase 가 final 이라
+    // 화면 테스트도 실제 UseCase 를 대역 위에 세워야 한다.
+    testFixtures {
+        enable = true
+    }
 }
+
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
+        jvmTarget = JvmTarget.JVM_11
     }
 }
 
 dependencies {
-    implementation(project(":core:domain"))
+    // Page/NavRoute·TokenRepository, User 등 공유 커널이 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
+    api(project(":core:domain"))
+    // 계정 정보는 profile 소유 — 온보딩은 최초 설정 때 그 계약을 빌려 쓴다(#175).
+    api(project(":profile:domain"))
+    // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
+    implementation(project(":observability:domain"))
+    implementation(libs.kotlinx.coroutines.core)
+    // UseCase 의 @Inject 생성자(런타임 Hilt 컴포넌트에서 제공). 도메인은 hilt 런타임 없이 annotation 만.
+    implementation(libs.javax.inject)
+
+    testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":onboarding:domain")))
+
+    // coroutines 가 implementation 이라 testFixtures 컴파일 경로엔 오지 않는다.
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
+    testImplementation(testFixtures(project(":observability:domain")))
 }

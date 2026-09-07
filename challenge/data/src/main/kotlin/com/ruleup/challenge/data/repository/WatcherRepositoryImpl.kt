@@ -1,0 +1,77 @@
+package com.ruleup.challenge.data.repository
+
+import com.ruleup.challenge.data.api.ChallengeApi
+import com.ruleup.challenge.data.dto.WatchingUpdateRequest
+import com.ruleup.challenge.data.dto.toAcceptFailure
+import com.ruleup.challenge.data.dto.toDomain
+import com.ruleup.challenge.domain.entity.AlreadyRevokedException
+import com.ruleup.challenge.domain.entity.ChallengeWatchers
+import com.ruleup.challenge.domain.entity.WatcherAcceptance
+import com.ruleup.challenge.domain.entity.WatcherInvitation
+import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
+import com.ruleup.challenge.domain.entity.Watching
+import com.ruleup.challenge.domain.entity.WatchingUpdate
+import com.ruleup.challenge.domain.repository.WatcherRepository
+import com.ruleup.network.dto.ApiException
+import com.ruleup.network.dto.getOrThrow
+import javax.inject.Inject
+
+class WatcherRepositoryImpl
+    @Inject
+    constructor(
+        private val api: ChallengeApi,
+    ) : WatcherRepository {
+        override suspend fun createInvitation(challengeId: String): WatcherInvitation =
+            try {
+                api
+                    .createWatcherInvitation(challengeId)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 무료 한도(챌린지당 3명) 초과는 화면이 구독 안내로 분기할 수 있게 도메인 예외로 변환한다.
+                if (e.code == "WATCHER_LIMIT_EXCEEDED") {
+                    throw WatcherLimitExceededException()
+                }
+                throw e
+            }
+
+        override suspend fun getWatchers(challengeId: String): ChallengeWatchers =
+            api
+                // 관리 섹션은 수락 대기(INVITED)·만료 현황까지 보여주므로 전체를 조회한다.
+                .getWatchers(challengeId, status = "ALL")
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getWatching(): List<Watching> =
+            api
+                .getWatching()
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun updateWatching(
+            watcherId: String,
+            pushEnabled: Boolean?,
+            revoke: Boolean?,
+        ): WatchingUpdate =
+            try {
+                api
+                    .updateWatching(watcherId, WatchingUpdateRequest(pushEnabled = pushEnabled, revoke = revoke))
+                    .getOrThrow()
+                    .toDomain(requestedId = watcherId)
+            } catch (e: ApiException) {
+                // 이미 거부한 항목이면 화면이 그 행을 지우도록 도메인 예외로 옮긴다.
+                if (e.code == "ALREADY_REVOKED") throw AlreadyRevokedException()
+                throw e
+            }
+
+        override suspend fun acceptInvitation(token: String): WatcherAcceptance =
+            try {
+                api
+                    .acceptWatcherInvitation(token)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 만료·중복·본인 수락은 화면 문구와 다음 행동이 전부 달라 코드별로 갈라 둔다.
+                throw e.toAcceptFailure()
+            }
+    }

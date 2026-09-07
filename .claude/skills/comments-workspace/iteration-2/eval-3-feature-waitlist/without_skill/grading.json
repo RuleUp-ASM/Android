@@ -1,0 +1,34 @@
+{
+  "expectations": [
+    {
+      "text": "50% 상한이 이름 붙은 함수로 존재",
+      "passed": true,
+      "evidence": "WaitlistPolicy.maxSize"
+    },
+    {
+      "text": "순번 null 을 1로 접지 않음",
+      "passed": true,
+      "evidence": "sealed Calculating/Assigned"
+    },
+    {
+      "text": "되풀이 주석 0개",
+      "passed": true,
+      "evidence": "없음"
+    },
+    {
+      "text": "최장 주석 블록 3줄 이하",
+      "passed": false,
+      "evidence": "최장 10줄, 24블록 중 12개가 3줄 초과"
+    },
+    {
+      "text": "코드로 안 드러나는 지점에 '왜'",
+      "passed": true,
+      "evidence": "있음"
+    },
+    {
+      "text": "명세에 없는 것을 지어내지 않음",
+      "passed": true,
+      "evidence": "미결 6건 분리"
+    }
+  ]
+}

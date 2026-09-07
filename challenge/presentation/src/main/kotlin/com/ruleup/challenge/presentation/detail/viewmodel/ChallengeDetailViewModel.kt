@@ -1,0 +1,1191 @@
+package com.ruleup.challenge.presentation.detail.viewmodel
+
+import androidx.lifecycle.viewModelScope
+import com.ruleup.challenge.domain.entity.ChallengeNotCloneableException
+import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
+import com.ruleup.challenge.domain.entity.DelegationAction
+import com.ruleup.challenge.domain.entity.JoinBlockReason
+import com.ruleup.challenge.domain.entity.JoinBlockedException
+import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
+import com.ruleup.challenge.domain.entity.RankingMode
+import com.ruleup.challenge.domain.entity.RoleAction
+import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
+import com.ruleup.challenge.domain.entity.ThreadPolicy
+import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
+import com.ruleup.challenge.domain.entity.WatcherInvitation
+import com.ruleup.challenge.domain.entity.WatcherInviteCard
+import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
+import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
+import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
+import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
+import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.observability.ChallengeEvents
+import com.ruleup.challenge.domain.observability.RankingViewScope
+import com.ruleup.challenge.domain.repository.ChallengeRepository
+import com.ruleup.challenge.domain.repository.ExploreRepository
+import com.ruleup.challenge.domain.repository.RoomRepository
+import com.ruleup.challenge.domain.repository.TargetAppStore
+import com.ruleup.challenge.domain.repository.WatcherRepository
+import com.ruleup.challenge.presentation.observability.ChallengeDetailTtiPage
+import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.AppRoutes
+import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.domain.token.TokenRepository
+import com.ruleup.notification.domain.repository.NotificationRepository
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.TtiTracker
+import com.ruleup.observability.domain.event.Channel
+import com.ruleup.observability.domain.model.ScreenKey
+import com.ruleup.observability.domain.model.TtiTimeline
+import com.ruleup.report.domain.entity.ReportContext
+import com.ruleup.report.domain.entity.ReportException
+import com.ruleup.report.domain.entity.ReportFailure
+import com.ruleup.report.domain.entity.ReportTarget
+import com.ruleup.report.domain.repository.ReportRepository
+import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.entity.AlreadyVerifiedException
+import com.ruleup.verification.domain.entity.AppealNotFailedException
+import com.ruleup.verification.domain.entity.AppealWindowClosedException
+import com.ruleup.verification.domain.entity.CancelWindowClosedException
+import com.ruleup.verification.domain.entity.InvalidAppealReasonException
+import com.ruleup.verification.domain.entity.InvalidTargetDateException
+import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
+import com.ruleup.verification.domain.repository.PermissionStatusProvider
+import com.ruleup.verification.domain.repository.VerificationRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import java.time.YearMonth
+import javax.inject.Inject
+
+/**
+ * 챌린지 상세/참여 ViewModel.
+ *
+ * 상세 + 셋업 요구사항(GET setup)을 조회해, requiresAnchors/requiresTargetPackages 로 필요한 등록만
+ * 유도한다: 권한 → (필요 시) 앱 등록 → (필요 시) 지도 앵커 → 시작.
+ * 권한 확인/요청·모달 노출은 Context 가 필요해 화면(Composable)이 담당한다.
+ */
+@HiltViewModel
+class ChallengeDetailViewModel
+    @Inject
+    constructor(
+        private val challengeRepository: ChallengeRepository,
+        private val roomRepository: RoomRepository,
+        private val watcherRepository: WatcherRepository,
+        private val verificationRepository: VerificationRepository,
+        private val permissionStatusProvider: PermissionStatusProvider,
+        private val exploreRepository: ExploreRepository,
+        private val tokenRepository: TokenRepository,
+        private val observability: Observability,
+        private val targetAppStore: TargetAppStore,
+        private val reportRepository: ReportRepository,
+        private val notificationRepository: NotificationRepository,
+        private val navigationHelper: NavigationHelper,
+        private val ttiTracker: TtiTracker,
+    ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
+            ChallengeDetailState.initial,
+        ) {
+        override fun onIntent(intent: ChallengeDetailIntent) {
+            when (intent) {
+                is ChallengeDetailIntent.Load -> load(intent.challengeId)
+                ChallengeDetailIntent.RefreshSetup -> refreshSetup()
+                ChallengeDetailIntent.RegisterApps -> registerApps()
+                ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
+                ChallengeDetailIntent.Proceed -> join()
+                ChallengeDetailIntent.CloneChallenge -> clone()
+
+                ChallengeDetailIntent.OpenReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetOpened)
+                is ChallengeDetailIntent.SelectReportReason ->
+                    dispatch(ChallengeDetailReducerEvent.ReportReasonSelected(intent.reason))
+                ChallengeDetailIntent.SubmitReport -> submitReport()
+                ChallengeDetailIntent.DismissReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetDismissed)
+
+                ChallengeDetailIntent.OpenSettings ->
+                    currentState.detail?.challengeId?.let {
+                        navigationHelper.navigateByRoute(ChallengeSettingsPage(it).toRoute())
+                    }
+                ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
+                ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
+                ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
+                ChallengeDetailIntent.InviteMember -> inviteMember()
+                is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
+
+                is ChallengeDetailIntent.ShiftCalendarMonth -> shiftCalendarMonth(intent.offset)
+
+                is ChallengeDetailIntent.ToggleMute -> toggleMute(intent.muted)
+                ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
+                ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
+                is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
+                ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
+                ChallengeDetailIntent.ClaimOwner -> claimOwner()
+                ChallengeDetailIntent.OpenRanking -> openRanking()
+                is ChallengeDetailIntent.PickAppealImage -> uploadAppealImage(intent.imageUri)
+                ChallengeDetailIntent.OpenPermissionRepair ->
+                    navigationHelper.navigateByRoute(VerificationPermissionRepairPage.toRoute())
+                ChallengeDetailIntent.SubmitManualCheck -> submitManualCheck()
+                ChallengeDetailIntent.CancelManualCheck -> cancelManualCheck()
+                ChallengeDetailIntent.RefreshPermissions -> refreshPermissions()
+                ChallengeDetailIntent.DismissAppeal -> dispatch(ChallengeDetailReducerEvent.AppealReset)
+                ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
+                is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
+                ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
+                ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
+                is ChallengeDetailIntent.PromoteMember -> changeRole(intent.userId, RoleAction.PROMOTE)
+                is ChallengeDetailIntent.DemoteMember -> changeRole(intent.userId, RoleAction.DEMOTE)
+                is ChallengeDetailIntent.RequestDelegation -> requestDelegation(intent.targetUserId)
+                ChallengeDetailIntent.CancelDelegation -> cancelDelegation()
+                ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
+            }
+        }
+
+        override fun reduce(
+            state: ChallengeDetailState,
+            event: ChallengeDetailReducerEvent,
+        ): ChallengeDetailState =
+            when (event) {
+                is ChallengeDetailReducerEvent.Loading ->
+                    state.copy(isLoading = true, challengeId = event.challengeId, errorMessage = null)
+
+                is ChallengeDetailReducerEvent.Loaded ->
+                    state.copy(
+                        isLoading = false,
+                        detail = event.detail,
+                        errorMessage = null,
+                        setup = event.setup,
+                        targetAppsRegistered = event.targetAppsRegistered,
+                    )
+
+                is ChallengeDetailReducerEvent.Failed ->
+                    state.copy(isLoading = false, errorMessage = event.message)
+
+                is ChallengeDetailReducerEvent.SetupRefreshed ->
+                    state.copy(setup = event.setup, targetAppsRegistered = event.targetAppsRegistered)
+
+                is ChallengeDetailReducerEvent.WatchersLoaded -> state.copy(watchers = event.watchers)
+
+                is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
+
+                is ChallengeDetailReducerEvent.RoomLoaded -> state.copy(room = event.room)
+
+                is ChallengeDetailReducerEvent.MembersLoaded -> state.copy(members = event.members)
+
+                is ChallengeDetailReducerEvent.MemberActionLoading -> state.copy(isMemberActionLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.DelegationRequested ->
+                    state.copy(pendingDelegation = event.ticket, pendingDelegationNickname = event.targetNickname)
+
+                ChallengeDetailReducerEvent.DelegationCleared ->
+                    state.copy(pendingDelegation = null, pendingDelegationNickname = null)
+
+                is ChallengeDetailReducerEvent.MyUserIdLoaded -> state.copy(myUserId = event.userId)
+
+                is ChallengeDetailReducerEvent.Joining -> state.copy(isJoining = event.joining)
+
+                is ChallengeDetailReducerEvent.JoinBlocked ->
+                    state.copy(isJoining = false, joinBlock = event.block)
+
+                ChallengeDetailReducerEvent.JoinBlockDismissed -> state.copy(joinBlock = null)
+
+                is ChallengeDetailReducerEvent.Cloning -> state.copy(isCloning = event.cloning)
+
+                is ChallengeDetailReducerEvent.TabSelected -> state.copy(selectedTab = event.tab)
+
+                is ChallengeDetailReducerEvent.RankingScopeSelected -> state.copy(rankingScope = event.scope)
+
+                is ChallengeDetailReducerEvent.ThreadsLoading ->
+                    state.copy(
+                        isThreadsLoading = event.first,
+                        isThreadsPaging = !event.first,
+                        threadsError = null,
+                    )
+
+                is ChallengeDetailReducerEvent.ThreadsLoaded ->
+                    state.copy(
+                        isThreadsLoading = false,
+                        isThreadsPaging = false,
+                        threadsError = null,
+                        threads = if (event.reset) event.page.items else state.threads + event.page.items,
+                        threadsCursor = event.page.nextCursor,
+                    )
+
+                is ChallengeDetailReducerEvent.ThreadsFailed ->
+                    state.copy(
+                        isThreadsLoading = false,
+                        isThreadsPaging = false,
+                        threadsError = event.message,
+                    )
+
+                is ChallengeDetailReducerEvent.MuteLoaded ->
+                    state.copy(isMuted = event.muted, isMuteSubmitting = false)
+
+                is ChallengeDetailReducerEvent.MuteSubmitting -> state.copy(isMuteSubmitting = event.submitting)
+
+                is ChallengeDetailReducerEvent.CalendarMonthChanged ->
+                    // 이전 달 색이 남으면 잘못된 기록으로 읽힌다 — 목록을 비우고 다시 받는다.
+                    state.copy(calendarMonth = event.month, calendar = null)
+
+                is ChallengeDetailReducerEvent.CalendarLoading -> state.copy(isCalendarLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.CalendarLoaded ->
+                    state.copy(isCalendarLoading = false, calendar = event.calendar)
+
+                is ChallengeDetailReducerEvent.RankingLoading -> state.copy(isRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.RankingLoaded ->
+                    state.copy(isRankingLoading = false, ranking = event.ranking)
+
+                is ChallengeDetailReducerEvent.CrossRankingLoading -> state.copy(isCrossRankingLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.TodayResultLoaded -> state.copy(todayResult = event.result)
+                ChallengeDetailReducerEvent.ResultAcknowledged -> state.copy(resultAcknowledged = true)
+                is ChallengeDetailReducerEvent.AppealImageUploading -> state.copy(isUploadingAppealImage = event.uploading)
+                is ChallengeDetailReducerEvent.AppealImageUploaded -> state.copy(appealImageUrl = event.imageUrl)
+                is ChallengeDetailReducerEvent.AppealReasonRejected -> state.copy(appealReasonError = event.message)
+                is ChallengeDetailReducerEvent.ManualChecking -> state.copy(isManualChecking = event.checking)
+                is ChallengeDetailReducerEvent.PermissionsCaptured -> state.copy(permissions = event.permissions)
+                ChallengeDetailReducerEvent.AppealReset ->
+                    state.copy(appealImageUrl = null, isUploadingAppealImage = false, appealReasonError = null)
+
+                is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
+                is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
+
+                ChallengeDetailReducerEvent.ReportSheetOpened -> state.copy(isReportSheetOpen = true)
+
+                ChallengeDetailReducerEvent.ReportSheetDismissed ->
+                    // 다음에 열 때 지난 선택이 남지 않게 비운다.
+                    state.copy(
+                        isReportSheetOpen = false,
+                        selectedReportReason = null,
+                        isSubmittingReport = false,
+                        reportResult = null,
+                    )
+
+                is ChallengeDetailReducerEvent.ReportReasonSelected ->
+                    state.copy(selectedReportReason = event.reason)
+
+                is ChallengeDetailReducerEvent.SubmittingReport ->
+                    state.copy(isSubmittingReport = event.submitting)
+
+                is ChallengeDetailReducerEvent.ReportAccepted ->
+                    state.copy(isSubmittingReport = false, reportResult = event.result)
+
+                is ChallengeDetailReducerEvent.CrossRankingLoaded ->
+                    state.copy(
+                        isCrossRankingLoading = false,
+                        crossRanking =
+                            if (event.append && state.crossRanking != null) {
+                                event.ranking.copy(items = state.crossRanking.items + event.ranking.items)
+                            } else {
+                                event.ranking
+                            },
+                    )
+            }
+
+        /**
+         * 가입. 권한은 화면이 **이 호출 전에** 확보해 둔다 — 서버는 OS 권한을 게이트로 검사하지 않고,
+         * 가입 후 권한 거부를 탈퇴로 롤백하는 경로는 폐기됐다.
+         */
+        private fun join() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isJoining) return
+            val detail = currentState.detail
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.challengeJoinAttempt(
+                    challengeId = id,
+                    eligible = detail?.gate?.eligible ?: false,
+                    isFull = detail?.isFull ?: false,
+                )
+            }
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.Joining(true))
+                runCatching { challengeRepository.join(id) }
+                    .onSuccess { result ->
+                        dispatch(ChallengeDetailReducerEvent.Joining(false))
+                        // 탐색→참여 전환율의 분자. 노출·클릭과 같은 challenge_id 로 이어진다.
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.challengeJoinResult(challengeId = id, success = true)
+                        }
+                        // 사이클 중간 입장이면 언제부터 판정되는지 알려준다(사이클은 1주 고정).
+                        result.countFromCycle?.let {
+                            emitEffect(ChallengeDetailEffect.ShowMessage("${'$'}it부터 인증이 집계돼요"))
+                        }
+                        load(id, force = true)
+                    }.onFailure { error ->
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.challengeJoinResult(
+                                challengeId = id,
+                                success = false,
+                                // 게이트 차단 분포를 보려면 reason 이 곧 에러 코드다.
+                                errorCode = (error as? JoinBlockedException)?.reason?.value ?: "UNKNOWN",
+                            )
+                        }
+                        when (error) {
+                            is JoinBlockedException -> {
+                                // ALREADY_JOINED 는 알릴 게 없다 — 조용히 방 상세로 전환한다.
+                                if (error.reason?.isAlreadyJoined == true) {
+                                    dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                    load(id, force = true)
+                                } else {
+                                    dispatch(
+                                        ChallengeDetailReducerEvent.JoinBlocked(
+                                            JoinBlock(reason = error.reason, rejoinAvailableAt = error.rejoinAvailableAt),
+                                        ),
+                                    )
+                                    // 정원은 수시로 변한다 — 막힌 순간의 상태를 다시 받아 뱃지를 맞춘다.
+                                    if (error.reason?.needsRefresh == true) load(id, force = true)
+                                }
+                            }
+
+                            is ChallengeNotFoundException -> {
+                                dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                emitEffect(ChallengeDetailEffect.ShowMessage(error.message.orEmpty()))
+                                navigationHelper.navigateToBack()
+                            }
+
+                            else -> {
+                                dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "참여하지 못했어요"))
+                            }
+                        }
+                    }
+            }
+        }
+
+        /** 복제 → 생성 확인 화면. 초안은 생성 모듈 draft 와 동일 스키마라 확인 화면을 그대로 쓴다. */
+        private fun clone() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isCloning) return
+            observability.log(Channel.BUSINESS) { ChallengeEvents.challengeCloneClick(id) }
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.Cloning(true))
+                runCatching { exploreRepository.clone(id) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.Cloning(false))
+                        navigationHelper.navigateTo(ChallengeConfirmPage)
+                    }.onFailure { error ->
+                        dispatch(ChallengeDetailReducerEvent.Cloning(false))
+                        val message =
+                            when (error) {
+                                is ChallengeNotCloneableException -> error.message
+                                is ChallengeNotFoundException -> error.message
+                                else -> error.message ?: "복제하지 못했어요"
+                            }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(message.orEmpty()))
+                    }
+            }
+        }
+
+        /** 차단 시트의 CTA. 사유마다 데려갈 곳이 다르다. */
+        private fun followJoinBlockAction() {
+            val reason = currentState.joinBlock?.reason
+            dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
+            when (reason) {
+                JoinBlockReason.FREE_LIMIT -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
+                JoinBlockReason.TIER_GATE -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
+                JoinBlockReason.FULL -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
+                JoinBlockReason.CHALLENGE_COMPLETED -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
+                else -> Unit
+            }
+        }
+
+        // 상세 진입은 전환 분모라 화면당 1회다. 가입 후 강제 재조회에서 또 나가면 분모가 부풀어 오른다.
+        private var detailViewLogged = false
+
+        // 방 진입도 같은 이유로 화면당 1회다.
+        private var roomViewLogged = false
+
+        // 빈 피드는 같은 화면에서 여러 번 그려질 수 있어 노출 로그는 한 번만 남긴다.
+        private var emptyFeedLogged = false
+
+        private fun load(
+            challengeId: String,
+            force: Boolean = false,
+        ) {
+            // 정원·자격은 수시로 변한다 — 가입 성공·실패 직후에는 캐시를 무시하고 다시 받는다.
+            if (!force && currentState.detail?.challengeId == challengeId) return
+            // 현재 사용자 ID 는 멤버 목록의 "내 행" 식별용 — 실패해도 흡수(본인 한정 액션만 숨겨진다).
+            if (currentState.myUserId == null) {
+                viewModelScope.launch {
+                    val userId = runCatching { tokenRepository.getUserId() }.getOrNull()
+                    dispatch(ChallengeDetailReducerEvent.MyUserIdLoaded(userId))
+                }
+            }
+            viewModelScope.launch {
+                // 화면 진입 → 사용 가능 상태까지의 TTI. 네비게이션 시 이전 세션은 ScreenTracker 가 정리한다.
+                ttiTracker.start(ChallengeDetailTtiPage, ScreenKey(AppRoutes.CHALLENGE_DETAIL))
+                dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
+                ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
+                runCatching { challengeRepository.getChallenge(challengeId) }
+                    .onSuccess { detail ->
+                        ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
+                        ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
+                        // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
+                        val setup = runCatching { challengeRepository.getSetupInfo(challengeId) }.getOrNull()
+                        dispatch(
+                            ChallengeDetailReducerEvent.Loaded(
+                                detail = detail,
+                                setup = setup,
+                                targetAppsRegistered = targetAppStore.isRegistered(challengeId),
+                            ),
+                        )
+                        // 상세→참여 전환의 분모. 재조회(가입 후 force)에서는 다시 보내지 않는다.
+                        if (!detailViewLogged) {
+                            detailViewLogged = true
+                            observability.log(Channel.BUSINESS) {
+                                ChallengeEvents.challengeDetailView(
+                                    challengeId = detail.challengeId,
+                                    // 카드에서 넘어온 경로는 아직 라우트 인자로 전달되지 않는다(오픈 이슈).
+                                    source = null,
+                                    eligible = detail.gate.eligible,
+                                    isFull = detail.isFull,
+                                )
+                            }
+                        }
+                        // 상세가 화면 상태로 반영된 시점 = 사용 가능. 감시자·방 홈은 부가 섹션이라 기다리지 않는다.
+                        ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
+                        ttiTracker.complete(ChallengeDetailTtiPage)
+                        // 감시자는 챌린지 × 참여자 단위 — 항상 조회를 시도하고, 성공하면(=참여자)
+                        // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
+                        loadWatchers(challengeId)
+                        // 방 홈은 그룹 챌린지의 ACTIVE 멤버만 — 조회 성공 시 방 홈으로 확장 렌더링.
+                        if (detail.mode.isGroup) loadRoom(challengeId)
+                    }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
+            }
+        }
+
+        // 등록 화면에서 돌아왔을 때 셋업 상태(앵커 바인딩 여부·앱 등록 여부)를 재확인해 버튼 모드를 갱신한다.
+        private fun refreshSetup() {
+            val id = currentState.detail?.challengeId ?: return
+            viewModelScope.launch {
+                val setup = runCatching { challengeRepository.getSetupInfo(id) }.getOrNull() ?: currentState.setup
+                dispatch(
+                    ChallengeDetailReducerEvent.SetupRefreshed(
+                        setup = setup,
+                        targetAppsRegistered = targetAppStore.isRegistered(id),
+                    ),
+                )
+            }
+            // 다른 화면에서 돌아왔을 때 방 홈이 옛 상태로 남지 않도록 함께 재조회한다.
+            if (currentState.room != null) loadRoom(id)
+        }
+
+        // 비멤버/솔로의 403 등 실패는 흡수 — room 이 null 이면 기존 공개 상세 그대로 렌더링된다.
+        private fun loadRoom(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { roomRepository.getRoom(challengeId) }
+                    .onSuccess { room ->
+                        dispatch(ChallengeDetailReducerEvent.RoomLoaded(room))
+                        // 방 주간 방문율의 분자. 재조회(가입 후 force)에서 또 나가면 분자가 부풀어 오른다.
+                        if (!roomViewLogged) {
+                            roomViewLogged = true
+                            observability.log(Channel.BUSINESS) {
+                                ChallengeEvents.roomView(
+                                    challengeId = challengeId,
+                                    myRole = room.myRole.value,
+                                    ownerType = room.ownerType.value,
+                                )
+                            }
+                        }
+                    }
+            }
+            loadMembers(challengeId)
+            // room·threads 는 병렬로 받는다 — 한쪽이 늦거나 실패해도 다른 쪽 렌더를 막지 않는다.
+            loadThreads(next = false)
+            // 방 안 랭킹은 랭킹 탭뿐 아니라 정보 탭 헤더의 "내 달성률" 원천이라 진입 시 함께 받는다.
+            loadRanking(challengeId)
+            loadTodayResult(challengeId)
+            loadCalendar(challengeId)
+            loadMuteState(challengeId)
+        }
+
+        /**
+         * 이 방이 음소거인지. **실패를 흡수한다** — 알림 설정을 못 읽으면 토글을 아예 그리지 않는다.
+         * 모르는 상태를 「켜짐」으로 그리면 사용자가 껐다고 믿은 방에서 푸시가 계속 온다.
+         */
+        private fun loadMuteState(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { notificationRepository.getSettings() }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(it.isMuted(challengeId)))
+                    }
+            }
+        }
+
+        /**
+         * 음소거 전환. 서버가 멱등(204)이라 재시도해도 안전하다.
+         *
+         * **낙관적으로 먼저 바꾸지 않는다** — 실패하면 껐다고 믿은 방에서 푸시가 계속 오는데,
+         * 화면만 꺼진 것처럼 보이면 사용자가 원인을 찾을 길이 없다.
+         */
+        private fun toggleMute(muted: Boolean) {
+            val challengeId = currentState.detail?.challengeId ?: return
+            if (currentState.isMuteSubmitting) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
+                runCatching { notificationRepository.setMuted(challengeId, muted) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted)) }
+                    .onFailure {
+                        dispatch(ChallengeDetailReducerEvent.MuteSubmitting(false))
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "알림 설정을 바꾸지 못했어요"))
+                    }
+            }
+        }
+
+        /**
+         * 솔로 상세의 월 캘린더 (Figma 1134:1930).
+         *
+         * **실패를 흡수한다** — 부가 정보이고, 참여한 적 없는 방이면 서버가 403 으로 막는 것이
+         * 정상이다. 값이 없으면 캘린더는 날짜만 그린다.
+         *
+         * 그룹 방에서는 부르지 않는다. 같은 자리를 랭킹·피드가 쓰므로 응답을 받아도 그릴 데가 없다.
+         */
+        private fun loadCalendar(challengeId: String) {
+            if (currentState.detail?.mode?.isGroup != false) return
+            val month =
+                currentState.calendarMonth ?: currentMonth().also {
+                    dispatch(ChallengeDetailReducerEvent.CalendarMonthChanged(it))
+                }
+            if (currentState.isCalendarLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.CalendarLoading(true))
+                runCatching { roomRepository.getCalendar(challengeId, month) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.CalendarLoaded(it)) }
+                    .onFailure { dispatch(ChallengeDetailReducerEvent.CalendarLoading(false)) }
+            }
+        }
+
+        /** 월 이동. 보고 있는 달이 없으면 이번 달을 기준으로 센다. */
+        private fun shiftCalendarMonth(offset: Long) {
+            val challengeId = currentState.detail?.challengeId ?: return
+            val base = currentState.calendarMonth ?: currentMonth()
+            val moved =
+                runCatching { YearMonth.parse(base).plusMonths(offset).toString() }.getOrNull() ?: return
+            dispatch(ChallengeDetailReducerEvent.CalendarMonthChanged(moved))
+            loadCalendar(challengeId)
+        }
+
+        /**
+         * 이번 달 `YYYY-MM`.
+         *
+         * 기기 타임존으로 센다 — 판정 경계는 KST 지만 이 값은 "어느 달을 펼쳐 보여줄까"일 뿐이고,
+         * 여기서 KST 로 강제하면 해외에서 달력이 실제 오늘과 다른 달로 열린다.
+         */
+        private fun currentMonth(): String = YearMonth.now().toString()
+
+        /**
+         * 오늘 인증 결과(인증 모듈). room 의 `myTodayStatus` 는 상태 하나뿐이라 인증 시각·실패 사유·
+         * 연속 일수·이의 잔여를 여기서 보충한다. **실패는 흡수한다** — 부가 정보라 없으면 room 값으로
+         * 떨어질 뿐 방을 못 그릴 이유가 없다.
+         */
+        private fun loadTodayResult(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { verificationRepository.getTodayResult(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.TodayResultLoaded(it)) }
+            }
+        }
+
+        /**
+         * 봇방장 방 클레임. 선착순이라 **밀리는 것이 정상 결과**다 — 오류로 알리지 않고 안내한 뒤
+         * 방을 다시 받아 누가 방장이 됐는지 화면에 반영한다.
+         */
+        private fun claimOwner() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isClaimingOwner) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ClaimingOwner(true))
+                runCatching { challengeRepository.claimOwner(id) }
+                    .onSuccess { result ->
+                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
+                        observability.log(Channel.BUSINESS) { ChallengeEvents.ownerClaim(challengeId = id, success = true) }
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                // 면책 기간을 함께 알린다 — "3일 안엔 빠져도 감점 없다"가 손드는 근거였다.
+                                if (result.graceUntil != null) {
+                                    "방장이 되었어요. 3일 안에는 나가도 감점되지 않아요"
+                                } else {
+                                    "방장이 되었어요"
+                                },
+                            ),
+                        )
+                        reloadRoom(id)
+                    }.onFailure { error ->
+                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
+                        observability.log(Channel.BUSINESS) {
+                            ChallengeEvents.ownerClaim(
+                                challengeId = id,
+                                success = false,
+                                errorCode = (error as? OwnerAlreadyExistsException)?.let { "OWNER_ALREADY_EXISTS" },
+                            )
+                        }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "방장이 되지 못했어요"))
+                        // 경합에서 밀렸으면 누가 방장인지 화면이 틀린 상태다 — 무조건 다시 받는다.
+                        if (error is OwnerAlreadyExistsException) reloadRoom(id)
+                    }
+            }
+        }
+
+        /** 방 상태만 다시 받는다(클레임·권한 변경 후). 상세·피드는 그대로 두어 스크롤을 잃지 않는다. */
+        private fun reloadRoom(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { roomRepository.getRoom(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
+            }
+        }
+
+        /** 탭 전환. 방 밖 랭킹처럼 진입 시 받지 않은 데이터는 처음 열릴 때 조회한다. */
+        private fun selectTab(tab: RoomTab) {
+            if (currentState.selectedTab == tab) return
+            dispatch(ChallengeDetailReducerEvent.TabSelected(tab))
+            // 피드가 비어 있는 채로 실패해 있었다면 탭을 여는 김에 다시 시도한다.
+            if (tab == RoomTab.FEED && currentState.threads.isEmpty() && !currentState.isThreadsLoading) {
+                loadThreads(next = false)
+            }
+            if (tab == RoomTab.RANKING) {
+                ensureRankingScopeLoaded(currentState.rankingScope)
+                logRankingView(currentState.rankingScope)
+            }
+        }
+
+        private fun selectRankingScope(scope: RankingScope) {
+            if (currentState.rankingScope == scope) return
+            dispatch(ChallengeDetailReducerEvent.RankingScopeSelected(scope))
+            ensureRankingScopeLoaded(scope)
+            logRankingView(scope)
+        }
+
+        /** 랭킹 조회. my_rank_null 이 등재 기준(10회·50회)이 너무 높은지 판단하는 근거다. */
+        private fun logRankingView(scope: RankingScope) {
+            val (viewScope, myRankNull) =
+                when (scope) {
+                    RankingScope.MEMBER -> RankingViewScope.IN_ROOM to (currentState.ranking?.me?.rank == null)
+                    RankingScope.ROOM -> RankingViewScope.CROSS to (currentState.crossRanking?.myChallenge?.rank == null)
+                }
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.rankingView(scope = viewScope, myRankNull = myRankNull)
+            }
+        }
+
+        /**
+         * 피드 페이지 로깅. 첫 페이지는 진입(room_view)에 이미 담기므로 **이어받기부터** 센다 —
+         * 보려는 건 "얼마나 더 내려갔는가"이지 화면을 열었는지가 아니다.
+         * 빈 피드는 봇방장 방 비중을 보려고 따로 남긴다(기능 스펙 리스크 #2).
+         */
+        private fun logThreadPage(
+            isFirstPage: Boolean,
+            pageItemCount: Int,
+        ) {
+            if (isFirstPage) {
+                val ownerType = currentState.room?.ownerType ?: return
+                if (pageItemCount == 0 && !emptyFeedLogged) {
+                    emptyFeedLogged = true
+                    observability.log(Channel.BUSINESS) {
+                        ChallengeEvents.roomEmptyStateView(ownerType.value)
+                    }
+                }
+                return
+            }
+            observability.log(Channel.BUSINESS) {
+                ChallengeEvents.threadScroll(
+                    // 첫 페이지가 0 번이므로 누적 개수에서 이번 페이지를 뺀 몫이 곧 페이지 번호다.
+                    pageIndex =
+                        ((currentState.threads.size - pageItemCount) / ThreadPolicy.PAGE_SIZE)
+                            .coerceAtLeast(0),
+                    itemCount = pageItemCount,
+                )
+            }
+        }
+
+        private fun ensureRankingScopeLoaded(scope: RankingScope) {
+            val id = currentState.detail?.challengeId ?: return
+            when (scope) {
+                RankingScope.MEMBER -> if (currentState.ranking == null) loadRanking(id)
+                RankingScope.ROOM -> if (currentState.crossRanking == null) loadCrossRanking(next = false)
+            }
+        }
+
+        /**
+         * 피드 조회. [next] 면 커서를 이어 받고, 아니면 첫 페이지부터 받는다.
+         * [retry] 는 실패 후 재시도라 진행 중 가드(threadsError)를 통과시켜야 한다.
+         */
+        private fun loadThreads(
+            next: Boolean,
+            retry: Boolean = false,
+        ) {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            if (currentState.isThreadsLoading || currentState.isThreadsPaging) return
+            // 마지막 페이지까지 받은 뒤의 추가 요청은 무시한다 — 커서 없이 첫 페이지를 다시 받으면 중복된다.
+            if (next && !retry && currentState.threadsCursor == null) return
+            val cursor = if (next) currentState.threadsCursor else null
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ThreadsLoading(first = cursor == null))
+                runCatching { roomRepository.getThreads(id, cursor = cursor) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = cursor == null))
+                        logThreadPage(isFirstPage = cursor == null, pageItemCount = it.items.size)
+                    }.onFailure { error ->
+                        when (error) {
+                            // 커서가 만료·변조됐다. 이어받기를 포기하고 첫 페이지부터 다시 세운다.
+                            is ThreadCursorInvalidException -> {
+                                dispatch(ChallengeDetailReducerEvent.ThreadsLoading(first = true))
+                                runCatching { roomRepository.getThreads(id, cursor = null) }
+                                    .onSuccess {
+                                        dispatch(ChallengeDetailReducerEvent.ThreadsLoaded(page = it, reset = true))
+                                    }.onFailure {
+                                        dispatch(
+                                            ChallengeDetailReducerEvent.ThreadsFailed(
+                                                it.message ?: "피드를 불러오지 못했어요",
+                                            ),
+                                        )
+                                    }
+                            }
+
+                            else ->
+                                dispatch(
+                                    ChallengeDetailReducerEvent.ThreadsFailed(error.message ?: "피드를 불러오지 못했어요"),
+                                )
+                        }
+                    }
+            }
+        }
+
+        // 랭킹은 부가 정보라 실패해도 방 렌더를 막지 않는다 — 화면은 값이 없으면 빈 상태를 그린다.
+        private fun loadRanking(challengeId: String) {
+            if (currentState.isRankingLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.RankingLoading(true))
+                runCatching { roomRepository.getRanking(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RankingLoaded(it)) }
+                    .onFailure { dispatch(ChallengeDetailReducerEvent.RankingLoading(false)) }
+            }
+        }
+
+        /** 방 밖 랭킹. 그룹·솔로는 서로 비교하지 않으므로 이 방의 모드로 조회한다. */
+        private fun loadCrossRanking(next: Boolean) {
+            val detail = currentState.detail ?: return
+            if (currentState.isCrossRankingLoading) return
+            val cursor = if (next) currentState.crossRanking?.nextCursor ?: return else null
+            val mode = if (detail.mode.isGroup) RankingMode.GROUP else RankingMode.SOLO
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.CrossRankingLoading(true))
+                runCatching {
+                    roomRepository.getCrossRanking(
+                        mode = mode,
+                        challengeId = detail.challengeId,
+                        cursor = cursor,
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.CrossRankingLoaded(ranking = it, append = cursor != null))
+                }.onFailure { dispatch(ChallengeDetailReducerEvent.CrossRankingLoading(false)) }
+            }
+        }
+
+        // 멤버 목록은 방 홈 부가 정보 — 실패해도(권한 등) 방 홈 렌더를 막지 않도록 흡수한다.
+        private fun loadMembers(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { challengeRepository.getMembers(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MembersLoaded(it)) }
+            }
+        }
+
+        /** 탈퇴(본인). 성공 시 안내 후 이전 화면으로. OWNER 등 실패 사유는 서버 메시지로 노출. */
+        private fun leaveChallenge() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { challengeRepository.leaveChallenge(id) }
+                    .onSuccess { result ->
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                if (result.penaltyApplied) "탈퇴했어요. 진행 이력이 있어 탈퇴 패널티가 적용됐어요" else "챌린지에서 나갔어요",
+                            ),
+                        )
+                        navigationHelper.navigateToBack()
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "탈퇴에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 삭제(방장). 참여자 0명일 때만 가능 — 실패 사유는 서버 메시지로 노출. */
+        private fun deleteChallenge() {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { challengeRepository.delete(id) }
+                    .onSuccess { result ->
+                        emitEffect(
+                            ChallengeDetailEffect.ShowMessage(
+                                if (result.penaltyApplied) "챌린지를 삭제했어요. 진행 이력이 있어 패널티가 적용됐어요" else "챌린지를 삭제했어요",
+                            ),
+                        )
+                        navigationHelper.navigateToBack()
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "삭제에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 공동 관리자 임명/해제(방장). 성공 시 멤버 목록을 재조회한다. */
+        private fun changeRole(
+            userId: String,
+            action: RoleAction,
+        ) {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { challengeRepository.changeMemberRole(id, userId, action) }
+                    .onSuccess {
+                        val message = if (action == RoleAction.PROMOTE) "공동 관리자로 임명했어요" else "공동 관리자를 해제했어요"
+                        emitEffect(ChallengeDetailEffect.ShowMessage(message))
+                        loadMembers(id)
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "권한 변경에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 방장 위임 요청(방장 → 공동 관리자). 생성된 티켓을 배너로 노출한다. */
+        private fun requestDelegation(targetUserId: String) {
+            val id = currentState.detail?.challengeId ?: return
+            if (currentState.isMemberActionLoading) return
+            val nickname =
+                currentState.members
+                    ?.members
+                    ?.firstOrNull { it.userId == targetUserId }
+                    ?.nickname
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { challengeRepository.requestDelegation(id, targetUserId) }
+                    .onSuccess { ticket ->
+                        dispatch(ChallengeDetailReducerEvent.DelegationRequested(ticket, nickname))
+                        emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임을 요청했어요. 상대가 수락하면 방장이 넘어가요"))
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "방장 위임 요청에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        /** 대기 중인 방장 위임 요청 취소(요청 OWNER). */
+        private fun cancelDelegation() {
+            val id = currentState.detail?.challengeId ?: return
+            val delegationId = currentState.pendingDelegation?.delegationId ?: return
+            if (currentState.isMemberActionLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
+                runCatching { challengeRepository.respondDelegation(id, delegationId, DelegationAction.CANCEL) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.DelegationCleared)
+                        emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임 요청을 취소했어요"))
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "위임 요청 취소에 실패했어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
+            }
+        }
+
+        private fun openRanking() {
+            val id = currentState.detail?.challengeId ?: return
+            navigationHelper.navigateByRoute(ChallengeRankingPage(challengeId = id).toRoute())
+        }
+
+        /**
+         * 판정 결과 모달 확인(명세 POST /verifications/{id}/ack).
+         *
+         * **모달은 ack 결과와 무관하게 먼저 닫는다.** 실패해도 사용자가 할 수 있는 일이 없고, 서버는
+         * 다음 진입에 같은 미확인 판정을 다시 내려준다 — 모달이 사용자를 가두는 상황을 만들지 않는
+         * 것이 계약이다(프론트엔드 테크스펙 4-1).
+         */
+        private fun acknowledgeResult() {
+            val verificationId = currentState.todayResult?.unacknowledged?.verificationId
+            dispatch(ChallengeDetailReducerEvent.ResultAcknowledged)
+            if (verificationId == null) return
+            viewModelScope.launch {
+                // 조용히 실패하고 1회만 자동 재시도한다(프론트엔드 테크스펙 4-6).
+                runCatching { verificationRepository.acknowledgeResult(verificationId) }
+                    .onFailure { runCatching { verificationRepository.acknowledgeResult(verificationId) } }
+            }
+        }
+
+        /**
+         * 오늘 실패 건 이의 제기(인증 정책 §5). **판정 단계가 없다** — 형식 요건만 맞으면 즉시 인용이라
+         * "접수했어요"가 아니라 결과를 바로 알린다. 요건 미달·기한 경과는 서버가 접수 자체를 막는다.
+         */
+        private fun submitAppeal(reason: String) {
+            val verificationId = currentState.todayResult?.verificationId ?: return
+            val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
+            if (currentState.isSubmittingAppeal) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.AppealReasonRejected(null))
+                dispatch(ChallengeDetailReducerEvent.SubmittingAppeal(true))
+                runCatching {
+                    verificationRepository.submitAppeal(
+                        verificationId = verificationId,
+                        reason = reason,
+                        imageUrl = currentState.appealImageUrl,
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.AppealReset)
+                    emitEffect(ChallengeDetailEffect.ShowMessage("이의가 받아들여졌어요. 기록을 되돌렸어요"))
+                    loadTodayResult(challengeId)
+                }.onFailure { error ->
+                    handleAppealFailure(error, challengeId)
+                }
+                dispatch(ChallengeDetailReducerEvent.SubmittingAppeal(false))
+            }
+        }
+
+        /**
+         * 이의 제출 실패 분기(프론트엔드 테크스펙 4-7).
+         *
+         * `NOT_FAILED` 는 **오류로 보여주지 않는다** — 이미 정정된 건이라 사용자가 할 일이 없다.
+         * 조용히 상태만 다시 읽으면 카드가 성공으로 바뀌면서 스스로 설명된다.
+         */
+        private fun handleAppealFailure(
+            error: Throwable,
+            challengeId: String,
+        ) {
+            when (error) {
+                is InvalidAppealReasonException ->
+                    dispatch(ChallengeDetailReducerEvent.AppealReasonRejected(error.message))
+
+                is AppealWindowClosedException -> {
+                    emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의 신청 기한이 지났어요"))
+                    // 기한이 지났으면 진입점 자체가 사라져야 한다.
+                    dispatch(ChallengeDetailReducerEvent.AppealReset)
+                    loadTodayResult(challengeId)
+                }
+
+                is AppealNotFailedException -> {
+                    dispatch(ChallengeDetailReducerEvent.AppealReset)
+                    loadTodayResult(challengeId)
+                }
+
+                else -> emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "이의를 접수하지 못했어요"))
+            }
+        }
+
+        /**
+         * 수동 방 오늘 인증 체크(명세 POST /challenges/{id}/verifications).
+         *
+         * 제출 즉시 확정이라 "접수했어요"가 아니라 결과를 바로 알린다. 실패하면 today 를 다시 읽어
+         * **화면 상태를 서버 사실로 되돌린다** — 눌렀는데 안 된 채 체크된 것처럼 남으면 사용자는
+         * 인증한 줄 알고 하루를 넘긴다.
+         */
+        private fun submitManualCheck() {
+            if (currentState.isManualChecking) return
+            val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(true))
+                runCatching { verificationRepository.submitManual(challengeId) }
+                    .onSuccess { emitEffect(ChallengeDetailEffect.ShowMessage("오늘 인증을 체크했어요")) }
+                    .onFailure { emitEffect(ChallengeDetailEffect.ShowMessage(manualCheckMessage(it))) }
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(false))
+                loadTodayResult(challengeId)
+            }
+        }
+
+        /**
+         * 수동 체크 해제(명세 DELETE /verifications/{id}). 당일(KST) 안에서만 된다.
+         *
+         * 잘못 누른 체크를 되돌릴 경로가 없으면 사용자는 하루를 거짓으로 남긴다.
+         */
+        private fun cancelManualCheck() {
+            if (currentState.isManualChecking) return
+            val verificationId = currentState.todayResult?.verificationId ?: return
+            val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(true))
+                runCatching { verificationRepository.cancelManual(verificationId) }
+                    .onSuccess { emitEffect(ChallengeDetailEffect.ShowMessage("오늘 체크를 해제했어요")) }
+                    .onFailure { emitEffect(ChallengeDetailEffect.ShowMessage(manualCheckMessage(it))) }
+                dispatch(ChallengeDetailReducerEvent.ManualChecking(false))
+                loadTodayResult(challengeId)
+            }
+        }
+
+        /** 수동 체크 실패 문구. 셋 다 사용자가 아는 사실이 달라 같은 말로 뭉개지 않는다. */
+        private fun manualCheckMessage(error: Throwable): String =
+            when (error) {
+                is AlreadyVerifiedException -> "오늘은 이미 인증했어요"
+                is InvalidTargetDateException -> "오늘이 지나 체크할 수 없어요"
+                is CancelWindowClosedException -> "오늘이 지나 해제할 수 없어요"
+                else -> error.message ?: "잠시 후 다시 시도해 주세요"
+            }
+
+        /** 권한 현황을 OS 에 다시 묻는다. 실패하면 직전 값을 유지한다 — 모른다고 참여를 막지 않는다. */
+        private fun refreshPermissions() {
+            viewModelScope.launch {
+                runCatching { permissionStatusProvider.capture() }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.PermissionsCaptured(it)) }
+            }
+        }
+
+        /**
+         * 증빙 사진 업로드(명세 POST /appeals/images).
+         *
+         * 실패해도 제출을 막지 않는다 — 사진은 선택 항목이고 진위 확인에 쓰이지도 않는다. 그래서
+         * "사진 없이도 낼 수 있다"를 함께 알린다.
+         */
+        private fun uploadAppealImage(imageUri: String) {
+            if (currentState.isUploadingAppealImage) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.AppealImageUploading(true))
+                runCatching { verificationRepository.uploadAppealImage(imageUri) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.AppealImageUploaded(it)) }
+                    .onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage("사진을 올리지 못했어요. 사진 없이도 제출할 수 있어요"))
+                    }
+                dispatch(ChallengeDetailReducerEvent.AppealImageUploading(false))
+            }
+        }
+
+        private fun registerApps() {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
+        }
+
+        private fun loadWatchers(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { watcherRepository.getWatchers(challengeId) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.WatchersLoaded(it)) }
+            }
+        }
+
+        /**
+         * 멤버 초대 링크 발급 → 카카오톡 공유. 비공개 그룹 방의 방장만 도달한다(화면이 버튼을 가린다).
+         *
+         * 발급 실패는 서버 문구를 그대로 쓴다 — `NOT_PRIVATE_CHALLENGE` 처럼 화면이 이미 막았어야
+         * 하는 경우라, 여기서 다시 번역할 문구가 없다.
+         */
+        private fun inviteMember() {
+            val detail = currentState.detail ?: return
+            viewModelScope.launch {
+                runCatching { challengeRepository.createInvitation(detail.challengeId) }
+                    .onSuccess {
+                        emitEffect(
+                            ChallengeDetailEffect.ShareMemberInvite(
+                                challengeTitle = detail.title,
+                                inviteUrl = it.inviteUrl,
+                            ),
+                        )
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "초대 링크를 만들지 못했어요"))
+                    }
+            }
+        }
+
+        /**
+         * 내 감시자 초대 생성 → 본인 카카오톡 공유(스펙: 초대 전달은 사용자 본인 채널로만).
+         * 무료 한도(참여자 기준 3명) 초과는 구독 안내 메시지로 분기한다.
+         */
+        private fun inviteWatcher() {
+            val detail = currentState.detail ?: return
+            if (currentState.isInvitingWatcher) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.InvitingWatcher(true))
+                runCatching { watcherRepository.createInvitation(detail.challengeId) }
+                    .onSuccess { invitation ->
+                        emitEffect(
+                            ChallengeDetailEffect.ShareWatcherInvite(
+                                card = invitation.inviteCard(challengeTitle = detail.title),
+                                inviteUrl = invitation.inviteUrl,
+                            ),
+                        )
+                        loadWatchers(detail.challengeId)
+                    }.onFailure { throwable ->
+                        val message =
+                            if (throwable is WatcherLimitExceededException) {
+                                "무료 감시자 ${WATCHER_FREE_LIMIT}명을 모두 사용했어요. 구독하면 무제한으로 추가할 수 있어요"
+                            } else {
+                                throwable.message ?: "감시자 초대에 실패했어요"
+                            }
+                        emitEffect(ChallengeDetailEffect.ShowMessage(message))
+                    }
+                dispatch(ChallengeDetailReducerEvent.InvitingWatcher(false))
+            }
+        }
+
+        private fun registerAnchor() {
+            val id = currentState.detail?.challengeId ?: currentState.challengeId
+            if (id.isBlank()) return
+            // GPS 루틴 좌표 바인딩(verification/location) 으로 이동. 멤버 키(지오펜스 requestId)는
+            // verification 이 세션 userId 와 challengeId 로 파생한다.
+            // 로컬 등록한 대상 앱을 함께 실어보내, 앵커 등록 화면이 setup 제출 시 앵커와 같이 전송하게 한다.
+            navigationHelper.navigateByRoute(
+                NavRoute(
+                    AppRoutes.VERIFICATION_LOCATION,
+                    mapOf(
+                        "challengeId" to id,
+                        "defaultRadiusM" to "500.0",
+                        "dwellMinutes" to "60",
+                        "targetPackages" to targetAppStore.registered(id).joinToString(","),
+                    ),
+                ),
+            )
+        }
+
+        /**
+         * 챌린지 신고. 사유 제약(부정 인증 의심 불가)은 [ReportTarget.Challenge] 가 갖고 있으므로
+         * 여기서 다시 검사하지 않는다 — 두 곳에서 검사하면 한쪽만 고쳐진다.
+         *
+         * 실패해도 시트를 닫지 않는다. 접수가 안 됐는데 닫히면 사용자는 신고된 줄 안다.
+         */
+        private fun submitReport() {
+            val challengeId = currentState.detail?.challengeId ?: return
+            val reason = currentState.selectedReportReason ?: return
+            // 진행 중이거나 이미 접수된 뒤면 보내지 않는다. 접수는 전건 적재라 한 번 더 나가면
+            // 신고가 한 건 더 쌓인다 — 진행 플래그만 보면 첫 접수가 끝난 직후의 두 번째 탭이 통과한다.
+            if (currentState.isSubmittingReport || currentState.reportResult != null) return
+
+            dispatch(ChallengeDetailReducerEvent.SubmittingReport(true))
+            viewModelScope.launch {
+                runCatching {
+                    reportRepository.report(
+                        ReportTarget.Challenge(
+                            challengeId = challengeId,
+                            reason = reason,
+                            context = ReportContext.CHALLENGE_DETAIL,
+                        ),
+                    )
+                }.onSuccess {
+                    dispatch(ChallengeDetailReducerEvent.ReportAccepted(it))
+                }.onFailure {
+                    dispatch(ChallengeDetailReducerEvent.SubmittingReport(false))
+                    emitEffect(ChallengeDetailEffect.ShowMessage(it.reportMessage()))
+                }
+            }
+        }
+    }
+
+/**
+ * 카톡 공유 카드 문구. 초대자(나)의 닉네임이 들어간 스펙 메시지 ① 문구는 토큰 사용자를 아는
+ * 서버 kakaoShare 페이로드가 담당하고, 없을 때만 닉네임 없는 일반 문구로 폴백한다.
+ * (챌린지 생성자 닉네임을 쓰면 안 된다 — 초대자는 참여자 본인이다.)
+ */
+private fun WatcherInvitation.inviteCard(challengeTitle: String): WatcherInviteCard =
+    kakaoShare
+        ?: WatcherInviteCard(
+            title = "당신을 루틴 감시자로 초대했어요",
+            description = "[$challengeTitle]에서 약속을 지키는지 지켜봐 주세요. 실패하면 알림이 가요.",
+            buttonLabel = "수락하기",
+        )
+
+/**
+ * 신고 실패를 사용자 문구로 옮긴다. 정지는 재시도로 풀리지 않으므로 다시 시도를 권하지 않는다.
+ */
+private fun Throwable.reportMessage(): String =
+    when ((this as? ReportException)?.failure) {
+        ReportFailure.SUSPENDED -> "지금은 신고 기능을 사용할 수 없어요."
+        ReportFailure.ACCOUNT_LOCKED -> "지금은 둘러보기만 할 수 있어요."
+        ReportFailure.TARGET_NOT_FOUND -> "이미 사라진 챌린지예요."
+        ReportFailure.NETWORK -> "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요."
+        else -> "신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요."
+    }

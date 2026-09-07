@@ -1,23 +1,76 @@
 package com.ruleup.android_ruleup.deeplink
 
 import android.net.Uri
-import android.util.Log
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
-import com.ruleup.domain.IntroPromisePage
+import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
+import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
+import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.observability.domain.api.Observability
+import com.ruleup.observability.domain.api.w
+import com.ruleup.onboarding.domain.navigation.SplashPage
 
 private const val TAG = "[DeepLink]"
 
+// App Links 경로 규약.
+// - /app/{path}?{args} : 앱 화면 직결(푸시 알림 등). 화면이 늘어도 매니페스트를 고치지 않도록 접두사 하나로 묶는다.
+// - /inv/{code}        : 친구 초대. 화면이 아니라 "앱 실행"으로만 받는다.
+// - /c/{token}         : 챌린지 멤버 초대 — 비공개 방의 유일한 입장 경로.
+// - /w/{token}         : 감시자 초대 — 인앱 수락 화면으로 연결한다(웹 동의는 폐지).
+private const val APP_SEGMENT = "app"
+private const val FRIEND_INVITE_SEGMENT = "inv"
+private const val WATCHER_INVITE_SEGMENT = "w"
+private const val RULEUP_SCHEME = "ruleup"
+private const val CHALLENGE_INVITE_SEGMENT = "c"
+
 /**
- * App Link 의 [Uri] 를 [NavRoute] 로 변환한다.
- * - path: pathSegments 를 슬래시로 합쳐 등록된 PATH 와 동일한 형식으로 만든다 (앞 슬래시 없음, 예: "profile/icon").
- * - args: 모든 query parameter 를 그대로 String 맵으로 옮긴다 (복합 타입은 호출부의 Args.from 이 디코딩).
+ * 앱 화면 주소의 호스트. 알림이 자기 목적지를 조립할 때 쓴다.
+ *
+ * 이 호스트의 `/app/...` 은 **매니페스트 intent-filter 에 등록돼 있지 않다.** 등록된 App Link 는
+ * 친구 초대 `/inv` 뿐이라, 웹페이지가 이 URL 로 앱 화면을 여는 경로가 없다(#179).
+ *
+ * ⚠️ `/app` 필터를 추가하는 순간 그 경로가 열린다. 그때는 **외부가 정해서는 안 되는 인자**
+ * (`canManage` 같은 권한 스위치, 지오펜스 설정값)를 [toNavRoute] 에서 다시 걸러내야 한다.
+ * 지금 걸러내지 않는 유일한 근거가 "그 문이 닫혀 있다"이다.
  */
-fun Uri.toNavRoute(): NavRoute {
-    val segments = pathSegments?.takeIf { it.isNotEmpty() } ?: return NavRoute(IntroPromisePage.PATH)
-    val path = segments.joinToString("/")
+private const val APP_LINK_HOST = "android.ruleup.co.kr"
+
+private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEND_INVITE_SEGMENT
+
+/**
+ * 감시자 초대 `/w/{token}` 을 수락 화면 경로로 옮긴다.
+ *
+ * 토큰이 없으면 null — 세그먼트가 하나뿐인 `/w` 로 들어오면 수락할 대상이 없다.
+ */
+private fun Uri.toWatcherAcceptRoute(): NavRoute? = tokenRoute(WATCHER_INVITE_SEGMENT)?.let { WatcherAcceptPage(it).toRoute() }
+
+/** 챌린지 멤버 초대 `/c/{token}` 을 미리보기 화면 경로로 옮긴다. */
+private fun Uri.toChallengeInviteRoute(): NavRoute? = tokenRoute(CHALLENGE_INVITE_SEGMENT)?.let { ChallengeInvitePage(it).toRoute() }
+
+/**
+ * `/{segment}/{token}` 에서 토큰만 꺼낸다. 없으면 null — 세그먼트 하나뿐인 링크는 가리키는
+ * 대상이 없어 화면을 띄워도 빈 오류만 보여 준다.
+ */
+private fun Uri.tokenRoute(segment: String): String? {
+    val segments = pathSegments ?: return null
+    if (segments.firstOrNull() != segment) return null
+    return segments.getOrNull(1)?.takeIf { it.isNotBlank() }
+}
+
+/**
+ * App Link 의 [Uri] 를 [NavRoute] 로 변환한다. 변환에 실패하면 null.
+ *
+ * - path: `/app` 접두사를 떼고 남은 segment 를 슬래시로 합쳐 등록된 PATH 형식으로 만든다
+ *   (앞 슬래시 없음, 예: "challenge/ranking").
+ * - args: query parameter 를 그대로 String 맵으로 옮긴다. 인자를 걸러내지 않는 근거는
+ *   [APP_LINK_HOST] 주석 참고 — `/app` 이 매니페스트에 없어 외부에서 이 경로로 들어올 수 없다.
+ */
+fun Uri.toNavRoute(): NavRoute? {
+    val segments = pathSegments?.takeIf { it.isNotEmpty() } ?: return null
+    if (segments.first() != APP_SEGMENT) return null
+    val path = segments.drop(1).joinToString("/").takeIf { it.isNotEmpty() } ?: return null
     val args =
         queryParameterNames
             .filter { it.isNotEmpty() }
@@ -26,30 +79,79 @@ fun Uri.toNavRoute(): NavRoute {
 }
 
 /**
- * App Link 진입 시 시작 백스택을 구성한다.
- * - URI 가 없거나 미등록 path 면 Intro 단일 스택으로 fallback.
- * - 등록된 path 면 해당 [com.ruleup.android_ruleup.navigation.AppRoute] 의
- *   syntheticStack 을 그대로 사용한다.
+ * 앱이 자기 화면을 가리키려고 만드는 URI. 알림의 PendingIntent 가 쓴다.
+ *
+ * 인텐트는 `MainActivity` 를 명시하므로 이 URI 가 매니페스트 필터를 타지 않는다 — 목적지를
+ * 실어 나르는 그릇일 뿐이다. 덕분에 진입 해석이 [toNavRoute] 한 곳으로 모이면서도 웹에서 앱
+ * 화면을 여는 경로는 생기지 않는다.
  */
-fun resolveStartStack(uri: Uri?): List<NavKey> {
-    if (uri == null) return listOf(GenericNavKey(IntroPromisePage.PATH))
-    val route = uri.toNavRoute()
-    val appRoute = appRouteByPath[route.path]
-    if (appRoute == null) {
-        Log.w(TAG, "No matching path for uri=$uri (path=${route.path})")
-        return listOf(GenericNavKey(IntroPromisePage.PATH))
-    }
-    return appRoute.syntheticStack(route.args)
-}
+fun NavRoute.toAppLinkUri(): Uri =
+    Uri
+        .Builder()
+        .scheme("https")
+        .authority(APP_LINK_HOST)
+        .appendPath(APP_SEGMENT)
+        .apply { path.split("/").forEach { appendPath(it) } }
+        .apply { args.forEach { (k, v) -> appendQueryParameter(k, v) } }
+        .build()
 
 /**
- * 앱 실행 중 들어온 새 deep-link 를 처리할 [NavRoute] 로 변환.
- * 미등록 path 면 null 반환 (호출부가 무시 결정).
+ * 커스텀 스킴(`ruleup://`) 딥링크. 해석기가 없거나 모르는 링크면 null 이다 —
+ * 서버가 알림 타입을 늘리는 건 정상이라 모르는 링크가 오는 것도 정상이다.
  */
-fun resolveNewIntentRoute(uri: Uri): NavRoute? {
+private fun schemeRoute(
+    uri: Uri,
+    deeplinkResolver: DeeplinkResolver?,
+): NavRoute? {
+    if (!uri.scheme.equals(RULEUP_SCHEME, ignoreCase = true)) return null
+    return deeplinkResolver?.resolve(uri.toString())
+}
+
+/** 시작 백스택. 딥링크 유무와 무관하게 스플래시 한 장이다 — 인증 판정이 끝나야 목적지가 정해진다. */
+fun startStack(): List<NavKey> = listOf(GenericNavKey(SplashPage.PATH))
+
+/**
+ * 콜드스타트 딥링크의 **목적지**만 해석한다. 백스택을 여기서 세우지 않는 근거는 PendingDeepLink KDoc.
+ *
+ * 해석할 수 없으면 null — 호출부는 스플래시에서 시작한다. **인트로로 직행시키지 않는다**:
+ * 이미 로그인한 사용자를 온보딩 첫 화면에 떨어뜨릴 이유가 없다.
+ */
+fun resolveStartRoute(
+    uri: Uri?,
+    observability: Observability,
+    deeplinkResolver: DeeplinkResolver? = null,
+): NavRoute? {
+    if (uri == null) return null
+    // 알림 탭은 ruleup:// 로 온다 — 해석은 앱이 가진 라우트 표를 아는 resolver 가 한다.
+    schemeRoute(uri, deeplinkResolver)?.let { return it }
+    // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다. 가입 시 inviteCode 서버 전달은
+    // auth 스펙(inviteCode 필드) 개정 후 후속.
+    if (uri.isFriendInvite()) return null
+    // 초대 링크들은 화면이 있다 — 로그인 뒤에 열리도록 보류 대상으로 넘긴다.
+    uri.toChallengeInviteRoute()?.let { return it }
+    uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
-    if (appRouteByPath[route.path] == null) {
-        Log.w(TAG, "onNewIntent: unhandled uri=$uri (path=${route.path})")
+    if (route == null || appRouteByPath[route.path] == null) {
+        // URI 전체(쿼리 포함)는 남기지 않고 path 만 남긴다(민감 인자 로깅 방지).
+        observability.w(TAG) { "해석할 수 없는 딥링크: path=${uri.path}" }
+        return null
+    }
+    return route
+}
+
+fun resolveNewIntentRoute(
+    uri: Uri,
+    observability: Observability,
+    deeplinkResolver: DeeplinkResolver? = null,
+): NavRoute? {
+    schemeRoute(uri, deeplinkResolver)?.let { return it }
+    // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태) — 무시.
+    if (uri.isFriendInvite()) return null
+    uri.toChallengeInviteRoute()?.let { return it }
+    uri.toWatcherAcceptRoute()?.let { return it }
+    val route = uri.toNavRoute()
+    if (route == null || appRouteByPath[route.path] == null) {
+        observability.w(TAG) { "해석할 수 없는 딥링크 무시: path=${uri.path}" }
         return null
     }
     return route

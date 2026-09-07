@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="5">
+    <title>testing — Skill Description Optimization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lora', Georgia, serif;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            background: #faf9f5;
+            color: #141413;
+        }
+        h1 { font-family: 'Poppins', sans-serif; color: #141413; }
+        .explainer {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e6dc;
+            color: #b0aea5;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        .summary {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #e8e6dc;
+        }
+        .summary p { margin: 5px 0; }
+        .best { color: #788c5d; font-weight: bold; }
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #e8e6dc;
+            border-radius: 6px;
+            font-size: 12px;
+            min-width: 100%;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #e8e6dc;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        th {
+            font-family: 'Poppins', sans-serif;
+            background: #141413;
+            color: #faf9f5;
+            font-weight: 500;
+        }
+        th.test-col {
+            background: #6a9bcc;
+        }
+        th.query-col { min-width: 200px; }
+        td.description {
+            font-family: monospace;
+            font-size: 11px;
+            word-wrap: break-word;
+            max-width: 400px;
+        }
+        td.result {
+            text-align: center;
+            font-size: 16px;
+            min-width: 40px;
+        }
+        td.test-result {
+            background: #f0f6fc;
+        }
+        .pass { color: #788c5d; }
+        .fail { color: #c44; }
+        .rate {
+            font-size: 9px;
+            color: #b0aea5;
+            display: block;
+        }
+        tr:hover { background: #faf9f5; }
+        .score {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .score-good { background: #eef2e8; color: #788c5d; }
+        .score-ok { background: #fef3c7; color: #d97706; }
+        .score-bad { background: #fceaea; color: #c44; }
+        .train-label { color: #b0aea5; font-size: 10px; }
+        .test-label { color: #6a9bcc; font-size: 10px; font-weight: bold; }
+        .best-row { background: #f5f8f2; }
+        th.positive-col { border-bottom: 3px solid #788c5d; }
+        th.negative-col { border-bottom: 3px solid #c44; }
+        th.test-col.positive-col { border-bottom: 3px solid #788c5d; }
+        th.test-col.negative-col { border-bottom: 3px solid #c44; }
+        .legend { font-family: 'Poppins', sans-serif; display: flex; gap: 20px; margin-bottom: 10px; font-size: 13px; align-items: center; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-swatch { width: 16px; height: 16px; border-radius: 3px; display: inline-block; }
+        .swatch-positive { background: #141413; border-bottom: 3px solid #788c5d; }
+        .swatch-negative { background: #141413; border-bottom: 3px solid #c44; }
+        .swatch-test { background: #6a9bcc; }
+        .swatch-train { background: #141413; }
+    </style>
+</head>
+<body>
+    <h1>testing — Skill Description Optimization</h1>
+    <div class="explainer">
+        <strong>Optimizing your skill's description.</strong> This page updates automatically as Claude tests different versions of your skill's description. Each row is an iteration — a new description attempt. The columns show test queries: green checkmarks mean the skill triggered correctly (or correctly didn't trigger), red crosses mean it got it wrong. The "Train" score shows performance on queries used to improve the description; the "Test" score shows performance on held-out queries the optimizer hasn't seen. When it's done, Claude will apply the best-performing description to your skill.
+    </div>
+
+    <div class="summary">
+        <p><strong>Original:</strong> RuleUp Android 레포에서 테스트를 설계·작성·감사하고 TEST_STRATEGY.md 를 갱신하는 절차. 케이스(엔티티·값객체·매퍼) · 모듈(UseCase·Repository 구현·ViewModel) · UI(Robolectric Compose) · 통합(모듈 경계·네비게이션·직렬화) · 인수(실서버 사용자 스토리) 다섯 층의 경계, 이름 규칙, 상태 경로와 에러 요인을 빠짐없이 열거하는 방법이 여기에만 있다. &quot;테스트 짜줘&quot;, &quot;테스트 케이스&quot;, &quot;커버리지&quot;, &quot;이거 테스트 어떻게 해&quot;, &quot;UI 테스트&quot;, &quot;통합 테스트&quot;, &quot;인수 테스트&quot;, &quot;빠진 테스트 찾아줘&quot;, &quot;테스트 전략&quot; 같은 말이 나오면 테스트 파일을 열기 전에 반드시 이 스킬을 먼저 읽는다. 명시적 요청이 아니어도 마찬가지다 — 새 엔티티·UseCase·ViewModel·화면을 만들거나 버그를 고치는 작업은 테스트도 같이 쓰게 되므로 코드를 쓰기 전에 읽고, PR 리뷰에서 남의 테스트를 평가할 때도 이 기준으로 판정한다. 층을 잘못 고르면 조합 폭발을 만들거나 리뷰에서 통째로 되돌아온다.</p>
+        <p class="best"><strong>Best:</strong> RuleUp Android 레포에서 &quot;이게 맞는지 확인&quot;이 필요한 모든 순간에 사용한다. 테스트를 써달라·추가해달라는 직접 요청은 물론, 방금 만들거나 고친 것(엔티티·값객체·매퍼·UseCase·Repository·ViewModel·화면·도메인 로직)을 검증하게 해달라, 어떤 케이스·경계값·null·에러 상황을 봐야 하냐, 값이나 분기가 나중에 늘면 자동으로 걸리게 하고 싶다, 실서버로 사용자 플로우를 한 번 관통시켜 보고 싶다, PR 에 올라온 남의 테스트나 테스트 이름이 이상한데 뭐라고 코멘트할까, 빠진 게 뭐냐(커버리지·감사) — 전부 이 스킬에서 시작한다.
+
+다섯 층(케이스·모듈·UI·통합·인수) 중 어디에 둘지, 이름을 어떻게 지을지, 경로를 빠짐없이 열거하는 법, 무엇을 테스트하지 않을지, TEST_STRATEGY.md 갱신 절차가 여기에만 있다. 테스트 파일을 열거나 코드를 쓰기 전에 먼저 읽어라.
+
+빌드·Gradle 설정 실패, CI 워크플로 구성, 성능 측정, 순수 리팩터링/코드 배치 질문에는 쓰지 않는다.</p>
+        <p><strong>Best Score:</strong> in progress (train)</p>
+        <p><strong>Iterations:</strong> 2 | <strong>Train:</strong> 12 | <strong>Test:</strong> 8</p>
+    </div>
+
+    <div class="legend">
+        <span style="font-weight:600">Query columns:</span>
+        <span class="legend-item"><span class="legend-swatch swatch-positive"></span> Should trigger</span>
+        <span class="legend-item"><span class="legend-swatch swatch-negative"></span> Should NOT trigger</span>
+        <span class="legend-item"><span class="legend-swatch swatch-train"></span> Train</span>
+        <span class="legend-item"><span class="legend-swatch swatch-test"></span> Test</span>
+    </div>
+
+    <div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Iter</th>
+                <th>Train</th>
+                <th>Test</th>
+                <th class="query-col">Description</th>
+                <th class="positive-col">새로 만든 JoinBlockReason enum 값이 6개인데 나중에 서버에서 하나 더 늘어나면 자동으로 걸리게 하고싶어</th>
+                <th class="positive-col">실제 서버 붙여서 챌린지 만들고 참여하는것까지 한번에 돌려보는 테스트 만들수 있을까? 배포 전에 한번씩 돌리게</th>
+                <th class="positive-col">profile/data 에 CalendarResponse 매퍼 추가했어. 서버가 필드 안주는 경우가 있는데 그것도 같이 검증하게 해줘</th>
+                <th class="positive-col">PR 올라온거 보는데 테스트 이름들이 다 `test1` `test2` 이런식이야. 이거 리뷰에서 뭐라고 코멘트 달아야될까</th>
+                <th class="positive-col">ChallengeSettingsViewModel 테스트 좀 추가해줘</th>
+                <th class="positive-col">verification/domain 에 SignalBatch 쪼개는 로직 새로 넣었는데 이거 테스트 어떻게 짜야될지 모르겠어. 배치 크기 넘어가면 나눠지는건데 경계값만 보면 되나?</th>
+                <th class="negative-col">챌린지 방 나가기 API 붙여야돼. DELETE /challenges/{id}/members/me 이고 응답은 204야</th>
+                <th class="negative-col">CI 에서 androidTest 도 같이 돌리려면 워크플로 어떻게 추가해야돼? 에뮬레이터 띄우는거 필요하지?</th>
+                <th class="negative-col">홈 화면 진입할때 렉이 걸리는것 같은데 어디서 시간을 잡아먹는지 측정해볼 방법 없을까</th>
+                <th class="negative-col">./gradlew test 돌렸는데 :app:testDebugUnitTest 에서 google-services.json 없다고 깨져. local.properties 문제인가?</th>
+                <th class="negative-col">ChallengeDetailViewModel 이 1000줄 넘어가서 좀 쪼개고 싶은데 어떻게 나누는게 좋을까</th>
+                <th class="negative-col">챌린지 생성할때 주간 횟수 범위가 1~7 인데 이 상수를 domain 어디에 두는게 맞아?</th>
+                <th class="test-col positive-col">onboarding 쪽에 빠진 테스트 있으면 찾아줘</th>
+                <th class="test-col positive-col">ExploreScreen 화면 테스트 만들어줘. 필터 눌렀을때 제대로 반응하는지 확인하고 싶음</th>
+                <th class="test-col positive-col">우리 앱 테스트가 지금 어디까지 커버되는지 정리해서 문서로 남기고 싶어. 나중에 품질 지표로 쓰게</th>
+                <th class="test-col positive-col">TokenAuthenticator 401 갱신되는 부분이 지금 검증이 하나도 안되어있는것 같은데 확인 좀</th>
+                <th class="test-col negative-col">ktlintCheck 에서 자꾸 걸리는데 max line length 를 140 으로 올릴수 있나? .editorconfig 어디 고쳐야돼</th>
+                <th class="test-col negative-col">https://www.figma.com/design/JDWCrvnTlAyrtzMI2MtpcC/RuleUp-디자인?node-id=1134-1930 이 솔로 상세 화면 구현해줘</th>
+                <th class="test-col negative-col">RunSyncUseCase 에 주석이 너무 많이 달려있어서 정리하고 싶어</th>
+                <th class="test-col negative-col">verification 쪽 지오펜스가 실기기에서 잘 안잡히는데 에뮬레이터로 위치 모킹해서 확인하는 adb 명령어 뭐였지</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="best-row">
+                <td>1</td>
+                <td><span class="score score-ok">19/36</span></td>
+                <td><span class="score score-ok">13/24</span></td>
+                <td class="description">RuleUp Android 레포에서 테스트를 설계·작성·감사하고 TEST_STRATEGY.md 를 갱신하는 절차. 케이스(엔티티·값객체·매퍼) · 모듈(UseCase·Repository 구현·ViewModel) · UI(Robolectric Compose) · 통합(모듈 경계·네비게이션·직렬화) · 인수(실서버 사용자 스토리) 다섯 층의 경계, 이름 규칙, 상태 경로와 에러 요인을 빠짐없이 열거하는 방법이 여기에만 있다. &quot;테스트 짜줘&quot;, &quot;테스트 케이스&quot;, &quot;커버리지&quot;, &quot;이거 테스트 어떻게 해&quot;, &quot;UI 테스트&quot;, &quot;통합 테스트&quot;, &quot;인수 테스트&quot;, &quot;빠진 테스트 찾아줘&quot;, &quot;테스트 전략&quot; 같은 말이 나오면 테스트 파일을 열기 전에 반드시 이 스킬을 먼저 읽는다. 명시적 요청이 아니어도 마찬가지다 — 새 엔티티·UseCase·ViewModel·화면을 만들거나 버그를 고치는 작업은 테스트도 같이 쓰게 되므로 코드를 쓰기 전에 읽고, PR 리뷰에서 남의 테스트를 평가할 때도 이 기준으로 판정한다. 층을 잘못 고르면 조합 폭발을 만들거나 리뷰에서 통째로 되돌아온다.</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">1/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">1/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+            <tr class="">
+                <td>2</td>
+                <td><span class="score score-ok">19/36</span></td>
+                <td><span class="score score-ok">12/24</span></td>
+                <td class="description">RuleUp Android 레포에서 &quot;이게 맞는지 확인&quot;이 필요한 모든 순간에 사용한다. 테스트를 써달라·추가해달라는 직접 요청은 물론, 방금 만들거나 고친 것(엔티티·값객체·매퍼·UseCase·Repository·ViewModel·화면·도메인 로직)을 검증하게 해달라, 어떤 케이스·경계값·null·에러 상황을 봐야 하냐, 값이나 분기가 나중에 늘면 자동으로 걸리게 하고 싶다, 실서버로 사용자 플로우를 한 번 관통시켜 보고 싶다, PR 에 올라온 남의 테스트나 테스트 이름이 이상한데 뭐라고 코멘트할까, 빠진 게 뭐냐(커버리지·감사) — 전부 이 스킬에서 시작한다.
+
+다섯 층(케이스·모듈·UI·통합·인수) 중 어디에 둘지, 이름을 어떻게 지을지, 경로를 빠짐없이 열거하는 법, 무엇을 테스트하지 않을지, TEST_STRATEGY.md 갱신 절차가 여기에만 있다. 테스트 파일을 열거나 코드를 쓰기 전에 먼저 읽어라.
+
+빌드·Gradle 설정 실패, CI 워크플로 구성, 성능 측정, 순수 리팩터링/코드 배치 질문에는 쓰지 않는다.</td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">1/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result fail">✗<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result fail">✗<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+                <td class="result test-result pass">✓<span class="rate">0/3</span></td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+</body>
+</html>

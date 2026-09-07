@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "좌표·반경 변경을 감지",
+      "passed": true,
+      "evidence": "차집합 필터를 제거해 전량 재등록(레포 실제 구현과 일치)"
+    },
+    {
+      "text": "같은 id 여도 재등록해야 하는 이유가 주석에",
+      "passed": true,
+      "evidence": "있음"
+    },
+    {
+      "text": "되풀이 주석 0개",
+      "passed": true,
+      "evidence": "없음"
+    },
+    {
+      "text": "최장 주석 블록 3줄 이하",
+      "passed": false,
+      "evidence": "최장 18줄"
+    },
+    {
+      "text": "기존 §2.3 KDoc 보존",
+      "passed": true,
+      "evidence": "보존 + registeredIds 정체 보강"
+    }
+  ]
+}

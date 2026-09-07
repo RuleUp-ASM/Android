@@ -1,25 +1,85 @@
 package com.ruleup.android_ruleup.navigation
 
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ruleup.domain.IntroPromisePage
-import com.ruleup.domain.IntroTrustPage
-import com.ruleup.domain.IntroVerifyPage
-import com.ruleup.domain.LoginPage
-import com.ruleup.domain.ProfileAgreementPage
-import com.ruleup.domain.ProfileIconPage
-import com.ruleup.domain.ProfileInterestPage
-import com.ruleup.domain.ProfileNicknamePage
-import com.ruleup.domain.ProfilePermissionPage
-import com.ruleup.presentation.intro.component.IntroContent
-import com.ruleup.presentation.intro.screen.LoginScreen
-import com.ruleup.presentation.intro.screen.onboardingPages
-import com.ruleup.presentation.intro.viewmodel.LoginViewModel
-import com.ruleup.presentation.profile.ProfileAgreementScreen
-import com.ruleup.presentation.profile.ProfileIconScreen
-import com.ruleup.presentation.profile.ProfileInterestScreen
-import com.ruleup.presentation.profile.ProfileNicknameScreen
-import com.ruleup.presentation.profile.ProfilePermissionScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
+import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
+import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
+import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
+import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
+import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
+import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
+import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
+import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
+import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
+import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
+import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
+import com.ruleup.challenge.presentation.explore.ExploreScreen
+import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
+import com.ruleup.challenge.presentation.invite.ChallengeInviteScreen
+import com.ruleup.challenge.presentation.mychallenges.MyChallengesScreen
+import com.ruleup.challenge.presentation.ranking.RankingScreen
+import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
+import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
+import com.ruleup.challenge.presentation.watcher.WatcherAcceptScreen
+import com.ruleup.domain.navigation.RouteAccessPolicy
+import com.ruleup.home.presentation.HomeScreen
+import com.ruleup.notification.domain.navigation.NotificationCenterPage
+import com.ruleup.notification.domain.navigation.NotificationSettingsPage
+import com.ruleup.notification.presentation.center.NotificationCenterScreen
+import com.ruleup.notification.presentation.settings.NotificationSettingsScreen
+import com.ruleup.onboarding.domain.navigation.HomePage
+import com.ruleup.onboarding.domain.navigation.LoginPage
+import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
+import com.ruleup.onboarding.domain.navigation.OnboardingGenderPage
+import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
+import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
+import com.ruleup.onboarding.domain.navigation.OnboardingPhotoPage
+import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
+import com.ruleup.onboarding.domain.navigation.SplashPage
+import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
+import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
+import com.ruleup.onboarding.presentation.onboarding.OnboardingBirthScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingGenderScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingInterestScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingNicknameScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
+import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
+import com.ruleup.onboarding.presentation.splash.SplashScreen
+import com.ruleup.profile.domain.navigation.FriendInvitePage
+import com.ruleup.profile.domain.navigation.MyAgreementsPage
+import com.ruleup.profile.domain.navigation.MyAppealsPage
+import com.ruleup.profile.domain.navigation.MyCalendarPage
+import com.ruleup.profile.domain.navigation.MyHomePage
+import com.ruleup.profile.domain.navigation.MySanctionsPage
+import com.ruleup.profile.domain.navigation.MySettingsPage
+import com.ruleup.profile.domain.navigation.MyStatsPage
+import com.ruleup.profile.domain.navigation.MyTierHistoryPage
+import com.ruleup.profile.domain.navigation.MyTierPage
+import com.ruleup.profile.domain.navigation.MyWatchingPage
+import com.ruleup.profile.domain.navigation.ProfileEditPage
+import com.ruleup.profile.presentation.agreements.AgreementsScreen
+import com.ruleup.profile.presentation.appeals.MyAppealsScreen
+import com.ruleup.profile.presentation.calendar.MyCalendarScreen
+import com.ruleup.profile.presentation.edit.ProfileEditScreen
+import com.ruleup.profile.presentation.home.MyHomeScreen
+import com.ruleup.profile.presentation.invite.FriendInviteScreen
+import com.ruleup.profile.presentation.sanctions.SanctionsScreen
+import com.ruleup.profile.presentation.settings.SettingsScreen
+import com.ruleup.profile.presentation.stats.MyStatsScreen
+import com.ruleup.profile.presentation.tier.MyTierHistoryScreen
+import com.ruleup.profile.presentation.tier.MyTierScreen
+import com.ruleup.profile.presentation.watching.WatchingScreen
+import com.ruleup.report.domain.navigation.BlockListPage
+import com.ruleup.report.presentation.blocklist.BlockListScreen
+import com.ruleup.verification.domain.entity.SetupAnchors
+import com.ruleup.verification.domain.navigation.VerificationLocationPage
+import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
+import com.ruleup.verification.presentation.location.VerificationLocationScreen
+import com.ruleup.verification.presentation.permission.PermissionRepairScreen
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
@@ -28,90 +88,265 @@ import com.ruleup.presentation.profile.ProfilePermissionScreen
 val appRoutes: List<AppRoute> =
     listOf(
         AppRoute(
-            path = IntroPromisePage.PATH,
-            render = { IntroContent(page = onboardingPages[0], pageIndex = 0) },
-        ),
-        AppRoute(
-            path = IntroVerifyPage.PATH,
-            syntheticStack = {
-                listOf(
-                    GenericNavKey(IntroPromisePage.PATH),
-                    GenericNavKey(IntroVerifyPage.PATH),
-                )
-            },
-            render = { IntroContent(page = onboardingPages[1], pageIndex = 1) },
-        ),
-        AppRoute(
-            path = IntroTrustPage.PATH,
-            syntheticStack = {
-                listOf(
-                    GenericNavKey(IntroPromisePage.PATH),
-                    GenericNavKey(IntroVerifyPage.PATH),
-                    GenericNavKey(IntroTrustPage.PATH),
-                )
-            },
-            render = { IntroContent(page = onboardingPages[2], pageIndex = 2) },
+            path = SplashPage.PATH,
+            isRoot = true,
+            render = { SplashScreen() },
         ),
         AppRoute(
             path = LoginPage.PATH,
+            isRoot = true,
             render = { LoginScreen(viewModel = hiltViewModel<LoginViewModel>()) },
         ),
-        // 프로필 설정(신규 가입) 5개 페이지. 모두 Activity 스코프의 단일 ProfileViewModel 을
-        // 공유하므로 입력값이 페이지 이동에도 누적된다. signupToken 은 첫 페이지(아이콘)에 args 로 전달.
-        // syntheticStack: deep-link 중간 진입 시 아이콘부터 해당 페이지까지를 백스택으로 복원한다
-        // (토큰은 아이콘 키에 실어 공유 ViewModel 이 받도록 한다).
         AppRoute(
-            path = ProfileIconPage.PATH,
-            render = { args -> ProfileIconScreen(signupToken = args[ProfileIconPage.ARG_SIGNUP_TOKEN].orEmpty()) },
+            path = HomePage.PATH,
+            isRoot = true,
+            isBottomTab = true,
+            render = { HomeScreen() },
         ),
         AppRoute(
-            path = ProfileNicknamePage.PATH,
-            syntheticStack = { args ->
+            path = ChallengeExplorePage.PATH,
+            isBottomTab = true,
+            // 탐색은 홈 위에 쌓인 탭 화면: 뒤로가기 시 홈으로 돌아간다.
+            syntheticStack = {
                 listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(ChallengeExplorePage.PATH),
                 )
             },
-            render = { ProfileNicknameScreen() },
+            render = { ExploreScreen() },
         ),
         AppRoute(
-            path = ProfileInterestPage.PATH,
-            syntheticStack = { args ->
+            path = MyChallengesPage.PATH,
+            isBottomTab = true,
+            // 챌린지 탭도 홈 위에 쌓인다 — 뒤로가기 시 홈으로 돌아간다(탐색·마이와 같은 규칙).
+            syntheticStack = {
                 listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(MyChallengesPage.PATH),
                 )
             },
-            render = { ProfileInterestScreen() },
+            render = { MyChallengesScreen() },
         ),
         AppRoute(
-            path = ProfilePermissionPage.PATH,
-            syntheticStack = { args ->
+            path = MyHomePage.PATH,
+            isBottomTab = true,
+            // 마이는 홈 위에 쌓인 탭 화면: 뒤로가기 시 홈으로 돌아간다(탐색 탭과 동일 규칙).
+            syntheticStack = {
                 listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
-                    GenericNavKey(ProfilePermissionPage.PATH),
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(MyHomePage.PATH),
                 )
             },
-            render = { ProfilePermissionScreen() },
+            render = { MyHomeScreen() },
         ),
         AppRoute(
-            path = ProfileAgreementPage.PATH,
-            syntheticStack = { args ->
-                listOf(
-                    GenericNavKey(ProfileIconPage.PATH, args),
-                    GenericNavKey(ProfileNicknamePage.PATH),
-                    GenericNavKey(ProfileInterestPage.PATH),
-                    GenericNavKey(ProfilePermissionPage.PATH),
-                    GenericNavKey(ProfileAgreementPage.PATH),
+            path = MyTierPage.PATH,
+            render = { MyTierScreen() },
+        ),
+        AppRoute(
+            path = MyTierHistoryPage.PATH,
+            render = { MyTierHistoryScreen() },
+        ),
+        AppRoute(
+            path = MyAppealsPage.PATH,
+            render = { MyAppealsScreen() },
+        ),
+        AppRoute(
+            path = BlockListPage.PATH,
+            render = { BlockListScreen() },
+        ),
+        AppRoute(
+            path = MyCalendarPage.PATH,
+            render = { MyCalendarScreen() },
+        ),
+        AppRoute(
+            path = MyStatsPage.PATH,
+            render = { MyStatsScreen() },
+        ),
+        AppRoute(
+            path = ProfileEditPage.PATH,
+            render = { ProfileEditScreen() },
+        ),
+        AppRoute(
+            path = NotificationCenterPage.PATH,
+            render = { NotificationCenterScreen() },
+        ),
+        AppRoute(
+            path = NotificationSettingsPage.PATH,
+            render = { NotificationSettingsScreen() },
+        ),
+        AppRoute(
+            path = MySettingsPage.PATH,
+            render = { SettingsScreen() },
+        ),
+        AppRoute(
+            path = MyAgreementsPage.PATH,
+            render = { AgreementsScreen() },
+        ),
+        AppRoute(
+            path = MySanctionsPage.PATH,
+            render = { SanctionsScreen() },
+        ),
+        AppRoute(
+            path = MyWatchingPage.PATH,
+            render = { WatchingScreen() },
+        ),
+        AppRoute(
+            path = FriendInvitePage.PATH,
+            render = { FriendInviteScreen() },
+        ),
+        AppRoute(
+            path = ChallengeExploreListPage.PATH,
+            render = { args ->
+                ExploreListScreen(
+                    category = args[ChallengeExploreListPage.ARG_CATEGORY],
+                    sort = args[ChallengeExploreListPage.ARG_SORT],
                 )
             },
-            render = { ProfileAgreementScreen() },
+        ),
+        AppRoute(
+            path = ChallengeCreatePage.PATH,
+            render = { ChallengeCreateScreen() },
+        ),
+        AppRoute(
+            path = ChallengeConfirmPage.PATH,
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(ChallengeCreatePage.PATH),
+                    GenericNavKey(ChallengeConfirmPage.PATH),
+                )
+            },
+            render = { ChallengeConfirmScreen() },
+        ),
+        AppRoute(
+            path = ChallengeDetailPage.PATH,
+            render = { args ->
+                ChallengeDetailScreen(challengeId = args[ChallengeDetailPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeTargetsPage.PATH,
+            render = { args ->
+                ChallengeTargetsScreen(challengeId = args[ChallengeTargetsPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeRankingPage.PATH,
+            render = { args ->
+                RankingScreen(challengeId = args[ChallengeRankingPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeSettingsPage.PATH,
+            render = { args ->
+                ChallengeSettingsScreen(challengeId = args[ChallengeSettingsPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeInvitePage.PATH,
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
+            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            render = { args ->
+                ChallengeInviteScreen(token = args[ChallengeInvitePage.ARG_TOKEN].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = WatcherAcceptPage.PATH,
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
+            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            render = { args ->
+                WatcherAcceptScreen(token = args[WatcherAcceptPage.ARG_TOKEN].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = VerificationPermissionRepairPage.PATH,
+            render = { PermissionRepairScreen() },
+        ),
+        AppRoute(
+            path = VerificationLocationPage.PATH,
+            render = { args ->
+                VerificationLocationScreen(
+                    challengeId = args[VerificationLocationPage.ARG_CHALLENGE_ID].orEmpty(),
+                    // 지도 원을 그릴 반경. 서버 설정값을 셋업 응답으로 받기 전까지 쓰는 표시용 기본값이다.
+                    defaultRadiusM =
+                        args[VerificationLocationPage.ARG_RADIUS]
+                            ?.toFloatOrNull()
+                            ?: SetupAnchors.DEFAULT_RADIUS_M,
+                    dwellMinutes = args[VerificationLocationPage.ARG_DWELL]?.toIntOrNull() ?: 60,
+                    targetPackages =
+                        args[VerificationLocationPage.ARG_TARGET_PACKAGES]
+                            ?.split(VerificationLocationPage.TARGET_PACKAGES_DELIMITER)
+                            ?.filter { it.isNotBlank() }
+                            .orEmpty(),
+                )
+            },
+        ),
+        // 온보딩 6단계. syntheticStack 은 딥링크·프로세스 복구로 중간 단계에 바로 들어왔을 때
+        // 뒤로가기가 앞 단계를 거치도록 스택을 세워 준다.
+        AppRoute(
+            path = OnboardingNicknamePage.PATH,
+            render = { OnboardingNicknameScreen() },
+        ),
+        AppRoute(
+            path = OnboardingInterestPage.PATH,
+            syntheticStack = { onboardingStack(OnboardingInterestPage.PATH) },
+            render = { OnboardingInterestScreen() },
+        ),
+        AppRoute(
+            path = OnboardingBirthPage.PATH,
+            syntheticStack = { onboardingStack(OnboardingInterestPage.PATH, OnboardingBirthPage.PATH) },
+            render = { OnboardingBirthScreen() },
+        ),
+        AppRoute(
+            path = OnboardingGenderPage.PATH,
+            syntheticStack = {
+                onboardingStack(OnboardingInterestPage.PATH, OnboardingBirthPage.PATH, OnboardingGenderPage.PATH)
+            },
+            render = { OnboardingGenderScreen() },
+        ),
+        AppRoute(
+            path = OnboardingPhotoPage.PATH,
+            syntheticStack = {
+                onboardingStack(
+                    OnboardingInterestPage.PATH,
+                    OnboardingBirthPage.PATH,
+                    OnboardingGenderPage.PATH,
+                    OnboardingPhotoPage.PATH,
+                )
+            },
+            render = { OnboardingPhotoScreen() },
+        ),
+        AppRoute(
+            path = OnboardingTermsPage.PATH,
+            syntheticStack = {
+                onboardingStack(
+                    OnboardingInterestPage.PATH,
+                    OnboardingBirthPage.PATH,
+                    OnboardingGenderPage.PATH,
+                    OnboardingPhotoPage.PATH,
+                    OnboardingTermsPage.PATH,
+                )
+            },
+            render = { OnboardingTermsScreen() },
         ),
     )
 
+private fun onboardingStack(vararg paths: String): List<GenericNavKey> =
+    listOf(GenericNavKey(OnboardingNicknamePage.PATH)) + paths.map { GenericNavKey(it) }
+
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
+
+/**
+ * [appRoutes] 를 그대로 읽는 [RouteAccessPolicy] 구현.
+ *
+ * 모르는 경로는 로그인 요구로 떨어뜨린다 — 딥링크는 외부 입력이라, 등록되지 않은 경로를 공개로
+ * 보면 오타 하나가 인증 우회 통로가 된다.
+ */
+@Singleton
+class AppRouteAccessPolicy
+    @Inject
+    constructor() : RouteAccessPolicy {
+        override fun requiresLogin(path: String): Boolean = appRouteByPath[path]?.isLoginRequired ?: true
+    }
 
 val bottomTabRoutes: List<AppRoute> = appRoutes.filter { it.isBottomTab }

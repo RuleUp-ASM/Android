@@ -3,6 +3,7 @@
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel target="11">
       <module name="Android-RuleUp.core.oauth" target="21" />
+      <module name="Android-RuleUp.shared" target="21" />
     </bytecodeTargetLevel>
   </component>
 </project>
