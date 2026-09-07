@@ -7,6 +7,7 @@ import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.profile.domain.navigation.FriendInvitePage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
+import com.ruleup.profile.domain.navigation.MySettingsPage
 import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTierPage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
@@ -53,7 +54,7 @@ class MyHomeViewModel
                 MyHomeIntent.OpenNotificationSettings ->
                     emitEffect(MyHomeEffect.ShowMessage("알림 설정은 준비 중이에요"))
 
-                MyHomeIntent.OpenSettings -> emitEffect(MyHomeEffect.ShowMessage("설정은 준비 중이에요"))
+                MyHomeIntent.OpenSettings -> navigationHelper.navigateTo(MySettingsPage)
                 MyHomeIntent.OpenHomeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 MyHomeIntent.OpenChallengeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
                 MyHomeIntent.OpenMyChallengesTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_LIST))

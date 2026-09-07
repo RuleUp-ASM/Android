@@ -40,21 +40,29 @@ import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
 import com.ruleup.profile.domain.navigation.FriendInvitePage
+import com.ruleup.profile.domain.navigation.MyAgreementsPage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyHomePage
+import com.ruleup.profile.domain.navigation.MySanctionsPage
+import com.ruleup.profile.domain.navigation.MySettingsPage
 import com.ruleup.profile.domain.navigation.MyStatsPage
 import com.ruleup.profile.domain.navigation.MyTierHistoryPage
 import com.ruleup.profile.domain.navigation.MyTierPage
+import com.ruleup.profile.domain.navigation.MyWatchingPage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
+import com.ruleup.profile.presentation.agreements.AgreementsScreen
 import com.ruleup.profile.presentation.appeals.MyAppealsScreen
 import com.ruleup.profile.presentation.calendar.MyCalendarScreen
 import com.ruleup.profile.presentation.edit.ProfileEditScreen
 import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.profile.presentation.invite.FriendInviteScreen
+import com.ruleup.profile.presentation.sanctions.SanctionsScreen
+import com.ruleup.profile.presentation.settings.SettingsScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
 import com.ruleup.profile.presentation.tier.MyTierHistoryScreen
 import com.ruleup.profile.presentation.tier.MyTierScreen
+import com.ruleup.profile.presentation.watching.WatchingScreen
 import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.report.presentation.blocklist.BlockListScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
@@ -150,6 +158,22 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = ProfileEditPage.PATH,
             render = { ProfileEditScreen() },
+        ),
+        AppRoute(
+            path = MySettingsPage.PATH,
+            render = { SettingsScreen() },
+        ),
+        AppRoute(
+            path = MyAgreementsPage.PATH,
+            render = { AgreementsScreen() },
+        ),
+        AppRoute(
+            path = MySanctionsPage.PATH,
+            render = { SanctionsScreen() },
+        ),
+        AppRoute(
+            path = MyWatchingPage.PATH,
+            render = { WatchingScreen() },
         ),
         AppRoute(
             path = FriendInvitePage.PATH,

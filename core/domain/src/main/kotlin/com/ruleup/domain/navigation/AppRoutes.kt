@@ -47,6 +47,10 @@ object AppRoutes {
     const val MY_INVITE = "my/invite" // 친구 초대
     const val MY_PROFILE_EDIT = "my/profile/edit" // 프로필 편집(마이 → 재편집)
     const val MY_BLOCKS = "my/blocks" // 신고한 사용자·챌린지 (마이 → 차단 목록·해제)
+    const val MY_SETTINGS = "my/settings" // 설정 허브 (마이 → 계정·약관)
+    const val MY_WATCHING = "my/watching" // 패널티 수신 관리 (내가 감시자로 지정된 관계)
+    const val MY_AGREEMENTS = "my/agreements" // 약관·개인정보 동의 관리
+    const val MY_SANCTIONS = "my/sanctions" // 제재 통지·이력 (잠금 상태에서도 열려야 한다)
 
     // verification
     const val VERIFICATION_PERMISSION_REPAIR = "verification/permission-repair" // 진입점 (권한 회수 복구)

@@ -52,3 +52,35 @@ data object ProfileEditPage : Page {
 
     const val PATH = AppRoutes.MY_PROFILE_EDIT
 }
+
+/** 설정 허브 페이지 (마이 홈 → 계정 · 약관). */
+data object MySettingsPage : Page {
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    const val PATH = AppRoutes.MY_SETTINGS
+}
+
+/** 약관 · 개인정보 동의 관리 페이지 (설정 허브 → 약관). */
+data object MyAgreementsPage : Page {
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    const val PATH = AppRoutes.MY_AGREEMENTS
+}
+
+/**
+ * 제재 통지·이력 페이지 (설정 허브 → 제재 이력).
+ *
+ * **잠금 상태에서도 열려야 한다** — 잠금 사유와 해제일을 볼 유일한 경로다.
+ */
+data object MySanctionsPage : Page {
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    const val PATH = AppRoutes.MY_SANCTIONS
+}
+
+/** 패널티 수신 관리 페이지 (설정 허브 → 내가 받는 알림). */
+data object MyWatchingPage : Page {
+    override fun toRoute(): NavRoute = NavRoute(PATH)
+
+    const val PATH = AppRoutes.MY_WATCHING
+}

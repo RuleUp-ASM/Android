@@ -34,6 +34,9 @@ import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
+import com.ruleup.challenge.data.dto.WatchingListResponse
+import com.ruleup.challenge.data.dto.WatchingUpdateRequest
+import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import com.ruleup.network.dto.ErrorBody
@@ -128,6 +131,13 @@ class FailingChallengeApi(
         challengeId: String,
         status: String?,
     ): BaseResponse<WatchersResponse> = failed()
+
+    override suspend fun getWatching(): BaseResponse<WatchingListResponse> = failed()
+
+    override suspend fun updateWatching(
+        watcherId: String,
+        request: WatchingUpdateRequest,
+    ): BaseResponse<WatchingUpdateResponse> = failed()
 
     override suspend fun removeWatcher(
         challengeId: String,

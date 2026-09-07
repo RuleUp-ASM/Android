@@ -14,11 +14,11 @@ import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
+import com.ruleup.challenge.domain.fake.FakeWatcherRepository
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
 import com.ruleup.challenge.presentation.fake.FakeRoomRepository
 import com.ruleup.challenge.presentation.fake.FakeTargetAppStore
-import com.ruleup.challenge.presentation.fake.FakeWatcherRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper

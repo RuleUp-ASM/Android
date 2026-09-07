@@ -121,3 +121,15 @@ internal fun AgreementConsents.toRequest(): Map<String, AgreementConsentRequest>
     consents.entries.associate { (type, consent) ->
         type.key to AgreementConsentRequest(agreed = consent.agreed, version = consent.version)
     }
+
+/**
+ * 회원 탈퇴 (명세: DELETE /users/me).
+ *
+ * [confirmPhrase] 는 **서버 검증 문자열이라 계약의 일부**다 — 화면 문구를 바꿔도 이 값은 바뀌지
+ * 않는다. 불일치면 400 `CONFIRM_PHRASE_MISMATCH`.
+ */
+@Serializable
+data class WithdrawRequest(
+    @SerialName("confirmPhrase")
+    val confirmPhrase: String,
+)

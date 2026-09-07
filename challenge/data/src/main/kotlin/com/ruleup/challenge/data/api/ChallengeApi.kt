@@ -33,6 +33,9 @@ import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
+import com.ruleup.challenge.data.dto.WatchingListResponse
+import com.ruleup.challenge.data.dto.WatchingUpdateRequest
+import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import kotlinx.serialization.json.JsonObject
@@ -205,6 +208,17 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
         @Query("status") status: String? = null,
     ): BaseResponse<WatchersResponse>
+
+    // 감시자: 내가 감시자로 등록된 관계 목록 (마이 「내가 받는 알림」)
+    @GET("v1/users/me/watching")
+    suspend fun getWatching(): BaseResponse<WatchingListResponse>
+
+    // 감시자: 내 감시 항목 수신 설정 (pushEnabled = 푸시만 / revoke = 완전 수신거부)
+    @PATCH("v1/users/me/watching/{watcherId}")
+    suspend fun updateWatching(
+        @Path("watcherId") watcherId: String,
+        @Body request: WatchingUpdateRequest,
+    ): BaseResponse<WatchingUpdateResponse>
 
     // 감시자: 해제 (REVOKED + 연락처 파기)
     @DELETE("v1/challenges/{challengeId}/watchers/{watcherId}")

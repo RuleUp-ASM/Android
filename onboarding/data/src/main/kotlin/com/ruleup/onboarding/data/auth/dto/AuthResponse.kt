@@ -14,6 +14,7 @@ import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
 import com.ruleup.onboarding.domain.auth.entity.OAuthProfile
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
+import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -230,3 +231,24 @@ private val AUTH_FAILURE_CODES: Map<String, AuthFailure> =
     )
 
 private const val DEFAULT_TOKEN_TYPE = "Bearer"
+
+// ---------- 회원 탈퇴 (DELETE /users/me) ----------
+@Serializable
+data class WithdrawResponse(
+    @SerialName("withdrawn")
+    val withdrawn: Boolean? = null,
+    // 복원 가능 기준 시각(탈퇴 +1년)
+    @SerialName("archiveExpiresAt")
+    val archiveExpiresAt: String? = null,
+    // 복원 안내 문구 (서버 관리)
+    @SerialName("restoreNote")
+    val restoreNote: String? = null,
+)
+
+internal fun WithdrawResponse.toDomain(): Withdrawal =
+    Withdrawal(
+        // 응답이 왔는데 플래그만 비면 처리된 것으로 본다 — 서버가 200 을 준 시점에 이미 끝났다.
+        withdrawn = withdrawn ?: true,
+        archiveExpiresAt = archiveExpiresAt,
+        restoreNote = restoreNote,
+    )

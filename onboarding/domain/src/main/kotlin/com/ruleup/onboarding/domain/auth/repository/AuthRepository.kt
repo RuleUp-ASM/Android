@@ -7,6 +7,7 @@ import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
 import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.auth.entity.SignupForm
+import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 
 interface AuthRepository {
     /**
@@ -30,4 +31,11 @@ interface AuthRepository {
 
     /** 현재 기기 refreshToken revoke. */
     suspend fun logout(refreshToken: String)
+
+    /**
+     * 회원 탈퇴(명세: DELETE /users/me). 확인 문구는 [com.ruleup.onboarding.domain.auth.entity.Withdrawal.CONFIRM_PHRASE].
+     *
+     * 참여 중인 챌린지에서 전부 자동 탈퇴되고, 제재 중이어도 탈퇴는 된다(잔여 기간은 동결).
+     */
+    suspend fun withdraw(confirmPhrase: String): Withdrawal
 }

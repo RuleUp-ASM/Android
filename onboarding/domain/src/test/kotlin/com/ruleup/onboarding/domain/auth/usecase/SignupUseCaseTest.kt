@@ -93,7 +93,7 @@ class SignupUseCaseTest {
         }
 
     @Test
-    fun `약관은 미체크 항목까지 6종 전부 실어 보낸다`() =
+    fun `가입 약관은 미체크 항목까지 6종 전부 실어 보내고 개별 동의 2종은 싣지 않는다`() =
         runBlocking {
             val auth = FakeAuthRepository().apply { signupResult = AuthSession(token, testUser()) }
 
@@ -104,7 +104,8 @@ class SignupUseCaseTest {
                     ?.agreements
                     ?.consents
                     .orEmpty()
-            assertEquals(AgreementType.entries.toSet(), sent.keys)
+            // 위치·건강 개별 동의는 그 인증 수단을 처음 쓸 때 받는다 — 가입에 실으면 서버가 400 을 준다.
+            assertEquals(AgreementType.SIGNUP.toSet(), sent.keys)
             assertEquals(false, sent[AgreementType.MARKETING]?.agreed)
         }
 

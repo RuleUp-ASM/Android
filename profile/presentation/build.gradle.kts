@@ -43,6 +43,10 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":profile:domain"))
+    // 로그아웃·탈퇴는 인증 소관 — onboarding 의 domain 계약을 직접 쓴다.
+    implementation(project(":onboarding:domain"))
+    // 「내가 받는 알림」은 감시자 관계 — challenge 의 domain 계약을 직접 쓴다.
+    implementation(project(":challenge:domain"))
     // 이의 내역은 인증 모듈 소관 개념이다 — 타입을 베끼지 않고 그쪽 domain 계약을 직접 쓴다.
     implementation(project(":verification:domain"))
     // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다. 화면 자체는 :report:presentation 소관.
@@ -81,6 +85,8 @@ dependencies {
     testImplementation(testFixtures(project(":core:domain")))
     testImplementation(testFixtures(project(":observability:domain")))
     testImplementation(testFixtures(project(":verification:domain")))
+    testImplementation(testFixtures(project(":challenge:domain")))
+    testImplementation(testFixtures(project(":onboarding:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
     testImplementation(libs.robolectric)
