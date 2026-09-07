@@ -157,9 +157,13 @@ interface ChallengeApi {
         @Part image: MultipartBody.Part,
     ): BaseResponse<ChallengeImageResponse>
 
-    // 내 챌린지 목록 조회 (GET /challenges): 승인제 폐기로 scope 없이 전량 반환
+    // 내 챌린지 목록 조회 (GET /challenges): filter 로 진행 중·완료·이탈 탭이 갈린다
     @GET("v1/challenges")
-    suspend fun getMyChallenges(): BaseResponse<MyChallengesResponse>
+    suspend fun getMyChallenges(
+        @Query("filter") filter: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<MyChallengesResponse>
 
     // 탐색: 실시간 인기 (서버가 Top 20 반환 · 홈은 상위 5개 사용). category 를 주면 카테고리별 인기.
     @GET("v1/challenges/trending")

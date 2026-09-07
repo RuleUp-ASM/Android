@@ -116,8 +116,7 @@ internal fun ExploreContent(
                 when (tab) {
                     RuleUpBottomTab.HOME -> onIntent(ExploreIntent.OpenHome)
                     RuleUpBottomTab.MY -> onIntent(ExploreIntent.OpenMy)
-                    // TODO(#269): "내 챌린지" 목적지 미정.
-                    RuleUpBottomTab.CHALLENGE -> Unit
+                    RuleUpBottomTab.CHALLENGE -> onIntent(ExploreIntent.OpenMyChallenges)
                     RuleUpBottomTab.EXPLORE -> Unit
                 }
             },

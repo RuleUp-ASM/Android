@@ -101,7 +101,11 @@ class FailingChallengeApi(
 
     override suspend fun uploadImage(image: MultipartBody.Part): BaseResponse<ChallengeImageResponse> = failed()
 
-    override suspend fun getMyChallenges(): BaseResponse<MyChallengesResponse> = failed()
+    override suspend fun getMyChallenges(
+        filter: String?,
+        cursor: String?,
+        size: Int?,
+    ): BaseResponse<MyChallengesResponse> = failed()
 
     override suspend fun getTrending(category: String?): BaseResponse<TrendingChallengesResponse> = failed()
 

@@ -33,7 +33,8 @@ import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationLockedException
-import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeFilter
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
 import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
@@ -189,9 +190,13 @@ class ChallengeRepositoryImpl
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun getMyChallenges(): List<MyChallenge> =
+        override suspend fun getMyChallenges(
+            filter: MyChallengeFilter,
+            cursor: String?,
+            size: Int?,
+        ): MyChallengePage =
             api
-                .getMyChallenges()
+                .getMyChallenges(filter = filter.value, cursor = cursor, size = size)
                 .getOrThrow()
                 .toDomain()
 

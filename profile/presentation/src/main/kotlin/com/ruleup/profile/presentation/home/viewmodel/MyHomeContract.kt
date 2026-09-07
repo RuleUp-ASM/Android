@@ -56,8 +56,11 @@ sealed interface MyHomeIntent : MviIntent {
 
     data object OpenHomeTab : MyHomeIntent
 
-    /** 하단 탭: 챌린지(탐색)로 전환. */
+    /** 하단 탭: 탐색으로 전환. */
     data object OpenChallengeTab : MyHomeIntent
+
+    /** 하단 탭: 내 챌린지(진행 중 / 완료·이탈). */
+    data object OpenMyChallengesTab : MyHomeIntent
 }
 
 sealed interface MyHomeEffect : MviEffect {

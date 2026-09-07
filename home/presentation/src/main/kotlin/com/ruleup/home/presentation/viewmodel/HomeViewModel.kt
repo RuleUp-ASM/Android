@@ -2,6 +2,7 @@ package com.ruleup.home.presentation.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.domain.helper.NavigationHelper
@@ -46,6 +47,9 @@ class HomeViewModel
                 HomeIntent.OpenMy ->
                     navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
 
+                HomeIntent.OpenMyChallenges ->
+                    navigationHelper.navigateTo(MyChallengesPage)
+
                 is HomeIntent.OpenChallenge ->
                     navigationHelper.navigateByRoute(ChallengeDetailPage(intent.challengeId).toRoute())
 
@@ -73,7 +77,12 @@ class HomeViewModel
                     // 서로 독립인 두 조회라 병렬로 돌린다. 각 실패는 기본값으로 흡수한다.
                     val (myChallenges, progress) =
                         coroutineScope {
-                            val challenges = async { runCatching { challengeRepository.getMyChallenges() }.getOrDefault(emptyList()) }
+                            // 홈은 진행 중만 보여 준다. 완료·이탈은 챌린지 탭 소관이다.
+                            val challenges =
+                                async {
+                                    runCatching { challengeRepository.getMyChallenges().challenges }
+                                        .getOrDefault(emptyList())
+                                }
                             val progressSnapshot = async { runCatching { verificationRepository.getProgress() }.getOrNull() }
                             challenges.await() to progressSnapshot.await()
                         }

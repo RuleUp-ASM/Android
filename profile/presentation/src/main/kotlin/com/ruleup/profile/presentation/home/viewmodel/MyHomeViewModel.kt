@@ -56,6 +56,7 @@ class MyHomeViewModel
                 MyHomeIntent.OpenSettings -> emitEffect(MyHomeEffect.ShowMessage("설정은 준비 중이에요"))
                 MyHomeIntent.OpenHomeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 MyHomeIntent.OpenChallengeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_EXPLORE))
+                MyHomeIntent.OpenMyChallengesTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_LIST))
             }
         }
 

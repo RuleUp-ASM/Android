@@ -18,10 +18,11 @@ interface MyPageApi {
     @GET("v1/me/home")
     suspend fun getHome(): BaseResponse<MyHomeResponse>
 
-    // 내 챌린지 목록 (챌린지 생성 스펙 계약) — 그룹 랭킹 진입용 최소 필드만 역직렬화한다.
+    // 내 챌린지 목록 — 그룹 랭킹 진입용 최소 필드만 역직렬화한다.
+    // 랭킹은 진행 중인 방만 대상이라 IN_PROGRESS 로 고정한다(구 scope=ACTIVE 폐기).
     @GET("v1/challenges")
     suspend fun getMyChallenges(
-        @Query("scope") scope: String = "ACTIVE",
+        @Query("filter") filter: String = "IN_PROGRESS",
     ): BaseResponse<MyChallengesSliceResponse>
 
     // 내 티어 상세 (변동 로그는 서버 고정 최근 10건)

@@ -9,11 +9,13 @@ import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
 import com.ruleup.challenge.presentation.explore.ExploreScreen
 import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
+import com.ruleup.challenge.presentation.mychallenges.MyChallengesScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
@@ -96,6 +98,18 @@ val appRoutes: List<AppRoute> =
                 )
             },
             render = { ExploreScreen() },
+        ),
+        AppRoute(
+            path = MyChallengesPage.PATH,
+            isBottomTab = true,
+            // 챌린지 탭도 홈 위에 쌓인다 — 뒤로가기 시 홈으로 돌아간다(탐색·마이와 같은 규칙).
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(MyChallengesPage.PATH),
+                )
+            },
+            render = { MyChallengesScreen() },
         ),
         AppRoute(
             path = MyHomePage.PATH,

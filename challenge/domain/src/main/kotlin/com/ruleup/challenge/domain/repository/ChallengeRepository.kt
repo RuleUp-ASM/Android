@@ -16,7 +16,8 @@ import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
-import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeFilter
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
@@ -112,9 +113,17 @@ interface ChallengeRepository {
     suspend fun getMembers(challengeId: String): ChallengeMembers
 
     /**
-     * 내가 참여 중인 챌린지 목록 조회(명세: GET /challenges). 승인제 폐기로 scope 없이 전량 반환한다.
+     * 내 챌린지 목록 조회(명세: GET /challenges).
+     *
+     * 홈의 참여 중 목록과 챌린지 탭이 이 하나를 공유하고 [filter] 로 탭이 갈린다. [cursor] 를
+     * 주지 않으면 첫 페이지다 — 다음 페이지는 응답의 `nextCursor` 를 그대로 되돌려 준다.
+     * 잘못된 커서는 서버가 400 `CURSOR_INVALID` 로 막으므로 클라가 보정하지 않는다.
      */
-    suspend fun getMyChallenges(): List<MyChallenge>
+    suspend fun getMyChallenges(
+        filter: MyChallengeFilter = MyChallengeFilter.IN_PROGRESS,
+        cursor: String? = null,
+        size: Int? = null,
+    ): MyChallengePage
 
     /**
      * 챌린지 탈퇴(본인, 명세 DELETE members/me). 본인 success 이력이 있으면 탈퇴 패널티가 트리거된다.

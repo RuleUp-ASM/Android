@@ -23,6 +23,9 @@ sealed interface HomeIntent : MviIntent {
 
     data object OpenMy : HomeIntent
 
+    /** 하단 탭: 내 챌린지(진행 중 / 완료·이탈). */
+    data object OpenMyChallenges : HomeIntent
+
     data class OpenChallenge(
         val challengeId: String,
     ) : HomeIntent

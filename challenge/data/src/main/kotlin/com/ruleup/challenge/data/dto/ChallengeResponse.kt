@@ -9,6 +9,7 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengeOwner
+import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
@@ -25,10 +26,12 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
+import com.ruleup.challenge.domain.entity.LeftType
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationMethod
@@ -539,10 +542,26 @@ data class MyChallengeResponse(
     val capacity: Int? = null,
     @SerialName("minTier")
     val minTier: String? = null,
+    @SerialName("weeklyCount")
+    val weeklyCount: Int? = null,
+    @SerialName("visibility")
+    val visibility: String? = null,
+    // 명세는 startDate·endDate 를 최상위로 준다. period 객체는 구 계약이라 둘 다 받는다 —
+    // 어느 쪽이 오든 기간이 빈칸으로 남지 않게 하려는 것이다.
+    @SerialName("startDate")
+    val startDate: String? = null,
+    @SerialName("endDate")
+    val endDate: String? = null,
     @SerialName("period")
     val period: PeriodDto? = null,
     @SerialName("myRole")
     val myRole: String? = null,
+    @SerialName("ownerType")
+    val ownerType: String? = null,
+    @SerialName("leftType")
+    val leftType: String? = null,
+    @SerialName("leftAt")
+    val leftAt: String? = null,
 )
 
 internal fun MyChallengeResponse.toDomain(): MyChallenge =
@@ -553,12 +572,18 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         imageUrl = imageUrl,
         category = Category.fromValue(category.orEmpty()),
         mode = ChallengeMode.fromValue(mode) ?: ChallengeMode.SOLO,
+        visibility = ChallengeVisibility.fromValue(visibility),
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         participantCount = participantCount ?: 0,
         capacity = capacity ?: 0,
         minTier = minTier?.let(Tier::fromValue),
-        period = period.toDomain(),
+        // 주간 횟수를 모르면 1 로 둔다 — 0 이면 "판정이 없는 방"처럼 보인다.
+        weeklyCount = (weeklyCount ?: 1).coerceIn(1, 7),
+        period = period?.toDomain() ?: ChallengePeriod(start = startDate.orEmpty(), end = endDate.orEmpty()),
         myRole = MemberRole.fromValue(myRole) ?: MemberRole.MEMBER,
+        ownerType = OwnerType.fromValue(ownerType),
+        leftType = LeftType.fromValue(leftType),
+        leftAt = leftAt,
     )
 
 @Serializable
@@ -568,9 +593,19 @@ data class MyChallengesResponse(
     // 서버가 items 로 바꿔도 견디게 둘 다 받는다 — 계약이 "수정중"이라 흔들릴 여지가 있다.
     @SerialName("items")
     val items: List<MyChallengeResponse>? = null,
+    @SerialName("nextCursor")
+    val nextCursor: String? = null,
+    @SerialName("hasNext")
+    val hasNext: Boolean? = null,
 )
 
-internal fun MyChallengesResponse.toDomain(): List<MyChallenge> = (challenges ?: items).orEmpty().map { it.toDomain() }
+internal fun MyChallengesResponse.toDomain(): MyChallengePage =
+    MyChallengePage(
+        challenges = (challenges ?: items).orEmpty().map { it.toDomain() },
+        nextCursor = nextCursor,
+        // 커서가 있으면 다음 장이 있는 것이다. 플래그만 믿으면 서버가 안 줬을 때 목록이 잘린다
+        hasNext = hasNext ?: (nextCursor != null),
+    )
 
 // ---------- 챌린지 최초 조회 (GET setup) ----------
 @Serializable

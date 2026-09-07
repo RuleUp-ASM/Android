@@ -124,8 +124,7 @@ internal fun HomeContent(
                 when (tab) {
                     RuleUpBottomTab.EXPLORE -> onIntent(HomeIntent.OpenExplore)
                     RuleUpBottomTab.MY -> onIntent(HomeIntent.OpenMy)
-                    // TODO(#269): "내 챌린지" 목적지 미정 — 화면도 라우트 등록도 아직 없다.
-                    RuleUpBottomTab.CHALLENGE -> Unit
+                    RuleUpBottomTab.CHALLENGE -> onIntent(HomeIntent.OpenMyChallenges)
                     RuleUpBottomTab.HOME -> Unit
                 }
             },

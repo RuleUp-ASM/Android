@@ -153,8 +153,7 @@ internal fun MyHomeContent(
                 when (tab) {
                     RuleUpBottomTab.HOME -> onIntent(MyHomeIntent.OpenHomeTab)
                     RuleUpBottomTab.EXPLORE -> onIntent(MyHomeIntent.OpenChallengeTab)
-                    // TODO(#411): "챌린지" 탭 목적지는 챌린지 탭 화면과 함께 붙인다.
-                    RuleUpBottomTab.CHALLENGE -> Unit
+                    RuleUpBottomTab.CHALLENGE -> onIntent(MyHomeIntent.OpenMyChallengesTab)
                     RuleUpBottomTab.MY -> Unit
                 }
             },
