@@ -100,7 +100,13 @@ class MyTierContentTest {
         render(
             MyTierState.initial.copy(
                 isLoading = false,
-                tier = tier(recentChanges = listOf(ScoreChange(date = "2026-08-01", reason = null, challengeId = null, delta = -3))),
+                tier =
+                    tier(
+                        recentChanges =
+                            listOf(
+                                ScoreChange(date = "2026-08-01", reason = null, challengeId = null, challengeTitle = null, delta = -3),
+                            ),
+                    ),
             ),
         )
 
@@ -127,7 +133,13 @@ class MyTierContentTest {
         demotion: TierDemotion? = TierDemotion(graceFloor = 280, demoteAt = 279),
         recentChanges: List<ScoreChange> =
             listOf(
-                ScoreChange(date = "2026-07-21", reason = ScoreChangeReason.CYCLE_SUCCESS, challengeId = "c1", delta = 5),
+                ScoreChange(
+                    date = "2026-07-21",
+                    reason = ScoreChangeReason.CYCLE_SUCCESS,
+                    challengeId = "c1",
+                    challengeTitle = "아침 6:30 기상",
+                    delta = 5,
+                ),
             ),
     ) = MyTier(
         tier = tier,

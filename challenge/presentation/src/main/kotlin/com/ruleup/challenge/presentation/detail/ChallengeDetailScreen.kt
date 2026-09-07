@@ -65,6 +65,7 @@ import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
 import com.ruleup.challenge.presentation.detail.component.RoomTabRow
+import com.ruleup.challenge.presentation.detail.component.SoloMonthCalendar
 import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
 import com.ruleup.challenge.presentation.detail.component.WatcherSection
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
@@ -535,6 +536,16 @@ private fun RoomDetailTabs(
                             .takeIf { state.setup?.manual == true && state.todayResult?.verificationId != null },
                     isManualChecking = state.isManualChecking,
                     extraSections = {
+                        // 솔로 방에만 월 캘린더를 편다 — 그룹은 같은 자리를 랭킹·피드가 쓴다.
+                        if (!detail.mode.isGroup) {
+                            SoloMonthCalendar(
+                                month = state.calendarMonth.orEmpty(),
+                                calendar = state.calendar,
+                                isLoading = state.isCalendarLoading,
+                                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
+                                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
+                            )
+                        }
                         val myWatchers = state.watchers
                         if (myWatchers != null) {
                             WatcherSection(

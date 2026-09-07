@@ -1,6 +1,7 @@
 package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
+import com.ruleup.challenge.data.dto.ChallengeCalendarResponse
 import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
@@ -69,6 +70,11 @@ class FailingChallengeApi(
     override suspend fun getChallenge(challengeId: String): BaseResponse<ChallengeDetailResponse> = failed()
 
     override suspend fun getSetup(challengeId: String): BaseResponse<ChallengeSetupInfoResponse> = failed()
+
+    override suspend fun getCalendar(
+        challengeId: String,
+        month: String,
+    ): BaseResponse<ChallengeCalendarResponse> = failed()
 
     override suspend fun getSettings(challengeId: String): BaseResponse<ChallengeSettingsResponse> = failed()
 

@@ -10,6 +10,7 @@ import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import com.ruleup.profile.domain.entity.ActiveSanction
 import com.ruleup.profile.domain.entity.SanctionHistory
 import com.ruleup.profile.presentation.fake.FakeAccountRepository
+import com.ruleup.profile.presentation.fake.FakeProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -113,10 +114,13 @@ class SettingsViewModelTest {
         repo: FakeAccountRepository,
         auth: FakeAuthRepository = FakeAuthRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
+        // 프로필은 「연결된 계정」 표기 전용이라 실패해도 나머지 행은 그대로 그린다.
+        profile: FakeProfileRepository = FakeProfileRepository(),
     ): SettingsViewModel {
         val tokens = FakeTokenRepository()
         return SettingsViewModel(
             accountRepository = repo,
+            profileRepository = profile,
             logoutUseCase = LogoutUseCase(auth, tokens),
             withdrawUseCase = WithdrawUseCase(auth, tokens),
             navigationHelper = nav,

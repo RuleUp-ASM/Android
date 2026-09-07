@@ -31,33 +31,33 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | 14 | 22 | 14 | 50 |
+| `:app` | – | – | 15 | 14 | 16 | 45 |
 | `:challenge:data` | 48 | – | – | – | – | 48 |
-| `:challenge:domain` | 28 | 4 | – | – | – | 32 |
-| `:challenge:presentation` | 37 | 69 | 56 | – | – | 162 |
+| `:challenge:domain` | 33 | 4 | – | – | – | 37 |
+| `:challenge:presentation` | 37 | 69 | 64 | – | – | 170 |
 | `:core:datastore` | – | 13 | – | – | – | 13 |
-| `:core:domain` | 17 | – | – | – | – | 17 |
+| `:core:domain` | 19 | – | – | – | – | 19 |
 | `:core:network` | 5 | – | – | – | – | 5 |
 | `:home:presentation` | 8 | 7 | 6 | – | – | 21 |
 | `:notification:data` | 10 | – | – | – | – | 10 |
 | `:notification:domain` | 12 | – | – | – | – | 12 |
-| `:notification:presentation` | – | 15 | 13 | – | – | 28 |
+| `:notification:presentation` | – | 18 | 13 | – | – | 31 |
 | `:observability:data` | 20 | – | – | – | – | 20 |
 | `:observability:domain` | 11 | – | – | – | – | 11 |
 | `:onboarding:data` | 11 | – | – | – | – | 11 |
 | `:onboarding:domain` | 8 | 30 | – | – | – | 38 |
 | `:onboarding:presentation` | 3 | 18 | 30 | – | – | 51 |
 | `:profile:data` | 33 | – | – | – | – | 33 |
-| `:profile:presentation` | 4 | 72 | 62 | – | – | 138 |
+| `:profile:presentation` | 4 | 76 | 68 | – | – | 148 |
 | `:report:data` | 12 | 8 | – | – | – | 20 |
 | `:report:domain` | 14 | – | – | – | – | 14 |
 | `:report:presentation` | 5 | 9 | 9 | – | – | 23 |
 | `:verification:data` | 55 | 15 | – | – | – | 70 |
 | `:verification:domain` | 22 | 14 | – | – | – | 36 |
 | `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
-| **합계** | **370** | **284** | **193** | **22** | **14** | **883** |
+| **합계** | **377** | **291** | **202** | **14** | **16** | **906** |
 
-테스트 파일 수: 케이스 65, 모듈 43, UI 35, 통합 6, 인수 2
+테스트 파일 수: 케이스 67, 모듈 43, UI 36, 통합 5, 인수 2
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 

@@ -6,6 +6,7 @@ import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.MyTier
+import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.domain.entity.TierHistory
 
@@ -19,6 +20,7 @@ class FakeMyPageRepository(
     private val home: (() -> MyHome)? = null,
     private val tier: (() -> MyTier)? = null,
     private val tierHistory: (() -> TierHistory)? = null,
+    private val scoreChanges: ((String?) -> ScoreChangePage)? = null,
     private val calendar: ((String) -> ActivityCalendar)? = null,
     private val calendarDay: ((String) -> CalendarDayDetail)? = null,
     private val stats: (() -> StatsReport)? = null,
@@ -29,6 +31,9 @@ class FakeMyPageRepository(
     val calls = mutableListOf<String>()
 
     val historyMonths = mutableListOf<Int>()
+
+    /** 어떤 커서로 이력을 물었는지. 첫 페이지는 null 이다. */
+    val changeCursors = mutableListOf<String?>()
     val calendarMonths = mutableListOf<String>()
 
     override suspend fun getHome(): MyHome {
@@ -50,6 +55,12 @@ class FakeMyPageRepository(
         calls += "getTierHistory"
         historyMonths += months
         return requireNotNull(tierHistory) { "getTierHistory 를 준비하지 않았다" }()
+    }
+
+    override suspend fun getScoreChanges(cursor: String?): ScoreChangePage {
+        calls += "getScoreChanges"
+        changeCursors += cursor
+        return requireNotNull(scoreChanges) { "getScoreChanges 를 준비하지 않았다" }(cursor)
     }
 
     override suspend fun getCalendar(month: String): ActivityCalendar {

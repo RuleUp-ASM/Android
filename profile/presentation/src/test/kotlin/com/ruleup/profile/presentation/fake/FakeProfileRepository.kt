@@ -17,6 +17,7 @@ class FakeProfileRepository(
     private val checkNickname: ((String) -> NicknameCheck)? = null,
     private val updateProfile: (() -> Profile)? = null,
     private val uploadImage: ((String) -> String)? = null,
+    private val myProfile: (() -> MyProfile)? = null,
 ) : ProfileRepository {
     /** 어떤 메서드가 불렸는지. "안 보냈다"도 계약이라 호출 자체를 남긴다. */
     val calls = mutableListOf<String>()
@@ -62,5 +63,8 @@ class FakeProfileRepository(
         calls += "deleteProfileImage"
     }
 
-    override suspend fun getMyProfile(): MyProfile = throw NotImplementedError()
+    override suspend fun getMyProfile(): MyProfile {
+        calls += "getMyProfile"
+        return requireNotNull(myProfile) { "getMyProfile 을 준비하지 않았다" }()
+    }
 }

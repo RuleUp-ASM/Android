@@ -2,6 +2,7 @@ package com.ruleup.profile.presentation.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.profile.presentation.clickPastGuard
 import com.ruleup.profile.presentation.renderScreen
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsDialog
@@ -51,6 +52,22 @@ class SettingsContentTest {
         render(SettingsState.initial.copy(isLoading = false, hasActiveSanction = true))
 
         compose.onNodeWithText("진행 중").assertExists()
+    }
+
+    @Test
+    fun `연결된 소셜 계정을 이름으로 말한다`() {
+        render(SettingsState.initial.copy(isLoading = false, provider = SocialProvider.KAKAO))
+
+        compose.onNodeWithText("연결된 계정").assertExists()
+        compose.onNodeWithText("카카오").assertExists()
+    }
+
+    @Test
+    fun `제공자를 모르면 이름을 지어내지 않는다`() {
+        // 카카오로 가입한 사람에게 구글이라고 말하느니 이름을 비운다.
+        render(SettingsState.initial.copy(isLoading = false, provider = null))
+
+        compose.onNodeWithText("연결됨").assertExists()
     }
 
     @Test

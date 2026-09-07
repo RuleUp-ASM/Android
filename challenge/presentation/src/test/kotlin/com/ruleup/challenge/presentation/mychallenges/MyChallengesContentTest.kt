@@ -88,6 +88,35 @@ class MyChallengesContentTest {
     }
 
     @Test
+    fun `완료 방은 최종 성공률을 함께 보여 준다`() {
+        render(
+            MyChallengesState.initial.copy(
+                isLoading = false,
+                segment = MyChallengeSegment.FINISHED,
+                finished = listOf(myChallenge(id = "done", successRate = 0.88)),
+                finishedPaging = FinishedPaging(null, false, null, false),
+            ),
+        )
+
+        compose.onNodeWithText("최종 88%").assertExists()
+    }
+
+    @Test
+    fun `판정 이력이 없는 완료 방은 성공률 줄을 그리지 않는다`() {
+        // 0% 로 접으면 하루도 판정받지 못하고 끝난 방과 전부 실패한 방이 같아 보인다.
+        render(
+            MyChallengesState.initial.copy(
+                isLoading = false,
+                segment = MyChallengeSegment.FINISHED,
+                finished = listOf(myChallenge(id = "empty", successRate = null)),
+                finishedPaging = FinishedPaging(null, false, null, false),
+            ),
+        )
+
+        compose.onNodeWithText("최종", substring = true).assertDoesNotExist()
+    }
+
+    @Test
     fun `진행률을 못 받았으면 달성률을 지어내지 않는다`() {
         // 0% 로 그리면 아직 모르는 것이 실패로 보인다.
         render(MyChallengesState.initial.copy(isLoading = false, inProgress = listOf(myChallenge()), progress = null))

@@ -1,5 +1,6 @@
 package com.ruleup.challenge.data.api
 
+import com.ruleup.challenge.data.dto.ChallengeCalendarResponse
 import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
@@ -265,6 +266,13 @@ interface ChallengeApi {
     suspend fun getRanking(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<RankingResponse>
+
+    // 챌린지 월 캘린더 (판정 대상일만 내려옴 — /me/calendar 와 status enum 이 다르다)
+    @GET("v1/challenges/{challengeId}/calendar")
+    suspend fun getCalendar(
+        @Path("challengeId") challengeId: String,
+        @Query("month") month: String,
+    ): BaseResponse<ChallengeCalendarResponse>
 
     // 방 밖 랭킹 조회 (같은 모드의 방끼리 — 하루 1회 03시 배치 스냅샷)
     @GET("v1/rankings/challenges")

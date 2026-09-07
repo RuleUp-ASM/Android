@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRanking
@@ -61,6 +62,11 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 상세) 상단 탭 전환. 아직 안 받아온 탭이면 그때 조회한다. */
     data class SelectTab(
         val tab: RoomTab,
+    ) : ChallengeDetailIntent
+
+    /** (솔로 정보 탭) 캘린더 월 이동. `+1` 이면 다음 달, `-1` 이면 이전 달. */
+    data class ShiftCalendarMonth(
+        val offset: Long,
     ) : ChallengeDetailIntent
 
     /** (피드 탭) 하단 도달 → 다음 페이지. */
@@ -243,6 +249,11 @@ data class ChallengeDetailState(
     val pendingDelegationNickname: String? = null,
     // 현재 사용자 ID. 멤버 목록에서 "내 행"을 식별해 관리자 본인 해제(self-DEMOTE)를 노출하는 데 쓴다.
     val myUserId: String? = null,
+    // 솔로 캘린더가 보고 있는 달 YYYY-MM. 화면 진입 시 이번 달로 채워진다.
+    val calendarMonth: String? = null,
+    // 그 달의 판정 기록. 조회 실패·미참여면 null 이라 캘린더가 날짜만 그린다
+    val calendar: ChallengeCalendar? = null,
+    val isCalendarLoading: Boolean = false,
     // 가입 요청 중(버튼 중복 탭 방지). 정원 경합은 재시도해도 서버가 막는다.
     val isJoining: Boolean = false,
     // 가입이 막힌 사유. null 이 아니면 사유별 안내 시트를 띄운다.
@@ -350,6 +361,19 @@ data class JoinBlock(
 sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     data class Loading(
         val challengeId: String,
+    ) : ChallengeDetailReducerEvent
+
+    /** 월 이동. 목록은 비우고 새 달을 읽는다 — 이전 달 색이 남으면 잘못된 기록으로 읽힌다. */
+    data class CalendarMonthChanged(
+        val month: String,
+    ) : ChallengeDetailReducerEvent
+
+    data class CalendarLoading(
+        val loading: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class CalendarLoaded(
+        val calendar: ChallengeCalendar,
     ) : ChallengeDetailReducerEvent
 
     data class Loaded(

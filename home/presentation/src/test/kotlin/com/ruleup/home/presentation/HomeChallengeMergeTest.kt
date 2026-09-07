@@ -112,6 +112,7 @@ class HomeChallengeMergeTest {
             ownerType = OwnerType.USER,
             leftType = null,
             leftAt = null,
+            successRate = null,
         )
 
     private fun local(id: String) =

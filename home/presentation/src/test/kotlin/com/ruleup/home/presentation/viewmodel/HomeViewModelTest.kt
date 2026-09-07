@@ -183,6 +183,7 @@ class HomeViewModelTest {
             ownerType = OwnerType.USER,
             leftType = null,
             leftAt = null,
+            successRate = null,
         )
 
     /** 홈은 첫 페이지만 본다 — 커서를 따라가지 않으므로 마지막 장으로 만든다. */

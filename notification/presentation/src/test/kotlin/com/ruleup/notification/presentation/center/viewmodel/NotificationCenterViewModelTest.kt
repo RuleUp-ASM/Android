@@ -154,6 +154,53 @@ class NotificationCenterViewModelTest {
             assertEquals("서버 오류", viewModel.uiState.value.errorMessage)
         }
 
+    @Test
+    fun `공지 탭으로 옮기면 공지만 묻는다`() =
+        runTest {
+            // 공지는 별도 API 가 아니라 같은 목록의 tab 필터다(2026-09-07 확정).
+            val repo = FakeNotificationRepository(page = { page(notification("n1")) })
+            val viewModel = viewModel(repo)
+
+            viewModel.onIntent(NotificationCenterIntent.Load)
+            viewModel.onIntent(NotificationCenterIntent.SelectTab(NotificationTab.ANNOUNCEMENT))
+
+            assertEquals(
+                listOf(NotificationTab.NOTIFICATION, NotificationTab.ANNOUNCEMENT),
+                repo.tabs,
+            )
+            assertEquals(NotificationTab.ANNOUNCEMENT, viewModel.uiState.value.tab)
+        }
+
+    @Test
+    fun `읽음 처리는 탭마다 한 번씩만 보낸다`() =
+        runTest {
+            // 읽음 지점이 탭별로 따로 보관되므로 탭마다 필요하고, 오갈 때마다 다시 보낼 이유는 없다.
+            val repo = FakeNotificationRepository(page = { page(notification("n1")) })
+            val viewModel = viewModel(repo)
+
+            viewModel.onIntent(NotificationCenterIntent.Load)
+            viewModel.onIntent(NotificationCenterIntent.SelectTab(NotificationTab.ANNOUNCEMENT))
+            viewModel.onIntent(NotificationCenterIntent.SelectTab(NotificationTab.NOTIFICATION))
+            viewModel.onIntent(NotificationCenterIntent.SelectTab(NotificationTab.ANNOUNCEMENT))
+
+            assertEquals(
+                listOf(NotificationTab.NOTIFICATION to "n1", NotificationTab.ANNOUNCEMENT to "n1"),
+                repo.readMarkers,
+            )
+        }
+
+    @Test
+    fun `같은 탭을 다시 눌러도 다시 묻지 않는다`() =
+        runTest {
+            val repo = FakeNotificationRepository(page = { page(notification("n1")) })
+            val viewModel = viewModel(repo)
+
+            viewModel.onIntent(NotificationCenterIntent.Load)
+            viewModel.onIntent(NotificationCenterIntent.SelectTab(NotificationTab.NOTIFICATION))
+
+            assertEquals(1, repo.calls.count { it == "getNotifications" })
+        }
+
     private fun viewModel(
         repo: FakeNotificationRepository,
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),

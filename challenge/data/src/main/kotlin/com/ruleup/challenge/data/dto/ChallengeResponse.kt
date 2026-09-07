@@ -1,6 +1,9 @@
 package com.ruleup.challenge.data.dto
 
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
+import com.ruleup.challenge.domain.entity.ChallengeCalendarDay
 import com.ruleup.challenge.domain.entity.ChallengeConfig
+import com.ruleup.challenge.domain.entity.ChallengeDayStatus
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeField
 import com.ruleup.challenge.domain.entity.ChallengeGate
@@ -645,3 +648,46 @@ internal fun ChallengeSetupInfoResponse.toDomain(): ChallengeSetupInfo =
     )
 
 private const val SETUP_STATUS_READY = "READY"
+
+// ---------- 챌린지 월 캘린더 (GET /challenges/{id}/calendar) ----------
+@Serializable
+data class ChallengeCalendarDayResponse(
+    @SerialName("date")
+    val date: String? = null,
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("verificationId")
+    val verificationId: String? = null,
+    @SerialName("appealable")
+    val appealable: Boolean? = null,
+)
+
+@Serializable
+data class ChallengeCalendarResponse(
+    @SerialName("challengeId")
+    val challengeId: String? = null,
+    @SerialName("month")
+    val month: String? = null,
+    @SerialName("days")
+    val days: List<ChallengeCalendarDayResponse>? = null,
+)
+
+internal fun ChallengeCalendarResponse.toDomain(requestedMonth: String): ChallengeCalendar =
+    ChallengeCalendar(
+        challengeId = challengeId.requireField("challengeId"),
+        // 응답이 월을 비우면 물어본 달로 둔다 — 캘린더 헤더가 빈칸이 되는 것보다 낫다.
+        month = month?.takeIf { it.isNotBlank() } ?: requestedMonth,
+        days = days.orEmpty().mapNotNull { it.toDomain() },
+    )
+
+internal fun ChallengeCalendarDayResponse.toDomain(): ChallengeCalendarDay? {
+    // 날짜 없는 칸은 달력에 세울 자리가 없다.
+    val date = date?.takeIf { it.isNotBlank() } ?: return null
+    return ChallengeCalendarDay(
+        date = date,
+        status = ChallengeDayStatus.fromValue(status),
+        verificationId = verificationId,
+        // 모르면 이의를 열지 않는다 — 못 내는 버튼을 보여 주면 눌렀다가 에러를 본다.
+        appealable = appealable ?: false,
+    )
+}

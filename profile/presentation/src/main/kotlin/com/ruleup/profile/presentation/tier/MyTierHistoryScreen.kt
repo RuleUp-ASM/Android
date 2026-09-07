@@ -152,10 +152,12 @@ private fun HistoryBody(
                 }
             }
         }
-        state.retentionDays?.let { days ->
+        // 이력 API 의 보관 일수를 먼저 쓰고, 그게 없으면(조회 실패) 그래프가 들고 온 문구로 떨어진다.
+        val retention = state.retentionDays?.let { "${it}일 보관" } ?: state.history?.retentionNote
+        retention?.let {
             item {
                 Text(
-                    text = "${days}일치까지 보관해요 — 그 이전 기록은 지워져요",
+                    text = "$it — 그 이전 기록은 지워져요",
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                     modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
