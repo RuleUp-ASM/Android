@@ -248,6 +248,7 @@ private fun ChallengeList(
                 InProgressCard(
                     challenge = challenge,
                     progress = state.progress.of(challenge.challengeId),
+                    unreadBadge = state.unread.badgeOf(challenge.challengeId),
                 ) { onIntent(MyChallengesIntent.OpenChallenge(challenge.challengeId)) }
             }
         }
@@ -271,6 +272,7 @@ private fun ProgressSnapshot?.of(challengeId: String): ChallengeProgress? = this
 private fun InProgressCard(
     challenge: MyChallenge,
     progress: ChallengeProgress?,
+    unreadBadge: String?,
     onClick: () -> Unit,
 ) {
     Card(onClick = onClick) {
@@ -292,6 +294,10 @@ private fun InProgressCard(
                             color = RuleUpTheme.colors.brand,
                             style = RuleUpTheme.typography.captionBold,
                         )
+                    }
+                    unreadBadge?.let {
+                        Spacer(Modifier.width(6.dp))
+                        UnreadBadge(text = it)
                     }
                 }
                 Text(
@@ -319,6 +325,29 @@ private fun InProgressCard(
             Spacer(Modifier.height(6.dp))
             RuleUpProgressBar(progress = (progress.progressRate / 100.0).toFloat().coerceIn(0f, 1f))
         }
+    }
+}
+
+/**
+ * 이 방의 읽지 않은 알림 수 (Figma 1314:2 `Badge · Unread`).
+ *
+ * 상한을 넘으면 `99+` 다 — 정확한 수를 쓰면 클라가 100건을 다 세야 하고, 그러면 목록을 무한정
+ * 읽게 된다. 알림 센터에 들어가야 0 이 되고 이 화면을 보는 것만으로는 리셋되지 않는다.
+ */
+@Composable
+private fun UnreadBadge(text: String) {
+    Box(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(9.dp))
+                .background(RuleUpTheme.colors.danger)
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+    ) {
+        Text(
+            text = text,
+            color = RuleUpTheme.colors.surface,
+            style = RuleUpTheme.typography.micro,
+        )
     }
 }
 

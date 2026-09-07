@@ -10,6 +10,7 @@ import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.notification.domain.repository.NotificationRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +35,7 @@ class MyChallengesViewModel
     constructor(
         private val challengeRepository: ChallengeRepository,
         private val verificationRepository: VerificationRepository,
+        private val notificationRepository: NotificationRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<MyChallengesIntent, MyChallengesState, MyChallengesReducerEvent, MyChallengesEffect>(
             MyChallengesState.initial,
@@ -73,6 +75,8 @@ class MyChallengesViewModel
                     )
 
                 is MyChallengesReducerEvent.ProgressLoaded -> state.copy(progress = event.progress)
+
+                is MyChallengesReducerEvent.UnreadLoaded -> state.copy(unread = event.unread)
 
                 is MyChallengesReducerEvent.Failed -> state.copy(isLoading = false, errorMessage = event.message)
 
@@ -120,6 +124,11 @@ class MyChallengesViewModel
             viewModelScope.launch {
                 runCatching { verificationRepository.getProgress() }
                     .onSuccess { dispatch(MyChallengesReducerEvent.ProgressLoaded(it)) }
+            }
+            // 미읽음 뱃지도 부수 정보다 — 못 세면 뱃지만 안 붙고 목록은 그대로 뜬다.
+            viewModelScope.launch {
+                runCatching { notificationRepository.getUnreadSummary() }
+                    .onSuccess { dispatch(MyChallengesReducerEvent.UnreadLoaded(it)) }
             }
         }
 

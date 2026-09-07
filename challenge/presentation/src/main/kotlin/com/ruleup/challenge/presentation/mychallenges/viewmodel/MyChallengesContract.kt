@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.mychallenges.viewmodel
 
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.notification.domain.entity.UnreadSummary
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -75,6 +76,8 @@ data class MyChallengesState(
     val finished: List<MyChallenge>,
     // 진행 중 카드의 달성률·D-day 원천. 없으면 두 값을 그리지 않는다
     val progress: ProgressSnapshot?,
+    // 카드의 미읽음 뱃지(Figma 1314:2). 조회에 실패하면 빈 집계라 뱃지가 붙지 않는다
+    val unread: UnreadSummary,
     val finishedPaging: FinishedPaging,
     val errorMessage: String?,
 ) : UiState {
@@ -90,6 +93,7 @@ data class MyChallengesState(
                 inProgress = emptyList(),
                 finished = emptyList(),
                 progress = null,
+                unread = UnreadSummary.EMPTY,
                 finishedPaging = FinishedPaging.initial,
                 errorMessage = null,
             )
@@ -108,6 +112,11 @@ sealed interface MyChallengesReducerEvent : ReducerEvent {
     /** 진행률은 목록의 부수 정보라 실패해도 목록을 지우지 않는다. */
     data class ProgressLoaded(
         val progress: ProgressSnapshot,
+    ) : MyChallengesReducerEvent
+
+    /** 미읽음도 부수 정보다 — 못 세면 뱃지만 안 붙는다. */
+    data class UnreadLoaded(
+        val unread: UnreadSummary,
     ) : MyChallengesReducerEvent
 
     data class Failed(

@@ -6,6 +6,7 @@ import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
 import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
+import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
@@ -21,6 +22,7 @@ private const val TAG = "[DeepLink]"
 private const val APP_SEGMENT = "app"
 private const val FRIEND_INVITE_SEGMENT = "inv"
 private const val WATCHER_INVITE_SEGMENT = "w"
+private const val RULEUP_SCHEME = "ruleup"
 private const val CHALLENGE_INVITE_SEGMENT = "c"
 
 /**
@@ -93,6 +95,18 @@ fun NavRoute.toAppLinkUri(): Uri =
         .apply { args.forEach { (k, v) -> appendQueryParameter(k, v) } }
         .build()
 
+/**
+ * 커스텀 스킴(`ruleup://`) 딥링크. 해석기가 없거나 모르는 링크면 null 이다 —
+ * 서버가 알림 타입을 늘리는 건 정상이라 모르는 링크가 오는 것도 정상이다.
+ */
+private fun schemeRoute(
+    uri: Uri,
+    deeplinkResolver: DeeplinkResolver?,
+): NavRoute? {
+    if (!uri.scheme.equals(RULEUP_SCHEME, ignoreCase = true)) return null
+    return deeplinkResolver?.resolve(uri.toString())
+}
+
 /** 시작 백스택. 딥링크 유무와 무관하게 스플래시 한 장이다 — 인증 판정이 끝나야 목적지가 정해진다. */
 fun startStack(): List<NavKey> = listOf(GenericNavKey(SplashPage.PATH))
 
@@ -105,8 +119,11 @@ fun startStack(): List<NavKey> = listOf(GenericNavKey(SplashPage.PATH))
 fun resolveStartRoute(
     uri: Uri?,
     observability: Observability,
+    deeplinkResolver: DeeplinkResolver? = null,
 ): NavRoute? {
     if (uri == null) return null
+    // 알림 탭은 ruleup:// 로 온다 — 해석은 앱이 가진 라우트 표를 아는 resolver 가 한다.
+    schemeRoute(uri, deeplinkResolver)?.let { return it }
     // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다. 가입 시 inviteCode 서버 전달은
     // auth 스펙(inviteCode 필드) 개정 후 후속.
     if (uri.isFriendInvite()) return null
@@ -125,7 +142,9 @@ fun resolveStartRoute(
 fun resolveNewIntentRoute(
     uri: Uri,
     observability: Observability,
+    deeplinkResolver: DeeplinkResolver? = null,
 ): NavRoute? {
+    schemeRoute(uri, deeplinkResolver)?.let { return it }
     // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태) — 무시.
     if (uri.isFriendInvite()) return null
     uri.toChallengeInviteRoute()?.let { return it }

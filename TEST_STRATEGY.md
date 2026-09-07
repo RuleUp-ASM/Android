@@ -31,7 +31,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | 6 | 18 | 14 | 38 |
+| `:app` | – | – | 14 | 22 | 14 | 50 |
 | `:challenge:data` | 48 | – | – | – | – | 48 |
 | `:challenge:domain` | 28 | 4 | – | – | – | 32 |
 | `:challenge:presentation` | 37 | 69 | 56 | – | – | 162 |
@@ -39,6 +39,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:core:domain` | 17 | – | – | – | – | 17 |
 | `:core:network` | 5 | – | – | – | – | 5 |
 | `:home:presentation` | 8 | 7 | 6 | – | – | 21 |
+| `:notification:data` | 10 | – | – | – | – | 10 |
+| `:notification:domain` | 12 | – | – | – | – | 12 |
+| `:notification:presentation` | – | 15 | 13 | – | – | 28 |
 | `:observability:data` | 20 | – | – | – | – | 20 |
 | `:observability:domain` | 11 | – | – | – | – | 11 |
 | `:onboarding:data` | 11 | – | – | – | – | 11 |
@@ -52,9 +55,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:verification:data` | 55 | 15 | – | – | – | 70 |
 | `:verification:domain` | 22 | 14 | – | – | – | 36 |
 | `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
-| **합계** | **348** | **269** | **172** | **18** | **14** | **821** |
+| **합계** | **370** | **284** | **193** | **22** | **14** | **883** |
 
-테스트 파일 수: 케이스 63, 모듈 41, UI 33, 통합 5, 인수 2
+테스트 파일 수: 케이스 65, 모듈 43, UI 35, 통합 6, 인수 2
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 
@@ -107,6 +110,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | 챌린지 생성 → 내 목록에 보임 | 하위만 | `CreateChallengeCommandTest` · `CreateChallengeViewModelTest` · `HomeChallengeMergeTest` |
 | 초대 링크로 참여 → 방 진입 | 하위만 | `ChallengeInviteViewModelTest` · `ChallengeInviteContentTest` · `InviteLinkTest`(딥링크 세 갈래) · `ChallengeDetailJoinTest` |
 | 감시자 초대 링크로 수락 → 통지 수신 대상이 됨 | 하위만 | `WatcherAcceptViewModelTest`(수락 전/후 분리) · `InviteLinkTest` · `WatchingViewModelTest`(수신 끄기) |
+| 알림 탭 → 읽음 지점이 뒤로 밀리지 않는다 | 하위만 | `NotificationCenterViewModelTest`(첫 페이지에서만 갱신) · `NotificationPageTest`(기준선 판정) · `PushMessageTest` |
 | 매너 온도 폐기 후 티어가 화면 전체에서 일관 | **인수 있음** | `AccountContractAcceptanceTest` · `MyTierResponseMappingTest` · `MyTierContentTest`(유예 밴드) |
 | 약관 재동의·철회가 사유별로 갈린다 | **인수 있음** | `AccountContractAcceptanceTest`(철회 금지·버전 불일치) · `AgreementsViewModelTest` · `ErrorBodyInterceptorTest` |
 | 인증 제출 → 오늘 상태가 바뀜 | 하위만 | `RunSyncUseCaseTest` · `SubmitDeviceIntroUseCaseTest` · `TodayStatusTest` |

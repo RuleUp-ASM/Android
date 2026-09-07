@@ -6,6 +6,7 @@ import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.presentation.mychallenges.myChallenge
 import com.ruleup.challenge.presentation.mychallenges.page
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import kotlinx.coroutines.Dispatchers
@@ -157,10 +158,12 @@ class MyChallengesViewModelTest {
         repo: FakeChallengeRepository,
         verification: FakeVerificationRepository =
             FakeVerificationRepository(progress = { ProgressSnapshot(asOf = "2026-09-01T00:00:00Z", challenges = emptyList()) }),
+        notifications: FakeNotificationRepository = FakeNotificationRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
     ) = MyChallengesViewModel(
         challengeRepository = repo,
         verificationRepository = verification,
+        notificationRepository = notifications,
         navigationHelper = nav,
     )
 }

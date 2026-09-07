@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.observability.domain.test.testObservability
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -69,4 +70,66 @@ class InviteLinkTest {
     }
 
     private fun uri(value: String): Uri = Uri.parse(value)
+}
+
+/**
+ * 알림 딥링크(`ruleup://`) → 앱 라우트.
+ *
+ * 서버가 알림 타입을 늘리는 것은 정상이라 **모르는 링크가 오는 것도 정상**이다 — 그때 엉뚱한
+ * 화면으로 보내는 것보다 아무 데도 안 가는 편이 낫다.
+ *
+ * 반대로 실재하는 화면인데 못 가면 알림을 눌러도 아무 일이 없는 것처럼 보인다.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(application = Application::class)
+class RuleUpSchemeResolverTest {
+    private val resolver = RuleUpSchemeResolver()
+
+    @Test
+    fun `챌린지 딥링크는 방 상세로 간다`() {
+        val route = resolver.resolve("ruleup://challenge/c_301")
+
+        assertEquals(AppRoutes.CHALLENGE_DETAIL, route?.path)
+        assertEquals("c_301", route?.args?.get("challengeId"))
+    }
+
+    @Test
+    fun `모더레이션 거부는 수정 화면으로 간다`() {
+        // 거부 후 사용자가 할 일이 "고치는 것"이라 목록이 아니라 편집으로 보낸다.
+        val route = resolver.resolve("ruleup://challenge/c_301/edit")
+
+        assertEquals(AppRoutes.CHALLENGE_SETTINGS, route?.path)
+    }
+
+    @Test
+    fun `티어 알림은 내 티어 화면으로 간다`() {
+        assertEquals(AppRoutes.MY_TIER, resolver.resolve("ruleup://mypage/tier")?.path)
+    }
+
+    @Test
+    fun `약관 개정 알림은 동의 화면으로 간다`() {
+        assertEquals(AppRoutes.MY_AGREEMENTS, resolver.resolve("ruleup://terms/t_7")?.path)
+    }
+
+    @Test
+    fun `모르는 딥링크는 아무 데도 보내지 않는다`() {
+        assertNull(resolver.resolve("ruleup://something/new"))
+    }
+
+    @Test
+    fun `화면이 없는 타입은 폴백하지 않고 제자리에 둔다`() {
+        // 인증 상세 화면이 없다 — 판정 결과는 방 상세의 오늘 카드에서 본다.
+        assertNull(resolver.resolve("ruleup://verification/v_88"))
+    }
+
+    @Test
+    fun `다른 스킴은 이 해석기가 다루지 않는다`() {
+        // https 앱링크는 별도 경로가 처리한다 — 여기서 가로채면 초대 링크가 엉뚱하게 풀린다.
+        assertNull(resolver.resolve("https://android.ruleup.co.kr/c/tok"))
+    }
+
+    @Test
+    fun `식별자 없는 챌린지 링크는 버린다`() {
+        assertNull(resolver.resolve("ruleup://challenge"))
+    }
 }

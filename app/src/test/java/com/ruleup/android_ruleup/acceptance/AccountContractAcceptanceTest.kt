@@ -7,6 +7,8 @@ import com.ruleup.challenge.domain.entity.MyChallengeFilter
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.network.image.ImageBytes
 import com.ruleup.network.image.ImageReader
+import com.ruleup.notification.data.api.NotificationApi
+import com.ruleup.notification.data.repository.NotificationRepositoryImpl
 import com.ruleup.profile.data.api.AccountApi
 import com.ruleup.profile.data.api.MyPageApi
 import com.ruleup.profile.data.repository.AccountRepositoryImpl
@@ -40,6 +42,7 @@ class AccountContractAcceptanceTest {
     private lateinit var account: AccountRepositoryImpl
     private lateinit var challenges: ChallengeRepositoryImpl
     private lateinit var watchers: WatcherRepositoryImpl
+    private lateinit var notifications: NotificationRepositoryImpl
 
     @Before
     fun setUp() {
@@ -50,6 +53,8 @@ class AccountContractAcceptanceTest {
         val challengeApi = AcceptanceGate.api(ChallengeApi::class.java, token.accessToken)
         challenges = ChallengeRepositoryImpl(challengeApi, NoImageReader)
         watchers = WatcherRepositoryImpl(challengeApi)
+        notifications =
+            NotificationRepositoryImpl(AcceptanceGate.api(NotificationApi::class.java, token.accessToken))
     }
 
     @Test
@@ -153,6 +158,26 @@ class AccountContractAcceptanceTest {
             val history = account.getSanctions()
 
             assertTrue(history.isEmpty, "새 계정인데 제재가 있다")
+        }
+
+    @Test
+    fun `알림 센터 목록을 앱 모델로 읽는다`() =
+        runBlocking<Unit> {
+            // 여기서 터지면 알림함이 통째로 오류 화면이 된다. 새 계정이라 목록은 비어 있는 게 정상이다.
+            val page = notifications.getNotifications()
+
+            assertTrue(page.items.isEmpty(), "새 계정인데 알림이 있다")
+            assertTrue(page.unread.isEmpty(), "빈 목록인데 미읽음이 있다")
+        }
+
+    @Test
+    fun `알림 설정을 앱 모델로 읽는다`() =
+        runBlocking<Unit> {
+            // 배포된 서버가 아직 구 모델(types + marketing)을 주더라도 읽혀야 한다 —
+            // 못 읽으면 설정 화면이 열리지 않는다.
+            val settings = notifications.getSettings()
+
+            assertNotNull(settings.groups, "그룹 설정을 읽지 못했다")
         }
 
     @Test

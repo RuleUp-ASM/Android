@@ -92,7 +92,14 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- FCM 수신. 데이터 전용 메시지만 오고, 지금은 알림을 띄우는 type 이 없다(RuleUpMessagingService). -->
+        <!-- 백그라운드·종료 상태에서는 OS 가 payload 의 notification 블록을 자동 표시한다.
+             그때 쓸 채널을 지정해 두지 않으면 서버가 보낸 channel_id 가 없을 때 알림이 조용히 사라진다.
+             값은 NotificationPresenter.DEFAULT_CHANNEL_ID 와 같아야 한다. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="ruleup_default" />
+
+        <!-- FCM 수신. 포그라운드에서만 이 서비스가 알림을 직접 그린다(RuleUpMessagingService). -->
         <service
             android:name=".push.RuleUpMessagingService"
             android:exported="false">
