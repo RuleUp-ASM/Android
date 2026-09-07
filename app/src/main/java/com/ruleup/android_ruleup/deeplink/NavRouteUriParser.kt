@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
+import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
@@ -14,9 +15,10 @@ private const val TAG = "[DeepLink]"
 // App Links 경로 규약.
 // - /app/{path}?{args} : 앱 화면 직결(푸시 알림 등). 화면이 늘어도 매니페스트를 고치지 않도록 접두사 하나로 묶는다.
 // - /inv/{code}        : 친구 초대. 화면이 아니라 "앱 실행"으로만 받는다.
-// - /w/{token}         : 감시자 초대 — 매니페스트에 없다. 앱 설치 여부와 무관하게 웹 동의 페이지로 열린다.
+// - /w/{token}         : 감시자 초대 — 인앱 수락 화면으로 연결한다(웹 동의는 폐지).
 private const val APP_SEGMENT = "app"
 private const val FRIEND_INVITE_SEGMENT = "inv"
+private const val WATCHER_INVITE_SEGMENT = "w"
 
 /**
  * 앱 화면 주소의 호스트. 알림이 자기 목적지를 조립할 때 쓴다.
@@ -31,6 +33,18 @@ private const val FRIEND_INVITE_SEGMENT = "inv"
 private const val APP_LINK_HOST = "android.ruleup.co.kr"
 
 private fun Uri.isFriendInvite(): Boolean = pathSegments?.firstOrNull() == FRIEND_INVITE_SEGMENT
+
+/**
+ * 감시자 초대 `/w/{token}` 을 수락 화면 경로로 옮긴다.
+ *
+ * 토큰이 없으면 null — 세그먼트가 하나뿐인 `/w` 로 들어오면 수락할 대상이 없다.
+ */
+private fun Uri.toWatcherAcceptRoute(): NavRoute? {
+    val segments = pathSegments ?: return null
+    if (segments.firstOrNull() != WATCHER_INVITE_SEGMENT) return null
+    val token = segments.getOrNull(1)?.takeIf { it.isNotBlank() } ?: return null
+    return WatcherAcceptPage(token).toRoute()
+}
 
 /**
  * App Link 의 [Uri] 를 [NavRoute] 로 변환한다. 변환에 실패하면 null.
@@ -85,6 +99,8 @@ fun resolveStartRoute(
     // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다. 가입 시 inviteCode 서버 전달은
     // auth 스펙(inviteCode 필드) 개정 후 후속.
     if (uri.isFriendInvite()) return null
+    // 감시자 초대는 화면이 있다 — 로그인 뒤에 열리도록 보류 대상으로 넘긴다.
+    uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
     if (route == null || appRouteByPath[route.path] == null) {
         // URI 전체(쿼리 포함)는 남기지 않고 path 만 남긴다(민감 인자 로깅 방지).
@@ -100,6 +116,7 @@ fun resolveNewIntentRoute(
 ): NavRoute? {
     // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태) — 무시.
     if (uri.isFriendInvite()) return null
+    uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
     if (route == null || appRouteByPath[route.path] == null) {
         observability.w(TAG) { "해석할 수 없는 딥링크 무시: path=${uri.path}" }

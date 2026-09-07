@@ -10,6 +10,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
+import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
@@ -19,6 +20,7 @@ import com.ruleup.challenge.presentation.mychallenges.MyChallengesScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
+import com.ruleup.challenge.presentation.watcher.WatcherAcceptScreen
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.home.presentation.HomeScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
@@ -224,6 +226,14 @@ val appRoutes: List<AppRoute> =
             path = ChallengeSettingsPage.PATH,
             render = { args ->
                 ChallengeSettingsScreen(challengeId = args[ChallengeSettingsPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = WatcherAcceptPage.PATH,
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
+            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            render = { args ->
+                WatcherAcceptScreen(token = args[WatcherAcceptPage.ARG_TOKEN].orEmpty())
             },
         ),
         AppRoute(

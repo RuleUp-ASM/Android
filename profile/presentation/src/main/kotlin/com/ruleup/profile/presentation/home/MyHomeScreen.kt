@@ -54,6 +54,7 @@ import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.presentation.common.label
 import com.ruleup.profile.presentation.common.thousandsLabel
+import com.ruleup.profile.presentation.home.viewmodel.ChallengePickerTarget
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeEffect
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeState
@@ -161,11 +162,11 @@ internal fun MyHomeContent(
         )
     }
 
-    val picker = state.rankingPicker
+    val picker = state.picker
     if (picker != null) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            onDismissRequest = { onIntent(MyHomeIntent.DismissRankingPicker) },
+            onDismissRequest = { onIntent(MyHomeIntent.DismissChallengePicker) },
             sheetState = sheetState,
             containerColor = RuleUpTheme.colors.surface,
         ) {
@@ -177,12 +178,17 @@ internal fun MyHomeContent(
                         .padding(bottom = 24.dp),
             ) {
                 Text(
-                    text = "어느 그룹의 랭킹을 볼까요?",
+                    text =
+                        if (picker.target == ChallengePickerTarget.WATCHERS) {
+                            "어느 챌린지의 감시자를 볼까요?"
+                        } else {
+                            "어느 그룹의 랭킹을 볼까요?"
+                        },
                     color = RuleUpTheme.colors.textPrimary,
                     style = RuleUpTheme.typography.section,
                 )
                 Spacer(Modifier.height(12.dp))
-                picker.forEach { challenge ->
+                picker.challenges.forEach { challenge ->
                     Row(
                         modifier =
                             Modifier
@@ -190,7 +196,7 @@ internal fun MyHomeContent(
                                 .clip(RoundedCornerShape(12.dp))
                                 .singleClickable(
                                     onClick = {
-                                        onIntent(MyHomeIntent.SelectRankingChallenge(challenge.challengeId))
+                                        onIntent(MyHomeIntent.SelectPickedChallenge(challenge.challengeId))
                                     },
                                 ).padding(horizontal = 4.dp, vertical = 13.dp),
                         verticalAlignment = Alignment.CenterVertically,

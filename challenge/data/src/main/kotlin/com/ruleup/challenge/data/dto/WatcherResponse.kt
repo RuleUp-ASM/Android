@@ -1,7 +1,13 @@
 package com.ruleup.challenge.data.dto
 
+import com.ruleup.challenge.domain.entity.AlreadyConsentedException
+import com.ruleup.challenge.domain.entity.CannotWatchSelfException
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
+import com.ruleup.challenge.domain.entity.InvitationExpiredException
+import com.ruleup.challenge.domain.entity.InvitationInvalidException
 import com.ruleup.challenge.domain.entity.Watcher
+import com.ruleup.challenge.domain.entity.WatcherAcceptance
+import com.ruleup.challenge.domain.entity.WatcherBlockedException
 import com.ruleup.challenge.domain.entity.WatcherChannel
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -9,6 +15,7 @@ import com.ruleup.challenge.domain.entity.WatcherStatus
 import com.ruleup.challenge.domain.entity.WatcherType
 import com.ruleup.challenge.domain.entity.Watching
 import com.ruleup.challenge.domain.entity.WatchingUpdate
+import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -84,6 +91,9 @@ data class WatcherResponse(
     // INVITED 일 때 토큰 만료
     @SerialName("expiresAt")
     val expiresAt: String? = null,
+    // REVOKED +30일 — 그 전에는 같은 사람을 다시 지정할 수 없다
+    @SerialName("reinviteAvailableAt")
+    val reinviteAvailableAt: String? = null,
 )
 
 internal fun WatcherResponse.toDomain(): Watcher =
@@ -95,13 +105,27 @@ internal fun WatcherResponse.toDomain(): Watcher =
         displayName = displayName,
         contactMasked = contactMasked,
         expiresAt = expiresAt,
+        reinviteAvailableAt = reinviteAvailableAt,
     )
+
+@Serializable
+data class WatcherSlotsResponse(
+    @SerialName("used")
+    val used: Int? = null,
+    // 무료 3, 구독이면 null(무제한)
+    @SerialName("freeLimit")
+    val freeLimit: Int? = null,
+    @SerialName("subscribed")
+    val subscribed: Boolean? = null,
+)
 
 @Serializable
 data class WatchersResponse(
     @SerialName("challengeId")
     val challengeId: String? = null,
-    // 무료 3, 구독 시 null(무제한)
+    @SerialName("slots")
+    val slots: WatcherSlotsResponse? = null,
+    // 구 계약의 평평한 한도. 서버가 slots 로 옮겼지만 둘 다 받아 둔다
     @SerialName("limit")
     val limit: Int? = null,
     @SerialName("watchers")
@@ -110,7 +134,8 @@ data class WatchersResponse(
 
 internal fun WatchersResponse.toDomain(): ChallengeWatchers =
     ChallengeWatchers(
-        limit = limit,
+        // 구독 중이면 한도가 없다 — freeLimit 이 와도 무제한으로 본다.
+        limit = if (slots?.subscribed == true) null else slots?.freeLimit ?: limit,
         watchers = watchers.orEmpty().map { it.toDomain() },
     )
 
@@ -189,3 +214,39 @@ internal fun WatchingUpdateResponse.toDomain(requestedId: String): WatchingUpdat
         inboxKept = inboxKept ?: true,
         reblockUntil = reblockUntil,
     )
+
+// ---------- 초대 수락 (POST /watchers/invitations/{token}/accept) ----------
+@Serializable
+data class WatcherAcceptResponse(
+    @SerialName("watcherId")
+    val watcherId: String? = null,
+    // CONSENTED(시작 전) / ACTIVE(진행 중)
+    @SerialName("status")
+    val status: String? = null,
+    // 인앱 수락이므로 항상 IN_APP
+    @SerialName("channel")
+    val channel: String? = null,
+)
+
+internal fun WatcherAcceptResponse.toDomain(): WatcherAcceptance =
+    WatcherAcceptance(
+        watcherId = watcherId.requireField("watcherId"),
+        status = WatcherStatus.fromValue(status),
+        channel = WatcherChannel.fromValue(channel),
+    )
+
+/**
+ * 수락 실패를 화면이 분기할 수 있는 타입으로 옮긴다.
+ *
+ * 만료는 "다시 초대해 달라고 하기", 중복은 "이미 됐다", 본인 수락은 "안 되는 일"로 다음 행동이
+ * 전부 다르다 — 한 토스트로 접으면 사용자가 무엇을 해야 할지 알 수 없다.
+ */
+internal fun ApiException.toAcceptFailure(): Throwable =
+    when (code) {
+        "INVITATION_EXPIRED" -> InvitationExpiredException()
+        "ALREADY_CONSENTED", "ALREADY_WATCHER" -> AlreadyConsentedException()
+        "CANNOT_WATCH_SELF" -> CannotWatchSelfException()
+        "WATCHER_BLOCKED" -> WatcherBlockedException()
+        "INVITATION_INVALID", "INVITATION_NOT_FOUND" -> InvitationInvalidException()
+        else -> this
+    }

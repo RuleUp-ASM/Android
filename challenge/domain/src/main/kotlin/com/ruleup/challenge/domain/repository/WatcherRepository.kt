@@ -1,17 +1,22 @@
 package com.ruleup.challenge.domain.repository
 
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
+import com.ruleup.challenge.domain.entity.WatcherAcceptance
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.Watching
 import com.ruleup.challenge.domain.entity.WatchingUpdate
 
 /**
- * 루틴 실패 패널티 — 감시자 통지(감시자 초대 생성·관리).
+ * 루틴 실패 패널티 — 감시자 통지.
  *
- * 초대 **수락**은 앱이 하지 않는다 — 비유저 감시자를 포함해 웹 동의 페이지가 담당한다.
- * 앱은 초대를 만들어 사용자 본인 채널로 공유하는 데까지만 관여한다.
+ * 수락은 **인앱 전용**이다(감시자 테크 스펙 5-2·2026-08-31) — 웹 동의는 폐지됐고 룰업 유저만
+ * 감시자가 될 수 있다. 초대 전달은 사용자 본인 채널(카카오톡 공유)로만 하고, 실패 통지 발송은
+ * 서버가 담당한다.
+ *
+ * **감시자 해제는 없다.** 관계는 루틴이 끝나면 배치가 지우고, 받는 쪽은 [updateWatching] 으로
+ * 수신을 닫는다. 그래서 지정한 쪽이 관계를 끊는 경로가 계약에 없다.
+ *
  * 감시자는 챌린지 × 참여자 단위로 붙는다(발송 대상 = (챌린지, 실패 사용자)의 ACTIVE 감시자).
- * 초대 전달은 사용자 본인 채널(카카오톡 공유)로만 하고, 실패 통지 발송은 서버가 담당한다.
  */
 interface WatcherRepository {
     /**
@@ -45,9 +50,13 @@ interface WatcherRepository {
         revoke: Boolean? = null,
     ): WatchingUpdate
 
-    /** 감시자 해제(명세: DELETE /challenges/{id}/watchers/{watcherId}). REVOKED + 연락처 파기. */
-    suspend fun removeWatcher(
-        challengeId: String,
-        watcherId: String,
-    )
+    /**
+     * 초대 수락(명세: POST /watchers/invitations/{token}/accept). **로그인 필수**이고 수락이 곧
+     * 수신 동의다 — 서버가 토큰과 로그인 상태를 함께 확인한 뒤에야 관계가 성립한다.
+     *
+     * 만료는 [com.ruleup.challenge.domain.entity.InvitationExpiredException],
+     * 이미 수락한 초대는 [com.ruleup.challenge.domain.entity.AlreadyConsentedException],
+     * 본인 초대는 [com.ruleup.challenge.domain.entity.CannotWatchSelfException] 이 던져진다.
+     */
+    suspend fun acceptInvitation(token: String): WatcherAcceptance
 }

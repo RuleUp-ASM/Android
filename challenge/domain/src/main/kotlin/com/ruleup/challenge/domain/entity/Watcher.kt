@@ -76,6 +76,8 @@ data class Watcher(
     val contactMasked: String?,
     // INVITED 일 때 토큰 만료 시각
     val expiresAt: String?,
+    // REVOKED +30일. 그 전에는 같은 사람을 다시 지정할 수 없다
+    val reinviteAvailableAt: String?,
 ) {
     /** 목록에 표시할 이름. 동의 전 비유저는 아직 아무 정보도 없다. */
     val shownName: String

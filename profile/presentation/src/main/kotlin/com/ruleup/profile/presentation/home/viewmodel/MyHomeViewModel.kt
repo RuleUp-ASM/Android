@@ -40,17 +40,18 @@ class MyHomeViewModel
                 MyHomeIntent.OpenTier -> navigationHelper.navigateByRoute(MyTierPage.toRoute())
                 MyHomeIntent.OpenCalendar -> navigationHelper.navigateByRoute(MyCalendarPage.toRoute())
                 MyHomeIntent.OpenAppeals -> navigationHelper.navigateByRoute(MyAppealsPage.toRoute())
-                MyHomeIntent.OpenRanking -> openRanking()
-                is MyHomeIntent.SelectRankingChallenge -> {
-                    dispatch(MyHomeReducerEvent.RankingPickerDismissed)
-                    navigateToRanking(intent.challengeId)
+                MyHomeIntent.OpenRanking -> pickChallenge(ChallengePickerTarget.RANKING)
+                MyHomeIntent.OpenWatchers -> pickChallenge(ChallengePickerTarget.WATCHERS)
+                is MyHomeIntent.SelectPickedChallenge -> {
+                    val target = currentState.picker?.target ?: ChallengePickerTarget.RANKING
+                    dispatch(MyHomeReducerEvent.PickerDismissed)
+                    navigateToPicked(target, intent.challengeId)
                 }
 
-                MyHomeIntent.DismissRankingPicker -> dispatch(MyHomeReducerEvent.RankingPickerDismissed)
+                MyHomeIntent.DismissChallengePicker -> dispatch(MyHomeReducerEvent.PickerDismissed)
                 MyHomeIntent.OpenStats -> navigationHelper.navigateByRoute(MyStatsPage.toRoute())
                 MyHomeIntent.OpenInvite -> navigationHelper.navigateByRoute(FriendInvitePage.toRoute())
                 MyHomeIntent.OpenBlocks -> navigationHelper.navigateTo(BlockListPage)
-                MyHomeIntent.OpenWatchers -> emitEffect(MyHomeEffect.ShowMessage("감시자 관리는 준비 중이에요"))
                 MyHomeIntent.OpenNotificationSettings ->
                     emitEffect(MyHomeEffect.ShowMessage("알림 설정은 준비 중이에요"))
 
@@ -76,11 +77,11 @@ class MyHomeViewModel
                 is MyHomeReducerEvent.Failed ->
                     state.copy(isLoading = false, errorMessage = event.message)
 
-                is MyHomeReducerEvent.LoadingRanking -> state.copy(isLoadingRanking = event.loading)
+                is MyHomeReducerEvent.LoadingPicker -> state.copy(isLoadingPicker = event.loading)
 
-                is MyHomeReducerEvent.RankingPickerShown -> state.copy(rankingPicker = event.challenges)
+                is MyHomeReducerEvent.PickerShown -> state.copy(picker = event.picker)
 
-                MyHomeReducerEvent.RankingPickerDismissed -> state.copy(rankingPicker = null)
+                MyHomeReducerEvent.PickerDismissed -> state.copy(picker = null)
             }
 
         private fun load(force: Boolean) {
@@ -103,32 +104,52 @@ class MyHomeViewModel
             }
         }
 
-        // 그룹 챌린지 0개 = 안내, 1개 = 바로 랭킹, 2개+ = 선택 시트.
-        private fun openRanking() {
-            if (currentState.isLoadingRanking) return
+        /**
+         * 방을 먼저 고르는 메뉴들. 0개 = 안내, 1개 = 바로 이동, 2개+ = 선택 시트.
+         *
+         * 랭킹과 감시자 둘 다 **방 단위**라 같은 목록을 쓴다 — 목적지만 [target] 으로 갈린다.
+         */
+        private fun pickChallenge(target: ChallengePickerTarget) {
+            if (currentState.isLoadingPicker) return
             viewModelScope.launch {
-                dispatch(MyHomeReducerEvent.LoadingRanking(true))
+                dispatch(MyHomeReducerEvent.LoadingPicker(true))
                 runCatching { myPageRepository.getMyGroupChallenges() }
                     .onSuccess { challenges ->
                         when {
                             challenges.isEmpty() ->
                                 emitEffect(MyHomeEffect.ShowMessage("참여 중인 그룹 챌린지가 없어요"))
 
-                            challenges.size == 1 -> navigateToRanking(challenges.first().challengeId)
+                            challenges.size == 1 -> navigateToPicked(target, challenges.first().challengeId)
 
-                            else -> dispatch(MyHomeReducerEvent.RankingPickerShown(challenges))
+                            else ->
+                                dispatch(
+                                    MyHomeReducerEvent.PickerShown(
+                                        ChallengePicker(target = target, challenges = challenges),
+                                    ),
+                                )
                         }
                     }.onFailure {
                         emitEffect(MyHomeEffect.ShowMessage(it.message ?: "그룹 정보를 불러오지 못했어요"))
                     }
-                dispatch(MyHomeReducerEvent.LoadingRanking(false))
+                dispatch(MyHomeReducerEvent.LoadingPicker(false))
             }
         }
 
-        // 랭킹 화면은 방 내부 스펙(챌린지 feature) 소유 — 공개 라우트 상수로 진입한다.
-        private fun navigateToRanking(challengeId: String) {
-            navigationHelper.navigateByRoute(
-                NavRoute(AppRoutes.CHALLENGE_RANKING, mapOf("challengeId" to challengeId)),
-            )
+        /**
+         * 고른 방으로 이동한다. 둘 다 챌린지 feature 소유 화면이라 공개 라우트 상수로 진입한다.
+         *
+         * 감시자는 전용 화면 대신 **방 상세의 감시자 섹션**으로 보낸다 — Figma 1134:1603 과 내용이
+         * 같아 화면을 하나 더 만들 이유가 없다.
+         */
+        private fun navigateToPicked(
+            target: ChallengePickerTarget,
+            challengeId: String,
+        ) {
+            val path =
+                when (target) {
+                    ChallengePickerTarget.RANKING -> AppRoutes.CHALLENGE_RANKING
+                    ChallengePickerTarget.WATCHERS -> AppRoutes.CHALLENGE_DETAIL
+                }
+            navigationHelper.navigateByRoute(NavRoute(path, mapOf("challengeId" to challengeId)))
         }
     }

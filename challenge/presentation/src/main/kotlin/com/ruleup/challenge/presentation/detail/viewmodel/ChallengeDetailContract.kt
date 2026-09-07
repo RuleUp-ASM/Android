@@ -55,11 +55,6 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
 
-    /** (참여자 본인) 내 감시자 해제 — REVOKED + 연락처 파기. */
-    data class RemoveWatcher(
-        val watcherId: String,
-    ) : ChallengeDetailIntent
-
     /** (방 상세) 상단 탭 전환. 아직 안 받아온 탭이면 그때 조회한다. */
     data class SelectTab(
         val tab: RoomTab,

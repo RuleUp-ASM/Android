@@ -8,6 +8,8 @@ import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
 import com.ruleup.profile.domain.entity.MyHomeCounts
+import com.ruleup.profile.presentation.home.viewmodel.ChallengePicker
+import com.ruleup.profile.presentation.home.viewmodel.ChallengePickerTarget
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeState
 import com.ruleup.profile.presentation.renderScreen
@@ -64,7 +66,7 @@ class MyHomeContentTest {
             MyHomeState.initial.copy(
                 isLoading = false,
                 home = home(),
-                rankingPicker = listOf(group("ch1"), group("ch2")),
+                picker = ChallengePicker(ChallengePickerTarget.RANKING, listOf(group("ch1"), group("ch2"))),
             ),
         )
 
@@ -73,7 +75,7 @@ class MyHomeContentTest {
 
     @Test
     fun `묻지 않을 때는 선택 시트를 띄우지 않는다`() {
-        render(MyHomeState.initial.copy(isLoading = false, home = home(), rankingPicker = null))
+        render(MyHomeState.initial.copy(isLoading = false, home = home(), picker = null))
 
         compose.onNodeWithText("어느 그룹의 랭킹을 볼까요?").assertDoesNotExist()
     }

@@ -531,7 +531,6 @@ private fun RoomDetailTabs(
                                 limit = myWatchers.limit,
                                 isInviting = state.isInvitingWatcher,
                                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-                                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
                             )
                         }
                         val members = state.members
@@ -651,7 +650,6 @@ private fun PublicDetailBody(
                 limit = myWatchers.limit,
                 isInviting = state.isInvitingWatcher,
                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
             )
         }
     }

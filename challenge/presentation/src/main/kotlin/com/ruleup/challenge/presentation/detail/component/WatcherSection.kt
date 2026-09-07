@@ -29,7 +29,10 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 
 /**
  * 챌린지 상세의 "내 감시자" 관리 섹션(참여자 본인 전용 — 감시자는 챌린지 × 참여자 단위).
- * 내가 실패하면 통지받을 감시자를 카카오톡 공유로 초대하고, 목록에서 상태 확인·해제한다.
+ * 내가 실패하면 통지받을 감시자를 카카오톡 공유로 초대하고, 목록에서 상태를 확인한다.
+ *
+ * **해제 버튼이 없다** — 정책상 감시자 해제가 폐지됐다(테크 스펙 4·2026-08-31). 관계는 루틴이
+ * 끝나면 배치가 지우고, 받는 쪽이 「내가 받는 알림」에서 수신을 닫는다.
  * 한도는 서버 값([limit], 무료 3 · 구독 시 null=무제한) — 초과 시도는 ViewModel 이 구독 안내로 처리한다.
  */
 @Composable
@@ -38,7 +41,6 @@ internal fun WatcherSection(
     limit: Int?,
     isInviting: Boolean,
     onInvite: () -> Unit,
-    onRemove: (watcherId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,7 +86,7 @@ internal fun WatcherSection(
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 watchers.forEach { watcher ->
-                    WatcherRow(watcher = watcher, onRemove = { onRemove(watcher.watcherId) })
+                    WatcherRow(watcher = watcher)
                 }
             }
         }
@@ -93,10 +95,7 @@ internal fun WatcherSection(
 }
 
 @Composable
-private fun WatcherRow(
-    watcher: Watcher,
-    onRemove: () -> Unit,
-) {
+private fun WatcherRow(watcher: Watcher) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -124,12 +123,6 @@ private fun WatcherRow(
             modifier = Modifier.weight(1f),
         )
         WatcherStatusBadge(status = watcher.status)
-        Text(
-            text = "해제",
-            color = RuleUpTheme.colors.danger,
-            style = RuleUpTheme.typography.smallMedium,
-            modifier = Modifier.singleClickable(onClick = onRemove),
-        )
     }
 }
 

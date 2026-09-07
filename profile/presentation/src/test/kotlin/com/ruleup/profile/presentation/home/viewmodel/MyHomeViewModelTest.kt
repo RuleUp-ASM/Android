@@ -131,7 +131,7 @@ class MyHomeViewModelTest {
             viewModel.onIntent(MyHomeIntent.OpenRanking)
 
             assertEquals(mapOf("challengeId" to "ch1"), nav.routes.single().args)
-            assertNull(viewModel.uiState.value.rankingPicker)
+            assertNull(viewModel.uiState.value.picker)
         }
 
     @Test
@@ -145,7 +145,8 @@ class MyHomeViewModelTest {
 
             assertEquals(
                 2,
-                viewModel.uiState.value.rankingPicker
+                viewModel.uiState.value.picker
+                    ?.challenges
                     ?.size,
             )
             assertTrue(nav.didNotMove)
@@ -159,10 +160,10 @@ class MyHomeViewModelTest {
                 viewModel(FakeMyPageRepository(groupChallenges = { listOf(group("ch1"), group("ch2")) }), nav)
             viewModel.onIntent(MyHomeIntent.OpenRanking)
 
-            viewModel.onIntent(MyHomeIntent.SelectRankingChallenge("ch2"))
+            viewModel.onIntent(MyHomeIntent.SelectPickedChallenge("ch2"))
 
             assertEquals(mapOf("challengeId" to "ch2"), nav.routes.single().args)
-            assertNull(viewModel.uiState.value.rankingPicker)
+            assertNull(viewModel.uiState.value.picker)
         }
 
     @Test

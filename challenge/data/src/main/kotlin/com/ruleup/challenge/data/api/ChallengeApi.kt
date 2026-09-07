@@ -31,13 +31,13 @@ import com.ruleup.challenge.data.dto.TemplateDraftResponse
 import com.ruleup.challenge.data.dto.ThreadsResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
+import com.ruleup.challenge.data.dto.WatcherAcceptResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.challenge.data.dto.WatchingListResponse
 import com.ruleup.challenge.data.dto.WatchingUpdateRequest
 import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
-import com.ruleup.network.dto.EmptyData
 import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
 import retrofit2.http.Body
@@ -220,12 +220,11 @@ interface ChallengeApi {
         @Body request: WatchingUpdateRequest,
     ): BaseResponse<WatchingUpdateResponse>
 
-    // 감시자: 해제 (REVOKED + 연락처 파기)
-    @DELETE("v1/challenges/{challengeId}/watchers/{watcherId}")
-    suspend fun removeWatcher(
-        @Path("challengeId") challengeId: String,
-        @Path("watcherId") watcherId: String,
-    ): BaseResponse<EmptyData>
+    // 감시자: 초대 수락 (인앱 전용 — 로그인 필수, 수락이 곧 수신 동의)
+    @POST("v1/watchers/invitations/{token}/accept")
+    suspend fun acceptWatcherInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<WatcherAcceptResponse>
 
     // 방 홈 일괄 조회 (ACTIVE 멤버 전용 — 비멤버 403 NOT_A_MEMBER)
     @GET("v1/challenges/{challengeId}/room")

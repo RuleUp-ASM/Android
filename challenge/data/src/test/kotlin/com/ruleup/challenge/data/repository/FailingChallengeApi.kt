@@ -32,13 +32,13 @@ import com.ruleup.challenge.data.dto.TemplateDraftResponse
 import com.ruleup.challenge.data.dto.ThreadsResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
+import com.ruleup.challenge.data.dto.WatcherAcceptResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.challenge.data.dto.WatchingListResponse
 import com.ruleup.challenge.data.dto.WatchingUpdateRequest
 import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
-import com.ruleup.network.dto.EmptyData
 import com.ruleup.network.dto.ErrorBody
 import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
@@ -139,10 +139,7 @@ class FailingChallengeApi(
         request: WatchingUpdateRequest,
     ): BaseResponse<WatchingUpdateResponse> = failed()
 
-    override suspend fun removeWatcher(
-        challengeId: String,
-        watcherId: String,
-    ): BaseResponse<EmptyData> = failed()
+    override suspend fun acceptWatcherInvitation(token: String): BaseResponse<WatcherAcceptResponse> = failed()
 
     override suspend fun getRoom(challengeId: String): BaseResponse<RoomResponse> = failed()
 

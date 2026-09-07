@@ -103,7 +103,6 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
-                is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
                 is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
                 ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
                 ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
@@ -990,17 +989,6 @@ class ChallengeDetailViewModel
                         emitEffect(ChallengeDetailEffect.ShowMessage(message))
                     }
                 dispatch(ChallengeDetailReducerEvent.InvitingWatcher(false))
-            }
-        }
-
-        private fun removeWatcher(watcherId: String) {
-            val challengeId = currentState.detail?.challengeId ?: return
-            viewModelScope.launch {
-                runCatching { watcherRepository.removeWatcher(challengeId, watcherId) }
-                    .onSuccess { loadWatchers(challengeId) }
-                    .onFailure {
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "감시자 해제에 실패했어요"))
-                    }
             }
         }
 

@@ -1,6 +1,7 @@
 package com.ruleup.challenge.domain.fake
 
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
+import com.ruleup.challenge.domain.entity.WatcherAcceptance
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.Watching
 import com.ruleup.challenge.domain.entity.WatchingUpdate
@@ -17,11 +18,15 @@ class FakeWatcherRepository(
     private val invitation: ((String) -> WatcherInvitation)? = null,
     private val watching: (() -> List<Watching>)? = null,
     private val update: ((String, Boolean?, Boolean?) -> WatchingUpdate)? = null,
+    private val accept: ((String) -> WatcherAcceptance)? = null,
 ) : WatcherRepository {
     val calls = mutableListOf<String>()
 
     /** 어떤 인자로 수신 설정을 보냈는지. pushEnabled 와 revoke 는 동시에 보내면 안 된다. */
     val updateArgs = mutableListOf<Triple<String, Boolean?, Boolean?>>()
+
+    /** 어떤 토큰으로 수락을 보냈는지. 링크에서 잘라낸 값이 그대로 가야 한다. */
+    val acceptedTokens = mutableListOf<String>()
 
     override suspend fun getWatchers(challengeId: String): ChallengeWatchers {
         calls += "getWatchers"
@@ -48,10 +53,9 @@ class FakeWatcherRepository(
         return requireNotNull(update) { "updateWatching 을 준비하지 않았다" }(watcherId, pushEnabled, revoke)
     }
 
-    override suspend fun removeWatcher(
-        challengeId: String,
-        watcherId: String,
-    ) {
-        calls += "removeWatcher"
+    override suspend fun acceptInvitation(token: String): WatcherAcceptance {
+        calls += "acceptInvitation"
+        acceptedTokens += token
+        return requireNotNull(accept) { "acceptInvitation 을 준비하지 않았다" }(token)
     }
 }
