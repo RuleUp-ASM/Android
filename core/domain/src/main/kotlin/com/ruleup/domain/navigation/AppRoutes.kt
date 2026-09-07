@@ -54,6 +54,10 @@ object AppRoutes {
     const val MY_AGREEMENTS = "my/agreements" // 약관·개인정보 동의 관리
     const val MY_SANCTIONS = "my/sanctions" // 제재 통지·이력 (잠금 상태에서도 열려야 한다)
 
+    // notification
+    const val NOTIFICATIONS = "notifications" // 진입점 (홈 벨·마이 → 알림 센터)
+    const val NOTIFICATION_SETTINGS = "notifications/settings" // 설정 허브 → 알림 설정
+
     // verification
     const val VERIFICATION_PERMISSION_REPAIR = "verification/permission-repair" // 진입점 (권한 회수 복구)
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)

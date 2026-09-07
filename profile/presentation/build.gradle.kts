@@ -47,6 +47,8 @@ dependencies {
     implementation(project(":onboarding:domain"))
     // 「내가 받는 알림」은 감시자 관계 — challenge 의 domain 계약을 직접 쓴다.
     implementation(project(":challenge:domain"))
+    // 알림 설정·알림함 진입점 — notification 의 domain 계약(Page)만 쓴다.
+    implementation(project(":notification:domain"))
     // 이의 내역은 인증 모듈 소관 개념이다 — 타입을 베끼지 않고 그쪽 domain 계약을 직접 쓴다.
     implementation(project(":verification:domain"))
     // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다. 화면 자체는 :report:presentation 소관.

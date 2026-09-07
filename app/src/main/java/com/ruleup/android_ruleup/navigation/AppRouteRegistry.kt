@@ -25,6 +25,10 @@ import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.challenge.presentation.watcher.WatcherAcceptScreen
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.home.presentation.HomeScreen
+import com.ruleup.notification.domain.navigation.NotificationCenterPage
+import com.ruleup.notification.domain.navigation.NotificationSettingsPage
+import com.ruleup.notification.presentation.center.NotificationCenterScreen
+import com.ruleup.notification.presentation.settings.NotificationSettingsScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
@@ -162,6 +166,14 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = ProfileEditPage.PATH,
             render = { ProfileEditScreen() },
+        ),
+        AppRoute(
+            path = NotificationCenterPage.PATH,
+            render = { NotificationCenterScreen() },
+        ),
+        AppRoute(
+            path = NotificationSettingsPage.PATH,
+            render = { NotificationSettingsScreen() },
         ),
         AppRoute(
             path = MySettingsPage.PATH,

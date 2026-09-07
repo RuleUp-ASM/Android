@@ -53,8 +53,11 @@ sealed interface MyHomeIntent : MviIntent {
      */
     data object OpenWatchers : MyHomeIntent
 
-    /** 메뉴: 알림 설정 — 서버 미완(명세 `수정중`)이라 진입점만 두고 안내한다. */
+    /** 메뉴: 알림 설정. */
     data object OpenNotificationSettings : MyHomeIntent
+
+    /** 알림함 — 상단 벨 아이콘. 미읽음이 있으면 레드닷이 붙는다. */
+    data object OpenNotificationCenter : MyHomeIntent
 
     /** 메뉴: 계정 · 약관 — 설정 허브. */
     data object OpenSettings : MyHomeIntent

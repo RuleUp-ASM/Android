@@ -123,6 +123,9 @@ dependencies {
 
     implementation(project(":report:domain"))
     implementation(project(":report:data"))
+    implementation(project(":notification:domain"))
+    implementation(project(":notification:data"))
+    implementation(project(":notification:presentation"))
     implementation(project(":report:presentation"))
 
     implementation(libs.androidx.work.runtime)

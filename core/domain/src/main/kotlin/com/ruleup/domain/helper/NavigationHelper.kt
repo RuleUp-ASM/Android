@@ -22,5 +22,14 @@ interface NavigationHelper {
      */
     fun replaceStackWith(route: NavRoute)
 
+    /**
+     * 서버가 준 딥링크(`ruleup://…`)로 이동한다. 해석은 `:app` 이 한다.
+     *
+     * **해석할 수 없거나 대상이 이미 삭제됐으면 아무 일도 하지 않는다** — 알림 타입은 서버가
+     * 늘리므로 모르는 링크가 오는 것이 정상이고, 그때 엉뚱한 화면으로 보내는 것보다 제자리에
+     * 두는 편이 낫다(알림 테크 스펙 8).
+     */
+    fun navigateByDeeplink(deeplink: String)
+
     fun navigateToBack()
 }

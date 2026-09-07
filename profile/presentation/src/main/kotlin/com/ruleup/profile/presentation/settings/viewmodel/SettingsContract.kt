@@ -17,8 +17,9 @@ sealed interface SettingsIntent : MviIntent {
 
     data object OpenSanctions : SettingsIntent
 
-    /** 알림 설정 — 서버 미완이라 안내만 한다. */
     data object OpenNotificationSettings : SettingsIntent
+
+    data object OpenNotificationCenter : SettingsIntent
 
     data object ConfirmLogout : SettingsIntent
 

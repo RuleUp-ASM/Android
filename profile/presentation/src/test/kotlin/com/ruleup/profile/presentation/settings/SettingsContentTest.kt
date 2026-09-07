@@ -1,8 +1,6 @@
 package com.ruleup.profile.presentation.settings
 
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import com.ruleup.profile.presentation.clickPastGuard
 import com.ruleup.profile.presentation.renderScreen
@@ -18,9 +16,6 @@ import kotlin.test.assertTrue
 /**
  * 설정 허브 (Figma 1134:2164).
  *
- * 알림 두 항목은 **서버가 아직 없다** — 눌러도 아무 일이 없는 스위치를 두면 사용자는 앱이 고장난
- * 줄 안다. 그래서 자리는 두되 준비 중임을 말한다.
- *
  * 탈퇴는 되돌리기 어려운 동작이라 확인 시트를 반드시 거친다.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -29,13 +24,12 @@ class SettingsContentTest {
     val compose = createComposeRule()
 
     @Test
-    fun `아직 없는 알림 기능은 준비 중이라고 말한다`() {
+    fun `알림 설정과 알림함으로 가는 길을 모두 둔다`() {
+        // 알림 센터는 설정으로 막을 수 없는 기록이라 설정과 별개의 진입점이 필요하다.
         render(SettingsState.initial.copy(isLoading = false))
 
-        compose.onNodeWithText("푸시 알림").assertExists()
-        compose.onNodeWithText("알림 시간대 · 종류").assertExists()
-        // 두 항목 모두 서버가 없다 — 하나만 안내하면 나머지는 되는 줄 안다.
-        compose.onAllNodesWithText("준비 중").assertCountEquals(2)
+        compose.onNodeWithText("알림 설정").assertExists()
+        compose.onNodeWithText("알림함").assertExists()
     }
 
     @Test

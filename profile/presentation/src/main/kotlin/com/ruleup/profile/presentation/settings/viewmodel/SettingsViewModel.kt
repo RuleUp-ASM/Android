@@ -4,6 +4,8 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.notification.domain.navigation.NotificationCenterPage
+import com.ruleup.notification.domain.navigation.NotificationSettingsPage
 import com.ruleup.onboarding.domain.auth.usecase.LogoutUseCase
 import com.ruleup.onboarding.domain.auth.usecase.WithdrawUseCase
 import com.ruleup.profile.domain.navigation.MyAgreementsPage
@@ -43,8 +45,8 @@ class SettingsViewModel
                 SettingsIntent.OpenAgreements -> navigationHelper.navigateTo(MyAgreementsPage)
                 SettingsIntent.OpenSanctions -> navigationHelper.navigateTo(MySanctionsPage)
 
-                SettingsIntent.OpenNotificationSettings ->
-                    emitEffect(SettingsEffect.ShowMessage("알림 설정은 준비 중이에요"))
+                SettingsIntent.OpenNotificationSettings -> navigationHelper.navigateTo(NotificationSettingsPage)
+                SettingsIntent.OpenNotificationCenter -> navigationHelper.navigateTo(NotificationCenterPage)
 
                 SettingsIntent.ConfirmLogout -> dispatch(SettingsReducerEvent.DialogShown(SettingsDialog.LOGOUT))
                 SettingsIntent.ConfirmWithdraw -> dispatch(SettingsReducerEvent.DialogShown(SettingsDialog.WITHDRAW))

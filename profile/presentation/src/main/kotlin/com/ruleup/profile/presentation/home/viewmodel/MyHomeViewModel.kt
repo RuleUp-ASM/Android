@@ -4,6 +4,8 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.notification.domain.navigation.NotificationCenterPage
+import com.ruleup.notification.domain.navigation.NotificationSettingsPage
 import com.ruleup.profile.domain.navigation.FriendInvitePage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
@@ -52,8 +54,8 @@ class MyHomeViewModel
                 MyHomeIntent.OpenStats -> navigationHelper.navigateByRoute(MyStatsPage.toRoute())
                 MyHomeIntent.OpenInvite -> navigationHelper.navigateByRoute(FriendInvitePage.toRoute())
                 MyHomeIntent.OpenBlocks -> navigationHelper.navigateTo(BlockListPage)
-                MyHomeIntent.OpenNotificationSettings ->
-                    emitEffect(MyHomeEffect.ShowMessage("알림 설정은 준비 중이에요"))
+                MyHomeIntent.OpenNotificationSettings -> navigationHelper.navigateTo(NotificationSettingsPage)
+                MyHomeIntent.OpenNotificationCenter -> navigationHelper.navigateTo(NotificationCenterPage)
 
                 MyHomeIntent.OpenSettings -> navigationHelper.navigateTo(MySettingsPage)
                 MyHomeIntent.OpenHomeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))

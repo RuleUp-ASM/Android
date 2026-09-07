@@ -12,6 +12,7 @@ import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import kotlinx.coroutines.Dispatchers
@@ -159,6 +160,7 @@ class HomeViewModelTest {
         verificationRepository =
             FakeVerificationRepository(progress = { progress ?: throw IllegalStateException("진행률 조회 실패") }),
         myChallengeStore = FakeMyChallengeStore(locals),
+        notificationRepository = FakeNotificationRepository(),
         navigationHelper = nav,
     )
 

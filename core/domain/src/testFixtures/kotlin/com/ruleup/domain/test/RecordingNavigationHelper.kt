@@ -19,12 +19,15 @@ class RecordingNavigationHelper : NavigationHelper {
     val routes = mutableListOf<NavRoute>()
     val replaced = mutableListOf<NavRoute>()
 
+    /** 서버가 준 딥링크 문자열. 해석은 `:app` 이 하므로 여기서는 넘어온 값만 본다. */
+    val deeplinks = mutableListOf<String>()
+
     var backCount: Int = 0
         private set
 
     /** 이동이 한 번도 없었는가. 실패 경로에서 자주 쓴다. */
     val didNotMove: Boolean
-        get() = pages.isEmpty() && routes.isEmpty() && replaced.isEmpty() && backCount == 0
+        get() = pages.isEmpty() && routes.isEmpty() && replaced.isEmpty() && deeplinks.isEmpty() && backCount == 0
 
     /** 마지막으로 요청한 경로 path. [navigateTo] 로 간 경우도 포함해 보려면 [pages] 를 직접 본다. */
     val lastRoutePath: String?
@@ -42,6 +45,10 @@ class RecordingNavigationHelper : NavigationHelper {
 
     override fun replaceStackWith(route: NavRoute) {
         replaced += route
+    }
+
+    override fun navigateByDeeplink(deeplink: String) {
+        deeplinks += deeplink
     }
 
     override fun navigateToBack() {

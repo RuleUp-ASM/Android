@@ -44,8 +44,6 @@ import com.ruleup.ui.helper.LocalMessageHelper
 /**
  * 설정 허브 (Figma 1134:2164).
  *
- * 알림 두 항목(푸시 알림 토글 · 알림 시간대·종류)은 **자리만 두고 비활성**이다 — 서버 알림 API 가
- * 아직 `수정중`이라, 토글을 열면 눌러도 아무 일이 없는 스위치가 된다.
  *
  * 「연결된 계정」은 그리지 않는다 — `GET /users/me` 응답에 소셜 제공자가 없다(BE 확인 요청).
  */
@@ -96,12 +94,16 @@ internal fun SettingsContent(
         ) {
             SectionLabel("알림")
             MenuCard {
-                DisabledRow(label = "푸시 알림", note = "준비 중")
+                MenuRow(
+                    label = "알림 설정",
+                    onClick = { onIntent(SettingsIntent.OpenNotificationSettings) },
+                    note = "푸시 알림 · 종류별 수신",
+                )
                 MenuDivider()
                 MenuRow(
-                    label = "알림 시간대 · 종류",
-                    onClick = { onIntent(SettingsIntent.OpenNotificationSettings) },
-                    trailing = "준비 중",
+                    label = "알림함",
+                    onClick = { onIntent(SettingsIntent.OpenNotificationCenter) },
+                    note = "받은 알림은 6개월 동안 남아요",
                 )
             }
 
@@ -240,30 +242,6 @@ private fun MenuCard(content: @Composable ColumnScope.() -> Unit) {
 @Composable
 private fun MenuDivider() {
     HorizontalDivider(color = RuleUpTheme.colors.border)
-}
-
-/** 서버가 아직 없는 항목. 눌리지 않는다는 걸 색으로 말하고 클릭 자체를 붙이지 않는다. */
-@Composable
-private fun DisabledRow(
-    label: String,
-    note: String,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = label,
-            color = RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Text(text = note, color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.caption)
-    }
 }
 
 @Composable

@@ -47,6 +47,8 @@ dependencies {
     // 홈은 집계 화면이라 두 feature 의 domain 을 함께 읽는다(내 챌린지 + 진행률).
     // 동급 feature 끼리의 횡적 결합이 아니라, 화면 하나를 조립하기 위한 하향 의존이다.
     implementation(project(":challenge:domain"))
+    // 상단 벨의 레드닷 — notification 의 domain 계약만 쓴다.
+    implementation(project(":notification:domain"))
     implementation(project(":verification:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -71,6 +73,7 @@ dependencies {
     testImplementation(testFixtures(project(":observability:domain")))
     testImplementation(testFixtures(project(":challenge:domain")))
     testImplementation(testFixtures(project(":verification:domain")))
+    testImplementation(testFixtures(project(":notification:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
     testImplementation(libs.robolectric)
