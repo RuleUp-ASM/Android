@@ -9,6 +9,7 @@ import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshResponse
+import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
@@ -95,5 +96,7 @@ class TokenRefresherImplTest {
         override suspend fun signup(request: SignUpRequest) = throw NotImplementedError()
 
         override suspend fun logout(request: LogoutRequest): BaseResponse<EmptyData> = throw NotImplementedError()
+
+        override suspend fun withdraw(request: WithdrawRequest) = throw NotImplementedError()
     }
 }

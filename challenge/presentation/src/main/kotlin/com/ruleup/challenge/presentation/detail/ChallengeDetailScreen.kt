@@ -63,8 +63,10 @@ import com.ruleup.challenge.presentation.detail.component.RoomInfoHeader
 import com.ruleup.challenge.presentation.detail.component.RoomInfoTab
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
+import com.ruleup.challenge.presentation.detail.component.RoomMuteSection
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
 import com.ruleup.challenge.presentation.detail.component.RoomTabRow
+import com.ruleup.challenge.presentation.detail.component.SoloMonthCalendar
 import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
 import com.ruleup.challenge.presentation.detail.component.WatcherSection
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
@@ -74,6 +76,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailViewMod
 import com.ruleup.challenge.presentation.detail.viewmodel.DetailSetupAction
 import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
+import com.ruleup.challenge.presentation.invite.MemberInviteSharer
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.category.categoryAccentColor
 import com.ruleup.designsystem.category.categoryEmoji
@@ -124,6 +127,16 @@ fun ChallengeDetailScreen(
                         WatcherInviteSharer.share(
                             context = context,
                             card = effect.card,
+                            inviteUrl = effect.inviteUrl,
+                        )
+                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
+                }
+
+                is ChallengeDetailEffect.ShareMemberInvite -> {
+                    val shared =
+                        MemberInviteSharer.share(
+                            context = context,
+                            challengeTitle = effect.challengeTitle,
                             inviteUrl = effect.inviteUrl,
                         )
                     if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
@@ -524,6 +537,25 @@ private fun RoomDetailTabs(
                             .takeIf { state.setup?.manual == true && state.todayResult?.verificationId != null },
                     isManualChecking = state.isManualChecking,
                     extraSections = {
+                        // 상태를 모르면 그리지 않는다 — 「켜짐」으로 보이면 껐다고 믿은 방에서
+                        // 푸시가 계속 온다.
+                        state.isMuted?.let { muted ->
+                            RoomMuteSection(
+                                muted = muted,
+                                enabled = !state.isMuteSubmitting,
+                                onToggle = { onIntent(ChallengeDetailIntent.ToggleMute(it)) },
+                            )
+                        }
+                        // 솔로 방에만 월 캘린더를 편다 — 그룹은 같은 자리를 랭킹·피드가 쓴다.
+                        if (!detail.mode.isGroup) {
+                            SoloMonthCalendar(
+                                month = state.calendarMonth.orEmpty(),
+                                calendar = state.calendar,
+                                isLoading = state.isCalendarLoading,
+                                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
+                                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
+                            )
+                        }
                         val myWatchers = state.watchers
                         if (myWatchers != null) {
                             WatcherSection(
@@ -531,7 +563,6 @@ private fun RoomDetailTabs(
                                 limit = myWatchers.limit,
                                 isInviting = state.isInvitingWatcher,
                                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-                                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
                             )
                         }
                         val members = state.members
@@ -548,6 +579,12 @@ private fun RoomDetailTabs(
                                 myUserId = state.myUserId,
                                 actionEnabled = !state.isMemberActionLoading,
                                 delegationBanner = delegationBanner,
+                                // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
+                                canInviteMember =
+                                    room.myRole.isOwner &&
+                                        state.detail?.visibility?.isPrivate == true &&
+                                        state.detail.mode.isGroup,
+                                onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
                                 onLeave = onConfirmLeave,
                                 onDelete = onConfirmDelete,
                                 onPromote = { onIntent(ChallengeDetailIntent.PromoteMember(it)) },
@@ -651,7 +688,6 @@ private fun PublicDetailBody(
                 limit = myWatchers.limit,
                 isInviting = state.isInvitingWatcher,
                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-                onRemove = { onIntent(ChallengeDetailIntent.RemoveWatcher(it)) },
             )
         }
     }

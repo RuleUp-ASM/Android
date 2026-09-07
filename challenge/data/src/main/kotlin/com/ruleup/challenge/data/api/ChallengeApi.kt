@@ -1,8 +1,11 @@
 package com.ruleup.challenge.data.api
 
+import com.ruleup.challenge.data.dto.ChallengeCalendarResponse
 import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationPreviewResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
@@ -31,10 +34,13 @@ import com.ruleup.challenge.data.dto.TemplateDraftResponse
 import com.ruleup.challenge.data.dto.ThreadsResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
+import com.ruleup.challenge.data.dto.WatcherAcceptResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
+import com.ruleup.challenge.data.dto.WatchingListResponse
+import com.ruleup.challenge.data.dto.WatchingUpdateRequest
+import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
-import com.ruleup.network.dto.EmptyData
 import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
 import retrofit2.http.Body
@@ -157,9 +163,13 @@ interface ChallengeApi {
         @Part image: MultipartBody.Part,
     ): BaseResponse<ChallengeImageResponse>
 
-    // 내 챌린지 목록 조회 (GET /challenges): 승인제 폐기로 scope 없이 전량 반환
+    // 내 챌린지 목록 조회 (GET /challenges): filter 로 진행 중·완료·이탈 탭이 갈린다
     @GET("v1/challenges")
-    suspend fun getMyChallenges(): BaseResponse<MyChallengesResponse>
+    suspend fun getMyChallenges(
+        @Query("filter") filter: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("size") size: Int? = null,
+    ): BaseResponse<MyChallengesResponse>
 
     // 탐색: 실시간 인기 (서버가 Top 20 반환 · 홈은 상위 5개 사용). category 를 주면 카테고리별 인기.
     @GET("v1/challenges/trending")
@@ -189,6 +199,24 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<TemplateDraftResponse>
 
+    // 멤버 초대 링크 발급 (비공개 그룹 방의 방장만 — 토큰 7일 만료)
+    @POST("v1/challenges/{challengeId}/invitations")
+    suspend fun createChallengeInvitation(
+        @Path("challengeId") challengeId: String,
+    ): BaseResponse<ChallengeInvitationResponse>
+
+    // 초대 링크 미리보기 (로그인 필수 · 토큰을 소모하지 않는다)
+    @GET("v1/challenges/invitations/{token}")
+    suspend fun getChallengeInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<ChallengeInvitationPreviewResponse>
+
+    // 초대 수락 가입 (토큰은 여기서 소모된다)
+    @POST("v1/challenges/invitations/{token}/accept")
+    suspend fun acceptChallengeInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<JoinResponse>
+
     // 감시자: 초대 생성 (토큰 7일 만료, 무료 3명 초과 시 에러)
     @POST("v1/challenges/{challengeId}/watchers/invitations")
     suspend fun createWatcherInvitation(
@@ -202,12 +230,22 @@ interface ChallengeApi {
         @Query("status") status: String? = null,
     ): BaseResponse<WatchersResponse>
 
-    // 감시자: 해제 (REVOKED + 연락처 파기)
-    @DELETE("v1/challenges/{challengeId}/watchers/{watcherId}")
-    suspend fun removeWatcher(
-        @Path("challengeId") challengeId: String,
+    // 감시자: 내가 감시자로 등록된 관계 목록 (마이 「내가 받는 알림」)
+    @GET("v1/users/me/watching")
+    suspend fun getWatching(): BaseResponse<WatchingListResponse>
+
+    // 감시자: 내 감시 항목 수신 설정 (pushEnabled = 푸시만 / revoke = 완전 수신거부)
+    @PATCH("v1/users/me/watching/{watcherId}")
+    suspend fun updateWatching(
         @Path("watcherId") watcherId: String,
-    ): BaseResponse<EmptyData>
+        @Body request: WatchingUpdateRequest,
+    ): BaseResponse<WatchingUpdateResponse>
+
+    // 감시자: 초대 수락 (인앱 전용 — 로그인 필수, 수락이 곧 수신 동의)
+    @POST("v1/watchers/invitations/{token}/accept")
+    suspend fun acceptWatcherInvitation(
+        @Path("token") token: String,
+    ): BaseResponse<WatcherAcceptResponse>
 
     // 방 홈 일괄 조회 (ACTIVE 멤버 전용 — 비멤버 403 NOT_A_MEMBER)
     @GET("v1/challenges/{challengeId}/room")
@@ -228,6 +266,13 @@ interface ChallengeApi {
     suspend fun getRanking(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<RankingResponse>
+
+    // 챌린지 월 캘린더 (판정 대상일만 내려옴 — /me/calendar 와 status enum 이 다르다)
+    @GET("v1/challenges/{challengeId}/calendar")
+    suspend fun getCalendar(
+        @Path("challengeId") challengeId: String,
+        @Query("month") month: String,
+    ): BaseResponse<ChallengeCalendarResponse>
 
     // 방 밖 랭킹 조회 (같은 모드의 방끼리 — 하루 1회 03시 배치 스냅샷)
     @GET("v1/rankings/challenges")

@@ -17,14 +17,15 @@ import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
+import com.ruleup.challenge.domain.fake.FakeWatcherRepository
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
 import com.ruleup.challenge.presentation.fake.FakeRoomRepository
 import com.ruleup.challenge.presentation.fake.FakeTargetAppStore
-import com.ruleup.challenge.presentation.fake.FakeWatcherRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.test.FakeClock
 import com.ruleup.observability.domain.test.testObservability
@@ -216,6 +217,8 @@ class ChallengeDetailJoinTest {
             observability = observability,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
+            // 음소거 상태는 부가 정보다 — 준비하지 않으면 조회가 실패하고 토글이 그려지지 않는다.
+            notificationRepository = FakeNotificationRepository(),
             navigationHelper = nav,
             ttiTracker = TtiTracker(FakeClock(), observability),
         )

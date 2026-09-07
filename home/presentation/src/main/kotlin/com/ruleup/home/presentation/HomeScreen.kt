@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -81,7 +82,10 @@ internal fun HomeContent(
                     .fillMaxSize()
                     .statusBarsPadding(),
         ) {
-            HomeHeader()
+            HomeHeader(
+                hasUnread = state.hasUnreadNotifications,
+                onOpenNotifications = { onIntent(HomeIntent.OpenNotifications) },
+            )
 
             // 스트릭 카드·필터 탭을 남기면 "0/0" 껍데기만 보여 처음 들어온 사람이 뭘 할지 모른다.
             // 그래서 화면 전체를 빈 상태로 바꾼다(Figma 1134:2033).
@@ -124,8 +128,7 @@ internal fun HomeContent(
                 when (tab) {
                     RuleUpBottomTab.EXPLORE -> onIntent(HomeIntent.OpenExplore)
                     RuleUpBottomTab.MY -> onIntent(HomeIntent.OpenMy)
-                    // TODO(#269): "내 챌린지" 목적지 미정 — 화면도 라우트 등록도 아직 없다.
-                    RuleUpBottomTab.CHALLENGE -> Unit
+                    RuleUpBottomTab.CHALLENGE -> onIntent(HomeIntent.OpenMyChallenges)
                     RuleUpBottomTab.HOME -> Unit
                 }
             },
@@ -221,9 +224,17 @@ private fun EmptyActionButton(
     }
 }
 
-/** 홈 상단 (Figma 1134:2045). 오늘 날짜 + 알림. 인사말 대신 날짜를 두면 "오늘 뭘 했나"로 시선이 간다. */
+/**
+ * 홈 상단 (Figma 1134:2045). 오늘 날짜 + 알림. 인사말 대신 날짜를 두면 "오늘 뭘 했나"로 시선이 간다.
+ *
+ * 벨의 레드닷은 **숫자를 쓰지 않는다** — 알림 테크 스펙 5-1 이 마이페이지 진입점을 점으로,
+ * 챌린지 카드를 숫자 카운터로 갈라 뒀다. 여기서 숫자를 쓰면 두 곳이 다른 규칙으로 보인다.
+ */
 @Composable
-private fun HomeHeader() {
+private fun HomeHeader(
+    hasUnread: Boolean,
+    onOpenNotifications: () -> Unit,
+) {
     val today = remember { LocalDate.now() }
     Row(
         modifier =
@@ -245,15 +256,27 @@ private fun HomeHeader() {
                     .size(36.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(RuleUpTheme.colors.surface)
-                    .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(12.dp)),
+                    .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(12.dp))
+                    .singleClickable(onClick = onOpenNotifications),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_bell),
-                contentDescription = "알림",
+                contentDescription = if (hasUnread) "알림 (읽지 않은 알림 있음)" else "알림",
                 tint = RuleUpTheme.colors.textSecondary,
                 modifier = Modifier.size(16.dp),
             )
+            if (hasUnread) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(RuleUpTheme.colors.danger),
+                )
+            }
         }
     }
 }

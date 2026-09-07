@@ -1,9 +1,12 @@
 package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
+import com.ruleup.challenge.data.dto.ChallengeCalendarResponse
 import com.ruleup.challenge.data.dto.ChallengeCategoriesResponse
 import com.ruleup.challenge.data.dto.ChallengeDetailResponse
 import com.ruleup.challenge.data.dto.ChallengeImageResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationPreviewResponse
+import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
@@ -32,10 +35,13 @@ import com.ruleup.challenge.data.dto.TemplateDraftResponse
 import com.ruleup.challenge.data.dto.ThreadsResponse
 import com.ruleup.challenge.data.dto.TrendingChallengesResponse
 import com.ruleup.challenge.data.dto.UpdateChallengeResponse
+import com.ruleup.challenge.data.dto.WatcherAcceptResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
+import com.ruleup.challenge.data.dto.WatchingListResponse
+import com.ruleup.challenge.data.dto.WatchingUpdateRequest
+import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
-import com.ruleup.network.dto.EmptyData
 import com.ruleup.network.dto.ErrorBody
 import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
@@ -64,6 +70,11 @@ class FailingChallengeApi(
     override suspend fun getChallenge(challengeId: String): BaseResponse<ChallengeDetailResponse> = failed()
 
     override suspend fun getSetup(challengeId: String): BaseResponse<ChallengeSetupInfoResponse> = failed()
+
+    override suspend fun getCalendar(
+        challengeId: String,
+        month: String,
+    ): BaseResponse<ChallengeCalendarResponse> = failed()
 
     override suspend fun getSettings(challengeId: String): BaseResponse<ChallengeSettingsResponse> = failed()
 
@@ -101,7 +112,11 @@ class FailingChallengeApi(
 
     override suspend fun uploadImage(image: MultipartBody.Part): BaseResponse<ChallengeImageResponse> = failed()
 
-    override suspend fun getMyChallenges(): BaseResponse<MyChallengesResponse> = failed()
+    override suspend fun getMyChallenges(
+        filter: String?,
+        cursor: String?,
+        size: Int?,
+    ): BaseResponse<MyChallengesResponse> = failed()
 
     override suspend fun getTrending(category: String?): BaseResponse<TrendingChallengesResponse> = failed()
 
@@ -125,10 +140,20 @@ class FailingChallengeApi(
         status: String?,
     ): BaseResponse<WatchersResponse> = failed()
 
-    override suspend fun removeWatcher(
-        challengeId: String,
+    override suspend fun getWatching(): BaseResponse<WatchingListResponse> = failed()
+
+    override suspend fun updateWatching(
         watcherId: String,
-    ): BaseResponse<EmptyData> = failed()
+        request: WatchingUpdateRequest,
+    ): BaseResponse<WatchingUpdateResponse> = failed()
+
+    override suspend fun acceptWatcherInvitation(token: String): BaseResponse<WatcherAcceptResponse> = failed()
+
+    override suspend fun createChallengeInvitation(challengeId: String): BaseResponse<ChallengeInvitationResponse> = failed()
+
+    override suspend fun getChallengeInvitation(token: String): BaseResponse<ChallengeInvitationPreviewResponse> = failed()
+
+    override suspend fun acceptChallengeInvitation(token: String): BaseResponse<JoinResponse> = failed()
 
     override suspend fun getRoom(challengeId: String): BaseResponse<RoomResponse> = failed()
 

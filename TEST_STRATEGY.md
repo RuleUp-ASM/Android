@@ -1,6 +1,6 @@
 # RuleUp 테스트 전략
 
-마지막 갱신: 2026-09-02 · 현황 표는 `.claude/skills/testing/scripts/coverage_map.py` 출력
+마지막 갱신: 2026-09-07 · 현황 표는 `.claude/skills/testing/scripts/coverage_map.py` 출력
 
 이 문서의 중심은 커버리지 숫자가 아니라 **3절 미검증 목록**이다. 숫자만 있는 문서는 늘어나는 걸
 보며 안심하게 만들 뿐, 다음에 뭘 해야 하는지 말해주지 않는다.
@@ -31,28 +31,33 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | – | 18 | 4 | 22 |
-| `:challenge:data` | 34 | – | – | – | – | 34 |
-| `:challenge:domain` | 28 | 4 | – | – | – | 32 |
-| `:challenge:presentation` | 30 | 51 | 30 | – | – | 111 |
+| `:app` | – | – | 15 | 14 | 16 | 45 |
+| `:challenge:data` | 48 | – | – | – | – | 48 |
+| `:challenge:domain` | 33 | 4 | – | – | – | 37 |
+| `:challenge:presentation` | 37 | 75 | 64 | – | – | 176 |
 | `:core:datastore` | – | 13 | – | – | – | 13 |
-| `:core:domain` | 17 | – | – | – | – | 17 |
+| `:core:domain` | 19 | – | – | – | – | 19 |
+| `:core:network` | 5 | – | – | – | – | 5 |
 | `:home:presentation` | 8 | 7 | 6 | – | – | 21 |
+| `:notification:data` | 10 | – | – | – | – | 10 |
+| `:notification:domain` | 12 | – | – | – | – | 12 |
+| `:notification:presentation` | – | 18 | 13 | – | – | 31 |
 | `:observability:data` | 20 | – | – | – | – | 20 |
 | `:observability:domain` | 11 | – | – | – | – | 11 |
 | `:onboarding:data` | 11 | – | – | – | – | 11 |
 | `:onboarding:domain` | 8 | 30 | – | – | – | 38 |
 | `:onboarding:presentation` | 3 | 18 | 30 | – | – | 51 |
-| `:profile:data` | 8 | – | – | – | – | 8 |
-| `:profile:presentation` | 4 | 60 | 38 | – | – | 102 |
+| `:profile:data` | 33 | – | – | – | – | 33 |
+| `:profile:presentation` | 4 | 76 | 68 | – | – | 148 |
+| `:report:data` | 12 | 8 | – | – | – | 20 |
+| `:report:domain` | 14 | – | – | – | – | 14 |
+| `:report:presentation` | 5 | 9 | 9 | – | – | 23 |
 | `:verification:data` | 55 | 15 | – | – | – | 70 |
 | `:verification:domain` | 22 | 14 | – | – | – | 36 |
 | `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
-| **합계** | **266** | **222** | **107** | **18** | **4** | **617** |
+| **합계** | **377** | **297** | **202** | **14** | **16** | **912** |
 
-테스트 파일 수: 케이스 51, 모듈 32, UI 23, 통합 5, 인수 1
-
-테스트 파일 수: 케이스 51, 모듈 32, UI 23, 통합 5, 인수 1
+테스트 파일 수: 케이스 67, 모듈 44, UI 36, 통합 5, 인수 2
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 
@@ -67,10 +72,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 무엇 | 못 잡는 위험 | 왜 안 했나 | 풀리는 조건 |
 |---|---|---|---|
-| RepositoryImpl 8건 (Room·Watcher·Auth·DeviceIdentity·Intro·MyPage·Profile·Signal) | 매핑은 덮었지만 **impl 의 조립·예외 변환**은 안 덮였다 | 위험이 큰 축(Challenge 에러 번역·Explore)부터 먼저 했다 | 이어서 진행 |
+| RepositoryImpl 9건 (Room·Watcher·Auth·DeviceIdentity·Intro·MyPage·Profile·Account·Signal) | 매핑은 덮었지만 **impl 의 조립·예외 변환**은 안 덮였다 | 위험이 큰 축(Challenge 에러 번역·Explore)부터 먼저 했다 | 이어서 진행 |
 | `ChallengeDetailViewModel` 의 나머지 전이 | 방 탭·이의·감시자·권한 경로 | 1005줄에 협력자 11종 — 가입 경로만 덮었다. 한 파일에 다 넣으면 무엇이 깨졌는지 읽기 어려워진다 | 경로별로 나눠 진행 |
 | 화면 3건 (ChallengeTargets·Splash·VerificationLocation) | 상태별 렌더 | 순수 함수(`filterApps`·`updateMessage`)는 덮었고, 나머지는 Context·런처가 얽혀 화면 분리가 선행한다 | 화면 분리 합의 |
-| `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 없다 | 테스트 의존성 선언 |
 
 ### 판단이 필요한 것 — 코드로는 못 정한다
 
@@ -92,7 +96,8 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 |---|---|---|
 | 런타임 권한 다이얼로그·지오펜스 | Robolectric 이 못 흉내낸다 | 에뮬레이터 CI 워크플로 |
 | 계측 테스트 8건이 CI 밖 | `test.yml` 이 `./gradlew test` 만 돈다 | 위와 같은 워크플로 |
-| **인수 테스트 실행 확인** | 기반은 세웠고 4건이 있으나 `DEV_TOKEN_SECRET` 이 없어 **실서버에 붙여 돌려본 적이 없다** | 시크릿을 가진 사람이 1회 실행 |
+| ~~인수 테스트 실행 확인~~ | — | **2026-09-07 해소.** 시크릿을 받아 스테이징에서 14건 전부 통과시켰다. 그 과정에서 하네스 버그 둘(봉투 미해제·`dev/tokens` 경로 이중 `/api`)과 `#417`(4xx 미변환)을 잡았다 | — |
+| `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 **생겼다**(`ErrorBodyInterceptorTest`) — 이제 막는 건 시간뿐이다 | 이어서 진행 |
 
 ## 4. 인수 시나리오 ↔ 하위 테스트
 
@@ -103,7 +108,11 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | 로그인 → 첫 화면 진입 | 하위만 | `SplashViewModelTest`(진입 순서·딥링크) · `LoginViewModelTest`(결과 4갈래) · `AuthResponseMappingTest` |
 | 탐색 목록·인기 조회 | **인수 있음** | `ExploreAcceptanceTest` · `ExploreListViewModelTest` · `ExploreResponseMappingTest` |
 | 챌린지 생성 → 내 목록에 보임 | 하위만 | `CreateChallengeCommandTest` · `CreateChallengeViewModelTest` · `HomeChallengeMergeTest` |
-| 초대 링크로 참여 → 방 진입 | 하위만 | `ChallengeDetailJoinTest` · `ChallengeRepositoryErrorMappingTest` · `NavRouteUriParserTest`(**CI 밖**) |
+| 초대 링크로 참여 → 방 진입 | 하위만 | `ChallengeInviteViewModelTest` · `ChallengeInviteContentTest` · `InviteLinkTest`(딥링크 세 갈래) · `ChallengeDetailJoinTest` |
+| 감시자 초대 링크로 수락 → 통지 수신 대상이 됨 | 하위만 | `WatcherAcceptViewModelTest`(수락 전/후 분리) · `InviteLinkTest` · `WatchingViewModelTest`(수신 끄기) |
+| 알림 탭 → 읽음 지점이 뒤로 밀리지 않는다 | 하위만 | `NotificationCenterViewModelTest`(첫 페이지에서만 갱신) · `NotificationPageTest`(기준선 판정) · `PushMessageTest` |
+| 매너 온도 폐기 후 티어가 화면 전체에서 일관 | **인수 있음** | `AccountContractAcceptanceTest` · `MyTierResponseMappingTest` · `MyTierContentTest`(유예 밴드) |
+| 약관 재동의·철회가 사유별로 갈린다 | **인수 있음** | `AccountContractAcceptanceTest`(철회 금지·버전 불일치) · `AgreementsViewModelTest` · `ErrorBodyInterceptorTest` |
 | 인증 제출 → 오늘 상태가 바뀜 | 하위만 | `RunSyncUseCaseTest` · `SubmitDeviceIntroUseCaseTest` · `TodayStatusTest` |
 
 ## 5. 돌리는 법

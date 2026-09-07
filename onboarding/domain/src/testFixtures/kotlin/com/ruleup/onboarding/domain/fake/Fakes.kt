@@ -11,6 +11,7 @@ import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
 import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.auth.entity.SignupForm
+import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
 import com.ruleup.onboarding.domain.intro.entity.IntroInfo
@@ -102,6 +103,13 @@ class FakeAuthRepository : AuthRepository {
     var logoutError: Throwable? = null
     var loggedOutWith: String? = null
 
+    var withdrawResult: Withdrawal =
+        Withdrawal(withdrawn = true, archiveExpiresAt = null, restoreNote = null)
+    var withdrawError: Throwable? = null
+
+    /** 서버가 검증하는 고정 문구를 그대로 보냈는지 — 문구가 어긋나면 400 이라 계약의 일부다. */
+    var withdrawnWith: String? = null
+
     override suspend fun exchangeToken(
         authorization: OAuthAuthorization,
         device: DeviceIdentity,
@@ -131,6 +139,12 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun logout(refreshToken: String) {
         loggedOutWith = refreshToken
         logoutError?.let { throw it }
+    }
+
+    override suspend fun withdraw(confirmPhrase: String): Withdrawal {
+        withdrawnWith = confirmPhrase
+        withdrawError?.let { throw it }
+        return withdrawResult
     }
 }
 

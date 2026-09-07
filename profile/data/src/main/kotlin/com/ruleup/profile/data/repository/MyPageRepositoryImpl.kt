@@ -9,10 +9,10 @@ import com.ruleup.profile.domain.entity.CalendarDayDetail
 import com.ruleup.profile.domain.entity.FriendInvitation
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
-import com.ruleup.profile.domain.entity.ReputationDetail
-import com.ruleup.profile.domain.entity.ReputationHistory
-import com.ruleup.profile.domain.entity.StatsPeriod
+import com.ruleup.profile.domain.entity.MyTier
+import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.StatsReport
+import com.ruleup.profile.domain.entity.TierHistory
 import com.ruleup.profile.domain.repository.MyPageRepository
 import javax.inject.Inject
 
@@ -33,15 +33,21 @@ class MyPageRepositoryImpl
                 .getOrThrow()
                 .toGroupChallenges()
 
-        override suspend fun getReputation(): ReputationDetail =
+        override suspend fun getTier(): MyTier =
             api
-                .getReputation()
+                .getTier()
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun getReputationHistory(): ReputationHistory =
+        override suspend fun getTierHistory(months: Int): TierHistory =
             api
-                .getReputationHistory()
+                .getTierHistory(months)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getScoreChanges(cursor: String?): ScoreChangePage =
+            api
+                .getScoreChanges(cursor)
                 .getOrThrow()
                 .toDomain()
 
@@ -57,11 +63,11 @@ class MyPageRepositoryImpl
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun getStats(period: StatsPeriod): StatsReport =
+        override suspend fun getStats(): StatsReport =
             api
-                .getStats(period.value)
+                .getStats()
                 .getOrThrow()
-                .toDomain(requested = period)
+                .toDomain()
 
         override suspend fun getInvitation(): FriendInvitation =
             api

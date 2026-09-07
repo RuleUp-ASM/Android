@@ -10,6 +10,8 @@ import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
 import com.ruleup.challenge.data.dto.toRequestBody
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeInvitation
+import com.ruleup.challenge.domain.entity.ChallengeInvitationPreview
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeNotEditableException
 import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
@@ -33,7 +35,8 @@ import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationLockedException
-import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeFilter
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
 import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
@@ -183,15 +186,48 @@ class ChallengeRepositoryImpl
                 throw e
             }
 
+        override suspend fun createInvitation(challengeId: String): ChallengeInvitation =
+            api
+                .createChallengeInvitation(challengeId)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun getInvitation(token: String): ChallengeInvitationPreview =
+            api
+                .getChallengeInvitation(token)
+                .getOrThrow()
+                .toDomain()
+
+        override suspend fun acceptInvitation(token: String): JoinResult =
+            try {
+                api
+                    .acceptChallengeInvitation(token)
+                    .getOrThrow()
+                    .toDomain()
+            } catch (e: ApiException) {
+                // 가입과 같은 게이트를 통과하므로 실패 형식도 같다 — 화면이 문구를 재사용한다.
+                if (e.code == CODE_JOIN_BLOCKED) {
+                    throw JoinBlockedException(
+                        reason = JoinBlockReason.fromValue(e.reason),
+                        rejoinAvailableAt = e.rejoinAvailableAt,
+                    )
+                }
+                throw e
+            }
+
         override suspend fun getMembers(challengeId: String): ChallengeMembers =
             api
                 .getMembers(challengeId)
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun getMyChallenges(): List<MyChallenge> =
+        override suspend fun getMyChallenges(
+            filter: MyChallengeFilter,
+            cursor: String?,
+            size: Int?,
+        ): MyChallengePage =
             api
-                .getMyChallenges()
+                .getMyChallenges(filter = filter.value, cursor = cursor, size = size)
                 .getOrThrow()
                 .toDomain()
 

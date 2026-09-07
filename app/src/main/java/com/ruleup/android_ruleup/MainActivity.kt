@@ -15,6 +15,7 @@ import com.ruleup.android_ruleup.observability.JankTracker
 import com.ruleup.android_ruleup.observability.ScreenTracker
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
@@ -49,6 +50,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var tokenRepository: TokenRepository
 
+    @Inject
+    lateinit var deeplinkResolver: DeeplinkResolver
+
     private var jankStats: JankStats? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +61,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // 딥링크는 인증보다 먼저 도착한다 — 목적지는 보관만 하고 스플래시가 꺼내 간다([PendingDeepLink]).
         // 알림 탭도 App Link 도 URI 로 온다. 해석은 한 갈래다.
-        pendingDeepLink.set(resolveStartRoute(intent?.data, observability))
+        pendingDeepLink.set(resolveStartRoute(intent?.data, observability, deeplinkResolver))
         observeSessionEnd()
         val startStack = startStack()
         // 시작 화면은 네비게이션 신호 없이 백스택으로 직접 세팅되므로 ScreenTracker 를 거치지 않는다.
@@ -113,7 +117,7 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         intent.data
-            ?.let { resolveNewIntentRoute(it, observability) }
+            ?.let { resolveNewIntentRoute(it, observability, deeplinkResolver) }
             ?.let { navigationHelper.navigateByRoute(it) }
     }
 }

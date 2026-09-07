@@ -76,6 +76,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -117,6 +123,9 @@ dependencies {
 
     implementation(project(":report:domain"))
     implementation(project(":report:data"))
+    implementation(project(":notification:domain"))
+    implementation(project(":notification:data"))
+    implementation(project(":notification:presentation"))
     implementation(project(":report:presentation"))
 
     implementation(libs.androidx.work.runtime)
@@ -154,6 +163,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.konsist)
+    // 딥링크 파서가 android.net.Uri 를 쓴다 — 순수 JVM 으로는 파싱이 안 된다.
+    testImplementation(libs.robolectric)
+    testImplementation(testFixtures(project(":observability:domain")))
 
     // 인수 테스트는 앱이 실제로 쓰는 Retrofit api·DTO 를 그대로 써서 실서버를 두드린다 —
     // 서버가 계약을 바꾸면 역직렬화에서 터지는 것이 목적이다.

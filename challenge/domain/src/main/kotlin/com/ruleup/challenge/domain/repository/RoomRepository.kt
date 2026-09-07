@@ -1,5 +1,6 @@
 package com.ruleup.challenge.domain.repository
 
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
 import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeThreads
@@ -21,6 +22,20 @@ interface RoomRepository {
     ): ChallengeThreads
 
     suspend fun getRanking(challengeId: String): ChallengeRanking
+
+    /**
+     * 챌린지 월 캘린더 (명세: GET /challenges/{id}/calendar — 2026-09-07 신규).
+     * [month] 는 `YYYY-MM`.
+     *
+     * 계정 단위 캘린더(`/me/calendar`)와 **상태 enum 이 다르다** — 한 방으로 좁히면 하루 판정
+     * 대상이 1건이라 부분 성공이 없다. 그래서 별도 엔드포인트다.
+     *
+     * 참여한 적 없는 방이면 403 `NOT_CHALLENGE_MEMBER` 다. 완료·이탈한 방은 조회된다.
+     */
+    suspend fun getCalendar(
+        challengeId: String,
+        month: String,
+    ): ChallengeCalendar
 
     /**
      * 방 밖 랭킹 — 같은 모드의 방끼리 비교한다. 멤버 전용이 아니며 하루 1회 배치 스냅샷이다.

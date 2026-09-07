@@ -9,7 +9,10 @@ import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthResponse
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshResponse
+import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
+import com.ruleup.onboarding.data.auth.dto.WithdrawResponse
 import retrofit2.http.Body
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -38,4 +41,11 @@ interface AuthApi {
     suspend fun logout(
         @Body request: LogoutRequest,
     ): BaseResponse<EmptyData>
+
+    // 회원 탈퇴. → /api/v1/users/me. 확인 문구를 본문으로 받으므로 @HTTP 로 body 를 허용한다
+    // (@DELETE 는 본문을 실을 수 없다).
+    @HTTP(method = "DELETE", path = "v1/users/me", hasBody = true)
+    suspend fun withdraw(
+        @Body request: WithdrawRequest,
+    ): BaseResponse<WithdrawResponse>
 }

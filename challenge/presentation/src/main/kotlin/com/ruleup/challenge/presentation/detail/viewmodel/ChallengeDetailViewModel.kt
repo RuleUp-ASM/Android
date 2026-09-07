@@ -31,6 +31,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.notification.domain.repository.NotificationRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
@@ -53,6 +54,7 @@ import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.time.YearMonth
 import javax.inject.Inject
 
 /**
@@ -76,6 +78,7 @@ class ChallengeDetailViewModel
         private val observability: Observability,
         private val targetAppStore: TargetAppStore,
         private val reportRepository: ReportRepository,
+        private val notificationRepository: NotificationRepository,
         private val navigationHelper: NavigationHelper,
         private val ttiTracker: TtiTracker,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
@@ -103,8 +106,12 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
-                is ChallengeDetailIntent.RemoveWatcher -> removeWatcher(intent.watcherId)
+                ChallengeDetailIntent.InviteMember -> inviteMember()
                 is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
+
+                is ChallengeDetailIntent.ShiftCalendarMonth -> shiftCalendarMonth(intent.offset)
+
+                is ChallengeDetailIntent.ToggleMute -> toggleMute(intent.muted)
                 ChallengeDetailIntent.LoadMoreThreads -> loadThreads(next = true)
                 ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
                 is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
@@ -206,6 +213,20 @@ class ChallengeDetailViewModel
                         isThreadsPaging = false,
                         threadsError = event.message,
                     )
+
+                is ChallengeDetailReducerEvent.MuteLoaded ->
+                    state.copy(isMuted = event.muted, isMuteSubmitting = false)
+
+                is ChallengeDetailReducerEvent.MuteSubmitting -> state.copy(isMuteSubmitting = event.submitting)
+
+                is ChallengeDetailReducerEvent.CalendarMonthChanged ->
+                    // 이전 달 색이 남으면 잘못된 기록으로 읽힌다 — 목록을 비우고 다시 받는다.
+                    state.copy(calendarMonth = event.month, calendar = null)
+
+                is ChallengeDetailReducerEvent.CalendarLoading -> state.copy(isCalendarLoading = event.loading)
+
+                is ChallengeDetailReducerEvent.CalendarLoaded ->
+                    state.copy(isCalendarLoading = false, calendar = event.calendar)
 
                 is ChallengeDetailReducerEvent.RankingLoading -> state.copy(isRankingLoading = event.loading)
 
@@ -472,7 +493,83 @@ class ChallengeDetailViewModel
             // 방 안 랭킹은 랭킹 탭뿐 아니라 정보 탭 헤더의 "내 달성률" 원천이라 진입 시 함께 받는다.
             loadRanking(challengeId)
             loadTodayResult(challengeId)
+            loadCalendar(challengeId)
+            loadMuteState(challengeId)
         }
+
+        /**
+         * 이 방이 음소거인지. **실패를 흡수한다** — 알림 설정을 못 읽으면 토글을 아예 그리지 않는다.
+         * 모르는 상태를 「켜짐」으로 그리면 사용자가 껐다고 믿은 방에서 푸시가 계속 온다.
+         */
+        private fun loadMuteState(challengeId: String) {
+            viewModelScope.launch {
+                runCatching { notificationRepository.getSettings() }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(it.isMuted(challengeId)))
+                    }
+            }
+        }
+
+        /**
+         * 음소거 전환. 서버가 멱등(204)이라 재시도해도 안전하다.
+         *
+         * **낙관적으로 먼저 바꾸지 않는다** — 실패하면 껐다고 믿은 방에서 푸시가 계속 오는데,
+         * 화면만 꺼진 것처럼 보이면 사용자가 원인을 찾을 길이 없다.
+         */
+        private fun toggleMute(muted: Boolean) {
+            val challengeId = currentState.detail?.challengeId ?: return
+            if (currentState.isMuteSubmitting) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
+                runCatching { notificationRepository.setMuted(challengeId, muted) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted)) }
+                    .onFailure {
+                        dispatch(ChallengeDetailReducerEvent.MuteSubmitting(false))
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "알림 설정을 바꾸지 못했어요"))
+                    }
+            }
+        }
+
+        /**
+         * 솔로 상세의 월 캘린더 (Figma 1134:1930).
+         *
+         * **실패를 흡수한다** — 부가 정보이고, 참여한 적 없는 방이면 서버가 403 으로 막는 것이
+         * 정상이다. 값이 없으면 캘린더는 날짜만 그린다.
+         *
+         * 그룹 방에서는 부르지 않는다. 같은 자리를 랭킹·피드가 쓰므로 응답을 받아도 그릴 데가 없다.
+         */
+        private fun loadCalendar(challengeId: String) {
+            if (currentState.detail?.mode?.isGroup != false) return
+            val month =
+                currentState.calendarMonth ?: currentMonth().also {
+                    dispatch(ChallengeDetailReducerEvent.CalendarMonthChanged(it))
+                }
+            if (currentState.isCalendarLoading) return
+            viewModelScope.launch {
+                dispatch(ChallengeDetailReducerEvent.CalendarLoading(true))
+                runCatching { roomRepository.getCalendar(challengeId, month) }
+                    .onSuccess { dispatch(ChallengeDetailReducerEvent.CalendarLoaded(it)) }
+                    .onFailure { dispatch(ChallengeDetailReducerEvent.CalendarLoading(false)) }
+            }
+        }
+
+        /** 월 이동. 보고 있는 달이 없으면 이번 달을 기준으로 센다. */
+        private fun shiftCalendarMonth(offset: Long) {
+            val challengeId = currentState.detail?.challengeId ?: return
+            val base = currentState.calendarMonth ?: currentMonth()
+            val moved =
+                runCatching { YearMonth.parse(base).plusMonths(offset).toString() }.getOrNull() ?: return
+            dispatch(ChallengeDetailReducerEvent.CalendarMonthChanged(moved))
+            loadCalendar(challengeId)
+        }
+
+        /**
+         * 이번 달 `YYYY-MM`.
+         *
+         * 기기 타임존으로 센다 — 판정 경계는 KST 지만 이 값은 "어느 달을 펼쳐 보여줄까"일 뿐이고,
+         * 여기서 KST 로 강제하면 해외에서 달력이 실제 오늘과 다른 달로 열린다.
+         */
+        private fun currentMonth(): String = YearMonth.now().toString()
 
         /**
          * 오늘 인증 결과(인증 모듈). room 의 `myTodayStatus` 는 상태 하나뿐이라 인증 시각·실패 사유·
@@ -963,6 +1060,29 @@ class ChallengeDetailViewModel
         }
 
         /**
+         * 멤버 초대 링크 발급 → 카카오톡 공유. 비공개 그룹 방의 방장만 도달한다(화면이 버튼을 가린다).
+         *
+         * 발급 실패는 서버 문구를 그대로 쓴다 — `NOT_PRIVATE_CHALLENGE` 처럼 화면이 이미 막았어야
+         * 하는 경우라, 여기서 다시 번역할 문구가 없다.
+         */
+        private fun inviteMember() {
+            val detail = currentState.detail ?: return
+            viewModelScope.launch {
+                runCatching { challengeRepository.createInvitation(detail.challengeId) }
+                    .onSuccess {
+                        emitEffect(
+                            ChallengeDetailEffect.ShareMemberInvite(
+                                challengeTitle = detail.title,
+                                inviteUrl = it.inviteUrl,
+                            ),
+                        )
+                    }.onFailure {
+                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "초대 링크를 만들지 못했어요"))
+                    }
+            }
+        }
+
+        /**
          * 내 감시자 초대 생성 → 본인 카카오톡 공유(스펙: 초대 전달은 사용자 본인 채널로만).
          * 무료 한도(참여자 기준 3명) 초과는 구독 안내 메시지로 분기한다.
          */
@@ -990,17 +1110,6 @@ class ChallengeDetailViewModel
                         emitEffect(ChallengeDetailEffect.ShowMessage(message))
                     }
                 dispatch(ChallengeDetailReducerEvent.InvitingWatcher(false))
-            }
-        }
-
-        private fun removeWatcher(watcherId: String) {
-            val challengeId = currentState.detail?.challengeId ?: return
-            viewModelScope.launch {
-                runCatching { watcherRepository.removeWatcher(challengeId, watcherId) }
-                    .onSuccess { loadWatchers(challengeId) }
-                    .onFailure {
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "감시자 해제에 실패했어요"))
-                    }
             }
         }
 

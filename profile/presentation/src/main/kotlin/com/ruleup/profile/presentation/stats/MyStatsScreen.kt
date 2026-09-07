@@ -5,14 +5,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,29 +23,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpTopBar
-import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.profile.domain.entity.StatsPeriod
-import com.ruleup.profile.domain.entity.StatsPoint
+import com.ruleup.profile.domain.entity.CycleResult
+import com.ruleup.profile.domain.entity.CycleWeek
 import com.ruleup.profile.domain.entity.StatsReport
-import com.ruleup.profile.presentation.common.trimLabel
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsState
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
 
-// 막대 그라데이션 (피그마 435:250 — violet 계열)
-private val BarGradient = listOf(RuleUpPalette.Primary300, RuleUpPalette.Primary600)
-
-/** 통계 리포트 (피그마 435:250). 주간/월간/연간 탭 + 지표 4카드 + 완주율 시리즈 + 인사이트. */
+/**
+ * 통계 리포트. 정책이 정한 **지표 5종 고정** — 전체 성공률 · 총 성공 인증 수 · 연속 성공 ·
+ * 최근 12주 사이클 · 완주 개수(명세: GET /me/stats).
+ *
+ * 기간 탭(주간/월간/연간)은 없다 — 명세에서 폐기됐다.
+ */
 @Composable
 fun MyStatsScreen(
     modifier: Modifier = Modifier,
@@ -77,272 +72,220 @@ internal fun MyStatsContent(
     ) {
         RuleUpTopBar(title = "통계", onBack = { onIntent(MyStatsIntent.Back) })
 
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 4.dp, bottom = 40.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            PeriodTabs(
-                selected = state.period,
-                onSelect = { onIntent(MyStatsIntent.SelectPeriod(it)) },
-            )
+        when {
+            state.isLoading ->
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = RuleUpTheme.colors.brand)
+                }
 
-            when {
-                state.isLoading ->
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 80.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(color = RuleUpTheme.colors.brand)
-                    }
+            state.report == null ->
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = state.errorMessage ?: "통계를 불러오지 못했어요",
+                        color = RuleUpTheme.colors.textSecondary,
+                        style = RuleUpTheme.typography.labelMedium,
+                    )
+                }
 
-                state.report == null ->
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 80.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = state.errorMessage ?: "통계를 불러오지 못했어요",
-                            color = RuleUpTheme.colors.textSecondary,
-                            style = RuleUpTheme.typography.labelMedium,
-                        )
-                    }
-
-                else -> StatsBody(report = state.report)
-            }
-        }
-    }
-}
-
-@Composable
-private fun PeriodTabs(
-    selected: StatsPeriod,
-    onSelect: (StatsPeriod) -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .background(RuleUpTheme.colors.surfaceVariant)
-                .padding(4.dp),
-    ) {
-        StatsPeriod.entries.forEach { period ->
-            val isSelected = period == selected
-            Box(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (isSelected) RuleUpTheme.colors.surface else Color.Transparent)
-                        .singleClickable(onClick = { onSelect(period) })
-                        .padding(horizontal = 16.dp, vertical = 7.dp),
-            ) {
-                Text(
-                    text = period.label,
-                    color = if (isSelected) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textSecondary,
-                    style = if (isSelected) RuleUpTheme.typography.smallBold else RuleUpTheme.typography.smallMedium,
-                )
-            }
+            else -> StatsBody(report = state.report)
         }
     }
 }
 
 @Composable
 private fun StatsBody(report: StatsReport) {
-    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        val mannerLabel =
-            when {
-                report.mannerDelta > 0 -> "+${report.mannerDelta.trimLabel()}℃"
-                report.mannerDelta < 0 -> "−${(-report.mannerDelta).trimLabel()}℃"
-                else -> "0℃"
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(top = 8.dp, bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        SuccessRateCard(rate = report.successRate)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MetricCard(
+                label = "총 성공 인증",
+                value = "${report.totalSuccessCount}",
+                unit = "회",
+                modifier = Modifier.weight(1f),
+            )
+            MetricCard(
+                label = "완주",
+                value = "${report.completedCount}",
+                unit = "개",
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MetricCard(
+                label = "연속 성공",
+                value = "${report.streak.current}",
+                unit = "일",
+                modifier = Modifier.weight(1f),
+            )
+            MetricCard(
+                label = "최고 연속",
+                value = "${report.streak.best}",
+                unit = "일",
+                modifier = Modifier.weight(1f),
+            )
+        }
+        CyclesCard(cycles = report.cycles12w)
+    }
+}
+
+/** 전체 성공률. 판정 이력이 없으면 0% 대신 비어 있다고 말한다 — 둘은 다른 사실이다. */
+@Composable
+private fun SuccessRateCard(rate: Double?) {
+    StatsCard {
+        Text(
+            text = "전체 성공률",
+            color = RuleUpTheme.colors.textSecondary,
+            style = RuleUpTheme.typography.smallBold,
+        )
+        if (rate == null) {
+            Text(
+                text = "아직 판정된 인증이 없어요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.small,
+            )
+        } else {
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(
+                    text = "${(rate * 100).toInt()}",
+                    color = RuleUpTheme.colors.brand,
+                    style = RuleUpTheme.typography.numberXl,
+                )
+                Text(
+                    text = "%",
+                    color = RuleUpTheme.colors.brand,
+                    style = RuleUpTheme.typography.smallBold,
+                    modifier = Modifier.padding(start = 2.dp, bottom = 4.dp),
+                )
             }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(
-                value = "${report.totalCompleted}",
-                label = "총 완주",
-                valueColor = RuleUpTheme.colors.success,
-                modifier = Modifier.weight(1f),
-            )
-            StatCard(
-                value = "${report.avgCompletionRate}%",
-                label = "평균 완주율",
-                valueColor = RuleUpTheme.colors.brand,
-                modifier = Modifier.weight(1f),
-            )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            StatCard(
-                value = mannerLabel,
-                label = "매너 상승",
-                valueColor = RuleUpPalette.StatusWarn,
-                modifier = Modifier.weight(1f),
-            )
-            StatCard(
-                value = "${report.avgStreak.trimLabel()}일",
-                label = "평균 연속",
-                valueColor = RuleUpPalette.Primary300,
-                modifier = Modifier.weight(1f),
-            )
-        }
-
-        SeriesChartCard(period = report.period, series = report.series)
-
-        report.insight?.let { InsightBanner(insight = it) }
     }
 }
 
 @Composable
-private fun StatCard(
-    value: String,
+private fun MetricCard(
     label: String,
-    valueColor: Color,
+    value: String,
+    unit: String,
     modifier: Modifier = Modifier,
+) {
+    StatsCard(modifier = modifier) {
+        Text(
+            text = label,
+            color = RuleUpTheme.colors.textSecondary,
+            style = RuleUpTheme.typography.caption,
+        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = value,
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.numberM,
+            )
+            Text(
+                text = unit,
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+                modifier = Modifier.padding(start = 2.dp, bottom = 3.dp),
+            )
+        }
+    }
+}
+
+/** 최근 12주 그리드. 판정이 없던 주는 회색 — 실패와 같은 색으로 칠하면 없던 실패를 새기게 된다. */
+@Composable
+private fun CyclesCard(cycles: List<CycleWeek>) {
+    StatsCard {
+        Text(
+            text = "최근 12주",
+            color = RuleUpTheme.colors.textSecondary,
+            style = RuleUpTheme.typography.smallBold,
+        )
+        if (cycles.isEmpty()) {
+            Text(
+                text = "아직 지나간 주가 없어요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.small,
+            )
+            return@StatsCard
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            cycles.forEach { cycle ->
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(cycle.result.cellColor),
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            LegendDot(color = CycleResult.SUCCESS.cellColor, label = "성공")
+            LegendDot(color = CycleResult.PARTIAL.cellColor, label = "일부")
+            LegendDot(color = CycleResult.FAIL.cellColor, label = "실패")
+            LegendDot(color = CycleResult.NONE.cellColor, label = "판정 없음")
+        }
+    }
+}
+
+@Composable
+private fun LegendDot(
+    color: Color,
+    label: String,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier =
+                Modifier
+                    .padding(end = 4.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(color)
+                    .padding(5.dp),
+        )
+        Text(
+            text = label,
+            color = RuleUpTheme.colors.textMuted,
+            style = RuleUpTheme.typography.micro,
+        )
+    }
+}
+
+private val CycleResult?.cellColor: Color
+    @Composable
+    get() =
+        when (this) {
+            CycleResult.SUCCESS -> RuleUpTheme.colors.success
+            CycleResult.PARTIAL -> RuleUpTheme.colors.warning
+            CycleResult.FAIL -> RuleUpTheme.colors.danger
+            // 판정이 없던 주와 모르는 값은 같은 회색 — 둘 다 "결과라고 말할 게 없다"는 뜻이다.
+            CycleResult.NONE, null -> RuleUpTheme.colors.border
+        }
+
+@Composable
+private fun StatsCard(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
         modifier =
             modifier
-                .clip(RoundedCornerShape(14.dp))
-                .background(RuleUpTheme.colors.surface)
-                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp))
-                .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = value,
-            color = valueColor,
-            style = RuleUpTheme.typography.title,
-        )
-        Text(
-            text = label,
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.captionMedium,
-        )
-    }
-}
-
-/**
- * 완주율 시리즈 바 차트 (시안 435:250 — 막대별 값·bucket 라벨).
- * 시안이 막대마다 값 라벨을 붙이는 구조라 차트 라이브러리 대신 직접 그린다.
- */
-@Composable
-private fun SeriesChartCard(
-    period: StatsPeriod,
-    series: List<StatsPoint>,
-) {
-    val title =
-        when (period) {
-            StatsPeriod.WEEKLY -> "일별 완주율"
-            StatsPeriod.MONTHLY -> "주간 완주율"
-            StatsPeriod.YEARLY -> "월별 완주율"
-        }
-    RuleUpCard(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(
-            text = title,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.cardTitle,
-        )
-        if (series.isEmpty()) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 24.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "아직 집계된 기록이 없어요",
-                    color = RuleUpTheme.colors.textMuted,
-                    style = RuleUpTheme.typography.small,
-                )
-            }
-        } else {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(150.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                series.forEach { point ->
-                    SeriesBar(point = point, modifier = Modifier.weight(1f))
-                }
-            }
-        }
-    }
-}
-
-private const val BAR_MAX_HEIGHT_DP = 96
-
-@Composable
-private fun SeriesBar(
-    point: StatsPoint,
-    modifier: Modifier = Modifier,
-) {
-    // 0% 도 존재를 알 수 있게 최소 높이를 준다.
-    val barHeight = (BAR_MAX_HEIGHT_DP * point.completionRate / 100).coerceAtLeast(4).dp
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(5.dp),
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .width(22.dp)
-                    .height(barHeight)
-                    .clip(RoundedCornerShape(topStart = 7.dp, topEnd = 7.dp, bottomStart = 3.dp, bottomEnd = 3.dp))
-                    .background(Brush.verticalGradient(BarGradient)),
-        )
-        Text(
-            text = "${point.completionRate}",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.tinyBold,
-        )
-        Text(
-            text = point.bucket.shortBucket(),
-            color = RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.micro,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-// 주간 bucket 은 날짜(YYYY-MM-DD)로 오므로 요일로 줄인다. W1·1월 등은 그대로.
-private fun String.shortBucket(): String {
-    val parsed = runCatching { java.time.LocalDate.parse(this) }.getOrNull() ?: return this
-    return parsed.dayOfWeek.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.KOREAN)
-}
-
-@Composable
-private fun InsightBanner(insight: String) {
-    Row(
-        modifier =
-            Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(14.dp))
-                .background(
-                    Brush.linearGradient(listOf(RuleUpPalette.Primary50, Color(0xFFFCE7F3))),
-                ).padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = "🤖", style = RuleUpTheme.typography.labelMedium)
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = insight,
-            color = RuleUpPalette.TextSub,
-            style = RuleUpTheme.typography.smallMedium,
-        )
-    }
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp))
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
 }

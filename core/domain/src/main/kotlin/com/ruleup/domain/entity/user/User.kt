@@ -11,6 +11,7 @@ import com.ruleup.domain.entity.category.Category
  * @property nickname 본인 화면용. 심사 중이면 입력값, 거부되면 직전 승인본(없으면 임시 닉네임)이다.
  * @property score 회원당 누적 점수 0~2,000 (점수·티어 정책 §1). 티어 안에서 다시 매기는 점수가 아니다.
  * @property displayTier 표시·방 입장 판정에 쓰는 티어. 유예 밴드면 [tier] 보다 높을 수 있다.
+ * @property provider 연결된 소셜 제공자(2026-09-07 신규). 설정 허브의 「연결된 계정」이 쓴다.
  * @property lockInfo [accountStatus] 가 [AccountStatus.LOCKED] 일 때만 채워진다.
  */
 data class User(
@@ -21,6 +22,8 @@ data class User(
     val tier: Tier,
     val score: Int,
     val displayTier: Tier,
+    // 연결된 소셜 제공자. 모르면 null — 설정 허브에서 이름만 빠진다
+    val provider: SocialProvider?,
     val interestCategories: List<Category>,
     val onboardingCompleted: Boolean,
     val accountStatus: AccountStatus,

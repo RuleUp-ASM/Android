@@ -20,12 +20,14 @@ private const val TYPE_SETUP_REQUIRED = "SETUP_REQUIRED"
 private const val TYPE_PERMISSION_REQUIRED = "PERMISSION_REQUIRED"
 
 /**
- * FCM 수신 진입점. 페이로드 명세의 type 기반으로 분기한다:
- * - 무음 쪽지(셋업/권한): 알림 없음 — 상태 재확인은 해당 화면 재진입 시 수행된다
- * - 미지 type: 조용히 폐기 (명세 규칙 3 — 서버·앱 독립 배포 보장)
+ * FCM 수신 진입점.
  *
- * 공지가 제품에서 빠지면서 `NOTICE_CREATED` 분기가 사라졌고, 지금은 **알림을 띄우는 type 이 하나도
- * 없다.** 서버가 계속 보내더라도 미지 type 으로 조용히 버려진다.
+ * **여기가 도는 건 포그라운드일 때뿐이다** — 백그라운드·종료 상태에서는 OS 가 payload 의
+ * `notification` 블록을 자동 표시한다. 그래서 이 코드가 없다고 알림이 안 오는 게 아니라,
+ * 앱을 보고 있을 때만 우리가 직접 그린다.
+ *
+ * 셋업·권한 쪽지는 여전히 무음이다 — 상태 재확인은 해당 화면 재진입이 담당한다.
+ * `notification_id` 가 없는 메시지는 조용히 버린다(명세 규칙 3 — 서버·앱 독립 배포 보장).
  */
 @AndroidEntryPoint
 class RuleUpMessagingService : FirebaseMessagingService() {
@@ -34,6 +36,9 @@ class RuleUpMessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var observability: Observability
+
+    @Inject
+    lateinit var notificationPresenter: NotificationPresenter
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -50,8 +55,19 @@ class RuleUpMessagingService : FirebaseMessagingService() {
             // 무음 쪽지: 알림 없음. 셋업/권한 재확인은 상세 화면 ON_RESUME 재조회가 담당한다.
             TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
 
-            // 명세 규칙 3: 모르는 type 은 조용히 버린다.
-            else -> observability.d(TAG) { "미지 푸시 type 무시: $type" }
+            else -> {
+                val push =
+                    PushMessage.from(
+                        data = data,
+                        title = message.notification?.title ?: data["title"],
+                        body = message.notification?.body ?: data["body"],
+                    )
+                if (push == null) {
+                    observability.d(TAG) { "표시할 수 없는 푸시 무시: type=$type" }
+                    return
+                }
+                notificationPresenter.show(push)
+            }
         }
     }
 

@@ -43,4 +43,9 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // 에러 본문 인터셉터가 실제 OkHttp 응답을 다루므로 유닛 테스트에도 okhttp 가 필요하다.
+    testImplementation(libs.junit)
+    testImplementation(kotlin("test-junit"))
+    testImplementation(libs.okhttp)
 }

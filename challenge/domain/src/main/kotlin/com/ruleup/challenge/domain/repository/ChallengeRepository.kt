@@ -1,6 +1,8 @@
 package com.ruleup.challenge.domain.repository
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeInvitation
+import com.ruleup.challenge.domain.entity.ChallengeInvitationPreview
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
@@ -16,7 +18,8 @@ import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRoleChange
-import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeFilter
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
@@ -107,14 +110,45 @@ interface ChallengeRepository {
     suspend fun join(challengeId: String): JoinResult
 
     /**
+     * 멤버 초대 링크 발급(명세: POST /challenges/{id}/invitations). **비공개 그룹 방의 방장만** 된다 —
+     * 공개 방·솔로 방은 서버가 `NOT_PRIVATE_CHALLENGE` 로 막는다.
+     *
+     * 응답의 `inviteUrl` 을 그대로 공유한다. 클라가 경로를 조립하지 않는다.
+     */
+    suspend fun createInvitation(challengeId: String): ChallengeInvitation
+
+    /**
+     * 초대 링크 미리보기(명세: GET /challenges/invitations/{token}). **로그인 필수**다.
+     *
+     * 조회만 하고 토큰을 소모하지 않는다 — 수락은 [acceptInvitation] 에서 일어난다.
+     */
+    suspend fun getInvitation(token: String): ChallengeInvitationPreview
+
+    /**
+     * 초대 수락 가입(명세: POST /challenges/invitations/{token}/accept). 토큰은 여기서 소모된다.
+     *
+     * 게이트에 막히면 [com.ruleup.challenge.domain.entity.JoinBlockedException] 이 던져진다 —
+     * 미리보기의 `joinable` 과 같은 사유 체계다.
+     */
+    suspend fun acceptInvitation(token: String): JoinResult
+
+    /**
      * 챌린지 멤버 목록 조회(명세 GET members). 승인제 폐기로 status 필터 없이 확정 멤버만 반환한다.
      */
     suspend fun getMembers(challengeId: String): ChallengeMembers
 
     /**
-     * 내가 참여 중인 챌린지 목록 조회(명세: GET /challenges). 승인제 폐기로 scope 없이 전량 반환한다.
+     * 내 챌린지 목록 조회(명세: GET /challenges).
+     *
+     * 홈의 참여 중 목록과 챌린지 탭이 이 하나를 공유하고 [filter] 로 탭이 갈린다. [cursor] 를
+     * 주지 않으면 첫 페이지다 — 다음 페이지는 응답의 `nextCursor` 를 그대로 되돌려 준다.
+     * 잘못된 커서는 서버가 400 `CURSOR_INVALID` 로 막으므로 클라가 보정하지 않는다.
      */
-    suspend fun getMyChallenges(): List<MyChallenge>
+    suspend fun getMyChallenges(
+        filter: MyChallengeFilter = MyChallengeFilter.IN_PROGRESS,
+        cursor: String? = null,
+        size: Int? = null,
+    ): MyChallengePage
 
     /**
      * 챌린지 탈퇴(본인, 명세 DELETE members/me). 본인 success 이력이 있으면 탈퇴 패널티가 트리거된다.

@@ -9,8 +9,10 @@ import com.ruleup.onboarding.data.auth.dto.LogoutRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
+import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
 import com.ruleup.onboarding.data.auth.dto.toAuthFailure
 import com.ruleup.onboarding.data.auth.dto.toAuthSession
+import com.ruleup.onboarding.data.auth.dto.toDomain
 import com.ruleup.onboarding.data.auth.dto.toOAuthResult
 import com.ruleup.onboarding.data.auth.dto.toRefreshedSession
 import com.ruleup.onboarding.data.auth.dto.toRequest
@@ -23,6 +25,7 @@ import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
 import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.auth.entity.SignupForm
+import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import java.io.IOException
 import java.time.format.DateTimeFormatter
@@ -89,6 +92,12 @@ class AuthRepositoryImpl
         override suspend fun logout(refreshToken: String) {
             api.logout(LogoutRequest(refreshToken = refreshToken)).throwOnError()
         }
+
+        override suspend fun withdraw(confirmPhrase: String): Withdrawal =
+            api
+                .withdraw(WithdrawRequest(confirmPhrase = confirmPhrase))
+                .getOrThrow()
+                .toDomain()
     }
 
 /**

@@ -7,6 +7,7 @@ import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Gender
 import com.ruleup.domain.entity.user.LockInfo
 import com.ruleup.domain.entity.user.NicknameStatus
+import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.User
 import com.ruleup.network.dto.requireField
@@ -35,6 +36,7 @@ data class MyUserResponse(
     @SerialName("tier") val tier: String? = null,
     @SerialName("score") val score: Int? = null,
     @SerialName("displayTier") val displayTier: String? = null,
+    @SerialName("provider") val provider: String? = null,
     @SerialName("interestCategories") val interestCategories: List<String>? = null,
     @SerialName("onboardingCompleted") val onboardingCompleted: Boolean? = null,
     @SerialName("accountStatus") val accountStatus: String? = null,
@@ -82,6 +84,7 @@ internal fun MyUserResponse.toDomain(): User =
         tier = Tier.fromValue(tier),
         score = score ?: 0,
         displayTier = displayTier?.let(Tier::fromValue) ?: Tier.fromValue(tier),
+        provider = SocialProvider.fromValue(provider),
         interestCategories = interestCategories.toCategories(),
         onboardingCompleted = onboardingCompleted ?: true,
         accountStatus = AccountStatus.fromValue(accountStatus),

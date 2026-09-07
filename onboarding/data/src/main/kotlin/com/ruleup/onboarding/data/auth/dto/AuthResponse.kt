@@ -4,6 +4,7 @@ import com.ruleup.domain.entity.category.toCategories
 import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.LockInfo
 import com.ruleup.domain.entity.user.NicknameStatus
+import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.entity.user.User
@@ -14,6 +15,7 @@ import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
 import com.ruleup.onboarding.domain.auth.entity.OAuthProfile
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
+import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -59,6 +61,8 @@ data class UserResponse(
     val score: Int? = null,
     @SerialName("displayTier")
     val displayTier: String? = null,
+    @SerialName("provider")
+    val provider: String? = null,
     @SerialName("interestCategories")
     val interestCategories: List<String>? = null,
     @SerialName("onboardingCompleted")
@@ -165,6 +169,7 @@ internal fun UserResponse.toDomain(): User =
         score = score ?: 0,
         // 표시 티어가 없으면 실제 티어로 떨어뜨린다. 방 입장 판정에 쓰이므로 부풀리면 안 된다.
         displayTier = displayTier?.let(Tier::fromValue) ?: Tier.fromValue(tier),
+        provider = SocialProvider.fromValue(provider),
         interestCategories = interestCategories.toCategories(),
         onboardingCompleted = onboardingCompleted ?: true,
         accountStatus = AccountStatus.fromValue(accountStatus),
@@ -230,3 +235,24 @@ private val AUTH_FAILURE_CODES: Map<String, AuthFailure> =
     )
 
 private const val DEFAULT_TOKEN_TYPE = "Bearer"
+
+// ---------- 회원 탈퇴 (DELETE /users/me) ----------
+@Serializable
+data class WithdrawResponse(
+    @SerialName("withdrawn")
+    val withdrawn: Boolean? = null,
+    // 복원 가능 기준 시각(탈퇴 +1년)
+    @SerialName("archiveExpiresAt")
+    val archiveExpiresAt: String? = null,
+    // 복원 안내 문구 (서버 관리)
+    @SerialName("restoreNote")
+    val restoreNote: String? = null,
+)
+
+internal fun WithdrawResponse.toDomain(): Withdrawal =
+    Withdrawal(
+        // 응답이 왔는데 플래그만 비면 처리된 것으로 본다 — 서버가 200 을 준 시점에 이미 끝났다.
+        withdrawn = withdrawn ?: true,
+        archiveExpiresAt = archiveExpiresAt,
+        restoreNote = restoreNote,
+    )

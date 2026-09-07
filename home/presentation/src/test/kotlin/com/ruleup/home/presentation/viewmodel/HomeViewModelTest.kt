@@ -5,11 +5,14 @@ import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
+import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import kotlinx.coroutines.Dispatchers
@@ -89,7 +92,7 @@ class HomeViewModelTest {
     fun `이미 불러오는 중이면 다시 요청하지 않는다`() =
         runTest {
             // 홈 재진입마다 LaunchedEffect 가 다시 발화한다 — 막지 않으면 중복 요청이 쌓인다.
-            val repo = FakeChallengeRepository(myChallenges = { listOf(myChallenge("ch1")) })
+            val repo = FakeChallengeRepository(myChallenges = { _, _ -> page(myChallenge("ch1")) })
             val viewModel = viewModel(repo = repo)
 
             viewModel.onIntent(HomeIntent.Load)
@@ -149,7 +152,7 @@ class HomeViewModelTest {
         locals: List<MyChallengeSummary> = emptyList(),
         repo: FakeChallengeRepository =
             FakeChallengeRepository(
-                myChallenges = { challenges ?: throw IllegalStateException("목록 조회 실패") },
+                myChallenges = { _, _ -> page(*(challenges ?: throw IllegalStateException("목록 조회 실패")).toTypedArray()) },
             ),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
     ) = HomeViewModel(
@@ -157,6 +160,7 @@ class HomeViewModelTest {
         verificationRepository =
             FakeVerificationRepository(progress = { progress ?: throw IllegalStateException("진행률 조회 실패") }),
         myChallengeStore = FakeMyChallengeStore(locals),
+        notificationRepository = FakeNotificationRepository(),
         navigationHelper = nav,
     )
 
@@ -169,12 +173,21 @@ class HomeViewModelTest {
             category = Category.entries.first(),
             mode = ChallengeMode.SOLO,
             status = ChallengeStatus.ACTIVE,
+            visibility = null,
             participantCount = 1,
             capacity = 1,
             minTier = null,
+            weeklyCount = 7,
             period = ChallengePeriod(start = "2026-09-01", end = "2026-10-01"),
             myRole = MemberRole.OWNER,
+            ownerType = OwnerType.USER,
+            leftType = null,
+            leftAt = null,
+            successRate = null,
         )
+
+    /** 홈은 첫 페이지만 본다 — 커서를 따라가지 않으므로 마지막 장으로 만든다. */
+    private fun page(vararg challenges: MyChallenge) = MyChallengePage(challenges = challenges.toList(), nextCursor = null, hasNext = false)
 
     private fun local(id: String) =
         MyChallengeSummary(

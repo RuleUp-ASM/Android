@@ -6,6 +6,7 @@ import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
+import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -101,11 +102,17 @@ class HomeChallengeMergeTest {
             category = Category.entries.first(),
             mode = ChallengeMode.SOLO,
             status = ChallengeStatus.ACTIVE,
+            visibility = null,
             participantCount = 1,
             capacity = 1,
             minTier = null,
+            weeklyCount = 7,
             period = ChallengePeriod(start = "2026-09-01", end = "2026-10-01"),
             myRole = MemberRole.OWNER,
+            ownerType = OwnerType.USER,
+            leftType = null,
+            leftAt = null,
+            successRate = null,
         )
 
     private fun local(id: String) =

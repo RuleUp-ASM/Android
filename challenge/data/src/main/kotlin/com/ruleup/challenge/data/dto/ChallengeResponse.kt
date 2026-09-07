@@ -1,6 +1,9 @@
 package com.ruleup.challenge.data.dto
 
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
+import com.ruleup.challenge.domain.entity.ChallengeCalendarDay
 import com.ruleup.challenge.domain.entity.ChallengeConfig
+import com.ruleup.challenge.domain.entity.ChallengeDayStatus
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeField
 import com.ruleup.challenge.domain.entity.ChallengeGate
@@ -9,6 +12,7 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengeOwner
+import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
@@ -25,10 +29,12 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
+import com.ruleup.challenge.domain.entity.LeftType
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationMethod
@@ -539,10 +545,28 @@ data class MyChallengeResponse(
     val capacity: Int? = null,
     @SerialName("minTier")
     val minTier: String? = null,
+    @SerialName("weeklyCount")
+    val weeklyCount: Int? = null,
+    @SerialName("visibility")
+    val visibility: String? = null,
+    // 명세는 startDate·endDate 를 최상위로 준다. period 객체는 구 계약이라 둘 다 받는다 —
+    // 어느 쪽이 오든 기간이 빈칸으로 남지 않게 하려는 것이다.
+    @SerialName("startDate")
+    val startDate: String? = null,
+    @SerialName("endDate")
+    val endDate: String? = null,
     @SerialName("period")
     val period: PeriodDto? = null,
     @SerialName("myRole")
     val myRole: String? = null,
+    @SerialName("ownerType")
+    val ownerType: String? = null,
+    @SerialName("leftType")
+    val leftType: String? = null,
+    @SerialName("leftAt")
+    val leftAt: String? = null,
+    @SerialName("successRate")
+    val successRate: Double? = null,
 )
 
 internal fun MyChallengeResponse.toDomain(): MyChallenge =
@@ -553,12 +577,20 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         imageUrl = imageUrl,
         category = Category.fromValue(category.orEmpty()),
         mode = ChallengeMode.fromValue(mode) ?: ChallengeMode.SOLO,
+        visibility = ChallengeVisibility.fromValue(visibility),
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         participantCount = participantCount ?: 0,
         capacity = capacity ?: 0,
         minTier = minTier?.let(Tier::fromValue),
-        period = period.toDomain(),
+        // 주간 횟수를 모르면 1 로 둔다 — 0 이면 "판정이 없는 방"처럼 보인다.
+        weeklyCount = (weeklyCount ?: 1).coerceIn(1, 7),
+        period = period?.toDomain() ?: ChallengePeriod(start = startDate.orEmpty(), end = endDate.orEmpty()),
         myRole = MemberRole.fromValue(myRole) ?: MemberRole.MEMBER,
+        ownerType = OwnerType.fromValue(ownerType),
+        leftType = LeftType.fromValue(leftType),
+        leftAt = leftAt,
+        // 표본이 없으면 서버가 비운다. 0 으로 접으면 「전부 실패」로 읽힌다.
+        successRate = successRate?.coerceIn(0.0, 1.0),
     )
 
 @Serializable
@@ -568,9 +600,19 @@ data class MyChallengesResponse(
     // 서버가 items 로 바꿔도 견디게 둘 다 받는다 — 계약이 "수정중"이라 흔들릴 여지가 있다.
     @SerialName("items")
     val items: List<MyChallengeResponse>? = null,
+    @SerialName("nextCursor")
+    val nextCursor: String? = null,
+    @SerialName("hasNext")
+    val hasNext: Boolean? = null,
 )
 
-internal fun MyChallengesResponse.toDomain(): List<MyChallenge> = (challenges ?: items).orEmpty().map { it.toDomain() }
+internal fun MyChallengesResponse.toDomain(): MyChallengePage =
+    MyChallengePage(
+        challenges = (challenges ?: items).orEmpty().map { it.toDomain() },
+        nextCursor = nextCursor,
+        // 커서가 있으면 다음 장이 있는 것이다. 플래그만 믿으면 서버가 안 줬을 때 목록이 잘린다
+        hasNext = hasNext ?: (nextCursor != null),
+    )
 
 // ---------- 챌린지 최초 조회 (GET setup) ----------
 @Serializable
@@ -606,3 +648,46 @@ internal fun ChallengeSetupInfoResponse.toDomain(): ChallengeSetupInfo =
     )
 
 private const val SETUP_STATUS_READY = "READY"
+
+// ---------- 챌린지 월 캘린더 (GET /challenges/{id}/calendar) ----------
+@Serializable
+data class ChallengeCalendarDayResponse(
+    @SerialName("date")
+    val date: String? = null,
+    @SerialName("status")
+    val status: String? = null,
+    @SerialName("verificationId")
+    val verificationId: String? = null,
+    @SerialName("appealable")
+    val appealable: Boolean? = null,
+)
+
+@Serializable
+data class ChallengeCalendarResponse(
+    @SerialName("challengeId")
+    val challengeId: String? = null,
+    @SerialName("month")
+    val month: String? = null,
+    @SerialName("days")
+    val days: List<ChallengeCalendarDayResponse>? = null,
+)
+
+internal fun ChallengeCalendarResponse.toDomain(requestedMonth: String): ChallengeCalendar =
+    ChallengeCalendar(
+        challengeId = challengeId.requireField("challengeId"),
+        // 응답이 월을 비우면 물어본 달로 둔다 — 캘린더 헤더가 빈칸이 되는 것보다 낫다.
+        month = month?.takeIf { it.isNotBlank() } ?: requestedMonth,
+        days = days.orEmpty().mapNotNull { it.toDomain() },
+    )
+
+internal fun ChallengeCalendarDayResponse.toDomain(): ChallengeCalendarDay? {
+    // 날짜 없는 칸은 달력에 세울 자리가 없다.
+    val date = date?.takeIf { it.isNotBlank() } ?: return null
+    return ChallengeCalendarDay(
+        date = date,
+        status = ChallengeDayStatus.fromValue(status),
+        verificationId = verificationId,
+        // 모르면 이의를 열지 않는다 — 못 내는 버튼을 보여 주면 눌렀다가 에러를 본다.
+        appealable = appealable ?: false,
+    )
+}

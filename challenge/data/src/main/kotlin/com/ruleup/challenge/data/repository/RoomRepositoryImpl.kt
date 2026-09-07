@@ -2,6 +2,7 @@ package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.toDomain
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
 import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeThreads
@@ -45,6 +46,15 @@ class RoomRepositoryImpl
                 .getRanking(challengeId)
                 .getOrThrow()
                 .toDomain()
+
+        override suspend fun getCalendar(
+            challengeId: String,
+            month: String,
+        ): ChallengeCalendar =
+            api
+                .getCalendar(challengeId, month)
+                .getOrThrow()
+                .toDomain(month)
 
         override suspend fun getCrossRanking(
             mode: RankingMode,

@@ -1,6 +1,8 @@
 package com.ruleup.profile.presentation.home.viewmodel
 
+import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NicknameStatus
+import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
@@ -129,7 +131,7 @@ class MyHomeViewModelTest {
             viewModel.onIntent(MyHomeIntent.OpenRanking)
 
             assertEquals(mapOf("challengeId" to "ch1"), nav.routes.single().args)
-            assertNull(viewModel.uiState.value.rankingPicker)
+            assertNull(viewModel.uiState.value.picker)
         }
 
     @Test
@@ -143,7 +145,8 @@ class MyHomeViewModelTest {
 
             assertEquals(
                 2,
-                viewModel.uiState.value.rankingPicker
+                viewModel.uiState.value.picker
+                    ?.challenges
                     ?.size,
             )
             assertTrue(nav.didNotMove)
@@ -157,10 +160,10 @@ class MyHomeViewModelTest {
                 viewModel(FakeMyPageRepository(groupChallenges = { listOf(group("ch1"), group("ch2")) }), nav)
             viewModel.onIntent(MyHomeIntent.OpenRanking)
 
-            viewModel.onIntent(MyHomeIntent.SelectRankingChallenge("ch2"))
+            viewModel.onIntent(MyHomeIntent.SelectPickedChallenge("ch2"))
 
             assertEquals(mapOf("challengeId" to "ch2"), nav.routes.single().args)
-            assertNull(viewModel.uiState.value.rankingPicker)
+            assertNull(viewModel.uiState.value.picker)
         }
 
     @Test
@@ -192,8 +195,12 @@ class MyHomeViewModelTest {
             nickname = nickname,
             nicknameStatus = NicknameStatus.APPROVED,
             profileImageUrl = null,
-            mannerTemperature = 36.5,
-            counts = MyHomeCounts(completed = 2, inProgress = 1, groups = 1),
+            tier = Tier.GOLD,
+            score = 370,
+            displayTier = Tier.GOLD,
+            counts = MyHomeCounts(inProgress = 1, completed = 2, left = 0),
+            accountStatus = AccountStatus.ACTIVE,
+            lockInfo = null,
         )
 
     private fun group(id: String) = GroupChallengeSummary(challengeId = id, title = "아침 러닝")

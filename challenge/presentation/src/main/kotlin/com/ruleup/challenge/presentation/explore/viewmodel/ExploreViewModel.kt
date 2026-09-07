@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.observability.ChallengeCardSource
 import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.repository.ExploreRepository
@@ -61,6 +62,8 @@ class ExploreViewModel
                 is ExploreIntent.OpenCategory -> openCategory(intent.category)
                 ExploreIntent.OpenHome -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 ExploreIntent.OpenMy -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
+
+                ExploreIntent.OpenMyChallenges -> navigationHelper.navigateTo(MyChallengesPage)
 
                 ExploreIntent.CreateChallenge ->
                     navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_CREATE))

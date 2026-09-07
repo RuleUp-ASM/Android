@@ -43,7 +43,7 @@ class ExploreAcceptanceTest {
     fun `갓 만든 계정은 참여 중인 챌린지가 없다`() =
         runBlocking {
             // 깨지면 온보딩 직후 홈이 남의 챌린지를 보여 준다는 뜻이다.
-            val mine = challenges.getMyChallenges()
+            val mine = challenges.getMyChallenges().challenges
 
             assertTrue(mine.isEmpty(), "새 계정인데 챌린지가 ${mine.size}개 있다")
         }

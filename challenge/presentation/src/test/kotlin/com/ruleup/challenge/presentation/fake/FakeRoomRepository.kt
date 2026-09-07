@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.fake
 
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
 import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeThreads
@@ -13,6 +14,7 @@ class FakeRoomRepository(
     private val threads: ((String, String?) -> ChallengeThreads)? = null,
     private val ranking: ((String) -> ChallengeRanking)? = null,
     private val crossRanking: ((RankingMode, String?) -> CrossChallengeRanking)? = null,
+    private val calendar: ((String, String) -> ChallengeCalendar)? = null,
 ) : RoomRepository {
     val calls = mutableListOf<String>()
 
@@ -37,6 +39,18 @@ class FakeRoomRepository(
     override suspend fun getRanking(challengeId: String): ChallengeRanking {
         calls += "getRanking"
         return requireNotNull(ranking) { "getRanking 을 준비하지 않았다" }(challengeId)
+    }
+
+    /** 어느 달을 물었는지. 월 이동이 실제로 다른 달을 조회하는지 보는 자리다. */
+    val calendarMonths = mutableListOf<String>()
+
+    override suspend fun getCalendar(
+        challengeId: String,
+        month: String,
+    ): ChallengeCalendar {
+        calls += "getCalendar"
+        calendarMonths += month
+        return requireNotNull(calendar) { "getCalendar 를 준비하지 않았다" }(challengeId, month)
     }
 
     override suspend fun getCrossRanking(

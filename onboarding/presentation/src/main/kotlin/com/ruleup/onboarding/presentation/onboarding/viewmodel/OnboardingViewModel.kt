@@ -136,10 +136,10 @@ class OnboardingViewModel
                 OnboardingReducerEvent.AllAgreementsToggled ->
                     state.copy(
                         agreements =
-                            if (state.agreements.containsAll(AgreementType.entries)) {
+                            if (state.agreements.containsAll(AgreementType.SIGNUP)) {
                                 emptySet()
                             } else {
-                                AgreementType.entries.toSet()
+                                AgreementType.SIGNUP.toSet()
                             },
                     )
 

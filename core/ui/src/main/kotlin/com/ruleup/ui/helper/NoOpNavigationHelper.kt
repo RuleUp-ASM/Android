@@ -20,5 +20,7 @@ object NoOpNavigationHelper : NavigationHelper {
 
     override fun replaceStackWith(route: NavRoute) = Unit
 
+    override fun navigateByDeeplink(deeplink: String) = Unit
+
     override fun navigateToBack() = Unit
 }

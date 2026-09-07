@@ -2,6 +2,8 @@ package com.ruleup.challenge.domain.fake
 
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeDraft
+import com.ruleup.challenge.domain.entity.ChallengeInvitation
+import com.ruleup.challenge.domain.entity.ChallengeInvitationPreview
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengePenalties
@@ -17,7 +19,8 @@ import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.ModerationState
-import com.ruleup.challenge.domain.entity.MyChallenge
+import com.ruleup.challenge.domain.entity.MyChallengeFilter
+import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationConfig
@@ -38,7 +41,10 @@ class FakeChallengeRepository(
     private val detail: ((String) -> ChallengeDetail)? = null,
     private val update: ((ChallengeUpdate) -> ChallengeUpdateResult)? = null,
     private val uploadImage: ((String) -> String)? = null,
-    private val myChallenges: (() -> List<MyChallenge>)? = null,
+    private val myChallenges: ((MyChallengeFilter, String?) -> MyChallengePage)? = null,
+    private val invitation: ((String) -> ChallengeInvitation)? = null,
+    private val invitationPreview: ((String) -> ChallengeInvitationPreview)? = null,
+    private val acceptInvitation: ((String) -> JoinResult)? = null,
     // 초안 생성 실패를 재현한다 — 폴백(정상 응답)과 예외는 화면에서 다르게 다뤄진다.
     private val draftError: Throwable? = null,
     private val join: ((String) -> JoinResult)? = null,
@@ -51,6 +57,13 @@ class FakeChallengeRepository(
 
     /** 어떤 메서드가 몇 번 불렸는지. "안 보냈다"도 계약이라 호출 자체를 남긴다. */
     val calls = mutableListOf<String>()
+
+    /** 어느 탭을 어떤 커서로 물었는지. 탭 전환·페이징이 계약대로 도는지 여기서 본다. */
+    val myChallengeFilters = mutableListOf<MyChallengeFilter>()
+    val myChallengeCursors = mutableListOf<String?>()
+
+    /** 초대 링크에서 잘라낸 토큰이 그대로 갔는지. */
+    val invitationTokens = mutableListOf<String>()
 
     /** 마지막으로 보낸 수정 내용. 바뀐 것만 실어 보내는지 볼 때 쓴다. */
     var lastUpdate: ChallengeUpdate? = null
@@ -112,11 +125,34 @@ class FakeChallengeRepository(
         return requireNotNull(join) { "join 을 준비하지 않았다" }(challengeId)
     }
 
+    override suspend fun createInvitation(challengeId: String): ChallengeInvitation {
+        calls += "createInvitation"
+        return requireNotNull(invitation) { "createInvitation 을 준비하지 않았다" }(challengeId)
+    }
+
+    override suspend fun getInvitation(token: String): ChallengeInvitationPreview {
+        calls += "getInvitation"
+        invitationTokens += token
+        return requireNotNull(invitationPreview) { "getInvitation 을 준비하지 않았다" }(token)
+    }
+
+    override suspend fun acceptInvitation(token: String): JoinResult {
+        calls += "acceptInvitation"
+        invitationTokens += token
+        return requireNotNull(acceptInvitation) { "acceptInvitation 을 준비하지 않았다" }(token)
+    }
+
     override suspend fun getMembers(challengeId: String) = throw NotImplementedError()
 
-    override suspend fun getMyChallenges(): List<MyChallenge> {
+    override suspend fun getMyChallenges(
+        filter: MyChallengeFilter,
+        cursor: String?,
+        size: Int?,
+    ): MyChallengePage {
         calls += "getMyChallenges"
-        return requireNotNull(myChallenges) { "getMyChallenges 를 준비하지 않았다" }()
+        myChallengeFilters += filter
+        myChallengeCursors += cursor
+        return requireNotNull(myChallenges) { "getMyChallenges 를 준비하지 않았다" }(filter, cursor)
     }
 
     override suspend fun leaveChallenge(challengeId: String) = throw NotImplementedError()

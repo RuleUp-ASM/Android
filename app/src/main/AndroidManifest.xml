@@ -43,12 +43,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- App Links: 친구 초대 /inv/{code}.
+            <!-- App Links: 친구 초대 /inv/{code} · 챌린지 초대 /c/{token} · 감시자 초대 /w/{token}.
                  autoVerify 검증은 설치 시점에 /.well-known/assetlinks.json 으로 수행된다.
                  앱 미설치 유저는 같은 URL이 웹 랜딩(스토어 안내)으로 열린다.
 
-                 감시자 초대 /w/{token} 은 여기 없다 — 비유저 감시자를 포함해 웹 동의 페이지가
-                 수락을 담당하므로, 앱 설치 여부와 무관하게 브라우저로 열려야 한다.
+                 감시자 초대 /w/{token} 도 여기서 받는다 — 웹 동의가 폐지되고 인앱 수락만 동의로
+                 인정되므로(감시자 테크 스펙 5-2), 설치된 앱이 링크를 열어야 한다.
 
                  앱 화면으로 직결되는 URL 은 없다. 알림 탭은 MainActivity 를 명시한 인텐트로
                  처리하므로(#179) 필터가 필요 없고, 그 덕에 **웹페이지가 앱 화면을 여는 경로가 0** 이다. -->
@@ -62,6 +62,14 @@
                     android:scheme="https"
                     android:host="android.ruleup.co.kr"
                     android:pathPrefix="/inv" />
+                <data
+                    android:scheme="https"
+                    android:host="android.ruleup.co.kr"
+                    android:pathPrefix="/c" />
+                <data
+                    android:scheme="https"
+                    android:host="android.ruleup.co.kr"
+                    android:pathPrefix="/w" />
             </intent-filter>
 
             <!-- Health Connect 권한 사용 이유(개인정보 처리방침) 안내 — Android 13 이하.
@@ -84,7 +92,14 @@
             </intent-filter>
         </activity-alias>
 
-        <!-- FCM 수신. 데이터 전용 메시지만 오고, 지금은 알림을 띄우는 type 이 없다(RuleUpMessagingService). -->
+        <!-- 백그라운드·종료 상태에서는 OS 가 payload 의 notification 블록을 자동 표시한다.
+             그때 쓸 채널을 지정해 두지 않으면 서버가 보낸 channel_id 가 없을 때 알림이 조용히 사라진다.
+             값은 NotificationPresenter.DEFAULT_CHANNEL_ID 와 같아야 한다. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="ruleup_default" />
+
+        <!-- FCM 수신. 포그라운드에서만 이 서비스가 알림을 직접 그린다(RuleUpMessagingService). -->
         <service
             android:name=".push.RuleUpMessagingService"
             android:exported="false">

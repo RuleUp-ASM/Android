@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
+import com.ruleup.challenge.domain.entity.ChallengeCalendar
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeRanking
@@ -55,14 +56,27 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
 
-    /** (참여자 본인) 내 감시자 해제 — REVOKED + 연락처 파기. */
-    data class RemoveWatcher(
-        val watcherId: String,
-    ) : ChallengeDetailIntent
+    /** (방장) 비공개 방 멤버 초대 링크 발급 후 공유. 공개 방·솔로 방에는 노출하지 않는다. */
+    data object InviteMember : ChallengeDetailIntent
 
     /** (방 상세) 상단 탭 전환. 아직 안 받아온 탭이면 그때 조회한다. */
     data class SelectTab(
         val tab: RoomTab,
+    ) : ChallengeDetailIntent
+
+    /**
+     * (정보 탭) 이 챌린지의 알림 음소거 전환.
+     *
+     * 알림 3계층의 ③이다 — 마스터·그룹을 켜 둔 채 이 방만 조용히 하고 싶을 때 쓴다.
+     * 알림 센터 적재는 막지 않는다(테크 스펙 2번 절대 규칙).
+     */
+    data class ToggleMute(
+        val muted: Boolean,
+    ) : ChallengeDetailIntent
+
+    /** (솔로 정보 탭) 캘린더 월 이동. `+1` 이면 다음 달, `-1` 이면 이전 달. */
+    data class ShiftCalendarMonth(
+        val offset: Long,
     ) : ChallengeDetailIntent
 
     /** (피드 탭) 하단 도달 → 다음 페이지. */
@@ -172,6 +186,15 @@ sealed interface ChallengeDetailEffect : MviEffect {
         val inviteUrl: String,
     ) : ChallengeDetailEffect
 
+    /**
+     * 멤버 초대 링크 공유. 감시자 초대와 카드 문구가 달라 이펙트를 갈라 둔다 —
+     * 감시자는 "지켜봐 달라"이고 멤버는 "같이 하자"다.
+     */
+    data class ShareMemberInvite(
+        val challengeTitle: String,
+        val inviteUrl: String,
+    ) : ChallengeDetailEffect
+
     data class ShowMessage(
         val message: String,
     ) : ChallengeDetailEffect
@@ -236,6 +259,14 @@ data class ChallengeDetailState(
     val pendingDelegationNickname: String? = null,
     // 현재 사용자 ID. 멤버 목록에서 "내 행"을 식별해 관리자 본인 해제(self-DEMOTE)를 노출하는 데 쓴다.
     val myUserId: String? = null,
+    // 이 방의 알림 음소거 여부. null 이면 아직 모른다 — 조회 실패 시 토글을 그리지 않는다
+    val isMuted: Boolean? = null,
+    val isMuteSubmitting: Boolean = false,
+    // 솔로 캘린더가 보고 있는 달 YYYY-MM. 화면 진입 시 이번 달로 채워진다.
+    val calendarMonth: String? = null,
+    // 그 달의 판정 기록. 조회 실패·미참여면 null 이라 캘린더가 날짜만 그린다
+    val calendar: ChallengeCalendar? = null,
+    val isCalendarLoading: Boolean = false,
     // 가입 요청 중(버튼 중복 탭 방지). 정원 경합은 재시도해도 서버가 막는다.
     val isJoining: Boolean = false,
     // 가입이 막힌 사유. null 이 아니면 사유별 안내 시트를 띄운다.
@@ -343,6 +374,27 @@ data class JoinBlock(
 sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     data class Loading(
         val challengeId: String,
+    ) : ChallengeDetailReducerEvent
+
+    data class MuteLoaded(
+        val muted: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class MuteSubmitting(
+        val submitting: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    /** 월 이동. 목록은 비우고 새 달을 읽는다 — 이전 달 색이 남으면 잘못된 기록으로 읽힌다. */
+    data class CalendarMonthChanged(
+        val month: String,
+    ) : ChallengeDetailReducerEvent
+
+    data class CalendarLoading(
+        val loading: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class CalendarLoaded(
+        val calendar: ChallengeCalendar,
     ) : ChallengeDetailReducerEvent
 
     data class Loaded(

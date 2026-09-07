@@ -6,9 +6,10 @@ import com.ruleup.profile.data.dto.CalendarDayDetailResponse
 import com.ruleup.profile.data.dto.FriendInvitationResponse
 import com.ruleup.profile.data.dto.MyChallengesSliceResponse
 import com.ruleup.profile.data.dto.MyHomeResponse
-import com.ruleup.profile.data.dto.ReputationHistoryResponse
-import com.ruleup.profile.data.dto.ReputationResponse
+import com.ruleup.profile.data.dto.MyTierResponse
+import com.ruleup.profile.data.dto.ScoreChangesResponse
 import com.ruleup.profile.data.dto.StatsResponse
+import com.ruleup.profile.data.dto.TierHistoryResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -18,19 +19,28 @@ interface MyPageApi {
     @GET("v1/me/home")
     suspend fun getHome(): BaseResponse<MyHomeResponse>
 
-    // 내 챌린지 목록 (챌린지 생성 스펙 계약) — 그룹 랭킹 진입용 최소 필드만 역직렬화한다.
+    // 내 챌린지 목록 — 그룹 랭킹 진입용 최소 필드만 역직렬화한다.
+    // 랭킹은 진행 중인 방만 대상이라 IN_PROGRESS 로 고정한다(구 scope=ACTIVE 폐기).
     @GET("v1/challenges")
     suspend fun getMyChallenges(
-        @Query("scope") scope: String = "ACTIVE",
+        @Query("filter") filter: String = "IN_PROGRESS",
     ): BaseResponse<MyChallengesSliceResponse>
 
-    // 매너 온도 상세 (변동 로그는 서버 고정 최근 10건)
-    @GET("v1/me/reputation")
-    suspend fun getReputation(): BaseResponse<ReputationResponse>
+    // 내 티어 상세 (변동 로그는 서버 고정 최근 10건)
+    @GET("v1/me/tier")
+    suspend fun getTier(): BaseResponse<MyTierResponse>
 
-    // 평판 히스토리 (전체 반환 — 서버 상한 50건)
-    @GET("v1/me/reputation/history")
-    suspend fun getReputationHistory(): BaseResponse<ReputationHistoryResponse>
+    // 티어 히스토리 그래프 원천 — months 는 1~12, 생략 시 서버 기본 12(보관 자체가 1년)
+    @GET("v1/me/tier/history")
+    suspend fun getTierHistory(
+        @Query("months") months: Int? = null,
+    ): BaseResponse<TierHistoryResponse>
+
+    // 점수 변동 이력 — size 는 서버 고정 50이라 보내지 않는다. cursor 는 불투명 문자열
+    @GET("v1/me/tier/changes")
+    suspend fun getScoreChanges(
+        @Query("cursor") cursor: String? = null,
+    ): BaseResponse<ScoreChangesResponse>
 
     // 활동 캘린더 월 조회 (판정 대상일만 내려옴)
     @GET("v1/me/calendar")
@@ -44,11 +54,9 @@ interface MyPageApi {
         @Path("date") date: String,
     ): BaseResponse<CalendarDayDetailResponse>
 
-    // 통계 리포트 (anchor 생략 = 오늘 KST 기준)
+    // 통계 리포트 — 정책이 지표 5종을 고정해 기간 파라미터가 없다(구 period 폐기)
     @GET("v1/me/stats")
-    suspend fun getStats(
-        @Query("period") period: String,
-    ): BaseResponse<StatsResponse>
+    suspend fun getStats(): BaseResponse<StatsResponse>
 
     // 친구 초대 정보 (유저당 1개 — 없으면 서버가 생성 후 반환, 멱등)
     @GET("v1/me/invitation")

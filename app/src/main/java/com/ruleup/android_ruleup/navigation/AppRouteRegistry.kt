@@ -6,19 +6,29 @@ import com.ruleup.challenge.domain.navigation.ChallengeCreatePage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.navigation.ChallengeExplorePage
+import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
+import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
 import com.ruleup.challenge.presentation.create.ChallengeCreateScreen
 import com.ruleup.challenge.presentation.detail.ChallengeDetailScreen
 import com.ruleup.challenge.presentation.explore.ExploreScreen
 import com.ruleup.challenge.presentation.explore.list.ExploreListScreen
+import com.ruleup.challenge.presentation.invite.ChallengeInviteScreen
+import com.ruleup.challenge.presentation.mychallenges.MyChallengesScreen
 import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
+import com.ruleup.challenge.presentation.watcher.WatcherAcceptScreen
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.home.presentation.HomeScreen
+import com.ruleup.notification.domain.navigation.NotificationCenterPage
+import com.ruleup.notification.domain.navigation.NotificationSettingsPage
+import com.ruleup.notification.presentation.center.NotificationCenterScreen
+import com.ruleup.notification.presentation.settings.NotificationSettingsScreen
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
@@ -38,21 +48,29 @@ import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
 import com.ruleup.profile.domain.navigation.FriendInvitePage
+import com.ruleup.profile.domain.navigation.MyAgreementsPage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
 import com.ruleup.profile.domain.navigation.MyHomePage
+import com.ruleup.profile.domain.navigation.MySanctionsPage
+import com.ruleup.profile.domain.navigation.MySettingsPage
 import com.ruleup.profile.domain.navigation.MyStatsPage
-import com.ruleup.profile.domain.navigation.MyTemperaturePage
+import com.ruleup.profile.domain.navigation.MyTierHistoryPage
+import com.ruleup.profile.domain.navigation.MyTierPage
+import com.ruleup.profile.domain.navigation.MyWatchingPage
 import com.ruleup.profile.domain.navigation.ProfileEditPage
-import com.ruleup.profile.domain.navigation.ReputationHistoryPage
+import com.ruleup.profile.presentation.agreements.AgreementsScreen
 import com.ruleup.profile.presentation.appeals.MyAppealsScreen
 import com.ruleup.profile.presentation.calendar.MyCalendarScreen
 import com.ruleup.profile.presentation.edit.ProfileEditScreen
-import com.ruleup.profile.presentation.history.ReputationHistoryScreen
 import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.profile.presentation.invite.FriendInviteScreen
+import com.ruleup.profile.presentation.sanctions.SanctionsScreen
+import com.ruleup.profile.presentation.settings.SettingsScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
-import com.ruleup.profile.presentation.temperature.MyTemperatureScreen
+import com.ruleup.profile.presentation.tier.MyTierHistoryScreen
+import com.ruleup.profile.presentation.tier.MyTierScreen
+import com.ruleup.profile.presentation.watching.WatchingScreen
 import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.report.presentation.blocklist.BlockListScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
@@ -98,6 +116,18 @@ val appRoutes: List<AppRoute> =
             render = { ExploreScreen() },
         ),
         AppRoute(
+            path = MyChallengesPage.PATH,
+            isBottomTab = true,
+            // 챌린지 탭도 홈 위에 쌓인다 — 뒤로가기 시 홈으로 돌아간다(탐색·마이와 같은 규칙).
+            syntheticStack = {
+                listOf(
+                    GenericNavKey(HomePage.PATH),
+                    GenericNavKey(MyChallengesPage.PATH),
+                )
+            },
+            render = { MyChallengesScreen() },
+        ),
+        AppRoute(
             path = MyHomePage.PATH,
             isBottomTab = true,
             // 마이는 홈 위에 쌓인 탭 화면: 뒤로가기 시 홈으로 돌아간다(탐색 탭과 동일 규칙).
@@ -110,12 +140,12 @@ val appRoutes: List<AppRoute> =
             render = { MyHomeScreen() },
         ),
         AppRoute(
-            path = MyTemperaturePage.PATH,
-            render = { MyTemperatureScreen() },
+            path = MyTierPage.PATH,
+            render = { MyTierScreen() },
         ),
         AppRoute(
-            path = ReputationHistoryPage.PATH,
-            render = { ReputationHistoryScreen() },
+            path = MyTierHistoryPage.PATH,
+            render = { MyTierHistoryScreen() },
         ),
         AppRoute(
             path = MyAppealsPage.PATH,
@@ -136,6 +166,30 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = ProfileEditPage.PATH,
             render = { ProfileEditScreen() },
+        ),
+        AppRoute(
+            path = NotificationCenterPage.PATH,
+            render = { NotificationCenterScreen() },
+        ),
+        AppRoute(
+            path = NotificationSettingsPage.PATH,
+            render = { NotificationSettingsScreen() },
+        ),
+        AppRoute(
+            path = MySettingsPage.PATH,
+            render = { SettingsScreen() },
+        ),
+        AppRoute(
+            path = MyAgreementsPage.PATH,
+            render = { AgreementsScreen() },
+        ),
+        AppRoute(
+            path = MySanctionsPage.PATH,
+            render = { SanctionsScreen() },
+        ),
+        AppRoute(
+            path = MyWatchingPage.PATH,
+            render = { WatchingScreen() },
         ),
         AppRoute(
             path = FriendInvitePage.PATH,
@@ -186,6 +240,22 @@ val appRoutes: List<AppRoute> =
             path = ChallengeSettingsPage.PATH,
             render = { args ->
                 ChallengeSettingsScreen(challengeId = args[ChallengeSettingsPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeInvitePage.PATH,
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
+            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            render = { args ->
+                ChallengeInviteScreen(token = args[ChallengeInvitePage.ARG_TOKEN].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = WatcherAcceptPage.PATH,
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
+            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            render = { args ->
+                WatcherAcceptScreen(token = args[WatcherAcceptPage.ARG_TOKEN].orEmpty())
             },
         ),
         AppRoute(

@@ -60,7 +60,7 @@ fun TermsContent(
             subtitle = "서비스 이용을 위해 동의가 필요해요",
         )
 
-        val allChecked = checked.containsAll(AgreementType.entries)
+        val allChecked = checked.containsAll(AgreementType.SIGNUP)
 
         Column(
             modifier =
@@ -87,7 +87,8 @@ fun TermsContent(
                     .background(RuleUpTheme.colors.surface)
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         ) {
-            AgreementType.entries.forEachIndexed { index, type ->
+            // 가입에서 받는 6종만 — 위치·건강 개별 동의는 그 인증 수단을 처음 쓸 때 따로 받는다.
+            AgreementType.SIGNUP.forEachIndexed { index, type ->
                 AgreementRow(
                     checked = type in checked,
                     label = type.label(),
@@ -97,7 +98,7 @@ fun TermsContent(
                             onIntent(OnboardingIntent.ToggleAgreement(type))
                         },
                 )
-                if (index != AgreementType.entries.lastIndex) RowDivider()
+                if (index != AgreementType.SIGNUP.lastIndex) RowDivider()
             }
         }
 
@@ -172,6 +173,9 @@ private fun AgreementType.label(): String =
         AgreementType.MARKETING -> "마케팅 정보 수신"
         AgreementType.EVENT -> "이벤트 정보 수신"
         AgreementType.NIGHT_PUSH -> "야간 푸시 알림 (21~08시)"
+        // 가입 화면에는 뜨지 않는다(AgreementType.SIGNUP 만 그린다). when 을 exhaustive 하게 두려고 남긴다.
+        AgreementType.LOCATION_INFO -> "위치정보 수집·이용"
+        AgreementType.HEALTH_INFO -> "건강정보 수집·이용"
     }
 
 @Preview

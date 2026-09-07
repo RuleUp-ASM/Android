@@ -1,6 +1,5 @@
 package com.ruleup.profile.presentation.stats.viewmodel
 
-import com.ruleup.profile.domain.entity.StatsPeriod
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.NoEffect
@@ -8,18 +7,13 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface MyStatsIntent : MviIntent {
-    /** 화면 진입 — 기본 기간(월간) 조회. */
+    /** 화면 진입 — 지표 5종 일괄 조회. 기간 탭은 없다(명세가 지표를 고정했다). */
     data object Load : MyStatsIntent
-
-    data class SelectPeriod(
-        val period: StatsPeriod,
-    ) : MyStatsIntent
 
     data object Back : MyStatsIntent
 }
 
 data class MyStatsState(
-    val period: StatsPeriod,
     val isLoading: Boolean,
     val report: StatsReport?,
     val errorMessage: String?,
@@ -27,8 +21,6 @@ data class MyStatsState(
     companion object {
         val initial =
             MyStatsState(
-                // 명세 기본값
-                period = StatsPeriod.MONTHLY,
                 isLoading = true,
                 report = null,
                 errorMessage = null,
@@ -37,12 +29,9 @@ data class MyStatsState(
 }
 
 sealed interface MyStatsReducerEvent : ReducerEvent {
-    data class Loading(
-        val period: StatsPeriod,
-    ) : MyStatsReducerEvent
+    data object Loading : MyStatsReducerEvent
 
     data class Loaded(
-        val period: StatsPeriod,
         val report: StatsReport,
     ) : MyStatsReducerEvent
 
