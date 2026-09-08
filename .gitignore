@@ -20,6 +20,12 @@ build/
 
 # Local config
 /local.properties
+
+# 릴리즈 서명 — 키스토어와 비밀번호는 어떤 경우에도 커밋하지 않는다.
+# 키스토어 파일은 레포 밖에 두는 것이 원칙이고, 아래는 실수로 들여온 경우를 막는 이중 안전장치다.
+/keystore.properties
+*.jks
+*.keystore
 # .claude 는 개인 설정(settings.local.json 등)이라 기본은 무시하되,
 # 팀이 공유하는 skills/ 만 추적한다.
 /.claude/*

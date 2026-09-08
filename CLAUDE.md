@@ -38,6 +38,36 @@ JDK 21. Gradle wrapper 사용(`./gradlew`). CI(`.github/workflows/`)는 `assembl
 - `app/google-services.json` 은 커밋하지 않는다. 파일이 **있을 때만** google-services·Crashlytics 플러그인이 적용된다(`app/build.gradle.kts` 상단 조건부 apply). CI 는 시크릿에서 복원한다.
 - 버전은 전부 `gradle/libs.versions.toml` 버전 카탈로그. 동적 버전(`1.+`)은 쓰지 않는다.
 
+## 릴리즈 서명
+
+Google Play 앱 서명을 쓰므로 여기서 다루는 키는 **업로드 키**다.
+
+`keystore.properties`(루트, 커밋 금지)가 **있을 때만** `release` 서명 설정이 붙는다. 없으면 서명만 빠지고 빌드는 통과하므로, `assembleRelease`·`bundleRelease` 를 요청했는데 이 파일이 없으면 빌드 로그에 경고가 뜬다. 설치도 업로드도 안 되는 APK 가 조용히 나가는 걸 막기 위한 것이다.
+
+```properties
+storeFile=C:/Users/<사용자>/keystores/ruleup-upload.jks
+storePassword=
+keyAlias=ruleup
+keyPassword=
+```
+
+- `storeFile` 은 절대경로·상대경로 모두 받는다(상대경로는 레포 루트 기준). 경로 구분자는 `/` 로 쓴다 — `.properties` 는 `\` 를 이스케이프로 읽어서 `C:\Users` 가 `C:Users` 가 된다.
+- `keyPassword` 는 `storePassword` 와 **같은 값**이다. PKCS12 는 키 비밀번호를 따로 두지 않는다.
+- 주석을 값 뒤에 붙이지 않는다. `.properties` 는 줄 맨 앞의 `#` 만 주석으로 보고, 나머지는 값에 그대로 들어간다.
+
+키스토어 파일은 **레포 밖**에 둔다. `.gitignore` 의 `*.jks`·`*.keystore` 는 실수를 막는 이중 안전장치지 보관 위치가 아니다.
+
+키 생성은 사람이 직접 한다 — 비밀번호가 툴 로그나 셸 히스토리에 남으면 안 되므로 `-storepass`·`-keypass` 로 넘기지 말고 프롬프트에 입력한다. 줄 이어쓰기 없이 한 줄로 둔 건 셸마다 연결 문자가 달라서다(PowerShell 은 백틱, bash 는 `\`):
+
+```powershell
+New-Item -ItemType Directory -Force "$HOME\keystores"
+keytool -genkeypair -v -keystore "$HOME\keystores\ruleup-upload.jks" -storetype PKCS12 -alias ruleup -keyalg RSA -keysize 2048 -validity 10000
+```
+
+PKCS12 라 키 저장소 비밀번호만 묻고 키 비밀번호는 따로 묻지 않는다. 이어서 이름·조직·도시·시도·국가 코드(`KR`)를 받고 마지막에 `y` 로 확인한다.
+
+업로드 키를 잃어도 Play Console 에서 재설정을 요청할 수 있지만, 그 사이 배포가 멈춘다. 키스토어와 비밀번호는 별도 비밀번호 관리자에 백업한다.
+
 # 아키텍처 (필수)
 
 이 프로젝트는 **DDD · MVI · feature 기반 멀티모듈**을 따른다. 새 코드는 기존 컨벤션과 일관되게 작성한다.
