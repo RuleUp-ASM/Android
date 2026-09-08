@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.presentation.intro
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.intro.screen.LoginContent
@@ -18,9 +19,9 @@ import kotlin.test.assertTrue
  * 로그인. 앱의 **유일한 진입점**이라 두 제공사 버튼이 각각 자기 제공사로 이어져야 한다 —
  * 뒤바뀌면 사용자가 쓰지 않는 계정으로 가입하고, 그 사실을 나중에야 안다.
  *
- * 문구는 **일부러 단언하지 않는다.** Figma `1134:1670` 은 `그룹과 함께, 습관이 기록이 되도록` /
- * `카카오로 계속하기` 인데 코드는 `RuleUp에 오신 것을 환영해요` / `카카오로 시작하기` 다.
- * 어느 쪽이 맞는지는 기획 판단이라 한쪽을 못 박으면 그게 정답이 되어 버린다.
+ * 안내 문구는 **일부러 단언하지 않는다.** Figma `1134:1670` 은 `그룹과 함께, 습관이 기록이 되도록`
+ * 인데 코드는 `RuleUp에 오신 것을 환영해요` 다. 어느 쪽이 맞는지는 기획 판단이라 한쪽을 못 박으면
+ * 그게 정답이 되어 버린다.
  */
 @RunWith(RobolectricTestRunner::class)
 class LoginContentTest {
@@ -32,7 +33,8 @@ class LoginContentTest {
         // 하나만 있으면 그 계정이 없는 사용자가 앱에 못 들어온다.
         compose.renderOnboarding { LoginContent(onIntent = {}) }
 
-        compose.onNodeWithText("카카오로 시작하기").assertExists()
+        // 카카오는 공식 에셋 이미지라 문구가 스크린리더에 안 잡힌다 — contentDescription 으로 찾는다.
+        compose.onNodeWithContentDescription("카카오 로그인").assertExists()
         compose.onNodeWithText("Google로 시작하기").assertExists()
     }
 
@@ -41,7 +43,7 @@ class LoginContentTest {
         val intents = mutableListOf<LoginIntent>()
         compose.renderOnboarding { LoginContent(onIntent = { intents += it }) }
 
-        compose.onNodeWithText("카카오로 시작하기").clickPastGuard()
+        compose.onNodeWithContentDescription("카카오 로그인").clickPastGuard()
 
         assertEquals(listOf<LoginIntent>(LoginIntent.LoginClicked(OAuthProvider.KAKAO)), intents)
     }
