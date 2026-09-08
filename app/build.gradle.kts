@@ -33,6 +33,32 @@ val appAuthRedirectScheme: String =
         .orEmpty()
         .substringBefore(":")
 
+/**
+ * 릴리즈 서명 자격 증명. 커밋하지 않으므로(.gitignore) CI 와 키를 받지 않은 개발자에게는 없다 —
+ * 없으면 서명만 건너뛰고 빌드는 계속 돼야 한다. 키 목록은 CLAUDE.md 「릴리즈 서명」.
+ */
+val keystoreProperties =
+    Properties().apply {
+        val f = rootProject.file("keystore.properties")
+        if (f.exists()) f.inputStream().use { load(it) }
+    }
+
+// rootProject.file() 은 절대경로면 그대로, 상대경로면 루트 기준으로 푼다.
+val releaseStoreFile =
+    keystoreProperties
+        .getProperty("storeFile")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { rootProject.file(it) }
+        ?.takeIf { it.isFile }
+
+// 서명 없는 릴리즈는 설치도 스토어 업로드도 안 되는 산출물이다. 조용히 나가면 배포 직전에 안다.
+if (releaseStoreFile == null &&
+    gradle.startParameter.taskNames.any { it.contains("assembleRelease") || it.contains("bundleRelease") }
+) {
+    logger.warn("경고: keystore.properties 를 찾지 못해 release 변형이 서명 없이 빌드된다. CLAUDE.md 「릴리즈 서명」 참고.")
+}
+
 android {
     namespace = "com.ruleup.android_ruleup"
     compileSdk {
@@ -63,8 +89,21 @@ android {
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // 자격 증명이 없으면 null — 서명이 빠질 뿐 빌드는 통과한다(위 경고 참고).
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

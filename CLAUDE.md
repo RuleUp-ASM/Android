@@ -38,6 +38,31 @@ JDK 21. Gradle wrapper 사용(`./gradlew`). CI(`.github/workflows/`)는 `assembl
 - `app/google-services.json` 은 커밋하지 않는다. 파일이 **있을 때만** google-services·Crashlytics 플러그인이 적용된다(`app/build.gradle.kts` 상단 조건부 apply). CI 는 시크릿에서 복원한다.
 - 버전은 전부 `gradle/libs.versions.toml` 버전 카탈로그. 동적 버전(`1.+`)은 쓰지 않는다.
 
+## 릴리즈 서명
+
+Google Play 앱 서명을 쓰므로 여기서 다루는 키는 **업로드 키**다.
+
+`keystore.properties`(루트, 커밋 금지)가 **있을 때만** `release` 서명 설정이 붙는다. 없으면 서명만 빠지고 빌드는 통과하므로, `assembleRelease`·`bundleRelease` 를 요청했는데 이 파일이 없으면 빌드 로그에 경고가 뜬다. 설치도 업로드도 안 되는 APK 가 조용히 나가는 걸 막기 위한 것이다.
+
+```properties
+storeFile=/절대/경로/ruleup-upload.jks   # 상대경로면 레포 루트 기준
+storePassword=...
+keyAlias=ruleup
+keyPassword=...
+```
+
+키스토어 파일은 **레포 밖**에 둔다. `.gitignore` 의 `*.jks`·`*.keystore` 는 실수를 막는 이중 안전장치지 보관 위치가 아니다.
+
+키 생성은 사람이 직접 한다 — 비밀번호가 툴 로그나 셸 히스토리에 남으면 안 되므로 `-storepass` 같은 인자로 넘기지 말고 프롬프트에 입력한다:
+
+```bash
+keytool -genkeypair -v \
+  -keystore ruleup-upload.jks -storetype PKCS12 \
+  -alias ruleup -keyalg RSA -keysize 2048 -validity 10000
+```
+
+업로드 키를 잃어도 Play Console 에서 재설정을 요청할 수 있지만, 그 사이 배포가 멈춘다. 키스토어와 비밀번호는 별도 비밀번호 관리자에 백업한다.
+
 # 아키텍처 (필수)
 
 이 프로젝트는 **DDD · MVI · feature 기반 멀티모듈**을 따른다. 새 코드는 기존 컨벤션과 일관되게 작성한다.
