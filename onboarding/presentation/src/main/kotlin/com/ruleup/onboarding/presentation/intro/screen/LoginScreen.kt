@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.presentation.intro.screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,10 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpColors
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
+import com.ruleup.onboarding.presentation.R
 import com.ruleup.onboarding.presentation.common.AuthFailureHost
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginEffect
@@ -130,12 +133,13 @@ fun LoginContent(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                socialProviders().forEach { provider ->
-                    SocialButton(
-                        provider,
-                        onClick = { onIntent(LoginIntent.LoginClicked(provider.provider)) },
-                    )
-                }
+                KakaoLoginButton(
+                    onClick = { onIntent(LoginIntent.LoginClicked(OAuthProvider.KAKAO)) },
+                )
+                SocialButton(
+                    googleProvider(),
+                    onClick = { onIntent(LoginIntent.LoginClicked(OAuthProvider.GOOGLE)) },
+                )
             }
 
             Spacer(Modifier.height(4.dp))
@@ -148,6 +152,27 @@ fun LoginContent(
             )
         }
     }
+}
+
+/** 에셋 원본 600×90. 이 비율을 놓으면 심볼과 글자가 늘어난다. */
+private const val KAKAO_BUTTON_ASPECT_RATIO = 600f / 90f
+
+/**
+ * 카카오 공식 버튼 에셋(`kakao_login_large_wide`). 카카오 로그인 디자인 가이드가 에셋 변형을
+ * 금지해서 색·문구·심볼을 코드로 다시 그리지 않고 이미지를 그대로 건다.
+ */
+@Composable
+private fun KakaoLoginButton(onClick: () -> Unit) {
+    Image(
+        painter = painterResource(R.drawable.kakao_login_large_wide),
+        // 문구가 이미지 안에 있어 스크린리더가 못 읽는다.
+        contentDescription = "카카오 로그인",
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(KAKAO_BUTTON_ASPECT_RATIO)
+                .singleClickable(onClick = onClick),
+    )
 }
 
 @Composable
@@ -200,28 +225,19 @@ private data class SocialProvider(
 )
 
 /**
- * 소셜 로그인 버튼 목록. 카카오는 브랜드 고정색이라 상수지만, Google 버튼은 surface/text/border 를
- * 쓰므로 테마에 따라 라이트·다크로 바뀐다.
+ * 코드로 그리는 건 Google 버튼뿐이다 — 카카오는 공식 에셋이라 [KakaoLoginButton] 이 맡는다.
+ * surface/text/border 를 쓰므로 테마에 따라 라이트·다크로 바뀐다.
  */
 @Composable
-private fun socialProviders(): List<SocialProvider> =
-    listOf(
-        SocialProvider(
-            "💬",
-            "카카오로 시작하기",
-            RuleUpColors.Kakao,
-            RuleUpColors.KakaoText,
-            provider = OAuthProvider.KAKAO,
-        ),
-        SocialProvider(
-            "G",
-            "Google로 시작하기",
-            RuleUpTheme.colors.surface,
-            RuleUpTheme.colors.textPrimary,
-            markBold = true,
-            border = RuleUpTheme.colors.border,
-            provider = OAuthProvider.GOOGLE,
-        ),
+private fun googleProvider(): SocialProvider =
+    SocialProvider(
+        "G",
+        "Google로 시작하기",
+        RuleUpTheme.colors.surface,
+        RuleUpTheme.colors.textPrimary,
+        markBold = true,
+        border = RuleUpTheme.colors.border,
+        provider = OAuthProvider.GOOGLE,
     )
 
 @Preview
