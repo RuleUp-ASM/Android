@@ -35,7 +35,7 @@ class LoginContentTest {
 
         // 카카오는 공식 에셋 이미지라 문구가 스크린리더에 안 잡힌다 — contentDescription 으로 찾는다.
         compose.onNodeWithContentDescription("카카오 로그인").assertExists()
-        compose.onNodeWithText("Google로 시작하기").assertExists()
+        compose.onNodeWithText("Google 계정으로 로그인").assertExists()
     }
 
     @Test
@@ -54,7 +54,7 @@ class LoginContentTest {
         val intents = mutableListOf<LoginIntent>()
         compose.renderOnboarding { LoginContent(onIntent = { intents += it }) }
 
-        compose.onNodeWithText("Google로 시작하기").clickPastGuard()
+        compose.onNodeWithText("Google 계정으로 로그인").clickPastGuard()
 
         assertEquals(listOf<LoginIntent>(LoginIntent.LoginClicked(OAuthProvider.GOOGLE)), intents)
     }

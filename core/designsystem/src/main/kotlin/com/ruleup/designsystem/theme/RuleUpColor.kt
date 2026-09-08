@@ -29,6 +29,11 @@ object RuleUpPalette {
     /** 카카오 브랜드 색. 카카오가 정한 값이라 팔레트 교체와 무관하게 고정이다. */
     val Kakao = Color(0xFFFEE500)
     val KakaoLabel = Color(0xFF191919)
+
+    /** Google 로그인 버튼 색(브랜딩 가이드라인 라이트). 다크 한 벌도 규정돼 있으나 테마가 라이트 고정이다. */
+    val GoogleSurface = Color(0xFFFFFFFF)
+    val GoogleStroke = Color(0xFF747775)
+    val GoogleLabel = Color(0xFF1F1F1F)
 }
 
 /** 시맨틱 컬러 토큰. 라이트 한 벌뿐이다 — Figma 에 다크 토큰이 없어 지어내면 디자인과 다른 화면이 나간다. */
@@ -92,4 +97,8 @@ val LightRuleUpColors =
 object RuleUpColors {
     val Kakao = RuleUpPalette.Kakao
     val KakaoText = RuleUpPalette.KakaoLabel
+
+    val Google = RuleUpPalette.GoogleSurface
+    val GoogleBorder = RuleUpPalette.GoogleStroke
+    val GoogleText = RuleUpPalette.GoogleLabel
 }

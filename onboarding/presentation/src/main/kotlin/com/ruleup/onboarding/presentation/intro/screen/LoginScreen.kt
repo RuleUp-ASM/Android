@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpColors
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
@@ -136,8 +137,7 @@ fun LoginContent(
                 KakaoLoginButton(
                     onClick = { onIntent(LoginIntent.LoginClicked(OAuthProvider.KAKAO)) },
                 )
-                SocialButton(
-                    googleProvider(),
+                GoogleLoginButton(
                     onClick = { onIntent(LoginIntent.LoginClicked(OAuthProvider.GOOGLE)) },
                 )
             }
@@ -154,8 +154,14 @@ fun LoginContent(
     }
 }
 
-/** 에셋 원본 600×90. 이 비율을 놓으면 심볼과 글자가 늘어난다. */
-private const val KAKAO_BUTTON_ASPECT_RATIO = 600f / 90f
+/**
+ * 카카오 에셋 원본 600×90. 이 비율을 놓으면 심볼과 글자가 늘어난다.
+ * Google 버튼도 같은 값을 쓴다 — 가이드라인이 다른 제공사 버튼과 크기를 맞추라고 한다.
+ */
+private const val LOGIN_BUTTON_ASPECT_RATIO = 600f / 90f
+
+/** 가이드라인이 정한 로고 크기. 여백 12/10/12dp 가 이 크기를 기준으로 그려져 있다. */
+private val GOOGLE_LOGO_SIZE = 18.dp
 
 /**
  * 카카오 공식 버튼 에셋(`kakao_login_large_wide`). 카카오 로그인 디자인 가이드가 에셋 변형을
@@ -170,75 +176,45 @@ private fun KakaoLoginButton(onClick: () -> Unit) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .aspectRatio(KAKAO_BUTTON_ASPECT_RATIO)
+                .aspectRatio(LOGIN_BUTTON_ASPECT_RATIO)
                 .singleClickable(onClick = onClick),
     )
 }
 
+/**
+ * Google 브랜딩 가이드라인(`developers.google.com/identity/branding-guidelines`)의 라이트 스펙.
+ * 색·테두리·문구·여백이 전부 규정값이라 디자인 시스템 시맨틱 토큰으로 바꾸지 않는다.
+ */
 @Composable
-private fun SocialButton(
-    provider: SocialProvider,
-    onClick: () -> Unit,
-) {
-    val base =
-        Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .clip(RuleUpTheme.shapes.medium)
-    val withBorder =
-        if (provider.border != null) {
-            base.border(1.dp, provider.border, RuleUpTheme.shapes.medium)
-        } else {
-            base
-        }
+private fun GoogleLoginButton(onClick: () -> Unit) {
     Row(
         modifier =
-            withBorder
-                .background(provider.background)
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(LOGIN_BUTTON_ASPECT_RATIO)
+                .clip(RuleUpTheme.shapes.medium)
+                .background(RuleUpColors.Google)
+                .border(1.dp, RuleUpColors.GoogleBorder, RuleUpTheme.shapes.medium)
                 .singleClickable(onClick = onClick)
-                .padding(horizontal = RuleUpTheme.spacing.lg),
+                .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            provider.mark,
-            color = provider.contentColor,
-            style = if (provider.markBold) RuleUpTheme.typography.section else RuleUpTheme.typography.labelMedium,
+        Image(
+            painter = painterResource(R.drawable.ic_google_logo),
+            contentDescription = null,
+            modifier = Modifier.size(GOOGLE_LOGO_SIZE),
         )
         Spacer(Modifier.size(10.dp))
         Text(
-            provider.label,
-            color = provider.contentColor,
-            style = RuleUpTheme.typography.cardTitle,
+            // 가이드라인이 허용하는 세 문구 중 하나. 임의로 바꾸면 브랜드 규정 위반이다.
+            "Google 계정으로 로그인",
+            color = RuleUpColors.GoogleText,
+            // 규정은 Roboto Medium 14 — labelMedium 이 정확히 그 값이다.
+            style = RuleUpTheme.typography.labelMedium,
         )
     }
 }
-
-private data class SocialProvider(
-    val mark: String,
-    val label: String,
-    val background: Color,
-    val contentColor: Color,
-    val markBold: Boolean = false,
-    val border: Color? = null,
-    val provider: OAuthProvider,
-)
-
-/**
- * 코드로 그리는 건 Google 버튼뿐이다 — 카카오는 공식 에셋이라 [KakaoLoginButton] 이 맡는다.
- * surface/text/border 를 쓰므로 테마에 따라 라이트·다크로 바뀐다.
- */
-@Composable
-private fun googleProvider(): SocialProvider =
-    SocialProvider(
-        "G",
-        "Google로 시작하기",
-        RuleUpTheme.colors.surface,
-        RuleUpTheme.colors.textPrimary,
-        markBold = true,
-        border = RuleUpTheme.colors.border,
-        provider = OAuthProvider.GOOGLE,
-    )
 
 @Preview
 @Composable
