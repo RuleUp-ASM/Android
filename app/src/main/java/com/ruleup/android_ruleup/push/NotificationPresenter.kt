@@ -13,10 +13,10 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.ruleup.android_ruleup.MainActivity
+import com.ruleup.android_ruleup.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.ruleup.designsystem.R as DesignSystemR
 
 /**
  * 포그라운드 푸시를 트레이에 올린다.
@@ -42,7 +42,7 @@ class NotificationPresenter
             val notification =
                 NotificationCompat
                     .Builder(context, DEFAULT_CHANNEL_ID)
-                    .setSmallIcon(DesignSystemR.drawable.ic_bell)
+                    .setSmallIcon(R.drawable.ic_stat_ruleup)
                     .setContentTitle(push.title)
                     .setContentText(push.body)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(push.body))
