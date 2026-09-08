@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.ruleup.android_ruleup.MainActivity
+import com.ruleup.android_ruleup.R
 import com.ruleup.android_ruleup.deeplink.toAppLinkUri
 import com.ruleup.domain.helper.PushNotificationHelper
 import com.ruleup.domain.navigation.NavRoute
@@ -42,7 +43,7 @@ class PushNotificationHelperImpl
             val notification =
                 NotificationCompat
                     .Builder(context, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(android.R.drawable.stat_sys_warning)
+                    .setSmallIcon(R.drawable.ic_stat_ruleup)
                     .setContentTitle(title)
                     .setContentText(message)
                     .setContentIntent(destinationPendingIntent(id, route))
