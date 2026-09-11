@@ -145,7 +145,7 @@ Navigation3 기반. 경로 문자열은 한 곳에만 존재한다.
 - **CompositionLocal**: `LocalNavigationHelper`, `LocalMessageHelper`, `LocalObservability`, `LocalScreenTracker` 만 허용된다(`.editorconfig` 의 `compose_allowed_composition_locals` allowlist). 새로 추가하면 ktlint 가 막는다.
 - **DI**: Hilt. `@HiltViewModel` + 생성자 주입, 화면은 `hiltViewModel()`. 모든 `@Module` 은 `SingletonComponent` 기준이며 `:app` 의 Hilt 컴포넌트가 전 모듈 바인딩을 모은다.
 - **네트워크**: `core:network/di/NetworkModule` 이 OkHttp/Retrofit/Json 을 제공한다. 액세스 토큰은 인터셉터가 자동으로 붙이되 `NO_AUTH_PATHS`(`/auth/oauth`, `/auth/signup`, `/auth/refresh`)는 제외한다 — 만료 토큰이 로그인 요청에 실리면 401 로 막힌다. 401 갱신은 `auth/TokenAuthenticator`.
-- **관측**: ViewModel 은 `Observability`(`observability:domain/api`)를 주입받는다. 이벤트 카탈로그는 각 feature domain 의 `observability/<Feature>Events.kt` 에 둔다. `observability:debug` 는 `debugImplementation` 이라 릴리스 APK 에 없다.
+- **관측**: ViewModel 은 `Observability`(`observability:domain/api`)를 주입받는다. 이벤트 카탈로그는 각 feature domain 의 `observability/<Feature>Events.kt` 에 둔다. 어떤 이벤트가 있고 무엇을 볼 수 있는지는 `OBSERVABILITY.md`. `observability:debug` 는 `debugImplementation` 이라 릴리스 APK 에 없다.
 - **디자인 시스템**: `core:designsystem` 의 `RuleUpTheme`/`RuleUpColor`/`RuleUpSpacing`/`RuleUpType` 과 `RuleUp*` 컴포넌트를 쓴다. 색·간격을 화면에서 하드코딩하지 않는다.
 - **verification 모듈**은 온디바이스 신호 수집(지오펜스·사용기록·Health)과 WorkManager 주기 sync 를 담당한다. 수동 QA 시나리오·adb 명령은 `VERIFICATION_TEST_PLAN.md` 참고.
 
