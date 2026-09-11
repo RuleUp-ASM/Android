@@ -65,9 +65,10 @@ internal object AmplitudeEventMapper {
             is BusinessPayload.Custom -> Unit
 
             is PerformancePayload.Tti -> {
-                props["screen_name"] = payload.screen.raw
+                props["page_name"] = payload.pageName
                 props["total_millis"] = payload.totalMillis
-                props["outcome"] = payload.outcome.name
+                // 구간을 속성으로 편다 — 어디가 느린지는 합계가 아니라 구간에서 갈린다.
+                payload.spans.forEach { (name, millis) -> props[name.lowercase()] = millis }
             }
 
             is PerformancePayload.JankWindow -> {

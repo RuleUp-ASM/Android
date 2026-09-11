@@ -2,7 +2,6 @@ package com.ruleup.android_ruleup.observability
 
 import com.ruleup.observability.data.context.ScreenContextHolder
 import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.BusinessPayload
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.Attributes
@@ -28,7 +27,6 @@ class ScreenTracker
     constructor(
         private val observability: Observability,
         private val contextHolder: ScreenContextHolder,
-        private val ttiTracker: TtiTracker,
         private val jankTracker: JankTracker,
     ) {
         private var current: ScreenKey? = null
@@ -36,11 +34,11 @@ class ScreenTracker
         fun onScreenEntered(path: String) {
             val screen = ScreenKey(path)
             val from = current
-            // 진행 중이던 세션·창을 여기서 확정한다. 다음 화면이 TTI 를 재지 않는 경우까지 덮으려면
-            // 네비게이션 자체가 경계여야 한다.
+            // 진행 중이던 jank 창을 여기서 확정한다.
             //
             // 순서가 중요하다 — jank 창은 컨텍스트에서 화면을 읽으므로 반드시 setScreen 전에 닫는다.
-            ttiTracker.abandonActive()
+            // TTI 는 더 이상 여기서 끊지 않는다. 화면의 수명은 컴포지션이 쥐고 있어서
+            // (`TtiPage`), 네비게이션이 대신 끊으면 아직 그려지는 중인 화면을 잘라 버린다.
             jankTracker.onScreenChanged()
             contextHolder.setScreen(screen)
             current = screen

@@ -86,6 +86,10 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.report.domain.entity.HiddenEffect
 import com.ruleup.report.domain.entity.ReportReason
+import com.ruleup.tti.domain.TtiTimeline
+import com.ruleup.tti.presentation.TtiEmptySpanEffect
+import com.ruleup.tti.presentation.TtiPage
+import com.ruleup.tti.presentation.TtiSpanEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.permission.healthConnectAvailable
 import com.ruleup.ui.permission.healthReadPermissions
@@ -107,144 +111,156 @@ fun ChallengeDetailScreen(
     viewModel: ChallengeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    val messageHelper = LocalMessageHelper.current
-    val permissionRequester = rememberPermissionRequester()
-    val scope = rememberCoroutineScope()
-    var showPermissionSheet by remember { mutableStateOf(false) }
-    val healthLauncher = rememberHealthPermissionLauncher { viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions) }
 
-    androidx.compose.runtime.LaunchedEffect(challengeId) {
-        viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
-    }
+    // 이 화면의 TTI 구간. BACKEND 는 상세 조회 왕복, VIEW_BINDING 은 그 응답이 화면 상태로
+    // 들어오기까지다 — 둘을 나눠야 네트워크가 느린 건지 렌더가 느린 건지 갈린다.
+    //
+    // BIG_PART_LOADING 은 0ms 로 닫는다. 상세에는 뒤늦게 채워지는 큰 덩어리가 없는데, 비워 두면
+    // 네 구간이 다 차지 않아 이 화면의 기록이 한 건도 나가지 않는다.
+    TtiPage(pageName = TTI_PAGE_NAME) {
+        TtiSpanEffect(TtiTimeline.BACKEND, running = state.isLoading)
+        TtiSpanEffect(TtiTimeline.VIEW_BINDING, running = state.isLoading || state.detail == null)
+        TtiEmptySpanEffect(TtiTimeline.BIG_PART_LOADING)
 
-    // 단발성 효과: 감시자 초대 카카오톡 공유(사용자 본인 발신) + 안내 토스트.
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                is ChallengeDetailEffect.ShareWatcherInvite -> {
-                    val shared =
-                        WatcherInviteSharer.share(
-                            context = context,
-                            card = effect.card,
-                            inviteUrl = effect.inviteUrl,
-                        )
-                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
-                }
+        val context = LocalContext.current
+        val messageHelper = LocalMessageHelper.current
+        val permissionRequester = rememberPermissionRequester()
+        val scope = rememberCoroutineScope()
+        var showPermissionSheet by remember { mutableStateOf(false) }
+        val healthLauncher = rememberHealthPermissionLauncher { viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions) }
 
-                is ChallengeDetailEffect.ShareMemberInvite -> {
-                    val shared =
-                        MemberInviteSharer.share(
-                            context = context,
-                            challengeTitle = effect.challengeTitle,
-                            inviteUrl = effect.inviteUrl,
-                        )
-                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
-                }
-
-                is ChallengeDetailEffect.ShowMessage -> messageHelper.showToast(effect.message)
-            }
+        androidx.compose.runtime.LaunchedEffect(challengeId) {
+            viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
         }
-    }
 
-    // 앱 등록 화면 등에서 돌아오면 등록 상태를 재확인해 버튼 모드를 갱신한다.
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
-    }
+        // 단발성 효과: 감시자 초대 카카오톡 공유(사용자 본인 발신) + 안내 토스트.
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            viewModel.effect.collect { effect ->
+                when (effect) {
+                    is ChallengeDetailEffect.ShareWatcherInvite -> {
+                        val shared =
+                            WatcherInviteSharer.share(
+                                context = context,
+                                card = effect.card,
+                                inviteUrl = effect.inviteUrl,
+                            )
+                        if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
+                    }
 
-    val setup = state.setup
-    // 권한 토큰은 GET setup 의 requiredPermissions 를 우선 사용(없으면 상세 verification 값).
-    val tokens =
-        setup?.requiredPermissions ?: state.detail
-            ?.verification
-            ?.requiredPermissions
-            .orEmpty()
-    // 권한 현황은 저장하지 않고 매번 OS 에 다시 묻는다 — 설정에서 끄고 돌아오는 경로가 있다.
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
-    }
-    // 아직 못 물었으면(null) 막지 않는다 — 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
-    val missingTokens = state.missingPermissionTokens()
-    val permissionGranted = missingTokens.isEmpty()
+                    is ChallengeDetailEffect.ShareMemberInvite -> {
+                        val shared =
+                            MemberInviteSharer.share(
+                                context = context,
+                                challengeTitle = effect.challengeTitle,
+                                inviteUrl = effect.inviteUrl,
+                            )
+                        if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
+                    }
 
-    // GET setup 요구사항으로 "필요한 등록만" 유도: 권한 → (requiresTargetPackages) 앱 → (requiresAnchors) 지도 → 참여.
-    // 수동 인증(manual)이거나 셋업 정보가 없으면 바로 참여.
-    val action =
-        when {
-            state.detail == null || setup == null || setup.manual -> DetailSetupAction.JOIN
-            !permissionGranted -> DetailSetupAction.GRANT_PERMISSION
-            setup.requiresTargetPackages && !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
-            setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
-            else -> DetailSetupAction.JOIN
-        }
-    // 심사 중에도 모집·입장에 제한이 없다 — 구 명세의 이미지 검수 모집 차단은 폐기됐다.
-    val recruitBlocked = false
-    val ctaLabel =
-        if (recruitBlocked) {
-            ""
-        } else {
-            when (action) {
-                DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
-                DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
-                DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
-                DetailSetupAction.JOIN -> "참여하기"
+                    is ChallengeDetailEffect.ShowMessage -> messageHelper.showToast(effect.message)
+                }
             }
         }
 
-    ChallengeDetailContent(
-        modifier = modifier,
-        state = state,
-        ctaLabel = ctaLabel,
-        onIntent = viewModel::onIntent,
-        onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
-        onCta = {
+        // 앱 등록 화면 등에서 돌아오면 등록 상태를 재확인해 버튼 모드를 갱신한다.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+            viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
+        }
+
+        val setup = state.setup
+        // 권한 토큰은 GET setup 의 requiredPermissions 를 우선 사용(없으면 상세 verification 값).
+        val tokens =
+            setup?.requiredPermissions ?: state.detail
+                ?.verification
+                ?.requiredPermissions
+                .orEmpty()
+        // 권한 현황은 저장하지 않고 매번 OS 에 다시 묻는다 — 설정에서 끄고 돌아오는 경로가 있다.
+        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+            viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
+        }
+        // 아직 못 물었으면(null) 막지 않는다 — 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
+        val missingTokens = state.missingPermissionTokens()
+        val permissionGranted = missingTokens.isEmpty()
+
+        // GET setup 요구사항으로 "필요한 등록만" 유도: 권한 → (requiresTargetPackages) 앱 → (requiresAnchors) 지도 → 참여.
+        // 수동 인증(manual)이거나 셋업 정보가 없으면 바로 참여.
+        val action =
+            when {
+                state.detail == null || setup == null || setup.manual -> DetailSetupAction.JOIN
+                !permissionGranted -> DetailSetupAction.GRANT_PERMISSION
+                setup.requiresTargetPackages && !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
+                setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
+                else -> DetailSetupAction.JOIN
+            }
+        // 심사 중에도 모집·입장에 제한이 없다 — 구 명세의 이미지 검수 모집 차단은 폐기됐다.
+        val recruitBlocked = false
+        val ctaLabel =
             if (recruitBlocked) {
-                messageHelper.showToast("이미지 검수가 끝나면 모집이 시작돼요")
+                ""
             } else {
                 when (action) {
-                    DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
-                    DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
-                    DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
-                    DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
+                    DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
+                    DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
+                    DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
+                    DetailSetupAction.JOIN -> "참여하기"
                 }
             }
-        },
-    )
 
-    if (showPermissionSheet) {
-        // OS 다이얼로그로 물을 수 있는 것과 설정에서만 켤 수 있는 것을 갈라 안내한다 —
-        // 사용정보 접근·Health Connect 는 "허용하기" 버튼으로 해결되지 않는다.
-        val byKind = missingTokens.groupBy { PermissionSnapshot.requestKindOf(it) }
-        val runtimeTokens = byKind[PermissionRequestKind.RUNTIME].orEmpty()
-        val usageTokens = byKind[PermissionRequestKind.USAGE_ACCESS_SETTINGS].orEmpty()
-        val healthTokens = byKind[PermissionRequestKind.HEALTH_CONNECT].orEmpty()
-        PermissionBottomSheet(
-            runtimeTokens = runtimeTokens,
-            usageTokens = usageTokens,
-            healthTokens = healthTokens,
-            onDismiss = { showPermissionSheet = false },
-            onOpenUsageSettings = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
-            onRequestHealth = {
-                // 걸음·수면은 HC 자체 권한 화면으로 — 사용정보 접근 설정으로 보내면 거기서
-                // 아무리 켜도 이 권한은 생기지 않는다.
-                if (healthConnectAvailable(context)) {
-                    healthLauncher.launch(healthReadPermissions())
+        ChallengeDetailContent(
+            modifier = modifier,
+            state = state,
+            ctaLabel = ctaLabel,
+            onIntent = viewModel::onIntent,
+            onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
+            onCta = {
+                if (recruitBlocked) {
+                    messageHelper.showToast("이미지 검수가 끝나면 모집이 시작돼요")
                 } else {
-                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
-                }
-            },
-            onAllow = {
-                scope.launch {
-                    permissionRequester.request(runtimeTokens)
-                    viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
-                    if (challengePermissionsGranted(context, runtimeTokens)) {
-                        showPermissionSheet = false
-                    } else {
-                        messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")
+                    when (action) {
+                        DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
+                        DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
+                        DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
+                        DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
                     }
                 }
             },
         )
+
+        if (showPermissionSheet) {
+            // OS 다이얼로그로 물을 수 있는 것과 설정에서만 켤 수 있는 것을 갈라 안내한다 —
+            // 사용정보 접근·Health Connect 는 "허용하기" 버튼으로 해결되지 않는다.
+            val byKind = missingTokens.groupBy { PermissionSnapshot.requestKindOf(it) }
+            val runtimeTokens = byKind[PermissionRequestKind.RUNTIME].orEmpty()
+            val usageTokens = byKind[PermissionRequestKind.USAGE_ACCESS_SETTINGS].orEmpty()
+            val healthTokens = byKind[PermissionRequestKind.HEALTH_CONNECT].orEmpty()
+            PermissionBottomSheet(
+                runtimeTokens = runtimeTokens,
+                usageTokens = usageTokens,
+                healthTokens = healthTokens,
+                onDismiss = { showPermissionSheet = false },
+                onOpenUsageSettings = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
+                onRequestHealth = {
+                    // 걸음·수면은 HC 자체 권한 화면으로 — 사용정보 접근 설정으로 보내면 거기서
+                    // 아무리 켜도 이 권한은 생기지 않는다.
+                    if (healthConnectAvailable(context)) {
+                        healthLauncher.launch(healthReadPermissions())
+                    } else {
+                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
+                    }
+                },
+                onAllow = {
+                    scope.launch {
+                        permissionRequester.request(runtimeTokens)
+                        viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
+                        if (challengePermissionsGranted(context, runtimeTokens)) {
+                            showPermissionSheet = false
+                        } else {
+                            messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")
+                        }
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -1031,3 +1047,6 @@ private fun HiddenEffect?.doneMessage(): String =
         HiddenEffect.CHALLENGE_MASKED -> "참여 중인 챌린지라 이름과 이미지만 가렸어요. 나가려면 방에서 직접 나가주세요."
         null -> "접수됐어요. 검토에 참고할게요."
     }
+
+/** TTI 집계 키. 대시보드가 이 문자열로 화면을 가른다. */
+private const val TTI_PAGE_NAME = "challenge_detail"

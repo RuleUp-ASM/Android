@@ -173,6 +173,9 @@ dependencies {
     implementation(project(":support:domain"))
     implementation(project(":support:data"))
     implementation(project(":support:presentation"))
+    implementation(project(":tti:domain"))
+    implementation(project(":tti:data"))
+    implementation(project(":tti:presentation"))
 
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.androidx.compose.bom))
@@ -185,6 +188,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    // 프로세스가 후면으로 내려가는 신호. TTI 완성 기록을 그 세션에서 내보내는 데 쓴다.
+    implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
