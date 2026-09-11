@@ -53,6 +53,8 @@ dependencies {
     implementation(project(":verification:domain"))
     // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다. 화면 자체는 :report:presentation 소관.
     implementation(project(":report:domain"))
+    // 설정 허브가 문의 진입점과 새 답변 뱃지를 그린다 — feature 간 의존은 domain 까지만.
+    implementation(project(":support:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)
@@ -89,6 +91,7 @@ dependencies {
     testImplementation(testFixtures(project(":verification:domain")))
     testImplementation(testFixtures(project(":challenge:domain")))
     testImplementation(testFixtures(project(":onboarding:domain")))
+    testImplementation(testFixtures(project(":support:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
     testImplementation(libs.robolectric)

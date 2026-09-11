@@ -73,6 +73,14 @@ import com.ruleup.profile.presentation.tier.MyTierScreen
 import com.ruleup.profile.presentation.watching.WatchingScreen
 import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.report.presentation.blocklist.BlockListScreen
+import com.ruleup.support.domain.navigation.InquiryCategoryPage
+import com.ruleup.support.domain.navigation.InquiryComposePage
+import com.ruleup.support.domain.navigation.InquiryDetailPage
+import com.ruleup.support.domain.navigation.InquiryListPage
+import com.ruleup.support.presentation.category.InquiryCategoryScreen
+import com.ruleup.support.presentation.compose.InquiryComposeScreen
+import com.ruleup.support.presentation.detail.InquiryDetailScreen
+import com.ruleup.support.presentation.list.InquiryListScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
 import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
@@ -257,6 +265,22 @@ val appRoutes: List<AppRoute> =
             render = { args ->
                 WatcherAcceptScreen(token = args[WatcherAcceptPage.ARG_TOKEN].orEmpty())
             },
+        ),
+        AppRoute(
+            path = InquiryCategoryPage.PATH,
+            render = { InquiryCategoryScreen() },
+        ),
+        AppRoute(
+            path = InquiryComposePage.PATH,
+            render = { InquiryComposeScreen() },
+        ),
+        AppRoute(
+            path = InquiryListPage.PATH,
+            render = { InquiryListScreen() },
+        ),
+        AppRoute(
+            path = InquiryDetailPage.PATH,
+            render = { InquiryDetailScreen() },
         ),
         AppRoute(
             path = VerificationPermissionRepairPage.PATH,

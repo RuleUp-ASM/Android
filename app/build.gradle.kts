@@ -166,6 +166,9 @@ dependencies {
     implementation(project(":notification:data"))
     implementation(project(":notification:presentation"))
     implementation(project(":report:presentation"))
+    implementation(project(":support:domain"))
+    implementation(project(":support:data"))
+    implementation(project(":support:presentation"))
 
     implementation(libs.androidx.work.runtime)
     implementation(platform(libs.androidx.compose.bom))

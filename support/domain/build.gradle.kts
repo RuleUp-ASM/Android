@@ -16,6 +16,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // 설정 허브(profile)와 문의 화면들이 같은 대역을 쓴다 — 모듈마다 베끼면 계약이 갈린다.
+    testFixtures {
+        enable = true
+    }
 }
 
 kotlin {

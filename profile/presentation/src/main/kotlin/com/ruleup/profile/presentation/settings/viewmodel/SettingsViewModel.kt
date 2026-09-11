@@ -8,12 +8,20 @@ import com.ruleup.notification.domain.navigation.NotificationCenterPage
 import com.ruleup.notification.domain.navigation.NotificationSettingsPage
 import com.ruleup.onboarding.domain.auth.usecase.LogoutUseCase
 import com.ruleup.onboarding.domain.auth.usecase.WithdrawUseCase
+import com.ruleup.profile.domain.entity.AgreementStatus
+import com.ruleup.profile.domain.entity.MyProfile
+import com.ruleup.profile.domain.entity.SanctionHistory
 import com.ruleup.profile.domain.navigation.MyAgreementsPage
 import com.ruleup.profile.domain.navigation.MySanctionsPage
 import com.ruleup.profile.domain.navigation.MyWatchingPage
 import com.ruleup.profile.domain.repository.AccountRepository
 import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.report.domain.navigation.BlockListPage
+import com.ruleup.support.domain.entity.InquiryStatus
+import com.ruleup.support.domain.entity.InquirySummary
+import com.ruleup.support.domain.navigation.InquiryCategoryPage
+import com.ruleup.support.domain.navigation.InquiryListPage
+import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -33,6 +41,7 @@ class SettingsViewModel
     constructor(
         private val accountRepository: AccountRepository,
         private val profileRepository: ProfileRepository,
+        private val inquiryRepository: InquiryRepository,
         private val logoutUseCase: LogoutUseCase,
         private val withdrawUseCase: WithdrawUseCase,
         private val navigationHelper: NavigationHelper,
@@ -49,6 +58,9 @@ class SettingsViewModel
 
                 SettingsIntent.OpenNotificationSettings -> navigationHelper.navigateTo(NotificationSettingsPage)
                 SettingsIntent.OpenNotificationCenter -> navigationHelper.navigateTo(NotificationCenterPage)
+
+                SettingsIntent.OpenInquiry -> navigationHelper.navigateTo(InquiryCategoryPage)
+                SettingsIntent.OpenInquiryHistory -> navigationHelper.navigateTo(InquiryListPage)
 
                 SettingsIntent.ConfirmLogout -> dispatch(SettingsReducerEvent.DialogShown(SettingsDialog.LOGOUT))
                 SettingsIntent.ConfirmWithdraw -> dispatch(SettingsReducerEvent.DialogShown(SettingsDialog.WITHDRAW))
@@ -70,6 +82,7 @@ class SettingsViewModel
                         provider = event.provider,
                         reconsentCount = event.reconsentCount,
                         hasActiveSanction = event.hasActiveSanction,
+                        answeredInquiryCount = event.answeredInquiryCount,
                     )
 
                 SettingsReducerEvent.LoadFinished -> state.copy(isLoading = false)
@@ -83,24 +96,27 @@ class SettingsViewModel
 
         private fun load() {
             viewModelScope.launch {
-                // 셋은 서로 독립이라 함께 던진다. 하나가 실패해도 나머지 행은 그대로 그린다 —
+                // 넷은 서로 독립이라 함께 던진다. 하나가 실패해도 나머지 행은 그대로 그린다 —
                 // 제재 조회가 막혔다고 로그아웃까지 못 하게 만들 이유가 없다.
-                val (agreements, sanctions, profile) =
+                val loaded =
                     coroutineScope {
                         val a = async { runCatching { accountRepository.getAgreements() }.getOrNull() }
                         val s = async { runCatching { accountRepository.getSanctions() }.getOrNull() }
                         val p = async { runCatching { profileRepository.getMyProfile() }.getOrNull() }
-                        Triple(a.await(), s.await(), p.await())
+                        val i = async { runCatching { inquiryRepository.getInquiries() }.getOrNull() }
+                        SettingsLoad(a.await(), s.await(), p.await(), i.await())
                     }
-                if (agreements == null && sanctions == null && profile == null) {
+                if (loaded.isEmpty) {
                     dispatch(SettingsReducerEvent.LoadFinished)
                     return@launch
                 }
                 dispatch(
                     SettingsReducerEvent.Loaded(
-                        provider = profile?.user?.provider,
-                        reconsentCount = agreements?.reconsentRequired?.size ?: 0,
-                        hasActiveSanction = sanctions?.activeSanction != null,
+                        provider = loaded.profile?.user?.provider,
+                        reconsentCount = loaded.agreements?.reconsentRequired?.size ?: 0,
+                        hasActiveSanction = loaded.sanctions?.activeSanction != null,
+                        answeredInquiryCount =
+                            loaded.inquiries.orEmpty().count { it.status == InquiryStatus.ANSWERED },
                     ),
                 )
             }
@@ -144,3 +160,17 @@ class SettingsViewModel
             navigationHelper.replaceStackWith(NavRoute(AppRoutes.LOGIN))
         }
     }
+
+/**
+ * 설정 허브가 한 번에 받아 오는 네 조각. 넷 다 실패했을 때만 뱃지 없이 화면을 띄우려고 묶었다 —
+ * `Triple` 로는 네 번째가 들어가지 않고, 자리 순서로만 구분되면 호출부에서 뒤바뀌어도 드러나지 않는다.
+ */
+private data class SettingsLoad(
+    val agreements: AgreementStatus?,
+    val sanctions: SanctionHistory?,
+    val profile: MyProfile?,
+    val inquiries: List<InquirySummary>?,
+) {
+    val isEmpty: Boolean
+        get() = agreements == null && sanctions == null && profile == null && inquiries == null
+}
