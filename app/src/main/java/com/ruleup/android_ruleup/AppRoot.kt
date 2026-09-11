@@ -10,6 +10,8 @@ import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.onboarding.domain.navigation.SplashPage
+import com.ruleup.tti.domain.TtiRecorder
+import com.ruleup.tti.presentation.LocalTtiRecorder
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
@@ -24,6 +26,7 @@ fun AppRoot(
     messageHelper: MessageHelper,
     screenTracker: ScreenTracker,
     observability: Observability,
+    ttiRecorder: TtiRecorder,
     startStack: List<NavKey> = listOf(GenericNavKey(SplashPage.PATH)),
 ) {
     CompositionLocalProvider(
@@ -31,6 +34,7 @@ fun AppRoot(
         LocalMessageHelper provides messageHelper,
         LocalScreenTracker provides screenTracker,
         LocalObservability provides observability,
+        LocalTtiRecorder provides ttiRecorder,
     ) {
         RootComposable(startStack = startStack)
     }

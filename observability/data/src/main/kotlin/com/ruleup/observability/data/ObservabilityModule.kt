@@ -14,7 +14,6 @@ import com.ruleup.observability.data.sink.LogcatSink
 import com.ruleup.observability.data.sink.SeverityFilterSink
 import com.ruleup.observability.data.sink.SinkFailureReporter
 import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.model.AmplitudeApiKey
 import com.ruleup.observability.domain.model.BuildProfile
@@ -118,13 +117,4 @@ object ObservabilityModule {
             policy = policy,
             sink = sink,
         )
-
-    /** 화면 TTI 추적기. 활성 세션이 하나뿐이라 앱 전역 싱글턴이다. */
-    @Provides
-    @Singleton
-    fun ttiTracker(
-        clock: Clock,
-        observability: Observability,
-        resourceSampler: ResourceSampler,
-    ): TtiTracker = TtiTracker(clock, observability, resourceSampler)
 }

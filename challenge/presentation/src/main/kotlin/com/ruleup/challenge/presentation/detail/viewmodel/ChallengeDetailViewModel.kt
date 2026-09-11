@@ -26,17 +26,13 @@ import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.repository.WatcherRepository
-import com.ruleup.challenge.presentation.observability.ChallengeDetailTtiPage
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.notification.domain.repository.NotificationRepository
 import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.api.TtiTracker
 import com.ruleup.observability.domain.event.Channel
-import com.ruleup.observability.domain.model.ScreenKey
-import com.ruleup.observability.domain.model.TtiTimeline
 import com.ruleup.report.domain.entity.ReportContext
 import com.ruleup.report.domain.entity.ReportException
 import com.ruleup.report.domain.entity.ReportFailure
@@ -80,7 +76,6 @@ class ChallengeDetailViewModel
         private val reportRepository: ReportRepository,
         private val notificationRepository: NotificationRepository,
         private val navigationHelper: NavigationHelper,
-        private val ttiTracker: TtiTracker,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
             ChallengeDetailState.initial,
         ) {
@@ -410,14 +405,9 @@ class ChallengeDetailViewModel
                 }
             }
             viewModelScope.launch {
-                // 화면 진입 → 사용 가능 상태까지의 TTI. 네비게이션 시 이전 세션은 ScreenTracker 가 정리한다.
-                ttiTracker.start(ChallengeDetailTtiPage, ScreenKey(AppRoutes.CHALLENGE_DETAIL))
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
-                ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
                 runCatching { challengeRepository.getChallenge(challengeId) }
                     .onSuccess { detail ->
-                        ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.API_RESPONSE)
-                        ttiTracker.beginPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
                         // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
                         val setup = runCatching { challengeRepository.getSetupInfo(challengeId) }.getOrNull()
                         dispatch(
@@ -440,9 +430,6 @@ class ChallengeDetailViewModel
                                 )
                             }
                         }
-                        // 상세가 화면 상태로 반영된 시점 = 사용 가능. 감시자·방 홈은 부가 섹션이라 기다리지 않는다.
-                        ttiTracker.endPhase(ChallengeDetailTtiPage, TtiTimeline.VIEW_BINDING)
-                        ttiTracker.complete(ChallengeDetailTtiPage)
                         // 감시자는 챌린지 × 참여자 단위 — 항상 조회를 시도하고, 성공하면(=참여자)
                         // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
                         loadWatchers(challengeId)
