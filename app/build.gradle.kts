@@ -1,3 +1,4 @@
+import com.google.firebase.appdistribution.gradle.firebaseAppDistributionDefault
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import kotlin.apply
@@ -12,9 +13,12 @@ plugins {
 
 // Firebase(google-services) 플러그인은 google-services.json 이 있어야 동작한다.
 // Crashlytics 도 같은 설정에 의존하므로 함께 적용한다(자동 크래시/ANR 수집).
+// App Distribution 도 앱 ID 를 이 파일에서 읽으므로 같은 조건에 묶는다 — 파일이 없는 개발자에게는
+// 배포 태스크가 아예 생기지 않고, 대신 빌드가 깨지지도 않는다.
 if (project.file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
+    apply(plugin = "com.google.firebase.appdistribution")
 }
 
 val localProperties =
@@ -223,4 +227,41 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+/**
+ * Firebase App Distribution 배포 설정.
+ *
+ * **내려보내는 변형은 debug 다.** 업로드 키(`keystore.properties`)가 없는 개발자·CI 에서도 서명된
+ * 산출물이 나오는 유일한 변형이고, `applicationId` 에 suffix 를 붙이지 않아 `google-services.json`
+ * 의 앱 ID 와 그대로 맞는다. release 를 배포하려면 키를 먼저 받아야 한다.
+ *
+ * 앱 ID·프로젝트는 `google-services.json` 에서 읽으므로 여기 적지 않는다 — 두 곳에 적으면 한쪽만
+ * 고쳐진다. 업로드 자격 증명은 `firebase login` 또는 `GOOGLE_APPLICATION_CREDENTIALS` 로 준다.
+ *
+ * 배포: `./gradlew assembleDebug appDistributionUploadDebug`
+ */
+if (project.file("google-services.json").exists()) {
+    firebaseAppDistributionDefault {
+        artifactType = "APK"
+
+        // 내부 확인용 채널. release 그룹은 실서버를 보는 빌드를 받는 자리라, 스테이징을
+        // 가리키는 이 빌드를 거기로 보내면 테스터가 데이터를 혼동한다.
+        groups = "beta"
+
+        // 무엇이 담긴 빌드인지 테스터가 알 수 있게 적는다. `-PreleaseNotes="..."` 로 사람이 쓴
+        // 문장을 넘길 수 있고, 없으면 최근 커밋으로 채운다.
+        //
+        // **머지 커밋은 건너뛴다**(--no-merges) — "Merge pull request #436 from ..." 은 테스터에게
+        // 아무것도 말해 주지 않는다. providers.exec 라 배포 태스크가 실제로 도는 순간에만 git 을
+        // 부르고, 평소 빌드의 설정 단계는 늦추지 않는다.
+        releaseNotes =
+            (project.findProperty("releaseNotes") as String?)?.takeIf { it.isNotBlank() }
+                ?: providers
+                    .exec { commandLine("git", "log", "-1", "--no-merges", "--pretty=%h %s") }
+                    .standardOutput
+                    .asText
+                    .map { it.trim() }
+                    .getOrElse("")
+    }
 }
