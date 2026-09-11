@@ -50,7 +50,6 @@ class VerificationDtoSerializationTest {
                 PermissionSnapshot(
                     location = PermissionState.GRANTED,
                     backgroundLocation = PermissionState.DENIED,
-                    activityRecognition = PermissionState.GRANTED,
                     usageStats = PermissionState.GRANTED,
                     postNotifications = PermissionState.GRANTED,
                     healthDistance = PermissionState.GRANTED,

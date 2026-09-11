@@ -33,7 +33,6 @@ class PermissionSnapshotProvider
             return PermissionSnapshot(
                 location = context.statusOf(Manifest.permission.ACCESS_FINE_LOCATION),
                 backgroundLocation = if (context.hasBackgroundLocation()) PermissionState.GRANTED else PermissionState.DENIED,
-                activityRecognition = activityRecognitionStatus(),
                 usageStats = if (context.hasUsageAccess()) PermissionState.GRANTED else PermissionState.DENIED,
                 postNotifications = postNotificationsStatus(),
                 healthDistance = hc.state(HealthPermission.getReadPermission(DistanceRecord::class)),
@@ -62,14 +61,6 @@ class PermissionSnapshotProvider
                 PermissionState.GRANTED
             } else {
                 PermissionState.DENIED
-            }
-
-        // ACTIVITY_RECOGNITION 은 API 29+ 런타임 권한, 이하에서는 설치 시 부여로 본다.
-        private fun activityRecognitionStatus(): PermissionState =
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                PermissionState.GRANTED
-            } else {
-                context.statusOf(Manifest.permission.ACTIVITY_RECOGNITION)
             }
 
         // POST_NOTIFICATIONS 는 API 33+ 런타임 권한, 이하에서는 부여 불필요.

@@ -32,6 +32,14 @@ class PermissionSnapshotTest {
     }
 
     @Test
+    fun `신체 활동 토큰은 더 이상 알아보지 않는다`() {
+        // 서버가 requiredPermissions 에서 뺐고 앱도 걷어냈다. 낡은 스냅샷이 이 토큰을 실어 보내도
+        // 판단 보류로 떨어져 참여를 막지 않는다 — 요청할 권한이 없으니 막으면 영영 못 들어간다.
+        assertNull(snapshot().isGranted("ACTIVITY_RECOGNITION"))
+        assertNull(snapshot().isGranted("PHYSICAL_ACTIVITY"))
+    }
+
+    @Test
     fun `권한마다 여는 문이 다르다`() {
         // 사용정보 접근과 Health Connect 를 한 덩어리로 묶으면 걸음 권한이 필요한 사용자를
         // 사용정보 접근 화면으로 보내게 되고, 거기서는 아무리 켜도 그 권한이 생기지 않는다.
@@ -54,7 +62,6 @@ class PermissionSnapshotTest {
         PermissionSnapshot(
             location = PermissionState.GRANTED,
             backgroundLocation = PermissionState.GRANTED,
-            activityRecognition = PermissionState.GRANTED,
             usageStats = usageStats,
             postNotifications = PermissionState.GRANTED,
             healthDistance = PermissionState.GRANTED,

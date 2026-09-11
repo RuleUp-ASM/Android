@@ -154,8 +154,6 @@ data class PermissionsRequest(
     val location: String,
     @SerialName("backgroundLocation")
     val backgroundLocation: String,
-    @SerialName("activityRecognition")
-    val activityRecognition: String,
     @SerialName("usageStats")
     val usageStats: String,
     @SerialName("postNotifications")
@@ -337,7 +335,6 @@ internal fun PermissionSnapshot.toDto(): PermissionsRequest =
     PermissionsRequest(
         location = location.name,
         backgroundLocation = backgroundLocation.name,
-        activityRecognition = activityRecognition.name,
         usageStats = usageStats.name,
         postNotifications = postNotifications.name,
         healthConnect =

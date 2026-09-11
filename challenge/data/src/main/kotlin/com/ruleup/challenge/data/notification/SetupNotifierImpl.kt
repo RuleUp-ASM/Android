@@ -91,7 +91,6 @@ class SetupNotifierImpl
         private fun androidPermission(token: String): String? =
             when (token.uppercase()) {
                 "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> Manifest.permission.ACCESS_FINE_LOCATION
-                "ACTIVITY_RECOGNITION", "PHYSICAL_ACTIVITY" -> Manifest.permission.ACTIVITY_RECOGNITION
                 "CAMERA", "PHOTO" -> Manifest.permission.CAMERA
                 else -> null
             }

@@ -92,7 +92,6 @@ class PermissionRepairViewModelTest {
         PermissionSnapshot(
             location = PermissionState.GRANTED,
             backgroundLocation = PermissionState.GRANTED,
-            activityRecognition = PermissionState.GRANTED,
             usageStats = usageStats,
             postNotifications = PermissionState.GRANTED,
             healthDistance = PermissionState.GRANTED,
