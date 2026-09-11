@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ruleup.profile.presentation"
+    namespace = "com.ruleup.support.presentation"
     compileSdk = 37
 
     defaultConfig {
@@ -42,18 +42,6 @@ kotlin {
 dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
-    implementation(project(":profile:domain"))
-    // 로그아웃·탈퇴는 인증 소관 — onboarding 의 domain 계약을 직접 쓴다.
-    implementation(project(":onboarding:domain"))
-    // 「내가 받는 알림」은 감시자 관계 — challenge 의 domain 계약을 직접 쓴다.
-    implementation(project(":challenge:domain"))
-    // 알림 설정·알림함 진입점 — notification 의 domain 계약(Page)만 쓴다.
-    implementation(project(":notification:domain"))
-    // 이의 내역은 인증 모듈 소관 개념이다 — 타입을 베끼지 않고 그쪽 domain 계약을 직접 쓴다.
-    implementation(project(":verification:domain"))
-    // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다. 화면 자체는 :report:presentation 소관.
-    implementation(project(":report:domain"))
-    // 설정 허브가 문의 진입점과 새 답변 뱃지를 그린다 — feature 간 의존은 domain 까지만.
     implementation(project(":support:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -69,16 +57,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    // 프로필 이미지 로딩
+    // 첨부 사진 썸네일. 작성 화면은 로컬 URI, 상세는 서버 URL 을 같은 컴포저블로 그린다.
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
-
-    // 활동 캘린더 월 그리드
-    implementation(libs.kizitonwose.calendar.compose)
-
-    // 친구 초대: QR 렌더링(클라 생성) + 카카오톡 공유(사용자 본인 발신)
-    implementation(libs.zxing.core)
-    implementation(libs.kakao.share)
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
@@ -87,10 +68,6 @@ dependencies {
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(testFixtures(project(":core:domain")))
-    testImplementation(testFixtures(project(":observability:domain")))
-    testImplementation(testFixtures(project(":verification:domain")))
-    testImplementation(testFixtures(project(":challenge:domain")))
-    testImplementation(testFixtures(project(":onboarding:domain")))
     testImplementation(testFixtures(project(":support:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.

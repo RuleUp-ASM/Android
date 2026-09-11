@@ -11,6 +11,9 @@ import com.ruleup.profile.domain.entity.ActiveSanction
 import com.ruleup.profile.domain.entity.SanctionHistory
 import com.ruleup.profile.presentation.fake.FakeAccountRepository
 import com.ruleup.profile.presentation.fake.FakeProfileRepository
+import com.ruleup.support.domain.entity.InquiryStatus
+import com.ruleup.support.domain.fake.FakeInquiryRepository
+import com.ruleup.support.domain.fake.inquirySummary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -110,17 +113,54 @@ class SettingsViewModelTest {
             assertEquals("탈퇴할게요", auth.withdrawnWith)
         }
 
+    @Test
+    fun `답변이 달린 문의 수를 뱃지로 센다`() =
+        runTest {
+            // 답변은 푸시도 알림함도 쓰지 않는다 — 이 숫자가 답변을 알리는 유일한 신호다.
+            val inquiries =
+                FakeInquiryRepository(
+                    inquiries = {
+                        listOf(
+                            inquirySummary(inquiryId = "a", status = InquiryStatus.ANSWERED),
+                            inquirySummary(inquiryId = "b", status = InquiryStatus.ANSWERED),
+                            inquirySummary(inquiryId = "c", status = InquiryStatus.RECEIVED),
+                        )
+                    },
+                )
+            val viewModel = viewModel(FakeAccountRepository(), inquiries = inquiries)
+
+            viewModel.onIntent(SettingsIntent.Load)
+
+            assertEquals(2, viewModel.uiState.value.answeredInquiryCount)
+        }
+
+    @Test
+    fun `문의 조회가 실패해도 나머지 행은 그대로 그린다`() =
+        runTest {
+            // 설정 허브는 진입점 목록이다. 뱃지 하나 때문에 로그아웃 경로까지 막으면 안 된다.
+            val inquiries = FakeInquiryRepository(inquiries = { throw IllegalStateException("조회 실패") })
+            val viewModel = viewModel(FakeAccountRepository(), inquiries = inquiries)
+
+            viewModel.onIntent(SettingsIntent.Load)
+
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertEquals(0, viewModel.uiState.value.answeredInquiryCount)
+        }
+
     private fun viewModel(
         repo: FakeAccountRepository,
         auth: FakeAuthRepository = FakeAuthRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         // 프로필은 「연결된 계정」 표기 전용이라 실패해도 나머지 행은 그대로 그린다.
         profile: FakeProfileRepository = FakeProfileRepository(),
+        // 문의 목록은 「내 문의 내역」 뱃지 전용. 기본은 빈 목록이라 뱃지가 뜨지 않는다.
+        inquiries: FakeInquiryRepository = FakeInquiryRepository(),
     ): SettingsViewModel {
         val tokens = FakeTokenRepository()
         return SettingsViewModel(
             accountRepository = repo,
             profileRepository = profile,
+            inquiryRepository = inquiries,
             logoutUseCase = LogoutUseCase(auth, tokens),
             withdrawUseCase = WithdrawUseCase(auth, tokens),
             navigationHelper = nav,

@@ -58,6 +58,12 @@ object AppRoutes {
     const val NOTIFICATIONS = "notifications" // 진입점 (홈 벨·마이 → 알림 센터)
     const val NOTIFICATION_SETTINGS = "notifications/settings" // 설정 허브 → 알림 설정
 
+    // support — 앱 내 문의가 유일한 CS 창구다(외부 채널 없음)
+    const val MY_INQUIRIES = "my/inquiries" // 설정 허브 → 내 문의 내역
+    const val MY_INQUIRY_NEW = "my/inquiries/new" // 설정 허브 → 문의하기 (분류 선택)
+    const val MY_INQUIRY_COMPOSE = "my/inquiries/compose" // 분류 선택 → 본문 작성
+    const val MY_INQUIRY_DETAIL = "my/inquiries/detail" // 내역 → 문의 1건 열람
+
     // verification
     const val VERIFICATION_PERMISSION_REPAIR = "verification/permission-repair" // 진입점 (권한 회수 복구)
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)

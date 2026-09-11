@@ -124,6 +124,23 @@ internal fun SettingsContent(
                 )
             }
 
+            SectionLabel("고객센터")
+            MenuCard {
+                MenuRow(
+                    label = "문의하기",
+                    onClick = { onIntent(SettingsIntent.OpenInquiry) },
+                    note = "평일 10:00~18:00 · 영업일 2일 안에 답변드려요",
+                )
+                MenuDivider()
+                MenuRow(
+                    label = "내 문의 내역",
+                    onClick = { onIntent(SettingsIntent.OpenInquiryHistory) },
+                    // 답변은 푸시도 알림함도 쓰지 않는다 — 이 뱃지가 답변을 알리는 유일한 신호다.
+                    trailing = if (state.answeredInquiryCount > 0) "새 답변 ${state.answeredInquiryCount}건" else null,
+                    highlightTrailing = true,
+                )
+            }
+
             SectionLabel("계정")
             MenuCard {
                 ConnectedAccountRow(provider = state.provider)

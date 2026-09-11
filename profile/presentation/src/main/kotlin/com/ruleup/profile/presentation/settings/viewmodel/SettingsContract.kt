@@ -22,6 +22,11 @@ sealed interface SettingsIntent : MviIntent {
 
     data object OpenNotificationCenter : SettingsIntent
 
+    /** 문의하기 — 분류 선택부터 시작한다. */
+    data object OpenInquiry : SettingsIntent
+
+    data object OpenInquiryHistory : SettingsIntent
+
     data object ConfirmLogout : SettingsIntent
 
     data object ConfirmWithdraw : SettingsIntent
@@ -56,6 +61,13 @@ data class SettingsState(
     val reconsentCount: Int,
     // 효력 중인 제재가 있으면 「제재 이력」 행에 표시한다
     val hasActiveSanction: Boolean,
+    /**
+     * 답변이 달린 문의 수. 「내 문의 내역」 행의 뱃지다.
+     *
+     * 문의 답변은 푸시도 알림함도 쓰지 않기로 해(2026-09-11) **이 숫자가 답변을 알리는 유일한
+     * 신호**다. 0 이면 뱃지를 그리지 않는다.
+     */
+    val answeredInquiryCount: Int,
     val dialog: SettingsDialog?,
     val isSubmitting: Boolean,
 ) : UiState {
@@ -66,6 +78,7 @@ data class SettingsState(
                 provider = null,
                 reconsentCount = 0,
                 hasActiveSanction = false,
+                answeredInquiryCount = 0,
                 dialog = null,
                 isSubmitting = false,
             )
@@ -77,6 +90,7 @@ sealed interface SettingsReducerEvent : ReducerEvent {
         val provider: SocialProvider?,
         val reconsentCount: Int,
         val hasActiveSanction: Boolean,
+        val answeredInquiryCount: Int,
     ) : SettingsReducerEvent
 
     data object LoadFinished : SettingsReducerEvent
