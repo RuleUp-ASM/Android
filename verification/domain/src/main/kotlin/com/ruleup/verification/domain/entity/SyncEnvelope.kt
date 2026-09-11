@@ -44,7 +44,6 @@ enum class PermissionState {
 data class PermissionSnapshot(
     val location: PermissionState,
     val backgroundLocation: PermissionState,
-    val activityRecognition: PermissionState,
     val usageStats: PermissionState,
     val postNotifications: PermissionState,
     val healthDistance: PermissionState,
@@ -66,7 +65,6 @@ data class PermissionSnapshot(
         when (token.uppercase()) {
             "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> location
             "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> backgroundLocation
-            "ACTIVITY_RECOGNITION", "PHYSICAL_ACTIVITY" -> activityRecognition
             "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> usageStats
             "POST_NOTIFICATIONS", "NOTIFICATION" -> postNotifications
             "READ_DISTANCE", "HEALTH_DISTANCE" -> healthDistance

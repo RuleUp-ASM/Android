@@ -41,7 +41,6 @@ class PermissionRepairRowsTest {
         PermissionSnapshot(
             location = location,
             backgroundLocation = PermissionState.GRANTED,
-            activityRecognition = PermissionState.GRANTED,
             usageStats = PermissionState.GRANTED,
             postNotifications = PermissionState.GRANTED,
             healthDistance = PermissionState.GRANTED,

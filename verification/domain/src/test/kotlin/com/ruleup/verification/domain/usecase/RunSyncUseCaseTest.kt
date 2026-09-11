@@ -321,7 +321,6 @@ class RunSyncUseCaseTest {
                     PermissionSnapshot(
                         location = PermissionState.GRANTED,
                         backgroundLocation = PermissionState.GRANTED,
-                        activityRecognition = PermissionState.GRANTED,
                         usageStats = PermissionState.GRANTED,
                         postNotifications = PermissionState.GRANTED,
                         healthDistance = PermissionState.GRANTED,

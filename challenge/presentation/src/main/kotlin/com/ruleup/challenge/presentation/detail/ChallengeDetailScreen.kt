@@ -899,7 +899,6 @@ private fun PermissionRow(label: String) {
 private fun permissionLabel(token: String): String =
     when (token.uppercase()) {
         "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> "위치 (자동 위치 인증)"
-        "ACTIVITY_RECOGNITION", "PHYSICAL_ACTIVITY" -> "신체 활동"
         "CAMERA", "PHOTO" -> "카메라"
         "HEALTH", "HEALTH_CONNECT" -> "건강 데이터"
         "USAGE", "USAGE_STATS", "PACKAGE_USAGE_STATS" -> "사용 기록 접근"
