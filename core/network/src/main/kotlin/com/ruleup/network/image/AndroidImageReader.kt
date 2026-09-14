@@ -25,9 +25,10 @@ class AndroidImageReader
 
                 // inJustDecodeBounds 모드의 decodeStream 은 항상 null 이다 — 반환값이 아니라 채워진 크기로 판정한다.
                 val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-                resolver.openInputStream(parsed)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-                    ?: throw unreadable()
-                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw unreadable()
+                val opened =
+                    resolver.openInputStream(parsed)?.use { BitmapFactory.decodeStream(it, null, bounds) } != null ||
+                        bounds.outWidth > 0
+                if (!opened || bounds.outWidth <= 0 || bounds.outHeight <= 0) throw unreadable()
 
                 val options =
                     BitmapFactory.Options().apply {
