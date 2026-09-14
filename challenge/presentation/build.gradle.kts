@@ -43,6 +43,8 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
+    // 화면이 자기 TTI 구간을 선언한다 — 그려지는 시점은 컴포지션이 안다.
+    implementation(project(":tti:presentation"))
     implementation(project(":observability:domain"))
     implementation(project(":challenge:domain"))
     // 대상 앱 설정은 verification 소관 — 그쪽 domain 계약을 직접 쓴다(core 포트 복제 제거).

@@ -87,9 +87,9 @@ internal object FirebaseEventMapper {
             is BusinessPayload.Custom -> Unit
 
             is PerformancePayload.Tti -> {
-                bundle.putString("screen_name", payload.screen.raw.clampValue())
+                bundle.putString("page_name", payload.pageName.clampValue())
                 bundle.putLong("total_millis", payload.totalMillis)
-                bundle.putString("outcome", payload.outcome.name)
+                payload.spans.forEach { (name, millis) -> bundle.putLong(name.lowercase().clampKey(), millis) }
             }
 
             is PerformancePayload.JankWindow -> {

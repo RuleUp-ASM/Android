@@ -142,7 +142,7 @@ Navigation3 기반. 경로 문자열은 한 곳에만 존재한다.
 # 크로스 커팅
 
 - **헬퍼 계약은 `core:domain/helper/`, 구현은 `:app/helper/`**: `NavigationHelper`, `MessageHelper`, `PushNotificationHelper`, 그리고 `navigation/RouteAccessPolicy`. feature 가 호스트의 능력이 필요할 때 core 에 계약만 두고 `:app` 이 구현하는 패턴이다.
-- **CompositionLocal**: `LocalNavigationHelper`, `LocalMessageHelper`, `LocalObservability`, `LocalScreenTracker` 만 허용된다(`.editorconfig` 의 `compose_allowed_composition_locals` allowlist). 새로 추가하면 ktlint 가 막는다.
+- **CompositionLocal**: `LocalNavigationHelper`, `LocalMessageHelper`, `LocalObservability`, `LocalScreenTracker`, `LocalTtiRecorder`, `LocalTtiPage` 만 허용된다(`.editorconfig` 의 `compose_allowed_composition_locals` allowlist). 새로 추가하면 ktlint 가 막는다.
 - **DI**: Hilt. `@HiltViewModel` + 생성자 주입, 화면은 `hiltViewModel()`. 모든 `@Module` 은 `SingletonComponent` 기준이며 `:app` 의 Hilt 컴포넌트가 전 모듈 바인딩을 모은다.
 - **네트워크**: `core:network/di/NetworkModule` 이 OkHttp/Retrofit/Json 을 제공한다. 액세스 토큰은 인터셉터가 자동으로 붙이되 `NO_AUTH_PATHS`(`/auth/oauth`, `/auth/signup`, `/auth/refresh`)는 제외한다 — 만료 토큰이 로그인 요청에 실리면 401 로 막힌다. 401 갱신은 `auth/TokenAuthenticator`.
 - **관측**: ViewModel 은 `Observability`(`observability:domain/api`)를 주입받는다. 이벤트 카탈로그는 각 feature domain 의 `observability/<Feature>Events.kt` 에 둔다. 어떤 이벤트가 있고 무엇을 볼 수 있는지는 `OBSERVABILITY.md`. `observability:debug` 는 `debugImplementation` 이라 릴리스 APK 에 없다.

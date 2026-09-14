@@ -20,6 +20,7 @@ import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.onboarding.domain.navigation.SplashPage
+import com.ruleup.tti.domain.TtiRecorder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -37,6 +38,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var screenTracker: ScreenTracker
+
+    @Inject
+    lateinit var ttiRecorder: TtiRecorder
 
     @Inject
     lateinit var observability: Observability
@@ -74,6 +78,7 @@ class MainActivity : ComponentActivity() {
                 messageHelper = messageHelper,
                 screenTracker = screenTracker,
                 observability = observability,
+                ttiRecorder = ttiRecorder,
                 startStack = startStack,
             )
         }

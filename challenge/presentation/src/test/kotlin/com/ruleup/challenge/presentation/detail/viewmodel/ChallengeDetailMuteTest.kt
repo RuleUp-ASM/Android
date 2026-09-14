@@ -25,8 +25,6 @@ import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.notification.domain.entity.NotificationGroupSettings
 import com.ruleup.notification.domain.entity.NotificationSettings
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
-import com.ruleup.observability.domain.api.TtiTracker
-import com.ruleup.observability.domain.test.FakeClock
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
@@ -206,7 +204,6 @@ class ChallengeDetailMuteTest {
             reportRepository = reports,
             notificationRepository = notifications,
             navigationHelper = nav,
-            ttiTracker = TtiTracker(FakeClock(), observability),
         )
     }
 }

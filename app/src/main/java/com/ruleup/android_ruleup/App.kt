@@ -2,6 +2,9 @@ package com.ruleup.android_ruleup
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Configuration
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
@@ -12,6 +15,7 @@ import com.ruleup.observability.data.UserIdentitySync
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.api.w
+import com.ruleup.tti.domain.TtiRecorder
 import com.ruleup.verification.domain.repository.GeofenceRegister
 import com.ruleup.verification.domain.repository.SyncScheduler
 import com.ruleup.verification.domain.usecase.SubmitDeviceIntroUseCase
@@ -55,6 +59,10 @@ class App :
     @Inject
     lateinit var userIdentitySync: UserIdentitySync
 
+    // 화면별 TTI 기록기. 수명은 프로세스가 아니라 전면/후면 전환에 맞춘다(아래 옵서버).
+    @Inject
+    lateinit var ttiRecorder: TtiRecorder
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -71,6 +79,19 @@ class App :
             // 카카오 콘솔(네이티브 앱키 → Android 플랫폼)에 등록할 키해시. 등록 안 되면 지도 인증 실패로 빈 화면.
             observability.i("KakaoMap") { "등록용 키해시 = ${Utility.getKeyHash(this)} / 패키지 = $packageName" }
         }
+        // TTI 기록기를 전면/후면에 맞춰 열고 닫는다.
+        //
+        // 후면으로 내려갈 때 닫는 이유는 그 세션에서 완성된 기록을 그때 내보내기 위해서다 —
+        // 안드로이드는 프로세스 종료를 알려주지 않으므로, 닫지 않으면 다음 실행까지 기다린다.
+        // 못 쏘고 죽은 것은 다음 init 이 주워 간다.
+        ProcessLifecycleOwner.get().lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) = ttiRecorder.init()
+
+                override fun onStop(owner: LifecycleOwner) = ttiRecorder.destroy()
+            },
+        )
+
         KakaoSdk.init(this, BuildConfig.KAKAO_NATIVE_APP_KEY)
         // 지도 SDK(v2)는 로그인 SDK 와 별개로 초기화하며 같은 네이티브 앱키를 쓴다.
         // libK3fAndroid.so 가 arm64/armeabi 만 있어 x86_64 에뮬레이터에선 init 이 던진다 — 지도만 비활성.
