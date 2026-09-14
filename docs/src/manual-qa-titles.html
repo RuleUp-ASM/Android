@@ -79,7 +79,7 @@
 <body>
 
 <h1>RuleUp Android 수동 QA 시나리오 목록</h1>
-<p class="sub">정책·도메인별 타이틀 인벤토리 · 2026-09-11 · develop 기준</p>
+<p class="sub">정책·도메인별 타이틀 인벤토리 · 2026-09-14 · develop 기준</p>
 
 <div class="meta">
   <dl>
@@ -201,7 +201,7 @@
 <li><span class="box">☐</span><span class="id">ROOM-15</span><span>참여하지 않은 챌린지 음소거 시도 차단</span></li>
 </ul>
 
-<h2><span class="code">SIG</span>자동 인증 신호 수집<span class="count">17</span></h2>
+<h2><span class="code">SIG</span>자동 인증 신호 수집<span class="count">18</span></h2>
 <p class="note">지오펜스·사용기록·Health·WorkManager 는 실기기에서만 발화한다. 이 모듈은 수동 QA가 유일한 방어선이다.</p>
 <ul>
 <li><span class="box">☐</span><span class="id">SIG-01</span><span>위치 권한 허용 후 위치 샘플이 수집되어 전송된다</span></li>
@@ -221,10 +221,11 @@
 <li><span class="box">☐</span><span class="id">SIG-15</span><span>오프라인에서 실패한 신호가 복구 후 다음 요청에 다시 실린다</span></li>
 <li><span class="box">☐</span><span class="id">SIG-16</span><span>응답의 다음 주기 값으로 sync 스케줄이 재조정된다</span></li>
 <li><span class="box">☐</span><span class="id">SIG-17</span><span>절전·배터리 최적화·제조사 백그라운드 제한에서 주기 sync 생존</span></li>
+<li><span class="box">☐</span><span class="id">SIG-18</span><span>걸음·운동 인증에서 신체활동 권한을 요청하지 않는다</span></li>
 </ul>
 
-<h2><span class="code">VER</span>인증 판정 · 표기<span class="count">19</span></h2>
-<p class="note">판정 전 상태를 실패로 그리는 것이 이 도메인 최대 사고다. 상태·사유 전수를 눈으로 본다.</p>
+<h2><span class="code">VER</span>인증 판정 · 표기<span class="count">15</span></h2>
+<p class="note">판정 전 상태를 실패로 그리는 것이 이 도메인 최대 사고다. 상태·사유 전수를 눈으로 본다. 제출 동선은 <em>MAN</em> 이 따로 갖는다.</p>
 <ul>
 <li><span class="box">☐</span><span class="id">VER-01</span><span>오늘 상태 5종(진행중·검사중·완료·실패·대상아님) 렌더</span></li>
 <li><span class="box">☐</span><span class="id">VER-02</span><span>검사중이 실패 색·문구로 보이지 않는다</span></li>
@@ -236,15 +237,11 @@
 <li><span class="box">☐</span><span class="id">VER-08</span><span>CTA 가 없는 사유에서 버튼이 노출되지 않는다</span></li>
 <li><span class="box">☐</span><span class="id">VER-09</span><span>진행률 화면 카드 렌더와 상세 진입</span></li>
 <li><span class="box">☐</span><span class="id">VER-10</span><span>신호 미수신 경계에서 경고 배지가 토글된다</span></li>
-<li><span class="box">☐</span><span class="id">VER-11</span><span>자가 체크 수동 인증 제출</span></li>
-<li><span class="box">☐</span><span class="id">VER-12</span><span>수동 폴백 제출 후 잠정 인증·이의 마감 시각 안내</span></li>
-<li><span class="box">☐</span><span class="id">VER-13</span><span>주간 수동 폴백 한도 초과 안내</span></li>
-<li><span class="box">☐</span><span class="id">VER-14</span><span>이미 인증한 날 재제출이 에러가 아닌 안내로 표시된다</span></li>
-<li><span class="box">☐</span><span class="id">VER-15</span><span>인증 창 문구가 방식별로 다르게 표시된다</span></li>
-<li><span class="box">☐</span><span class="id">VER-16</span><span>미확인 판정 결과 모달이 한 번만 뜬다</span></li>
-<li><span class="box">☐</span><span class="id">VER-17</span><span>자정·일자 경계에서 오늘 상태가 전환된다</span></li>
-<li><span class="box">☐</span><span class="id">VER-18</span><span>기기 시간대 변경·시각 조작 상태에서의 표기</span></li>
-<li><span class="box">☐</span><span class="id">VER-19</span><span>연속 성공 일수가 끊긴 것을 화면이 표현한다</span></li>
+<li><span class="box">☐</span><span class="id">VER-11</span><span>인증 창 문구가 방식별로 다르게 표시된다</span></li>
+<li><span class="box">☐</span><span class="id">VER-12</span><span>미확인 판정 결과 모달이 한 번만 뜬다</span></li>
+<li><span class="box">☐</span><span class="id">VER-13</span><span>자정·일자 경계에서 오늘 상태가 전환된다</span></li>
+<li><span class="box">☐</span><span class="id">VER-14</span><span>기기 시간대 변경·시각 조작 상태에서의 표기</span></li>
+<li><span class="box">☐</span><span class="id">VER-15</span><span>연속 성공 일수가 끊긴 것을 화면이 표현한다</span></li>
 </ul>
 
 <h2><span class="code">SETUP</span>개인 인증 설정<span class="count">8</span></h2>
@@ -258,6 +255,25 @@
 <li><span class="box">☐</span><span class="id">SETUP-06</span><span>줄임말·초성으로 대상 앱을 찾지 못하는 경우 동선</span></li>
 <li><span class="box">☐</span><span class="id">SETUP-07</span><span>대상 앱 선택 저장 후 수집 범위에 반영</span></li>
 <li><span class="box">☐</span><span class="id">SETUP-08</span><span>권한 복구 화면에서 누락 권한 재요청</span></li>
+</ul>
+
+<h2><span class="code">MAN</span>수동 인증 제출<span class="count">14</span></h2>
+<p class="note">솔로 수동 방은 이 화면이 유일한 인증 동선이다 — 진입점이 하나라도 막히면 그 방은 인증 자체를 못 한다.</p>
+<ul>
+<li><span class="box">☐</span><span class="id">MAN-01</span><span>솔로 수동 방 상세에 오늘 인증 진입 카드가 보인다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-02</span><span>그룹 수동 방 정보 탭이 같은 화면으로 들어간다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-03</span><span>자동 방에는 수동 인증 진입점이 없다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-04</span><span>미참여·시작 전·종료된 방에는 진입점이 없다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-05</span><span>체크 후 오늘 상태와 연속 일수가 갱신된다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-06</span><span>적어 넣은 메모가 실제 요청에 실린다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-07</span><span>메모를 비워 두면 빈 메모가 전송되지 않는다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-08</span><span>메모 200자 초과 입력이 차단된다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-09</span><span>체크된 날에는 체크 버튼 대신 해제만 열린다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-10</span><span>체크 해제 후 오늘 상태가 되돌아간다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-11</span><span>당일이 지난 뒤 해제 시도 안내</span></li>
+<li><span class="box">☐</span><span class="id">MAN-12</span><span>이미 체크한 날 재제출이 안내로 뜨고 화면이 서버 상태로 맞춰진다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-13</span><span>대상일이 아닌 날에는 체크 버튼이 놓이지 않는다</span></li>
+<li><span class="box">☐</span><span class="id">MAN-14</span><span>점수 미반영 안내가 체크 전에 보이고, 화면에서 돌아오면 상세 카드가 갱신된다</span></li>
 </ul>
 
 <h2><span class="code">APL</span>이의 제기<span class="count">7</span></h2>
@@ -317,6 +333,26 @@
 <li><span class="box">☐</span><span class="id">REP-09</span><span>같은 대상 중복 신고 처리</span></li>
 </ul>
 
+<h2><span class="code">CS</span>문의하기<span class="count">15</span></h2>
+<p class="note">답변을 알림함·푸시로 알리지 않기로 했다(2026-09-11). 사용자가 답을 확인하는 경로는 설정 허브 뱃지와 내 문의 내역뿐이라, 그 두 곳이 이 기능의 생명선이다.</p>
+<ul>
+<li><span class="box">☐</span><span class="id">CS-01</span><span>설정 허브에서 문의하기로 진입</span></li>
+<li><span class="box">☐</span><span class="id">CS-02</span><span>분류 6종이 설명과 함께 보인다</span></li>
+<li><span class="box">☐</span><span class="id">CS-03</span><span>고른 분류가 작성 화면에 그대로 유지된다</span></li>
+<li><span class="box">☐</span><span class="id">CS-04</span><span>본문 10자 미만이면 보내기가 열리지 않는다</span></li>
+<li><span class="box">☐</span><span class="id">CS-05</span><span>본문 1,000자 초과 입력이 차단된다</span></li>
+<li><span class="box">☐</span><span class="id">CS-06</span><span>이미지 3장까지 첨부되고 그 이상은 막힌다</span></li>
+<li><span class="box">☐</span><span class="id">CS-07</span><span>이미지 업로드 실패 시 본문과 첨부가 유지된다</span></li>
+<li><span class="box">☐</span><span class="id">CS-08</span><span>앱 버전·기기 정보가 토글 없이 함께 전송된다</span></li>
+<li><span class="box">☐</span><span class="id">CS-09</span><span>하루 3건 상한을 넘기면 안내가 뜬다</span></li>
+<li><span class="box">☐</span><span class="id">CS-10</span><span>접수 완료 화면의 문의 번호 표기</span></li>
+<li><span class="box">☐</span><span class="id">CS-11</span><span>내 문의 내역 목록 페이징과 빈 화면</span></li>
+<li><span class="box">☐</span><span class="id">CS-12</span><span>문의 상세에서 본문·첨부·답변이 보인다</span></li>
+<li><span class="box">☐</span><span class="id">CS-13</span><span>상태가 접수됨·답변 완료 2종으로만 표기된다</span></li>
+<li><span class="box">☐</span><span class="id">CS-14</span><span>앱이 모르는 분류의 문의도 목록에서 사라지지 않는다</span></li>
+<li><span class="box">☐</span><span class="id">CS-15</span><span>오프라인 접수 실패 후 재시도로 복구된다</span></li>
+</ul>
+
 <h2><span class="code">WAT</span>감시자<span class="count">13</span></h2>
 <p class="note">상태 머신 5종에 만료·재초대 금지 기간이 붙는다. 초대자와 감시자 두 계정이 필요하다.</p>
 <ul>
@@ -335,7 +371,7 @@
 <li><span class="box">☐</span><span class="id">WAT-13</span><span>비유저 감시자의 마스킹 연락처·상태 표기</span></li>
 </ul>
 
-<h2><span class="code">NOTI</span>알림<span class="count">12</span></h2>
+<h2><span class="code">NOTI</span>알림<span class="count">13</span></h2>
 <p class="note">설정 3계층에서 가장 제한적인 것이 이긴다. 막혀도 알림함에는 쌓여야 한다.</p>
 <ul>
 <li><span class="box">☐</span><span class="id">NOTI-01</span><span>OS 푸시 권한 거부 상태 배너 표시</span></li>
@@ -350,6 +386,7 @@
 <li><span class="box">☐</span><span class="id">NOTI-10</span><span>앱 종료 상태에서 푸시 탭 진입</span></li>
 <li><span class="box">☐</span><span class="id">NOTI-11</span><span>앱이 모르는 타입의 알림도 목록에 남는다</span></li>
 <li><span class="box">☐</span><span class="id">NOTI-12</span><span>알림 없음 빈 화면</span></li>
+<li><span class="box">☐</span><span class="id">NOTI-13</span><span>문의 답변이 알림함·푸시로 오지 않는다</span></li>
 </ul>
 
 <h2><span class="code">NAV</span>딥링크 · 네비게이션<span class="count">10</span></h2>
@@ -398,7 +435,7 @@
 </ul>
 
 <footer>
-  17개 그룹 · 216개 시나리오. 타이틀만 확정한 목록이며, 절차와 기대결과는 실행 시점에 항목별로 채운다.
+  19개 그룹 · 243개 시나리오. 타이틀만 확정한 목록이며, 절차와 기대결과는 실행 시점에 항목별로 채운다.
   자동 인증 상세 절차는 VERIFICATION_TEST_PLAN.md, 자동 테스트 커버리지는 TEST_STRATEGY.md 를 함께 본다.
 </footer>
 
