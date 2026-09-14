@@ -11,6 +11,7 @@ import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
 import com.ruleup.challenge.domain.entity.ThreadPolicy
+import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
@@ -26,6 +27,7 @@ import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.repository.WatcherRepository
+import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -74,6 +76,7 @@ class ChallengeDetailViewModel
         private val reportRepository: ReportRepository,
         private val notificationRepository: NotificationRepository,
         private val navigationHelper: NavigationHelper,
+        private val sensitiveConsent: SensitiveConsent,
     ) : MviViewModel<ChallengeDetailIntent, ChallengeDetailState, ChallengeDetailReducerEvent, ChallengeDetailEffect>(
             ChallengeDetailState.initial,
         ) {
@@ -84,6 +87,9 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RegisterApps -> registerApps()
                 ChallengeDetailIntent.RegisterAnchor -> registerAnchor()
                 ChallengeDetailIntent.Proceed -> join()
+                ChallengeDetailIntent.AgreeSensitiveConsent -> agreeConsentAndJoin()
+                ChallengeDetailIntent.DismissSensitiveConsent ->
+                    dispatch(ChallengeDetailReducerEvent.SensitiveConsentRequested(null))
                 ChallengeDetailIntent.CloneChallenge -> clone()
 
                 ChallengeDetailIntent.OpenReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetOpened)
@@ -245,6 +251,8 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.UserReportSheetOpened ->
                     state.copy(isReportSheetOpen = true, reportUserId = event.userId)
 
+                is ChallengeDetailReducerEvent.SensitiveConsentRequested -> state.copy(pendingConsent = event.type)
+
                 ChallengeDetailReducerEvent.ReportSheetDismissed ->
                     // 다음에 열 때 지난 선택이 남지 않게 비운다.
                     state.copy(
@@ -276,6 +284,35 @@ class ChallengeDetailViewModel
                     )
             }
 
+        // 위치·건강 인증을 처음 쓰는 순간이 개별 동의를 받을 유일한 시점이다 — 참여 직전에 확인한다.
+        private var joinConsentChecked = false
+
+        private fun checkConsentThenJoin(method: VerificationMethod) {
+            viewModelScope.launch {
+                runCatching { sensitiveConsent.missingFor(method) }
+                    .onSuccess { missing ->
+                        if (missing == null) {
+                            joinConsentChecked = true
+                            join()
+                        } else {
+                            dispatch(ChallengeDetailReducerEvent.SensitiveConsentRequested(missing))
+                        }
+                    }.onFailure { emitEffect(ChallengeDetailEffect.ShowMessage("동의 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요")) }
+            }
+        }
+
+        private fun agreeConsentAndJoin() {
+            val type = currentState.pendingConsent ?: return
+            viewModelScope.launch {
+                runCatching { sensitiveConsent.agree(type) }
+                    .onSuccess {
+                        dispatch(ChallengeDetailReducerEvent.SensitiveConsentRequested(null))
+                        joinConsentChecked = true
+                        join()
+                    }.onFailure { emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "동의를 기록하지 못했어요")) }
+            }
+        }
+
         /**
          * 가입. 권한은 화면이 **이 호출 전에** 확보해 둔다 — 서버는 OS 권한을 게이트로 검사하지 않고,
          * 가입 후 권한 거부를 탈퇴로 롤백하는 경로는 폐기됐다.
@@ -284,6 +321,11 @@ class ChallengeDetailViewModel
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isJoining) return
             val detail = currentState.detail
+            val method = detail?.verification?.method
+            if (!joinConsentChecked && method != null) {
+                checkConsentThenJoin(method)
+                return
+            }
             observability.log(Channel.BUSINESS) {
                 ChallengeEvents.challengeJoinAttempt(
                     challengeId = id,

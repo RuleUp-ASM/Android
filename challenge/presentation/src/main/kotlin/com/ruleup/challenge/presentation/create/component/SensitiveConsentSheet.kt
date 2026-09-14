@@ -17,13 +17,14 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
 
-/** 위치·건강 인증을 처음 쓰는 방을 만들기 직전에 받는 개별 동의. 동의하지 않으면 만들지 않는다. */
+/** 위치·건강 인증을 처음 쓰는 방을 만들거나 들어가기 직전에 받는 개별 동의. 동의하지 않으면 진행하지 않는다. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SensitiveConsentSheet(
     type: AgreementType,
     onAgree: () -> Unit,
     onDismiss: () -> Unit,
+    agreeLabel: String = "동의하고 만들기",
 ) {
     val (title, body) =
         when (type) {
@@ -45,7 +46,7 @@ internal fun SensitiveConsentSheet(
         ) {
             Text(text = title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
             Text(text = body, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
-            RuleUpPrimaryButton(text = "동의하고 만들기", onClick = onAgree, modifier = Modifier.fillMaxWidth())
+            RuleUpPrimaryButton(text = agreeLabel, onClick = onAgree, modifier = Modifier.fillMaxWidth())
             Text(
                 text = "다음에 할게요",
                 color = RuleUpTheme.colors.textMuted,

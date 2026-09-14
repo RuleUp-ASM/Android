@@ -654,11 +654,6 @@ class CreateChallengeViewModel
             }
         }
 
-        /** 홈은 루트 페이지라 백스택이 비워지고 생성 플로우가 정리된다. */
-        private fun goHome() {
-            navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
-        }
-
         private var countdownJob: Job? = null
         private var draftJob: Job? = null
         private var createStartLogged = false
