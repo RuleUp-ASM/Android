@@ -44,7 +44,7 @@ feature 가 부르지 않아도 파이프라인이 보내는 것들이다.
 | 이벤트 | 언제 | 속성 |
 |---|---|---|
 | `screen_view` | 화면 진입마다(`ScreenTracker`) | `screen_name`, `from_screen` |
-| `perf_tti` | 화면이 첫 콘텐츠를 그릴 때까지 | `screen_name`, `total_millis`, `outcome` |
+| `perf_tti` | 화면이 첫 콘텐츠를 그릴 때까지 | `page_name`, `total_millis`, 구간별 키(`view_create`·`backend`·`view_binding`·`big_part_loading`) |
 | `perf_jank` | 화면당 프레임 창이 닫힐 때 | `total_frames`, `janky_frames`, `frozen_frames`, `p95_frame_millis` |
 | `perf_resource` | 메모리 표본 | `trigger`, `heap_used_bytes`, `heap_max_bytes`, `low_memory` |
 | `diagnostic` | 에러·경고 | `severity`, `tag`, `message`, `error_type`, `error_hash` |
@@ -160,7 +160,7 @@ feature 팩토리의 이름 있는 이벤트로 나간다 — 대시보드에서
 | 카테고리 편중 | `category_grid_click` 를 `category` 로 나눈다 |
 | 방 재방문 | `room_view` 의 주간 고유 사용자 |
 | 단일 기기 정책 부작용 | `session_expired` 를 `trigger` 로 나눈다 |
-| 화면별 체감 속도 | `perf_tti` 의 `total_millis` 를 `screen_name` 으로 나눈다 |
+| 화면별 체감 속도 | `perf_tti` 의 `total_millis` 를 `page_name` 으로 나눈다 |
 
 만들어 둔 대시보드가 있다 — Amplitude 의 **RuleUp 제품 지표**. 위 항목 중 8개가 차트로 들어가
 있다. 다만 개인 스페이스에 있어 지금은 만든 사람만 볼 수 있다.
