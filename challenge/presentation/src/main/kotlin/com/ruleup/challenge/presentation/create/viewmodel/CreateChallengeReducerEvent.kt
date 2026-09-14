@@ -5,6 +5,7 @@ import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.ReducerEvent
 
@@ -112,6 +113,10 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
     data object Creating : CreateChallengeReducerEvent
 
     data object CreateFailed : CreateChallengeReducerEvent
+
+    data class SensitiveConsentRequested(
+        val type: AgreementType?,
+    ) : CreateChallengeReducerEvent
 
     /** 생성 성공 — 권한 요청이 남았을 때만 화면에 머문다. */
     data class Created(

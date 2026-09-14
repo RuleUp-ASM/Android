@@ -51,6 +51,9 @@ dependencies {
     implementation(project(":verification:domain"))
     // 신고 계약만 쓴다 — 신고 대상·사유 제약이 그쪽 domain 타입에 들어 있다.
     implementation(project(":report:domain"))
+    // 위치·건강 개별 동의 기록(AccountRepository)과 현행 약관 버전(IntroRepository)
+    implementation(project(":profile:domain"))
+    implementation(project(":onboarding:domain"))
     // 카드의 미읽음 카운터 — notification 의 domain 계약만 쓴다.
     implementation(project(":notification:domain"))
 
@@ -84,6 +87,7 @@ dependencies {
     testImplementation(testFixtures(project(":verification:domain")))
     testImplementation(testFixtures(project(":challenge:domain")))
     testImplementation(testFixtures(project(":notification:domain")))
+    testImplementation(testFixtures(project(":onboarding:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
     testImplementation(libs.robolectric)

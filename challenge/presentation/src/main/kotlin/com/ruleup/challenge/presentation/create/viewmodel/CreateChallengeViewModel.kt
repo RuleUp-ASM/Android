@@ -1,17 +1,22 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
+import com.ruleup.challenge.domain.entity.CreatedChallenge
 import com.ruleup.challenge.domain.entity.DraftExpiredException
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoutineDescription
+import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.toEntries
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
+import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
+import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.observability.CreateEntry
 import com.ruleup.challenge.domain.observability.CreatePath
@@ -19,12 +24,16 @@ import com.ruleup.challenge.domain.observability.DraftField
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
+import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.ui.mvi.MviViewModel
+import com.ruleup.verification.domain.entity.PermissionState
+import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
+import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,8 +49,8 @@ import javax.inject.Inject
  * 입력 화면과 확인 화면이 같은 인스턴스를 공유한다. 두 진입 경로(추천 칩 · 설명 입력)가 **같은 확인
  * 화면으로 수렴**하므로 초안 수신 처리도 하나로 묶여 있다.
  *
- * 생성 플로우 상태는 프로세스 종료 시 복원하지 않는다 — 초안 재생성 비용이 낮고 부분 복원이 오히려
- * 혼란을 만든다.
+ * 프로세스 종료 뒤에는 입력 화면의 루틴 설명만 복원한다 — 초안은 재생성 비용이 낮지만, 사용자가 쓴
+ * 문장이 사라지면 다시 쳐야 한다.
  */
 @HiltViewModel
 class CreateChallengeViewModel
@@ -52,9 +61,18 @@ class CreateChallengeViewModel
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
         private val observability: Observability,
+        private val savedStateHandle: SavedStateHandle,
+        private val permissionStatusProvider: PermissionStatusProvider,
+        private val sensitiveConsent: SensitiveConsent,
     ) : MviViewModel<CreateChallengeIntent, CreateChallengeState, CreateChallengeReducerEvent, CreateChallengeEffect>(
             CreateChallengeState.initial,
         ) {
+        init {
+            savedStateHandle.get<String>(KEY_ROUTINE_DESCRIPTION)?.let {
+                dispatch(CreateChallengeReducerEvent.RoutineDescriptionEntered(it))
+            }
+        }
+
         override fun onIntent(intent: CreateChallengeIntent) {
             when (intent) {
                 CreateChallengeIntent.Load -> {
@@ -69,8 +87,10 @@ class CreateChallengeViewModel
 
                 CreateChallengeIntent.RetryTemplates -> loadTemplates()
 
-                is CreateChallengeIntent.SetRoutineDescription ->
+                is CreateChallengeIntent.SetRoutineDescription -> {
+                    savedStateHandle[KEY_ROUTINE_DESCRIPTION] = intent.description
                     dispatch(CreateChallengeReducerEvent.RoutineDescriptionEntered(intent.description))
+                }
 
                 CreateChallengeIntent.SubmitDescription -> submitDescription()
 
@@ -149,12 +169,15 @@ class CreateChallengeViewModel
                     dispatch(CreateChallengeReducerEvent.PermissionsGranted(intent.granted))
                     // 권한은 생성 이후 단계다 — 결과가 무엇이든 생성은 이미 끝났으므로 홈으로 보낸다.
                     // 미허용은 첫 판정일 전까지 인증 설정에서 다시 받을 수 있다.
-                    if (currentState.createdChallengeId != null) goHome()
+                    lastCreated?.let { goAfterCreate(it) }
                 }
 
                 is CreateChallengeIntent.ConfirmTextEdit -> confirmTextEdit(intent.field)
 
                 CreateChallengeIntent.Create -> create()
+                CreateChallengeIntent.AgreeSensitiveConsent -> agreeConsentAndCreate()
+                CreateChallengeIntent.DismissSensitiveConsent ->
+                    dispatch(CreateChallengeReducerEvent.SensitiveConsentRequested(null))
             }
         }
 
@@ -310,6 +333,9 @@ class CreateChallengeViewModel
 
                 is CreateChallengeReducerEvent.WatcherPenaltyChanged ->
                     state.copy(penalties = state.penalties.copy(watcher = event.enabled))
+
+                is CreateChallengeReducerEvent.SensitiveConsentRequested ->
+                    state.copy(pendingConsent = event.type)
 
                 is CreateChallengeReducerEvent.PermissionsGranted ->
                     state.copy(
@@ -501,6 +527,10 @@ class CreateChallengeViewModel
                     return
                 }
             val idempotencyKey = state.idempotencyKey ?: return
+            if (!consentChecked) {
+                checkConsentThenCreate(verification.method)
+                return
+            }
 
             val command =
                 CreateChallengeCommand(
@@ -545,13 +575,14 @@ class CreateChallengeViewModel
                         ),
                     )
                     dispatch(CreateChallengeReducerEvent.Created(created.challengeId))
+                    lastCreated = created
 
                     // 권한은 생성 이후에 받는다 — 생성 전에 받으면 만들지도 않은 방 때문에 권한을 요구하는 꼴이 된다.
                     val missing = created.verification.requiredPermissions - state.grantedPermissions
                     if (created.verification.type.isAuto && missing.isNotEmpty()) {
                         emitEffect(CreateChallengeEffect.RequestPermissions(missing.toList()))
                     } else {
-                        goHome()
+                        goAfterCreate(created)
                     }
                 }.onFailure { error ->
                     dispatch(CreateChallengeReducerEvent.CreateFailed)
@@ -561,6 +592,64 @@ class CreateChallengeViewModel
                             else -> error.message ?: "챌린지 생성에 실패했어요"
                         }
                     emitEffect(CreateChallengeEffect.ShowError(message))
+                }
+            }
+        }
+
+        private var consentChecked = false
+        private var lastCreated: CreatedChallenge? = null
+
+        private fun checkConsentThenCreate(method: VerificationMethod) {
+            viewModelScope.launch {
+                runCatching { sensitiveConsent.missingFor(method) }
+                    .onSuccess { missing ->
+                        if (missing == null) {
+                            consentChecked = true
+                            create()
+                        } else {
+                            dispatch(CreateChallengeReducerEvent.SensitiveConsentRequested(missing))
+                        }
+                    }.onFailure { emitEffect(CreateChallengeEffect.ShowError("동의 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요")) }
+            }
+        }
+
+        private fun agreeConsentAndCreate() {
+            val type = currentState.pendingConsent ?: return
+            viewModelScope.launch {
+                runCatching { sensitiveConsent.agree(type) }
+                    .onSuccess {
+                        dispatch(CreateChallengeReducerEvent.SensitiveConsentRequested(null))
+                        consentChecked = true
+                        create()
+                    }.onFailure { emitEffect(CreateChallengeEffect.ShowError(it.message ?: "동의를 기록하지 못했어요")) }
+            }
+        }
+
+        /**
+         * 만든 방으로 보내고, 인증에 필요한 설정이 남았으면 그 화면을 위에 연다.
+         *
+         * 홈으로 보내면 사용기록 접근·대상 앱·인증 장소를 받을 기회가 없어 첫 판정일에 조용히 실패한다.
+         */
+        private fun goAfterCreate(created: CreatedChallenge) {
+            val id = created.challengeId
+            navigationHelper.replaceStackWith(ChallengeDetailPage(id).toRoute())
+            viewModelScope.launch {
+                // 사용기록 접근은 OS 다이얼로그로 못 받는 특수 권한이라 권한 요청을 통과해 버린다 — 재연결 화면이 받는다.
+                val usageMissing =
+                    "PACKAGE_USAGE_STATS" in created.verification.requiredPermissions &&
+                        runCatching { permissionStatusProvider.capture().usageStats != PermissionState.GRANTED }.getOrDefault(true)
+                when {
+                    usageMissing -> navigationHelper.navigateByRoute(VerificationPermissionRepairPage.toRoute())
+                    !created.personalSetupRequired -> Unit
+                    created.verification.method.needsTargetApps -> navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
+                    created.verification.method.needsAnchor ->
+                        navigationHelper.navigateByRoute(
+                            NavRoute(
+                                AppRoutes.VERIFICATION_LOCATION,
+                                mapOf("challengeId" to id, "defaultRadiusM" to "500.0", "dwellMinutes" to "60", "targetPackages" to ""),
+                            ),
+                        )
+                    else -> Unit
                 }
             }
         }
@@ -600,3 +689,11 @@ class CreateChallengeViewModel
             const val COUNTDOWN_TICK_MS = 1_000L
         }
     }
+
+private const val KEY_ROUTINE_DESCRIPTION = "routineDescription"
+
+private val VerificationMethod.needsTargetApps: Boolean
+    get() = this == VerificationMethod.SCREEN_TIME_MAX || this == VerificationMethod.SCREEN_TIME_MIN
+
+private val VerificationMethod.needsAnchor: Boolean
+    get() = this == VerificationMethod.GPS_PRESENCE || this == VerificationMethod.GPS_AVOID

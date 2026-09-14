@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.create.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import com.ruleup.challenge.domain.entity.ChallengeDraft
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengePenalties
@@ -14,9 +15,13 @@ import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.repository.SetupNotifier
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
+import com.ruleup.challenge.presentation.common.SensitiveConsent
+import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.onboarding.domain.fake.FakeIntroRepository
+import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
@@ -123,6 +128,15 @@ class CreateChallengeViewModelTest {
             assertTrue(repo.calls.none { it == "create" })
         }
 
+    @Test
+    fun `프로세스가 죽었다 살아나도 적던 루틴 설명이 남는다`() =
+        runTest {
+            // 입력이 사라지면 사용자가 문장을 처음부터 다시 쳐야 한다(ENV-05).
+            val viewModel = viewModel(saved = SavedStateHandle(mapOf("routineDescription" to "평일 아침 7시 러닝")))
+
+            assertEquals("평일 아침 7시 러닝", viewModel.uiState.value.routineDescription)
+        }
+
     private fun TestScope.collectEffects(viewModel: CreateChallengeViewModel): List<CreateChallengeEffect> {
         val effects = mutableListOf<CreateChallengeEffect>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effect.toList(effects) }
@@ -157,12 +171,17 @@ class CreateChallengeViewModelTest {
     private fun viewModel(
         repo: FakeChallengeRepository = FakeChallengeRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
+        saved: SavedStateHandle = SavedStateHandle(),
+        account: FakeAccountRepository = FakeAccountRepository(),
     ) = CreateChallengeViewModel(
         createChallengeUseCase = CreateChallengeUseCase(repo, NoSetupNotifier),
         challengeRepository = repo,
         myChallengeStore = RecordingChallengeStore(),
         navigationHelper = nav,
         observability = testObservability(),
+        savedStateHandle = saved,
+        permissionStatusProvider = PermissionStatusProvider { throw IllegalStateException("권한 조회는 이 테스트의 관심사가 아니다") },
+        sensitiveConsent = SensitiveConsent(account, FakeIntroRepository()),
     )
 }
 
