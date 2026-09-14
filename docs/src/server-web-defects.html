@@ -21,7 +21,7 @@
  footer { margin-top:6mm; padding-top:3mm; border-top:1px solid #d8dce3; color:#777f8d; font-size:8pt; }
 </style></head><body>
 <h1>RuleUp 서버·웹 전달 결함</h1>
-<p class="sub">2026-09-14 수동 QA 2회차에서 나온 것 중 Android 레포에서 고칠 수 없는 항목 · 스테이징 기준</p>
+<p class="sub">2026-09-14 수동 QA 2회차에서 나온 것 중 Android 레포에서 고칠 수 없는 항목(13건) · 스테이징 기준</p>
 
 <div class="lead">
 <p><b>이 문서의 범위.</b> 앱 쪽 결함은 #454~#459 로 고쳐 PR 을 올렸다. 여기 모은 것은 원인이 서버 응답·웹 배포·데이터에 있어 앱을 고쳐도 사라지지 않는 항목이다. 각 항목에 재현 근거(요청·응답)와 기대 동작을 적었다.</p>
@@ -40,6 +40,11 @@
 <dt>기대</dt><dd>설치 유도 랜딩(스토어 이동) 제공</dd></dl></div>
 
 <h2>서버 API</h2>
+<div class="item"><h3><span class="tag hi">높음</span>문의·이의 첨부 사진 업로드가 500 이다 <span class="own">서버 · appeals/support · QA CS-07</span></h3>
+<dl><dt>근거</dt><dd><code>POST /v1/appeals/images</code> multipart <code>image</code>(image/jpeg, 405×900 PNG 를 JPEG 로 변환) → <code>500 {"code":"INTERNAL_SERVER_ERROR","message":"서버 내부 오류가 발생했습니다."}</code> (2026-09-15 00:35, 앱 이미지 리더 수정 #460 적용 빌드)</dd>
+<dt>영향</dt><dd>문의 첨부·이의 증빙 사진을 올릴 수 없다</dd>
+<dt>기대</dt><dd>명세대로 200 <code>{"imageUrl": "/files/…"}</code>. 문의 접수 명세는 "업로드 API 가 준 /files 주소"라고만 적혀 있어 문의 전용 업로드 경로가 따로 필요한지도 확인 필요</dd></dl></div>
+
 <div class="item"><h3><span class="tag hi">높음</span>앱 표준 sync 페이로드를 400 INVALID_SIGNAL_PAYLOAD 로 거부한다 <span class="own">서버 · verification</span></h3>
 <dl><dt>근거</dt><dd><code>POST /v1/verifications/sync</code> 본문 <code>{"activeChallengeIds":[], "signals":[{"type":"WAKE","firstScreenOn":1789336414750,"deviceSecure":false}], "permissions":{…}, "diagnostics":{…}, "gaps":[]}</code> → <code>400 {"code":"INVALID_SIGNAL_PAYLOAD","message":"인증 신호 페이로드가 올바르지 않습니다."}</code>. 23:26 콜드스타트에서도 같은 400 재현</dd>
 <dt>영향</dt><dd>앱은 해당 배치를 버린다(재전송 없음) — 이 조건의 신호가 판정에 반영되지 않는다</dd>
