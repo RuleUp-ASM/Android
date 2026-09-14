@@ -7,6 +7,7 @@
 | `RuleUp-수동QA-시나리오목록.pdf` | 정책·도메인별 수동 QA 시나리오 타이틀 243개 | `src/manual-qa-titles.html` |
 | `RuleUp-관측이벤트와퍼널.pdf` | 관측 이벤트 37종과 퍼널·지표 | `src/observability.html` |
 | `RuleUp-수동QA-실행결과.pdf` | 위 목록을 2026-09-14 develop 에서 두 회차(오후·저녁) 돌린 결과 | `src/manual-qa-results.html` |
+| `RuleUp-서버웹-전달결함.pdf` | 실행 결과 중 앱 레포 밖(서버 응답·웹 배포·데이터)에 원인이 있는 결함 | `src/server-web-defects.html` |
 
 ## 다시 뽑는 법
 

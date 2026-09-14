@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<title>RuleUp 서버·웹 전달 결함</title>
+<style>
+ @page { size: A4; margin: 14mm 12mm; }
+ * { box-sizing: border-box; }
+ body { font-family:"Apple SD Gothic Neo","Noto Sans KR",sans-serif; font-size:9pt; line-height:1.45; color:#14161a; margin:0; }
+ h1 { font-size:18pt; margin:0 0 2mm; letter-spacing:-0.4px; }
+ .sub { color:#5b6270; margin:0 0 5mm; }
+ .lead { border:1px solid #d8dce3; border-radius:3px; padding:4mm; background:#fafbfc; margin-bottom:6mm; }
+ .lead p { margin:0 0 2mm; } .lead p:last-child { margin:0; }
+ h2 { font-size:10.6pt; margin:6mm 0 2mm; padding-bottom:1.2mm; border-bottom:1.5px solid #14161a; page-break-after:avoid; }
+ .item { border:1px solid #e4e7ec; border-radius:3px; padding:3mm 3.5mm; margin:0 0 3mm; page-break-inside:avoid; }
+ .item h3 { font-size:9.8pt; margin:0 0 1.5mm; }
+ .tag { display:inline-block; font-size:7.4pt; font-weight:700; padding:0.3mm 1.4mm; border-radius:2px; margin-right:1.5mm; vertical-align:1px; }
+ .hi { background:#fdecec; color:#b91c1c; } .md { background:#fff4e2; color:#b45309; } .lo { background:#eef0f4; color:#6b7280; }
+ .own { font-size:7.8pt; color:#5b6270; float:right; }
+ dl { margin:0; display:grid; grid-template-columns:18mm 1fr; gap:0.8mm 2mm; }
+ dt { color:#6b7280; font-size:8.2pt; } dd { margin:0; }
+ code { font-family:"SF Mono",Menlo,monospace; font-size:8pt; background:#f3f4f6; padding:0 1mm; border-radius:2px; word-break:break-all; }
+ footer { margin-top:6mm; padding-top:3mm; border-top:1px solid #d8dce3; color:#777f8d; font-size:8pt; }
+</style></head><body>
+<h1>RuleUp 서버·웹 전달 결함</h1>
+<p class="sub">2026-09-14 수동 QA 2회차에서 나온 것 중 Android 레포에서 고칠 수 없는 항목 · 스테이징 기준</p>
+
+<div class="lead">
+<p><b>이 문서의 범위.</b> 앱 쪽 결함은 #454~#459 로 고쳐 PR 을 올렸다. 여기 모은 것은 원인이 서버 응답·웹 배포·데이터에 있어 앱을 고쳐도 사라지지 않는 항목이다. 각 항목에 재현 근거(요청·응답)와 기대 동작을 적었다.</p>
+<p><b>우선순위.</b> <span class="tag hi">높음</span> 실사용자가 기능을 못 쓴다 · <span class="tag md">중간</span> 잘못된 사실이 화면에 보인다 · <span class="tag lo">낮음</span> 계약·데이터 정리.</p>
+</div>
+
+<h2>웹 배포</h2>
+<div class="item"><h3><span class="tag hi">높음</span>운영 assetlinks.json 이 템플릿 그대로다 <span class="own">웹 · QA NAV-01</span></h3>
+<dl><dt>근거</dt><dd><code>https://android.ruleup.co.kr/.well-known/assetlinks.json</code> 응답이 <code>"package_name": "REPLACE_ME_패키지명"</code>, <code>"sha256_cert_fingerprints": ["REPLACE_ME_DEBUG_SHA256_지문", "REPLACE_ME_RELEASE_SHA256_지문"]</code>. 에뮬레이터에서 도메인 검증 상태 1024(미검증)</dd>
+<dt>영향</dt><dd>설치된 앱이 친구·챌린지·감시자 초대 링크를 받지 못하고 브라우저로 열린다</dd>
+<dt>기대</dt><dd><code>com.ruleup.android_ruleup</code> 과 업로드·Play 앱 서명 키의 SHA-256 지문으로 채워 배포</dd></dl></div>
+
+<div class="item"><h3><span class="tag hi">높음</span>/w · /c 초대 경로의 웹 페이지가 404 다 <span class="own">웹 · QA NAV-05</span></h3>
+<dl><dt>근거</dt><dd><code>/inv/{code}</code> 는 <code>/invite</code> 랜딩으로 가지만 <code>/w/{token}</code>·<code>/c</code> 는 "HTTP ERROR 404"</dd>
+<dt>영향</dt><dd>앱 미설치(또는 링크 미검증) 사용자가 감시자·챌린지 초대를 열면 빈 오류 페이지를 본다</dd>
+<dt>기대</dt><dd>설치 유도 랜딩(스토어 이동) 제공</dd></dl></div>
+
+<h2>서버 API</h2>
+<div class="item"><h3><span class="tag hi">높음</span>앱 표준 sync 페이로드를 400 INVALID_SIGNAL_PAYLOAD 로 거부한다 <span class="own">서버 · verification</span></h3>
+<dl><dt>근거</dt><dd><code>POST /v1/verifications/sync</code> 본문 <code>{"activeChallengeIds":[], "signals":[{"type":"WAKE","firstScreenOn":1789336414750,"deviceSecure":false}], "permissions":{…}, "diagnostics":{…}, "gaps":[]}</code> → <code>400 {"code":"INVALID_SIGNAL_PAYLOAD","message":"인증 신호 페이로드가 올바르지 않습니다."}</code>. 23:26 콜드스타트에서도 같은 400 재현</dd>
+<dt>영향</dt><dd>앱은 해당 배치를 버린다(재전송 없음) — 이 조건의 신호가 판정에 반영되지 않는다</dd>
+<dt>기대</dt><dd>어느 필드가 틀렸는지 <code>reason</code> 으로 알려 주거나, 활성 챌린지가 없을 때의 WAKE 신호를 무시하고 200</dd></dl></div>
+
+<div class="item"><h3><span class="tag md">중간</span>챌린지 신고(CHALLENGE_MASKED) 뒤에도 제목·이미지가 가려지지 않는다 <span class="own">서버 · report/challenge · QA REP-06</span></h3>
+<dl><dt>근거</dt><dd><code>POST /v1/reports</code> → <code>{"blocked":true,"hiddenEffect":"CHALLENGE_MASKED"}</code> 이후에도 <code>GET /v1/challenges?filter=…</code>·상세 응답의 title 이 원문(「단어 암기하기」). 차단 목록에서만 "숨김 처리된 챌린지"</dd>
+<dt>기대</dt><dd>신고자 기준으로 목록·상세·진행률 응답의 title·imageUrl 마스킹(앱은 신고 뒤 재조회하도록 #464 에서 수정)</dd></dl></div>
+
+<div class="item"><h3><span class="tag md">중간</span>마이 홈 카운트와 챌린지 목록이 어긋난다 <span class="own">서버 · mypage · QA MY-01</span></h3>
+<dl><dt>근거</dt><dd><code>GET /v1/me/home</code> counts.inProgress=4 · completed=0 인데 <code>GET /v1/challenges?filter=IN_PROGRESS</code> 는 0건, 네 챌린지 모두 status=COMPLETED</dd>
+<dt>기대</dt><dd>counts 를 목록 filter 와 같은 기준으로 집계</dd></dl></div>
+
+<div class="item"><h3><span class="tag md">중간</span>진행률 조회가 status 필터를 무시한다 <span class="own">서버 · verification · QA MY-01</span></h3>
+<dl><dt>근거</dt><dd><code>GET /v1/verifications/progress?status=ACTIVE</code> 응답에 status=COMPLETED 챌린지 4건</dd>
+<dt>영향</dt><dd>홈이 끝난 방을 "진행 중 · 오늘 시작"으로 그렸다(앱에서 COMPLETED 제외로 #461 수정)</dd>
+<dt>기대</dt><dd>status 쿼리대로 거르기</dd></dl></div>
+
+<div class="item"><h3><span class="tag md">중간</span>오늘 인증 응답에 verificationId 가 없어 수동 인증 해제가 막힌다 <span class="own">서버 · verification · QA MAN-09 · #451</span></h3>
+<dl><dt>근거</dt><dd>체크 직후에는 해제되지만 화면 재진입 뒤 <code>GET /challenges/{id}/verifications/today</code> 에 verificationId 가 없어 해제 요청을 만들 수 없다</dd>
+<dt>기대</dt><dd>체크된 날은 verificationId 포함. 관련: #453(상세 MANUAL 인데 제출이 NOT_MANUAL_CHALLENGE)</dd></dl></div>
+
+<div class="item"><h3><span class="tag lo">낮음</span>대상 앱 미설정을 4xx 로 내린다 <span class="own">서버 · challenge</span></h3>
+<dl><dt>근거</dt><dd><code>GET /challenges/{id}/my-screen-apps</code> → <code>400 SCREENTIME_NOT_CONFIGURED</code>("측정할 앱이 아직 설정되지 않았어요")</dd>
+<dt>기대</dt><dd>정상 상태이므로 <code>200 {"apps":[]}</code>. 4xx 는 로그·모니터링에 오류로 쌓인다</dd></dl></div>
+
+<div class="item"><h3><span class="tag lo">낮음</span>탐색 빈 결과에 emptyReason 이 없다 <span class="own">서버 · explore · QA JOIN-03</span></h3>
+<dl><dt>근거</dt><dd><code>GET /v1/challenges/explore?categories=EXERCISE</code> 빈 목록에 emptyReason 미포함 → 앱이 카테고리 전용 문구 대신 기본 문구</dd>
+<dt>기대</dt><dd>CATEGORY_EMPTY · TIER_FILTER · LOW_SAMPLE 중 하나를 채워 반환</dd></dl></div>
+
+<h2>데이터 · 문서</h2>
+<div class="item"><h3><span class="tag md">중간</span>챌린지 제목이 깨진 문자열로 저장돼 있다 <span class="own">서버 · 데이터</span></h3>
+<dl><dt>근거</dt><dd>한 구글 계정의 COMPLETED 챌린지 4건 title 이 응답부터 <code>ì•„ì¹¨ 3km ë‹¬ë¦¬ê¸°</code> 형태(UTF-8 을 cp1252 로 읽은 모지바케)</dd>
+<dt>기대</dt><dd>해당 행 인코딩 복구, 입력 경로 인코딩 확인</dd></dl></div>
+
+<div class="item"><h3><span class="tag lo">낮음</span>GPS 러닝 루틴 설명이 "모임 참석"이다 <span class="own">서버 · 루틴 템플릿</span></h3>
+<dl><dt>근거</dt><dd>자유 입력 "run every morning" 초안(GPS_PRESENCE) 인증 방식 설명이 "등록한 공원·트랙에 머문 시간으로 모임 참석을 확인해요"</dd>
+<dt>기대</dt><dd>루틴에 맞는 설명 문구</dd></dl></div>
+
+<div class="item"><h3><span class="tag lo">낮음</span>노션 온보딩 명세에 폐기된 프로필 수정 경로가 남아 있다 <span class="own">문서</span></h3>
+<dl><dt>근거</dt><dd>"API 명세 및 DB 변경 - 로그인 및 온보딩" 4.9 가 <code>PATCH /api/v1/profile</code>, 현행 "내 프로필 수정"은 <code>PATCH /api/v1/users/me/profile</code>. 앱이 구 경로를 따라 스테이징 405(#461 에서 앱 수정)</dd>
+<dt>기대</dt><dd>구 명세에 폐기 표시와 현행 링크</dd></dl></div>
+
+<footer>원본: docs/src/server-web-defects.html · 수동 QA 결과: docs/RuleUp-수동QA-실행결과.pdf</footer>
+</body></html>
