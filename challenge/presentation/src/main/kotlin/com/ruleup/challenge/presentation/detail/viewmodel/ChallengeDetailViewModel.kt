@@ -87,6 +87,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.CloneChallenge -> clone()
 
                 ChallengeDetailIntent.OpenReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetOpened)
+                is ChallengeDetailIntent.OpenUserReport -> dispatch(ChallengeDetailReducerEvent.UserReportSheetOpened(intent.userId))
                 is ChallengeDetailIntent.SelectReportReason ->
                     dispatch(ChallengeDetailReducerEvent.ReportReasonSelected(intent.reason))
                 ChallengeDetailIntent.SubmitReport -> submitReport()
@@ -239,12 +240,16 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
                 is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
 
-                ChallengeDetailReducerEvent.ReportSheetOpened -> state.copy(isReportSheetOpen = true)
+                ChallengeDetailReducerEvent.ReportSheetOpened -> state.copy(isReportSheetOpen = true, reportUserId = null)
+
+                is ChallengeDetailReducerEvent.UserReportSheetOpened ->
+                    state.copy(isReportSheetOpen = true, reportUserId = event.userId)
 
                 ChallengeDetailReducerEvent.ReportSheetDismissed ->
                     // 다음에 열 때 지난 선택이 남지 않게 비운다.
                     state.copy(
                         isReportSheetOpen = false,
+                        reportUserId = null,
                         selectedReportReason = null,
                         isSubmittingReport = false,
                         reportResult = null,
@@ -1097,15 +1102,15 @@ class ChallengeDetailViewModel
             dispatch(ChallengeDetailReducerEvent.SubmittingReport(true))
             viewModelScope.launch {
                 runCatching {
-                    reportRepository.report(
-                        ReportTarget.Challenge(
-                            challengeId = challengeId,
-                            reason = reason,
-                            context = ReportContext.CHALLENGE_DETAIL,
-                        ),
-                    )
+                    val target =
+                        currentState.reportUserId?.let { userId ->
+                            ReportTarget.User(userId = userId, reason = reason, context = ReportContext.ROOM, challengeId = challengeId)
+                        } ?: ReportTarget.Challenge(challengeId = challengeId, reason = reason, context = ReportContext.CHALLENGE_DETAIL)
+                    reportRepository.report(target)
                 }.onSuccess {
                     dispatch(ChallengeDetailReducerEvent.ReportAccepted(it))
+                    // 가림은 서버가 적용해 내려준다 — 다시 읽지 않으면 신고한 방·사람이 그대로 보인다.
+                    load(challengeId, force = true)
                 }.onFailure {
                     dispatch(ChallengeDetailReducerEvent.SubmittingReport(false))
                     emitEffect(ChallengeDetailEffect.ShowMessage(it.reportMessage()))

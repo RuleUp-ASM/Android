@@ -137,6 +137,11 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** 이 챌린지를 신고하는 시트를 연다. 멤버든 아니든 열 수 있다. */
     data object OpenReport : ChallengeDetailIntent
 
+    /** 방 멤버 행의 「신고」 — 사람의 행위라 사유 목록이 챌린지 신고와 다르다. */
+    data class OpenUserReport(
+        val userId: String,
+    ) : ChallengeDetailIntent
+
     /** 신고 사유 선택. 고르기 전에는 제출 버튼이 눌리지 않는다. */
     data class SelectReportReason(
         val reason: ReportReason,
@@ -310,6 +315,8 @@ data class ChallengeDetailState(
     val isSubmittingAppeal: Boolean = false,
     // 신고 시트가 열려 있는지. 사유 선택과 완료를 한 플래그로 가르지 않는 이유는 reportResult 참고.
     val isReportSheetOpen: Boolean = false,
+    // 신고 대상 사용자. null 이면 챌린지 신고다.
+    val reportUserId: String? = null,
     val selectedReportReason: ReportReason? = null,
     val isSubmittingReport: Boolean = false,
     // 접수 결과. null 이 아니면 완료 시트를 띄운다 — 접수는 끝났고 되돌릴 수 없으므로
@@ -545,6 +552,10 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     ) : ChallengeDetailReducerEvent
 
     data object ReportSheetOpened : ChallengeDetailReducerEvent
+
+    data class UserReportSheetOpened(
+        val userId: String,
+    ) : ChallengeDetailReducerEvent
 
     data object ReportSheetDismissed : ChallengeDetailReducerEvent
 

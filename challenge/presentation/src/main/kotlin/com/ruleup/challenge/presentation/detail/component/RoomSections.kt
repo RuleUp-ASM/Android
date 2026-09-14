@@ -71,6 +71,7 @@ internal fun RoomMemberSection(
     onDemote: (String) -> Unit,
     onRequestDelegation: (String) -> Unit,
     onCancelDelegation: () -> Unit,
+    onReportMember: (String) -> Unit = {},
 ) {
     RuleUpCard {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -96,6 +97,8 @@ internal fun RoomMemberSection(
                 onPromote = { onPromote(member.userId) },
                 onDemote = { onDemote(member.userId) },
                 onRequestDelegation = { onRequestDelegation(member.userId) },
+                // 나 자신은 신고할 수 없다 — 내 userId 를 모르면 서버가 막도록 열어 둔다.
+                onReport = { onReportMember(member.userId) }.takeIf { member.userId != myUserId },
             )
         }
 
@@ -145,6 +148,7 @@ private fun MemberRow(
     onPromote: () -> Unit,
     onDemote: () -> Unit,
     onRequestDelegation: () -> Unit,
+    onReport: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -180,6 +184,15 @@ private fun MemberRow(
                 text = tier.value,
                 color = RuleUpPalette.StatusWarn,
                 style = RuleUpTheme.typography.smallBold,
+            )
+        }
+        onReport?.let {
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "신고",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.smallMedium,
+                modifier = Modifier.singleClickable(globalGuard = false, onClick = it),
             )
         }
         if (ownerManage || selfDemote) {

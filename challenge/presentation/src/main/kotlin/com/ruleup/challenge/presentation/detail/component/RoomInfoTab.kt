@@ -317,7 +317,7 @@ private fun TodayVerificationStatus.toResultStatus(): TodayResultStatus =
  * 남겨 두면 설정이 빠진 것처럼 읽힌다.
  */
 @Composable
-private fun MySetupCard(
+internal fun MySetupCard(
     onRegisterApps: (() -> Unit)?,
     onRegisterAnchor: (() -> Unit)?,
 ) {
