@@ -23,9 +23,11 @@ class AndroidImageReader
                 val parsed = uri.toUri()
                 val resolver = context.contentResolver
 
+                // inJustDecodeBounds 모드의 decodeStream 은 항상 null 이다 — 반환값이 아니라 채워진 크기로 판정한다.
                 val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                 resolver.openInputStream(parsed)?.use { BitmapFactory.decodeStream(it, null, bounds) }
-                    ?: throw IllegalArgumentException("이미지를 읽을 수 없습니다: $uri")
+                    ?: throw unreadable()
+                if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw unreadable()
 
                 val options =
                     BitmapFactory.Options().apply {
@@ -33,7 +35,7 @@ class AndroidImageReader
                     }
                 val decoded =
                     resolver.openInputStream(parsed)?.use { BitmapFactory.decodeStream(it, null, options) }
-                        ?: throw IllegalArgumentException("이미지를 읽을 수 없습니다: $uri")
+                        ?: throw unreadable()
 
                 // BitmapFactory 는 EXIF 를 반영하지 않는다 — 직접 회전하지 않으면 세로 사진이 눕는다.
                 val orientation =
@@ -52,6 +54,9 @@ class AndroidImageReader
 
                 ImageBytes(bytes = output.toByteArray(), mimeType = "image/jpeg")
             }
+
+        // 메시지가 그대로 토스트로 뜨는 화면이 있다 — content URI 같은 내부 값을 싣지 않는다.
+        private fun unreadable() = IllegalArgumentException("사진을 읽을 수 없어요. 다른 사진을 골라 주세요")
 
         // inSampleSize 는 2의 거듭제곱만 유효하다 — 다른 값은 BitmapFactory 가 아래로 내림한다.
         private fun computeInSampleSize(
