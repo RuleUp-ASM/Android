@@ -1,14 +1,11 @@
 package com.ruleup.support.presentation.compose.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.support.domain.entity.InquiryBody
-import com.ruleup.support.domain.entity.InquiryCategory
 import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.entity.InquirySubmission
-import com.ruleup.support.domain.navigation.InquiryComposePage
 import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -26,18 +23,14 @@ import javax.inject.Inject
 class InquiryComposeViewModel
     @Inject
     constructor(
-        savedStateHandle: SavedStateHandle,
         private val inquiryRepository: InquiryRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<InquiryComposeIntent, InquiryComposeState, InquiryComposeReducerEvent, NoEffect>(
-            InquiryComposeState.initial(
-                // 인자가 없거나 모르는 값이면 기타로 둔다 — 분류 없이 폼을 띄우면 접수가 400 으로 막힌다.
-                InquiryCategory.fromValue(savedStateHandle[InquiryComposePage.ARG_CATEGORY])
-                    ?: InquiryCategory.ERROR_ETC,
-            ),
+            InquiryComposeState.initial,
         ) {
         override fun onIntent(intent: InquiryComposeIntent) {
             when (intent) {
+                is InquiryComposeIntent.Load -> dispatch(InquiryComposeReducerEvent.CategoryLoaded(intent.category))
                 InquiryComposeIntent.Back -> navigationHelper.navigateToBack()
                 InquiryComposeIntent.ChangeCategory -> navigationHelper.navigateToBack()
                 is InquiryComposeIntent.BodyChanged -> dispatch(InquiryComposeReducerEvent.BodyEdited(intent.value))
@@ -53,6 +46,8 @@ class InquiryComposeViewModel
             event: InquiryComposeReducerEvent,
         ): InquiryComposeState =
             when (event) {
+                is InquiryComposeReducerEvent.CategoryLoaded -> state.copy(category = event.category)
+
                 is InquiryComposeReducerEvent.BodyEdited ->
                     // 입력을 자르지 않는다 — 붙여넣기가 조용히 잘리면 사용자가 지워진 걸 모른다.
                     // 상한 초과는 글자 수 표기가 빨개지고 버튼이 잠기는 것으로 알린다.

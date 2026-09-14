@@ -7,7 +7,13 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface InquiryDetailIntent : MviIntent {
-    data object Load : InquiryDetailIntent
+    /**
+     * 화면 진입. **인자를 여기로 받는다** — 이 내비게이션은 `SavedStateHandle` 을 채우지 않아
+     * ViewModel 이 라우트 인자를 직접 읽을 수 없다.
+     */
+    data class Load(
+        val inquiryId: String,
+    ) : InquiryDetailIntent
 
     data object Retry : InquiryDetailIntent
 
@@ -21,17 +27,21 @@ sealed interface InquiryDetailIntent : MviIntent {
 }
 
 data class InquiryDetailState(
+    // 재시도가 같은 문의를 다시 부르려면 상태가 기억해야 한다.
+    val inquiryId: String,
     val isLoading: Boolean,
     val detail: InquiryDetail?,
     val errorMessage: String?,
 ) : UiState {
     companion object {
-        val initial = InquiryDetailState(isLoading = true, detail = null, errorMessage = null)
+        val initial = InquiryDetailState(inquiryId = "", isLoading = true, detail = null, errorMessage = null)
     }
 }
 
 sealed interface InquiryDetailReducerEvent : ReducerEvent {
-    data object Loading : InquiryDetailReducerEvent
+    data class Loading(
+        val inquiryId: String,
+    ) : InquiryDetailReducerEvent
 
     data class Loaded(
         val detail: InquiryDetail,

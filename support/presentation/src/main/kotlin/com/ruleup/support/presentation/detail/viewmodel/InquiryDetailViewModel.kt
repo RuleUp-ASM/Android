@@ -1,12 +1,10 @@
 package com.ruleup.support.presentation.detail.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
-import com.ruleup.support.domain.navigation.InquiryDetailPage
 import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -23,17 +21,15 @@ import javax.inject.Inject
 class InquiryDetailViewModel
     @Inject
     constructor(
-        savedStateHandle: SavedStateHandle,
         private val inquiryRepository: InquiryRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<InquiryDetailIntent, InquiryDetailState, InquiryDetailReducerEvent, NoEffect>(
             InquiryDetailState.initial,
         ) {
-        private val inquiryId: String = savedStateHandle[InquiryDetailPage.ARG_INQUIRY_ID] ?: ""
-
         override fun onIntent(intent: InquiryDetailIntent) {
             when (intent) {
-                InquiryDetailIntent.Load, InquiryDetailIntent.Retry -> load()
+                is InquiryDetailIntent.Load -> load(intent.inquiryId)
+                InquiryDetailIntent.Retry -> load(currentState.inquiryId)
                 InquiryDetailIntent.Back -> navigationHelper.navigateToBack()
                 InquiryDetailIntent.NewInquiry -> navigationHelper.navigateTo(InquiryCategoryPage)
             }
@@ -44,7 +40,8 @@ class InquiryDetailViewModel
             event: InquiryDetailReducerEvent,
         ): InquiryDetailState =
             when (event) {
-                InquiryDetailReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
+                is InquiryDetailReducerEvent.Loading ->
+                    state.copy(inquiryId = event.inquiryId, isLoading = true, errorMessage = null)
 
                 is InquiryDetailReducerEvent.Loaded ->
                     state.copy(isLoading = false, detail = event.detail, errorMessage = null)
@@ -53,13 +50,13 @@ class InquiryDetailViewModel
                     state.copy(isLoading = false, errorMessage = event.message)
             }
 
-        private fun load() {
+        private fun load(inquiryId: String) {
             if (inquiryId.isBlank()) {
                 // 인자 없이 열린 화면이다. 조회를 보내 봐야 404 라 서버를 부르지 않는다.
                 dispatch(InquiryDetailReducerEvent.Failed(NOT_FOUND_MESSAGE))
                 return
             }
-            dispatch(InquiryDetailReducerEvent.Loading)
+            dispatch(InquiryDetailReducerEvent.Loading(inquiryId))
             viewModelScope.launch {
                 runCatching { inquiryRepository.getInquiry(inquiryId) }
                     .onSuccess { dispatch(InquiryDetailReducerEvent.Loaded(it)) }

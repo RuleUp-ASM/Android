@@ -73,6 +73,7 @@ import com.ruleup.profile.presentation.tier.MyTierScreen
 import com.ruleup.profile.presentation.watching.WatchingScreen
 import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.report.presentation.blocklist.BlockListScreen
+import com.ruleup.support.domain.entity.InquiryCategory
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
 import com.ruleup.support.domain.navigation.InquiryComposePage
 import com.ruleup.support.domain.navigation.InquiryDetailPage
@@ -274,7 +275,14 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = InquiryComposePage.PATH,
-            render = { InquiryComposeScreen() },
+            render = { args ->
+                InquiryComposeScreen(
+                    // 모르는 값이면 기타로 둔다 — 분류 없이 폼을 띄우면 접수가 400 으로 막힌다.
+                    category =
+                        InquiryCategory.fromValue(args[InquiryComposePage.ARG_CATEGORY])
+                            ?: InquiryCategory.ERROR_ETC,
+                )
+            },
         ),
         AppRoute(
             path = InquiryListPage.PATH,
@@ -282,7 +290,9 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = InquiryDetailPage.PATH,
-            render = { InquiryDetailScreen() },
+            render = { args ->
+                InquiryDetailScreen(inquiryId = args[InquiryDetailPage.ARG_INQUIRY_ID].orEmpty())
+            },
         ),
         AppRoute(
             path = VerificationManualPage.PATH,

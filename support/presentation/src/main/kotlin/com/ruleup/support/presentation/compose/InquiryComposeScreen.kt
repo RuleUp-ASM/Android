@@ -25,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +41,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.support.domain.entity.InquiryCategory
 import com.ruleup.support.domain.entity.InquiryLimits
 import com.ruleup.support.presentation.compose.viewmodel.InquiryAttachment
 import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeIntent
@@ -56,10 +58,12 @@ import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeViewModel
  */
 @Composable
 fun InquiryComposeScreen(
+    category: InquiryCategory,
     modifier: Modifier = Modifier,
     viewModel: InquiryComposeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(category) { viewModel.onIntent(InquiryComposeIntent.Load(category)) }
     InquiryComposeContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
