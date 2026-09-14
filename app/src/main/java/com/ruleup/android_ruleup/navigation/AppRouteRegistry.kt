@@ -83,8 +83,10 @@ import com.ruleup.support.presentation.detail.InquiryDetailScreen
 import com.ruleup.support.presentation.list.InquiryListScreen
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.navigation.VerificationLocationPage
+import com.ruleup.verification.domain.navigation.VerificationManualPage
 import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
 import com.ruleup.verification.presentation.location.VerificationLocationScreen
+import com.ruleup.verification.presentation.manual.ManualSubmitScreen
 import com.ruleup.verification.presentation.permission.PermissionRepairScreen
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -281,6 +283,12 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = InquiryDetailPage.PATH,
             render = { InquiryDetailScreen() },
+        ),
+        AppRoute(
+            path = VerificationManualPage.PATH,
+            render = { args ->
+                ManualSubmitScreen(challengeId = args[VerificationManualPage.ARG_CHALLENGE_ID].orEmpty())
+            },
         ),
         AppRoute(
             path = VerificationPermissionRepairPage.PATH,

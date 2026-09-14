@@ -99,6 +99,19 @@ data class ChallengeDetail(
     /** 참여 버튼을 활성할 수 있는지. 자격·정원·차단 사유를 모두 통과해야 한다. */
     val joinable: Boolean
         get() = joinBlockReason == null && gate.eligible && !isFull && myRole == MemberRole.NONE
+
+    /**
+     * 오늘 수동 인증을 할 수 있는 방인가 — 진입점을 열지 말지의 기준.
+     *
+     * 자동 방에 대고 제출하면 서버가 `NOT_MANUAL_CHALLENGE`(409)로 막고, 미참여자는 애초에 낼
+     * 인증이 없다. 시작 전([ChallengeStatus.UPCOMING])·종료([ChallengeStatus.COMPLETED])도 귀속일이
+     * 없어 제외한다.
+     */
+    val manualCheckable: Boolean
+        get() =
+            verification.type == VerificationType.MANUAL &&
+                myRole != MemberRole.NONE &&
+                status == ChallengeStatus.ACTIVE
 }
 
 /**
