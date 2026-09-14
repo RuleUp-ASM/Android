@@ -38,13 +38,21 @@ class MyCalendarContentTest {
     }
 
     @Test
-    fun `조회 실패 사유가 화면 어디에도 나오지 않는다`() {
-        // 발견: ViewModel 은 errorMessage 를 채우는데 화면이 그걸 그리는 자리가 없다.
-        // 사용자는 달이 그냥 비어 보여 "그 달에 기록이 없다"로 읽는다 — 실패와 빈 달이 같아 보인다.
-        // 화면에 자리를 만드는 건 디자인 판단이라, 지금은 현재 동작을 못 박고 남긴다.
+    fun `조회에 실패하면 사유를 보여 줘 기록 없는 달과 구분된다`() {
+        // 사유를 안 그리면 실패한 달이 "그 달에 기록이 없다"로 읽힌다(#403).
         render(MyCalendarState.initial.copy(month = "2026-09", errorMessage = "캘린더를 못 불러왔어요"))
 
-        compose.onNodeWithText("캘린더를 못 불러왔어요").assertDoesNotExist()
+        compose.onNodeWithText("캘린더를 못 불러왔어요").assertExists()
+    }
+
+    @Test
+    fun `조회 실패 뒤 다시 시도 의도가 올라간다`() {
+        val intents = mutableListOf<MyCalendarIntent>()
+        render(MyCalendarState.initial.copy(month = "2026-09", errorMessage = "캘린더를 못 불러왔어요")) { intents += it }
+
+        compose.onNodeWithText("다시 시도").clickPastGuard()
+
+        assertTrue(MyCalendarIntent.Retry in intents)
     }
 
     @Test

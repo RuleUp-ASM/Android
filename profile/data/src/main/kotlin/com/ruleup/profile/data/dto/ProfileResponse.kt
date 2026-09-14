@@ -93,6 +93,17 @@ internal fun ProfileResponse.toDomain(): Profile =
         createdAt = createdAt.requireField("createdAt"),
     )
 
+// 명세 PATCH /users/me/profile 응답. id·createdAt 이 없어 Profile 로 옮기지 않고, 저장 뒤 다시 조회한다.
+@Serializable
+data class UpdateProfileResponse(
+    @SerialName("nickname")
+    val nickname: String? = null,
+    @SerialName("interestCategories")
+    val interestCategories: List<String>? = null,
+    @SerialName("profileLockedUntil")
+    val profileLockedUntil: String? = null,
+)
+
 // ---------- 프로필 이미지 등록 ----------
 @Serializable
 data class ProfileImageResponse(

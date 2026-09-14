@@ -116,6 +116,22 @@ internal fun MyCalendarContent(
                 onPrev = { onIntent(MyCalendarIntent.ChangeMonth(-1)) },
                 onNext = { onIntent(MyCalendarIntent.ChangeMonth(1)) },
             )
+            // 실패를 그리지 않으면 조회 실패가 「기록 없는 달」과 똑같아 보인다(#403).
+            state.errorMessage?.let { message ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text = message, color = RuleUpTheme.colors.danger, style = RuleUpTheme.typography.caption)
+                    Text(
+                        text = "다시 시도",
+                        color = RuleUpTheme.colors.brand,
+                        style = RuleUpTheme.typography.bodyBold,
+                        modifier = Modifier.singleClickable { onIntent(MyCalendarIntent.Retry) },
+                    )
+                }
+            }
             MonthGrid(
                 month = month,
                 days = state.days,

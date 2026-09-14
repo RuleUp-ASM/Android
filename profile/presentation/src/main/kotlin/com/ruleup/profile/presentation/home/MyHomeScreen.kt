@@ -113,11 +113,22 @@ internal fun MyHomeContent(
 
             state.home == null ->
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = state.errorMessage ?: "마이 정보를 불러오지 못했어요",
-                        color = RuleUpTheme.colors.textSecondary,
-                        style = RuleUpTheme.typography.labelMedium,
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = state.errorMessage ?: "마이 정보를 불러오지 못했어요",
+                            color = RuleUpTheme.colors.textSecondary,
+                            style = RuleUpTheme.typography.labelMedium,
+                        )
+                        Text(
+                            text = "다시 시도",
+                            color = RuleUpTheme.colors.brand,
+                            style = RuleUpTheme.typography.bodyBold,
+                            modifier = Modifier.singleClickable { onIntent(MyHomeIntent.Refresh) },
+                        )
+                    }
                 }
 
             else ->

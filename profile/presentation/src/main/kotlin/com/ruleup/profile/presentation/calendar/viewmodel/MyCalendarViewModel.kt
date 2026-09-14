@@ -8,6 +8,7 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
@@ -32,6 +33,7 @@ class MyCalendarViewModel
             when (intent) {
                 MyCalendarIntent.Load -> loadInitial()
                 is MyCalendarIntent.ChangeMonth -> changeMonth(intent.delta)
+                MyCalendarIntent.Retry -> changeMonth(0)
                 is MyCalendarIntent.SelectDate -> selectDate(intent.date)
                 MyCalendarIntent.Back -> navigationHelper.navigateToBack()
             }
@@ -92,7 +94,16 @@ class MyCalendarViewModel
                         if (month < YearMonth.from(LocalDate.now()).toString()) monthCache[month] = days
                         dispatch(MyCalendarReducerEvent.MonthLoaded(month, days))
                     }.onFailure {
-                        dispatch(MyCalendarReducerEvent.MonthFailed(it.message ?: "캘린더를 불러오지 못했어요"))
+                        dispatch(
+                            MyCalendarReducerEvent.MonthFailed(
+                                if (it is IOException) {
+                                    "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요."
+                                } else {
+                                    it.message
+                                        ?: "캘린더를 불러오지 못했어요"
+                                },
+                            ),
+                        )
                     }
             }
         }

@@ -46,7 +46,6 @@ class FakeProfileRepository(
     override suspend fun updateProfile(
         nickname: String?,
         interestCategories: List<Category>?,
-        profileImageUrl: String?,
     ): Profile {
         calls += "updateProfile"
         lastUpdatedNickname = nickname

@@ -18,6 +18,7 @@ import com.ruleup.report.domain.navigation.BlockListPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -95,7 +96,7 @@ class MyHomeViewModel
                     .onSuccess { dispatch(MyHomeReducerEvent.Loaded(it)) }
                     .onFailure {
                         if (currentState.home == null) {
-                            dispatch(MyHomeReducerEvent.Failed(it.message ?: "마이 정보를 불러오지 못했어요"))
+                            dispatch(MyHomeReducerEvent.Failed(it.loadFailureMessage()))
                         }
                     }
             }
@@ -155,3 +156,7 @@ class MyHomeViewModel
             navigationHelper.navigateByRoute(NavRoute(path, mapOf("challengeId" to challengeId)))
         }
     }
+
+// 네트워크 예외 메시지는 영문 원문(Unable to resolve host …)이라 화면에 그대로 내보내지 않는다.
+private fun Throwable.loadFailureMessage(): String =
+    if (this is IOException) "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요." else message ?: "마이 정보를 불러오지 못했어요"

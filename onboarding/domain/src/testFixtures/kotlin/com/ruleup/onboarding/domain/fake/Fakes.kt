@@ -187,7 +187,6 @@ class FakeProfileRepository : ProfileRepository {
     override suspend fun updateProfile(
         nickname: String?,
         interestCategories: List<Category>?,
-        profileImageUrl: String?,
     ) = throw NotImplementedError()
 
     override suspend fun deleteProfileImage() = throw NotImplementedError()

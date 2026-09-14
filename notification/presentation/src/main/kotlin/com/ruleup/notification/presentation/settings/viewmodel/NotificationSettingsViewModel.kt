@@ -8,6 +8,9 @@ import com.ruleup.notification.domain.repository.NotificationRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 /**
@@ -92,7 +95,7 @@ class NotificationSettingsViewModel
                         update.marketing?.let { agreed ->
                             emitEffect(
                                 NotificationSettingsEffect.ShowMessage(
-                                    if (agreed) "마케팅 정보 수신에 동의했어요" else "마케팅 정보 수신을 철회했어요",
+                                    consentMessage(agreed, result.marketingConsentSyncedAt),
                                 ),
                             )
                         }
@@ -117,3 +120,18 @@ private fun NotificationGroup.update(enabled: Boolean): NotificationSettingsUpda
         NotificationGroup.MARKETING -> NotificationSettingsUpdate(marketing = enabled)
         NotificationGroup.REMINDER -> NotificationSettingsUpdate()
     }
+
+/** 광고성 수신 동의·철회는 처리 일시를 알려야 한다(정보통신망법) — 서버가 준 처리 시각을 함께 띄운다. */
+internal fun consentMessage(
+    agreed: Boolean,
+    syncedAt: String?,
+    zone: ZoneId = ZoneId.systemDefault(),
+): String {
+    val action = if (agreed) "마케팅 정보 수신에 동의했어요" else "마케팅 정보 수신을 철회했어요"
+    val at =
+        syncedAt
+            ?.let { runCatching { OffsetDateTime.parse(it).atZoneSameInstant(zone) }.getOrNull() }
+            ?.format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm"))
+            ?: return action
+    return "$action · $at 처리"
+}

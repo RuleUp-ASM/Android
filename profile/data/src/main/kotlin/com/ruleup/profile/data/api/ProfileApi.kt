@@ -1,7 +1,6 @@
 package com.ruleup.profile.data.api
 
 import com.ruleup.network.dto.BaseResponse
-import com.ruleup.network.dto.EmptyData
 import com.ruleup.profile.data.dto.CategoriesResponse
 import com.ruleup.profile.data.dto.MyProfileResponse
 import com.ruleup.profile.data.dto.NicknameCheckRequest
@@ -9,9 +8,9 @@ import com.ruleup.profile.data.dto.NicknameCheckResponse
 import com.ruleup.profile.data.dto.ProfileImageResponse
 import com.ruleup.profile.data.dto.ProfileResponse
 import com.ruleup.profile.data.dto.UpdateProfileRequest
+import com.ruleup.profile.data.dto.UpdateProfileResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.PATCH
@@ -40,11 +39,11 @@ interface ProfileApi {
     @GET("v1/profile")
     suspend fun getProfile(): BaseResponse<ProfileResponse>
 
-    // 4.9 프로필 수정
-    @PATCH("v1/profile")
+    // 구 PATCH v1/profile 은 스테이징이 405 로 막는다 — 현행 명세는 마이페이지 모듈 경로다.
+    @PATCH("v1/users/me/profile")
     suspend fun updateProfile(
         @Body request: UpdateProfileRequest,
-    ): BaseResponse<ProfileResponse>
+    ): BaseResponse<UpdateProfileResponse>
 
     // 프로필 사진 업로드 + 등록. 가입 직후와 프로필 편집이 같이 쓴다(accessToken 필요).
     @Multipart
@@ -52,8 +51,4 @@ interface ProfileApi {
     suspend fun uploadProfileImage(
         @Part image: MultipartBody.Part,
     ): BaseResponse<ProfileImageResponse>
-
-    // 4.11 프로필 사진 제거
-    @DELETE("v1/profile/image")
-    suspend fun deleteProfileImage(): BaseResponse<EmptyData>
 }

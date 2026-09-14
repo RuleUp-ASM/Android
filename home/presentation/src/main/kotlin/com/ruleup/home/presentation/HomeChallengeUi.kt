@@ -3,6 +3,7 @@ package com.ruleup.home.presentation
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.graphics.Color
 import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.designsystem.category.categoryAccentColor
@@ -44,6 +45,8 @@ fun mergeHomeChallenges(
             ?.challenges
             .orEmpty()
             .filter { it.challengeId !in serverIds }
+            // 진행률 스냅샷은 끝난 방도 싣는다 — 거르지 않으면 완주한 방이 「진행 중 · 오늘 시작」으로 뜬다.
+            .filterNot { ChallengeStatus.fromValue(it.status) == ChallengeStatus.COMPLETED }
             .map { it.toHomeUi() }
 
     val coveredIds = serverIds + progressOnlyCards.map { it.challengeId }.toSet()
