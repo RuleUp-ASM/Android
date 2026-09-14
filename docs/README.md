@@ -4,7 +4,7 @@
 
 | 파일 | 무엇 | 원본 |
 |---|---|---|
-| `RuleUp-수동QA-시나리오목록.pdf` | 정책·도메인별 수동 QA 시나리오 타이틀 216개 | `src/manual-qa-titles.html` |
+| `RuleUp-수동QA-시나리오목록.pdf` | 정책·도메인별 수동 QA 시나리오 타이틀 243개 | `src/manual-qa-titles.html` |
 | `RuleUp-관측이벤트와퍼널.pdf` | 관측 이벤트 37종과 퍼널·지표 | `src/observability.html` |
 
 ## 다시 뽑는 법
