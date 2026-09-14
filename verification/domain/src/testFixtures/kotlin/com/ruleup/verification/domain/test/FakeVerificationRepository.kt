@@ -36,6 +36,8 @@ class FakeVerificationRepository(
     private val places: ((String) -> List<Place>)? = null,
     private val submitIntro: ((DeviceIntro) -> SyncPolicy)? = null,
     private val updateScreenApps: ((String, ScreenAppSet) -> ScreenAppsUpdate)? = null,
+    private val submitManual: ((String, String?, String?) -> ManualSubmitResult)? = null,
+    private val cancelManual: ((String) -> Unit)? = null,
 ) : VerificationRepository {
     /** 어떤 메서드가 몇 번 불렸는지. "안 불렀다"도 계약이라 호출 자체를 남긴다. */
     val calls = mutableListOf<String>()
@@ -99,7 +101,8 @@ class FakeVerificationRepository(
 
     override suspend fun acknowledgeResult(verificationId: String): Unit = throw NotImplementedError()
 
-    override suspend fun cancelManual(verificationId: String): Unit = throw NotImplementedError()
+    override suspend fun cancelManual(verificationId: String): Unit =
+        answer("cancelManual") { requireNotNull(cancelManual)(verificationId) }
 
     override suspend fun uploadAppealImage(imageUri: String): String = throw NotImplementedError()
 
@@ -107,7 +110,7 @@ class FakeVerificationRepository(
         challengeId: String,
         targetDate: String?,
         note: String?,
-    ): ManualSubmitResult = throw NotImplementedError()
+    ): ManualSubmitResult = answer("submitManual") { requireNotNull(submitManual)(challengeId, targetDate, note) }
 
     override suspend fun reverseGeocode(
         lat: Double,

@@ -17,3 +17,13 @@ data class ManualSubmitResult(
     // 점수 미반영 표시(`MANUAL_NO_SCORE` 고정). 값이 늘면 그때 enum 으로 올린다.
     val scoreNote: String?,
 )
+
+/**
+ * 수동 인증 메모 제한.
+ *
+ * **서버는 메모를 검증하지 않는다**(명세). 그래서 이건 계약이 아니라 클라이언트가 스스로 거는
+ * 가드다 — 길이를 막지 않으면 붙여넣기 한 번으로 본문 수십 KB 가 그대로 올라간다.
+ */
+object ManualNoteLimits {
+    const val MAX_LENGTH = 200
+}
