@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.data.auth.repository
 
 import com.ruleup.domain.token.RefreshedSession
+import com.ruleup.domain.token.TokenRefresher
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
@@ -8,13 +9,11 @@ import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.auth.dto.LogoutRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
-import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
 import com.ruleup.onboarding.data.auth.dto.toAuthFailure
 import com.ruleup.onboarding.data.auth.dto.toAuthSession
 import com.ruleup.onboarding.data.auth.dto.toDomain
 import com.ruleup.onboarding.data.auth.dto.toOAuthResult
-import com.ruleup.onboarding.data.auth.dto.toRefreshedSession
 import com.ruleup.onboarding.data.auth.dto.toRequest
 import com.ruleup.onboarding.data.device.DeviceInfoProvider
 import com.ruleup.onboarding.domain.auth.entity.AuthException
@@ -36,6 +35,7 @@ class AuthRepositoryImpl
     constructor(
         private val api: AuthApi,
         private val deviceInfoProvider: DeviceInfoProvider,
+        private val tokenRefresher: TokenRefresher,
     ) : AuthRepository {
         override suspend fun exchangeToken(
             authorization: OAuthAuthorization,
@@ -83,11 +83,10 @@ class AuthRepositoryImpl
                     .toAuthSession()
             }
 
+        // 콜드스타트 자동로그인도 Authenticator 와 같은 갱신기를 거쳐야 같은 토큰으로 두 번 보내지 않는다.
         override suspend fun refreshToken(refreshToken: String): RefreshedSession =
-            api
-                .refreshToken(TokenRefreshRequest(refreshToken = refreshToken))
-                .getOrThrow()
-                .toRefreshedSession()
+            tokenRefresher.refresh(refreshToken)
+                ?: throw ApiException(code = "SESSION_EXPIRED", message = "세션이 만료되었습니다.")
 
         override suspend fun logout(refreshToken: String) {
             api.logout(LogoutRequest(refreshToken = refreshToken)).throwOnError()
