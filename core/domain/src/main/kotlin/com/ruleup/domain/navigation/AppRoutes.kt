@@ -66,5 +66,6 @@ object AppRoutes {
 
     // verification
     const val VERIFICATION_PERMISSION_REPAIR = "verification/permission-repair" // 진입점 (권한 회수 복구)
+    const val VERIFICATION_MANUAL = "verification/manual" // 진입점 (수동 방 → 오늘 인증 체크)
     const val VERIFICATION_LOCATION = "verification/location" // 진입점 (지도 핀 → 지오펜스 좌표 바인딩)
 }

@@ -102,11 +102,13 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** 권한 재연결 화면으로 — 인증에 필요한 권한이 끊겼을 때. */
     data object OpenPermissionRepair : ChallengeDetailIntent
 
-    /** 수동 방 오늘 인증 체크(명세 POST /challenges/{id}/verifications). */
-    data object SubmitManualCheck : ChallengeDetailIntent
-
-    /** 수동 체크 해제(명세 DELETE /verifications/{id}). 당일 안에서만 된다. */
-    data object CancelManualCheck : ChallengeDetailIntent
+    /**
+     * 수동 인증 화면으로. 체크·해제·메모를 거기서 한다.
+     *
+     * 상세 안에서 바로 제출하지 않는 이유는 **메모** 다 — 요청에 실을 수 있는데 상세에는 그것을
+     * 적을 자리가 없었다. 솔로도 같은 화면을 쓴다.
+     */
+    data object OpenManualCheck : ChallengeDetailIntent
 
     /**
      * 권한 현황 재조회. 화면 진입·설정에서 복귀할 때마다 부른다 — 권한 상태는 저장하지 않고
@@ -302,8 +304,6 @@ data class ChallengeDetailState(
     val appealReasonError: String? = null,
     // 지금 이 기기의 권한 현황. 런타임 권한만이 아니라 사용정보 접근·Health Connect 까지 포함한다.
     val permissions: PermissionSnapshot? = null,
-    // 수동 체크 제출·해제 진행 중(중복 탭 차단).
-    val isManualChecking: Boolean = false,
     // 방장 클레임 요청 중(버튼 중복 탭 방지). 선착순이라 두 번 눌러도 한 번만 나간다.
     val isClaimingOwner: Boolean = false,
     // 이의 제출 중(중복 탭 방지).
@@ -527,10 +527,6 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     ) : ChallengeDetailReducerEvent
 
     data object AppealReset : ChallengeDetailReducerEvent
-
-    data class ManualChecking(
-        val checking: Boolean,
-    ) : ChallengeDetailReducerEvent
 
     data class PermissionsCaptured(
         val permissions: PermissionSnapshot,

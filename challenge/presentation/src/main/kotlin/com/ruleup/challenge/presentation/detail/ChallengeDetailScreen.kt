@@ -96,6 +96,7 @@ import com.ruleup.ui.permission.healthReadPermissions
 import com.ruleup.ui.permission.rememberHealthPermissionLauncher
 import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
+import com.ruleup.verification.domain.entity.TodayResultStatus
 import kotlinx.coroutines.launch
 
 /**
@@ -545,13 +546,9 @@ private fun RoomDetailTabs(
                     },
                     onDismissAppeal = { onIntent(ChallengeDetailIntent.DismissAppeal) },
                     // 수동 방에서만 체크 CTA 를 넘긴다 — 자동 방의 실패 구제는 이의 제기가 담당한다.
-                    onManualCheck =
-                        { onIntent(ChallengeDetailIntent.SubmitManualCheck) }
-                            .takeIf { state.setup?.manual == true },
-                    onManualUncheck =
-                        { onIntent(ChallengeDetailIntent.CancelManualCheck) }
-                            .takeIf { state.setup?.manual == true && state.todayResult?.verificationId != null },
-                    isManualChecking = state.isManualChecking,
+                    onOpenManualCheck =
+                        { onIntent(ChallengeDetailIntent.OpenManualCheck) }
+                            .takeIf { detail.manualCheckable },
                     extraSections = {
                         // 상태를 모르면 그리지 않는다 — 「켜짐」으로 보이면 껐다고 믿은 방에서
                         // 푸시가 계속 온다.
@@ -696,6 +693,14 @@ private fun PublicDetailBody(
     ) {
         DetailHero(detail)
         DetailInfoCard(detail)
+        // 솔로 수동 방의 유일한 인증 동선. 그룹은 방 정보 탭이 같은 화면으로 보낸다 —
+        // 솔로는 방 홈을 받지 못해 여기 없으면 오늘 인증을 할 방법이 아예 없다.
+        if (detail.manualCheckable) {
+            ManualCheckCard(
+                checked = state.todayResult?.status == TodayResultStatus.DONE,
+                onClick = { onIntent(ChallengeDetailIntent.OpenManualCheck) },
+            )
+        }
         // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
         val myWatchers = state.watchers
         if (myWatchers != null) {
@@ -706,6 +711,34 @@ private fun PublicDetailBody(
                 onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
             )
         }
+    }
+}
+
+/** 솔로 수동 방의 오늘 인증 진입 카드. 체크 여부만 말하고, 실제 체크는 수동 인증 화면이 한다. */
+@Composable
+private fun ManualCheckCard(
+    checked: Boolean,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(RuleUpTheme.colors.surface)
+                .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = if (checked) "오늘 인증을 마쳤어요" else "오늘 인증이 아직 남았어요",
+            color = RuleUpTheme.colors.textPrimary,
+            style = RuleUpTheme.typography.cardTitle,
+        )
+        RuleUpPrimaryButton(
+            text = if (checked) "인증 수정" else "오늘 인증 체크",
+            onClick = onClick,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
