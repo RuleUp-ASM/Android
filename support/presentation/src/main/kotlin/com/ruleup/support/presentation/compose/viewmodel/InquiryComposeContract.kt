@@ -9,6 +9,16 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface InquiryComposeIntent : MviIntent {
+    /**
+     * 화면 진입. **분류를 여기로 받는다** — 이 내비게이션은 `SavedStateHandle` 을 채우지 않아
+     * ViewModel 이 라우트 인자를 직접 읽을 수 없다.
+     *
+     * 이미 쓰던 본문은 지우지 않는다 — 같은 분류로 다시 들어오는 재구성에서 입력이 날아간다.
+     */
+    data class Load(
+        val category: InquiryCategory,
+    ) : InquiryComposeIntent
+
     data object Back : InquiryComposeIntent
 
     /** 분류를 고르러 되돌아간다. 화면 안에서 바꾸지 않는 이유는 [InquiryComposeState] KDoc 참고. */
@@ -85,6 +95,9 @@ data class InquiryComposeState(
         get() = attachments.size < InquiryLimits.IMAGE_MAX_COUNT
 
     companion object {
+        // 분류는 진입 직후 Load 가 채운다. 그 전까지의 기본값은 화면에 뜨지 않는다.
+        val initial = initial(InquiryCategory.ERROR_ETC)
+
         fun initial(category: InquiryCategory) =
             InquiryComposeState(
                 category = category,
@@ -98,6 +111,10 @@ data class InquiryComposeState(
 }
 
 sealed interface InquiryComposeReducerEvent : ReducerEvent {
+    data class CategoryLoaded(
+        val category: InquiryCategory,
+    ) : InquiryComposeReducerEvent
+
     data class BodyEdited(
         val value: String,
     ) : InquiryComposeReducerEvent

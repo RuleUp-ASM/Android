@@ -1,13 +1,11 @@
 package com.ruleup.support.presentation.detail.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.fake.FakeInquiryRepository
 import com.ruleup.support.domain.fake.inquiryDetail
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
-import com.ruleup.support.domain.navigation.InquiryDetailPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -24,6 +22,11 @@ import kotlin.test.assertTrue
 /**
  * 문의 상세. 열람 전용이라 보낼 요청이 조회 하나뿐이고, **남의 문의와 없는 문의를 같은 문구로**
  * 말해야 한다 — 구분해 주면 그 번호의 문의가 존재한다는 사실이 새어 나간다.
+ *
+ * 인자는 `Load` 인텐트로 받는다. 예전에는 `SavedStateHandle` 에서 읽었고 이 테스트가 그 핸들을
+ * 직접 채워 줬는데, **실제 내비게이션은 채우지 않아** 화면이 늘 "찾을 수 없는 문의예요" 를
+ * 보여줬다(#449). 테스트가 통과하면서 버그가 살아 있던 이유가 그것이라, 이제 화면이 쓰는 것과
+ * 같은 경로로만 인자를 준다.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class InquiryDetailViewModelTest {
@@ -37,9 +40,9 @@ class InquiryDetailViewModelTest {
     fun `라우트 인자의 문의를 조회한다`() =
         runTest {
             val repo = FakeInquiryRepository(detail = { inquiryDetail(inquiryId = it) })
-            val viewModel = viewModel(repo, inquiryId = "abc-123")
+            val viewModel = viewModel(repo)
 
-            viewModel.onIntent(InquiryDetailIntent.Load)
+            viewModel.onIntent(InquiryDetailIntent.Load("abc-123"))
 
             assertEquals(listOf("abc-123"), repo.openedIds)
             assertEquals(
@@ -54,9 +57,9 @@ class InquiryDetailViewModelTest {
         runTest {
             // 빈 id 로 조회해 봐야 404 다. 왕복 한 번을 아끼고 같은 문구를 바로 보여 준다.
             val repo = FakeInquiryRepository(detail = { error("불려서는 안 된다") })
-            val viewModel = viewModel(repo, handle = SavedStateHandle())
+            val viewModel = viewModel(repo)
 
-            viewModel.onIntent(InquiryDetailIntent.Load)
+            viewModel.onIntent(InquiryDetailIntent.Load(""))
 
             assertTrue(repo.calls.isEmpty())
             assertEquals("찾을 수 없는 문의예요", viewModel.uiState.value.errorMessage)
@@ -71,7 +74,7 @@ class InquiryDetailViewModelTest {
                 )
             val viewModel = viewModel(repo)
 
-            viewModel.onIntent(InquiryDetailIntent.Load)
+            viewModel.onIntent(InquiryDetailIntent.Load(INQUIRY_ID))
 
             assertEquals("찾을 수 없는 문의예요", viewModel.uiState.value.errorMessage)
             assertNull(viewModel.uiState.value.detail)
@@ -89,14 +92,38 @@ class InquiryDetailViewModelTest {
             assertEquals(InquiryCategoryPage, nav.pages.single())
         }
 
+    @Test
+    fun `재시도는 직전에 열었던 문의를 다시 부른다`() =
+        runTest {
+            // 인자를 상태에 담아 두지 않으면 재시도가 빈 id 로 나가 같은 화면에 갇힌다.
+            var fail = true
+            val repo =
+                FakeInquiryRepository(
+                    detail = { if (fail) error("일시 실패") else inquiryDetail(inquiryId = it) },
+                )
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(InquiryDetailIntent.Load("abc-123"))
+
+            fail = false
+            viewModel.onIntent(InquiryDetailIntent.Retry)
+
+            assertEquals(listOf("abc-123", "abc-123"), repo.openedIds)
+            assertEquals(
+                "abc-123",
+                viewModel.uiState.value.detail
+                    ?.inquiryId,
+            )
+        }
+
     private fun viewModel(
         repo: FakeInquiryRepository = FakeInquiryRepository(detail = { inquiryDetail() }),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-        inquiryId: String = "3d6ad414-5fb6-81aa-8d11-ca6ffd272529",
-        handle: SavedStateHandle = SavedStateHandle(mapOf(InquiryDetailPage.ARG_INQUIRY_ID to inquiryId)),
     ) = InquiryDetailViewModel(
-        savedStateHandle = handle,
         inquiryRepository = repo,
         navigationHelper = nav,
     )
+
+    private companion object {
+        const val INQUIRY_ID = "3d6ad414-5fb6-81aa-8d11-ca6ffd272529"
+    }
 }

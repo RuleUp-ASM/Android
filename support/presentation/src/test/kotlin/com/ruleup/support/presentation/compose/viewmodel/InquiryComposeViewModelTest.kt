@@ -1,6 +1,5 @@
 package com.ruleup.support.presentation.compose.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.support.domain.entity.InquiryCategory
 import com.ruleup.support.domain.entity.InquiryException
@@ -8,7 +7,6 @@ import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.entity.InquiryReceipt
 import com.ruleup.support.domain.entity.InquiryStatus
 import com.ruleup.support.domain.fake.FakeInquiryRepository
-import com.ruleup.support.domain.navigation.InquiryComposePage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -161,12 +159,27 @@ class InquiryComposeViewModelTest {
         }
 
     @Test
-    fun `분류 인자가 없으면 기타로 연다`() =
+    fun `고른 분류가 화면에 그대로 남는다`() =
         runTest {
-            // 분류 없이 보내면 서버가 400 으로 막는다. 폼을 띄우되 보낼 수 있는 값이어야 한다.
-            val viewModel = viewModel(handle = SavedStateHandle())
+            // 인자가 화면까지 오지 않던 동안 어떤 분류를 골라도 기타로 떨어졌다(#449).
+            val viewModel = viewModel()
 
-            assertEquals(InquiryCategory.ERROR_ETC, viewModel.uiState.value.category)
+            viewModel.onIntent(InquiryComposeIntent.Load(InquiryCategory.DEVICE_PERMISSION))
+
+            assertEquals(InquiryCategory.DEVICE_PERMISSION, viewModel.uiState.value.category)
+        }
+
+    @Test
+    fun `분류가 다시 도착해도 쓰던 본문은 지우지 않는다`() =
+        runTest {
+            // 같은 화면이 재구성될 때마다 입력이 날아가면 긴 문의를 쓸 수 없다.
+            val viewModel = viewModel()
+            viewModel.onIntent(InquiryComposeIntent.Load(InquiryCategory.VERIFICATION))
+            viewModel.onIntent(InquiryComposeIntent.BodyChanged("기상 인증이 실패로 떴어요"))
+
+            viewModel.onIntent(InquiryComposeIntent.Load(InquiryCategory.VERIFICATION))
+
+            assertEquals("기상 인증이 실패로 떴어요", viewModel.uiState.value.body)
         }
 
     @Test
@@ -209,16 +222,18 @@ class InquiryComposeViewModelTest {
             assertTrue(nav.backCount > 0)
         }
 
+    /**
+     * 화면이 쓰는 것과 같은 경로로만 분류를 준다 — 예전에는 `SavedStateHandle` 을 테스트가 직접
+     * 채워 줬고, 실제 내비게이션은 채우지 않아 버그가 통과한 테스트 뒤에 살아 있었다(#449).
+     */
     private fun viewModel(
         repo: FakeInquiryRepository = FakeInquiryRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         category: InquiryCategory = InquiryCategory.VERIFICATION,
-        handle: SavedStateHandle = SavedStateHandle(mapOf(InquiryComposePage.ARG_CATEGORY to category.value)),
     ) = InquiryComposeViewModel(
-        savedStateHandle = handle,
         inquiryRepository = repo,
         navigationHelper = nav,
-    )
+    ).apply { onIntent(InquiryComposeIntent.Load(category)) }
 
     private fun receipt(inquiryId: String = "3d6ad414-5fb6-81aa-8d11-ca6ffd272529") =
         InquiryReceipt(

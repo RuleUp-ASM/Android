@@ -55,12 +55,13 @@ import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailViewModel
  */
 @Composable
 fun InquiryDetailScreen(
+    inquiryId: String,
     modifier: Modifier = Modifier,
     viewModel: InquiryDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) { viewModel.onIntent(InquiryDetailIntent.Load) }
+    LaunchedEffect(inquiryId) { viewModel.onIntent(InquiryDetailIntent.Load(inquiryId)) }
 
     InquiryDetailContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
