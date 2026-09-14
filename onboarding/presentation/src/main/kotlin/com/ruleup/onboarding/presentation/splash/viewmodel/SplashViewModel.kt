@@ -7,7 +7,6 @@ import com.ruleup.domain.navigation.PendingDeepLinkEntry
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
-import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.intro.usecase.IntroGate
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
@@ -98,10 +97,9 @@ class SplashViewModel
                 // 딥링크는 부모 화면까지 함께 깔아야 뒤로가기가 자연스럽다(공지 상세 → 방 홈 → 홈).
                 is PendingDeepLinkEntry.Open -> navigationHelper.replaceStackWith(pending.route)
 
-                is PendingDeepLinkEntry.Dropped -> {
-                    // 초대 링크로 유입된 신규 사용자가 여기 걸린다. 가입을 마쳐도 목적지로 돌아가지
-                    // 않으므로, 잃어버린 진입을 집계해 이어가기 필요성을 판단할 근거를 남긴다.
-                    observability.w(TAG) { "인증 전이라 딥링크 유실: path=${pending.route.path}" }
+                // 목적지는 보관된 채 남는다 — 로그인·가입을 마치면 그 화면이 연다.
+                is PendingDeepLinkEntry.Deferred -> {
+                    observability.i(TAG) { "인증 전 딥링크 보류: path=${pending.route.path}" }
                     navigationHelper.navigateTo(LoginPage)
                 }
 

@@ -14,13 +14,8 @@ sealed interface PendingDeepLinkEntry {
         val route: NavRoute,
     ) : PendingDeepLinkEntry
 
-    /**
-     * 로그인이 필요한 화면인데 아직 미인증이라 목적지를 버린다.
-     *
-     * 초대 링크로 유입된 신규 사용자가 여기 걸린다 — 가입을 마쳐도 목적지로 돌아가지 않는다.
-     * 버려진 목적지를 결과에 실어 두면 호출부가 집계해 이어가기 필요성을 판단할 수 있다.
-     */
-    data class Dropped(
+    /** 로그인이 필요한 화면인데 아직 미인증이다. 목적지는 보관한 채로 두고 [PendingDeepLink.consumeAfterLogin] 이 연다. */
+    data class Deferred(
         val route: NavRoute,
     ) : PendingDeepLinkEntry
 }
@@ -52,20 +47,19 @@ class PendingDeepLink
         /**
          * 인증 상태에 비추어 지금 열어도 되는 목적지인지까지 판정해 꺼낸다.
          *
-         * 미인증이면 버리는 게 기본이다 — 세션 없이 목적지를 띄우면 API 가 401 을 받고 사용자는
-         * 목적지가 아니라 로그인 화면을 보게 된다. 다만 로그인이 필요 없는 화면이면 그대로 연다.
-         *
-         * 버려질 때도 꺼낸다. 남겨 두면 다음 진입에서 사용자가 열지도 않은 링크로 이동한다.
+         * 미인증이면 목적지를 열지 않고 보관한다 — 세션 없이 띄우면 API 가 401 을 받는다. 초대 링크로 온
+         * 사용자는 로그인·가입을 마친 뒤 [consumeAfterLogin] 으로 그 목적지에 도착한다.
          */
         fun consumeFor(
             authenticated: Boolean,
             policy: RouteAccessPolicy,
         ): PendingDeepLinkEntry {
-            val route = pending.getAndSet(null) ?: return PendingDeepLinkEntry.None
-            return if (authenticated || !policy.requiresLogin(route.path)) {
-                PendingDeepLinkEntry.Open(route)
-            } else {
-                PendingDeepLinkEntry.Dropped(route)
-            }
+            val route = pending.get() ?: return PendingDeepLinkEntry.None
+            if (!authenticated && policy.requiresLogin(route.path)) return PendingDeepLinkEntry.Deferred(route)
+            pending.compareAndSet(route, null)
+            return PendingDeepLinkEntry.Open(route)
         }
+
+        /** 로그인·가입 완료 직후 보관해 둔 목적지를 한 번 꺼낸다. 없으면 null — 평소처럼 홈으로 간다. */
+        fun consumeAfterLogin(): NavRoute? = pending.getAndSet(null)
     }

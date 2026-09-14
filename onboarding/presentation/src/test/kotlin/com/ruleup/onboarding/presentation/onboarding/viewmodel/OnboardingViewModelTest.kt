@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.presentation.onboarding.viewmodel
 
 import com.ruleup.domain.entity.user.Gender
+import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.observability.domain.test.testObservability
@@ -153,6 +154,7 @@ class OnboardingViewModelTest {
             signupTimer = SignupTimer(),
             observability = testObservability(),
             navigationHelper = nav,
+            pendingDeepLink = PendingDeepLink(),
         )
     }
 }

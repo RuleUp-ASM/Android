@@ -3,7 +3,9 @@ package com.ruleup.onboarding.presentation.intro.viewmodel
 import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
+import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.test.RecordingMessageHelper
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.observability.domain.test.testObservability
@@ -62,6 +64,20 @@ class LoginViewModelTest {
             viewModel.onIntent(LoginIntent.AuthorizationReceived(authorization))
 
             assertEquals(listOf<Page>(HomePage), nav.pages)
+        }
+
+    @Test
+    fun `로그인 전에 받은 초대 링크가 있으면 홈 대신 그 목적지로 보낸다`() =
+        runTest {
+            // 가입·로그인을 마쳐도 목적지로 못 가면 초대 링크가 끊긴다(NAV-03).
+            val nav = RecordingNavigationHelper()
+            val pending = PendingDeepLink().apply { set(NavRoute("challenge/watcher/accept", mapOf("token" to "t1"))) }
+            val viewModel = viewModel(existingUser(), nav = nav, pendingDeepLink = pending)
+
+            viewModel.onIntent(LoginIntent.AuthorizationReceived(authorization))
+
+            assertEquals("challenge/watcher/accept", nav.replaced.single().path)
+            assertTrue(nav.pages.isEmpty())
         }
 
     @Test
@@ -180,6 +196,7 @@ class LoginViewModelTest {
         messages: RecordingMessageHelper = RecordingMessageHelper(),
         signupSession: SignupSession = SignupSession(),
         tokens: FakeTokenRepository = FakeTokenRepository(),
+        pendingDeepLink: PendingDeepLink = PendingDeepLink(),
     ) = LoginViewModel(
         socialLoginUseCase = SocialLoginUseCase(auth, FakeDeviceIdentityRepository(), tokens, testObservability()),
         navigationHelper = nav,
@@ -188,5 +205,6 @@ class LoginViewModelTest {
         signupTimer = SignupTimer(),
         tokenRepository = tokens,
         signupSession = signupSession,
+        pendingDeepLink = pendingDeepLink,
     )
 }

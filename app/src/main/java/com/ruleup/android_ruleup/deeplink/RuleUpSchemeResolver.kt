@@ -47,7 +47,8 @@ class RuleUpSchemeResolver
 
                 "notifications" -> NavRoute(AppRoutes.NOTIFICATIONS)
 
-                "challenge" -> challengeRoute(rest)
+                // 권한 재허용 알림은 복수형 challenges/{id}/setup 으로 온다 — 설정·권한 배너가 있는 방 상세로 보낸다.
+                "challenge", "challenges" -> challengeRoute(rest)
 
                 "verification" ->
                     // 폐기된 링크다. `VERIFICATION_RESULT` 는 2026-09-07 개정으로
