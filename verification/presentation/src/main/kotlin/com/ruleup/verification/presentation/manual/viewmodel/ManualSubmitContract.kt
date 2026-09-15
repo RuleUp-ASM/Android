@@ -47,7 +47,7 @@ data class ManualSubmitState(
     val isSubmitting: Boolean,
     val errorMessage: String?,
 ) : UiState {
-    /** 오늘 체크가 끝났는가. 확정 상태만 본다 — 검사중·진행중은 아직 체크 전이다. */
+    /** 오늘 체크가 끝났는가. 확정 상태만 본다 — 실패 예정·진행중은 아직 체크 전이다. */
     val checked: Boolean
         get() = status == TodayResultStatus.DONE
 

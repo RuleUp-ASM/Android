@@ -16,9 +16,8 @@ data class RoomUser(
 /**
  * 내 오늘 인증 상태 (명세 `myTodayStatus`).
  *
- * room 명세의 예시에는 [DONE]·[CHECKING]·[NOT_TARGET] 만 나오지만, 같은 사실을 내려주는
- * `GET /challenges/{id}/verifications/today` 의 `status` 는 [IN_PROGRESS]·[FAILED] 를 포함한 5종이다.
- * 어휘가 같으므로 5종을 모두 받아 둔다 — 서버가 안 보내면 아무 일도 없고, 보내면 정상 표기된다.
+ * `GET /challenges/{id}/verifications/today` 의 `status` 와 같은 5종이다. 구 `CHECKING` 은 폐기됐고,
+ * 그 자리의 [FAIL_EXPECTED] 가 이의 신청 창이다.
  *
  * 그래도 앱이 모르는 값은 [fromValue] 가 null 을 돌려주고 화면이 상태 표기를 생략한다 — 임의로
  * 실패·성공 어느 쪽으로도 접지 않는다.
@@ -29,8 +28,8 @@ enum class TodayVerificationStatus(
     // 인증 창이 아직 열려 있음
     IN_PROGRESS("IN_PROGRESS"),
 
-    // 귀속일은 끝났고 확정 전 — 늦게 오는 신호를 받는 유예 구간이라 성공·실패 양쪽으로 열려 있다
-    CHECKING("CHECKING"),
+    // 이대로면 실패 — 확정 전이라 늦은 신호로 뒤집힐 수 있고 이의를 낼 수 있다
+    FAIL_EXPECTED("FAIL_EXPECTED"),
 
     // 오늘 인증 완료
     DONE("DONE"),
@@ -42,7 +41,7 @@ enum class TodayVerificationStatus(
     NOT_TARGET("NOT_TARGET"),
     ;
 
-    /** 실패로 확정됐는가. 재평가 중·진행 중은 아직 실패가 아니다. */
+    /** 실패로 확정됐는가. 실패 예정·진행 중은 아직 실패가 아니다. */
     val isFailure: Boolean
         get() = this == FAILED
 

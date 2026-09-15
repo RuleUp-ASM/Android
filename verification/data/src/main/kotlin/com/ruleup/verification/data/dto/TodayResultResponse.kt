@@ -2,6 +2,7 @@ package com.ruleup.verification.data.dto
 
 import com.ruleup.verification.domain.entity.AppealChance
 import com.ruleup.verification.domain.entity.FailureReason
+import com.ruleup.verification.domain.entity.PendingReason
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import com.ruleup.verification.domain.entity.UnacknowledgedResult
@@ -29,7 +30,7 @@ data class UnacknowledgedResultResponse(
 
 @Serializable
 data class AppealChanceResponse(
-    // 실패 확정 후 1일 (인증 정책 §5.2)
+    // 귀속일+2일 00:00 KST — 최종 확정 시각과 같다
     @SerialName("eligibleUntil")
     val eligibleUntil: String? = null,
     @SerialName("eligible")
@@ -56,9 +57,14 @@ data class TodayResultResponse(
     val streak: StreakResponse? = null,
     @SerialName("unacknowledgedResult")
     val unacknowledgedResult: UnacknowledgedResultResponse? = null,
-    // FAILED 일 때만 내려온다
+    // FAILED·FAIL_EXPECTED 에서 내려온다
     @SerialName("appeal")
     val appeal: AppealChanceResponse? = null,
+    // 판정 불가 사유 PERMISSION_MISSING / NO_SIGNAL
+    @SerialName("pendingReason")
+    val pendingReason: String? = null,
+    @SerialName("evidenceSummary")
+    val evidenceSummary: String? = null,
 )
 
 internal fun TodayResultResponse.toDomain(): TodayResult =
@@ -87,6 +93,8 @@ internal fun TodayResultResponse.toDomain(): TodayResult =
                     eligible = it.eligible ?: true,
                 )
             },
+        pendingReason = PendingReason.fromValue(pendingReason),
+        evidenceSummary = evidenceSummary?.takeIf { it.isNotBlank() },
     )
 
 // ---------- 판정 결과 확인 (POST /verifications/{verificationId}/ack) ----------

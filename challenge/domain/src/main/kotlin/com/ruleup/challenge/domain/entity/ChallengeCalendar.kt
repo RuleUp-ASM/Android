@@ -16,7 +16,7 @@ enum class ChallengeDayStatus(
     FAILED("FAILED"),
 
     // 귀속일은 지났고 확정 전 — 유예 창. 화면은 "실패 예정"으로 말한다
-    CHECKING("CHECKING"),
+    FAIL_EXPECTED("FAIL_EXPECTED"),
 
     // 오늘. 아직 판정되지 않았다
     IN_PROGRESS("IN_PROGRESS"),

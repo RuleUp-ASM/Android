@@ -15,7 +15,7 @@ class ChallengeDayStatusTest {
     fun `명세의 4종만 정의돼 있고 서버 값과 이름이 같다`() {
         // /me/calendar 의 ALL_DONE·PARTIAL 이 섞여 들어오면 한 방으로 좁힌 뜻이 무너진다.
         assertEquals(
-            listOf("DONE", "FAILED", "CHECKING", "IN_PROGRESS"),
+            listOf("DONE", "FAILED", "FAIL_EXPECTED", "IN_PROGRESS"),
             ChallengeDayStatus.entries.map { it.value },
         )
     }
@@ -30,7 +30,7 @@ class ChallengeDayStatusTest {
     @Test
     fun `유예 창은 확정된 실패가 아니다`() {
         // 아직 뒤집힐 수 있다(인증 정책 2-1). 확정 실패와 같아 보이면 이의를 포기하게 된다.
-        assertFalse(ChallengeDayStatus.CHECKING.isSettledFailure)
+        assertFalse(ChallengeDayStatus.FAIL_EXPECTED.isSettledFailure)
         assertTrue(ChallengeDayStatus.FAILED.isSettledFailure)
     }
 }

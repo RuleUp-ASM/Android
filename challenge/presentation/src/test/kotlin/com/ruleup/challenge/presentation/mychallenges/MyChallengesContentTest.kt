@@ -158,7 +158,7 @@ class MyChallengesContentTest {
                     targetDays = 14,
                     remainingDays = remainingDays,
                     todayTarget = true,
-                    todayStatus = TodayStatus.PENDING,
+                    todayStatus = TodayStatus.IN_PROGRESS,
                     lastSyncedAt = null,
                 ),
             ),

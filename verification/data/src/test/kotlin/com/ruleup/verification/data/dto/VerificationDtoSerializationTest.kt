@@ -4,6 +4,7 @@ import com.ruleup.verification.domain.entity.CoverageWindow
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
+import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTransitionEvent
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
@@ -11,13 +12,14 @@ import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.HealthReading
 import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.NetworkState
+import com.ruleup.verification.domain.entity.PendingReason
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.RecordingMethod
 import com.ruleup.verification.domain.entity.SignalBatch
 import com.ruleup.verification.domain.entity.SignalGap
 import com.ruleup.verification.domain.entity.SleepSession
-import com.ruleup.verification.domain.entity.TodayStatus
+import com.ruleup.verification.domain.entity.TodayResultStatus
 import com.ruleup.verification.domain.entity.VerificationSignal
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -319,7 +321,36 @@ class VerificationDtoSerializationTest {
     }
 
     @Test
-    fun `진행률 응답의 미인식 todayStatus 는 PENDING 으로 떨어진다`() {
+    fun `실패 예정인 오늘 결과는 사유·근거·이의 창을 함께 읽는다`() {
+        // 이의 창이 실패 예정이라, 여기서 사유와 근거를 버리면 사용자가 신청할지 판단할 수 없다.
+        val payload =
+            """
+            {"date":"2026-07-25","status":"FAIL_EXPECTED","pendingReason":null,
+             "failureReason":"WOKE_UP_LATE","evidenceSummary":"첫 잠금 해제 07:24 / 목표 07:00 이전",
+             "appeal":{"eligibleUntil":"2026-07-27T00:00:00+09:00","eligible":true}}
+            """.trimIndent()
+
+        val today = json.decodeFromString<TodayResultResponse>(payload).toDomain()
+
+        assertEquals(TodayResultStatus.FAIL_EXPECTED, today.status)
+        assertEquals(FailureReason.WOKE_UP_LATE, today.failureReason)
+        assertEquals("첫 잠금 해제 07:24 / 목표 07:00 이전", today.evidenceSummary)
+        assertEquals(true, today.appeal?.eligible)
+        assertNull(today.pendingReason)
+    }
+
+    @Test
+    fun `판정 불가 사유는 권한과 신호 없음을 가르고 모르는 값은 비운다`() {
+        // 모르는 사유를 권한 문제로 접으면 멀쩡한 사용자를 권한 화면으로 보낸다.
+        val permission = json.decodeFromString<TodayResultResponse>("""{"pendingReason":"PERMISSION_MISSING"}""").toDomain()
+        val unknown = json.decodeFromString<TodayResultResponse>("""{"pendingReason":"WAITING_SIGNAL"}""").toDomain()
+
+        assertEquals(PendingReason.PERMISSION_MISSING, permission.pendingReason)
+        assertNull(unknown.pendingReason)
+    }
+
+    @Test
+    fun `진행률 응답의 미인식 todayStatus 는 어떤 상태로도 접지 않는다`() {
         val payload =
             """
             {
@@ -335,8 +366,8 @@ class VerificationDtoSerializationTest {
         val challenge = snapshot.challenges.single()
         assertEquals("c-1", challenge.challengeId)
         assertEquals(42.5, challenge.progressRate)
-        // 미인식 값은 보수적으로 PENDING(진행 중) — 실패로 표시 금지(명세 §6.4).
-        assertEquals(TodayStatus.PENDING, challenge.todayStatus)
+        // 진행 중으로 접으면 서버가 상태를 늘렸을 뿐인데 완료한 날이 진행 중으로 보인다.
+        assertNull(challenge.todayStatus)
     }
 
     @Test

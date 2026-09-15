@@ -35,7 +35,7 @@ import java.time.format.DateTimeParseException
  * **판정 대상일만 색을 갖는다.** 주 3회 방이면 한 달에 12~13칸만 응답에 오고 나머지는 빈 날짜다 —
  * 없는 날을 실패로 칠하면 사용자가 쉬는 날에 실패했다고 읽는다.
  *
- * 유예 창(`CHECKING`)을 실패와 다른 색으로 그린다. 그 구간은 아직 뒤집힐 수 있고(인증 정책
+ * 유예 창(`FAIL_EXPECTED`)을 실패와 다른 색으로 그린다. 그 구간은 아직 뒤집힐 수 있고(인증 정책
  * §2.1), 확정 실패와 같아 보이면 이의를 낼 수 있는데도 포기하게 된다.
  *
  * 그룹 방에서는 그리지 않는다 — 같은 자리를 랭킹·피드가 쓴다.
@@ -193,7 +193,7 @@ private fun StatusLegend() {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         LegendItem(label = "완료", status = ChallengeDayStatus.DONE)
-        LegendItem(label = "실패 예정", status = ChallengeDayStatus.CHECKING)
+        LegendItem(label = "실패 예정", status = ChallengeDayStatus.FAIL_EXPECTED)
         LegendItem(label = "실패", status = ChallengeDayStatus.FAILED)
     }
 }
@@ -231,7 +231,7 @@ private val ChallengeDayStatus?.fillColor: Color?
         when (this) {
             ChallengeDayStatus.DONE -> RuleUpTheme.colors.success
             ChallengeDayStatus.FAILED -> RuleUpTheme.colors.danger
-            ChallengeDayStatus.CHECKING -> RuleUpTheme.colors.warning
+            ChallengeDayStatus.FAIL_EXPECTED -> RuleUpTheme.colors.warning
             ChallengeDayStatus.IN_PROGRESS, null -> null
         }
 

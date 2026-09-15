@@ -24,7 +24,7 @@ class ProgressCacheStoreImpl
                 updated.map {
                     ProgressCacheEntity(
                         challengeId = it.challengeId,
-                        todayStatus = it.todayStatus.name,
+                        todayStatus = it.todayStatus?.name.orEmpty(),
                         progressRate = it.progressRate,
                         updatedAt = now,
                     )

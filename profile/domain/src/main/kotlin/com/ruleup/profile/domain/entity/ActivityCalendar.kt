@@ -13,8 +13,8 @@ enum class CalendarDayStatus(
     PARTIAL("PARTIAL"),
     FAILED("FAILED"),
 
-    // 최종 재평가 중 — 실패가 아니다
-    CHECKING("CHECKING"),
+    // 실패 예정 — 확정 전이라 아직 실패가 아니다. 구 CHECKING 은 폐기됐다
+    FAIL_EXPECTED("FAIL_EXPECTED"),
 
     // 오늘, 아직 판정 전
     IN_PROGRESS("IN_PROGRESS"),
@@ -51,8 +51,8 @@ enum class DayItemStatus(
 ) {
     IN_PROGRESS("IN_PROGRESS"),
 
-    // 최종 재평가 중 — 실패가 아니다
-    CHECKING("CHECKING"),
+    // 실패 예정 — 확정 전이고 이의를 낼 수 있다
+    FAIL_EXPECTED("FAIL_EXPECTED"),
 
     DONE("DONE"),
     FAILED("FAILED"),
@@ -65,7 +65,7 @@ enum class DayItemStatus(
 }
 
 /**
- * 일자 상세의 이의 가능 여부 (명세 items[].appeal — FAILED 일 때만).
+ * 일자 상세의 이의 가능 여부 (명세 items[].appeal — FAILED·FAIL_EXPECTED 에서).
  * `remainingThisMonth`·`LIMIT_EXCEEDED` 는 읽지 않는다 — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2).
  */
 data class DayItemAppeal(

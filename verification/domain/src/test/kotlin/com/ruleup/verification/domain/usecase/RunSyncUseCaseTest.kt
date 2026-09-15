@@ -335,7 +335,7 @@ class RunSyncUseCaseTest {
                 listOf(
                     com.ruleup.verification.domain.entity.UpdatedChallenge(
                         challengeId,
-                        com.ruleup.verification.domain.entity.TodayStatus.SUCCESS,
+                        com.ruleup.verification.domain.entity.TodayStatus.DONE,
                         50.0,
                     ),
                 ),

@@ -150,7 +150,7 @@ class HomeChallengeMergeTest {
         targetDays = 20,
         remainingDays = 16,
         todayTarget = true,
-        todayStatus = TodayStatus.PENDING,
+        todayStatus = TodayStatus.IN_PROGRESS,
         lastSyncedAt = null,
     )
 

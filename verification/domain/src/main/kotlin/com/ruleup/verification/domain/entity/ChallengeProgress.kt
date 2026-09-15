@@ -28,6 +28,7 @@ data class ChallengeProgress(
     val targetDays: Int,
     val remainingDays: Int,
     val todayTarget: Boolean,
-    val todayStatus: TodayStatus,
+    // 모르는 값이면 null
+    val todayStatus: TodayStatus?,
     val lastSyncedAt: String?,
 )
