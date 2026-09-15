@@ -32,10 +32,10 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.component.ConfirmEditSection
 import com.ruleup.challenge.presentation.create.component.ConfirmEditSheet
 import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
-import com.ruleup.challenge.presentation.create.component.capacityLabel
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.designsystem.R

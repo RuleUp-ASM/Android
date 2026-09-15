@@ -43,7 +43,8 @@ data class CreateChallengeState(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    val capacity: Int,
+    // 그룹 정원. null 이면 무제한
+    val capacity: Int?,
     val minTier: Tier?,
     // minTier 슬라이더 상한 = 생성자 표시 티어(초안이 준 기본값). 진입 시점 값으로 고정한다.
     val ownerTierCap: Tier?,

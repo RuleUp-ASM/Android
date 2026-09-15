@@ -48,7 +48,8 @@ data class ChallengeMember(
 data class ChallengeMembers(
     val challengeId: String,
     val participantCount: Int,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     val members: List<ChallengeMember>,
 )
 

@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.presentation.common.CapacitySlider
 import com.ruleup.challenge.presentation.create.ChallengeDates
 import com.ruleup.challenge.presentation.create.label
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
@@ -202,69 +203,6 @@ private fun ModeCapacityEditor(
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-/** 정원 표기. 무제한 단계는 서버 상한값이라 숫자로 보이면 안 된다. */
-internal fun capacityLabel(capacity: Int): String = if (capacity >= ChallengeLimits.CAPACITY_UNLIMITED) "무제한" else "${capacity}명"
-
-/**
- * 정원 단계 슬라이더 (Figma 1134:691). 값이 아니라 단계 인덱스로 움직인다 — 5·30·100·300 은 간격이
- * 고르지 않아 값 축으로 두면 앞 단계가 한쪽에 몰린다. 라벨을 탭해도 고른다.
- */
-@Composable
-private fun CapacitySlider(
-    capacity: Int,
-    onChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val steps = ChallengeLimits.CREATE_CAPACITY_STEPS
-    val index = steps.indexOf(capacity).coerceAtLeast(0)
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.medium)
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("정원", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
-            Text(capacityLabel(capacity), color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.numberS)
-        }
-        Slider(
-            value = index.toFloat(),
-            onValueChange = { onChange(steps[it.roundToInt()]) },
-            valueRange = 0f..steps.lastIndex.toFloat(),
-            // 양 끝을 뺀 내부 눈금 수
-            steps = steps.size - 2,
-            colors =
-                SliderDefaults.colors(
-                    thumbColor = RuleUpTheme.colors.brand,
-                    activeTrackColor = RuleUpTheme.colors.brand,
-                    inactiveTrackColor = RuleUpTheme.colors.border,
-                    activeTickColor = RuleUpTheme.colors.brandSoft,
-                    inactiveTickColor = RuleUpTheme.colors.borderStrong,
-                ),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            steps.forEach { step ->
-                val selected = step == capacity
-                Text(
-                    text = if (step >= ChallengeLimits.CAPACITY_UNLIMITED) "무제한" else step.toString(),
-                    modifier = Modifier.singleClickable { onChange(step) },
-                    color = if (selected) RuleUpTheme.colors.brand else RuleUpTheme.colors.textMuted,
-                    style = if (selected) RuleUpTheme.typography.smallBold else RuleUpTheme.typography.smallMedium,
-                )
             }
         }
     }

@@ -65,7 +65,7 @@ sealed interface CreateChallengeIntent : MviIntent {
     ) : CreateChallengeIntent
 
     data class SetCapacity(
-        val capacity: Int,
+        val capacity: Int?,
     ) : CreateChallengeIntent
 
     data class SetMinTier(

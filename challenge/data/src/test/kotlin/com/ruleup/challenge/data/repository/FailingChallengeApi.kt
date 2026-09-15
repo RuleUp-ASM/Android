@@ -10,7 +10,6 @@ import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
-import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateChallengeResponse
 import com.ruleup.challenge.data.dto.CrossRankingResponse
 import com.ruleup.challenge.data.dto.DraftRequest
@@ -54,7 +53,7 @@ class FailingChallengeApi(
 
     override suspend fun create(
         idempotencyKey: String,
-        request: CreateChallengeRequest,
+        request: JsonObject,
     ): BaseResponse<CreateChallengeResponse> = failed()
 
     override suspend fun getChallenge(challengeId: String): BaseResponse<ChallengeDetailResponse> = failed()

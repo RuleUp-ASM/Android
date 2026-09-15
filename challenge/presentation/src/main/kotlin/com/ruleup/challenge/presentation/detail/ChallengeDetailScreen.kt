@@ -53,6 +53,7 @@ import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
@@ -798,7 +799,7 @@ private fun DetailInfoCard(detail: ChallengeDetail) {
 
     RuleUpCard {
         InfoRow(label = "기간", value = "${detail.period.start} ~ ${detail.period.end}")
-        InfoRow(label = "정원", value = "${detail.participantCount} / ${detail.capacity}명")
+        InfoRow(label = "정원", value = "${detail.participantCount} / ${capacityLabel(detail.capacity)}")
         InfoRow(label = "참여 형태", value = participation)
         InfoRow(label = "인증 방식", value = detail.verification.detail ?: method)
     }

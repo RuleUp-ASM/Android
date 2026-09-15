@@ -62,7 +62,8 @@ data class RoomSummary(
     val roomSuccessRate: Double?,
     val remainingDays: Int,
     val participantCount: Int,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
 )
 
 /** 방 홈 랭킹 상위 3 (명세 `topRanking[]`). 전체 랭킹([RankingEntry])보다 필드가 적은 별개 표현이다. */

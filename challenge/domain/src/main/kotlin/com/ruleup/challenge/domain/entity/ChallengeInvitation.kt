@@ -28,7 +28,8 @@ data class InvitedChallenge(
     val imageUrl: String?,
     val category: Category?,
     val participantCount: Int,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     val minTier: Tier?,
     val startDate: String?,
     val endDate: String?,

@@ -219,7 +219,7 @@ internal fun ChallengeSettingsResponse.toDomain(): ChallengeSettings {
                 mode = ChallengeMode.fromValue(config.mode) ?: ChallengeMode.SOLO,
                 visibility = config.visibility?.let(ChallengeVisibility::fromValue),
                 rankingVisible = config.rankingVisible,
-                capacity = config.capacity ?: 0,
+                capacity = config.capacity,
                 minTier = config.minTier?.let(Tier::fromValue),
                 period = config.period.toDomain(),
                 // 서버가 빠뜨리면 7(매일)로 본다 — 0 이면 "아무 날도 안 함"이 돼 화면이 거짓말을 한다.
@@ -354,7 +354,7 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         owner = owner?.let { ChallengeOwner(userId = it.userId.orEmpty(), nickname = it.nickname.orEmpty()) },
         ownerType = OwnerType.fromValue(ownerType),
         participantCount = participantCount ?: 0,
-        capacity = capacity ?: 0,
+        capacity = capacity,
         isFull = isFull ?: false,
         period = period.toDomain(),
         verification = verification.toDomain(),
@@ -450,7 +450,7 @@ internal fun ChallengeMembersResponse.toDomain(): ChallengeMembers =
     ChallengeMembers(
         challengeId = challengeId.requireField("challengeId"),
         participantCount = participantCount ?: 0,
-        capacity = capacity ?: 0,
+        capacity = capacity,
         members = members?.map { it.toDomain() }.orEmpty(),
     )
 
@@ -519,7 +519,7 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         visibility = ChallengeVisibility.fromValue(visibility),
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.UPCOMING,
         participantCount = participantCount ?: 0,
-        capacity = capacity ?: 0,
+        capacity = capacity,
         minTier = minTier?.let(Tier::fromValue),
         // 주간 횟수를 모르면 1 로 둔다 — 0 이면 "판정이 없는 방"처럼 보인다.
         weeklyCount = (weeklyCount ?: 1).coerceIn(1, 7),

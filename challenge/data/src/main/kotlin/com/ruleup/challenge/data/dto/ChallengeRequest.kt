@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 
 /**
@@ -78,6 +79,15 @@ data class CreateChallengeRequest(
     val imageUrl: String? = null,
 )
 
+/**
+ * 생성 요청 본문. 그룹 무제한 정원은 `capacity: null` 을 **명시해** 보낸다 — 공용 Json 이 null 키를 빼 버리면
+ * 서버가 무제한인지 누락인지 가를 수 없다.
+ */
+internal fun CreateChallengeCommand.toRequestBody(): JsonObject {
+    val body = ChallengeJson.encodeToJsonElement(toRequest()).jsonObject
+    return if (mode.isGroup && capacity == null) JsonObject(body + ("capacity" to JsonNull)) else body
+}
+
 internal fun CreateChallengeCommand.toRequest(): CreateChallengeRequest =
     CreateChallengeRequest(
         draftId = draftId,
@@ -122,7 +132,10 @@ internal fun ChallengeUpdate.toRequestBody(): JsonObject =
         mode?.let { put("mode", it.value) }
         visibility?.let { put("visibility", it.value) }
         rankingVisible?.let { put("rankingVisible", it) }
-        capacity?.let { put("capacity", it) }
+        when {
+            unlimitedCapacity -> put("capacity", JsonNull)
+            capacity != null -> put("capacity", capacity)
+        }
         minTier?.let { put("minTier", it.value) }
         period?.let { put("period", ChallengeJson.encodeToJsonElement(it.toDto())) }
         weeklyCount?.let { put("weeklyCount", it) }

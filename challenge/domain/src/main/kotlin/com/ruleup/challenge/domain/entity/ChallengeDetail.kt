@@ -78,7 +78,8 @@ data class ChallengeDetail(
     val owner: ChallengeOwner?,
     val ownerType: OwnerType,
     val participantCount: Int,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     // 정원이 찼어도 카드·상세는 노출한다 — 탈퇴로 자리가 날 수 있다
     val isFull: Boolean,
     val period: ChallengePeriod,

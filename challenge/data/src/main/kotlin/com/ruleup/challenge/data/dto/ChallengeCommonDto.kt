@@ -219,7 +219,8 @@ internal fun DraftDto.toDomain(): ChallengeDraft =
         mode = ChallengeMode.fromValue(mode) ?: ChallengeMode.SOLO,
         visibility = visibility?.let(ChallengeVisibility::fromValue),
         rankingVisible = rankingVisible,
-        capacity = capacity ?: DEFAULT_CAPACITY,
+        // null 은 무제한이다 — 기본값으로 메우면 무제한 초안이 50명 방이 된다
+        capacity = capacity,
         minTier = minTier?.let(Tier::fromValue),
         period = period.toDomain(),
         // 명세: 빈도 언급이 없거나 템플릿 진입이면 기본 7(=매일).
@@ -228,9 +229,6 @@ internal fun DraftDto.toDomain(): ChallengeDraft =
         verification = verification.toDomain(),
         penalties = penalties.toDomain(),
     )
-
-/** 명세 기본 정원. 서버가 값을 빠뜨렸을 때만 쓰인다. */
-private const val DEFAULT_CAPACITY = 50
 
 /** 명세 기본 주간 횟수(7 = 매일). 서버가 값을 빠뜨렸을 때만 쓰인다. */
 internal const val DEFAULT_WEEKLY_COUNT = 7
