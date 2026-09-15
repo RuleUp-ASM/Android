@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -241,8 +242,9 @@ internal fun RoomTabRow(
     ) {
         RoomTab.entries.forEach { tab ->
             val isSelected = tab == selected
+            // 폭을 글자에 묶지 않으면 아래 밑줄(fillMaxWidth)이 첫 탭을 줄 끝까지 늘려 나머지 탭이 밀려난다.
             Column(
-                modifier = Modifier.singleClickable { onSelect(tab) },
+                modifier = Modifier.width(IntrinsicSize.Max).singleClickable { onSelect(tab) },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(

@@ -167,6 +167,40 @@ class ChallengeDetailReportTest {
             assertNull(model.uiState.value.reportResult)
         }
 
+    @Test
+    fun `멤버 행에서 신고하면 그 사용자를 방 맥락으로 신고한다`() =
+        runTest {
+            // 사용자 신고 진입점이 없으면 부정 인증을 목격해도 알릴 방법이 없다(REP-01·REP-02).
+            val reports = FakeReportRepository()
+            val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), reports = reports)
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+
+            model.onIntent(ChallengeDetailIntent.OpenUserReport("u2"))
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.CHEATING_SUSPECT))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+
+            val target = reports.reported.single() as ReportTarget.User
+            assertEquals("u2", target.userId)
+            assertEquals(ReportContext.ROOM, target.context)
+            assertEquals("ch1", target.challengeId)
+        }
+
+    @Test
+    fun `접수에 성공하면 가림이 반영된 상세를 다시 불러온다`() =
+        runTest {
+            // 가림은 서버가 적용해 내려준다 — 다시 읽지 않으면 신고한 방 이름이 그대로 보인다(REP-06).
+            val repo = FakeChallengeRepository(detail = { detail() })
+            val model = viewModel(repo = repo, reports = FakeReportRepository(result = ReportResult("r-1", HiddenEffect.CHALLENGE_MASKED)))
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.OpenReport)
+            val before = repo.calls.count { it == "getChallenge" }
+
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+
+            assertTrue(repo.calls.count { it == "getChallenge" } > before)
+        }
+
     /** 상세를 받아 두고 신고 시트까지 연 상태. 신고는 이 지점부터만 성립한다. */
     private fun loaded(reports: FakeReportRepository): ChallengeDetailViewModel {
         val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), reports = reports)

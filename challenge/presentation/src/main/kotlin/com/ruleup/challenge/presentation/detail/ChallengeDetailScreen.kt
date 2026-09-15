@@ -55,6 +55,7 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.MySetupCard
 import com.ruleup.challenge.presentation.detail.component.ReportDoneSheet
 import com.ruleup.challenge.presentation.detail.component.ReportReasonSheet
 import com.ruleup.challenge.presentation.detail.component.RoomAppBar
@@ -309,6 +310,17 @@ internal fun ChallengeDetailContent(
                     menuItems = roomMenuItems(room.myRole, onIntent),
                     onBack = onBack,
                 )
+            } else if (detail != null && detail.myRole.isMember) {
+                // 솔로 방·시작 전 방은 room 이 오지 않는다. 멤버인데 비멤버 메뉴를 주면 방장이 수정·삭제할 길이 없다.
+                RoomAppBar(
+                    title = detail.title,
+                    menuItems =
+                        roomMenuItems(detail.myRole, onIntent) +
+                            listOfNotNull(
+                                RoomMenuItem("챌린지 삭제") { confirmAction = MemberConfirm.DELETE }.takeIf { detail.myRole.isOwner },
+                            ),
+                    onBack = onBack,
+                )
             } else {
                 // 비멤버도 ⋯ 를 갖는다 — 부적절한 챌린지를 만나는 건 탐색으로 들어온 쪽이고,
                 // 여기 메뉴가 없으면 신고할 방법 자체가 없다.
@@ -321,7 +333,7 @@ internal fun ChallengeDetailContent(
 
             // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다. 인증은 조용히 멈추므로 사용자가
             // 스스로 알아챌 방법이 없다 — 매일 실패가 쌓이다 강퇴로 간다.
-            if (!state.isLoading && room != null && state.missingPermissionTokens().isNotEmpty()) {
+            if (!state.isLoading && detail?.myRole?.isMember == true && state.missingPermissionTokens().isNotEmpty()) {
                 Text(
                     text = "인증에 필요한 권한이 꺼져 있어요 · 다시 연결하기",
                     color = RuleUpTheme.colors.danger,
@@ -421,11 +433,17 @@ internal fun ChallengeDetailContent(
     if (state.isReportSheetOpen) {
         val result = state.reportResult
         if (result == null) {
+            val userReport = state.reportUserId != null
             ReportReasonSheet(
-                title = "이 챌린지를 신고할까요?",
-                description = "신고하면 탐색 목록에서 바로 빠져요. 참여 중이면 이름과 이미지만 가려져요.",
-                // 부정 인증 의심은 사람의 행위라 여기 없다. 목록을 화면에서 추리지 않고 domain 이 준다.
-                reasons = ReportReason.forChallenge,
+                title = if (userReport) "이 사용자를 신고할까요?" else "이 챌린지를 신고할까요?",
+                description =
+                    if (userReport) {
+                        "신고하면 이 사용자의 이름과 글이 내 화면에서 가려져요."
+                    } else {
+                        "신고하면 탐색 목록에서 바로 빠져요. 참여 중이면 이름과 이미지만 가려져요."
+                    },
+                // 부정 인증 의심은 사람의 행위라 사용자 신고에만 있다. 목록을 화면에서 추리지 않고 domain 이 준다.
+                reasons = if (userReport) ReportReason.forUser else ReportReason.forChallenge,
                 selected = state.selectedReportReason,
                 submitting = state.isSubmittingReport,
                 onSelect = { onIntent(ChallengeDetailIntent.SelectReportReason(it)) },
@@ -463,7 +481,7 @@ internal fun ChallengeDetailContent(
         MemberConfirm.LEAVE ->
             MemberConfirmDialog(
                 title = "챌린지에서 나갈까요?",
-                body = "나가면 이 챌린지에 다시 참여할 수 없어요. 진행 이력이 있으면 탈퇴 패널티가 적용될 수 있어요.",
+                body = "나가면 1주 동안 이 챌린지에 다시 참여할 수 없어요. 진행 이력이 있으면 탈퇴 패널티가 적용될 수 있어요.",
                 confirmLabel = "나가기",
                 onConfirm = {
                     confirmAction = null
@@ -604,6 +622,7 @@ private fun RoomDetailTabs(
                                 onDemote = { onIntent(ChallengeDetailIntent.DemoteMember(it)) },
                                 onRequestDelegation = { onIntent(ChallengeDetailIntent.RequestDelegation(it)) },
                                 onCancelDelegation = { onIntent(ChallengeDetailIntent.CancelDelegation) },
+                                onReportMember = { onIntent(ChallengeDetailIntent.OpenUserReport(it)) },
                             )
                         }
                     },
@@ -693,6 +712,13 @@ private fun PublicDetailBody(
     ) {
         DetailHero(detail)
         DetailInfoCard(detail)
+        // 솔로 방은 방 홈이 없어 여기 두지 않으면 대상 앱·인증 장소를 등록할 곳이 없다.
+        if (detail.myRole.isMember) {
+            MySetupCard(
+                onRegisterApps = { onIntent(ChallengeDetailIntent.RegisterApps) }.takeIf { state.setup?.requiresTargetPackages == true },
+                onRegisterAnchor = { onIntent(ChallengeDetailIntent.RegisterAnchor) }.takeIf { state.setup?.requiresAnchors == true },
+            )
+        }
         // 솔로 수동 방의 유일한 인증 동선. 그룹은 방 정보 탭이 같은 화면으로 보낸다 —
         // 솔로는 방 홈을 받지 못해 여기 없으면 오늘 인증을 할 방법이 아예 없다.
         if (detail.manualCheckable) {
