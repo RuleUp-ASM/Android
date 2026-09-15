@@ -26,6 +26,9 @@ import javax.inject.Inject
  * 활성 챌린지가 있으면 신호·gap 이 없어도 빈 envelope 를 전송한다(전송 스펙 §0.5 — 서버가 공백 사유·
  * 권한 현황으로 NO_SIGNAL 을 판정). 활성 챌린지도 보낼 것도 없으면 null 을 반환한다(전송 생략).
  *
+ * 구간(`coveredFrom`·`coveredUntil`)은 **전송이 받아들여진 뒤에만** 다음 시작으로 넘긴다. 실패한 전송의
+ * 구간을 넘기면 그 사이 신호가 다시 선언되지 않아 서버가 "신호 없음"으로 확정한다.
+ *
  * **동시에 두 번 돌리면 안 된다.** 드레인이 tagPending(전체 미전송분에 배치키 부여) → byBatch →
  * markSynced 순서라, 겹치면 뒤 실행이 앞 실행의 배치를 자기 키로 덮어써 같은 신호가 두 번 나간다.
  * 실행 경로가 Worker 하나뿐이라 직렬화는 거기서 건다(SyncGate, #355).
@@ -74,8 +77,9 @@ class RunSyncUseCase
                     throw e
                 }
 
-            // 5) 성공분 synced 표시 + TTL 정리.
+            // 5) 성공분 synced 표시 + 구간 넘기기 + TTL 정리.
             signalRepository.markSynced(collectedAt)
+            envelopeMetadataProvider.markCovered(merged.coverage.until)
             signalRepository.purgeExpired(BUFFER_TTL_MILLIS)
             return result
         }
@@ -85,6 +89,9 @@ class RunSyncUseCase
          *
          * `gaps` 는 **첫 조각에만** 싣는다. 같은 공백 구간을 조각 수만큼 되풀이해 보고할 이유가 없고,
          * gap 은 판정 입력이 아니라 안내 대상 선별용이라 한 번 닿으면 충분하다.
+         *
+         * 구간은 반대로 **마지막 조각만** 선언한다. 앞 조각이 전체 구간을 선언한 뒤 뒤 조각이 실패하면,
+         * 서버는 신호 절반만 보고 그 날을 확정해 버린다.
          *
          * 더 못 쪼개거나 [MAX_SPLIT_DEPTH] 를 넘으면 예외를 그대로 올린다 — 분할이 수렴하지 않는
          * 상황에서 요청 수만 지수로 늘리는 것을 막는다.
@@ -99,7 +106,7 @@ class RunSyncUseCase
             } catch (e: SyncPayloadTooLargeException) {
                 if (depth >= MAX_SPLIT_DEPTH) throw e
                 val (head, tail) = batch.split() ?: throw e
-                val headResult = send(metadata, head, depth + 1)
+                val headResult = send(metadata.copy(coverage = metadata.coverage.emptyAtStart()), head, depth + 1)
                 val tailResult = send(metadata.copy(gaps = emptyList()), tail, depth + 1)
                 headResult.mergedWith(tailResult)
             }

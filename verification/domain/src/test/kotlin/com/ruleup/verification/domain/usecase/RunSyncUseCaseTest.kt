@@ -3,6 +3,7 @@ package com.ruleup.verification.domain.usecase
 import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.AppealHistoryItem
 import com.ruleup.verification.domain.entity.ChallengeSetupResult
+import com.ruleup.verification.domain.entity.CoverageWindow
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import com.ruleup.verification.domain.entity.DeviceIntro
@@ -232,6 +233,61 @@ class RunSyncUseCaseTest {
             assertTrue(signalRepo.markSyncedCalled)
         }
 
+    @Test
+    fun `전송이 받아들여지면 이번 구간 끝을 다음 구간의 시작으로 넘긴다`() =
+        runBlocking {
+            val provider = FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1"))
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    FakeSignalRepository(drain = nonEmptyBatch()),
+                    provider,
+                    FakeVerificationRepository(result = syncResult()),
+                )
+
+            useCase(scope, collectedAt)
+
+            assertEquals(listOf(COVERED_UNTIL), provider.coveredUntil)
+        }
+
+    @Test
+    fun `전송이 막히면 구간을 넘기지 않는다`() =
+        runBlocking {
+            // 넘기면 다음 전송이 막힌 구간을 다시 선언하지 않아 그 사이 신호가 없던 일이 된다.
+            val provider = FakeEnvelopeMetadataProvider()
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    FakeSignalRepository(drain = nonEmptyBatch()),
+                    provider,
+                    FakeVerificationRepository(error = SyncTooFrequentException()),
+                )
+
+            assertFailsWith<SyncTooFrequentException> { useCase(scope, collectedAt) }
+            assertTrue(provider.coveredUntil.isEmpty())
+        }
+
+    @Test
+    fun `413 으로 쪼개면 마지막 조각만 구간 전체를 선언한다`() =
+        runBlocking {
+            // 앞 조각이 전체 구간을 선언하면 뒤 조각이 실패했을 때 서버가 신호 절반으로 날을 확정한다.
+            val verificationRepo = FakeVerificationRepository(maxEvents = 2, resultFor = { syncResult() })
+            val useCase =
+                RunSyncUseCase(
+                    FakeSignalCollector(),
+                    FakeSignalRepository(drain = healthBatch(readings = 4)),
+                    FakeEnvelopeMetadataProvider(activeChallengeIds = listOf("c1")),
+                    verificationRepo,
+                )
+
+            useCase(scope, collectedAt)
+
+            assertEquals(
+                listOf(CoverageWindow(COVERED_FROM, COVERED_FROM), CoverageWindow(COVERED_FROM, COVERED_UNTIL)),
+                verificationRepo.acceptedCoverages,
+            )
+        }
+
     private fun healthBatch(readings: Int): SignalBatch =
         SignalBatch(
             collectedAt = collectedAt,
@@ -313,6 +369,12 @@ class RunSyncUseCaseTest {
     private class FakeEnvelopeMetadataProvider(
         private val activeChallengeIds: List<String> = emptyList(),
     ) : EnvelopeMetadataProvider {
+        val coveredUntil = mutableListOf<Long>()
+
+        override suspend fun markCovered(until: Long) {
+            coveredUntil += until
+        }
+
         override suspend fun capture(scope: SignalScope): EnvelopeMetadata =
             EnvelopeMetadata(
                 clock = DeviceClock(deviceTimeMillis = 1L, elapsedRealtimeMillis = 1L, bootSessionId = "boot", timeZone = "Asia/Seoul"),
@@ -332,6 +394,7 @@ class RunSyncUseCaseTest {
                 integrity = IntegritySnapshot(token = null),
                 diagnostics = DeviceDiagnostics(null, null, null, null, null, null, null),
                 gaps = emptyList(),
+                coverage = CoverageWindow(COVERED_FROM, COVERED_UNTIL),
             )
     }
 
@@ -347,6 +410,7 @@ class RunSyncUseCaseTest {
         var attempts = 0
         val acceptedBatches = mutableListOf<SignalBatch>()
         val acceptedGapCounts = mutableListOf<Int>()
+        val acceptedCoverages = mutableListOf<CoverageWindow>()
 
         override suspend fun submitIntro(intro: DeviceIntro): SyncPolicy = error("unused")
 
@@ -361,6 +425,7 @@ class RunSyncUseCaseTest {
             if (maxEvents != null && batch.eventCount() > maxEvents) throw SyncPayloadTooLargeException()
             acceptedBatches += batch
             acceptedGapCounts += metadata.gaps.size
+            acceptedCoverages += metadata.coverage
             return resultFor?.invoke(batch) ?: requireNotNull(result)
         }
 
@@ -421,6 +486,9 @@ class RunSyncUseCaseTest {
         ): Place? = error("unused")
     }
 }
+
+private const val COVERED_FROM = 100L
+private const val COVERED_UNTIL = 200L
 
 /** 배치가 실어 보내는 이벤트 총 개수 — 테스트에서 서버 상한을 흉내 낼 때 쓴다. */
 private fun SignalBatch.eventCount(): Int =

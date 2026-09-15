@@ -5,6 +5,7 @@ import com.ruleup.verification.data.db.common.ProgressCacheDao
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.data.signal.common.NetworkStateProvider
 import com.ruleup.verification.data.signal.common.PermissionSnapshotProvider
+import com.ruleup.verification.domain.entity.CoverageWindow
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.PermissionSnapshot
@@ -40,6 +41,11 @@ class EnvelopeMetadataProviderImpl
             val diagnostics = diagnosticsProvider.snapshot()
             val activeChallengeIds = runCatching { progressCacheDao.allChallengeIds() }.getOrDefault(emptyList())
             val windowFrom = settings.lastSuccessfulFlushAt() ?: (clock.deviceTimeMillis - DEFAULT_WINDOW_MS)
+            // 첫 전송은 기본 창만큼만 선언한다. 기기 시계가 되감겼으면 시작을 지금으로 당긴다 — 끝이 시작보다
+            // 앞선 구간은 서버가 받지 않는다.
+            val coveredFrom =
+                (settings.lastCoveredUntil() ?: (clock.deviceTimeMillis - DEFAULT_WINDOW_MS))
+                    .coerceAtMost(clock.deviceTimeMillis)
 
             return EnvelopeMetadata(
                 clock = clock,
@@ -49,7 +55,12 @@ class EnvelopeMetadataProviderImpl
                 integrity = integrity,
                 diagnostics = diagnostics,
                 gaps = permissionGaps(scope, permissions, windowFrom, clock.deviceTimeMillis),
+                coverage = CoverageWindow(from = coveredFrom, until = clock.deviceTimeMillis),
             )
+        }
+
+        override suspend fun markCovered(until: Long) {
+            settings.setLastCoveredUntil(until)
         }
 
         /** 스코프에 든 신호의 권한이 빠졌으면 PERMISSION_MISSING(recoverable=true) gap 으로 보고. */
