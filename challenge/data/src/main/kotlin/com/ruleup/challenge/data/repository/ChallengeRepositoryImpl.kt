@@ -1,10 +1,7 @@
 package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
-import com.ruleup.challenge.data.dto.DelegationActionRequest
-import com.ruleup.challenge.data.dto.DelegationRequestBody
 import com.ruleup.challenge.data.dto.DraftRequest
-import com.ruleup.challenge.data.dto.MemberRoleActionRequest
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.toDomain
 import com.ruleup.challenge.data.dto.toRequest
@@ -22,10 +19,6 @@ import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
 import com.ruleup.challenge.domain.entity.ChallengeVersionConflictException
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
-import com.ruleup.challenge.domain.entity.DelegationAction
-import com.ruleup.challenge.domain.entity.DelegationResolution
-import com.ruleup.challenge.domain.entity.DelegationTicket
-import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.DraftExpiredException
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.InvalidWeeklyCountException
@@ -33,14 +26,10 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
-import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.ModerationLockedException
 import com.ruleup.challenge.domain.entity.MyChallengeFilter
 import com.ruleup.challenge.domain.entity.MyChallengePage
-import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
-import com.ruleup.challenge.domain.entity.OwnerClaimResult
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
-import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.repository.ChallengeRepository
@@ -162,12 +151,6 @@ class ChallengeRepositoryImpl
                 }
             }
 
-        override suspend fun delete(challengeId: String): DeleteResult =
-            api
-                .delete(challengeId)
-                .getOrThrow()
-                .toDomain()
-
         override suspend fun join(challengeId: String): JoinResult =
             try {
                 api
@@ -237,57 +220,7 @@ class ChallengeRepositoryImpl
                 .getOrThrow()
                 .toDomain()
 
-        override suspend fun changeMemberRole(
-            challengeId: String,
-            userId: String,
-            action: RoleAction,
-        ): MemberRoleChange =
-            api
-                .changeMemberRole(
-                    challengeId = challengeId,
-                    userId = userId,
-                    request = MemberRoleActionRequest(action = action.value),
-                ).getOrThrow()
-                .toDomain()
-
-        override suspend fun requestDelegation(
-            challengeId: String,
-            targetUserId: String,
-        ): DelegationTicket =
-            api
-                .requestDelegation(
-                    challengeId = challengeId,
-                    request = DelegationRequestBody(targetUserId = targetUserId),
-                ).getOrThrow()
-                .toDomain()
-
-        override suspend fun respondDelegation(
-            challengeId: String,
-            delegationId: String,
-            action: DelegationAction,
-        ): DelegationResolution =
-            api
-                .respondDelegation(
-                    challengeId = challengeId,
-                    delegationId = delegationId,
-                    request = DelegationActionRequest(action = action.value),
-                ).getOrThrow()
-                .toDomain()
-
-        override suspend fun claimOwner(challengeId: String): OwnerClaimResult =
-            try {
-                api
-                    .claimOwner(challengeId)
-                    .getOrThrow()
-                    .toDomain()
-            } catch (e: ApiException) {
-                // 선착순에서 밀린 건 오류가 아니라 정상 결과다 — 화면이 안내 문구로 분기하도록 타입을 나눈다.
-                if (e.code == CODE_OWNER_ALREADY_EXISTS) throw OwnerAlreadyExistsException()
-                throw e
-            }
-
         private companion object {
-            const val CODE_OWNER_ALREADY_EXISTS = "OWNER_ALREADY_EXISTS"
             const val CODE_RATE_LIMITED = "RECOMMENDATION_RATE_LIMITED"
             const val CODE_DRAFT_NOT_FOUND = "DRAFT_NOT_FOUND"
             const val CODE_DRAFT_EXPIRED = "DRAFT_EXPIRED"

@@ -122,7 +122,6 @@ feature 팩토리의 이름 있는 이벤트로 나간다 — 대시보드에서
 | `thread_scroll` | 피드 다음 페이지 | `page_index`, `item_count` |
 | `ranking_view` | 랭킹 조회 | `scope` (`IN_ROOM`/`CROSS`), `my_rank_null` |
 | `room_empty_state_view` | 피드 빈 상태 | `owner_type` |
-| `owner_claim` | 봇방장 클레임 결과 | `challenge_id`, `success`, `error_code`? |
 
 `room_view` 는 **방 주간 방문율**(그룹 참여자 중 주 1회 이상 진입)의 분자다. 공지·댓글이 빠지면서
 방 안에 흔적을 남길 수단이 사라졌기 때문에, 이 이벤트가 "인증 피드와 랭킹만으로 재방문이

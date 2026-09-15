@@ -293,7 +293,6 @@ private val AgreementType.label: String
             AgreementType.LOCATION_SERVICE -> "위치기반 서비스 약관"
             AgreementType.MARKETING -> "마케팅 정보 수신"
             AgreementType.EVENT -> "이벤트 알림 수신"
-            AgreementType.NIGHT_PUSH -> "야간 알림 수신"
             AgreementType.LOCATION_INFO -> "위치정보 수집 · 이용"
             AgreementType.HEALTH_INFO -> "건강정보 수집 · 이용"
         }

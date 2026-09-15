@@ -19,7 +19,7 @@ data class IntroResponse(
     @SerialName("termsVersions") val termsVersions: TermsVersionsResponse? = null,
 )
 
-/** 현행 약관 버전 6종. 키는 [AgreementType.key] 와 같다. */
+/** 현행 약관 버전 5종. 키는 [AgreementType.key] 와 같다. */
 @Serializable
 data class TermsVersionsResponse(
     @SerialName("termsOfService") val termsOfService: String? = null,
@@ -27,7 +27,6 @@ data class TermsVersionsResponse(
     @SerialName("locationService") val locationService: String? = null,
     @SerialName("marketing") val marketing: String? = null,
     @SerialName("event") val event: String? = null,
-    @SerialName("nightPush") val nightPush: String? = null,
 )
 
 internal fun IntroResponse.toDomain(): IntroInfo =
@@ -51,6 +50,5 @@ internal fun TermsVersionsResponse?.toDomain(): TermsVersions =
             this@toDomain?.locationService?.let { put(AgreementType.LOCATION_SERVICE, it) }
             this@toDomain?.marketing?.let { put(AgreementType.MARKETING, it) }
             this@toDomain?.event?.let { put(AgreementType.EVENT, it) }
-            this@toDomain?.nightPush?.let { put(AgreementType.NIGHT_PUSH, it) }
         },
     )

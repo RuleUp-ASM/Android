@@ -1,9 +1,7 @@
 package com.ruleup.profile.data.dto
 
-import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.network.dto.ApiException
 import com.ruleup.profile.domain.entity.AgreementRevokeForbiddenException
-import com.ruleup.profile.domain.entity.AgreementSubmission
 import com.ruleup.profile.domain.entity.AgreementVersionMismatchException
 import com.ruleup.profile.domain.entity.SanctionType
 import kotlin.test.Test
@@ -42,18 +40,6 @@ class AgreementResponseMappingTest {
 
         assertEquals(false, never?.everAgreed)
         assertEquals(true, revoked?.everAgreed)
-    }
-
-    @Test
-    fun `동의 API 가 받지 않는 항목은 요청에서 뺀다`() {
-        // 폐기된 야간 알림을 실어 보내면 서버가 400 으로 전체를 막는다.
-        val request =
-            listOf(
-                AgreementSubmission(AgreementType.NIGHT_PUSH, agreed = true, version = "1.0"),
-                AgreementSubmission(AgreementType.MARKETING, agreed = true, version = "1.0"),
-            ).toRequest()
-
-        assertEquals(listOf("MARKETING"), request.agreements.map { it.type })
     }
 
     @Test

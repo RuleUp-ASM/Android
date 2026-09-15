@@ -10,18 +10,11 @@ import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
-import com.ruleup.challenge.domain.entity.DelegationAction
-import com.ruleup.challenge.domain.entity.DelegationResolution
-import com.ruleup.challenge.domain.entity.DelegationTicket
-import com.ruleup.challenge.domain.entity.DeleteResult
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.LeaveResult
-import com.ruleup.challenge.domain.entity.MemberRoleChange
 import com.ruleup.challenge.domain.entity.MyChallengeFilter
 import com.ruleup.challenge.domain.entity.MyChallengePage
-import com.ruleup.challenge.domain.entity.OwnerClaimResult
-import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 
@@ -95,12 +88,6 @@ interface ChallengeRepository {
     ): ChallengeUpdateResult
 
     /**
-     * 챌린지 삭제(생성자만, 명세 DELETE). 참여자(방장 제외) 0명일 때만 가능.
-     * 진행 중 + success 이력이 있으면 탈퇴 패널티가 트리거된다([DeleteResult.penaltyApplied]).
-     */
-    suspend fun delete(challengeId: String): DeleteResult
-
-    /**
      * 챌린지 가입(명세 POST members). 승인 없이 게이트만 통과하면 즉시 멤버가 된다.
      *
      * **자동 인증 방은 호출 전에 공개 상세의 `verification.requiredPermissions` 를 확보해야 한다** —
@@ -152,39 +139,7 @@ interface ChallengeRepository {
 
     /**
      * 챌린지 탈퇴(본인, 명세 DELETE members/me). 본인 success 이력이 있으면 탈퇴 패널티가 트리거된다.
-     * OWNER 는 탈퇴 불가(위임 또는 삭제로 안내) — 서버가 403 OWNER_CANNOT_LEAVE 로 분기 사유를 준다.
+     * 방장도 나갈 수 있다 — 방장이 나가면 봇방장 방이 되고, 0명이 되면 삭제 배치가 방을 지운다(챌린지 정책 §11·§12).
      */
     suspend fun leaveChallenge(challengeId: String): LeaveResult
-
-    /**
-     * 공동 관리자 임명/해제(명세 PATCH members/{userId}/role). 임명·해제는 OWNER, 본인 DEMOTE 는 MANAGER 본인만.
-     */
-    suspend fun changeMemberRole(
-        challengeId: String,
-        userId: String,
-        action: RoleAction,
-    ): MemberRoleChange
-
-    /**
-     * 방장 위임 요청 생성(OWNER, 명세 POST delegation). 대상은 MANAGER, 7일 후 자동 만료.
-     */
-    suspend fun requestDelegation(
-        challengeId: String,
-        targetUserId: String,
-    ): DelegationTicket
-
-    /**
-     * 방장 위임 요청 응답(명세 PATCH delegation/{id}). ACCEPT/REJECT 는 대상자, CANCEL 은 요청 OWNER.
-     */
-    suspend fun respondDelegation(
-        challengeId: String,
-        delegationId: String,
-        action: DelegationAction,
-    ): DelegationResolution
-
-    /**
-     * 봇방장 방에서 손들고 방장 되기(명세 POST owner/claim). **선착순**이라 경합에서 밀리면
-     * [com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException] 이 올라온다.
-     */
-    suspend fun claimOwner(challengeId: String): OwnerClaimResult
 }

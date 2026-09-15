@@ -39,14 +39,6 @@ class WatchingResponseTest {
         assertEquals(WatcherStatus.REVOKED, item.single().status)
         assertEquals(true, item.single().isRevoked)
     }
-
-    @Test
-    fun `수신 설정 응답에 식별자가 없으면 요청한 항목을 가리킨 것으로 본다`() {
-        val update = WatchingUpdateResponse(watcherId = null, pushEnabled = false).toDomain(requestedId = "w1")
-
-        assertEquals("w1", update.watcherId)
-        assertEquals(false, update.pushEnabled)
-    }
 }
 
 /**

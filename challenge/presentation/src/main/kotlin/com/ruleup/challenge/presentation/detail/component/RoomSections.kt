@@ -12,15 +12,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +46,8 @@ internal fun Double.toPercentText(): String {
 }
 
 /**
- * 탈퇴·삭제 노출 조건은 서버 규칙과 같다 — 삭제는 방장 + 참여자(본인 제외) 0명일 때만이다.
+ * 나가기는 방장을 포함한 모두에게 연다 — 방장이 나가면 봇방장 방이 되고, 0명이 되면 삭제 배치가 방을
+ * 지운다(챌린지 정책 §11·§12). 위임·공동 관리자·삭제는 페이지1에 없다.
  * 디자인 시안이 없어 방 홈 섹션 카드 컨벤션을 따른다.
  */
 @Composable
@@ -58,19 +55,12 @@ internal fun RoomMemberSection(
     members: List<ChallengeMember>,
     participantCount: Int,
     maxParticipants: Int,
-    myRole: MemberRole,
     myUserId: String?,
     actionEnabled: Boolean,
-    delegationBanner: String?,
     // 비공개 그룹 방의 방장만 — 초대 링크가 유일한 입장 경로다
     canInviteMember: Boolean,
     onInviteMember: () -> Unit,
     onLeave: () -> Unit,
-    onDelete: () -> Unit,
-    onPromote: (String) -> Unit,
-    onDemote: (String) -> Unit,
-    onRequestDelegation: (String) -> Unit,
-    onCancelDelegation: () -> Unit,
     onReportMember: (String) -> Unit = {},
 ) {
     RuleUpCard {
@@ -84,19 +74,9 @@ internal fun RoomMemberSection(
             )
         }
 
-        if (delegationBanner != null) {
-            DelegationBanner(text = delegationBanner, enabled = actionEnabled, onCancel = onCancelDelegation)
-        }
-
         members.forEach { member ->
             MemberRow(
                 member = member,
-                ownerManage = myRole.isOwner && !member.role.isOwner,
-                selfDemote = myRole.isManager && member.role.isManager && member.userId == myUserId,
-                actionEnabled = actionEnabled,
-                onPromote = { onPromote(member.userId) },
-                onDemote = { onDemote(member.userId) },
-                onRequestDelegation = { onRequestDelegation(member.userId) },
                 // 나 자신은 신고할 수 없다 — 내 userId 를 모르면 서버가 막도록 열어 둔다.
                 onReport = { onReportMember(member.userId) }.takeIf { member.userId != myUserId },
             )
@@ -115,39 +95,17 @@ internal fun RoomMemberSection(
             )
         }
 
-        when {
-            !myRole.isOwner ->
-                DangerActionButton(
-                    text = "챌린지 나가기",
-                    enabled = actionEnabled,
-                    onClick = onLeave,
-                )
-            // 방장: 참여자(본인 제외)가 없을 때만 삭제 가능.
-            participantCount <= 1 ->
-                DangerActionButton(
-                    text = "챌린지 삭제",
-                    enabled = actionEnabled,
-                    onClick = onDelete,
-                )
-            else ->
-                Text(
-                    text = "참여자가 있는 동안에는 삭제할 수 없어요. 방장 위임 후 나갈 수 있어요",
-                    color = RuleUpTheme.colors.textMuted,
-                    style = RuleUpTheme.typography.caption,
-                )
-        }
+        DangerActionButton(
+            text = "챌린지 나가기",
+            enabled = actionEnabled,
+            onClick = onLeave,
+        )
     }
 }
 
 @Composable
 private fun MemberRow(
     member: ChallengeMember,
-    ownerManage: Boolean,
-    selfDemote: Boolean,
-    actionEnabled: Boolean,
-    onPromote: () -> Unit,
-    onDemote: () -> Unit,
-    onRequestDelegation: () -> Unit,
     onReport: (() -> Unit)? = null,
 ) {
     Row(
@@ -193,115 +151,6 @@ private fun MemberRow(
                 color = RuleUpTheme.colors.textMuted,
                 style = RuleUpTheme.typography.smallMedium,
                 modifier = Modifier.singleClickable(globalGuard = false, onClick = it),
-            )
-        }
-        if (ownerManage || selfDemote) {
-            Spacer(Modifier.width(4.dp))
-            MemberManageMenu(
-                role = member.role,
-                selfDemote = selfDemote,
-                enabled = actionEnabled,
-                onPromote = onPromote,
-                onDemote = onDemote,
-                onRequestDelegation = onRequestDelegation,
-            )
-        }
-    }
-}
-
-@Composable
-private fun MemberManageMenu(
-    role: MemberRole,
-    selfDemote: Boolean,
-    enabled: Boolean,
-    onPromote: () -> Unit,
-    onDemote: () -> Unit,
-    onRequestDelegation: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Box(
-            modifier =
-                Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .then(if (enabled) Modifier.singleClickable(globalGuard = false) { expanded = true } else Modifier),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("⋯", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.section)
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            if (selfDemote) {
-                DropdownMenuItem(
-                    text = { Text("관리자 그만두기") },
-                    onClick = {
-                        expanded = false
-                        onDemote()
-                    },
-                )
-            } else {
-                when (role) {
-                    MemberRole.MEMBER ->
-                        DropdownMenuItem(
-                            text = { Text("공동 관리자 임명") },
-                            onClick = {
-                                expanded = false
-                                onPromote()
-                            },
-                        )
-
-                    MemberRole.MANAGER -> {
-                        DropdownMenuItem(
-                            text = { Text("공동 관리자 해제") },
-                            onClick = {
-                                expanded = false
-                                onDemote()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("방장 위임") },
-                            onClick = {
-                                expanded = false
-                                onRequestDelegation()
-                            },
-                        )
-                    }
-
-                    else -> Unit
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DelegationBanner(
-    text: String,
-    enabled: Boolean,
-    onCancel: () -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(RuleUpTheme.colors.brandSoft)
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = text,
-            color = RuleUpTheme.colors.brandStrong,
-            style = RuleUpTheme.typography.smallMedium,
-            modifier = Modifier.weight(1f),
-        )
-        if (enabled) {
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = "취소",
-                color = RuleUpTheme.colors.danger,
-                style = RuleUpTheme.typography.smallBold,
-                modifier = Modifier.singleClickable(globalGuard = false) { onCancel() },
             )
         }
     }

@@ -15,8 +15,7 @@ import org.robolectric.RobolectricTestRunner
 /**
  * 패널티 수신 관리 (Figma 1134:2221).
  *
- * 토글이 무엇을 멈추는지가 이 화면의 핵심이다 — **푸시만 멈추고 알림함에는 남는다**는 걸 말하지
- * 않으면 사용자는 껐는데도 알림함에 쌓이는 걸 보고 설정을 믿지 않게 된다.
+ * 조회 전용 화면이다. 끄는 곳이 여기가 아니라는 걸 말하지 않으면 사용자는 알림을 멈출 방법이 없다고 여긴다.
  */
 @RunWith(RobolectricTestRunner::class)
 class WatchingContentTest {
@@ -31,10 +30,10 @@ class WatchingContentTest {
     }
 
     @Test
-    fun `토글이 푸시만 멈춘다는 걸 함께 말한다`() {
+    fun `푸시는 알림 설정에서 끈다는 걸 함께 말한다`() {
         render(WatchingState.initial.copy(isLoading = false, items = listOf(watching())))
 
-        compose.onNodeWithText("알림함에는 남아요", substring = true).assertExists()
+        compose.onNodeWithText("알림 설정에서", substring = true).assertExists()
     }
 
     @Test
@@ -44,19 +43,6 @@ class WatchingContentTest {
 
         compose.onNodeWithText("수민").assertExists()
         compose.onNodeWithText("아침 6:30 기상").assertExists()
-    }
-
-    @Test
-    fun `수신거부 확인에서는 되돌릴 수 없다는 걸 먼저 말한다`() {
-        render(
-            WatchingState.initial.copy(
-                isLoading = false,
-                items = listOf(watching()),
-                revokeTarget = "w1",
-            ),
-        )
-
-        compose.onNodeWithText("다시 켤 수 없어요", substring = true).assertExists()
     }
 
     private fun watching() =

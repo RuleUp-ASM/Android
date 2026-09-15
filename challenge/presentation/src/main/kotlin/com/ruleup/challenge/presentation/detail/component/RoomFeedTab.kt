@@ -53,7 +53,6 @@ internal fun RoomFeedTab(
     state: ChallengeDetailState,
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
-    onClaimOwner: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -94,7 +93,6 @@ internal fun RoomFeedTab(
                 modifier = modifier,
                 ownerType = state.room?.ownerType,
                 isOwner = state.room?.myRole?.isOwner == true,
-                onClaimOwner = onClaimOwner,
             )
 
         else ->
@@ -171,14 +169,13 @@ internal fun RoomFeedTab(
 /**
  * 빈 피드 (Figma 1134:2133).
  *
- * 봇방장 방은 방장이 없어 소식이 생길 계기 자체가 적으므로 "방장 되기"로 유도한다. 그 외에는
- * 첫 인증을 기다리는 상태라는 사실만 알린다 — 없는 기능을 권하지 않는다.
+ * 봇방장 방은 방장 자리가 비어 있다는 사실만 함께 알린다 — 멤버가 방장이 되는 경로는 없다(정책 §11).
+ * 그 외에는 첫 인증을 기다리는 상태라는 사실만 알린다 — 없는 기능을 권하지 않는다.
  */
 @Composable
 private fun FeedEmptyState(
     ownerType: OwnerType?,
     isOwner: Boolean,
-    onClaimOwner: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -186,8 +183,6 @@ private fun FeedEmptyState(
             RoomEmptyState(
                 modifier = modifier,
                 message = "아직 소식이 없어요\n이 방은 방장 자리가 비어 있어요",
-                actionLabel = onClaimOwner?.let { "방장 되기" },
-                onAction = onClaimOwner,
             )
 
         isOwner ->

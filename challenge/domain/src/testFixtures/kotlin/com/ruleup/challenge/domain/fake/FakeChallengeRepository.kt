@@ -15,13 +15,11 @@ import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.ChallengeUpdateResult
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
-import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallengeFilter
 import com.ruleup.challenge.domain.entity.MyChallengePage
-import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
@@ -118,8 +116,6 @@ class FakeChallengeRepository(
         return requireNotNull(this.update) { "update 를 준비하지 않았다" }(update)
     }
 
-    override suspend fun delete(challengeId: String) = throw NotImplementedError()
-
     override suspend fun join(challengeId: String): JoinResult {
         calls += "join"
         return requireNotNull(join) { "join 을 준비하지 않았다" }(challengeId)
@@ -156,25 +152,6 @@ class FakeChallengeRepository(
     }
 
     override suspend fun leaveChallenge(challengeId: String) = throw NotImplementedError()
-
-    override suspend fun changeMemberRole(
-        challengeId: String,
-        userId: String,
-        action: RoleAction,
-    ) = throw NotImplementedError()
-
-    override suspend fun requestDelegation(
-        challengeId: String,
-        targetUserId: String,
-    ) = throw NotImplementedError()
-
-    override suspend fun respondDelegation(
-        challengeId: String,
-        delegationId: String,
-        action: DelegationAction,
-    ) = throw NotImplementedError()
-
-    override suspend fun claimOwner(challengeId: String) = throw NotImplementedError()
 }
 
 class RecordingSetupNotifier : SetupNotifier {
