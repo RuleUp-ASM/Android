@@ -10,6 +10,9 @@ import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshResponse
 import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
@@ -81,12 +84,81 @@ class TokenRefresherImplTest {
             Unit
         }
 
+    @Test
+    fun `같은 refreshToken 으로 동시에 갱신하면 요청은 한 번만 나가고 결과를 나눠 갖는다`() =
+        runBlocking {
+            // 두 번 나가면 서버가 첫 요청에서 토큰을 회전해 두 번째가 401 을 받고, 그쪽이 세션을 지운다(AUTH-09).
+            val api =
+                FakeAuthApi {
+                    delay(100)
+                    rotated()
+                }
+            val refresher = TokenRefresherImpl(api)
+
+            val results = listOf(async { refresher.refresh("r1") }, async { refresher.refresh("r1") }).awaitAll()
+
+            assertEquals(1, api.refreshCalls)
+            assertEquals(listOf("new-refresh", "new-refresh"), results.map { it?.token?.refreshToken })
+        }
+
+    @Test
+    fun `이미 끝난 갱신과 같은 토큰으로 늦게 와도 회전 전 토큰을 다시 보내지 않는다`() =
+        runBlocking {
+            val api = FakeAuthApi { rotated() }
+            val refresher = TokenRefresherImpl(api)
+
+            refresher.refresh("r1")
+            val late = refresher.refresh("r1")
+
+            assertEquals(1, api.refreshCalls)
+            assertEquals("new-refresh", late?.token?.refreshToken)
+        }
+
+    @Test
+    fun `일시적 오류 뒤 같은 토큰으로 다시 부르면 다시 요청한다`() =
+        runBlocking {
+            var fail = true
+            val api =
+                FakeAuthApi {
+                    if (fail) {
+                        fail = false
+                        throw httpException(500)
+                    }
+                    rotated()
+                }
+            val refresher = TokenRefresherImpl(api)
+
+            assertFailsWith<HttpException> { refresher.refresh("r1") }
+            val retried = refresher.refresh("r1")
+
+            assertEquals(2, api.refreshCalls)
+            assertEquals("new-refresh", retried?.token?.refreshToken)
+        }
+
+    private fun rotated() =
+        BaseResponse(
+            success = true,
+            data =
+                TokenRefreshResponse(
+                    accessToken = "new-access",
+                    refreshToken = "new-refresh",
+                    tokenType = "Bearer",
+                    expiresIn = 1800,
+                    userId = "u-1",
+                ),
+        )
+
     private fun httpException(code: Int): HttpException = HttpException(Response.error<Any>(code, "".toResponseBody(null)))
 
     private class FakeAuthApi(
-        private val onRefresh: () -> BaseResponse<TokenRefreshResponse>,
+        private val onRefresh: suspend () -> BaseResponse<TokenRefreshResponse>,
     ) : AuthApi {
-        override suspend fun refreshToken(request: TokenRefreshRequest): BaseResponse<TokenRefreshResponse> = onRefresh()
+        var refreshCalls = 0
+
+        override suspend fun refreshToken(request: TokenRefreshRequest): BaseResponse<TokenRefreshResponse> {
+            refreshCalls++
+            return onRefresh()
+        }
 
         override suspend fun socialLogin(
             provider: String,
