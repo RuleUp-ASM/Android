@@ -6,6 +6,8 @@
 |---|---|---|
 | `RuleUp-수동QA-시나리오목록.pdf` | 정책·도메인별 수동 QA 시나리오 타이틀 243개 | `src/manual-qa-titles.html` |
 | `RuleUp-관측이벤트와퍼널.pdf` | 관측 이벤트 37종과 퍼널·지표 | `src/observability.html` |
+| `RuleUp-수동QA-실행결과.pdf` | 위 목록을 2026-09-14 develop 에서 두 회차(오후·저녁) 돌린 결과 | `src/manual-qa-results.html` |
+| `RuleUp-서버웹-전달결함.pdf` | 실행 결과 중 앱 레포 밖(서버 응답·웹 배포·데이터)에 원인이 있는 결함 | `src/server-web-defects.html` |
 
 ## 다시 뽑는 법
 
@@ -26,6 +28,9 @@ cd docs
 
 관측 PDF 는 **레포의 `OBSERVABILITY.md` 에서 온 공유용 사본**이다. 이벤트 이름·속성이 바뀌면
 마크다운이 먼저 바뀌고 PDF 는 따라온다. 둘이 어긋나면 마크다운이 맞다.
+
+실행 결과 PDF 는 **회차마다 덮어쓴다.** 지난 회차를 남기고 싶으면 파일명에 날짜를 붙여 따로 뽑는다 —
+결과는 그날의 코드·서버 상태에 묶여 있어서 합치면 어느 회차의 사실인지 알 수 없게 된다.
 
 수동 QA PDF 는 원본이 이 HTML 뿐이다. 자동 인증 상세 절차는 레포의 `VERIFICATION_TEST_PLAN.md`,
 자동 테스트 커버리지는 `TEST_STRATEGY.md` 가 따로 갖는다.
