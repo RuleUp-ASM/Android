@@ -75,6 +75,13 @@ fun handleNavRoute(
         return
     }
 
+    // 탭끼리 옮겨 다닌 기록을 쌓으면 뒤로가기가 직전 탭으로 간다 — 탭은 늘 [홈, 탭] 으로 세운다.
+    if (appRoute.isBottomTab) {
+        backStack.clear()
+        backStack.addAll(appRoute.syntheticStack(route.args))
+        return
+    }
+
     if (backStack.lastOrNull() != navKey) {
         backStack.add(navKey)
     }

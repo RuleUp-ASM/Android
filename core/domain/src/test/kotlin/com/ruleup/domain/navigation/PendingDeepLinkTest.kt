@@ -21,11 +21,11 @@ class PendingDeepLinkTest {
     }
 
     @Test
-    fun `미인증이면 로그인이 필요한 목적지를 버린다`() {
+    fun `미인증이면 로그인이 필요한 목적지를 열지 않고 보류한다`() {
         // 세션 없이 띄우면 API 가 401 을 받고 사용자는 목적지가 아니라 로그인 화면을 본다.
         val pending = PendingDeepLink().apply { set(route) }
 
-        assertEquals(PendingDeepLinkEntry.Dropped(route), pending.consumeFor(authenticated = false, policy = allPrivate))
+        assertEquals(PendingDeepLinkEntry.Deferred(route), pending.consumeFor(authenticated = false, policy = allPrivate))
     }
 
     @Test
@@ -36,12 +36,13 @@ class PendingDeepLinkTest {
     }
 
     @Test
-    fun `버려진 목적지도 남지 않는다`() {
-        // 남겨 두면 다음 진입에서 사용자가 열지도 않은 링크로 이동한다.
+    fun `보류한 목적지는 로그인 뒤 한 번만 꺼낸다`() {
+        // 초대 링크로 온 사용자가 가입을 마쳐도 목적지로 못 가면 초대가 끊긴다(NAV-03).
         val pending = PendingDeepLink().apply { set(route) }
         pending.consumeFor(authenticated = false, policy = allPrivate)
 
-        assertEquals(PendingDeepLinkEntry.None, pending.consumeFor(authenticated = true, policy = allPrivate))
+        assertEquals(route, pending.consumeAfterLogin())
+        assertEquals(null, pending.consumeAfterLogin())
     }
 
     @Test

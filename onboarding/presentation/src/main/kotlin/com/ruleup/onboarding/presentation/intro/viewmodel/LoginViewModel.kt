@@ -3,6 +3,7 @@ package com.ruleup.onboarding.presentation.intro.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
@@ -36,6 +37,7 @@ class LoginViewModel
         private val signupTimer: SignupTimer,
         private val tokenRepository: TokenRepository,
         private val signupSession: SignupSession,
+        private val pendingDeepLink: PendingDeepLink,
     ) : MviViewModel<LoginIntent, LoginState, LoginReducerEvent, LoginEffect>(LoginState.initial) {
         override fun onIntent(intent: LoginIntent) {
             when (intent) {
@@ -102,7 +104,7 @@ class LoginViewModel
                         )
                     }
                     when (result) {
-                        is LoginOutcome.GoHome -> navigationHelper.navigateTo(HomePage)
+                        is LoginOutcome.GoHome -> navigationHelper.goHomeOrPending(pendingDeepLink)
 
                         // 잠금 계정도 로그인은 된다. 홈은 열되 잠금 사유를 알려 준다 —
                         // 편집 등 막힌 기능은 각 화면이 ACCOUNT_LOCKED 로 안내한다.
@@ -111,7 +113,7 @@ class LoginViewModel
                                 result.lockInfo?.let { "계정이 잠겨 있어요 (해제: ${it.unlockAt})" }
                                     ?: "계정이 잠겨 열람만 가능해요",
                             )
-                            navigationHelper.navigateTo(HomePage)
+                            navigationHelper.goHomeOrPending(pendingDeepLink)
                         }
 
                         // 복원 중 닉네임을 선점당했다. 바꾸기 전엔 홈으로 보내지 않는다.
@@ -145,3 +147,8 @@ class LoginViewModel
             }
         }
     }
+
+/** 로그인·가입을 마친 사용자를 보관된 딥링크 목적지로, 없으면 홈으로 보낸다. */
+internal fun NavigationHelper.goHomeOrPending(pendingDeepLink: PendingDeepLink) {
+    pendingDeepLink.consumeAfterLogin()?.let(::replaceStackWith) ?: navigateTo(HomePage)
+}

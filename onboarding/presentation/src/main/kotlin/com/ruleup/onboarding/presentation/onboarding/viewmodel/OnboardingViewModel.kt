@@ -6,6 +6,7 @@ import com.ruleup.domain.entity.user.AgreementConsents
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.SignupSession
@@ -16,12 +17,12 @@ import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
-import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.observability.OnboardingEvents
 import com.ruleup.onboarding.domain.observability.SignupTimer
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
+import com.ruleup.onboarding.presentation.intro.viewmodel.goHomeOrPending
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.NicknameCheckReason
 import com.ruleup.profile.domain.repository.ProfileRepository
@@ -53,6 +54,7 @@ class OnboardingViewModel
         private val signupTimer: SignupTimer,
         private val observability: Observability,
         private val navigationHelper: NavigationHelper,
+        private val pendingDeepLink: PendingDeepLink,
     ) : MviViewModel<OnboardingIntent, OnboardingState, OnboardingReducerEvent, OnboardingEffect>(OnboardingState.initial) {
         /**
          * 닉네임 입력 스트림. 타이핑마다 확인 API 를 부르면 무인증 엔드포인트에 부하가 걸리고 응답이
@@ -282,7 +284,7 @@ class OnboardingViewModel
                             OnboardingEvents.profileImageUploadResult(success = user.profileImageUrl != null)
                         }
                     }
-                    navigationHelper.navigateTo(HomePage)
+                    navigationHelper.goHomeOrPending(pendingDeepLink)
                 }.onFailure { error ->
                     dispatch(OnboardingReducerEvent.SubmitFailed)
                     observability.log(Channel.BUSINESS) {

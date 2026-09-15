@@ -92,7 +92,7 @@ class SplashViewModelTest {
         }
 
     @Test
-    fun `인증 전에 온 딥링크는 버리고 로그인으로 보낸다`() =
+    fun `인증 전에 온 딥링크는 보류한 채 로그인으로 보낸다`() =
         runTest {
             val nav = RecordingNavigationHelper()
             val pending = PendingDeepLink().apply { set(NavRoute("challenge/detail", mapOf("challengeId" to "ch1"))) }
@@ -101,6 +101,7 @@ class SplashViewModelTest {
 
             assertTrue(nav.replaced.isEmpty())
             assertEquals(LoginPage, nav.pages.single())
+            assertEquals("challenge/detail", pending.consumeAfterLogin()?.path)
         }
 
     @Test

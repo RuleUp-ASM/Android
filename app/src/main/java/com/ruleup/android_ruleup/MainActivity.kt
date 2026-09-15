@@ -17,6 +17,7 @@ import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.PendingDeepLink
+import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.onboarding.domain.navigation.SplashPage
@@ -25,6 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -56,6 +58,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var deeplinkResolver: DeeplinkResolver
+
+    @Inject
+    lateinit var routeAccessPolicy: RouteAccessPolicy
 
     private var jankStats: JankStats? = null
 
@@ -121,8 +126,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        intent.data
-            ?.let { resolveNewIntentRoute(it, observability, deeplinkResolver) }
-            ?.let { navigationHelper.navigateByRoute(it) }
+        val route = intent.data?.let { resolveNewIntentRoute(it, observability, deeplinkResolver) } ?: return
+        lifecycleScope.launch {
+            // 로그인 화면 위에서 링크를 받으면 화면만 뜨고 API 가 401 을 받는다 — 보관했다가 로그인 후 연다.
+            if (!tokenRepository.isLoggedIn.first() && routeAccessPolicy.requiresLogin(route.path)) {
+                pendingDeepLink.set(route)
+            } else {
+                navigationHelper.navigateByRoute(route)
+            }
+        }
     }
 }
