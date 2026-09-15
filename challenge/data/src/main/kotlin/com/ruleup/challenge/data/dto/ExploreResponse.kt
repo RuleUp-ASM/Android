@@ -154,7 +154,7 @@ internal fun ExploreChallengeResponse.toDomain(): ExploreChallenge =
         verificationType = VerificationType.fromValue(verificationType) ?: VerificationType.MANUAL,
         startsSoon = startsSoon ?: false,
         participantCount = participantCount ?: 0,
-        capacity = capacity ?: 0,
+        capacity = capacity,
         isFull = isFull ?: false,
         minTier = minTier?.let(Tier::fromValue),
         // 모르면 막는 쪽으로 — 못 들어갈 방에 참여 동선을 열어주지 않는다.

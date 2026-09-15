@@ -189,7 +189,8 @@ private fun ColumnScope.InviteBody(
 /** "그룹 4/10명 · 8.17 시작" — 가입 전에 알아야 할 것만. */
 private val ChallengeInvitationPreview.summaryLine: String
     get() {
-        val people = "${challenge.participantCount}/${challenge.capacity}명"
+        // 무제한 방은 분모가 없다 — "4/0명"으로 그리면 들어갈 수 없는 방처럼 보인다
+        val people = challenge.capacity?.let { "${challenge.participantCount}/${it}명" } ?: "${challenge.participantCount}명 · 정원 무제한"
         val start = challenge.startDate?.let { "${it.replace('-', '.')} 시작" }
         val tier = challenge.minTier?.let { "${it.value} 이상" }
         return listOfNotNull(people, start, tier).joinToString(" · ")

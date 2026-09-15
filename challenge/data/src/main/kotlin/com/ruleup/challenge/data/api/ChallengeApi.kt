@@ -9,7 +9,6 @@ import com.ruleup.challenge.data.dto.ChallengeInvitationResponse
 import com.ruleup.challenge.data.dto.ChallengeMembersResponse
 import com.ruleup.challenge.data.dto.ChallengeSettingsResponse
 import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
-import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateChallengeResponse
 import com.ruleup.challenge.data.dto.CrossRankingResponse
 import com.ruleup.challenge.data.dto.DraftRequest
@@ -65,7 +64,8 @@ interface ChallengeApi {
     @POST("v1/challenges")
     suspend fun create(
         @Header("Idempotency-Key") idempotencyKey: String,
-        @Body request: CreateChallengeRequest,
+        // 그룹 무제한 정원의 null 을 명시해 실어야 해서 JsonObject 로 조립한다
+        @Body request: JsonObject,
     ): BaseResponse<CreateChallengeResponse>
 
     // 공개 상세 (멤버 전용 내부는 /room). 비공개·솔로·없음은 전부 404 로 존재를 숨긴다.

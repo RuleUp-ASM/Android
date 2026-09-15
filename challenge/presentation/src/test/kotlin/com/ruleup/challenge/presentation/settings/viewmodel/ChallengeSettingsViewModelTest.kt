@@ -4,7 +4,6 @@ import com.ruleup.challenge.domain.entity.ChallengeConfig
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeField
 import com.ruleup.challenge.domain.entity.ChallengeGate
-import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeModeration
 import com.ruleup.challenge.domain.entity.ChallengePenalties
@@ -101,26 +100,29 @@ class ChallengeSettingsViewModelTest {
         }
 
     @Test
-    fun `정원은 현재 인원보다 작게 줄일 수 없다`() =
+    fun `현재 인원보다 작은 정원은 받지 않는다`() =
         runTest {
             // 이미 들어와 있는 사람을 밀어낼 수 없다.
-            val viewModel = viewModel(repo(participantCount = 5))
+            val viewModel = viewModel(repo(participantCount = 50))
             viewModel.onIntent(ChallengeSettingsIntent.Load("ch1"))
 
-            viewModel.onIntent(ChallengeSettingsIntent.SetCapacity(2))
+            viewModel.onIntent(ChallengeSettingsIntent.SetCapacity(30))
 
-            assertEquals(5, viewModel.uiState.value.capacity)
+            assertEquals(10, viewModel.uiState.value.capacity)
         }
 
     @Test
-    fun `정원은 상한을 넘길 수 없다`() =
+    fun `무제한으로 바꿔 저장하면 정원을 null 로 명시해 보낸다`() =
         runTest {
-            val viewModel = viewModel(repo())
+            // capacity 의 null 은 PATCH 에서 "미변경"이라, 표시를 따로 세우지 않으면 무제한으로 바뀌지 않는다.
+            val repo = repo()
+            val viewModel = viewModel(repo)
             viewModel.onIntent(ChallengeSettingsIntent.Load("ch1"))
 
-            viewModel.onIntent(ChallengeSettingsIntent.SetCapacity(ChallengeLimits.CAPACITY_MAX + 1))
+            viewModel.onIntent(ChallengeSettingsIntent.SetCapacity(null))
+            viewModel.onIntent(ChallengeSettingsIntent.Save)
 
-            assertEquals(ChallengeLimits.CAPACITY_MAX, viewModel.uiState.value.capacity)
+            assertEquals(true, repo.lastUpdate?.unlimitedCapacity)
         }
 
     @Test

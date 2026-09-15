@@ -242,12 +242,8 @@ class CreateChallengeViewModel
                         visibility = draft.visibility,
                         rankingVisible = draft.rankingVisible,
                         // 초안은 서버가 준 값이라 통제할 수 없다 — 경계에서 흡수한다(사용자 입력 clamp 가
-                        // 아니다). 여기서 접지 않으면 범위 밖 값이 그대로 생성 요청까지 내려간다.
-                        capacity =
-                            draft.capacity.coerceIn(
-                                ChallengeLimits.CAPACITY_MIN,
-                                ChallengeLimits.CAPACITY_MAX,
-                            ),
+                        // 아니다). 여기서 단계에 맞추지 않으면 슬라이더에 없는 값이 생성 요청까지 내려간다.
+                        capacity = ChallengeLimits.createCapacityStepAtLeast(draft.capacity),
                         minTier = draft.minTier,
                         // 상한은 초안이 준 기본값(= 생성자 표시 티어)으로 고정한다.
                         ownerTierCap = draft.minTier,

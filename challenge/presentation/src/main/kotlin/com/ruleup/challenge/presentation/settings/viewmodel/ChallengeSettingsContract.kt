@@ -35,8 +35,9 @@ sealed interface ChallengeSettingsIntent : MviIntent {
     /** 대표 이미지를 기본 이미지로 되돌린다 — PATCH 에서 유일하게 명시적 null 을 보내는 경로다. */
     data object RemoveCoverImage : ChallengeSettingsIntent
 
+    // null 이면 무제한
     data class SetCapacity(
-        val capacity: Int,
+        val capacity: Int?,
     ) : ChallengeSettingsIntent
 
     data class SetVisibility(
@@ -109,7 +110,8 @@ data class ChallengeSettingsState(
     val coverImageUri: String?,
     // 기본 이미지로 되돌리기를 눌렀는지 — imageUrl 에 명시적 null 을 보낼지 가른다.
     val removeImage: Boolean,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
     val minTier: Tier?,
@@ -129,6 +131,16 @@ data class ChallengeSettingsState(
     /** 정원 하한. 현재 참여 인원보다 작게 줄일 수 없다(서버도 `CAPACITY_BELOW_CURRENT` 로 막는다). */
     val capacityFloor: Int
         get() = participantCount ?: 1
+
+    /**
+     * 고를 수 있는 정원 단계. 현재 인원보다 작은 단계는 빼고, 단계 밖의 기존 정원(예: 개편 전 50명)은
+     * 지금 값으로 남긴다 — 빼면 슬라이더가 엉뚱한 단계를 가리킨다.
+     */
+    val capacitySteps: List<Int?>
+        get() =
+            (ChallengeLimits.CREATE_CAPACITY_STEPS.filter { it == null || it >= capacityFloor } + capacity)
+                .distinct()
+                .sortedWith(nullsLast(naturalOrder()))
 
     fun editable(field: ChallengeField): Boolean = loaded?.editableFields?.contains(field) == true
 
@@ -173,7 +185,7 @@ data class ChallengeSettingsState(
                 imageUrl = null,
                 coverImageUri = null,
                 removeImage = false,
-                capacity = 0,
+                capacity = null,
                 visibility = null,
                 rankingVisible = null,
                 minTier = null,
@@ -232,7 +244,7 @@ sealed interface ChallengeSettingsReducerEvent : ReducerEvent {
     data object CoverImageRemoved : ChallengeSettingsReducerEvent
 
     data class CapacityChanged(
-        val capacity: Int,
+        val capacity: Int?,
     ) : ChallengeSettingsReducerEvent
 
     data class VisibilitySelected(

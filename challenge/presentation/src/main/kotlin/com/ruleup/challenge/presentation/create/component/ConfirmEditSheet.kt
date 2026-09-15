@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.presentation.common.CapacitySlider
 import com.ruleup.challenge.presentation.create.ChallengeDates
 import com.ruleup.challenge.presentation.create.label
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
@@ -176,31 +177,10 @@ private fun ModeCapacityEditor(
         )
         // 정원·티어는 그룹 전용 계약이다. 솔로에서 보여주면 보내지지도 않을 값을 고르게 하는 셈이다.
         if (state.isGroup) {
-            BorderedRow {
-                Text("정원", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    StepperBox(
-                        text = "−",
-                        highlighted = false,
-                        onClick = { onIntent(CreateChallengeIntent.SetCapacity(state.capacity - 1)) },
-                        enabled = state.capacity > ChallengeLimits.CAPACITY_MIN,
-                    )
-                    Text(
-                        "${state.capacity}명",
-                        color = RuleUpTheme.colors.textPrimary,
-                        style = RuleUpTheme.typography.numberS,
-                    )
-                    StepperBox(
-                        text = "＋",
-                        highlighted = true,
-                        onClick = { onIntent(CreateChallengeIntent.SetCapacity(state.capacity + 1)) },
-                        enabled = state.capacity < ChallengeLimits.CAPACITY_MAX,
-                    )
-                }
-            }
+            CapacitySlider(
+                capacity = state.capacity,
+                onChange = { onIntent(CreateChallengeIntent.SetCapacity(it)) },
+            )
             BorderedRow(onClick = { showTiers = !showTiers }) {
                 Text("참여 가능 티어", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
                 Text(
@@ -581,43 +561,6 @@ private fun BorderedRow(
         content()
     }
 }
-
-/**
- * 증감 버튼. [enabled] 가 false 면 눌리지 않고 **색도 함께 죽인다** — 눌리는데 값이 안 바뀌는 것처럼
- * 보이면 고장으로 읽힌다.
- */
-@Composable
-private fun StepperBox(
-    text: String,
-    highlighted: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
-    val accented = highlighted && enabled
-    Box(
-        modifier =
-            modifier
-                .size(28.dp)
-                .clip(RoundedCornerShape(9.dp))
-                .background(if (accented) RuleUpTheme.colors.brandSoft else RuleUpTheme.colors.background)
-                .singleClickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            color =
-                when {
-                    !enabled -> RuleUpTheme.colors.textMuted.copy(alpha = DISABLED_ALPHA)
-                    highlighted -> RuleUpTheme.colors.brand
-                    else -> RuleUpTheme.colors.textMuted
-                },
-            style = RuleUpTheme.typography.bodyBold,
-        )
-    }
-}
-
-private const val DISABLED_ALPHA = 0.4f
 
 @Composable
 private fun ChoiceChip(

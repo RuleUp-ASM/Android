@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
@@ -54,7 +55,8 @@ internal fun Double.toPercentText(): String {
 internal fun RoomMemberSection(
     members: List<ChallengeMember>,
     participantCount: Int,
-    maxParticipants: Int,
+    // null 이면 무제한
+    maxParticipants: Int?,
     myUserId: String?,
     actionEnabled: Boolean,
     // 비공개 그룹 방의 방장만 — 초대 링크가 유일한 입장 경로다
@@ -68,7 +70,7 @@ internal fun RoomMemberSection(
             SectionTitle("멤버")
             Spacer(Modifier.width(6.dp))
             Text(
-                text = "$participantCount / $maxParticipants",
+                text = "$participantCount / ${capacityLabel(maxParticipants)}",
                 color = RuleUpTheme.colors.textSecondary,
                 style = RuleUpTheme.typography.smallMedium,
             )

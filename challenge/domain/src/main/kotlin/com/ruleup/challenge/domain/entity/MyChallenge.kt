@@ -83,7 +83,8 @@ data class MyChallenge(
     val visibility: ChallengeVisibility?,
     val status: ChallengeStatus,
     val participantCount: Int,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     // 최소 입장 티어 (없으면 null)
     val minTier: Tier?,
     // 주간 수행 횟수 1~7. 판정 주기는 1주 고정이고 요일 지정은 없다(구 repeatDays 폐기)

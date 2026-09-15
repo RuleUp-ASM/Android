@@ -107,7 +107,7 @@ internal fun RoomResponse.toDomain(): ChallengeRoom =
                 roomSuccessRate = summary?.roomSuccessRate,
                 remainingDays = summary?.remainingDays ?: 0,
                 participantCount = summary?.participantCount ?: 0,
-                capacity = summary?.capacity ?: 0,
+                capacity = summary?.capacity,
             ),
         topRanking = topRanking.orEmpty().mapNotNull { it.toDomain() },
         // 미지 값은 null — 성공·실패 어느 쪽으로도 임의로 접지 않고 표기를 생략한다

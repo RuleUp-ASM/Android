@@ -77,7 +77,7 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
     ) : CreateChallengeReducerEvent
 
     data class CapacityChanged(
-        val capacity: Int,
+        val capacity: Int?,
     ) : CreateChallengeReducerEvent
 
     data class MinTierChanged(

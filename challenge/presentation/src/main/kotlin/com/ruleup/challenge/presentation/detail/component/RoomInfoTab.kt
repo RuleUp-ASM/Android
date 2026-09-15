@@ -27,6 +27,7 @@ import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
+import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.StatusChip
@@ -404,7 +405,7 @@ private fun ProgressInfoCard(
             value =
                 buildString {
                     append("${room.summary.participantCount}명")
-                    if (room.summary.capacity > 0) append(" / 정원 ${room.summary.capacity}명")
+                    append(" / 정원 ${capacityLabel(room.summary.capacity)}")
                     // 봇방장은 승계자가 없어 자리를 지키는 상태다 — 사람 이름이 없다는 사실을 그대로 적는다.
                     val owner =
                         if (room.ownerType == OwnerType.BOT) "방장 없음" else detail.owner?.nickname?.let { "방장 $it" }

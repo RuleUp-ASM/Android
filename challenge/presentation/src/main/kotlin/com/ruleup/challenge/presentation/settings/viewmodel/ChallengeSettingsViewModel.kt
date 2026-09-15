@@ -191,13 +191,10 @@ class ChallengeSettingsViewModel
             }
         }
 
-        private fun setCapacity(capacity: Int) {
-            // 현재 인원 미만으로는 줄일 수 없다 — 스테퍼 하한을 여기서 잠근다.
-            val clamped =
-                capacity
-                    .coerceAtLeast(currentState.capacityFloor)
-                    .coerceAtMost(ChallengeLimits.CAPACITY_MAX)
-            dispatch(ChallengeSettingsReducerEvent.CapacityChanged(clamped))
+        private fun setCapacity(capacity: Int?) {
+            // 현재 인원보다 작은 정원은 받지 않는다 — 화면도 그 단계를 보여 주지 않는다(서버 CAPACITY_BELOW_CURRENT).
+            if (capacity != null && capacity < currentState.capacityFloor) return
+            dispatch(ChallengeSettingsReducerEvent.CapacityChanged(capacity))
         }
 
         /** AUTO → MANUAL 단방향. 되돌리려는 시도는 여기서 막고 이유를 알린다. */
@@ -255,7 +252,7 @@ class ChallengeSettingsViewModel
             }
         }
 
-        /** 원본과 다른 필드만 담는다. `imageUrl` 만 명시적 null(기본 이미지 되돌리기)을 실을 수 있다. */
+        /** 원본과 다른 필드만 담는다. 명시적 null 은 `imageUrl`(기본 이미지)과 `capacity`(무제한)만 실린다. */
         private fun ChallengeSettingsState.toUpdate(
             origin: ChallengeSettings,
             uploadedUrl: String?,
@@ -268,6 +265,8 @@ class ChallengeSettingsViewModel
                 imageUrl = uploadedUrl,
                 removeImage = removeImage,
                 capacity = capacity.takeIf { it != config.capacity },
+                // 무제한으로 바꿀 때만 null 을 명시 전송한다 — capacity 의 null 은 "미변경"이다.
+                unlimitedCapacity = capacity == null && config.capacity != null,
                 visibility = visibility.takeIf { it != config.visibility },
                 rankingVisible = rankingVisible.takeIf { it != config.rankingVisible },
                 minTier = minTier.takeIf { it != config.minTier },

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.BasicTextField
@@ -35,6 +34,8 @@ import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.presentation.common.CapacitySlider
+import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
 import com.ruleup.challenge.presentation.create.component.GradientSwitch
 import com.ruleup.challenge.presentation.create.component.InfoNote
@@ -306,36 +307,18 @@ private fun CapacitySection(
         SectionLabel("최대 인원")
         if (!editable) {
             LockedRow(reason = "지금은 바꿀 수 없어요") {
-                Text("${state.capacity}명", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
+                Text(capacityLabel(state.capacity), color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
             }
         } else {
-            Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RuleUpTheme.shapes.small)
-                        .background(RuleUpTheme.colors.surface)
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                StepButton("−") { onIntent(ChallengeSettingsIntent.SetCapacity(state.capacity - 1)) }
-                BasicTextField(
-                    value = state.capacity.toString(),
-                    onValueChange = { input ->
-                        input.filter(Char::isDigit).toIntOrNull()?.let {
-                            onIntent(ChallengeSettingsIntent.SetCapacity(it))
-                        }
-                    },
-                    textStyle = RuleUpTheme.typography.bodyBold.copy(color = RuleUpTheme.colors.textPrimary),
-                    singleLine = true,
-                )
-                StepButton("+") { onIntent(ChallengeSettingsIntent.SetCapacity(state.capacity + 1)) }
-            }
+            CapacitySlider(
+                capacity = state.capacity,
+                onChange = { onIntent(ChallengeSettingsIntent.SetCapacity(it)) },
+                steps = state.capacitySteps,
+            )
             // 이미 들어온 사람을 내보낼 수는 없으므로 하한이 현재 인원이다.
             state.participantCount?.let {
                 Text(
-                    text = "지금 ${it}명이 참여 중이라 그보다 줄일 수 없어요",
+                    text = "지금 ${it}명이 참여 중이라 그보다 작은 단계는 고를 수 없어요",
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.caption,
                 )
@@ -668,24 +651,6 @@ private fun ChoiceChip(
                 },
             style = RuleUpTheme.typography.smallMedium,
         )
-    }
-}
-
-@Composable
-private fun StepButton(
-    text: String,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier =
-            Modifier
-                .size(32.dp)
-                .clip(RuleUpTheme.shapes.pill)
-                .background(RuleUpTheme.colors.surfaceVariant)
-                .singleClickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyBold)
     }
 }
 

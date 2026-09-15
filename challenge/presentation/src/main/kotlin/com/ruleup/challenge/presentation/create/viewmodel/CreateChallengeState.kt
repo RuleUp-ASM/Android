@@ -43,7 +43,8 @@ data class CreateChallengeState(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    val capacity: Int,
+    // 그룹 정원. null 이면 무제한
+    val capacity: Int?,
     val minTier: Tier?,
     // minTier 슬라이더 상한 = 생성자 표시 티어(초안이 준 기본값). 진입 시점 값으로 고정한다.
     val ownerTierCap: Tier?,
@@ -101,7 +102,7 @@ data class CreateChallengeState(
         // 명세: 루틴 설명 1~200자. 서버가 같은 범위를 재검증한다.
 
         // 범위는 도메인이 정한다([ChallengeLimits]). 여기 남는 건 화면 기본값뿐이다.
-        const val CAPACITY_DEFAULT = 50
+        const val CAPACITY_DEFAULT = 30
 
         val initial =
             CreateChallengeState(

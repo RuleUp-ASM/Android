@@ -4,7 +4,6 @@ import com.ruleup.challenge.data.api.ChallengeApi
 import com.ruleup.challenge.data.dto.DraftRequest
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.toDomain
-import com.ruleup.challenge.data.dto.toRequest
 import com.ruleup.challenge.data.dto.toRequestBody
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeInvitation
@@ -80,7 +79,7 @@ class ChallengeRepositoryImpl
         ): CreatedChallenge =
             try {
                 api
-                    .create(idempotencyKey = idempotencyKey, request = command.toRequest())
+                    .create(idempotencyKey = idempotencyKey, request = command.toRequestBody())
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {

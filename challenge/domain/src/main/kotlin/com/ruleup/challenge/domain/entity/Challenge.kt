@@ -12,9 +12,20 @@ object ChallengeLimits {
     const val WEEKLY_COUNT_MIN = 1
     const val WEEKLY_COUNT_MAX = 7
 
-    // 그룹 정원
-    const val CAPACITY_MIN = 1
-    const val CAPACITY_MAX = 10_000
+    // 그룹 정원 단계(5·30·100·300·무제한). 무제한은 null 이다 — 서버도 null 로 저장한다(테크 스펙 challenges.capacity)
+    val CREATE_CAPACITY_STEPS: List<Int?> = listOf(5, 30, 100, 300, null)
+
+    /**
+     * [capacity] 이상인 가장 가까운 정원 단계. 300 을 넘거나 무제한(null)이면 무제한이다 —
+     * 원한 인원보다 작게 접으면 방이 먼저 차 버린다.
+     */
+    fun createCapacityStepAtLeast(capacity: Int?): Int? =
+        capacity?.let { wanted ->
+            CREATE_CAPACITY_STEPS.filterNotNull().firstOrNull {
+                it >=
+                    wanted
+            }
+        }
 }
 
 /** 참여 형태 (명세 `mode`). 구 `participationType` 을 대체한다. */
@@ -126,7 +137,8 @@ data class ChallengeDraft(
     val visibility: ChallengeVisibility?,
     // 솔로만 — 그룹은 null
     val rankingVisible: Boolean?,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     // 기본·상한 모두 생성자 표시 티어
     val minTier: Tier?,
     val period: ChallengePeriod,
@@ -189,7 +201,7 @@ data class CreateChallengeCommand(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    // 그룹 전용. 범위는 [ChallengeLimits]
+    // 그룹 전용. [ChallengeLimits.CREATE_CAPACITY_STEPS] 중 하나 — 그룹의 null 은 무제한이다
     val capacity: Int?,
     // ≤ 생성자 표시 티어
     val minTier: Tier?,
@@ -217,7 +229,7 @@ data class CreateChallengeCommand(
         if (mode.isGroup) {
             require(visibility != null) { "그룹 챌린지는 공개 범위가 필요합니다." }
             require(rankingVisible == null) { "랭킹 공개 여부는 솔로 전용입니다." }
-            require(capacity != null && capacity in ChallengeLimits.CAPACITY_MIN..ChallengeLimits.CAPACITY_MAX) {
+            require(capacity in ChallengeLimits.CREATE_CAPACITY_STEPS) {
                 "정원이 범위를 벗어났습니다: $capacity"
             }
         } else {
@@ -290,7 +302,8 @@ data class ChallengeConfig(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     val minTier: Tier?,
     val period: ChallengePeriod,
     // 주간 수행 횟수 1~7 — 시작 전 + 방장 혼자일 때만 수정 가능
@@ -319,6 +332,8 @@ data class ChallengeUpdate(
     val visibility: ChallengeVisibility? = null,
     val rankingVisible: Boolean? = null,
     val capacity: Int? = null,
+    // true 면 `capacity: null` 을 명시 전송해 정원을 무제한으로 바꾼다 — [capacity] 의 null 은 "미변경"이다
+    val unlimitedCapacity: Boolean = false,
     val minTier: Tier? = null,
     val period: ChallengePeriod? = null,
     val weeklyCount: Int? = null,

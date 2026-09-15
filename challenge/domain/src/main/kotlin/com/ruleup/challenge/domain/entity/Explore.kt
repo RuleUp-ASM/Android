@@ -121,7 +121,8 @@ data class ExploreChallenge(
     // 시작 전 — true 면 진행 지표가 전부 null 이다
     val startsSoon: Boolean,
     val participantCount: Int,
-    val capacity: Int,
+    // null 이면 무제한
+    val capacity: Int?,
     val isFull: Boolean,
     val minTier: Tier?,
     // 내 표시 티어 기준 입장 가능 여부
