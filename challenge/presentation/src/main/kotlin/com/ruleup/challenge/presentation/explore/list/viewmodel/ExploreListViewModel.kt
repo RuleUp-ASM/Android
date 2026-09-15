@@ -19,6 +19,7 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
 
 /**
@@ -245,8 +246,10 @@ class ExploreListViewModel
             }
         }
 
+        // 예외 원문(영문 UnknownHostException 등)을 그대로 쓰면 사용자 화면에 노출된다.
         private fun fail(error: Throwable) {
-            dispatch(ExploreListReducerEvent.Failed(error.message ?: "챌린지를 불러오지 못했어요"))
+            val message = if (error is IOException) "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요." else "챌린지를 불러오지 못했어요"
+            dispatch(ExploreListReducerEvent.Failed(message))
         }
 
         private fun loadMore() {

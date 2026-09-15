@@ -255,16 +255,17 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = ChallengeInvitePage.PATH,
-            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
-            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 홈을 깔고 그 위에 연다.
+            // 홈만 넣으면 콜드 스타트 링크가 초대 화면 대신 홈을 보여 준다.
+            syntheticStack = { args -> listOf(GenericNavKey(HomePage.PATH), GenericNavKey(ChallengeInvitePage.PATH, args)) },
             render = { args ->
                 ChallengeInviteScreen(token = args[ChallengeInvitePage.ARG_TOKEN].orEmpty())
             },
         ),
         AppRoute(
             path = WatcherAcceptPage.PATH,
-            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 깔아 준다.
-            syntheticStack = { listOf(GenericNavKey(HomePage.PATH)) },
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 홈을 깔고 그 위에 연다.
+            syntheticStack = { args -> listOf(GenericNavKey(HomePage.PATH), GenericNavKey(WatcherAcceptPage.PATH, args)) },
             render = { args ->
                 WatcherAcceptScreen(token = args[WatcherAcceptPage.ARG_TOKEN].orEmpty())
             },
