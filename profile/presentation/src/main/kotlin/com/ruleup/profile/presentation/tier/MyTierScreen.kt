@@ -37,7 +37,6 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.MyTier
 import com.ruleup.profile.domain.entity.ScoreChange
-import com.ruleup.profile.domain.entity.TierDemotion
 import com.ruleup.profile.presentation.common.accentColor
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.deltaLabel
@@ -124,7 +123,6 @@ private fun TierBody(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         TierHero(tier = tier)
-        tier.demotion?.let { DemotionCard(displayTier = tier.displayTier, demotion = it) }
         TierBandTable(current = tier.displayTier)
         RecentChangesCard(changes = tier.recentChanges, onOpenHistory = onOpenHistory)
         Text(
@@ -198,35 +196,6 @@ private fun ScoreText(
             color = color,
             style = RuleUpTheme.typography.smallBold,
             modifier = Modifier.padding(start = 2.dp, bottom = 3.dp),
-        )
-    }
-}
-
-/**
- * 강등 안내 (Figma 1134:1562). 유예 구간이 있다는 사실 자체가 안심 문구라 강등 대상이면 항상 띄운다.
- *
- * 경계는 서버가 준 [TierDemotion.demoteAt] 을 그대로 쓴다 — 표시 티어 시작점 −21 이지만
- * 클라가 다시 계산하면 정책이 바뀔 때 두 곳이 어긋난다.
- */
-@Composable
-private fun DemotionCard(
-    displayTier: Tier,
-    demotion: TierDemotion,
-) {
-    val lower = Tier.entries.getOrNull(displayTier.ordinal - 1)
-    TierCard {
-        Text(
-            text = "${displayTier.label}를 지키려면",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.cardTitle,
-        )
-        Text(
-            text =
-                "${displayTier.minScore.thousandsLabel()}점 아래로 내려가도 바로 떨어지지 않아요. " +
-                    "${demotion.demoteAt.thousandsLabel()}점 이하가 되면 " +
-                    (lower?.let { "${it.label}로 내려가요." } ?: "강등돼요."),
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.small,
         )
     }
 }

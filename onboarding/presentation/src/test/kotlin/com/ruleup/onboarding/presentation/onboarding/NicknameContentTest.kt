@@ -1,6 +1,8 @@
 package com.ruleup.onboarding.presentation.onboarding
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
@@ -73,15 +75,34 @@ class NicknameContentTest {
         assertEquals(listOf<OnboardingIntent>(OnboardingIntent.SetNickName("지현")), intents)
     }
 
+    @Test
+    fun `지우기 버튼을 누르면 입력을 비우는 의도를 올린다`() {
+        val intents = mutableListOf<OnboardingIntent>()
+        render(nickname = "지현", onIntent = { intents += it })
+
+        compose.onNodeWithContentDescription("닉네임 지우기").clickPastGuard()
+
+        assertEquals(listOf<OnboardingIntent>(OnboardingIntent.SetNickName("")), intents)
+    }
+
+    @Test
+    fun `사용 가능 안내는 한 번만 보인다`() {
+        render(nickname = "지현", nicknameAvailable = true, nicknameMessage = "사용 가능한 닉네임이에요")
+
+        compose.onAllNodesWithText("사용 가능한 닉네임이에요").assertCountEquals(1)
+    }
+
     private fun render(
         nicknameAvailable: Boolean? = null,
         nickname: String = "",
+        nicknameMessage: String? = null,
         onIntent: (OnboardingIntent) -> Unit = {},
     ): RecordingNavigationHelper =
         compose.renderOnboarding {
             NicknameContent(
                 onIntent = onIntent,
                 nickname = nickname,
+                nicknameMessage = nicknameMessage,
                 nicknameAvailable = nicknameAvailable,
             )
         }

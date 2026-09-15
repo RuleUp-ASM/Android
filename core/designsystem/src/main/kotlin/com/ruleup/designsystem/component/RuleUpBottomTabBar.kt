@@ -58,7 +58,7 @@ fun RuleUpBottomTabBar(
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(RuleUpTheme.colors.surface)
+                .background(RuleUpTheme.colors.background)
                 .navigationBarsPadding(),
     ) {
         HorizontalDivider(thickness = 1.dp, color = RuleUpTheme.colors.border)

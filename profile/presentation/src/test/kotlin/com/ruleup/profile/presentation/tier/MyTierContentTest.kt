@@ -60,11 +60,12 @@ class MyTierContentTest {
             ),
         )
 
-        compose.onNodeWithText("골드를 지키려면").assertExists()
+        compose.onNodeWithText("골드 300").assertExists()
     }
 
     @Test
-    fun `강등 경계는 서버가 준 점수를 그대로 말한다`() {
+    fun `강등 대상이어도 강등 안내 카드를 띄우지 않는다`() {
+        // 안내 카드는 디자인에서 제거됐다(Figma 1134:1562). 되살아나면 지운 문구가 다시 노출된다.
         render(
             MyTierState.initial.copy(
                 isLoading = false,
@@ -72,7 +73,7 @@ class MyTierContentTest {
             ),
         )
 
-        compose.onNodeWithText("300점 아래로 내려가도 바로 떨어지지 않아요. 279점 이하가 되면 실버로 내려가요.").assertExists()
+        compose.onNodeWithText("지키려면", substring = true).assertDoesNotExist()
     }
 
     @Test
