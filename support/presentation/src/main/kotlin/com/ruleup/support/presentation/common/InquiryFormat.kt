@@ -1,5 +1,10 @@
 package com.ruleup.support.presentation.common
 
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
 /**
  * 화면에 보이는 접수번호. **서버가 주는 UUID 를 줄여서만 보여준다.**
  *
@@ -12,19 +17,30 @@ fun shortInquiryId(inquiryId: String): String =
 private const val SHORT_ID_LENGTH = 18
 
 /**
- * "2026-09-05T14:22:00Z" → "09.05". 목록 줄처럼 연도가 필요 없는 자리에 쓴다.
+ * "2026-09-05T14:22:00Z" → "09.05"(기기 시간대). 목록 줄처럼 연도가 필요 없는 자리에 쓴다.
  *
  * 파싱에 실패하면 받은 문자열을 그대로 돌려준다 — 날짜 한 칸을 비우는 것보다 원문이라도 보이는
  * 편이 사용자가 접수 시점을 가늠하는 데 낫다.
  */
-fun shortDate(iso: String): String {
-    val parts = iso.substringBefore('T').split('-')
-    return if (parts.size == 3) "${parts[1]}.${parts[2]}" else iso
-}
+fun shortDate(
+    iso: String,
+    zone: ZoneId = ZoneId.systemDefault(),
+): String = local(iso, zone)?.format(SHORT_DATE) ?: iso
 
-/** "2026-09-05T14:22:00Z" → "09.05 14:22". 상세·답변처럼 시각까지 필요한 자리에 쓴다. */
-fun shortDateTime(iso: String): String {
-    val date = shortDate(iso)
-    val time = iso.substringAfter('T', "").take(5)
-    return if (time.length == 5) "$date $time" else date
-}
+/**
+ * "2026-09-05T14:22:00Z" → "09.05 23:22"(KST). 상세·답변처럼 시각까지 필요한 자리에 쓴다.
+ *
+ * 서버는 UTC 로 준다 — 문자열을 잘라 그리면 KST 사용자에게 9시간 이른 시각이 보인다(#452).
+ */
+fun shortDateTime(
+    iso: String,
+    zone: ZoneId = ZoneId.systemDefault(),
+): String = local(iso, zone)?.format(SHORT_DATE_TIME) ?: iso
+
+private fun local(
+    iso: String,
+    zone: ZoneId,
+): ZonedDateTime? = runCatching { OffsetDateTime.parse(iso).atZoneSameInstant(zone) }.getOrNull()
+
+private val SHORT_DATE = DateTimeFormatter.ofPattern("MM.dd")
+private val SHORT_DATE_TIME = DateTimeFormatter.ofPattern("MM.dd HH:mm")

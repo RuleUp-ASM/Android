@@ -70,6 +70,16 @@ class HomeChallengeMergeTest {
     }
 
     @Test
+    fun `진행률에만 있는 끝난 챌린지는 진행 중 카드로 붙이지 않는다`() {
+        // 스냅샷은 완주한 방도 싣는다. 붙이면 끝난 방이 「진행 중 · 오늘 시작」으로 보인다.
+        val done = progress("done").copy(status = ChallengeStatus.COMPLETED.value)
+
+        val merged = mergeHomeChallenges(emptyList(), snapshot(done, progress("ongoing")), emptyList())
+
+        assertEquals(listOf("ongoing"), merged.map { it.challengeId })
+    }
+
+    @Test
     fun `진행률은 0에서 1 사이로 갇힌다`() {
         // 서버가 100 을 넘겨 보내도 진행바가 넘치지 않아야 한다.
         val merged = mergeHomeChallenges(emptyList(), snapshot(progress("ch1", progressRate = 140.0)), emptyList())

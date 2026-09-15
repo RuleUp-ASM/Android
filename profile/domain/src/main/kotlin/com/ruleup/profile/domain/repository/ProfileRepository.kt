@@ -26,16 +26,15 @@ interface ProfileRepository {
     /** 내 프로필 조회 (명세 4.8). */
     suspend fun getProfile(): Profile
 
-    /** 프로필 수정. 변경할 필드만 전달한다 (명세 4.9). */
+    /** 프로필 수정(명세 PATCH /users/me/profile). 변경할 필드만 전달하고, 저장 뒤 다시 조회한 값을 돌려준다. */
     suspend fun updateProfile(
         nickname: String? = null,
         interestCategories: List<Category>? = null,
-        profileImageUrl: String? = null,
     ): Profile
 
     /** 프로필 사진 업로드 후 URL 반환 (명세 4.10). */
     suspend fun uploadProfileImage(imageUri: String): String
 
-    /** 프로필 사진 제거 (명세 4.11). */
+    /** 프로필 사진 제거(명세 PATCH /users/me/profile removeProfileImage). */
     suspend fun deleteProfileImage()
 }

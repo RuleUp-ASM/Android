@@ -21,6 +21,9 @@ sealed interface MyCalendarIntent : MviIntent {
         val date: String,
     ) : MyCalendarIntent
 
+    /** 조회에 실패한 달을 다시 불러온다. */
+    data object Retry : MyCalendarIntent
+
     data object Back : MyCalendarIntent
 }
 

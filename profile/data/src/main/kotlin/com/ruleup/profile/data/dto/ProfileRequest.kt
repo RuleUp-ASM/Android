@@ -10,13 +10,13 @@ data class NicknameCheckRequest(
     val nickname: String? = null,
 )
 
-// 4.9 프로필 수정 (변경할 필드만 전달)
+// 명세 PATCH /users/me/profile — 변경할 필드만 싣는다. 사진 등록은 profile-image API 소관이다.
 @Serializable
 data class UpdateProfileRequest(
     @SerialName("nickname")
     val nickname: String? = null,
     @SerialName("interestCategories")
     val interestCategories: List<String>? = null,
-    @SerialName("profileImageUrl")
-    val profileImageUrl: String? = null,
+    @SerialName("removeProfileImage")
+    val removeProfileImage: Boolean? = null,
 )

@@ -40,17 +40,16 @@ class ProfileRepositoryImpl
         override suspend fun updateProfile(
             nickname: String?,
             interestCategories: List<Category>?,
-            profileImageUrl: String?,
-        ): Profile =
+        ): Profile {
             api
                 .updateProfile(
                     UpdateProfileRequest(
                         nickname = nickname,
                         interestCategories = interestCategories?.map { it.value },
-                        profileImageUrl = profileImageUrl,
                     ),
-                ).getOrThrow()
-                .toDomain()
+                ).throwOnError()
+            return getProfile()
+        }
 
         override suspend fun uploadProfileImage(imageUri: String): String {
             val image = imageReader.read(imageUri)
@@ -68,6 +67,6 @@ class ProfileRepositoryImpl
         }
 
         override suspend fun deleteProfileImage() {
-            api.deleteProfileImage().throwOnError()
+            api.updateProfile(UpdateProfileRequest(removeProfileImage = true)).throwOnError()
         }
     }
