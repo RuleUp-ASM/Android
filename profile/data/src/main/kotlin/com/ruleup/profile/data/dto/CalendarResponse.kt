@@ -16,7 +16,7 @@ import kotlinx.serialization.Serializable
 data class CalendarDayResponse(
     @SerialName("date")
     val date: String? = null,
-    // ALL_DONE / PARTIAL / FAILED / CHECKING / IN_PROGRESS
+    // ALL_DONE / PARTIAL / FAILED / FAIL_EXPECTED / IN_PROGRESS
     @SerialName("status")
     val status: String? = null,
     @SerialName("successCount")
@@ -59,7 +59,7 @@ data class CalendarDayItemResponse(
     // RoutineOutcome 카테고리 스냅샷 (예: WAKE_UP)
     @SerialName("category")
     val category: String? = null,
-    // IN_PROGRESS / CHECKING / DONE / FAILED
+    // IN_PROGRESS / FAIL_EXPECTED / DONE / FAILED
     @SerialName("status")
     val status: String? = null,
     // 이의 신청 대상 인증 건 ID
@@ -72,7 +72,7 @@ data class CalendarDayItemResponse(
     val confirmedAt: String? = null,
     @SerialName("failureReason")
     val failureReason: String? = null,
-    // FAILED 일 때만 내려온다
+    // FAILED·FAIL_EXPECTED 에서 내려온다
     @SerialName("appeal")
     val appeal: DayItemAppealResponse? = null,
 )

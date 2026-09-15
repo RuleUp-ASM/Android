@@ -38,6 +38,7 @@ data class SyncResult(
 
 data class UpdatedChallenge(
     val challengeId: String,
-    val todayStatus: TodayStatus,
+    // 모르는 값이면 null
+    val todayStatus: TodayStatus?,
     val progressRate: Double,
 )

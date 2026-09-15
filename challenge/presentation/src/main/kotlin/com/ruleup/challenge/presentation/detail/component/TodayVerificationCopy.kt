@@ -1,6 +1,7 @@
 package com.ruleup.challenge.presentation.detail.component
 
 import com.ruleup.verification.domain.entity.FailureReason
+import com.ruleup.verification.domain.entity.PendingReason
 
 /**
  * 실패 사유 문구 (프론트엔드 테크스펙 4-7).
@@ -35,4 +36,11 @@ internal fun FailureReason.failureText(): String =
         FailureReason.FALLBACK_LIMIT_EXCEEDED -> "이번 주 수동 인증을 모두 사용했어요"
         // 모르는 사유를 지어내지 않는다 — 이의로 갈 수 있다는 것만 말한다.
         FailureReason.UNKNOWN -> "인증 조건을 채우지 못했어요"
+    }
+
+/** 판정 불가 사유 문구. 할 일이 갈린다 — 권한은 켜야 하고, 신호는 기다리거나 앱을 열어야 한다. */
+internal fun PendingReason.pendingText(): String =
+    when (this) {
+        PendingReason.PERMISSION_MISSING -> "권한이 꺼져 있어 측정하지 못했어요"
+        PendingReason.NO_SIGNAL -> "아직 휴대폰에서 받은 기록이 없어요"
     }

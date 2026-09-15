@@ -307,10 +307,10 @@ private fun CalendarDayStatus?.dotColor(isSelected: Boolean): Color =
         CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
         CalendarDayStatus.PARTIAL -> RuleUpPalette.StatusWarn
         CalendarDayStatus.FAILED -> RuleUpTheme.colors.danger
-        // 검사중은 최종 재평가 구간이라 실패가 아니다. 미확정 색을 함께 쓰고 범례를 늘리지 않는다
+        // 실패 예정은 확정 전이라 실패가 아니다. 미확정 색을 함께 쓰고 범례를 늘리지 않는다
         // (프론트엔드 테크스펙: 장시간 구간 범례를 추가하지 않고 카드에서만 안내).
         CalendarDayStatus.IN_PROGRESS,
-        CalendarDayStatus.CHECKING,
+        CalendarDayStatus.FAIL_EXPECTED,
         -> if (isSelected) RuleUpPalette.BgSurface else RuleUpTheme.colors.brand
         // 판정 대상일만 내려오므로 null 은 비대상일이거나 모르는 값이다 — 어느 쪽이든 칠하지 않는다.
         null -> Color.Transparent
@@ -420,8 +420,8 @@ private fun DayItemRow(item: CalendarDayItem) {
                 } to RuleUpTheme.colors.success
 
             DayItemStatus.FAILED -> (item.failureReason?.failureLabel() ?: "실패") to RuleUpTheme.colors.danger
-            // 검사중을 실패처럼 보이게 하지 않는다 — 성공·실패 양쪽으로 열려 있는 상태다.
-            DayItemStatus.CHECKING -> "결과 계산 중" to RuleUpPalette.StatusWarn
+            // 확정 실패와 같은 색을 쓰지 않는다 — 아직 뒤집힐 수 있고 이의를 낼 수 있다.
+            DayItemStatus.FAIL_EXPECTED -> "실패 예정" to RuleUpPalette.StatusWarn
             DayItemStatus.IN_PROGRESS -> "진행 중" to RuleUpTheme.colors.brand
             // 모르는 상태는 완료·실패 어느 쪽으로도 접지 않고 표기를 생략한다.
             null -> "" to RuleUpTheme.colors.textMuted

@@ -80,7 +80,7 @@ internal fun RoomInfoTab(
             roomStatus = room.myTodayStatus,
             today = today,
             onOpenManualCheck = onOpenManualCheck,
-            // 이의는 실패 확정 건에만, 그것도 대상 인증 건 ID 를 알 때만 낼 수 있다.
+            // 이의는 서버가 낼 수 있다고 한 건(appeal.eligible)에만, 대상 인증 건 ID 를 알 때만 낸다.
             onAppealClick =
                 { appealOpen = true }
                     .takeIf { onSubmitAppeal != null && today?.appeal?.eligible == true && today.verificationId != null },
@@ -126,9 +126,9 @@ internal fun RoomInfoTab(
  * 떨어지고, 그마저 앱이 모르는 값이면 카드를 그리지 않는다 — 모르는 상태를 성공이나 실패로 접어
  * 보여주는 쪽이 아무것도 안 보여주는 것보다 나쁘다.
  *
- * 실패는 **두 얼굴**이다. 아직 이의할 수 있으면 붉은 배지 대신 카드 톤으로만 알리고 마감 시각과 함께
- * 진입점을 준다. 기한이 지나면 그때 `실패 확정` 배지가 붙는다 — 되돌릴 수 있는 실패와 끝난 실패를
- * 같은 얼굴로 보여주면 사용자는 아직 남은 기회를 모른 채 넘긴다.
+ * 실패는 **두 얼굴**이다. 실패 예정(`FAIL_EXPECTED`)이 실제 이의 창이라 붉은 배지 대신 카드 톤으로만
+ * 알리고 마감 시각과 함께 진입점을 준다. 확정(`FAILED`)되면 `실패 확정` 배지가 붙는다 — 되돌릴 수 있는
+ * 실패와 끝난 실패를 같은 얼굴로 보여주면 사용자는 아직 남은 기회를 모른 채 넘긴다.
  */
 @Composable
 private fun TodayVerificationCard(
@@ -151,9 +151,9 @@ private fun TodayVerificationCard(
             label = "인증 진행 중"
             color = colors.brand
         }
-        // 창은 닫혔지만 성공·실패 양쪽으로 열려 있는 구간이다. 실패로 보이게 하지 않는다.
-        TodayResultStatus.CHECKING -> {
-            label = "검사중"
+        // 이대로면 실패지만 확정 전이다. 확정 실패와 같은 색을 쓰면 이의를 포기하게 된다.
+        TodayResultStatus.FAIL_EXPECTED -> {
+            label = "실패 예정"
             color = RuleUpPalette.StatusWarn
         }
         TodayResultStatus.FAILED -> {
@@ -165,8 +165,9 @@ private fun TodayVerificationCard(
             color = colors.textMuted
         }
     }
-    // 이의를 낼 수 있는 실패만 카드 테두리로 알린다(배지 없음, Figma 1134:512 상태 1).
-    val appealAction = onAppealClick?.takeIf { status == TodayResultStatus.FAILED }
+    // 이의를 낼 수 있는 건만 카드 테두리로 알린다(배지 없음, Figma 1134:512 상태 1). 상태가 아니라
+    // appeal.eligible 이 기준이다 — 신청 창은 FAIL_EXPECTED 라 FAILED 만 보면 진입점이 사라진다.
+    val appealAction = onAppealClick
     val appealable = appealAction != null
     Column(
         modifier =
@@ -264,8 +265,6 @@ private fun todayNote(
     today: TodayResult?,
 ): String? =
     when (status) {
-        // 확정 전 유예 구간. 미완료나 실패로 읽히지 않게 계산 중임을 밝힌다.
-        TodayResultStatus.CHECKING -> "최종 결과를 계산하고 있어요"
         TodayResultStatus.NOT_TARGET -> "오늘은 인증하는 날이 아니에요"
         TodayResultStatus.DONE ->
             today
@@ -273,13 +272,18 @@ private fun todayNote(
                 ?.after
                 ?.takeIf { it > 0 }
                 ?.let { "${it}일 연속 성공 중이에요" }
-        TodayResultStatus.FAILED ->
+        // 실패 예정에도 사유·근거를 보인다 — 그걸 보고 이의를 낼지 정한다.
+        TodayResultStatus.FAIL_EXPECTED,
+        TodayResultStatus.FAILED,
+        ->
             buildList {
+                today?.pendingReason?.let { add(it.pendingText()) }
                 today?.failureReason?.let { add(it.failureText()) }
+                today?.evidenceSummary?.let { add(it) }
                 // 끊긴 연속 기록은 사실만 말한다(재촉하지 않는다).
                 today?.streak?.takeIf { it.before > 0 && it.after == 0 }?.let { add("연속 ${it.before}일이 끊겼어요") }
             }.takeIf { it.isNotEmpty() }?.joinToString(" · ")
-        TodayResultStatus.IN_PROGRESS -> null
+        TodayResultStatus.IN_PROGRESS -> today?.pendingReason?.pendingText()
     }
 
 /**
@@ -303,7 +307,7 @@ private fun TodayResult.appealButtonText(): String {
 private fun TodayVerificationStatus.toResultStatus(): TodayResultStatus =
     when (this) {
         TodayVerificationStatus.IN_PROGRESS -> TodayResultStatus.IN_PROGRESS
-        TodayVerificationStatus.CHECKING -> TodayResultStatus.CHECKING
+        TodayVerificationStatus.FAIL_EXPECTED -> TodayResultStatus.FAIL_EXPECTED
         TodayVerificationStatus.DONE -> TodayResultStatus.DONE
         TodayVerificationStatus.FAILED -> TodayResultStatus.FAILED
         TodayVerificationStatus.NOT_TARGET -> TodayResultStatus.NOT_TARGET

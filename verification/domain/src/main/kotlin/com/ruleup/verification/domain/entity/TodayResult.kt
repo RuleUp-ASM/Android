@@ -3,21 +3,20 @@ package com.ruleup.verification.domain.entity
 /**
  * 오늘 인증 상태 (명세: GET /challenges/{id}/verifications/today `status`).
  *
- * 판정 이전 구간이 둘로 나뉘는 게 핵심이다 — [IN_PROGRESS] 는 인증 창이 아직 열려 있는 상태이고,
- * [CHECKING] 은 귀속일은 끝났지만 아직 확정 전 — 늦게 도착하는 신호를 계속 받는 유예 구간이다.
- * 둘 다 **실패가 아니다** — 검사중은 성공·실패 양쪽으로 열려 있다.
+ * [FAIL_EXPECTED] 는 위반이 잡혔거나 귀속일이 끝났는데 목표 미달인 상태다. **확정 실패가 아니고
+ * 실제 이의 신청 창이 여기다** — 확정([FAILED])되면 이의는 닫힌다. 구 `CHECKING` 은 폐기됐다.
  */
 enum class TodayResultStatus(
     val value: String,
 ) {
     IN_PROGRESS("IN_PROGRESS"),
-    CHECKING("CHECKING"),
+    FAIL_EXPECTED("FAIL_EXPECTED"),
     DONE("DONE"),
     FAILED("FAILED"),
     NOT_TARGET("NOT_TARGET"),
     ;
 
-    /** 실패로 확정됐는가 — 이의 제기 안내의 조건. 재평가 중([CHECKING])은 아직 실패가 아니다. */
+    /** 실패로 확정됐는가. 실패 예정([FAIL_EXPECTED])은 늦은 신호로 뒤집힐 수 있어 아직 실패가 아니다. */
     val isFailure: Boolean
         get() = this == FAILED
 
@@ -27,6 +26,21 @@ enum class TodayResultStatus(
          * 생략하게 한다 — 잘못 접으면 성공한 날이 실패로 보이거나 그 반대가 된다.
          */
         fun fromValue(value: String?): TodayResultStatus? = entries.find { it.value == value }
+    }
+}
+
+/**
+ * 판정 불가 사유 (명세 `pendingReason`). 목표 미달은 여기 오지 않는다 — 그건 [FailureReason] 이다.
+ * 할 일이 「권한 켜기」와 「더 하기」로 갈려서 층을 나눈다.
+ */
+enum class PendingReason {
+    PERMISSION_MISSING,
+    NO_SIGNAL,
+    ;
+
+    companion object {
+        /** 모르는 사유는 null — 권한 문제로 접으면 멀쩡한 사용자를 권한 화면으로 보낸다. */
+        fun fromValue(value: String?): PendingReason? = entries.find { it.name == value }
     }
 }
 
@@ -46,7 +60,8 @@ data class UnacknowledgedResult(
 )
 
 /**
- * 이의 제기 가능 여부 (명세 `appeal`). `FAILED` 일 때만 내려온다.
+ * 이의 제기 가능 여부 (명세 `appeal`). `FAILED`·`FAIL_EXPECTED` 에서 내려온다 — 실제로 낼 수 있는지는
+ * 상태가 아니라 [eligible] 이 말한다.
  *
  * [eligibleUntil] 은 실패 확정과 같은 시각(귀속일 이틀 뒤 00:00 KST)인 **경계**다. 횟수 한도는
  * 없어졌으므로 "몇 회 남음"을 세지 않는다 — 남용은 이상탐지가 잡는다.
@@ -76,4 +91,7 @@ data class TodayResult(
     val streak: VerificationStreak?,
     val unacknowledged: UnacknowledgedResult?,
     val appeal: AppealChance?,
+    val pendingReason: PendingReason? = null,
+    // 「체류 42분 / 목표 60분」처럼 그대로 보여줄 판정 근거 한 줄. FAILED·FAIL_EXPECTED 에서만
+    val evidenceSummary: String? = null,
 )

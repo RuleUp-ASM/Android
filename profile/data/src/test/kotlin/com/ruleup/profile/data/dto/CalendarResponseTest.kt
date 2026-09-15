@@ -11,18 +11,18 @@ class CalendarResponseTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
-    fun `월 캘린더의 오늘과 검사중이 상태로 살아 있다`() {
+    fun `월 캘린더의 오늘과 실패 예정이 상태로 살아 있다`() {
         // 종전에는 이 두 값을 몰라 NOT_TARGET 으로 접었고, 오늘 날짜가 "판정 대상 아님"으로 비어 보였다.
         val payload =
             """
             {"month":"2026-07","days":[
-              {"date":"2026-07-24","status":"CHECKING","successCount":2,"targetCount":3},
+              {"date":"2026-07-24","status":"FAIL_EXPECTED","successCount":2,"targetCount":3},
               {"date":"2026-07-25","status":"IN_PROGRESS","successCount":1,"targetCount":3}]}
             """.trimIndent()
 
         val calendar = json.decodeFromString<ActivityCalendarResponse>(payload).toDomain()
 
-        assertEquals(CalendarDayStatus.CHECKING, calendar.days.first().status)
+        assertEquals(CalendarDayStatus.FAIL_EXPECTED, calendar.days.first().status)
         assertEquals(CalendarDayStatus.IN_PROGRESS, calendar.days.last().status)
     }
 

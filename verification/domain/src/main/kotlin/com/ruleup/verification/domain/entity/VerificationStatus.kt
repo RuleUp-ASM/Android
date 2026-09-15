@@ -1,29 +1,25 @@
 package com.ruleup.verification.domain.entity
 
 /**
- * 하루 단위 인증 상태 (명세 3.2/3.3 todayStatus, BE 소유).
+ * 하루 단위 인증 상태 (명세 sync·progress `todayStatus`). 오늘 인증 결과 조회의 `status` 와 같은 5종이다.
  *
- * ⚠️ [PENDING] 은 "진행 중"이지 실패가 아니다. 특히 MAX·부재·시간창 루틴은 창이 닫혀야
- * [SUCCESS] 로 확정되므로 그 전엔 계속 [PENDING] 이다(명세 §6.4). 위반 시에만 [FAILED].
+ * [FAIL_EXPECTED] 는 "이대로면 실패"지 확정 실패가 아니다 — 늦은 신호로 뒤집힐 수 있고 이의 신청 창이다.
  */
 enum class TodayStatus {
-    SUCCESS,
-    PENDING,
+    IN_PROGRESS,
+    FAIL_EXPECTED,
+    DONE,
     FAILED,
     NOT_TARGET,
     ;
 
-    /**
-     * 실패로 확정된 날인가 — 실패 카피·이의 제기 노출의 기준.
-     *
-     * [PENDING] 은 아직 판정 전이고 [NOT_TARGET] 은 애초에 대상이 아니다. 둘 다 실패가 아니다.
-     */
+    /** 실패로 확정된 날인가. [FAIL_EXPECTED] 는 아직 뒤집힐 수 있어 실패가 아니다. */
     val isFailure: Boolean
         get() = this == FAILED
 
     companion object {
-        // 서버가 새 값을 추가해도 깨지지 않도록 미인식은 보수적으로 PENDING(진행 중)으로 떨군다.
-        fun fromValue(value: String?): TodayStatus = entries.find { it.name == value } ?: PENDING
+        /** 미인식 값은 null — 진행 중으로 접으면 완료된 날까지 진행 중으로 보인다. */
+        fun fromValue(value: String?): TodayStatus? = entries.find { it.name == value }
     }
 }
 

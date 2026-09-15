@@ -105,7 +105,7 @@ class SoloMonthCalendarTest {
                 listOf(
                     day("$month-01", ChallengeDayStatus.DONE),
                     day("$month-03", ChallengeDayStatus.FAILED),
-                    day("$month-05", ChallengeDayStatus.CHECKING),
+                    day("$month-05", ChallengeDayStatus.FAIL_EXPECTED),
                 ),
         )
 
