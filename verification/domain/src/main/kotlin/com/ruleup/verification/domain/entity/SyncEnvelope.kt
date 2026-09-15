@@ -154,6 +154,24 @@ data class DeviceDiagnostics(
 )
 
 /**
+ * 이번 전송이 **빠짐없이 담았다고 선언하는 구간** (명세 `coveredFrom`·`coveredUntil`, epoch millis).
+ *
+ * 서버는 이 선언을 누적해 귀속일 커버리지를 채우고, 다 차면 판정을 확정한다. 선언이 없으면
+ * "신호가 없다"와 "아직 안 왔다"를 가를 수 없어 요청을 400 으로 막는다.
+ */
+data class CoverageWindow(
+    val from: Long,
+    val until: Long,
+) {
+    init {
+        require(until >= from) { "구간 끝이 시작보다 앞섭니다: $from..$until" }
+    }
+
+    /** 신호 일부만 실은 조각용 — 길이 0 이라 아무 구간도 채웠다고 말하지 않는다. */
+    fun emptyAtStart(): CoverageWindow = CoverageWindow(from, from)
+}
+
+/**
  * envelope 의 신호 외 메타데이터 (전송 스펙 §0.1). [EnvelopeMetadataProvider] 가 sync 시점에 채집한다.
  * 신호 배치([SignalBatch])와 합쳐 한 envelope 로 전송한다.
  *
@@ -168,4 +186,5 @@ data class EnvelopeMetadata(
     val integrity: IntegritySnapshot,
     val diagnostics: DeviceDiagnostics,
     val gaps: List<SignalGap>,
+    val coverage: CoverageWindow,
 )

@@ -226,6 +226,11 @@ data class SyncEnvelopeRequest(
     val timeZone: String,
     @SerialName("activeChallengeIds")
     val activeChallengeIds: List<String>,
+    // 이 구간의 신호를 빠짐없이 담았다는 선언(epoch millis). 필수 — 없으면 400 INVALID_SIGNAL_PAYLOAD
+    @SerialName("coveredFrom")
+    val coveredFrom: Long,
+    @SerialName("coveredUntil")
+    val coveredUntil: Long,
     @SerialName("permissions")
     val permissions: PermissionsRequest,
     @SerialName("network")
@@ -365,6 +370,8 @@ internal fun EnvelopeMetadata.toRequest(batch: SignalBatch): SyncEnvelopeRequest
         bootSessionId = clock.bootSessionId,
         timeZone = clock.timeZone,
         activeChallengeIds = activeChallengeIds,
+        coveredFrom = coverage.from,
+        coveredUntil = coverage.until,
         permissions = permissions.toDto(),
         network = NetworkRequest(vpnActive = network.vpnActive),
         integrity = integrity.token?.let { IntegrityRequest(token = it) },

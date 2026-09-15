@@ -43,6 +43,13 @@ class VerificationSettingsStore
             dataStore.edit { it[KEY_LAST_FLUSH_AT] = at }
         }
 
+        /** 서버가 받아들인 마지막 sync 구간 끝(`coveredUntil`). 다음 구간의 시작이다. */
+        suspend fun lastCoveredUntil(): Long? = dataStore.data.first()[KEY_LAST_COVERED_UNTIL]
+
+        suspend fun setLastCoveredUntil(at: Long) {
+            dataStore.edit { it[KEY_LAST_COVERED_UNTIL] = at }
+        }
+
         suspend fun lastGeofenceReregisterAt(): Long? = dataStore.data.first()[KEY_LAST_GEOFENCE_REREGISTER_AT]
 
         suspend fun setLastGeofenceReregisterAt(at: Long) {
@@ -60,6 +67,7 @@ class VerificationSettingsStore
             val KEY_BOOT_SESSION_ID = stringPreferencesKey("boot_session_id")
             val KEY_BOOT_EPOCH_ANCHOR = longPreferencesKey("boot_epoch_anchor")
             val KEY_LAST_FLUSH_AT = longPreferencesKey("last_successful_flush_at")
+            val KEY_LAST_COVERED_UNTIL = longPreferencesKey("last_covered_until")
             val KEY_LAST_GEOFENCE_REREGISTER_AT = longPreferencesKey("last_geofence_reregister_at")
             val KEY_FLUSH_INTERVAL_SEC = longPreferencesKey("flush_interval_sec")
         }

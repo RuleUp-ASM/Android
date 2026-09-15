@@ -1,5 +1,6 @@
 package com.ruleup.verification.data.dto
 
+import com.ruleup.verification.domain.entity.CoverageWindow
 import com.ruleup.verification.domain.entity.DeviceClock
 import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import com.ruleup.verification.domain.entity.EnvelopeMetadata
@@ -61,6 +62,7 @@ class VerificationDtoSerializationTest {
             integrity = IntegritySnapshot(token = null),
             diagnostics = DeviceDiagnostics(null, null, null, null, null, null, "SDK_AVAILABLE"),
             gaps = gaps,
+            coverage = CoverageWindow(from = 1_719_598_200_000L, until = 1_719_600_000_000L),
         )
 
     @Test
@@ -75,6 +77,9 @@ class VerificationDtoSerializationTest {
         assertEquals("boot-1", decoded.bootSessionId)
         assertEquals("Asia/Seoul", decoded.timeZone)
         assertEquals(listOf("c-1"), decoded.activeChallengeIds)
+        // 빠지면 서버가 모든 sync 를 400 INVALID_SIGNAL_PAYLOAD 로 반려한다.
+        assertEquals(1_719_598_200_000L, decoded.coveredFrom)
+        assertEquals(1_719_600_000_000L, decoded.coveredUntil)
         assertEquals("GRANTED", decoded.permissions.location)
         assertEquals("DENIED", decoded.permissions.backgroundLocation)
         assertEquals("DENIED", decoded.permissions.healthConnect.steps)
