@@ -35,6 +35,7 @@ import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.presentation.create.component.ConfirmEditSection
 import com.ruleup.challenge.presentation.create.component.ConfirmEditSheet
 import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
+import com.ruleup.challenge.presentation.create.component.capacityLabel
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.designsystem.R
@@ -335,7 +336,7 @@ private fun CreateChallengeState.modeSummary(): String =
     if (mode.isGroup) {
         val visibilityLabel = if (visibility?.isPrivate == true) "비공개" else "그룹"
         val tierLabel = minTier?.let { "티어 ${it.label()} 이상" } ?: "티어 제한 없음"
-        "$visibilityLabel · 정원 ${capacity}명 · $tierLabel"
+        "$visibilityLabel · 정원 ${capacityLabel(capacity)} · $tierLabel"
     } else {
         val ranking = if (rankingVisible == false) "랭킹 비공개" else "랭킹 공개"
         "솔로 · $ranking"

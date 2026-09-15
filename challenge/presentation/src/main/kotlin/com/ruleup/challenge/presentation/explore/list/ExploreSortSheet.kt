@@ -121,19 +121,20 @@ internal fun ExploreSortSheet(
 
 @Composable
 private fun SortSheetDragHandle() {
+    // Figma 시트 공통 핸들 규격(1134:682) — 위 10 · 아래 4, 36x4 r2
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(24.dp),
+                .padding(top = 10.dp, bottom = 4.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
             modifier =
                 Modifier
-                    .width(40.dp)
-                    .height(5.dp)
-                    .clip(RoundedCornerShape(3.dp))
+                    .width(36.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
                     .background(RuleUpTheme.colors.borderStrong),
         )
     }

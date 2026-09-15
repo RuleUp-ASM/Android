@@ -15,6 +15,13 @@ object ChallengeLimits {
     // 그룹 정원
     const val CAPACITY_MIN = 1
     const val CAPACITY_MAX = 10_000
+
+    // 생성 시 고르는 정원 단계(5·30·100·300·무제한). 무제한은 서버 상한으로 보낸다 — 요청 계약은 그대로다
+    const val CAPACITY_UNLIMITED = CAPACITY_MAX
+    val CREATE_CAPACITY_STEPS = listOf(5, 30, 100, 300, CAPACITY_UNLIMITED)
+
+    /** [capacity] 이상인 가장 가까운 생성 단계. 원한 인원보다 작게 접으면 방이 먼저 차 버린다. */
+    fun createCapacityStepAtLeast(capacity: Int): Int = CREATE_CAPACITY_STEPS.firstOrNull { it >= capacity } ?: CAPACITY_UNLIMITED
 }
 
 /** 참여 형태 (명세 `mode`). 구 `participationType` 을 대체한다. */
@@ -189,7 +196,7 @@ data class CreateChallengeCommand(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    // 그룹 전용. 범위는 [ChallengeLimits]
+    // 그룹 전용. [ChallengeLimits.CREATE_CAPACITY_STEPS] 중 하나
     val capacity: Int?,
     // ≤ 생성자 표시 티어
     val minTier: Tier?,
@@ -217,7 +224,7 @@ data class CreateChallengeCommand(
         if (mode.isGroup) {
             require(visibility != null) { "그룹 챌린지는 공개 범위가 필요합니다." }
             require(rankingVisible == null) { "랭킹 공개 여부는 솔로 전용입니다." }
-            require(capacity != null && capacity in ChallengeLimits.CAPACITY_MIN..ChallengeLimits.CAPACITY_MAX) {
+            require(capacity != null && capacity in ChallengeLimits.CREATE_CAPACITY_STEPS) {
                 "정원이 범위를 벗어났습니다: $capacity"
             }
         } else {
