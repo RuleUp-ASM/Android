@@ -3,12 +3,9 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ChallengeNotCloneableException
 import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
-import com.ruleup.challenge.domain.entity.DelegationAction
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
-import com.ruleup.challenge.domain.entity.OwnerAlreadyExistsException
 import com.ruleup.challenge.domain.entity.RankingMode
-import com.ruleup.challenge.domain.entity.RoleAction
 import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
 import com.ruleup.challenge.domain.entity.ThreadPolicy
 import com.ruleup.challenge.domain.entity.VerificationMethod
@@ -116,7 +113,6 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RetryThreads -> loadThreads(next = true, retry = true)
                 is ChallengeDetailIntent.SelectRankingScope -> selectRankingScope(intent.scope)
                 ChallengeDetailIntent.LoadMoreCrossRanking -> loadCrossRanking(next = true)
-                ChallengeDetailIntent.ClaimOwner -> claimOwner()
                 ChallengeDetailIntent.OpenRanking -> openRanking()
                 is ChallengeDetailIntent.PickAppealImage -> uploadAppealImage(intent.imageUri)
                 ChallengeDetailIntent.OpenPermissionRepair ->
@@ -127,11 +123,6 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
                 is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
-                ChallengeDetailIntent.DeleteChallenge -> deleteChallenge()
-                is ChallengeDetailIntent.PromoteMember -> changeRole(intent.userId, RoleAction.PROMOTE)
-                is ChallengeDetailIntent.DemoteMember -> changeRole(intent.userId, RoleAction.DEMOTE)
-                is ChallengeDetailIntent.RequestDelegation -> requestDelegation(intent.targetUserId)
-                ChallengeDetailIntent.CancelDelegation -> cancelDelegation()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
         }
@@ -168,12 +159,6 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.MembersLoaded -> state.copy(members = event.members)
 
                 is ChallengeDetailReducerEvent.MemberActionLoading -> state.copy(isMemberActionLoading = event.loading)
-
-                is ChallengeDetailReducerEvent.DelegationRequested ->
-                    state.copy(pendingDelegation = event.ticket, pendingDelegationNickname = event.targetNickname)
-
-                ChallengeDetailReducerEvent.DelegationCleared ->
-                    state.copy(pendingDelegation = null, pendingDelegationNickname = null)
 
                 is ChallengeDetailReducerEvent.MyUserIdLoaded -> state.copy(myUserId = event.userId)
 
@@ -243,7 +228,6 @@ class ChallengeDetailViewModel
                 ChallengeDetailReducerEvent.AppealReset ->
                     state.copy(appealImageUrl = null, isUploadingAppealImage = false, appealReasonError = null)
 
-                is ChallengeDetailReducerEvent.ClaimingOwner -> state.copy(isClaimingOwner = event.claiming)
                 is ChallengeDetailReducerEvent.SubmittingAppeal -> state.copy(isSubmittingAppeal = event.submitting)
 
                 ChallengeDetailReducerEvent.ReportSheetOpened -> state.copy(isReportSheetOpen = true, reportUserId = null)
@@ -616,54 +600,6 @@ class ChallengeDetailViewModel
             }
         }
 
-        /**
-         * 봇방장 방 클레임. 선착순이라 **밀리는 것이 정상 결과**다 — 오류로 알리지 않고 안내한 뒤
-         * 방을 다시 받아 누가 방장이 됐는지 화면에 반영한다.
-         */
-        private fun claimOwner() {
-            val id = currentState.detail?.challengeId ?: return
-            if (currentState.isClaimingOwner) return
-            viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.ClaimingOwner(true))
-                runCatching { challengeRepository.claimOwner(id) }
-                    .onSuccess { result ->
-                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
-                        observability.log(Channel.BUSINESS) { ChallengeEvents.ownerClaim(challengeId = id, success = true) }
-                        emitEffect(
-                            ChallengeDetailEffect.ShowMessage(
-                                // 면책 기간을 함께 알린다 — "3일 안엔 빠져도 감점 없다"가 손드는 근거였다.
-                                if (result.graceUntil != null) {
-                                    "방장이 되었어요. 3일 안에는 나가도 감점되지 않아요"
-                                } else {
-                                    "방장이 되었어요"
-                                },
-                            ),
-                        )
-                        reloadRoom(id)
-                    }.onFailure { error ->
-                        dispatch(ChallengeDetailReducerEvent.ClaimingOwner(false))
-                        observability.log(Channel.BUSINESS) {
-                            ChallengeEvents.ownerClaim(
-                                challengeId = id,
-                                success = false,
-                                errorCode = (error as? OwnerAlreadyExistsException)?.let { "OWNER_ALREADY_EXISTS" },
-                            )
-                        }
-                        emitEffect(ChallengeDetailEffect.ShowMessage(error.message ?: "방장이 되지 못했어요"))
-                        // 경합에서 밀렸으면 누가 방장인지 화면이 틀린 상태다 — 무조건 다시 받는다.
-                        if (error is OwnerAlreadyExistsException) reloadRoom(id)
-                    }
-            }
-        }
-
-        /** 방 상태만 다시 받는다(클레임·권한 변경 후). 상세·피드는 그대로 두어 스크롤을 잃지 않는다. */
-        private fun reloadRoom(challengeId: String) {
-            viewModelScope.launch {
-                runCatching { roomRepository.getRoom(challengeId) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.RoomLoaded(it)) }
-            }
-        }
-
         /** 탭 전환. 방 밖 랭킹처럼 진입 시 받지 않은 데이터는 처음 열릴 때 조회한다. */
         private fun selectTab(tab: RoomTab) {
             if (currentState.selectedTab == tab) return
@@ -820,7 +756,7 @@ class ChallengeDetailViewModel
             }
         }
 
-        /** 탈퇴(본인). 성공 시 안내 후 이전 화면으로. OWNER 등 실패 사유는 서버 메시지로 노출. */
+        /** 탈퇴(본인, 방장 포함). 성공 시 안내 후 이전 화면으로. 실패 사유는 서버 메시지로 노출. */
         private fun leaveChallenge() {
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isMemberActionLoading) return
@@ -836,88 +772,6 @@ class ChallengeDetailViewModel
                         navigationHelper.navigateToBack()
                     }.onFailure {
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "탈퇴에 실패했어요"))
-                    }
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
-            }
-        }
-
-        /** 삭제(방장). 참여자 0명일 때만 가능 — 실패 사유는 서버 메시지로 노출. */
-        private fun deleteChallenge() {
-            val id = currentState.detail?.challengeId ?: return
-            if (currentState.isMemberActionLoading) return
-            viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { challengeRepository.delete(id) }
-                    .onSuccess { result ->
-                        emitEffect(
-                            ChallengeDetailEffect.ShowMessage(
-                                if (result.penaltyApplied) "챌린지를 삭제했어요. 진행 이력이 있어 패널티가 적용됐어요" else "챌린지를 삭제했어요",
-                            ),
-                        )
-                        navigationHelper.navigateToBack()
-                    }.onFailure {
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "삭제에 실패했어요"))
-                    }
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
-            }
-        }
-
-        /** 공동 관리자 임명/해제(방장). 성공 시 멤버 목록을 재조회한다. */
-        private fun changeRole(
-            userId: String,
-            action: RoleAction,
-        ) {
-            val id = currentState.detail?.challengeId ?: return
-            if (currentState.isMemberActionLoading) return
-            viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { challengeRepository.changeMemberRole(id, userId, action) }
-                    .onSuccess {
-                        val message = if (action == RoleAction.PROMOTE) "공동 관리자로 임명했어요" else "공동 관리자를 해제했어요"
-                        emitEffect(ChallengeDetailEffect.ShowMessage(message))
-                        loadMembers(id)
-                    }.onFailure {
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "권한 변경에 실패했어요"))
-                    }
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
-            }
-        }
-
-        /** 방장 위임 요청(방장 → 공동 관리자). 생성된 티켓을 배너로 노출한다. */
-        private fun requestDelegation(targetUserId: String) {
-            val id = currentState.detail?.challengeId ?: return
-            if (currentState.isMemberActionLoading) return
-            val nickname =
-                currentState.members
-                    ?.members
-                    ?.firstOrNull { it.userId == targetUserId }
-                    ?.nickname
-            viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { challengeRepository.requestDelegation(id, targetUserId) }
-                    .onSuccess { ticket ->
-                        dispatch(ChallengeDetailReducerEvent.DelegationRequested(ticket, nickname))
-                        emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임을 요청했어요. 상대가 수락하면 방장이 넘어가요"))
-                    }.onFailure {
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "방장 위임 요청에 실패했어요"))
-                    }
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
-            }
-        }
-
-        /** 대기 중인 방장 위임 요청 취소(요청 OWNER). */
-        private fun cancelDelegation() {
-            val id = currentState.detail?.challengeId ?: return
-            val delegationId = currentState.pendingDelegation?.delegationId ?: return
-            if (currentState.isMemberActionLoading) return
-            viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
-                runCatching { challengeRepository.respondDelegation(id, delegationId, DelegationAction.CANCEL) }
-                    .onSuccess {
-                        dispatch(ChallengeDetailReducerEvent.DelegationCleared)
-                        emitEffect(ChallengeDetailEffect.ShowMessage("방장 위임 요청을 취소했어요"))
-                    }.onFailure {
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "위임 요청 취소에 실패했어요"))
                     }
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(false))
             }

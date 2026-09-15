@@ -1,16 +1,13 @@
 package com.ruleup.challenge.data.repository
 
 import com.ruleup.challenge.data.api.ChallengeApi
-import com.ruleup.challenge.data.dto.WatchingUpdateRequest
 import com.ruleup.challenge.data.dto.toAcceptFailure
 import com.ruleup.challenge.data.dto.toDomain
-import com.ruleup.challenge.domain.entity.AlreadyRevokedException
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.WatcherAcceptance
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.entity.Watching
-import com.ruleup.challenge.domain.entity.WatchingUpdate
 import com.ruleup.challenge.domain.repository.WatcherRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
@@ -47,22 +44,6 @@ class WatcherRepositoryImpl
                 .getWatching()
                 .getOrThrow()
                 .toDomain()
-
-        override suspend fun updateWatching(
-            watcherId: String,
-            pushEnabled: Boolean?,
-            revoke: Boolean?,
-        ): WatchingUpdate =
-            try {
-                api
-                    .updateWatching(watcherId, WatchingUpdateRequest(pushEnabled = pushEnabled, revoke = revoke))
-                    .getOrThrow()
-                    .toDomain(requestedId = watcherId)
-            } catch (e: ApiException) {
-                // 이미 거부한 항목이면 화면이 그 행을 지우도록 도메인 예외로 옮긴다.
-                if (e.code == "ALREADY_REVOKED") throw AlreadyRevokedException()
-                throw e
-            }
 
         override suspend fun acceptInvitation(token: String): WatcherAcceptance =
             try {

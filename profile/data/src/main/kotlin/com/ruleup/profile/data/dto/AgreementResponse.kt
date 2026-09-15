@@ -69,13 +69,11 @@ data class AgreementSubmitRequest(
     val agreements: List<AgreementSubmitItemRequest>,
 )
 
-/** 동의 API 로 보낼 수 없는 항목(폐기된 야간 알림)은 요청에서 뺀다 — 서버가 400 으로 막는다. */
 internal fun List<AgreementSubmission>.toRequest(): AgreementSubmitRequest =
     AgreementSubmitRequest(
         agreements =
-            mapNotNull { submission ->
-                val type = submission.type.apiType ?: return@mapNotNull null
-                AgreementSubmitItemRequest(type = type, agreed = submission.agreed, version = submission.version)
+            map { submission ->
+                AgreementSubmitItemRequest(type = submission.type.apiType, agreed = submission.agreed, version = submission.version)
             },
     )
 

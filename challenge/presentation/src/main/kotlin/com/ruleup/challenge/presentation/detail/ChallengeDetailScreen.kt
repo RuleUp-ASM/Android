@@ -312,14 +312,12 @@ internal fun ChallengeDetailContent(
                     onBack = onBack,
                 )
             } else if (detail != null && detail.myRole.isMember) {
-                // 솔로 방·시작 전 방은 room 이 오지 않는다. 멤버인데 비멤버 메뉴를 주면 방장이 수정·삭제할 길이 없다.
+                // 솔로 방·시작 전 방은 room 이 오지 않는다. 멤버인데 비멤버 메뉴를 주면 수정·나가기 길이 없다.
                 RoomAppBar(
                     title = detail.title,
                     menuItems =
                         roomMenuItems(detail.myRole, onIntent) +
-                            listOfNotNull(
-                                RoomMenuItem("챌린지 삭제") { confirmAction = MemberConfirm.DELETE }.takeIf { detail.myRole.isOwner },
-                            ),
+                            RoomMenuItem("챌린지 나가기") { confirmAction = MemberConfirm.LEAVE },
                     onBack = onBack,
                 )
             } else {
@@ -381,7 +379,6 @@ internal fun ChallengeDetailContent(
                         room = room,
                         onIntent = onIntent,
                         onConfirmLeave = { confirmAction = MemberConfirm.LEAVE },
-                        onConfirmDelete = { confirmAction = MemberConfirm.DELETE },
                     )
 
                 else -> PublicDetailBody(state = state, detail = detail, onIntent = onIntent)
@@ -500,18 +497,6 @@ internal fun ChallengeDetailContent(
                 onDismiss = { confirmAction = null },
             )
 
-        MemberConfirm.DELETE ->
-            MemberConfirmDialog(
-                title = "챌린지를 삭제할까요?",
-                body = "삭제하면 되돌릴 수 없어요. 진행 이력이 있으면 패널티가 적용될 수 있어요.",
-                confirmLabel = "삭제",
-                onConfirm = {
-                    confirmAction = null
-                    onIntent(ChallengeDetailIntent.DeleteChallenge)
-                },
-                onDismiss = { confirmAction = null },
-            )
-
         null -> Unit
     }
 }
@@ -529,7 +514,6 @@ private fun RoomDetailTabs(
     room: ChallengeRoom,
     onIntent: (ChallengeDetailIntent) -> Unit,
     onConfirmLeave: () -> Unit,
-    onConfirmDelete: () -> Unit,
 ) {
     // 이의 증빙 사진 선택. 고른 즉시 올려 두고 제출 때는 URL 만 실어 보낸다.
     val appealImagePicker =
@@ -608,18 +592,12 @@ private fun RoomDetailTabs(
                         }
                         val members = state.members
                         if (members != null) {
-                            val delegationBanner =
-                                state.pendingDelegation?.let {
-                                    "${state.pendingDelegationNickname ?: "선택한 멤버"}님에게 방장 위임을 요청했어요"
-                                }
                             RoomMemberSection(
                                 members = members.members,
                                 participantCount = members.participantCount,
                                 maxParticipants = members.capacity,
-                                myRole = room.myRole,
                                 myUserId = state.myUserId,
                                 actionEnabled = !state.isMemberActionLoading,
-                                delegationBanner = delegationBanner,
                                 // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
                                 canInviteMember =
                                     room.myRole.isOwner &&
@@ -627,11 +605,6 @@ private fun RoomDetailTabs(
                                         state.detail.mode.isGroup,
                                 onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
                                 onLeave = onConfirmLeave,
-                                onDelete = onConfirmDelete,
-                                onPromote = { onIntent(ChallengeDetailIntent.PromoteMember(it)) },
-                                onDemote = { onIntent(ChallengeDetailIntent.DemoteMember(it)) },
-                                onRequestDelegation = { onIntent(ChallengeDetailIntent.RequestDelegation(it)) },
-                                onCancelDelegation = { onIntent(ChallengeDetailIntent.CancelDelegation) },
                                 onReportMember = { onIntent(ChallengeDetailIntent.OpenUserReport(it)) },
                             )
                         }
@@ -643,9 +616,6 @@ private fun RoomDetailTabs(
                     state = state,
                     onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
                     onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
-                    // 봇방장 방의 멤버에게만 자리를 만든다 — 방장이 있는 방에서 누르면 409 다.
-                    onClaimOwner =
-                        { onIntent(ChallengeDetailIntent.ClaimOwner) }.takeIf { state.canClaimOwner },
                 )
 
             RoomTab.RANKING ->
@@ -673,7 +643,7 @@ private fun roomMenuItems(
         add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
     }
 
-private enum class MemberConfirm { LEAVE, DELETE }
+private enum class MemberConfirm { LEAVE }
 
 @Composable
 private fun MemberConfirmDialog(

@@ -12,20 +12,12 @@ import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateChallengeResponse
 import com.ruleup.challenge.data.dto.CrossRankingResponse
-import com.ruleup.challenge.data.dto.DelegationActionRequest
-import com.ruleup.challenge.data.dto.DelegationRequestBody
-import com.ruleup.challenge.data.dto.DelegationResolutionResponse
-import com.ruleup.challenge.data.dto.DelegationResponse
-import com.ruleup.challenge.data.dto.DeleteChallengeResponse
 import com.ruleup.challenge.data.dto.DraftRequest
 import com.ruleup.challenge.data.dto.DraftResponse
 import com.ruleup.challenge.data.dto.ExploreChallengesResponse
 import com.ruleup.challenge.data.dto.JoinResponse
 import com.ruleup.challenge.data.dto.LeaveChallengeResponse
-import com.ruleup.challenge.data.dto.MemberRoleActionRequest
-import com.ruleup.challenge.data.dto.MemberRoleResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
-import com.ruleup.challenge.data.dto.OwnerClaimResponse
 import com.ruleup.challenge.data.dto.RankingResponse
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.RoomResponse
@@ -38,8 +30,6 @@ import com.ruleup.challenge.data.dto.WatcherAcceptResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.challenge.data.dto.WatchingListResponse
-import com.ruleup.challenge.data.dto.WatchingUpdateRequest
-import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
 import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
@@ -103,12 +93,6 @@ interface ChallengeApi {
         @Body request: JsonObject,
     ): BaseResponse<UpdateChallengeResponse>
 
-    // 챌린지 삭제 — 응답에 penaltyApplied(탈퇴 패널티 트리거 여부)
-    @DELETE("v1/challenges/{challengeId}")
-    suspend fun delete(
-        @Path("challengeId") challengeId: String,
-    ): BaseResponse<DeleteChallengeResponse>
-
     // 챌린지 참여 신청 (승인제 폐기 — 성공 시 즉시 ACTIVE, requiredPermissions 반환)
     @POST("v1/challenges/{challengeId}/members")
     suspend fun join(
@@ -126,35 +110,6 @@ interface ChallengeApi {
     suspend fun leaveChallenge(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<LeaveChallengeResponse>
-
-    // 공동 관리자 임명/해제 — { action: PROMOTE/DEMOTE }
-    @PATCH("v1/challenges/{challengeId}/members/{userId}/role")
-    suspend fun changeMemberRole(
-        @Path("challengeId") challengeId: String,
-        @Path("userId") userId: String,
-        @Body request: MemberRoleActionRequest,
-    ): BaseResponse<MemberRoleResponse>
-
-    // 봇방장 방 클레임 — 선착순, 바디 없음(토큰으로 식별). 밀리면 409 OWNER_ALREADY_EXISTS
-    @POST("v1/challenges/{challengeId}/owner/claim")
-    suspend fun claimOwner(
-        @Path("challengeId") challengeId: String,
-    ): BaseResponse<OwnerClaimResponse>
-
-    // 방장 위임 요청 생성 — { targetUserId }
-    @POST("v1/challenges/{challengeId}/delegation")
-    suspend fun requestDelegation(
-        @Path("challengeId") challengeId: String,
-        @Body request: DelegationRequestBody,
-    ): BaseResponse<DelegationResponse>
-
-    // 방장 위임 요청 응답 — { action: ACCEPT/REJECT/CANCEL }
-    @PATCH("v1/challenges/{challengeId}/delegation/{delegationId}")
-    suspend fun respondDelegation(
-        @Path("challengeId") challengeId: String,
-        @Path("delegationId") delegationId: String,
-        @Body request: DelegationActionRequest,
-    ): BaseResponse<DelegationResolutionResponse>
 
     // 3.9 챌린지 대표 이미지 업로드 (생성/수정 전 호출, challengeId 불필요)
     @Multipart
@@ -233,13 +188,6 @@ interface ChallengeApi {
     // 감시자: 내가 감시자로 등록된 관계 목록 (마이 「내가 받는 알림」)
     @GET("v1/users/me/watching")
     suspend fun getWatching(): BaseResponse<WatchingListResponse>
-
-    // 감시자: 내 감시 항목 수신 설정 (pushEnabled = 푸시만 / revoke = 완전 수신거부)
-    @PATCH("v1/users/me/watching/{watcherId}")
-    suspend fun updateWatching(
-        @Path("watcherId") watcherId: String,
-        @Body request: WatchingUpdateRequest,
-    ): BaseResponse<WatchingUpdateResponse>
 
     // 감시자: 초대 수락 (인앱 전용 — 로그인 필수, 수락이 곧 수신 동의)
     @POST("v1/watchers/invitations/{token}/accept")

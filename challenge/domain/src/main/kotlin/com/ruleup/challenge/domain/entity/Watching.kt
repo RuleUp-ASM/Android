@@ -25,23 +25,6 @@ data class Watching(
 }
 
 /**
- * 수신 설정 결과 (명세: PATCH /users/me/watching/{watcherId}).
- *
- * [reblockUntil] 은 완전 수신거부에서만 온다 — 같은 생성자가 30일간 다시 초대하지 못한다.
- */
-data class WatchingUpdate(
-    val watcherId: String,
-    val status: WatcherStatus?,
-    val pushEnabled: Boolean,
-    // pushEnabled=false 면 true 고정 — 푸시만 멈추고 알림함은 남는다
-    val inboxKept: Boolean,
-    val reblockUntil: String?,
-)
-
-/** 이미 수신거부한 관계에 다시 거부를 보냈다(서버 409 `ALREADY_REVOKED`). */
-class AlreadyRevokedException : Exception("이미 수신을 거부한 항목이에요.")
-
-/**
  * 초대 수락 결과 (명세: POST /watchers/invitations/{token}/accept).
  *
  * 챌린지가 진행 중이면 즉시 [WatcherStatus.ACTIVE](발송 대상)이고, 시작 전이면

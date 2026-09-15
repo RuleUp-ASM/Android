@@ -243,11 +243,6 @@ data class CreatedChallenge(
     val createdAt: String,
 )
 
-/** 챌린지 삭제 결과. 진행 중 + 본인 success 이력이 있으면 탈퇴 패널티가 트리거된다. */
-data class DeleteResult(
-    val penaltyApplied: Boolean,
-)
-
 /**
  * 방장 전용 설정 스냅샷 (명세 `GET /challenges/{id}/settings`).
  *

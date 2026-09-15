@@ -13,20 +13,12 @@ import com.ruleup.challenge.data.dto.ChallengeSetupInfoResponse
 import com.ruleup.challenge.data.dto.CreateChallengeRequest
 import com.ruleup.challenge.data.dto.CreateChallengeResponse
 import com.ruleup.challenge.data.dto.CrossRankingResponse
-import com.ruleup.challenge.data.dto.DelegationActionRequest
-import com.ruleup.challenge.data.dto.DelegationRequestBody
-import com.ruleup.challenge.data.dto.DelegationResolutionResponse
-import com.ruleup.challenge.data.dto.DelegationResponse
-import com.ruleup.challenge.data.dto.DeleteChallengeResponse
 import com.ruleup.challenge.data.dto.DraftRequest
 import com.ruleup.challenge.data.dto.DraftResponse
 import com.ruleup.challenge.data.dto.ExploreChallengesResponse
 import com.ruleup.challenge.data.dto.JoinResponse
 import com.ruleup.challenge.data.dto.LeaveChallengeResponse
-import com.ruleup.challenge.data.dto.MemberRoleActionRequest
-import com.ruleup.challenge.data.dto.MemberRoleResponse
 import com.ruleup.challenge.data.dto.MyChallengesResponse
-import com.ruleup.challenge.data.dto.OwnerClaimResponse
 import com.ruleup.challenge.data.dto.RankingResponse
 import com.ruleup.challenge.data.dto.RecommendByTemplateRequest
 import com.ruleup.challenge.data.dto.RoomResponse
@@ -39,8 +31,6 @@ import com.ruleup.challenge.data.dto.WatcherAcceptResponse
 import com.ruleup.challenge.data.dto.WatcherInvitationResponse
 import com.ruleup.challenge.data.dto.WatchersResponse
 import com.ruleup.challenge.data.dto.WatchingListResponse
-import com.ruleup.challenge.data.dto.WatchingUpdateRequest
-import com.ruleup.challenge.data.dto.WatchingUpdateResponse
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.ErrorBody
 import kotlinx.serialization.json.JsonObject
@@ -83,32 +73,11 @@ class FailingChallengeApi(
         request: JsonObject,
     ): BaseResponse<UpdateChallengeResponse> = failed()
 
-    override suspend fun delete(challengeId: String): BaseResponse<DeleteChallengeResponse> = failed()
-
     override suspend fun join(challengeId: String): BaseResponse<JoinResponse> = failed()
 
     override suspend fun getMembers(challengeId: String): BaseResponse<ChallengeMembersResponse> = failed()
 
     override suspend fun leaveChallenge(challengeId: String): BaseResponse<LeaveChallengeResponse> = failed()
-
-    override suspend fun changeMemberRole(
-        challengeId: String,
-        userId: String,
-        request: MemberRoleActionRequest,
-    ): BaseResponse<MemberRoleResponse> = failed()
-
-    override suspend fun claimOwner(challengeId: String): BaseResponse<OwnerClaimResponse> = failed()
-
-    override suspend fun requestDelegation(
-        challengeId: String,
-        request: DelegationRequestBody,
-    ): BaseResponse<DelegationResponse> = failed()
-
-    override suspend fun respondDelegation(
-        challengeId: String,
-        delegationId: String,
-        request: DelegationActionRequest,
-    ): BaseResponse<DelegationResolutionResponse> = failed()
 
     override suspend fun uploadImage(image: MultipartBody.Part): BaseResponse<ChallengeImageResponse> = failed()
 
@@ -141,11 +110,6 @@ class FailingChallengeApi(
     ): BaseResponse<WatchersResponse> = failed()
 
     override suspend fun getWatching(): BaseResponse<WatchingListResponse> = failed()
-
-    override suspend fun updateWatching(
-        watcherId: String,
-        request: WatchingUpdateRequest,
-    ): BaseResponse<WatchingUpdateResponse> = failed()
 
     override suspend fun acceptWatcherInvitation(token: String): BaseResponse<WatcherAcceptResponse> = failed()
 

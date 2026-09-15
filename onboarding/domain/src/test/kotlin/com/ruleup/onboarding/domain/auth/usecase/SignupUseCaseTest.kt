@@ -93,7 +93,7 @@ class SignupUseCaseTest {
         }
 
     @Test
-    fun `가입 약관은 미체크 항목까지 6종 전부 실어 보내고 개별 동의 2종은 싣지 않는다`() =
+    fun `가입 약관은 미체크 항목까지 5종 전부 실어 보내고 개별 동의 2종은 싣지 않는다`() =
         runBlocking {
             val auth = FakeAuthRepository().apply { signupResult = AuthSession(token, testUser()) }
 

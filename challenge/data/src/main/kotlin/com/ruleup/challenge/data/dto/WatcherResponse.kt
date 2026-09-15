@@ -14,7 +14,6 @@ import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherStatus
 import com.ruleup.challenge.domain.entity.WatcherType
 import com.ruleup.challenge.domain.entity.Watching
-import com.ruleup.challenge.domain.entity.WatchingUpdate
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
@@ -153,7 +152,7 @@ internal fun WatchersResponse.toDomain(): ChallengeWatchers =
 
 // 초대 링크 진입(GET /watchers/invitations/{token})과 수락은 웹 동의 페이지가 담당한다 — 앱 DTO 없음.
 
-// ---------- 내가 감시자로 등록된 관계 (GET · PATCH /users/me/watching) ----------
+// ---------- 내가 감시자로 등록된 관계 (GET /users/me/watching — 조회 전용) ----------
 @Serializable
 data class WatchingItemResponse(
     @SerialName("watcherId")
@@ -179,7 +178,7 @@ data class WatchingListResponse(
 
 internal fun WatchingListResponse.toDomain(): List<Watching> = items.orEmpty().mapNotNull { it.toDomain() }
 
-/** 식별자가 없으면 토글을 걸 대상이 없다 — 끌 수 없는 스위치를 세우느니 행을 뺀다. */
+/** 식별자가 없으면 목록 키로 쓸 값이 없어 행을 뺀다. */
 internal fun WatchingItemResponse.toDomain(): Watching? {
     val id = watcherId ?: return null
     return Watching(
@@ -192,40 +191,6 @@ internal fun WatchingItemResponse.toDomain(): Watching? {
         consentAt = consentAt,
     )
 }
-
-@Serializable
-data class WatchingUpdateRequest(
-    @SerialName("pushEnabled")
-    val pushEnabled: Boolean? = null,
-    // true 면 완전 수신거부. pushEnabled 와 동시 전송 불가(서버 400)
-    @SerialName("revoke")
-    val revoke: Boolean? = null,
-)
-
-@Serializable
-data class WatchingUpdateResponse(
-    @SerialName("watcherId")
-    val watcherId: String? = null,
-    @SerialName("status")
-    val status: String? = null,
-    @SerialName("pushEnabled")
-    val pushEnabled: Boolean? = null,
-    @SerialName("inboxKept")
-    val inboxKept: Boolean? = null,
-    // revoke 시 — 동일 생성자 재초대 차단 해제 시각(+30일)
-    @SerialName("reblockUntil")
-    val reblockUntil: String? = null,
-)
-
-internal fun WatchingUpdateResponse.toDomain(requestedId: String): WatchingUpdate =
-    WatchingUpdate(
-        watcherId = watcherId ?: requestedId,
-        status = WatcherStatus.fromValue(status),
-        pushEnabled = pushEnabled ?: true,
-        // 명세상 pushEnabled=false 면 true 고정. 안 오면 유지되는 쪽으로 본다
-        inboxKept = inboxKept ?: true,
-        reblockUntil = reblockUntil,
-    )
 
 // ---------- 초대 수락 (POST /watchers/invitations/{token}/accept) ----------
 @Serializable

@@ -9,9 +9,7 @@ import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeThreads
 import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.CrossChallengeRanking
-import com.ruleup.challenge.domain.entity.DelegationTicket
 import com.ruleup.challenge.domain.entity.JoinBlockReason
-import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.domain.entity.user.AgreementType
@@ -94,9 +92,6 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (랭킹 탭 · 방 순위) 하단 도달 → 다음 페이지. */
     data object LoadMoreCrossRanking : ChallengeDetailIntent
 
-    /** (봇방장 방) "방장 되기" — 선착순 클레임. 밀리면 안내 후 방을 다시 받는다. */
-    data object ClaimOwner : ChallengeDetailIntent
-
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
@@ -162,29 +157,8 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈, 방장 전용) 챌린지 수정 화면으로 이동. */
     data object OpenSettings : ChallengeDetailIntent
 
-    /** (방 홈, 비방장) 챌린지 탈퇴. 성공 시 이전 화면으로. */
+    /** 챌린지 탈퇴(방장 포함). 성공 시 이전 화면으로. 방장이 나가면 봇방장 방이 된다. */
     data object LeaveChallenge : ChallengeDetailIntent
-
-    /** (방 홈, 방장·참여자 0명) 챌린지 삭제. 성공 시 이전 화면으로. */
-    data object DeleteChallenge : ChallengeDetailIntent
-
-    /** (방장) 멤버를 공동 관리자로 임명. */
-    data class PromoteMember(
-        val userId: String,
-    ) : ChallengeDetailIntent
-
-    /** (방장) 공동 관리자를 일반 멤버로 해제. */
-    data class DemoteMember(
-        val userId: String,
-    ) : ChallengeDetailIntent
-
-    /** (방장) 공동 관리자에게 방장 위임 요청. */
-    data class RequestDelegation(
-        val targetUserId: String,
-    ) : ChallengeDetailIntent
-
-    /** (방장) 대기 중인 방장 위임 요청 취소. */
-    data object CancelDelegation : ChallengeDetailIntent
 
     data object Back : ChallengeDetailIntent
 }
@@ -262,15 +236,11 @@ data class ChallengeDetailState(
     // 방 홈 일괄 조회 결과. 그룹 챌린지의 ACTIVE 멤버만 조회에 성공하며(비멤버 403 흡수 → null),
     // 값이 있으면 상세를 방 홈(요약·랭킹·오늘 상태)으로 확장 렌더링한다.
     val room: ChallengeRoom? = null,
-    // 방 홈 멤버 목록(GET members). 방 홈일 때만 조회하며, 멤버 섹션·삭제 가능 여부 판정에 쓴다.
+    // 방 홈 멤버 목록(GET members). 방 홈일 때만 조회하며, 멤버 섹션에 쓴다.
     val members: ChallengeMembers? = null,
-    // 탈퇴/삭제/권한 변경/위임 요청 중(버튼 중복 탭 방지).
+    // 탈퇴 요청 중(버튼 중복 탭 방지).
     val isMemberActionLoading: Boolean = false,
-    // 방금 생성한 방장 위임 요청(PENDING). 취소(CANCEL)의 delegationId 출처 — 배너로 노출한다.
-    val pendingDelegation: DelegationTicket? = null,
-    // 위임 요청 대상 닉네임(배너 문구용).
-    val pendingDelegationNickname: String? = null,
-    // 현재 사용자 ID. 멤버 목록에서 "내 행"을 식별해 관리자 본인 해제(self-DEMOTE)를 노출하는 데 쓴다.
+    // 현재 사용자 ID. 피드·랭킹의 "내 행" 강조와 멤버 신고 대상에서 나를 빼는 데 쓴다.
     val myUserId: String? = null,
     // 이 방의 알림 음소거 여부. null 이면 아직 모른다 — 조회 실패 시 토글을 그리지 않는다
     val isMuted: Boolean? = null,
@@ -315,8 +285,6 @@ data class ChallengeDetailState(
     val appealReasonError: String? = null,
     // 지금 이 기기의 권한 현황. 런타임 권한만이 아니라 사용정보 접근·Health Connect 까지 포함한다.
     val permissions: PermissionSnapshot? = null,
-    // 방장 클레임 요청 중(버튼 중복 탭 방지). 선착순이라 두 번 눌러도 한 번만 나간다.
-    val isClaimingOwner: Boolean = false,
     // 이의 제출 중(중복 탭 방지).
     val isSubmittingAppeal: Boolean = false,
     // 신고 시트가 열려 있는지. 사유 선택과 완료를 한 플래그로 가르지 않는 이유는 reportResult 참고.
@@ -356,13 +324,6 @@ data class ChallengeDetailState(
     /** 방 밖 랭킹을 더 받아올 수 있는지. */
     val canLoadMoreCrossRanking: Boolean
         get() = crossRanking?.nextCursor != null && !isCrossRankingLoading
-
-    /**
-     * "방장 되기"를 보여줄지. 봇방장 방의 멤버에게만 의미가 있다 — 이미 방장이 있는 방에서 누르면
-     * 서버가 409 로 막으므로, 버튼을 아예 만들지 않는 쪽이 맞다.
-     */
-    val canClaimOwner: Boolean
-        get() = room != null && room.ownerType == OwnerType.BOT && !room.myRole.isOwner
 
     companion object {
         val initial =
@@ -448,19 +409,10 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val members: ChallengeMembers,
     ) : ChallengeDetailReducerEvent
 
-    /** 탈퇴/삭제/권한 변경/위임 요청 시작/종료. */
+    /** 탈퇴 요청 시작/종료. */
     data class MemberActionLoading(
         val loading: Boolean,
     ) : ChallengeDetailReducerEvent
-
-    /** 방장 위임 요청 생성됨(배너 노출). */
-    data class DelegationRequested(
-        val ticket: DelegationTicket,
-        val targetNickname: String?,
-    ) : ChallengeDetailReducerEvent
-
-    /** 방장 위임 요청 배너 해제(취소·응답 후). */
-    data object DelegationCleared : ChallengeDetailReducerEvent
 
     /** 현재 사용자 ID 로드됨(진입 시 1회). */
     data class MyUserIdLoaded(
@@ -549,10 +501,6 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
 
     data class TodayResultLoaded(
         val result: TodayResult,
-    ) : ChallengeDetailReducerEvent
-
-    data class ClaimingOwner(
-        val claiming: Boolean,
     ) : ChallengeDetailReducerEvent
 
     data class SubmittingAppeal(
