@@ -15,7 +15,9 @@ import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
+import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
+import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
 import com.ruleup.challenge.presentation.fake.FakeRoomRepository
 import com.ruleup.challenge.presentation.fake.FakeTargetAppStore
@@ -26,6 +28,7 @@ import com.ruleup.notification.domain.entity.NotificationGroupSettings
 import com.ruleup.notification.domain.entity.NotificationSettings
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
@@ -204,6 +207,7 @@ class ChallengeDetailMuteTest {
             reportRepository = reports,
             notificationRepository = notifications,
             navigationHelper = nav,
+            sensitiveConsent = SensitiveConsent(FakeAccountRepository(), FakeIntroRepository()),
         )
     }
 }

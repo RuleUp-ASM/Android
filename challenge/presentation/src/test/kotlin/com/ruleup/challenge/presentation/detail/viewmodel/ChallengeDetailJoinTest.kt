@@ -18,15 +18,19 @@ import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
+import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
+import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
 import com.ruleup.challenge.presentation.fake.FakeRoomRepository
 import com.ruleup.challenge.presentation.fake.FakeTargetAppStore
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
@@ -152,6 +156,35 @@ class ChallengeDetailJoinTest {
             assertTrue(repo.calls.count { it == "getChallenge" } > before)
         }
 
+    @Test
+    fun `위치 인증 방은 개별 동의를 받기 전에 가입하지 않고 동의 시트를 띄운다`() =
+        runTest {
+            // 첫 사용 시점을 놓치면 위치정보 개별 동의를 끝내 받지 못한다(ONB-14).
+            val repo = repo(join = { JoinResult(countFromCycle = null, requiredPermissions = emptyList(), personalSetupRequired = false) })
+            val model = viewModel(repo = repo, account = FakeAccountRepository())
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+
+            model.onIntent(ChallengeDetailIntent.Proceed)
+
+            assertTrue(repo.calls.none { it == "join" })
+            assertEquals(AgreementType.LOCATION_INFO, model.uiState.value.pendingConsent)
+        }
+
+    @Test
+    fun `개별 동의에 동의하면 기록한 뒤 이어서 가입한다`() =
+        runTest {
+            val repo = repo(join = { JoinResult(countFromCycle = null, requiredPermissions = emptyList(), personalSetupRequired = false) })
+            val account = FakeAccountRepository()
+            val model = viewModel(repo = repo, account = account)
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.Proceed)
+
+            model.onIntent(ChallengeDetailIntent.AgreeSensitiveConsent)
+
+            assertEquals(AgreementType.LOCATION_INFO, account.submitted.single().type)
+            assertTrue(repo.calls.any { it == "join" })
+        }
+
     private fun repo(join: (String) -> JoinResult) = FakeChallengeRepository(detail = { detail() }, join = join)
 
     private fun detail() =
@@ -201,6 +234,7 @@ class ChallengeDetailJoinTest {
         repo: FakeChallengeRepository = FakeChallengeRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         reports: FakeReportRepository = FakeReportRepository(),
+        account: FakeAccountRepository = FakeAccountRepository(agreed = AgreementType.entries.toSet()),
     ): ChallengeDetailViewModel {
         val observability = testObservability()
         return ChallengeDetailViewModel(
@@ -217,6 +251,8 @@ class ChallengeDetailJoinTest {
             // 음소거 상태는 부가 정보다 — 준비하지 않으면 조회가 실패하고 토글이 그려지지 않는다.
             notificationRepository = FakeNotificationRepository(),
             navigationHelper = nav,
+            // 가입 규칙을 보는 테스트들이라 개별 동의는 이미 받은 상태로 둔다 — 동의 흐름은 따로 본다.
+            sensitiveConsent = SensitiveConsent(account, FakeIntroRepository()),
         )
     }
 }

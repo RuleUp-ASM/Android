@@ -53,6 +53,7 @@ import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
 import com.ruleup.challenge.presentation.detail.component.MySetupCard
@@ -456,6 +457,15 @@ internal fun ChallengeDetailContent(
                 onDismiss = { onIntent(ChallengeDetailIntent.DismissReport) },
             )
         }
+    }
+
+    state.pendingConsent?.let { type ->
+        SensitiveConsentSheet(
+            type = type,
+            agreeLabel = "동의하고 참여하기",
+            onAgree = { onIntent(ChallengeDetailIntent.AgreeSensitiveConsent) },
+            onDismiss = { onIntent(ChallengeDetailIntent.DismissSensitiveConsent) },
+        )
     }
 
     state.joinBlock?.let { block ->

@@ -10,6 +10,7 @@ import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.UiState
 
@@ -60,6 +61,8 @@ data class CreateChallengeState(
     val isCreating: Boolean,
     // 생성은 끝났고 권한 요청 응답만 기다리는 상태. 권한 결과를 받으면 홈으로 나간다.
     val createdChallengeId: String?,
+    // 만들기 전에 받아야 하는 위치·건강 개별 동의. null 이 아니면 동의 시트를 띄운다.
+    val pendingConsent: AgreementType? = null,
 ) : UiState {
     /** 초안이 도착해 확인 화면을 그릴 수 있는 상태인지. */
     val hasDraft: Boolean

@@ -113,4 +113,9 @@ sealed interface CreateChallengeIntent : MviIntent {
 
     /** 이대로 만들기. */
     data object Create : CreateChallengeIntent
+
+    /** 위치·건강 개별 동의 시트에서 동의하고 계속. */
+    data object AgreeSensitiveConsent : CreateChallengeIntent
+
+    data object DismissSensitiveConsent : CreateChallengeIntent
 }

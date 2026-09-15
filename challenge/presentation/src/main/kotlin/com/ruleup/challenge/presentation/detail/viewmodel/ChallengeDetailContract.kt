@@ -14,6 +14,7 @@ import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
+import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.report.domain.entity.ReportResult
 import com.ruleup.ui.mvi.MviEffect
@@ -152,6 +153,11 @@ sealed interface ChallengeDetailIntent : MviIntent {
 
     /** 신고 시트(사유 선택·완료 공용)를 닫는다. */
     data object DismissReport : ChallengeDetailIntent
+
+    /** 위치·건강 개별 동의 시트에서 동의하고 참여. */
+    data object AgreeSensitiveConsent : ChallengeDetailIntent
+
+    data object DismissSensitiveConsent : ChallengeDetailIntent
 
     /** (방 홈, 방장 전용) 챌린지 수정 화면으로 이동. */
     data object OpenSettings : ChallengeDetailIntent
@@ -317,6 +323,8 @@ data class ChallengeDetailState(
     val isReportSheetOpen: Boolean = false,
     // 신고 대상 사용자. null 이면 챌린지 신고다.
     val reportUserId: String? = null,
+    // 참여 전에 받아야 하는 위치·건강 개별 동의. null 이 아니면 동의 시트를 띄운다.
+    val pendingConsent: AgreementType? = null,
     val selectedReportReason: ReportReason? = null,
     val isSubmittingReport: Boolean = false,
     // 접수 결과. null 이 아니면 완료 시트를 띄운다 — 접수는 끝났고 되돌릴 수 없으므로
@@ -558,6 +566,10 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     ) : ChallengeDetailReducerEvent
 
     data object ReportSheetDismissed : ChallengeDetailReducerEvent
+
+    data class SensitiveConsentRequested(
+        val type: AgreementType?,
+    ) : ChallengeDetailReducerEvent
 
     data class ReportReasonSelected(
         val reason: ReportReason,
