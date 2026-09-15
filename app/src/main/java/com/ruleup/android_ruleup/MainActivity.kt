@@ -1,8 +1,10 @@
 package com.ruleup.android_ruleup
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
@@ -76,7 +78,11 @@ class MainActivity : ComponentActivity() {
         // 시작 화면은 네비게이션 신호 없이 백스택으로 직접 세팅되므로 ScreenTracker 를 거치지 않는다.
         // 그대로 두면 스플래시의 ScreenView 가 누락되고, 그 구간 jank 가 'unknown' 에 귀속된다.
         (startStack.lastOrNull() as? GenericNavKey)?.let { screenTracker.onScreenEntered(it.path) }
-        enableEdgeToEdge()
+        // 앱은 라이트 테마만 있다. 기본값은 시스템 다크 모드를 따라 밝은 아이콘을 그려 밝은 배경에서 안 보인다.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+        )
         setContent {
             AppRoot(
                 navigationHelper = navigationHelper,

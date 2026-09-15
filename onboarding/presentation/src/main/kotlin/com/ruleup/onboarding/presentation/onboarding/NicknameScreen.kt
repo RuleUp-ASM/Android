@@ -23,13 +23,15 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.NickNameUtil
-import com.ruleup.domain.entity.user.NicknameValidation
 import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
 import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
@@ -68,15 +70,9 @@ fun NicknameContent(
         NicknameField(
             nickname = nickname,
             maxLength = maxLength,
+            feedback = nicknameFeedback(nickname, nicknameMessage, nicknameAvailable),
             onNickNameChange = { onIntent(OnboardingIntent.SetNickName(it)) },
         )
-        if (nicknameMessage != null) {
-            Text(
-                nicknameMessage,
-                color = if (nicknameAvailable == true) RuleUpTheme.colors.brand else RuleUpTheme.colors.danger,
-                style = RuleUpTheme.typography.body,
-            )
-        }
         NicknameRules(nickname = nickname)
     }
 }
@@ -131,14 +127,34 @@ private fun NicknamePreviewCard(
     }
 }
 
+/** 입력칸 아래 한 줄 안내. [positive] 면 통과 색, 아니면 경고 색으로 그린다. */
+internal data class NicknameFeedback(
+    val message: String,
+    val positive: Boolean,
+)
+
+/**
+ * 형식 검사와 서버 확인 결과를 **한 줄로** 합친다. 둘을 따로 그리면 "사용 가능한 닉네임이에요"가 두 번 뜬다.
+ * 형식이 틀리면 서버에 묻기 전이라 형식 안내가 우선이고, 형식이 맞으면 서버 확인 결과를 보여 준다.
+ */
+internal fun nicknameFeedback(
+    nickname: String,
+    serverMessage: String?,
+    serverAvailable: Boolean?,
+): NicknameFeedback? {
+    if (nickname.isEmpty()) return null
+    val validation = NickNameUtil.validate(nickname)
+    if (!validation.isValid) return NicknameFeedback(NickNameUtil.message(validation), positive = false)
+    return serverMessage?.let { NicknameFeedback(it, positive = serverAvailable == true) }
+}
+
 @Composable
 private fun NicknameField(
     nickname: String,
     maxLength: Int,
+    feedback: NicknameFeedback?,
     onNickNameChange: (String) -> Unit,
 ) {
-    val validation = NickNameUtil.validate(nickname)
-    val valid = validation.isValid
     Column(verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.sm)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -178,50 +194,32 @@ private fun NicknameField(
                 },
             )
             if (nickname.isNotEmpty()) {
-                StatusBadge(valid = valid)
+                ClearButton(onClick = { onNickNameChange("") })
             }
         }
-        if (nickname.isNotEmpty()) {
-            NicknameStatusMessage(validation = validation)
+        if (feedback != null) {
+            Text(
+                feedback.message,
+                color = if (feedback.positive) RuleUpTheme.colors.onSuccess else RuleUpTheme.colors.danger,
+                style = RuleUpTheme.typography.caption,
+            )
         }
     }
 }
 
 @Composable
-private fun StatusBadge(valid: Boolean) {
+private fun ClearButton(onClick: () -> Unit) {
     Box(
         modifier =
             Modifier
                 .size(24.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (valid) RuleUpTheme.colors.success else RuleUpTheme.colors.danger),
+                .background(RuleUpTheme.colors.textMuted)
+                .semantics { contentDescription = "닉네임 지우기" }
+                .singleClickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            if (valid) "✓" else "✕",
-            color = Color.White,
-            style = RuleUpTheme.typography.smallBold,
-        )
-    }
-}
-
-@Composable
-private fun NicknameStatusMessage(validation: NicknameValidation) {
-    val valid = validation.isValid
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            if (valid) "✓" else "✕",
-            color = if (valid) RuleUpTheme.colors.success else RuleUpTheme.colors.danger,
-            style = RuleUpTheme.typography.captionBold,
-        )
-        Text(
-            NickNameUtil.message(validation),
-            color = if (valid) RuleUpTheme.colors.onSuccess else RuleUpTheme.colors.danger,
-            style = RuleUpTheme.typography.caption,
-        )
+        Text("✕", color = Color.White, style = RuleUpTheme.typography.captionBold)
     }
 }
 

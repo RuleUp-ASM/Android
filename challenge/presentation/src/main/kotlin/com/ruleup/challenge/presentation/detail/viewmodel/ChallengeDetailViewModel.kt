@@ -328,7 +328,7 @@ class ChallengeDetailViewModel
                         }
                         // 사이클 중간 입장이면 언제부터 판정되는지 알려준다(사이클은 1주 고정).
                         result.countFromCycle?.let {
-                            emitEffect(ChallengeDetailEffect.ShowMessage("${'$'}it부터 인증이 집계돼요"))
+                            emitEffect(ChallengeDetailEffect.ShowMessage("${cycleStartLabel(it)}부터 인증이 집계돼요"))
                         }
                         load(id, force = true)
                     }.onFailure { error ->

@@ -90,6 +90,8 @@ fun RootComposable(
         Box(modifier = modifier.fillMaxSize()) {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
+                // 기본값(Material 배경)이 상태바·내비게이션바 뒤에 비쳐 본문 캔버스와 색이 갈린다.
+                containerColor = RuleUpTheme.colors.background,
                 snackbarHost = { SnackbarHost(snackBarHostState) },
             ) { innerPadding ->
                 AppNavHost(
