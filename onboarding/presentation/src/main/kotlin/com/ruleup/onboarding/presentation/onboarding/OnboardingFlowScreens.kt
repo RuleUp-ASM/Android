@@ -56,7 +56,14 @@ private fun OnboardingFailureHost(viewModel: OnboardingViewModel) {
             }
         }
     }
-    AuthFailureHost(ui = failure, onDismiss = { failure = null })
+    AuthFailureHost(
+        ui = failure,
+        onDismiss = {
+            val restart = (failure as? AuthFailureUi.Dialog)?.restartFromLogin == true
+            failure = null
+            if (restart) nav.navigateTo(LoginPage)
+        },
+    )
 
     if (confirmExit) {
         AlertDialog(

@@ -95,6 +95,20 @@ class ExploreListViewModelTest {
         }
 
     @Test
+    fun `연결이 끊겨 실패하면 예외 원문 대신 연결 안내를 보여 준다`() =
+        runTest {
+            val repo =
+                FakeExploreRepository(explore = { _, _, _ ->
+                    throw java.net.UnknownHostException("Unable to resolve host \"staging-api.ruleup.co.kr\"")
+                })
+            val viewModel = viewModel(repo)
+
+            viewModel.onIntent(ExploreListIntent.Load(category = null, sort = null))
+
+            assertEquals("지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요.", viewModel.uiState.value.errorMessage)
+        }
+
+    @Test
     fun `서버가 필터를 거절하면 필터를 풀고 다시 묻는다`() =
         runTest {
             var first = true

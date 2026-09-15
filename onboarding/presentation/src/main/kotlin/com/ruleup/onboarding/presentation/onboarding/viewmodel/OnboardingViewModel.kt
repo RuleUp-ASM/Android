@@ -17,7 +17,6 @@ import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
-import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.observability.OnboardingEvents
 import com.ruleup.onboarding.domain.observability.SignupTimer
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
@@ -300,10 +299,10 @@ class OnboardingViewModel
             }
         }
 
+        // 로그인 화면 이동은 대화상자를 닫을 때 한다. 여기서 바로 옮기면 대화상자를 그릴 화면이 사라져 안내가 묻힌다.
         private fun restartFromLogin(message: String) {
             signupSession.clear()
             emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Dialog(message, restartFromLogin = true)))
-            navigationHelper.navigateTo(LoginPage)
         }
 
         private companion object {

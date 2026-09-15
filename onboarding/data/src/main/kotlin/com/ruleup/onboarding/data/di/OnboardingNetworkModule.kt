@@ -1,5 +1,6 @@
 package com.ruleup.onboarding.data.di
 
+import com.ruleup.network.di.NetworkModule
 import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.intro.api.IntroApi
 import dagger.Module
@@ -8,6 +9,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.create
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -15,7 +17,9 @@ import javax.inject.Singleton
 object OnboardingNetworkModule {
     @Provides
     @Singleton
-    fun provideAuthApi(retrofit: Retrofit): AuthApi = retrofit.create()
+    fun provideAuthApi(
+        @Named(NetworkModule.AUTH_RETROFIT) retrofit: Retrofit,
+    ): AuthApi = retrofit.create()
 
     @Provides
     @Singleton

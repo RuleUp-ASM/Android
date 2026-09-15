@@ -14,6 +14,7 @@ import com.ruleup.onboarding.domain.fake.FakeDeviceIdentityRepository
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository
 import com.ruleup.onboarding.domain.observability.SignupTimer
+import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
@@ -63,15 +64,19 @@ class OnboardingViewModelTest {
         }
 
     @Test
-    fun `가입 토큰이 만료됐으면 로그인부터 다시 하게 한다`() =
+    fun `가입 토큰이 만료됐으면 안내를 띄운 뒤 로그인부터 다시 하게 한다`() =
         runTest {
             // 토큰 없이 제출하면 서버가 튕기고, 그때는 어느 단계로 돌아가야 할지 알 수 없다.
+            // 여기서 바로 이동하면 대화상자를 그릴 화면이 사라진다 — 이동은 대화상자를 닫을 때 화면이 한다.
             val nav = RecordingNavigationHelper()
             val viewModel = viewModel(session = SignupSession(), nav = nav)
+            val effects = collectEffects(viewModel)
 
             viewModel.onIntent(OnboardingIntent.Submit)
 
-            assertTrue(nav.pages.isNotEmpty() || nav.replaced.isNotEmpty())
+            val dialog = (effects.single() as OnboardingEffect.ShowFailure).ui as AuthFailureUi.Dialog
+            assertTrue(dialog.restartFromLogin)
+            assertTrue(nav.pages.isEmpty() && nav.replaced.isEmpty())
         }
 
     @Test

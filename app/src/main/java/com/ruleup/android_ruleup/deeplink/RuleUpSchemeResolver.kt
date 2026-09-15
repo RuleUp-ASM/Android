@@ -62,6 +62,9 @@ class RuleUpSchemeResolver
 
                 "mypage" -> myPageRoute(rest.firstOrNull() ?: uri.path?.trim('/'))
 
+                // 모더레이션 거부(MODERATION_REJECTED) 알림이 쓰는 경로다.
+                "profile" -> NavRoute(AppRoutes.MY_PROFILE_EDIT).takeIf { rest.firstOrNull() == "edit" }
+
                 else -> null
             }
 

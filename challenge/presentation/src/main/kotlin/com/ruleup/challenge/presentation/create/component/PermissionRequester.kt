@@ -52,7 +52,12 @@ fun rememberPermissionRequester(): PermissionRequester {
                         .distinct()
                 if (toRequest.isEmpty()) return granted
 
-                val result = holder.await { launcher.launch(toRequest.toTypedArray()) }
+                val result = mutableMapOf<String, Boolean>()
+                for (batch in permissionRequestBatches(toRequest)) {
+                    // 전경 위치를 받지 못했으면 백그라운드 위치는 OS 가 요청 자체를 거부한다.
+                    if (Manifest.permission.ACCESS_BACKGROUND_LOCATION in batch && !foregroundLocationGranted(context)) continue
+                    result += holder.await { launcher.launch(batch.toTypedArray()) }
+                }
                 tokens.forEach { token ->
                     val perm = tokenToPerm[token]
                     if (perm != null && result[perm] == true) granted += token
@@ -62,6 +67,24 @@ fun rememberPermissionRequester(): PermissionRequester {
         }
     }
 }
+
+/**
+ * 요청 묶음. Android 11(API 30)+ 는 백그라운드 위치를 다른 권한과 한 번에 요청하면 다이얼로그 없이 거부하므로
+ * 전경 권한을 먼저 묶고 백그라운드 위치는 마지막에 따로 요청한다.
+ */
+internal fun permissionRequestBatches(permissions: List<String>): List<List<String>> {
+    val background = Manifest.permission.ACCESS_BACKGROUND_LOCATION
+    val foreground = permissions.filter { it != background }
+    return listOfNotNull(
+        foreground.takeIf { it.isNotEmpty() },
+        listOf(background).takeIf { background in permissions },
+    )
+}
+
+private fun foregroundLocationGranted(context: Context): Boolean =
+    listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION).any {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
 
 private class AndroidPermissionHolder {
     private var deferred: CompletableDeferred<Map<String, Boolean>>? = null
