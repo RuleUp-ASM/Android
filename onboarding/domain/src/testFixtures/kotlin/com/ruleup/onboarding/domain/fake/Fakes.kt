@@ -16,6 +16,7 @@ import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
 import com.ruleup.onboarding.domain.intro.entity.IntroInfo
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
+import com.ruleup.onboarding.domain.intro.repository.WalkthroughRepository
 import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.profile.domain.repository.ProfileRepository
@@ -204,4 +205,19 @@ class FakeIntroRepository : IntroRepository {
     }
 
     override fun lastTermsVersions(): TermsVersions = lastTermsVersions ?: TermsVersions(emptyMap())
+}
+
+/** 워크쓰루 열람 여부 테스트 더블. 기록 호출을 세어 "끝낸 경로가 기록까지 하는가" 를 본다. */
+class FakeWalkthroughRepository(
+    private var seen: Boolean = false,
+) : WalkthroughRepository {
+    var markSeenCount = 0
+        private set
+
+    override suspend fun isSeen(): Boolean = seen
+
+    override suspend fun markSeen() {
+        seen = true
+        markSeenCount++
+    }
 }

@@ -38,6 +38,7 @@ import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
 import com.ruleup.onboarding.domain.navigation.OnboardingPhotoPage
 import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
+import com.ruleup.onboarding.domain.navigation.WalkthroughPage
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.onboarding.OnboardingBirthScreen
@@ -47,6 +48,7 @@ import com.ruleup.onboarding.presentation.onboarding.OnboardingNicknameScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
+import com.ruleup.onboarding.presentation.walkthrough.WalkthroughScreen
 import com.ruleup.profile.domain.navigation.FriendInvitePage
 import com.ruleup.profile.domain.navigation.MyAgreementsPage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
@@ -102,6 +104,13 @@ val appRoutes: List<AppRoute> =
             path = SplashPage.PATH,
             isRoot = true,
             render = { SplashScreen() },
+        ),
+        AppRoute(
+            path = WalkthroughPage.PATH,
+            isRoot = true,
+            // 로그인 이전 화면이다. 인증이 필요한 API 를 부르지 않고 기기 저장소 플래그만 읽는다.
+            isLoginRequired = false,
+            render = { WalkthroughScreen() },
         ),
         AppRoute(
             path = LoginPage.PATH,

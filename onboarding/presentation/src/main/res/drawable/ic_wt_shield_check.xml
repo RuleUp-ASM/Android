@@ -1,0 +1,22 @@
+<!--
+  워크쓰루 아이콘. Figma 워크쓰루 프레임(1460:2·1461:2·1462:2) 내보내기 경로를 그대로 옮긴 것.
+  색은 사용처에서 tint 로 지정한다 — 같은 아이콘이 화면마다 다른 색으로 쓰인다.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="14dp"
+    android:height="14dp"
+    android:viewportWidth="14"
+    android:viewportHeight="14">
+    <path
+        android:pathData="M11.6667 7.58333C11.6667 10.5 9.625 11.9583 7.19833 12.8042C7.07126 12.8472 6.93323 12.8452 6.8075 12.7983C4.375 11.9583 2.33333 10.5 2.33333 7.58333V3.5C2.33333 3.34529 2.39479 3.19692 2.50419 3.08752C2.61358 2.97812 2.76196 2.91667 2.91667 2.91667C4.08333 2.91667 5.54167 2.21667 6.55667 1.33C6.68025 1.22442 6.83746 1.1664 7 1.1664C7.16254 1.1664 7.31975 1.22442 7.44333 1.33C8.46417 2.2225 9.91667 2.91667 11.0833 2.91667C11.238 2.91667 11.3864 2.97812 11.4958 3.08752C11.6052 3.19692 11.6667 3.34529 11.6667 3.5V7.58333Z"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.16667"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M5.25 7L6.41667 8.16667L8.75 5.83333"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="1.16667"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
