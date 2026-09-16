@@ -13,11 +13,11 @@ import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
+import com.ruleup.onboarding.domain.logging.LoginEntryType
+import com.ruleup.onboarding.domain.logging.OnboardingEvents
+import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
-import com.ruleup.onboarding.domain.observability.LoginEntryType
-import com.ruleup.onboarding.domain.observability.OnboardingEvents
-import com.ruleup.onboarding.domain.observability.SignupTimer
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel

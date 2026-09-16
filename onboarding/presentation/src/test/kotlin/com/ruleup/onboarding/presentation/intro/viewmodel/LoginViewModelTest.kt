@@ -21,9 +21,9 @@ import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeDeviceIdentityRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import com.ruleup.onboarding.domain.fake.testUser
+import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
-import com.ruleup.onboarding.domain.observability.SignupTimer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher

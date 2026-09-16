@@ -14,13 +14,13 @@ import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.toEntries
+import com.ruleup.challenge.domain.logging.ChallengeEvents
+import com.ruleup.challenge.domain.logging.CreateEntry
+import com.ruleup.challenge.domain.logging.CreatePath
+import com.ruleup.challenge.domain.logging.DraftField
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
-import com.ruleup.challenge.domain.observability.ChallengeEvents
-import com.ruleup.challenge.domain.observability.CreateEntry
-import com.ruleup.challenge.domain.observability.CreatePath
-import com.ruleup.challenge.domain.observability.DraftField
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase

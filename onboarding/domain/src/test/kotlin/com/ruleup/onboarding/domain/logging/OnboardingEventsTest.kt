@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.observability
+package com.ruleup.onboarding.domain.logging
 
 import com.ruleup.logging.domain.bizAttributes
 import kotlin.test.Test

@@ -2,11 +2,11 @@ package com.ruleup.challenge.presentation.explore.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ExploreSort
+import com.ruleup.challenge.domain.logging.ChallengeCardSource
+import com.ruleup.challenge.domain.logging.ChallengeEvents
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
-import com.ruleup.challenge.domain.observability.ChallengeCardSource
-import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper

@@ -32,8 +32,8 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.NickNameUtil
+import com.ruleup.onboarding.domain.logging.OnboardingStep
 import com.ruleup.onboarding.domain.navigation.OnboardingInterestPage
-import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader

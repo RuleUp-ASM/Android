@@ -16,8 +16,8 @@ import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
-import com.ruleup.onboarding.domain.observability.OnboardingEvents
-import com.ruleup.onboarding.domain.observability.SignupTimer
+import com.ruleup.onboarding.domain.logging.OnboardingEvents
+import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.onboarding.presentation.intro.viewmodel.goHomeOrPending

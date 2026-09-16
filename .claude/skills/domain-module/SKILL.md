@@ -293,7 +293,7 @@ class CreateChallengeUseCase
 domain 에 살지만 규칙이 따로 있다. 필요할 때 읽는다:
 
 - 화면 라우트(`navigation/<Name>Page.kt`) 추가 → **`references/navigation.md`**
-- 이벤트 카탈로그(`observability/<Feature>Events.kt`) 추가 → **`references/observability.md`**
+- 이벤트 카탈로그(`logging/<Feature>Events.kt`) 추가 → **`references/observability.md`**
 - 새 `:<feature>:domain` 모듈 신설 → **`references/new-module.md`**
 
 ## 테스트 — domain 이 테스트의 본거지다

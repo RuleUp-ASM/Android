@@ -2,8 +2,8 @@ package com.ruleup.onboarding.domain.auth.usecase
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.logging.domain.BizLogger
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
-import com.ruleup.onboarding.domain.observability.OnboardingEvents
-import com.ruleup.onboarding.domain.observability.SessionExpiredTrigger
+import com.ruleup.onboarding.domain.logging.OnboardingEvents
+import com.ruleup.onboarding.domain.logging.SessionExpiredTrigger
 import javax.inject.Inject
 
 /** 자동 로그인. 저장된 refreshToken 으로 앱 토큰을 재발급(명세 4.4)해 세션을 복구한다. */

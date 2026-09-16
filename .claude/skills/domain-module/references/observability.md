@@ -5,7 +5,7 @@
 없고, feature 가 늘 때마다 로깅 모듈을 고쳐야 한다. 그래서 이름을 값으로 받는 `BizEvent` 하나만
 두고, **분류 체계는 feature domain 의 팩토리 함수가 갖는다.**
 
-위치: `<feature>/domain/observability/<Feature>Events.kt` (개념 폴더가 있어도 여기는 쪼개지 않는다).
+위치: `<feature>/domain/logging/<Feature>Events.kt` (개념 폴더가 있어도 여기는 쪼개지 않는다).
 그 모듈은 `api(project(":logging:domain"))` 을 문다 — 팩토리 반환 타입이 공개 시그니처에 나온다.
 
 사용자 행동은 `:logging`, 에러·성능은 `:observability` 다. 둘은 파이프라인이 다르다 —

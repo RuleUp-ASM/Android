@@ -28,8 +28,8 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.onboarding.domain.observability.OnboardingEvents
-import com.ruleup.onboarding.domain.observability.OnboardingStep
+import com.ruleup.onboarding.domain.logging.OnboardingEvents
+import com.ruleup.onboarding.domain.logging.OnboardingStep
 import com.ruleup.ui.helper.LocalBizLogger
 
 /** 온보딩 전체 단계 수. 화면·진행바·로깅이 같은 값을 봐야 해서 한곳에 둔다. */

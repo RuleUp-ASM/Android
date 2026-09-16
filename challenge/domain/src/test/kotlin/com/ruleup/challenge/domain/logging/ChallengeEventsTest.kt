@@ -1,4 +1,4 @@
-package com.ruleup.challenge.domain.observability
+package com.ruleup.challenge.domain.logging
 
 import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ExploreSort

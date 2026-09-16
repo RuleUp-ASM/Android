@@ -44,7 +44,7 @@
 
 `:app` 이 전 모듈을 모으는 지점에서만 드러나는 것들.
 
-- **관측 이벤트 카탈로그** — feature 마다 `observability/<Feature>Events.kt` 가 있는데 이름이 겹치거나 규칙(prefix·snake_case)을 어기면 대시보드가 조용히 틀린다. 전 모듈 이벤트 이름을 모아 중복·형식을 단언한다
+- **관측 이벤트 카탈로그** — feature 마다 `logging/<Feature>Events.kt` 가 있는데 이름이 겹치거나 규칙(prefix·snake_case)을 어기면 대시보드가 조용히 틀린다. 전 모듈 이벤트 이름을 모아 중복·형식을 단언한다
 - **릴리스 빌드에 debug sink 가 없다** — `observability:debug` 는 `debugImplementation` 이라 빠지는 게 맞다. 이게 정책이면 검증할 값이 있다
 
 Hilt 그래프 자체는 테스트하지 않는다 — 못 엮으면 빌드가 깨진다.

@@ -1,6 +1,6 @@
 # RuleUp 관측 이벤트
 
-마지막 갱신: 2026-09-16 · 이벤트 정의의 출처는 각 feature domain 의 `observability/<Feature>Events.kt`
+마지막 갱신: 2026-09-16 · 이벤트 정의의 출처는 각 feature domain 의 `logging/<Feature>Events.kt`
 
 이 문서는 **Amplitude·Firebase 에서 무엇을 볼 수 있는지**를 적는다. 이벤트가 코드에만 있으면
 대시보드를 만들 사람이 소스를 읽어야 하고, 그러면 아무도 안 만든다. 실제로 한 달 전에 만들어진
@@ -64,7 +64,7 @@ feature 가 부르지 않아도 파이프라인이 보내는 것들이다.
 
 ## 4. 온보딩 퍼널
 
-출처: `onboarding/domain/.../observability/OnboardingEvents.kt`
+출처: `onboarding/domain/.../logging/OnboardingEvents.kt`
 
 가입 과정을 단계로 쪼개 어디서 빠져나가는지 보는 깔때기다. **완주율의 분모는
 `login_screen_view`, 분자는 `signup_complete`** 다.
@@ -94,7 +94,7 @@ feature 가 부르지 않아도 파이프라인이 보내는 것들이다.
 
 ## 5. 챌린지 탐색·참여
 
-출처: `challenge/domain/.../observability/ChallengeEvents.kt`
+출처: `challenge/domain/.../logging/ChallengeEvents.kt`
 
 **`challenge_id` 가 노출 → 클릭 → 상세 → 참여까지 같은 값으로 이어진다.** 그게 전환율 계산의
 축이다.
@@ -208,7 +208,7 @@ APK 는 Amplitude 출구 없이 나간다. 로컬에서 빌드한 APK 만 키를
 
 ## 11. 새 이벤트를 추가하려면
 
-1. **그 도메인의 `observability/<Feature>Events.kt` 에 팩토리 함수를 만든다.** 없으면 새로 만든다.
+1. **그 도메인의 `logging/<Feature>Events.kt` 에 팩토리 함수를 만든다.** 없으면 새로 만든다.
    이벤트 이름은 snake_case 이고, 팩토리 시그니처가 곧 스키마다.
 2. **골든 테스트를 같이 쓴다.** 이름과 속성 키를 그대로 박아 두면 나중에 이름을 바꿀 때
    대시보드가 조용히 비는 대신 테스트가 깨진다. `OnboardingEventsTest` 가 본보기다.
