@@ -1,11 +1,15 @@
 # 이벤트 카탈로그(`<Feature>Events.kt`) 작성하기
 
-이벤트는 **그 도메인을 아는 모듈이 소유한다.** `observability:domain` 에는 `challenge_created` 같은
+이벤트는 **그 도메인을 아는 모듈이 소유한다.** `logging:domain` 에는 `challenge_created` 같은
 케이스가 없고 앞으로도 없다 — sealed 는 모듈 경계를 넘지 못해 feature 가 자기 케이스를 정의할 수도
-없고, feature 가 늘 때마다 관측 모듈을 고쳐야 한다. 그래서 이름을 값으로 받는
-`BusinessPayload.Custom` 하나만 두고, **분류 체계는 feature domain 의 팩토리 함수가 갖는다.**
+없고, feature 가 늘 때마다 로깅 모듈을 고쳐야 한다. 그래서 이름을 값으로 받는 `BizEvent` 하나만
+두고, **분류 체계는 feature domain 의 팩토리 함수가 갖는다.**
 
-위치: `<feature>/domain/observability/<Feature>Events.kt` (개념 폴더가 있어도 여기는 쪼개지 않는다).
+위치: `<feature>/domain/logging/<Feature>Events.kt` (개념 폴더가 있어도 여기는 쪼개지 않는다).
+그 모듈은 `api(project(":logging:domain"))` 을 문다 — 팩토리 반환 타입이 공개 시그니처에 나온다.
+
+사용자 행동은 `:logging`, 에러·성능은 `:observability` 다. 둘은 파이프라인이 다르다 —
+행동 이벤트에는 게이트도 샘플링도 없다.
 
 ## 형태
 
@@ -18,9 +22,9 @@ object ChallengeEvents {
 
     /** 탐색 홈 진입. 전환율의 분모다. */
     fun exploreHomeView(hasTrending: Boolean) =
-        BusinessPayload.Custom(
+        BizEvent(
             "explore_home_view",
-            attributes { put("has_trending", hasTrending) },
+            bizAttributes { put("has_trending", hasTrending) },
         )
 
     /** 카드 클릭. 상세 진입률의 분자다. */
@@ -29,9 +33,9 @@ object ChallengeEvents {
         position: Int,
         source: ChallengeCardSource,
         sort: ExploreSort?,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "challenge_card_click",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             put("position", position)
             put("source", source.value)
@@ -43,7 +47,7 @@ object ChallengeEvents {
 ```
 
 - 이벤트 이름과 속성 키는 **snake_case**. 이름은 `<대상>_<행위>` (`challenge_card_click`).
-- `attributes { put(...) }` 는 값 타입별 오버로드다(`String`/`Int`/`Long`/`Double`/`Boolean`).
+- `bizAttributes { put(...) }` 는 값 타입별 오버로드다(`String`/`Int`/`Long`/`Double`/`Boolean`).
   `Map<String, Any>` 와 달리 **넣는 순간 타입이 고정**되므로 대시보드에서 타입이 흔들리지 않는다.
 - **KDoc 에 "이 값으로 무엇을 계산하는지"를 적는다** — "전환율의 분모다", "빈 결과율을 낸다".
   이게 없으면 나중에 아무도 그 이벤트를 지워도 되는지 판단하지 못한다.
@@ -92,18 +96,22 @@ enum class ChallengeCardSource(
 
 ## 호출
 
-ViewModel 이 `Observability` 를 주입받아 호출한다. domain 의 Events 는 **페이로드를 만들기만** 하고
+ViewModel 이 `BizLogger` 를 생성자로 주입받아 호출한다. domain 의 Events 는 **이벤트를 만들기만** 하고
 발송하지 않는다.
 
 ```kotlin
-observability.log(Channel.BUSINESS, Severity.INFO, TAG) { ChallengeEvents.exploreHomeView(hasTrending) }
+bizLogger.record(ChallengeEvents.exploreHomeView(hasTrending))
 ```
 
-람다인 이유가 있다 — 게이트가 **페이로드 생성 전에** 돌기 때문에 버려질 이벤트는 객체 할당조차
-일어나지 않는다. 팩토리를 미리 호출해 변수에 담아 넘기지 않는다.
+Composable 은 생성자 주입을 못 받으므로 `LocalBizLogger.current` 를 쓴다.
 
-화면 진입·클릭처럼 모든 feature 에 공통인 것은 `Custom` 이 아니라 `BusinessPayload.ScreenView` ·
-`UserAction` 을 쓴다. 진단 로그는 `observability.w(TAG) { "..." }` 계열 단축 함수.
+**화면 이름과 사용자 식별자를 속성에 넣지 않는다** — 기록기가 기록 시점에 붙인다(`screen` 키).
+넣으면 같은 값이 두 키로 쌓인다.
+
+화면 진입(`screen_view`)은 네비게이션을 쥔 `:app` 이 남긴다(`CommonBizEvents`). feature 가 따로
+남기지 않는다 — 진입 경로가 여럿이라 빠뜨리기 쉽다.
+
+진단 로그는 `:observability` 쪽이다: `observability.w(TAG) { "..." }` 계열 단축 함수.
 
 ## 골든 테스트를 같이 쓴다
 
@@ -126,14 +134,17 @@ class ChallengeEventsTest {
 }
 ```
 
-속성까지 고정하려면 `attrs` 를 `attributes { ... }` 로 만든 기대값과 비교한다 —
-`Attributes` 는 삽입 순서를 보존하고 맵 동등성을 따르므로 그대로 비교된다.
+속성까지 고정하려면 `attrs` 를 `bizAttributes { ... }` 로 만든 기대값과 비교한다 —
+`BizAttributes` 는 삽입 순서를 보존하고 맵 동등성을 따르므로 그대로 비교된다.
+
+화면이 그 이벤트를 실제로 남기는지는 `RecordingBizLogger`(`testFixtures(project(":logging:domain"))`)
+로 본다 — `bizLogger.names` 가 기록된 이름 목록이다.
 
 ## 자주 빠뜨리는 것
 
 - **분모를 안 만든다** → 클릭 수만 쌓이고 전환율이 안 나온다.
 - **`challenge_id` 를 한 단계에서 뺀다** → 퍼널이 그 지점에서 끊긴다.
 - **빈 문자열을 넣는다** → 집계에 결측과 구분 안 되는 가짜 분류가 생긴다.
-- **팩토리를 람다 밖에서 호출한다** → 게이트가 막을 이벤트도 객체를 만든다.
+- **화면 이름을 속성에 직접 싣는다** → 기록기가 붙이는 `screen` 과 두 벌이 된다.
 - 노출(impression) 이벤트에 중복 방지 규칙을 안 적는다 → 스크롤마다 재전송돼 노출 수가 부풀려진다.
   규칙(뷰포트 50% · 1초 이상 · 세션 내 1회)은 KDoc 에 적고 호출부가 지킨다.

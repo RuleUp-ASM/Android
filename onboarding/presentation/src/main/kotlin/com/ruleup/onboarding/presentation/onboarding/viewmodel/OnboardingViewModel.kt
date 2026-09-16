@@ -7,8 +7,7 @@ import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.PendingDeepLink
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.event.Channel
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.AuthFailure
@@ -17,8 +16,8 @@ import com.ruleup.onboarding.domain.auth.usecase.BirthDateValidation
 import com.ruleup.onboarding.domain.auth.usecase.SignupUseCase
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
-import com.ruleup.onboarding.domain.observability.OnboardingEvents
-import com.ruleup.onboarding.domain.observability.SignupTimer
+import com.ruleup.onboarding.domain.logging.OnboardingEvents
+import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.onboarding.presentation.intro.viewmodel.goHomeOrPending
@@ -51,7 +50,7 @@ class OnboardingViewModel
         private val introRepository: IntroRepository,
         private val signupSession: SignupSession,
         private val signupTimer: SignupTimer,
-        private val observability: Observability,
+        private val bizLogger: BizLogger,
         private val navigationHelper: NavigationHelper,
         private val pendingDeepLink: PendingDeepLink,
     ) : MviViewModel<OnboardingIntent, OnboardingState, OnboardingReducerEvent, OnboardingEffect>(OnboardingState.initial) {
@@ -168,13 +167,13 @@ class OnboardingViewModel
         private suspend fun checkNickname(name: String) {
             runCatching { profileRepository.checkNickname(name) }
                 .onSuccess { check ->
-                    observability.log(Channel.BUSINESS) {
+                    bizLogger.record(
                         OnboardingEvents.nicknameCheck(
                             valid = check.valid,
                             available = check.available,
                             reason = check.reason?.name,
-                        )
-                    }
+                        ),
+                    )
                     dispatch(
                         OnboardingReducerEvent.NicknameChecked(
                             available = check.available,
@@ -268,27 +267,24 @@ class OnboardingViewModel
                 }.onSuccess { user ->
                     // 가입이 끝났다. 남겨 두면 다음 시도가 만료된 토큰을 물고 시작한다.
                     signupSession.clear()
-                    observability.log(Channel.BUSINESS) {
+                    bizLogger.record(
                         OnboardingEvents.signupComplete(
                             interestCount = state.interests.size,
                             // 성별이 필수가 되면서 항상 true 다. 이벤트 스키마 정리는 분석 쪽과 합의 후.
                             hasGender = true,
                             optionalAgreements = state.agreements.count { !it.required },
                             durationMs = signupTimer.consumeElapsedMillis(),
-                        )
-                    }
+                        ),
+                    )
                     if (state.profileImageUri != null) {
-                        observability.log(Channel.BUSINESS) {
-                            // 업로드 실패는 UseCase 가 삼키므로 결과는 URL 이 붙었는지로 판정한다.
-                            OnboardingEvents.profileImageUploadResult(success = user.profileImageUrl != null)
-                        }
+                        bizLogger.record( // 업로드 실패는 UseCase 가 삼키므로 결과는 URL 이 붙었는지로 판정한다.
+                            OnboardingEvents.profileImageUploadResult(success = user.profileImageUrl != null),
+                        )
                     }
                     navigationHelper.goHomeOrPending(pendingDeepLink)
                 }.onFailure { error ->
                     dispatch(OnboardingReducerEvent.SubmitFailed)
-                    observability.log(Channel.BUSINESS) {
-                        OnboardingEvents.signupFailed((error as? AuthException)?.failure?.name ?: "UNKNOWN")
-                    }
+                    bizLogger.record(OnboardingEvents.signupFailed((error as? AuthException)?.failure?.name ?: "UNKNOWN"))
                     // 토큰이 만료됐으면 되돌아갈 단계가 없다. 로그인부터 다시 시작한다.
                     if ((error as? AuthException)?.failure == AuthFailure.INVALID_SIGNUP_TOKEN) {
                         restartFromLogin("시간이 초과됐어요. 처음부터 다시 해주세요")

@@ -7,10 +7,7 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.event.BusinessPayload
-import com.ruleup.observability.domain.test.RecordingSink
-import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -86,36 +83,36 @@ class ExploreViewModelTest {
     fun `탐색 홈 진입은 두 섹션이 다 끝나도 한 번만 센다`() =
         runTest {
             // 전환율의 분모다. 두 번 나가면 전환율이 실제보다 낮게 보인다.
-            val sink = RecordingSink()
-            val viewModel = viewModel(repo(trendingCount = 3), observability = testObservability(sink = sink))
+            val bizLogger = RecordingBizLogger()
+            val viewModel = viewModel(repo(trendingCount = 3), bizLogger = bizLogger)
 
             viewModel.onIntent(ExploreIntent.Load)
 
-            assertEquals(1, sink.customNames.count { it == "explore_home_view" })
+            assertEquals(1, bizLogger.names.count { it == "explore_home_view" })
         }
 
     @Test
     fun `다시 시도해도 홈 진입을 또 세지 않는다`() =
         runTest {
-            val sink = RecordingSink()
-            val viewModel = viewModel(repo(trendingCount = 3), observability = testObservability(sink = sink))
+            val bizLogger = RecordingBizLogger()
+            val viewModel = viewModel(repo(trendingCount = 3), bizLogger = bizLogger)
             viewModel.onIntent(ExploreIntent.Load)
 
             viewModel.onIntent(ExploreIntent.RetryTrending)
 
-            assertEquals(1, sink.customNames.count { it == "explore_home_view" })
+            assertEquals(1, bizLogger.names.count { it == "explore_home_view" })
         }
 
     @Test
     fun `인기가 비었으면 노출을 세지 않는다`() =
         runTest {
             // 보여 준 게 없는데 노출로 세면 노출 대비 클릭률이 0 으로 눌린다.
-            val sink = RecordingSink()
-            val viewModel = viewModel(repo(trendingCount = 0), observability = testObservability(sink = sink))
+            val bizLogger = RecordingBizLogger()
+            val viewModel = viewModel(repo(trendingCount = 0), bizLogger = bizLogger)
 
             viewModel.onIntent(ExploreIntent.Load)
 
-            assertTrue(sink.customNames.none { it == "trending_impression" })
+            assertTrue(bizLogger.names.none { it == "trending_impression" })
         }
 
     @Test
@@ -161,17 +158,13 @@ class ExploreViewModelTest {
             assertEquals(2, repo.calls.count { it == "getTrending" })
         }
 
-    /** 이 카탈로그의 이벤트는 전부 [BusinessPayload.Custom] 이라 이름으로 센다. */
-    private val RecordingSink.customNames: List<String>
-        get() = payloads.filterIsInstance<BusinessPayload.Custom>().map { it.name }
-
     private fun repo(trendingCount: Int) = FakeExploreRepository(trending = { snapshot(trendingCount) }, categories = { emptyList() })
 
     private fun viewModel(
         repo: FakeExploreRepository = FakeExploreRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-        observability: Observability = testObservability(),
-    ) = ExploreViewModel(exploreRepository = repo, navigationHelper = nav, observability = observability)
+        bizLogger: RecordingBizLogger = RecordingBizLogger(),
+    ) = ExploreViewModel(exploreRepository = repo, navigationHelper = nav, bizLogger = bizLogger)
 
     private fun snapshot(count: Int) =
         TrendingSnapshot(

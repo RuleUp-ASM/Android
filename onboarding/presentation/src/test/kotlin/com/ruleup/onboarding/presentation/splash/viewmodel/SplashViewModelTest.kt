@@ -8,6 +8,7 @@ import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.domain.token.RefreshedSession
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
@@ -142,7 +143,7 @@ class SplashViewModelTest {
                         refreshResult = RefreshedSession(Token("at", "rt2", "Bearer", 3600), userId = "u-1")
                     },
                     tokens,
-                    testObservability(),
+                    RecordingBizLogger(),
                 ),
             pendingDeepLink = pendingDeepLink,
             // 모르는 경로는 로그인을 요구한다 — 딥링크는 외부에서 들어오므로 안전한 쪽으로 실패한다.

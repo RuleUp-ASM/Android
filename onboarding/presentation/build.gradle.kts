@@ -93,6 +93,7 @@ dependencies {
     implementation(project(":onboarding:domain"))
     // 진단 로깅(사용자에게 노출하지 않는 실패 원인).
     implementation(project(":observability:domain"))
+    implementation(project(":logging:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)
@@ -121,6 +122,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(testFixtures(project(":core:domain")))
     testImplementation(testFixtures(project(":observability:domain")))
+    testImplementation(testFixtures(project(":logging:domain")))
     testImplementation(testFixtures(project(":onboarding:domain")))
 
     // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.

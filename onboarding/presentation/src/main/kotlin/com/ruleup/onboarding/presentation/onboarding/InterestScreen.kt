@@ -28,8 +28,8 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.category.InterestLimits
+import com.ruleup.onboarding.domain.logging.OnboardingStep
 import com.ruleup.onboarding.domain.navigation.OnboardingBirthPage
-import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader

@@ -148,6 +148,7 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:datastore"))
     implementation(project(":observability:data"))
+    implementation(project(":logging:data"))
     // 인스펙터 싱크는 디버그 변형에만 물린다 — 릴리스 APK 에 포함되지 않는다.
     debugImplementation(project(":observability:debug"))
     implementation(project(":onboarding:domain"))
@@ -217,6 +218,7 @@ dependencies {
     // 딥링크 파서가 android.net.Uri 를 쓴다 — 순수 JVM 으로는 파싱이 안 된다.
     testImplementation(libs.robolectric)
     testImplementation(testFixtures(project(":observability:domain")))
+    testImplementation(testFixtures(project(":logging:domain")))
 
     // 인수 테스트는 앱이 실제로 쓰는 Retrofit api·DTO 를 그대로 써서 실서버를 두드린다 —
     // 서버가 계약을 바꾸면 역직렬화에서 터지는 것이 목적이다.

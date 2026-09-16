@@ -28,8 +28,8 @@ import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
-import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
@@ -236,7 +236,7 @@ class ChallengeDetailJoinTest {
         reports: FakeReportRepository = FakeReportRepository(),
         account: FakeAccountRepository = FakeAccountRepository(agreed = AgreementType.entries.toSet()),
     ): ChallengeDetailViewModel {
-        val observability = testObservability()
+        val bizLogger = RecordingBizLogger()
         return ChallengeDetailViewModel(
             challengeRepository = repo,
             roomRepository = FakeRoomRepository(),
@@ -245,7 +245,7 @@ class ChallengeDetailJoinTest {
             permissionStatusProvider = PermissionStatusProvider { snapshot() },
             exploreRepository = FakeExploreRepository(),
             tokenRepository = FakeTokenRepository(storedUserId = "u1"),
-            observability = observability,
+            bizLogger = bizLogger,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
             // 음소거 상태는 부가 정보다 — 준비하지 않으면 조회가 실패하고 토글이 그려지지 않는다.

@@ -1,4 +1,4 @@
-package com.ruleup.onboarding.domain.observability
+package com.ruleup.onboarding.domain.logging
 
 import javax.inject.Inject
 import javax.inject.Singleton

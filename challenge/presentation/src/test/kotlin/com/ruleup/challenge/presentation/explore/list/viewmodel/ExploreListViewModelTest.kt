@@ -10,8 +10,7 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -258,6 +257,6 @@ class ExploreListViewModelTest {
     private fun viewModel(
         repo: FakeExploreRepository = FakeExploreRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-        observability: Observability = testObservability(),
-    ) = ExploreListViewModel(exploreRepository = repo, navigationHelper = nav, observability = observability)
+        bizLogger: RecordingBizLogger = RecordingBizLogger(),
+    ) = ExploreListViewModel(exploreRepository = repo, navigationHelper = nav, bizLogger = bizLogger)
 }

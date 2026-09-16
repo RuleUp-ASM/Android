@@ -21,6 +21,7 @@ import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.tti.domain.TtiRecorder
@@ -48,6 +49,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var observability: Observability
+
+    @Inject
+    lateinit var bizLogger: BizLogger
 
     @Inject
     lateinit var jankTracker: JankTracker
@@ -89,6 +93,7 @@ class MainActivity : ComponentActivity() {
                 messageHelper = messageHelper,
                 screenTracker = screenTracker,
                 observability = observability,
+                bizLogger = bizLogger,
                 ttiRecorder = ttiRecorder,
                 startStack = startStack,
             )

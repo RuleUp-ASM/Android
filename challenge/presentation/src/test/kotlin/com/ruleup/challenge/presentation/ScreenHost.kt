@@ -9,7 +9,9 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.test.ClickClock
 import com.ruleup.domain.test.RecordingMessageHelper
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.ui.helper.LocalBizLogger
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
@@ -31,6 +33,7 @@ fun ComposeContentTestRule.renderScreen(
                 LocalNavigationHelper provides nav,
                 LocalMessageHelper provides messages,
                 LocalObservability provides testObservability(),
+                LocalBizLogger provides RecordingBizLogger(),
             ) {
                 content()
             }

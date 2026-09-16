@@ -2,18 +2,17 @@ package com.ruleup.challenge.presentation.explore.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ExploreSort
+import com.ruleup.challenge.domain.logging.ChallengeCardSource
+import com.ruleup.challenge.domain.logging.ChallengeEvents
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.challenge.domain.navigation.ChallengeExploreListPage
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
-import com.ruleup.challenge.domain.observability.ChallengeCardSource
-import com.ruleup.challenge.domain.observability.ChallengeEvents
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.event.Channel
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +36,7 @@ class ExploreViewModel
     constructor(
         private val exploreRepository: ExploreRepository,
         private val navigationHelper: NavigationHelper,
-        private val observability: Observability,
+        private val bizLogger: BizLogger,
     ) : MviViewModel<ExploreIntent, ExploreState, ExploreReducerEvent, NoEffect>(
             ExploreState.initial,
         ) {
@@ -123,9 +122,7 @@ class ExploreViewModel
                             )
                             // 인기는 상위 N개가 한 화면에 함께 들어와 카드별로 쪼갤 이유가 없다 — 섹션 단위 1회.
                             if (shown.isNotEmpty()) {
-                                observability.log(Channel.BUSINESS) {
-                                    ChallengeEvents.trendingImpression(shown.map { it.challengeId })
-                                }
+                                bizLogger.record(ChallengeEvents.trendingImpression(shown.map { it.challengeId }))
                             }
                             logHomeViewOnce()
                         }.onFailure {
@@ -151,7 +148,7 @@ class ExploreViewModel
 
         private fun openCategory(category: Category) {
             val count = currentState.categories.firstOrNull { it.category == category }?.activeGroupCount ?: 0
-            observability.log(Channel.BUSINESS) { ChallengeEvents.categoryGridClick(category.value, count) }
+            bizLogger.record(ChallengeEvents.categoryGridClick(category.value, count))
             navigationHelper.navigateByRoute(ChallengeExploreListPage(category = category).toRoute())
         }
 
@@ -161,14 +158,14 @@ class ExploreViewModel
          */
         private fun openChallenge(challengeId: String) {
             val position = currentState.trending.indexOfFirst { it.challengeId == challengeId }
-            observability.log(Channel.BUSINESS) {
+            bizLogger.record(
                 ChallengeEvents.challengeCardClick(
                     challengeId = challengeId,
                     position = position.coerceAtLeast(0),
                     source = ChallengeCardSource.TRENDING,
                     sort = null,
-                )
-            }
+                ),
+            )
             navigationHelper.navigateByRoute(ChallengeDetailPage(challengeId).toRoute())
         }
 
@@ -180,9 +177,7 @@ class ExploreViewModel
         private fun logHomeViewOnce() {
             if (homeViewLogged) return
             homeViewLogged = true
-            observability.log(Channel.BUSINESS) {
-                ChallengeEvents.exploreHomeView(hasTrending = !currentState.hideTrendingSection)
-            }
+            bizLogger.record(ChallengeEvents.exploreHomeView(hasTrending = !currentState.hideTrendingSection))
         }
 
         private var homeViewLogged = false

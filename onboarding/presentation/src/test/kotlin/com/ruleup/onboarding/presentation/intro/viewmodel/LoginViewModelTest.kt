@@ -8,6 +8,7 @@ import com.ruleup.domain.navigation.Page
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.test.RecordingMessageHelper
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
@@ -20,9 +21,9 @@ import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeDeviceIdentityRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import com.ruleup.onboarding.domain.fake.testUser
+import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
-import com.ruleup.onboarding.domain.observability.SignupTimer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -202,6 +203,7 @@ class LoginViewModelTest {
         navigationHelper = nav,
         messageHelper = messages,
         observability = testObservability(),
+        bizLogger = RecordingBizLogger(),
         signupTimer = SignupTimer(),
         tokenRepository = tokens,
         signupSession = signupSession,

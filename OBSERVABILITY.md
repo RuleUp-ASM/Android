@@ -1,6 +1,6 @@
 # RuleUp 관측 이벤트
 
-마지막 갱신: 2026-09-11 · 이벤트 정의의 출처는 각 feature domain 의 `observability/<Feature>Events.kt`
+마지막 갱신: 2026-09-16 · 이벤트 정의의 출처는 각 feature domain 의 `logging/<Feature>Events.kt`
 
 이 문서는 **Amplitude·Firebase 에서 무엇을 볼 수 있는지**를 적는다. 이벤트가 코드에만 있으면
 대시보드를 만들 사람이 소스를 읽어야 하고, 그러면 아무도 안 만든다. 실제로 한 달 전에 만들어진
@@ -11,25 +11,32 @@
 
 ## 1. 어디로 흘러가는가
 
-ViewModel 이 `Observability.log(channel) { payload }` 를 부르면 파이프라인이 채널별로 출구를 고른다.
+**파이프라인이 둘이다.** 사용자 행동은 `:logging` 이, 진단·성능은 `:observability` 가 맡는다.
+행동 이벤트는 수명주기(전면/후면)와 전송 순서 보장이 달라 게이트가 있는 관측 파이프라인에 태우면
+설정 하나로 제품 지표가 통째로 사라질 수 있다.
 
-| 채널 | 무엇 | Firebase Analytics | Amplitude | Crashlytics |
-|---|---|---|---|---|
-| `BUSINESS` | 사용자 행동 | ○ | ○ | – |
-| `PERFORMANCE` | TTI·잼·메모리 | ○ | ○ | – |
-| `DIAGNOSTIC` | 에러·경고 | – | – | ○ (`WARN` 이상) |
+| 무엇 | 부르는 법 | 모듈 | Firebase Analytics | Amplitude | Crashlytics |
+|---|---|---|---|---|---|
+| 사용자 행동 | `BizLogger.record(event)` | `:logging:domain` · `:logging:data` | ○ | ○ | – |
+| 성능(TTI·잼·메모리) | `Observability.log(PERFORMANCE) { payload }` | `:observability` | ○ | ○ | – |
+| 에러·경고 | `Observability.log(severity, tag) { message }` | `:observability` | – | – | ○ (`WARN` 이상) |
 
 Amplitude 와 Firebase 는 **병행**한다. 같은 이벤트가 두 곳에 쌓이므로 집계할 때 출처를 섞지 않는다.
 
 `DIAGNOSTIC` 만 심각도 하한이 있다 — 릴리스는 `WARN`, QA 는 `DEBUG`, 개발은 전부다. Crashlytics
-쿼터를 지키려는 것이고, **행동 이벤트에는 샘플링이 없다.** 발생한 만큼 다 나간다.
+쿼터를 지키려는 것이고, **행동 이벤트에는 게이트도 샘플링도 없다.** 발생한 만큼 다 나간다.
+
+행동 이벤트 기록기는 `:app` 이 전면/후면 전환에 맞춰 열고 닫는다. 쌓아 두는 곳이 없어 **닫힌 뒤에
+기록된 것과 전송에 실패한 것은 사라진다** — 한 건도 잃으면 안 되는 이벤트가 생기면 전송기가
+재시도를 맡는다.
 
 Amplitude 키(`AMPLITUDE_API_KEY`)가 비면 **Amplitude 출구를 아예 달지 않는다.** Firebase 로는
 계속 나간다. 키는 `local.properties` 에서 온다.
 
 ## 2. 모든 이벤트에 붙는 것
 
-- `screen` — 이벤트가 난 시점의 화면 경로. `ScreenTracker` 가 네비게이션마다 갱신한다.
+- `screen` — 이벤트가 난 시점의 화면 경로. `ScreenTracker` 가 네비게이션마다 갱신하고, 두
+  파이프라인이 같은 객체에서 읽는다(행동은 `BizScreenSource`, 성능·진단은 `ObsContext`).
   성능·진단 페이로드에는 화면 필드가 따로 없어서 **이 값이 유일한 출처**다.
 - 기기·앱·세션 속성 — SDK 가 알아서 붙인다.
 
@@ -43,7 +50,7 @@ feature 가 부르지 않아도 파이프라인이 보내는 것들이다.
 
 | 이벤트 | 언제 | 속성 |
 |---|---|---|
-| `screen_view` | 화면 진입마다(`ScreenTracker`) | `screen_name`, `from_screen` |
+| `screen_view` | 화면 진입마다(`ScreenTracker` → `BizLogger`) | `screen_name`, `from_screen` |
 | `perf_tti` | 화면이 첫 콘텐츠를 그릴 때까지 | `page_name`, `total_millis`, 구간별 키(`view_create`·`backend`·`view_binding`·`big_part_loading`) |
 | `perf_jank` | 화면당 프레임 창이 닫힐 때 | `total_frames`, `janky_frames`, `frozen_frames`, `p95_frame_millis` |
 | `perf_resource` | 메모리 표본 | `trigger`, `heap_used_bytes`, `heap_max_bytes`, `low_memory` |
@@ -51,12 +58,13 @@ feature 가 부르지 않아도 파이프라인이 보내는 것들이다.
 
 `diagnostic` 은 Crashlytics 로만 간다. Amplitude 에서는 보이지 않는다.
 
-파이프라인에는 `user_action` 페이로드도 있지만 **부르는 곳이 없다.** 버튼 클릭은 지금 전부
-feature 팩토리의 이름 있는 이벤트로 나간다 — 대시보드에서 `user_action` 을 찾지 말 것.
+`diagnostic` 외의 세 성능 이벤트는 `:observability` 가, `screen_view` 는 `:logging` 이 보낸다.
+예전 파이프라인에 있던 `user_action` 페이로드는 부르는 곳이 없어 없앴다 — 버튼 클릭은 전부 feature
+팩토리의 이름 있는 이벤트로 나간다. 대시보드에서 `user_action` 을 찾지 말 것.
 
 ## 4. 온보딩 퍼널
 
-출처: `onboarding/domain/.../observability/OnboardingEvents.kt`
+출처: `onboarding/domain/.../logging/OnboardingEvents.kt`
 
 가입 과정을 단계로 쪼개 어디서 빠져나가는지 보는 깔때기다. **완주율의 분모는
 `login_screen_view`, 분자는 `signup_complete`** 다.
@@ -86,7 +94,7 @@ feature 팩토리의 이름 있는 이벤트로 나간다 — 대시보드에서
 
 ## 5. 챌린지 탐색·참여
 
-출처: `challenge/domain/.../observability/ChallengeEvents.kt`
+출처: `challenge/domain/.../logging/ChallengeEvents.kt`
 
 **`challenge_id` 가 노출 → 클릭 → 상세 → 참여까지 같은 값으로 이어진다.** 그게 전환율 계산의
 축이다.
@@ -167,7 +175,8 @@ feature 팩토리의 이름 있는 이벤트로 나간다 — 대시보드에서
 ## 9. 알려진 함정
 
 **Amplitude 에 사용자 식별자가 없다.** `UserIdentitySync` 가 Firebase 와 Crashlytics 에만
-`setUserId` 를 호출한다. 그래서 Amplitude 의 "사용자"는 앱 설치 단위이고, 재설치·기기 교체는 새
+`setUserId` 를 호출한다. 행동 이벤트는 기록 시점의 userId 를 `BizLog` 에 함께 담지만, 전송기가
+그것을 SDK 사용자 속성으로 올리지는 않는다. 그래서 Amplitude 의 "사용자"는 앱 설치 단위이고, 재설치·기기 교체는 새
 사람으로 잡힌다. 온보딩 퍼널은 어차피 설치 단위라 영향이 작지만, **리텐션·티어처럼 계정을 따라가야
 하는 지표는 지금 Amplitude 로 낼 수 없다.**
 
@@ -199,11 +208,12 @@ APK 는 Amplitude 출구 없이 나간다. 로컬에서 빌드한 APK 만 키를
 
 ## 11. 새 이벤트를 추가하려면
 
-1. **그 도메인의 `observability/<Feature>Events.kt` 에 팩토리 함수를 만든다.** 없으면 새로 만든다.
+1. **그 도메인의 `logging/<Feature>Events.kt` 에 팩토리 함수를 만든다.** 없으면 새로 만든다.
    이벤트 이름은 snake_case 이고, 팩토리 시그니처가 곧 스키마다.
 2. **골든 테스트를 같이 쓴다.** 이름과 속성 키를 그대로 박아 두면 나중에 이름을 바꿀 때
    대시보드가 조용히 비는 대신 테스트가 깨진다. `OnboardingEventsTest` 가 본보기다.
-3. ViewModel 에서 `observability.log(Channel.BUSINESS) { ... }` 로 부른다.
+3. ViewModel 은 `BizLogger` 를 생성자로 주입받아 `bizLogger.record(...)` 로 부른다. Composable 은
+   `LocalBizLogger.current` 를 쓴다 — 화면 이름과 사용자 식별자는 기록기가 붙이므로 넘기지 않는다.
 4. **이 문서의 표에 한 줄 더한다.** 코드와 같은 PR 에 있어야 안 썩는다.
 
 속성을 정할 때 지키는 것 둘:

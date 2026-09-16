@@ -6,15 +6,14 @@ import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.entity.InvalidFilterValueException
 import com.ruleup.challenge.domain.entity.InvalidSortTypeException
+import com.ruleup.challenge.domain.logging.ChallengeCardSource
+import com.ruleup.challenge.domain.logging.ChallengeEvents
+import com.ruleup.challenge.domain.logging.ExploreListEntry
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
-import com.ruleup.challenge.domain.observability.ChallengeCardSource
-import com.ruleup.challenge.domain.observability.ChallengeEvents
-import com.ruleup.challenge.domain.observability.ExploreListEntry
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.helper.NavigationHelper
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.event.Channel
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,7 +33,7 @@ class ExploreListViewModel
     constructor(
         private val exploreRepository: ExploreRepository,
         private val navigationHelper: NavigationHelper,
-        private val observability: Observability,
+        private val bizLogger: BizLogger,
     ) : MviViewModel<ExploreListIntent, ExploreListState, ExploreListReducerEvent, NoEffect>(
             ExploreListState.initial,
         ) {
@@ -120,13 +119,13 @@ class ExploreListViewModel
             val prefilled = Category.fromValue(category.orEmpty())
             val initialFilter = ExploreFilter(categories = setOfNotNull(prefilled))
             val initialSort = ExploreSort.fromValue(sort) ?: ExploreSort.default
-            observability.log(Channel.BUSINESS) {
+            bizLogger.record(
                 ChallengeEvents.exploreListView(
                     entry = if (prefilled != null) ExploreListEntry.CATEGORY else ExploreListEntry.ALL,
                     sort = initialSort,
                     filter = initialFilter,
-                )
-            }
+                ),
+            )
             fetchFirstPage(filter = initialFilter, sort = initialSort)
         }
 
@@ -138,7 +137,7 @@ class ExploreListViewModel
             if (!impressed.add(challengeId)) return
             val index = currentState.items.indexOfFirst { it.challengeId == challengeId }
             val item = currentState.items.getOrNull(index) ?: return
-            observability.log(Channel.BUSINESS) {
+            bizLogger.record(
                 ChallengeEvents.challengeCardImpression(
                     challengeId = challengeId,
                     position = index,
@@ -146,21 +145,21 @@ class ExploreListViewModel
                     isFull = item.isFull,
                     eligible = item.eligible,
                     hasMetrics = item.hasMetrics,
-                )
-            }
+                ),
+            )
         }
 
         /** 목록 카드 클릭. 노출→클릭→상세를 잇는 challenge_id 는 여기서 상세로 넘어간다. */
         private fun openChallenge(challengeId: String) {
             val position = currentState.items.indexOfFirst { it.challengeId == challengeId }
-            observability.log(Channel.BUSINESS) {
+            bizLogger.record(
                 ChallengeEvents.challengeCardClick(
                     challengeId = challengeId,
                     position = position.coerceAtLeast(0),
                     source = ChallengeCardSource.LIST,
                     sort = currentState.sort,
-                )
-            }
+                ),
+            )
             navigationHelper.navigateByRoute(ChallengeDetailPage(challengeId).toRoute())
         }
 
@@ -199,9 +198,7 @@ class ExploreListViewModel
                         logAfterLoad?.let { logResult(it, result.items.size) }
                         // 빈 결과는 filter_apply 와 **중복으로** 보낸다 — 분모가 달라 하나로 합칠 수 없다.
                         if (result.items.isEmpty()) {
-                            observability.log(Channel.BUSINESS) {
-                                ChallengeEvents.exploreEmptyResult(filter, sort)
-                            }
+                            bizLogger.record(ChallengeEvents.exploreEmptyResult(filter, sort))
                         }
                     }.onFailure { error -> recoverOrFail(error, filter, sort) }
             }
@@ -213,14 +210,10 @@ class ExploreListViewModel
         ) {
             when (log) {
                 is LogAfterLoad.FilterApplied ->
-                    observability.log(Channel.BUSINESS) {
-                        ChallengeEvents.exploreFilterApply(log.filter, resultCount)
-                    }
+                    bizLogger.record(ChallengeEvents.exploreFilterApply(log.filter, resultCount))
 
                 is LogAfterLoad.SortChanged ->
-                    observability.log(Channel.BUSINESS) {
-                        ChallengeEvents.exploreSortChange(log.from, log.to, resultCount)
-                    }
+                    bizLogger.record(ChallengeEvents.exploreSortChange(log.from, log.to, resultCount))
             }
         }
 
@@ -271,9 +264,7 @@ class ExploreListViewModel
                         ),
                     )
                     pageIndex += 1
-                    observability.log(Channel.BUSINESS) {
-                        ChallengeEvents.exploreListLoadMore(pageIndex, currentState.sort)
-                    }
+                    bizLogger.record(ChallengeEvents.exploreListLoadMore(pageIndex, currentState.sort))
                 }.onFailure { error ->
                     // 커서가 상해 있으면 조용히 첫 페이지부터 다시 받는다 — 사용자가 인지할 필요가 없다.
                     if (error is CursorInvalidException) {

@@ -13,12 +13,12 @@ import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherInvitation
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
+import com.ruleup.challenge.domain.logging.ChallengeEvents
+import com.ruleup.challenge.domain.logging.RankingViewScope
 import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
-import com.ruleup.challenge.domain.observability.ChallengeEvents
-import com.ruleup.challenge.domain.observability.RankingViewScope
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
@@ -29,9 +29,8 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.notification.domain.repository.NotificationRepository
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.event.Channel
 import com.ruleup.report.domain.entity.ReportContext
 import com.ruleup.report.domain.entity.ReportException
 import com.ruleup.report.domain.entity.ReportFailure
@@ -68,7 +67,7 @@ class ChallengeDetailViewModel
         private val permissionStatusProvider: PermissionStatusProvider,
         private val exploreRepository: ExploreRepository,
         private val tokenRepository: TokenRepository,
-        private val observability: Observability,
+        private val bizLogger: BizLogger,
         private val targetAppStore: TargetAppStore,
         private val reportRepository: ReportRepository,
         private val notificationRepository: NotificationRepository,
@@ -310,36 +309,34 @@ class ChallengeDetailViewModel
                 checkConsentThenJoin(method)
                 return
             }
-            observability.log(Channel.BUSINESS) {
+            bizLogger.record(
                 ChallengeEvents.challengeJoinAttempt(
                     challengeId = id,
                     eligible = detail?.gate?.eligible ?: false,
                     isFull = detail?.isFull ?: false,
-                )
-            }
+                ),
+            )
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Joining(true))
                 runCatching { challengeRepository.join(id) }
                     .onSuccess { result ->
                         dispatch(ChallengeDetailReducerEvent.Joining(false))
                         // 탐색→참여 전환율의 분자. 노출·클릭과 같은 challenge_id 로 이어진다.
-                        observability.log(Channel.BUSINESS) {
-                            ChallengeEvents.challengeJoinResult(challengeId = id, success = true)
-                        }
+                        bizLogger.record(ChallengeEvents.challengeJoinResult(challengeId = id, success = true))
                         // 사이클 중간 입장이면 언제부터 판정되는지 알려준다(사이클은 1주 고정).
                         result.countFromCycle?.let {
                             emitEffect(ChallengeDetailEffect.ShowMessage("${cycleStartLabel(it)}부터 인증이 집계돼요"))
                         }
                         load(id, force = true)
                     }.onFailure { error ->
-                        observability.log(Channel.BUSINESS) {
+                        bizLogger.record(
                             ChallengeEvents.challengeJoinResult(
                                 challengeId = id,
                                 success = false,
                                 // 게이트 차단 분포를 보려면 reason 이 곧 에러 코드다.
                                 errorCode = (error as? JoinBlockedException)?.reason?.value ?: "UNKNOWN",
-                            )
-                        }
+                            ),
+                        )
                         when (error) {
                             is JoinBlockedException -> {
                                 // ALREADY_JOINED 는 알릴 게 없다 — 조용히 방 상세로 전환한다.
@@ -376,7 +373,7 @@ class ChallengeDetailViewModel
         private fun clone() {
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isCloning) return
-            observability.log(Channel.BUSINESS) { ChallengeEvents.challengeCloneClick(id) }
+            bizLogger.record(ChallengeEvents.challengeCloneClick(id))
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.Cloning(true))
                 runCatching { exploreRepository.clone(id) }
@@ -447,15 +444,15 @@ class ChallengeDetailViewModel
                         // 상세→참여 전환의 분모. 재조회(가입 후 force)에서는 다시 보내지 않는다.
                         if (!detailViewLogged) {
                             detailViewLogged = true
-                            observability.log(Channel.BUSINESS) {
+                            bizLogger.record(
                                 ChallengeEvents.challengeDetailView(
                                     challengeId = detail.challengeId,
                                     // 카드에서 넘어온 경로는 아직 라우트 인자로 전달되지 않는다(오픈 이슈).
                                     source = null,
                                     eligible = detail.gate.eligible,
                                     isFull = detail.isFull,
-                                )
-                            }
+                                ),
+                            )
                         }
                         // 감시자는 챌린지 × 참여자 단위 — 항상 조회를 시도하고, 성공하면(=참여자)
                         // 섹션을 노출한다. 미참여 403 등 실패는 흡수(섹션 숨김).
@@ -495,13 +492,13 @@ class ChallengeDetailViewModel
                         // 방 주간 방문율의 분자. 재조회(가입 후 force)에서 또 나가면 분자가 부풀어 오른다.
                         if (!roomViewLogged) {
                             roomViewLogged = true
-                            observability.log(Channel.BUSINESS) {
+                            bizLogger.record(
                                 ChallengeEvents.roomView(
                                     challengeId = challengeId,
                                     myRole = room.myRole.value,
                                     ownerType = room.ownerType.value,
-                                )
-                            }
+                                ),
+                            )
                         }
                     }
             }
@@ -628,9 +625,7 @@ class ChallengeDetailViewModel
                     RankingScope.MEMBER -> RankingViewScope.IN_ROOM to (currentState.ranking?.me?.rank == null)
                     RankingScope.ROOM -> RankingViewScope.CROSS to (currentState.crossRanking?.myChallenge?.rank == null)
                 }
-            observability.log(Channel.BUSINESS) {
-                ChallengeEvents.rankingView(scope = viewScope, myRankNull = myRankNull)
-            }
+            bizLogger.record(ChallengeEvents.rankingView(scope = viewScope, myRankNull = myRankNull))
         }
 
         /**
@@ -646,21 +641,19 @@ class ChallengeDetailViewModel
                 val ownerType = currentState.room?.ownerType ?: return
                 if (pageItemCount == 0 && !emptyFeedLogged) {
                     emptyFeedLogged = true
-                    observability.log(Channel.BUSINESS) {
-                        ChallengeEvents.roomEmptyStateView(ownerType.value)
-                    }
+                    bizLogger.record(ChallengeEvents.roomEmptyStateView(ownerType.value))
                 }
                 return
             }
-            observability.log(Channel.BUSINESS) {
+            bizLogger.record(
                 ChallengeEvents.threadScroll(
                     // 첫 페이지가 0 번이므로 누적 개수에서 이번 페이지를 뺀 몫이 곧 페이지 번호다.
                     pageIndex =
                         ((currentState.threads.size - pageItemCount) / ThreadPolicy.PAGE_SIZE)
                             .coerceAtLeast(0),
                     itemCount = pageItemCount,
-                )
-            }
+                ),
+            )
         }
 
         private fun ensureRankingScopeLoaded(scope: RankingScope) {

@@ -9,8 +9,10 @@ import androidx.work.Configuration
 import com.kakao.sdk.common.KakaoSdk
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
+import com.ruleup.android_ruleup.logging.CurrentUserHolder
 import com.ruleup.android_ruleup.push.PushTokenRegister
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.observability.data.UserIdentitySync
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
@@ -63,6 +65,14 @@ class App :
     @Inject
     lateinit var ttiRecorder: TtiRecorder
 
+    // 비즈니스 이벤트 기록기. TTI 와 같은 이유로 전면/후면 전환에 맞춰 열고 닫는다.
+    @Inject
+    lateinit var bizLogger: BizLogger
+
+    // 이벤트에 실리는 사용자 식별자. 아래 userId 구독이 채운다.
+    @Inject
+    lateinit var currentUserHolder: CurrentUserHolder
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -79,16 +89,22 @@ class App :
             // 카카오 콘솔(네이티브 앱키 → Android 플랫폼)에 등록할 키해시. 등록 안 되면 지도 인증 실패로 빈 화면.
             observability.i("KakaoMap") { "등록용 키해시 = ${Utility.getKeyHash(this)} / 패키지 = $packageName" }
         }
-        // TTI 기록기를 전면/후면에 맞춰 열고 닫는다.
+        // 기록기들을 전면/후면에 맞춰 열고 닫는다.
         //
         // 후면으로 내려갈 때 닫는 이유는 그 세션에서 완성된 기록을 그때 내보내기 위해서다 —
         // 안드로이드는 프로세스 종료를 알려주지 않으므로, 닫지 않으면 다음 실행까지 기다린다.
-        // 못 쏘고 죽은 것은 다음 init 이 주워 간다.
+        // TTI 는 못 쏘고 죽은 것을 다음 init 이 주워 가고, 비즈니스 이벤트는 쌓아 두지 않아 사라진다.
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onStart(owner: LifecycleOwner) = ttiRecorder.init()
+                override fun onStart(owner: LifecycleOwner) {
+                    ttiRecorder.init()
+                    bizLogger.init()
+                }
 
-                override fun onStop(owner: LifecycleOwner) = ttiRecorder.destroy()
+                override fun onStop(owner: LifecycleOwner) {
+                    ttiRecorder.destroy()
+                    bizLogger.destroy()
+                }
             },
         )
 
@@ -122,7 +138,10 @@ class App :
         // isLoggedIn 이 아니라 userId 를 구독한다 — 갱신 응답이 userId 를 안 주는 배포본에서는
         // 로그인 상태여도 이 값이 비어 있다(TokenRepository.userId KDoc).
         appScope.launch {
-            tokenRepository.userId.collect { userIdentitySync.setUser(it) }
+            tokenRepository.userId.collect {
+                userIdentitySync.setUser(it)
+                currentUserHolder.setUser(it)
+            }
         }
 
         installFlushHooks()

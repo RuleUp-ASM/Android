@@ -28,10 +28,9 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.observability.domain.event.Channel
-import com.ruleup.onboarding.domain.observability.OnboardingEvents
-import com.ruleup.onboarding.domain.observability.OnboardingStep
-import com.ruleup.ui.helper.LocalObservability
+import com.ruleup.onboarding.domain.logging.OnboardingEvents
+import com.ruleup.onboarding.domain.logging.OnboardingStep
+import com.ruleup.ui.helper.LocalBizLogger
 
 /** 온보딩 전체 단계 수. 화면·진행바·로깅이 같은 값을 봐야 해서 한곳에 둔다. */
 const val ONBOARDING_TOTAL_STEPS = 6
@@ -58,10 +57,10 @@ fun OnboardingScaffold(
     onNext: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
-    val observability = LocalObservability.current
+    val bizLogger = LocalBizLogger.current
     // 단계 진입·완료 로깅을 여기서 한다. 6개 화면에 따로 심으면 반드시 하나가 빠진다.
     LaunchedEffect(step) {
-        observability.log(Channel.BUSINESS) { OnboardingEvents.stepView(step) }
+        bizLogger.record(OnboardingEvents.stepView(step))
     }
     Column(
         modifier =
@@ -90,7 +89,7 @@ fun OnboardingScaffold(
                 modifier = Modifier.alpha(if (nextEnabled) 1f else DISABLED_ALPHA),
                 onClick = {
                     if (!nextEnabled) return@RuleUpPrimaryButton
-                    observability.log(Channel.BUSINESS) { OnboardingEvents.stepComplete(step, skipped) }
+                    bizLogger.record(OnboardingEvents.stepComplete(step, skipped))
                     onNext()
                 },
             )

@@ -19,7 +19,7 @@ class RuntimePolicyTest {
 
         assertFalse(p.isEnabled(Channel.DIAGNOSTIC, Severity.INFO, null))
         // 비즈니스·성능 페이로드는 전부 INFO 다. 진단 floor 가 여기까지 적용되면 지표가 통째로 사라진다.
-        assertTrue(p.isEnabled(Channel.BUSINESS, Severity.INFO, null))
+        assertTrue(p.isEnabled(Channel.PERFORMANCE, Severity.INFO, null))
         assertTrue(p.isEnabled(Channel.PERFORMANCE, Severity.INFO, null))
     }
 
@@ -27,7 +27,7 @@ class RuntimePolicyTest {
     fun `설정에 없는 채널은 제한 없음으로 본다`() {
         val p = policy(PolicyConfig.of(channelFloors = emptyMap()))
 
-        assertTrue(p.isEnabled(Channel.BUSINESS, Severity.VERBOSE, null))
+        assertTrue(p.isEnabled(Channel.PERFORMANCE, Severity.VERBOSE, null))
     }
 
     @Test
@@ -46,9 +46,9 @@ class RuntimePolicyTest {
 
     @Test
     fun `꺼진 채널은 심각도와 무관하게 막힌다`() {
-        val p = policy(PolicyConfig.of(channelFloors = emptyMap(), disabledChannels = setOf(Channel.BUSINESS)))
+        val p = policy(PolicyConfig.of(channelFloors = emptyMap(), disabledChannels = setOf(Channel.PERFORMANCE)))
 
-        assertFalse(p.isEnabled(Channel.BUSINESS, Severity.ERROR, null))
+        assertFalse(p.isEnabled(Channel.PERFORMANCE, Severity.ERROR, null))
     }
 
     @Test

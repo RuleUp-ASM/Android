@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.usecase.ValidateBirthDateUseCase
+import com.ruleup.onboarding.domain.logging.OnboardingStep
 import com.ruleup.onboarding.domain.navigation.OnboardingGenderPage
-import com.ruleup.onboarding.domain.observability.OnboardingStep
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview

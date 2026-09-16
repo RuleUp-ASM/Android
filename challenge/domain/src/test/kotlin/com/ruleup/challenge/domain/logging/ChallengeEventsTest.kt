@@ -1,10 +1,10 @@
-package com.ruleup.challenge.domain.observability
+package com.ruleup.challenge.domain.logging
 
 import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.domain.entity.category.Category
-import com.ruleup.observability.domain.model.attributes
+import com.ruleup.logging.domain.bizAttributes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -77,7 +77,7 @@ class ChallengeEventsTest {
         val event = ChallengeEvents.roomView("c1", "OWNER", "BOT")
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("challenge_id", "c1")
                 put("my_role", "OWNER")
                 put("owner_type", "BOT")
@@ -90,14 +90,14 @@ class ChallengeEventsTest {
     fun `랭킹 조회는 방 안과 방 밖을 다른 scope 로 남긴다`() {
         // 등재 기준(10회 대 50회)이 달라 my_rank_null 을 한 지표로 묶으면 해석이 안 된다.
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("scope", "IN_ROOM")
                 put("my_rank_null", true)
             },
             ChallengeEvents.rankingView(RankingViewScope.IN_ROOM, myRankNull = true).attrs,
         )
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("scope", "CROSS")
                 put("my_rank_null", false)
             },
@@ -127,7 +127,7 @@ class ChallengeEventsTest {
             )
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("challenge_id", "c1")
                 put("position", 2L)
                 put("sort", "COMPLETION_RATE")
@@ -145,7 +145,7 @@ class ChallengeEventsTest {
         val event = ChallengeEvents.challengeCardClick("c1", 0, ChallengeCardSource.TRENDING, sort = null)
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("challenge_id", "c1")
                 put("position", 0L)
                 put("source", "trending")
@@ -159,7 +159,7 @@ class ChallengeEventsTest {
         val event = ChallengeEvents.challengeJoinResult("c1", success = true)
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("challenge_id", "c1")
                 put("success", true)
             },
@@ -173,7 +173,7 @@ class ChallengeEventsTest {
         val event = ChallengeEvents.exploreEmptyResult(ExploreFilter.none, ExploreSort.POPULAR)
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("filters", "none")
                 put("sort", "POPULAR")
             },
@@ -193,7 +193,7 @@ class ChallengeEventsTest {
         val event = ChallengeEvents.exploreEmptyResult(filter, ExploreSort.DEADLINE)
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("filters", "categories=EXERCISE,verify=AUTO,eligible_only")
                 put("sort", "DEADLINE")
             },
@@ -204,11 +204,11 @@ class ChallengeEventsTest {
     @Test
     fun `자동에서 수동으로 바꾼 경우에만 auto_to_manual 을 채운다`() {
         assertEquals(
-            attributes { put("field", "verification") },
+            bizAttributes { put("field", "verification") },
             ChallengeEvents.draftEdit(DraftField.VERIFICATION).attrs,
         )
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("field", "verification")
                 put("auto_to_manual", true)
             },

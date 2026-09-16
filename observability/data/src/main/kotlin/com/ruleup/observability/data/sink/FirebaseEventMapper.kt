@@ -1,7 +1,6 @@
 package com.ruleup.observability.data.sink
 
 import android.os.Bundle
-import com.ruleup.observability.domain.event.BusinessPayload
 import com.ruleup.observability.domain.event.DiagnosticPayload
 import com.ruleup.observability.domain.event.ObsEvent
 import com.ruleup.observability.domain.event.ObsPayload
@@ -32,10 +31,6 @@ internal object FirebaseEventMapper {
     fun eventName(payload: ObsPayload): String =
         when (payload) {
             is DiagnosticPayload -> "diagnostic"
-            is BusinessPayload.ScreenView -> "screen_view"
-            is BusinessPayload.UserAction -> "user_action"
-            // feature 팩토리가 선언한 이름을 그대로 쓴다.
-            is BusinessPayload.Custom -> payload.name
             is PerformancePayload.Tti -> "perf_tti"
             is PerformancePayload.JankWindow -> "perf_jank"
             is PerformancePayload.ResourceProbe -> "perf_resource"
@@ -72,19 +67,6 @@ internal object FirebaseEventMapper {
                     bundle.putString("error_hash", it.stackHash)
                 }
             }
-
-            is BusinessPayload.ScreenView -> {
-                bundle.putString("screen_name", payload.screen.raw.clampValue())
-                payload.referrer?.let { bundle.putString("from_screen", it.fromScreen.raw.clampValue()) }
-            }
-
-            is BusinessPayload.UserAction -> {
-                bundle.putString("screen_name", payload.screen.raw.clampValue())
-                bundle.putString("element", payload.element.raw.clampValue())
-            }
-
-            // Custom 은 이름과 attrs 가 전부다. 이름은 eventName() 이, attrs 는 아래 공통 루프가 담는다.
-            is BusinessPayload.Custom -> Unit
 
             is PerformancePayload.Tti -> {
                 bundle.putString("page_name", payload.pageName.clampValue())

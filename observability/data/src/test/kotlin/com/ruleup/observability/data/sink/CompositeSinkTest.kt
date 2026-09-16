@@ -84,7 +84,7 @@ class CompositeSinkTest {
     @Test
     fun `채널 필터가 관심 없는 이벤트를 막는다`() {
         val target = RecordingSink()
-        val filtered = ChannelFilterSink(setOf(com.ruleup.observability.domain.event.Channel.BUSINESS), target)
+        val filtered = ChannelFilterSink(setOf(com.ruleup.observability.domain.event.Channel.PERFORMANCE), target)
 
         filtered.emit(event) // DIAGNOSTIC
 

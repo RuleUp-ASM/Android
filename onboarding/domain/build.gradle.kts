@@ -35,8 +35,10 @@ dependencies {
     api(project(":core:domain"))
     // 계정 정보는 profile 소유 — 온보딩은 최초 설정 때 그 계약을 빌려 쓴다(#175).
     api(project(":profile:domain"))
-    // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
+    // 진단 로깅(사용자에게 노출하지 않는 실패 원인).
     implementation(project(":observability:domain"))
+    // 이벤트 카탈로그가 BizEvent 를 돌려주므로 공개 시그니처에 나온다.
+    api(project(":logging:domain"))
     implementation(libs.kotlinx.coroutines.core)
     // UseCase 의 @Inject 생성자(런타임 Hilt 컴포넌트에서 제공). 도메인은 hilt 런타임 없이 annotation 만.
     implementation(libs.javax.inject)
@@ -47,4 +49,5 @@ dependencies {
     // coroutines 가 implementation 이라 testFixtures 컴파일 경로엔 오지 않는다.
     testFixturesImplementation(libs.kotlinx.coroutines.core)
     testImplementation(testFixtures(project(":observability:domain")))
+    testImplementation(testFixtures(project(":logging:domain")))
 }
