@@ -1,7 +1,7 @@
 package com.ruleup.onboarding.domain.observability
 
-import com.ruleup.observability.domain.event.BusinessPayload
-import com.ruleup.observability.domain.model.attributes
+import com.ruleup.logging.domain.BizEvent
+import com.ruleup.logging.domain.bizAttributes
 
 /**
  * 온보딩 퍼널 이벤트. **기획 스펙 9번(로깅)의 릴리즈 게이트**라, 하나라도 빠지면 완주율·이탈
@@ -17,16 +17,16 @@ import com.ruleup.observability.domain.model.attributes
 object OnboardingEvents {
     /** 로그인 화면 진입. 완주율의 분모다. */
     fun loginScreenView(entryType: LoginEntryType) =
-        BusinessPayload.Custom(
+        BizEvent(
             "login_screen_view",
-            attributes { put("entry_type", entryType.value) },
+            bizAttributes { put("entry_type", entryType.value) },
         )
 
     /** 소셜 로그인 버튼 클릭. 성공률의 분모이자 가입 소요 시간의 시작점이다. */
     fun loginAttempt(provider: String) =
-        BusinessPayload.Custom(
+        BizEvent(
             "login_attempt",
-            attributes { put("provider", provider) },
+            bizAttributes { put("provider", provider) },
         )
 
     /**
@@ -41,9 +41,9 @@ object OnboardingEvents {
         errorCode: String? = null,
         isNewUser: Boolean? = null,
         restored: Boolean? = null,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "login_result",
-        attributes {
+        bizAttributes {
             put("provider", provider)
             put("success", success)
             errorCode?.let { put("error_code", it) }
@@ -54,9 +54,9 @@ object OnboardingEvents {
 
     /** 온보딩 각 단계 진입. 단계별 이탈 지점 분포를 낸다. */
     fun stepView(step: OnboardingStep) =
-        BusinessPayload.Custom(
+        BizEvent(
             "onboarding_step_view",
-            attributes {
+            bizAttributes {
                 put("step", step.value)
                 put("step_index", step.index.toLong())
             },
@@ -70,9 +70,9 @@ object OnboardingEvents {
     fun stepComplete(
         step: OnboardingStep,
         skipped: Boolean,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "onboarding_step_complete",
-        attributes {
+        bizAttributes {
             put("step", step.value)
             put("skipped", skipped)
         },
@@ -83,9 +83,9 @@ object OnboardingEvents {
         valid: Boolean,
         available: Boolean,
         reason: String? = null,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "nickname_check",
-        attributes {
+        bizAttributes {
             put("valid", valid)
             put("available", available)
             reason?.let { put("reason", it) }
@@ -102,9 +102,9 @@ object OnboardingEvents {
         hasGender: Boolean,
         optionalAgreements: Int,
         durationMs: Long?,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "signup_complete",
-        attributes {
+        bizAttributes {
             put("interest_count", interestCount.toLong())
             put("has_gender", hasGender)
             put("optional_agreements", optionalAgreements.toLong())
@@ -114,18 +114,18 @@ object OnboardingEvents {
 
     /** 가입 실패. 특히 `BIRTHDATE_UNDERAGE` 분포를 본다. */
     fun signupFailed(errorCode: String) =
-        BusinessPayload.Custom(
+        BizEvent(
             "signup_failed",
-            attributes { put("error_code", errorCode) },
+            bizAttributes { put("error_code", errorCode) },
         )
 
     /** 프로필 사진 등록 결과. 사진 등록률을 낸다. */
     fun profileImageUploadResult(
         success: Boolean,
         errorCode: String? = null,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "profile_image_upload_result",
-        attributes {
+        bizAttributes {
             put("success", success)
             errorCode?.let { put("error_code", it) }
         },
@@ -133,9 +133,9 @@ object OnboardingEvents {
 
     /** 세션이 끊겨 로그인으로 돌아옴. 단일 활성 기기 정책의 부작용을 모니터링한다. */
     fun sessionExpired(trigger: SessionExpiredTrigger) =
-        BusinessPayload.Custom(
+        BizEvent(
             "session_expired",
-            attributes { put("trigger", trigger.value) },
+            bizAttributes { put("trigger", trigger.value) },
         )
 }
 

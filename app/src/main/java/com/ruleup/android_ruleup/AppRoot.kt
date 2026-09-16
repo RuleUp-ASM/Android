@@ -8,10 +8,12 @@ import com.ruleup.android_ruleup.navigation.RootComposable
 import com.ruleup.android_ruleup.observability.ScreenTracker
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.onboarding.domain.navigation.SplashPage
 import com.ruleup.tti.domain.TtiRecorder
 import com.ruleup.tti.presentation.LocalTtiRecorder
+import com.ruleup.ui.helper.LocalBizLogger
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
@@ -26,6 +28,7 @@ fun AppRoot(
     messageHelper: MessageHelper,
     screenTracker: ScreenTracker,
     observability: Observability,
+    bizLogger: BizLogger,
     ttiRecorder: TtiRecorder,
     startStack: List<NavKey> = listOf(GenericNavKey(SplashPage.PATH)),
 ) {
@@ -34,6 +37,7 @@ fun AppRoot(
         LocalMessageHelper provides messageHelper,
         LocalScreenTracker provides screenTracker,
         LocalObservability provides observability,
+        LocalBizLogger provides bizLogger,
         LocalTtiRecorder provides ttiRecorder,
     ) {
         RootComposable(startStack = startStack)

@@ -24,10 +24,10 @@ import com.ruleup.challenge.presentation.fake.FakeTargetAppStore
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.notification.domain.entity.NotificationGroupSettings
 import com.ruleup.notification.domain.entity.NotificationSettings
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
-import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
@@ -193,7 +193,7 @@ class ChallengeDetailMuteTest {
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         reports: FakeReportRepository = FakeReportRepository(),
     ): ChallengeDetailViewModel {
-        val observability = testObservability()
+        val bizLogger = RecordingBizLogger()
         return ChallengeDetailViewModel(
             challengeRepository = repo,
             roomRepository = FakeRoomRepository(),
@@ -202,7 +202,7 @@ class ChallengeDetailMuteTest {
             permissionStatusProvider = PermissionStatusProvider { snapshot() },
             exploreRepository = FakeExploreRepository(),
             tokenRepository = FakeTokenRepository(storedUserId = "u1"),
-            observability = observability,
+            bizLogger = bizLogger,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
             notificationRepository = notifications,

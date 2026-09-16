@@ -1,6 +1,6 @@
 package com.ruleup.onboarding.domain.observability
 
-import com.ruleup.observability.domain.model.attributes
+import com.ruleup.logging.domain.bizAttributes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -14,7 +14,7 @@ class OnboardingEventsTest {
         val event = OnboardingEvents.loginScreenView(LoginEntryType.RELOGIN)
 
         assertEquals("login_screen_view", event.name)
-        assertEquals(attributes { put("entry_type", "relogin") }, event.attrs)
+        assertEquals(bizAttributes { put("entry_type", "relogin") }, event.attrs)
     }
 
     @Test
@@ -23,7 +23,7 @@ class OnboardingEventsTest {
         val event = OnboardingEvents.loginResult(provider = "kakao", success = true, isNewUser = true)
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("provider", "kakao")
                 put("success", true)
                 put("is_new_user", true)
@@ -37,7 +37,7 @@ class OnboardingEventsTest {
         val event = OnboardingEvents.loginResult(provider = "google", success = false, errorCode = "LOGIN_FAILED")
 
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("provider", "google")
                 put("success", false)
                 put("error_code", "LOGIN_FAILED")
@@ -55,7 +55,7 @@ class OnboardingEventsTest {
         val event = OnboardingEvents.stepView(OnboardingStep.BIRTH)
         assertEquals("onboarding_step_view", event.name)
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("step", "birth")
                 put("step_index", 3L)
             },
@@ -75,7 +75,7 @@ class OnboardingEventsTest {
 
         assertEquals("signup_complete", event.name)
         assertEquals(
-            attributes {
+            bizAttributes {
                 put("interest_count", 2L)
                 put("has_gender", true)
                 put("optional_agreements", 1L)

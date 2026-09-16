@@ -5,9 +5,9 @@ import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
-import com.ruleup.observability.domain.event.Channel
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
@@ -34,6 +34,7 @@ class LoginViewModel
         private val navigationHelper: NavigationHelper,
         private val messageHelper: MessageHelper,
         private val observability: Observability,
+        private val bizLogger: BizLogger,
         private val signupTimer: SignupTimer,
         private val tokenRepository: TokenRepository,
         private val signupSession: SignupSession,
@@ -46,7 +47,7 @@ class LoginViewModel
                     viewModelScope.launch {
                         // 완주율의 분모. 첫 설치와 재로그인을 나누지 않으면 분모가 뒤섞인다.
                         val entryType = if (tokenRepository.hasEverLoggedIn()) LoginEntryType.RELOGIN else LoginEntryType.FRESH
-                        observability.log(Channel.BUSINESS) { OnboardingEvents.loginScreenView(entryType) }
+                        bizLogger.record(OnboardingEvents.loginScreenView(entryType))
                     }
                 }
 
@@ -54,9 +55,7 @@ class LoginViewModel
                     dispatch(LoginReducerEvent.LoginStarted)
                     // 가입 소요 시간의 시작점. signup_complete 가 이 값과의 차이를 싣는다.
                     signupTimer.start()
-                    observability.log(Channel.BUSINESS) {
-                        OnboardingEvents.loginAttempt(intent.provider.provider)
-                    }
+                    bizLogger.record(OnboardingEvents.loginAttempt(intent.provider.provider))
                     emitEffect(LoginEffect.LaunchOAuth(intent.provider))
                 }
 
@@ -95,14 +94,14 @@ class LoginViewModel
                     socialLoginUseCase(authorization)
                 }.onSuccess { result ->
                     dispatch(LoginReducerEvent.LoginFinished)
-                    observability.log(Channel.BUSINESS) {
+                    bizLogger.record(
                         OnboardingEvents.loginResult(
                             provider = authorization.provider.provider,
                             success = true,
                             isNewUser = result is LoginOutcome.GoSignup,
                             restored = (result as? LoginOutcome.GoHome)?.restored,
-                        )
-                    }
+                        ),
+                    )
                     when (result) {
                         is LoginOutcome.GoHome -> navigationHelper.goHomeOrPending(pendingDeepLink)
 
@@ -135,13 +134,13 @@ class LoginViewModel
                     // 원인은 로그로만 남긴다 — 사용자가 고칠 수 없는 코드(redirectUri·deviceInfo)까지
                     // 화면에 드러내면 안내만 어지러워진다.
                     observability.w(TAG, error) { "소셜 로그인 실패" }
-                    observability.log(Channel.BUSINESS) {
+                    bizLogger.record(
                         OnboardingEvents.loginResult(
                             provider = authorization.provider.provider,
                             success = false,
                             errorCode = (error as? AuthException)?.failure?.name,
-                        )
-                    }
+                        ),
+                    )
                     emitEffect(LoginEffect.ShowFailure(error.toAuthFailureUi()))
                 }
             }

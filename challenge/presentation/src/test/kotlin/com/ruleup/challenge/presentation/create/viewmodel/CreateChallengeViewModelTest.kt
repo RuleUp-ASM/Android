@@ -19,7 +19,7 @@ import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
-import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import kotlinx.coroutines.Dispatchers
@@ -178,7 +178,7 @@ class CreateChallengeViewModelTest {
         challengeRepository = repo,
         myChallengeStore = RecordingChallengeStore(),
         navigationHelper = nav,
-        observability = testObservability(),
+        bizLogger = RecordingBizLogger(),
         savedStateHandle = saved,
         permissionStatusProvider = PermissionStatusProvider { throw IllegalStateException("권한 조회는 이 테스트의 관심사가 아니다") },
         sensitiveConsent = SensitiveConsent(account, FakeIntroRepository()),

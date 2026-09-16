@@ -1,6 +1,5 @@
 package com.ruleup.observability.data.sink
 
-import com.ruleup.observability.domain.event.BusinessPayload
 import com.ruleup.observability.domain.event.DiagnosticPayload
 import com.ruleup.observability.domain.event.ObsEvent
 import com.ruleup.observability.domain.event.ObsPayload
@@ -18,10 +17,6 @@ internal object AmplitudeEventMapper {
     fun eventName(payload: ObsPayload): String =
         when (payload) {
             is DiagnosticPayload -> "diagnostic"
-            is BusinessPayload.ScreenView -> "screen_view"
-            is BusinessPayload.UserAction -> "user_action"
-            // feature 팩토리가 선언한 이름을 그대로 쓴다.
-            is BusinessPayload.Custom -> payload.name
             is PerformancePayload.Tti -> "perf_tti"
             is PerformancePayload.JankWindow -> "perf_jank"
             is PerformancePayload.ResourceProbe -> "perf_resource"
@@ -50,19 +45,6 @@ internal object AmplitudeEventMapper {
                     props["error_hash"] = it.stackHash
                 }
             }
-
-            is BusinessPayload.ScreenView -> {
-                props["screen_name"] = payload.screen.raw
-                payload.referrer?.let { props["from_screen"] = it.fromScreen.raw }
-            }
-
-            is BusinessPayload.UserAction -> {
-                props["screen_name"] = payload.screen.raw
-                props["element"] = payload.element.raw
-            }
-
-            // Custom 은 이름과 attrs 가 전부다. 이름은 eventName() 이, attrs 는 공통 루프가 담는다.
-            is BusinessPayload.Custom -> Unit
 
             is PerformancePayload.Tti -> {
                 props["page_name"] = payload.pageName

@@ -13,7 +13,7 @@ class PolicyConfigTest {
         val source = mutableMapOf(Channel.DIAGNOSTIC to Severity.WARN)
         val config = PolicyConfig.of(channelFloors = source)
 
-        source[Channel.BUSINESS] = Severity.ERROR
+        source[Channel.PERFORMANCE] = Severity.ERROR
 
         // 방어적 복사가 없으면 AtomicReference 스왑의 전제(참조 교체 없이는 내용이 안 바뀜)가 무너진다.
         assertEquals(1, config.channelFloors.size)
@@ -23,7 +23,7 @@ class PolicyConfigTest {
     fun `변환은 새 스냅샷을 만들고 원본을 건드리지 않는다`() {
         val base = PolicyConfig.of(channelFloors = mapOf(Channel.DIAGNOSTIC to Severity.WARN))
 
-        val next = base.withChannelFloor(Channel.BUSINESS, Severity.ERROR)
+        val next = base.withChannelFloor(Channel.PERFORMANCE, Severity.ERROR)
 
         assertEquals(1, base.channelFloors.size)
         assertEquals(2, next.channelFloors.size)
@@ -39,9 +39,9 @@ class PolicyConfigTest {
 
     @Test
     fun `채널 on off 토글`() {
-        val off = PolicyConfig.of(channelFloors = emptyMap()).withChannel(Channel.BUSINESS, enabled = false)
-        assertTrue(Channel.BUSINESS in off.disabledChannels)
-        assertTrue(off.withChannel(Channel.BUSINESS, enabled = true).disabledChannels.isEmpty())
+        val off = PolicyConfig.of(channelFloors = emptyMap()).withChannel(Channel.PERFORMANCE, enabled = false)
+        assertTrue(Channel.PERFORMANCE in off.disabledChannels)
+        assertTrue(off.withChannel(Channel.PERFORMANCE, enabled = true).disabledChannels.isEmpty())
     }
 
     @Test

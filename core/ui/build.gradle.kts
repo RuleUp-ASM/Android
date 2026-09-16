@@ -34,6 +34,8 @@ kotlin {
 dependencies {
     api(project(":core:domain"))
     api(project(":observability:domain"))
+    // 화면이 비즈니스 이벤트를 남기는 경로(LocalBizLogger)가 공개 시그니처에 나온다.
+    api(project(":logging:domain"))
 
     // MVI 기반 클래스와 CompositionLocal 이 Compose/ViewModel 을 공개 시그니처로 노출한다.
     api(platform(libs.androidx.compose.bom))

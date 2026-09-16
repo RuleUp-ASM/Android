@@ -28,8 +28,7 @@ import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
-import com.ruleup.observability.domain.api.Observability
-import com.ruleup.observability.domain.event.Channel
+import com.ruleup.logging.domain.BizLogger
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
@@ -60,7 +59,7 @@ class CreateChallengeViewModel
         private val challengeRepository: ChallengeRepository,
         private val myChallengeStore: MyChallengeStore,
         private val navigationHelper: NavigationHelper,
-        private val observability: Observability,
+        private val bizLogger: BizLogger,
         private val savedStateHandle: SavedStateHandle,
         private val permissionStatusProvider: PermissionStatusProvider,
         private val sensitiveConsent: SensitiveConsent,
@@ -80,7 +79,7 @@ class CreateChallengeViewModel
                     if (!createStartLogged) {
                         createStartLogged = true
                         // TODO(entry): 진입점(홈·목록 빈 상태·탐색 빈 결과) 구분은 라우트 인자 확정 후 채운다.
-                        observability.log(Channel.BUSINESS) { ChallengeEvents.createStart(CreateEntry.UNKNOWN) }
+                        bizLogger.record(ChallengeEvents.createStart(CreateEntry.UNKNOWN))
                     }
                     loadTemplates()
                 }
@@ -364,7 +363,7 @@ class CreateChallengeViewModel
         private fun submitDescription() {
             val state = currentState
             if (!state.canSubmitDescription) return
-            observability.log(Channel.BUSINESS) { ChallengeEvents.createPathSelect(CreatePath.PROMPT) }
+            bizLogger.record(ChallengeEvents.createPathSelect(CreatePath.PROMPT))
             draftJob =
                 viewModelScope.launch {
                     dispatch(CreateChallengeReducerEvent.Drafting)
@@ -423,7 +422,7 @@ class CreateChallengeViewModel
         /** 경로 A — 추천 칩. LLM 미경유라 폴백·rate limit 이 없다. */
         private fun selectTemplate(templateId: Long) {
             if (currentState.isDrafting) return
-            observability.log(Channel.BUSINESS) { ChallengeEvents.createPathSelect(CreatePath.TEMPLATE) }
+            bizLogger.record(ChallengeEvents.createPathSelect(CreatePath.TEMPLATE))
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.Drafting)
                 runCatching { challengeRepository.createDraftFromTemplate(templateId) }
@@ -663,7 +662,7 @@ class CreateChallengeViewModel
             autoToManual: Boolean? = null,
         ) {
             if (!editedFields.add(field)) return
-            observability.log(Channel.BUSINESS) { ChallengeEvents.draftEdit(field, autoToManual) }
+            bizLogger.record(ChallengeEvents.draftEdit(field, autoToManual))
         }
 
         private fun durationDays(

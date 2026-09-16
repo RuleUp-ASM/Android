@@ -4,6 +4,7 @@ import com.ruleup.domain.entity.user.Gender
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.OAuthProfile
@@ -157,7 +158,7 @@ class OnboardingViewModelTest {
             introRepository = FakeIntroRepository(),
             signupSession = session,
             signupTimer = SignupTimer(),
-            observability = testObservability(),
+            bizLogger = RecordingBizLogger(),
             navigationHelper = nav,
             pendingDeepLink = PendingDeepLink(),
         )

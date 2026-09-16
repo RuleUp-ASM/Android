@@ -2,8 +2,8 @@ package com.ruleup.challenge.domain.observability
 
 import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.ExploreSort
-import com.ruleup.observability.domain.event.BusinessPayload
-import com.ruleup.observability.domain.model.attributes
+import com.ruleup.logging.domain.BizEvent
+import com.ruleup.logging.domain.bizAttributes
 
 /**
  * 챌린지 탐색·생성 퍼널 이벤트. **기능 스펙 9번의 릴리즈 게이트**라, 하나라도 빠지면 탐색→참여
@@ -23,9 +23,9 @@ object ChallengeEvents {
 
     /** 탐색 홈 진입. 전환율의 분모다. */
     fun exploreHomeView(hasTrending: Boolean) =
-        BusinessPayload.Custom(
+        BizEvent(
             "explore_home_view",
-            attributes { put("has_trending", hasTrending) },
+            bizAttributes { put("has_trending", hasTrending) },
         )
 
     /**
@@ -33,9 +33,9 @@ object ChallengeEvents {
      * 함께 들어와서 카드별로 쪼갤 이유가 없다.
      */
     fun trendingImpression(challengeIds: List<String>) =
-        BusinessPayload.Custom(
+        BizEvent(
             "trending_impression",
-            attributes {
+            bizAttributes {
                 put("challenge_ids", challengeIds.joinToString(","))
                 put("rank_range", if (challengeIds.isEmpty()) "" else "1-${challengeIds.size}")
             },
@@ -45,9 +45,9 @@ object ChallengeEvents {
     fun categoryGridClick(
         category: String,
         challengeCount: Int,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "category_grid_click",
-        attributes {
+        bizAttributes {
             put("category", category)
             put("challenge_count", challengeCount.toLong())
         },
@@ -57,9 +57,9 @@ object ChallengeEvents {
         entry: ExploreListEntry,
         sort: ExploreSort,
         filter: ExploreFilter,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "explore_list_view",
-        attributes {
+        bizAttributes {
             put("entry", entry.value)
             put("sort", sort.value)
             put("filters", filter.describe())
@@ -70,9 +70,9 @@ object ChallengeEvents {
     fun exploreFilterApply(
         filter: ExploreFilter,
         resultCount: Int,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "explore_filter_apply",
-        attributes {
+        bizAttributes {
             put("categories", filter.categories.joinToString(",") { it.value })
             put("verify_type", filter.verifyType?.value.orEmpty())
             put("eligible_only", filter.eligibleOnly)
@@ -85,9 +85,9 @@ object ChallengeEvents {
         from: ExploreSort,
         to: ExploreSort,
         resultCount: Int,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "explore_sort_change",
-        attributes {
+        bizAttributes {
             put("sort_from", from.value)
             put("sort_to", to.value)
             put("result_count", resultCount.toLong())
@@ -103,9 +103,9 @@ object ChallengeEvents {
     fun exploreEmptyResult(
         filter: ExploreFilter,
         sort: ExploreSort,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "explore_empty_result",
-        attributes {
+        bizAttributes {
             put("filters", filter.describe())
             put("sort", sort.value)
         },
@@ -124,9 +124,9 @@ object ChallengeEvents {
         isFull: Boolean,
         eligible: Boolean,
         hasMetrics: Boolean,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "challenge_card_impression",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             put("position", position.toLong())
             put("sort", sort.value)
@@ -142,9 +142,9 @@ object ChallengeEvents {
         position: Int,
         source: ChallengeCardSource,
         sort: ExploreSort?,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "challenge_card_click",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             put("position", position.toLong())
             put("source", source.value)
@@ -159,9 +159,9 @@ object ChallengeEvents {
         source: ChallengeCardSource?,
         eligible: Boolean,
         isFull: Boolean,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "challenge_detail_view",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             source?.let { put("source", it.value) }
             put("eligible", eligible)
@@ -181,9 +181,9 @@ object ChallengeEvents {
         challengeId: String,
         myRole: String,
         ownerType: String,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "room_view",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             put("my_role", myRole)
             put("owner_type", ownerType)
@@ -194,9 +194,9 @@ object ChallengeEvents {
     fun threadScroll(
         pageIndex: Int,
         itemCount: Int,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "thread_scroll",
-        attributes {
+        bizAttributes {
             put("page_index", pageIndex.toLong())
             put("item_count", itemCount.toLong())
         },
@@ -209,9 +209,9 @@ object ChallengeEvents {
     fun rankingView(
         scope: RankingViewScope,
         myRankNull: Boolean,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "ranking_view",
-        attributes {
+        bizAttributes {
             put("scope", scope.value)
             put("my_rank_null", myRankNull)
         },
@@ -222,9 +222,9 @@ object ChallengeEvents {
      * (기능 스펙 리스크 #2).
      */
     fun roomEmptyStateView(ownerType: String) =
-        BusinessPayload.Custom(
+        BizEvent(
             "room_empty_state_view",
-            attributes { put("owner_type", ownerType) },
+            bizAttributes { put("owner_type", ownerType) },
         )
 
     /** 참여 버튼 클릭. 게이트에 막히기 전 시점이라 시도 수의 분모가 된다. */
@@ -232,9 +232,9 @@ object ChallengeEvents {
         challengeId: String,
         eligible: Boolean,
         isFull: Boolean,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "challenge_join_attempt",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             put("eligible", eligible)
             put("is_full", isFull)
@@ -254,9 +254,9 @@ object ChallengeEvents {
         challengeId: String,
         success: Boolean,
         errorCode: String? = null,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "challenge_join_result",
-        attributes {
+        bizAttributes {
             put("challenge_id", challengeId)
             put("success", success)
             errorCode?.let { put("error_code", it) }
@@ -265,18 +265,18 @@ object ChallengeEvents {
 
     /** 템플릿 복제 실행. 참여 대신 "직접 만들기"로 가는 수요 크기를 낸다. */
     fun challengeCloneClick(challengeId: String) =
-        BusinessPayload.Custom(
+        BizEvent(
             "challenge_clone_click",
-            attributes { put("challenge_id", challengeId) },
+            bizAttributes { put("challenge_id", challengeId) },
         )
 
     /** 다음 페이지 로드. 스크롤 깊이를 낸다. */
     fun exploreListLoadMore(
         pageIndex: Int,
         sort: ExploreSort,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "explore_list_load_more",
-        attributes {
+        bizAttributes {
             put("page_index", pageIndex.toLong())
             put("sort", sort.value)
         },
@@ -291,16 +291,16 @@ object ChallengeEvents {
      * **프로그래매틱 화면 진입에서 중복 전송되지 않도록** 호출부가 1회만 보내야 한다.
      */
     fun createStart(entry: CreateEntry) =
-        BusinessPayload.Custom(
+        BizEvent(
             "create_start",
-            attributes { put("entry", entry.value) },
+            bizAttributes { put("entry", entry.value) },
         )
 
     /** 경로 선택. 추천 칩과 설명 입력의 비중을 낸다. */
     fun createPathSelect(path: CreatePath) =
-        BusinessPayload.Custom(
+        BizEvent(
             "create_path_select",
-            attributes { put("path", path.value) },
+            bizAttributes { put("path", path.value) },
         )
 
     /**
@@ -311,9 +311,9 @@ object ChallengeEvents {
     fun draftEdit(
         field: DraftField,
         autoToManual: Boolean? = null,
-    ) = BusinessPayload.Custom(
+    ) = BizEvent(
         "draft_edit",
-        attributes {
+        bizAttributes {
             put("field", field.value)
             autoToManual?.let { put("auto_to_manual", it) }
         },

@@ -32,8 +32,8 @@ kotlin {
 dependencies {
     // Page/NavRoute, InterestCategory(공유 커널)가 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
     api(project(":core:domain"))
-    // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
-    implementation(project(":observability:domain"))
+    // 이벤트 카탈로그가 BizEvent 를 돌려주므로 공개 시그니처에 나온다.
+    api(project(":logging:domain"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
 

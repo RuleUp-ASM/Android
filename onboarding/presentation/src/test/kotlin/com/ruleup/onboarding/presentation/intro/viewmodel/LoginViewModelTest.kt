@@ -8,6 +8,7 @@ import com.ruleup.domain.navigation.Page
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.test.RecordingMessageHelper
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
@@ -202,6 +203,7 @@ class LoginViewModelTest {
         navigationHelper = nav,
         messageHelper = messages,
         observability = testObservability(),
+        bizLogger = RecordingBizLogger(),
         signupTimer = SignupTimer(),
         tokenRepository = tokens,
         signupSession = signupSession,
