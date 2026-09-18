@@ -1,5 +1,6 @@
 package com.ruleup.android_ruleup.navigation
 
+import com.ruleup.onboarding.domain.navigation.WalkthroughPage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,10 +26,10 @@ class AppRouteAccessPolicyTest {
 
     @Test
     fun `공개로 표시된 라우트만 로그인 없이 열린다`() {
-        // 지금은 공개 라우트가 없다. 생기면 이 목록이 늘고, 늘어난 화면이 인증된 API 를 호출하지
-        // 않는지 확인하는 것이 리뷰 포인트가 된다.
+        // 목록이 늘 때마다, 늘어난 화면이 인증된 API 를 호출하지 않는지 확인하는 것이 리뷰 포인트다.
+        // 워크쓰루는 첫 실행 소개라 서버를 부르지 않고 기기 저장소 플래그만 읽는다.
         val public = appRoutes.filterNot { it.isLoginRequired }.map { it.path }
 
-        assertEquals(emptyList<String>(), public)
+        assertEquals(listOf(WalkthroughPage.PATH), public)
     }
 }

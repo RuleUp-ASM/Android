@@ -15,6 +15,9 @@ package com.ruleup.domain.navigation
 object AppRoutes {
     // onboarding
     const val SPLASH = "splash"
+
+    /** 첫 실행 워크쓰루 3장. 로그인 전에 한 번만 보여 준다. */
+    const val WALKTHROUGH = "walkthrough"
     const val LOGIN = "login"
 
     // 가입 온보딩 6단계. 순서가 계약이다 — 서버가 생일·성별을 필수로 받고 약관이 마지막이다.

@@ -14,11 +14,13 @@ import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
+import com.ruleup.onboarding.domain.fake.FakeWalkthroughRepository
 import com.ruleup.onboarding.domain.intro.entity.AppVersionGate
 import com.ruleup.onboarding.domain.intro.entity.IntroInfo
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
+import com.ruleup.onboarding.domain.navigation.WalkthroughPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -118,12 +120,49 @@ class SplashViewModelTest {
             assertEquals(listOf<Page>(HomePage), nav.pages)
         }
 
+    @Test
+    fun `소개를 안 본 미로그인 사용자는 워크쓰루로 보낸다`() =
+        runTest {
+            // 첫 실행에서 로그인 버튼부터 보여 주면 이 앱이 무엇을 하는지 모른 채 소셜 로그인을 만난다.
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(nav = nav, refreshToken = null, walkthroughSeen = false)
+
+            viewModel.onIntent(SplashIntent.Check)
+
+            assertEquals(
+                WalkthroughPage.PATH,
+                nav.pages
+                    .single()
+                    .toRoute()
+                    .path,
+            )
+        }
+
+    @Test
+    fun `소개를 본 미로그인 사용자는 로그인으로 보낸다`() =
+        runTest {
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(nav = nav, refreshToken = null, walkthroughSeen = true)
+
+            viewModel.onIntent(SplashIntent.Check)
+
+            assertEquals(
+                LoginPage.PATH,
+                nav.pages
+                    .single()
+                    .toRoute()
+                    .path,
+            )
+        }
+
     private fun viewModel(
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         refreshToken: String? = "rt",
         forceUpdate: Boolean = false,
         pendingDeepLink: PendingDeepLink = PendingDeepLink(),
         tokens: FakeTokenRepository = FakeTokenRepository(refreshToken),
+        // 대부분의 테스트는 진입 분기(홈·로그인·딥링크)를 보므로 소개를 이미 본 사용자로 둔다.
+        walkthroughSeen: Boolean = true,
     ): SplashViewModel {
         val intro =
             FakeIntroRepository().apply {
@@ -145,6 +184,7 @@ class SplashViewModelTest {
                     tokens,
                     RecordingBizLogger(),
                 ),
+            walkthroughRepository = FakeWalkthroughRepository(seen = walkthroughSeen),
             pendingDeepLink = pendingDeepLink,
             // 모르는 경로는 로그인을 요구한다 — 딥링크는 외부에서 들어오므로 안전한 쪽으로 실패한다.
             routeAccessPolicy = RouteAccessPolicy { true },

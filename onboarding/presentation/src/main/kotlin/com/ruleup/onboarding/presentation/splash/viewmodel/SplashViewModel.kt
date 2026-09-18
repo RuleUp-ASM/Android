@@ -8,10 +8,12 @@ import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
+import com.ruleup.onboarding.domain.intro.repository.WalkthroughRepository
 import com.ruleup.onboarding.domain.intro.usecase.IntroGate
 import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
+import com.ruleup.onboarding.domain.navigation.WalkthroughPage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,6 +40,7 @@ class SplashViewModel
     constructor(
         private val loadIntroUseCase: LoadIntroUseCase,
         private val autoLoginUseCase: AutoLoginUseCase,
+        private val walkthroughRepository: WalkthroughRepository,
         private val pendingDeepLink: PendingDeepLink,
         private val routeAccessPolicy: RouteAccessPolicy,
         private val navigationHelper: NavigationHelper,
@@ -92,7 +95,7 @@ class SplashViewModel
             }
         }
 
-        private fun navigate(authenticated: Boolean) {
+        private suspend fun navigate(authenticated: Boolean) {
             when (val pending = pendingDeepLink.consumeFor(authenticated, routeAccessPolicy)) {
                 // 딥링크는 부모 화면까지 함께 깔아야 뒤로가기가 자연스럽다(공지 상세 → 방 홈 → 홈).
                 is PendingDeepLinkEntry.Open -> navigationHelper.replaceStackWith(pending.route)
@@ -103,8 +106,16 @@ class SplashViewModel
                     navigationHelper.navigateTo(LoginPage)
                 }
 
-                // 홈·로그인은 루트라 호스트가 스택을 비우고 단독으로 세운다.
-                PendingDeepLinkEntry.None -> navigationHelper.navigateTo(if (authenticated) HomePage else LoginPage)
+                // 홈·로그인·워크쓰루는 루트라 호스트가 스택을 비우고 단독으로 세운다.
+                PendingDeepLinkEntry.None -> navigationHelper.navigateTo(if (authenticated) HomePage else guestEntry())
             }
         }
+
+        /**
+         * 로그인 안 된 사용자의 첫 화면. 소개를 아직 못 봤으면 워크쓰루가 먼저다.
+         *
+         * 보류 딥링크가 있을 때는 이 경로로 오지 않는다 — 목적지가 있는 사용자를 소개로 붙잡으면
+         * 링크를 타고 온 이유가 한 번 더 밀린다.
+         */
+        private suspend fun guestEntry() = if (walkthroughRepository.isSeen()) LoginPage else WalkthroughPage
     }
