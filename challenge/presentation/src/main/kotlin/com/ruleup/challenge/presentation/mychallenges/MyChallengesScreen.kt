@@ -53,10 +53,12 @@ import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpProgressBar
 import com.ruleup.designsystem.singleClickable
+import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
+import java.time.Instant
 
 /**
  * 내 챌린지 (Figma 1134:1205 · 1162:2 · 빈 상태 1134:2085). 하단 「챌린지」 탭의 루트 화면.
@@ -326,6 +328,25 @@ private fun InProgressCard(
             }
             Spacer(Modifier.height(6.dp))
             RuleUpProgressBar(progress = (progress.progressRate / 100.0).toFloat().coerceIn(0f, 1f))
+
+            // 오늘 인증해야 하는데 신호가 끊긴 상태다. 판정 결과가 아니라 **측정이 안 되고 있다**는
+            // 사실이라, 실패로 굳기 전에 권한을 점검하라고 알린다(명세 §6.1).
+            if (progress.signalStale(Instant.now())) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "신호가 오지 않고 있어요",
+                        color = RuleUpPalette.StatusWarn,
+                        style = RuleUpTheme.typography.captionBold,
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = "인증 권한을 확인해 주세요",
+                        color = RuleUpTheme.colors.textMuted,
+                        style = RuleUpTheme.typography.caption,
+                    )
+                }
+            }
         }
     }
 }

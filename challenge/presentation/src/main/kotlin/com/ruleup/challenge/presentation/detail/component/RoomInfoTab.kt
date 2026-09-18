@@ -36,6 +36,7 @@ import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 
@@ -58,6 +59,7 @@ internal fun RoomInfoTab(
     onSubmitAppeal: ((reason: String) -> Unit)? = null,
     // 수동 방일 때만 넘어온다 — 자동 방에 보조 수동 버튼을 두지 않는 것이 확정 규칙이다.
     onOpenManualCheck: (() -> Unit)? = null,
+    onOpenPermissionRepair: (() -> Unit)? = null,
     isSubmittingAppeal: Boolean = false,
     appealImageUrl: String? = null,
     isUploadingAppealImage: Boolean = false,
@@ -81,6 +83,8 @@ internal fun RoomInfoTab(
             roomStatus = room.myTodayStatus,
             today = today,
             onOpenManualCheck = onOpenManualCheck,
+            onRegisterAnchor = onRegisterAnchor,
+            onOpenPermissionRepair = onOpenPermissionRepair,
             // 이의는 서버가 낼 수 있다고 한 건(appeal.eligible)에만, 대상 인증 건 ID 를 알 때만 낸다.
             onAppealClick =
                 { appealOpen = true }
@@ -137,6 +141,8 @@ private fun TodayVerificationCard(
     today: TodayResult?,
     onAppealClick: (() -> Unit)?,
     onOpenManualCheck: (() -> Unit)? = null,
+    onRegisterAnchor: (() -> Unit)? = null,
+    onOpenPermissionRepair: (() -> Unit)? = null,
 ) {
     val status = today?.status ?: roomStatus?.toResultStatus() ?: return
     val colors = RuleUpTheme.colors
@@ -218,6 +224,17 @@ private fun TodayVerificationCard(
             )
         }
 
+        // 사유를 말했으면 그걸 푸는 곳으로 보낸다. 지금 할 수 있는 조치가 없는 사유(걸음 부족 등)에는
+        // 버튼을 두지 않는다 — 눌러도 아무 일이 없으면 안내가 아니라 고장으로 읽힌다.
+        today?.failureReason?.fixAction(onRegisterAnchor, onOpenPermissionRepair, onOpenManualCheck)?.let { fix ->
+            Text(
+                text = fix.label,
+                color = colors.brand,
+                style = RuleUpTheme.typography.smallBold,
+                modifier = Modifier.singleClickable(onClick = fix.onClick),
+            )
+        }
+
         appealAction?.let { action ->
             RuleUpPrimaryButton(
                 text = today?.appealButtonText() ?: "이의 제기",
@@ -254,6 +271,34 @@ private fun TodayVerificationCard(
         }
     }
 }
+
+/** 실패 사유를 풀 수 있는 화면과 그리로 가는 문구. */
+internal class FixAction(
+    val label: String,
+    val onClick: () -> Unit,
+)
+
+/**
+ * 사유별 조치 경로. 없는 사유가 훨씬 많다 — 걸음·수면처럼 이미 지난 측정은 화면으로 고칠 수 없고,
+ * 그런 데 버튼을 두면 사용자가 눌러보고 아무 일도 일어나지 않는다. 그건 이의 제기의 몫이다.
+ */
+internal fun FailureReason.fixAction(
+    onRegisterAnchor: (() -> Unit)?,
+    onOpenPermissionRepair: (() -> Unit)?,
+    onOpenManualCheck: (() -> Unit)?,
+): FixAction? =
+    when (this) {
+        FailureReason.GEOFENCE_NOT_CONFIGURED ->
+            onRegisterAnchor?.let { FixAction("인증 장소 등록하기", it) }
+
+        FailureReason.PERMISSION_MISSING ->
+            onOpenPermissionRepair?.let { FixAction("권한 다시 연결하기", it) }
+
+        FailureReason.MANUAL_NOT_SUBMITTED ->
+            onOpenManualCheck?.let { FixAction("오늘 체크하기", it) }
+
+        else -> null
+    }
 
 /**
  * 상태 아래에 붙는 안내 문구 (프론트엔드 테크스펙 4-8).

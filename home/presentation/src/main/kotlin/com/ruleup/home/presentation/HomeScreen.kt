@@ -43,6 +43,7 @@ import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.time.ServiceDate
 import com.ruleup.home.presentation.viewmodel.HomeFilter
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
@@ -237,7 +238,7 @@ private fun HomeHeader(
     hasUnread: Boolean,
     onOpenNotifications: () -> Unit,
 ) {
-    val today = remember { LocalDate.now() }
+    val today = remember { ServiceDate.today() }
     Row(
         modifier =
             Modifier
@@ -291,7 +292,7 @@ private fun LocalDate.headerLabel(): String {
 
 @Composable
 private fun WeekStreakCard() {
-    val today = remember { LocalDate.now() }
+    val today = remember { ServiceDate.today() }
     val monday = remember(today) { today.minusDays((today.dayOfWeek.value - 1).toLong()) }
     val labels = listOf("월", "화", "수", "목", "금", "토", "일")
 
