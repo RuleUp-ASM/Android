@@ -13,6 +13,12 @@ enum class AccountStatus(
 
     /** 열람 전용. 로그인은 되지만 프로필 편집 등 일부 기능이 막힌다. */
     LOCKED("LOCKED"),
+
+    /**
+     * 로그인 정지. 잠금 토큰만 발급돼 **제재 이력 열람과 CS 문의 외의 API 가 막힌다**
+     * (제재 정책 §5.3). 화면은 잠금 화면으로 고정 진입한다.
+     */
+    SUSPENDED("SUSPENDED"),
     ;
 
     companion object {

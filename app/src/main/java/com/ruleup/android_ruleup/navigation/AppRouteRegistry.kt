@@ -49,7 +49,9 @@ import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
 import com.ruleup.onboarding.presentation.walkthrough.WalkthroughScreen
+import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.profile.domain.navigation.FriendInvitePage
+import com.ruleup.profile.domain.navigation.MemberProfilePage
 import com.ruleup.profile.domain.navigation.MyAgreementsPage
 import com.ruleup.profile.domain.navigation.MyAppealsPage
 import com.ruleup.profile.domain.navigation.MyCalendarPage
@@ -67,6 +69,8 @@ import com.ruleup.profile.presentation.calendar.MyCalendarScreen
 import com.ruleup.profile.presentation.edit.ProfileEditScreen
 import com.ruleup.profile.presentation.home.MyHomeScreen
 import com.ruleup.profile.presentation.invite.FriendInviteScreen
+import com.ruleup.profile.presentation.locked.AccountLockedScreen
+import com.ruleup.profile.presentation.member.MemberProfileScreen
 import com.ruleup.profile.presentation.sanctions.SanctionsScreen
 import com.ruleup.profile.presentation.settings.SettingsScreen
 import com.ruleup.profile.presentation.stats.MyStatsScreen
@@ -74,7 +78,9 @@ import com.ruleup.profile.presentation.tier.MyTierHistoryScreen
 import com.ruleup.profile.presentation.tier.MyTierScreen
 import com.ruleup.profile.presentation.watching.WatchingScreen
 import com.ruleup.report.domain.navigation.BlockListPage
+import com.ruleup.report.domain.navigation.ReportPage
 import com.ruleup.report.presentation.blocklist.BlockListScreen
+import com.ruleup.report.presentation.report.ReportScreen
 import com.ruleup.support.domain.entity.InquiryCategory
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
 import com.ruleup.support.domain.navigation.InquiryComposePage
@@ -158,6 +164,20 @@ val appRoutes: List<AppRoute> =
                 )
             },
             render = { MyHomeScreen() },
+        ),
+        AppRoute(
+            path = MemberProfilePage.PATH,
+            render = { MemberProfileScreen() },
+        ),
+        AppRoute(
+            path = ReportPage.PATH,
+            render = { ReportScreen() },
+        ),
+        AppRoute(
+            path = AccountLockedPage.PATH,
+            // 루트다. 뒤로가기로 빠져나갈 수 있으면 게이트가 아니다(제재 정책 §5.3).
+            isRoot = true,
+            render = { AccountLockedScreen() },
         ),
         AppRoute(
             path = MyTierPage.PATH,

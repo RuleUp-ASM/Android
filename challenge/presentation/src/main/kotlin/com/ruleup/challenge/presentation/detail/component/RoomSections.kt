@@ -64,6 +64,7 @@ internal fun RoomMemberSection(
     onInviteMember: () -> Unit,
     onLeave: () -> Unit,
     onReportMember: (String) -> Unit = {},
+    onOpenProfile: (String) -> Unit = {},
 ) {
     RuleUpCard {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -81,6 +82,8 @@ internal fun RoomMemberSection(
                 member = member,
                 // 나 자신은 신고할 수 없다 — 내 userId 를 모르면 서버가 막도록 열어 둔다.
                 onReport = { onReportMember(member.userId) }.takeIf { member.userId != myUserId },
+                // 내 프로필은 마이페이지가 원본이라 여기서 열지 않는다.
+                onOpenProfile = { onOpenProfile(member.userId) }.takeIf { member.userId != myUserId },
             )
         }
 
@@ -109,9 +112,13 @@ internal fun RoomMemberSection(
 private fun MemberRow(
     member: ChallengeMember,
     onReport: (() -> Unit)? = null,
+    onOpenProfile: (() -> Unit)? = null,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .let { base -> onOpenProfile?.let { base.singleClickable(onClick = it) } ?: base },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

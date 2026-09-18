@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.component.RuleUpCard
+import com.ruleup.designsystem.component.RuleUpSuspendedSheet
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
@@ -108,6 +109,17 @@ internal fun ProfileEditContent(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
+        // 저장 버튼을 숨기지 않고, 눌렀을 때 정지 사실을 말한다(Figma 1465:141).
+        state.saveBlock?.let { block ->
+            RuleUpSuspendedSheet(
+                title = "지금은 작성·수정할 수 없어요",
+                description = "운영 정책 위반으로 닉네임·프로필·챌린지·방 공지 작성이 정지됐어요.",
+                until = block.until,
+                onConfirm = { onIntent(ProfileEditIntent.DismissSaveBlock) },
+                onOpenHistory = { onIntent(ProfileEditIntent.OpenSanctionHistory) },
+                onDismiss = { onIntent(ProfileEditIntent.DismissSaveBlock) },
+            )
+        }
         EditTopBar(
             isSaving = state.isSaving,
             onBack = { onIntent(ProfileEditIntent.Back) },

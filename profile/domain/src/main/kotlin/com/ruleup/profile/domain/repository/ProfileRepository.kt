@@ -2,6 +2,7 @@ package com.ruleup.profile.domain.repository
 
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.MemberProfile
 import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
@@ -37,4 +38,12 @@ interface ProfileRepository {
 
     /** 프로필 사진 제거(명세 PATCH /users/me/profile removeProfileImage). */
     suspend fun deleteProfileImage()
+
+    /**
+     * 타인 프로필 조회 (명세 GET /users/{userId}/profile).
+     *
+     * 내 프로필([getMyProfile])과 타입을 나눈 이유는 공개 범위가 다르기 때문이다 — 같은 타입을
+     * 쓰면 화면이 없는 값을 기대하게 되고, 비어 있는 점수·통계를 0 으로 그리게 된다.
+     */
+    suspend fun getMemberProfile(userId: String): MemberProfile
 }

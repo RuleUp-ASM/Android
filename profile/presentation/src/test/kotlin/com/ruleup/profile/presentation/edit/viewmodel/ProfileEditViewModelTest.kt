@@ -1,10 +1,13 @@
 package com.ruleup.profile.presentation.edit.viewmodel
 
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.NicknameCheckReason
 import com.ruleup.profile.domain.entity.Profile
+import com.ruleup.profile.domain.entity.SanctionHistory
+import com.ruleup.profile.presentation.fake.FakeAccountRepository
 import com.ruleup.profile.presentation.fake.FakeProfileRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -206,5 +209,18 @@ class ProfileEditViewModelTest {
     private fun viewModel(
         repo: FakeProfileRepository = repo(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-    ) = ProfileEditViewModel(profileRepository = repo, navigationHelper = nav)
+    ) = ProfileEditViewModel(
+        profileRepository = repo,
+        // 저장 전에 제재를 확인한다 — 깨끗한 계정이 기본이고, 정지 경로는 별도 테스트가 본다.
+        accountRepository = FakeAccountRepository(sanctions = { cleanSanctions }),
+        navigationHelper = nav,
+    )
+
+    private val cleanSanctions =
+        SanctionHistory(
+            accountStatus = AccountStatus.ACTIVE,
+            activeSanction = null,
+            admin = emptyList(),
+            auto = emptyList(),
+        )
 }

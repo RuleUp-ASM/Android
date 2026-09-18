@@ -176,6 +176,8 @@ class FakeProfileRepository : ProfileRepository {
 
     override suspend fun checkNickname(nickname: String) = throw NotImplementedError()
 
+    override suspend fun getMemberProfile(userId: String) = throw NotImplementedError()
+
     override suspend fun getCategories() = throw NotImplementedError()
 
     override suspend fun getMyProfile(): MyProfile {

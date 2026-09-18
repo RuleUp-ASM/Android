@@ -3,6 +3,7 @@ package com.ruleup.profile.presentation.edit.viewmodel
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.profile.domain.entity.Profile
+import com.ruleup.profile.presentation.common.SuspendedBlock
 import com.ruleup.ui.mvi.MviEffect
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -30,6 +31,11 @@ sealed interface ProfileEditIntent : MviIntent {
     /** 저장 — 닉네임 변경 시 선검사(4.6) 후 변경 필드만 PATCH. */
     data object Save : ProfileEditIntent
 
+    data object DismissSaveBlock : ProfileEditIntent
+
+    /** 제재 이력으로 간다 — 사유와 해제일의 원본은 그 화면이다. */
+    data object OpenSanctionHistory : ProfileEditIntent
+
     data object Back : ProfileEditIntent
 }
 
@@ -53,6 +59,8 @@ data class ProfileEditState(
     // 이미지 업로드/제거 진행 중
     val isImageBusy: Boolean,
     val errorMessage: String?,
+    // 저장 진입점은 숨기지 않는다 — 눌렀을 때 왜 막혔는지 시트로 말한다(제재 정책 §5.1).
+    val saveBlock: SuspendedBlock?,
 ) : UiState {
     val nicknameLocked: Boolean get() = nicknameLockedDays > 0
 
@@ -68,12 +76,17 @@ data class ProfileEditState(
                 isSaving = false,
                 isImageBusy = false,
                 errorMessage = null,
+                saveBlock = null,
             )
     }
 }
 
 sealed interface ProfileEditReducerEvent : ReducerEvent {
     data object Loading : ProfileEditReducerEvent
+
+    data class SaveBlocked(
+        val block: SuspendedBlock?,
+    ) : ProfileEditReducerEvent
 
     data class Loaded(
         val profile: Profile,

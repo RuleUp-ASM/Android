@@ -31,6 +31,7 @@ import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.logging.domain.BizLogger
 import com.ruleup.notification.domain.repository.NotificationRepository
+import com.ruleup.profile.domain.navigation.MemberProfilePage
 import com.ruleup.report.domain.entity.ReportContext
 import com.ruleup.report.domain.entity.ReportException
 import com.ruleup.report.domain.entity.ReportFailure
@@ -46,6 +47,7 @@ import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.time.YearMonth
 import javax.inject.Inject
 
@@ -89,6 +91,8 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.CloneChallenge -> clone()
 
                 ChallengeDetailIntent.OpenReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetOpened)
+                is ChallengeDetailIntent.OpenMemberProfile ->
+                    navigationHelper.navigateTo(MemberProfilePage(intent.userId))
                 is ChallengeDetailIntent.OpenUserReport -> dispatch(ChallengeDetailReducerEvent.UserReportSheetOpened(intent.userId))
                 is ChallengeDetailIntent.SelectReportReason ->
                     dispatch(ChallengeDetailReducerEvent.ReportReasonSelected(intent.reason))
@@ -100,6 +104,11 @@ class ChallengeDetailViewModel
                         navigationHelper.navigateByRoute(ChallengeSettingsPage(it).toRoute())
                     }
                 ChallengeDetailIntent.DismissJoinBlock -> dispatch(ChallengeDetailReducerEvent.JoinBlockDismissed)
+                ChallengeDetailIntent.RetryJoin -> {
+                    dispatch(ChallengeDetailReducerEvent.JoinRetryable(false))
+                    join()
+                }
+                ChallengeDetailIntent.DismissJoinRetry -> dispatch(ChallengeDetailReducerEvent.JoinRetryable(false))
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
                 ChallengeDetailIntent.InviteMember -> inviteMember()
@@ -165,6 +174,8 @@ class ChallengeDetailViewModel
 
                 is ChallengeDetailReducerEvent.JoinBlocked ->
                     state.copy(isJoining = false, joinBlock = event.block)
+
+                is ChallengeDetailReducerEvent.JoinRetryable -> state.copy(joinRetryable = event.visible)
 
                 ChallengeDetailReducerEvent.JoinBlockDismissed -> state.copy(joinBlock = null)
 
@@ -358,6 +369,12 @@ class ChallengeDetailViewModel
                                 dispatch(ChallengeDetailReducerEvent.Joining(false))
                                 emitEffect(ChallengeDetailEffect.ShowMessage(error.message.orEmpty()))
                                 navigationHelper.navigateToBack()
+                            }
+
+                            // 연결 문제는 다시 눌러 보면 되는 실패다 — 재시도를 낀 스낵바로 남긴다.
+                            is IOException -> {
+                                dispatch(ChallengeDetailReducerEvent.Joining(false))
+                                dispatch(ChallengeDetailReducerEvent.JoinRetryable(true))
                             }
 
                             else -> {

@@ -57,6 +57,20 @@ object AppRoutes {
     const val MY_AGREEMENTS = "my/agreements" // 약관·개인정보 동의 관리
     const val MY_SANCTIONS = "my/sanctions" // 제재 통지·이력 (잠금 상태에서도 열려야 한다)
 
+    /**
+     * 타인 프로필 (방 멤버·랭킹 행 → 프로필). 공개 범위가 좁아 내 마이 홈과 다른 화면이다.
+     */
+    const val MEMBER_PROFILE = "profile/member"
+
+    /**
+     * 잠금 화면. 로그인 정지·영구 정지가 걸리면 여기로 고정 진입한다(제재 정책 §5.3).
+     * 여기서 열 수 있는 건 제재 이력과 CS 문의뿐이다.
+     */
+    const val ACCOUNT_LOCKED = "account/locked"
+
+    // report
+    const val REPORT = "report" // 진입점 (타인 프로필·방 상세 → 신고하기)
+
     // notification
     const val NOTIFICATIONS = "notifications" // 진입점 (홈 벨·마이 → 알림 센터)
     const val NOTIFICATION_SETTINGS = "notifications/settings" // 설정 허브 → 알림 설정
