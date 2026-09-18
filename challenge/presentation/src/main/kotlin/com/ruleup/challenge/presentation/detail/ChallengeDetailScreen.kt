@@ -564,6 +564,7 @@ private fun RoomDetailTabs(
                         { onIntent(ChallengeDetailIntent.RegisterAnchor) }
                             .takeIf { state.setup?.requiresAnchors == true },
                     onSubmitAppeal = { reason -> onIntent(ChallengeDetailIntent.SubmitAppeal(reason)) },
+                    onOpenPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
                     isSubmittingAppeal = state.isSubmittingAppeal,
                     appealImageUrl = state.appealImageUrl,
                     isUploadingAppealImage = state.isUploadingAppealImage,

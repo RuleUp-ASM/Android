@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail.component
 
+import com.ruleup.domain.time.ServiceDate
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
@@ -22,7 +23,7 @@ private fun parseDateOrNull(isoDate: String): LocalDate? =
 /** 피드 날짜 구분 헤더 — "오늘" / "어제" / "7월 25일". 파싱 불가면 날짜 문자열 그대로. */
 internal fun feedDateHeader(
     iso: String,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = ServiceDate.today(),
 ): String {
     val datePart = isoDatePart(iso)
     val date = parseDateOrNull(datePart) ?: return datePart
@@ -58,7 +59,7 @@ internal fun failDateLabel(failDate: String?): String {
  */
 internal fun rankingUpdatedLabel(
     updatedAt: String?,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = ServiceDate.today(),
 ): String {
     val datePart = updatedAt?.let(::isoDatePart) ?: return "매일 1회 갱신"
     val date = parseDateOrNull(datePart) ?: return "매일 1회 갱신"
@@ -96,7 +97,7 @@ internal fun periodLabel(
  */
 internal fun appealDeadlineLabel(
     eligibleUntil: String,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = ServiceDate.today(),
 ): String? {
     val boundary = parseDateOrNull(isoDatePart(eligibleUntil)) ?: return null
     return when (val lastDay = boundary.minusDays(1)) {
