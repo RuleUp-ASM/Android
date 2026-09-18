@@ -16,7 +16,9 @@ class JoinBlockReasonTest {
                 "FREE_LIMIT" to JoinBlockReason.FREE_LIMIT,
                 "FULL" to JoinBlockReason.FULL,
                 "TIER_GATE" to JoinBlockReason.TIER_GATE,
-                "BANNED" to JoinBlockReason.BANNED,
+                // 서버 값은 PERMANENT_BAN 이다. 앱 상수 이름(BANNED)과 달라 값을 직접 고정해 둔다 —
+                // 어긋나면 영구 차단이 일반 안내로 떨어져 "잠시 후 다시" 로 보인다.
+                "PERMANENT_BAN" to JoinBlockReason.BANNED,
                 "ALREADY_JOINED" to JoinBlockReason.ALREADY_JOINED,
                 "CHALLENGE_COMPLETED" to JoinBlockReason.CHALLENGE_COMPLETED,
             )

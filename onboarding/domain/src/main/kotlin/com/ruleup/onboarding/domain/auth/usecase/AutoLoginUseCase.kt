@@ -4,6 +4,7 @@ import com.ruleup.logging.domain.BizLogger
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
 import com.ruleup.onboarding.domain.logging.OnboardingEvents
 import com.ruleup.onboarding.domain.logging.SessionExpiredTrigger
+import java.io.IOException
 import javax.inject.Inject
 
 /** 자동 로그인. 저장된 refreshToken 으로 앱 토큰을 재발급(명세 4.4)해 세션을 복구한다. */
@@ -29,6 +30,11 @@ class AutoLoginUseCase
                         val latest = tokenRepository.getRefreshToken()
                         if (latest != null && latest != refreshToken) {
                             true
+                        } else if (it is IOException) {
+                            // 전송 실패는 세션이 끊긴 게 아니다. 여기서 지우면 타임아웃 한 번에 아직 며칠
+                            // 남은 refreshToken 이 버려지고 소셜 로그인부터 다시 해야 한다. 토큰을 남겨
+                            // 다음 콜드스타트에 다시 시도한다.
+                            false
                         } else {
                             // 세션이 실제로 끊긴 지점. 다른 기기 로그인 때문인지 단순 만료인지는
                             // 서버가 둘 다 401 SESSION_EXPIRED 로 내려 구분할 수 없다.

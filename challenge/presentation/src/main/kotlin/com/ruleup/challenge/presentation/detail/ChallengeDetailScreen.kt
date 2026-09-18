@@ -1092,8 +1092,9 @@ private fun JoinBlockedSheet(
             JoinBlockReason.CHALLENGE_COMPLETED ->
                 "이미 끝난 챌린지예요" to "비슷한 챌린지를 찾아볼까요?"
 
+            // 모르는 사유다. 재시도를 권하지 않는다 — 시간이 지나도 풀리지 않는 사유가 섞여 있다.
             else ->
-                "지금은 참여할 수 없어요" to "잠시 후 다시 시도해 주세요"
+                "지금은 참여할 수 없어요" to "다른 챌린지를 둘러보세요"
         }
     val actionLabel =
         when (block.reason) {

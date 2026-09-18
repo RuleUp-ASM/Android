@@ -261,7 +261,7 @@ private fun TodayVerificationCard(
  * 실패는 사유를 먼저 말한다 — 자동 인증은 신호가 비는 것만으로도 실패하므로, 사유 없이 "실패"만
  * 남으면 사용자는 자기가 뭘 잘못했는지 알 수 없다.
  */
-private fun todayNote(
+internal fun todayNote(
     status: TodayResultStatus,
     today: TodayResult?,
 ): String? =
@@ -278,9 +278,11 @@ private fun todayNote(
         TodayResultStatus.FAILED,
         ->
             buildList {
-                today?.pendingReason?.let { add(it.pendingText()) }
-                today?.failureReason?.let { add(it.failureText()) }
-                today?.evidenceSummary?.let { add(it) }
+                // 사유는 한 줄만 말한다. 판정 불가와 실패 사유를 같이 붙이면 같은 사실을 두 번 읽게 되고,
+                // evidenceSummary 는 서버가 「… (INSUFFICIENT_STEPS)」처럼 원문 코드를 섞어 보내 enum
+                // 이름이 그대로 노출된다. VerificationResultModal 과 같은 규칙으로 맞춘다.
+                val reason = today?.failureReason?.failureText() ?: today?.pendingReason?.pendingText()
+                reason?.let { add(it) }
                 // 끊긴 연속 기록은 사실만 말한다(재촉하지 않는다).
                 today?.streak?.takeIf { it.before > 0 && it.after == 0 }?.let { add("연속 ${it.before}일이 끊겼어요") }
             }.takeIf { it.isNotEmpty() }?.joinToString(" · ")

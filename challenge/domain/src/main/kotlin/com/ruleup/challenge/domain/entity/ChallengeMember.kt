@@ -89,8 +89,10 @@ enum class JoinBlockReason(
     // 표시 티어가 minTier 미만
     TIER_GATE("TIER_GATE"),
 
-    // 해당 챌린지 영구 차단 — 사유는 설명하지 않는다
-    BANNED("BANNED"),
+    // 해당 챌린지 영구 차단 — 사유는 설명하지 않는다.
+    // 서버 값은 `PERMANENT_BAN` 이다(명세 blockReason enum). `BANNED` 로 두면 fromValue 가 null 을
+    // 내고 영구 차단이 "잠시 후 다시" 로 보여, 풀리지 않는 차단에 계속 재시도하게 된다.
+    BANNED("PERMANENT_BAN"),
 
     ALREADY_JOINED("ALREADY_JOINED"),
 
