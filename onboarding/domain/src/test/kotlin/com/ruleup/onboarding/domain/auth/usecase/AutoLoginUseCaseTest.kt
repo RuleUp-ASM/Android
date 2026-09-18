@@ -6,6 +6,7 @@ import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import kotlinx.coroutines.runBlocking
+import java.net.SocketTimeoutException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -56,6 +57,20 @@ class AutoLoginUseCaseTest {
             AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
             assertEquals("u-old", tokens.savedUserId)
+        }
+
+    @Test
+    fun `연결이 끊겨 재발급하지 못하면 토큰을 남겨 다음 실행에 다시 시도한다`() =
+        runBlocking {
+            // 전송 실패는 세션이 끝난 게 아니다. 여기서 지우면 지하철에서 앱을 한 번 연 것만으로
+            // 며칠 남은 refreshToken 이 사라지고 소셜 로그인부터 다시 해야 한다.
+            val auth = FakeAuthRepository().apply { refreshError = SocketTimeoutException("timeout") }
+            val tokens = FakeTokenRepository(refreshToken = "r1")
+
+            val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
+
+            assertFalse(result)
+            assertFalse(tokens.cleared)
         }
 
     @Test

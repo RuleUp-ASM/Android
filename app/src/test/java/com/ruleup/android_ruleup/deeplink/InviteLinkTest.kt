@@ -117,6 +117,12 @@ class RuleUpSchemeResolverTest {
     }
 
     @Test
+    fun `이의 결과 알림은 이의 내역으로 간다`() {
+        // 서버는 이 알림에 `ruleup://me/appeals` 를 싣는다. host 를 mypage 로만 받으면 탭해도 제자리다.
+        assertEquals(AppRoutes.MY_APPEALS, resolver.resolve("ruleup://me/appeals")?.path)
+    }
+
+    @Test
     fun `부정행위 검출 알림은 제재 이력으로 간다`() {
         // 검출은 자동 제재(CHALLENGE_KICK)로 제재 이력에 남는다. 전용 화면은 아직 없다.
         assertEquals(AppRoutes.MY_SANCTIONS, resolver.resolve("ruleup://mypage/cheat-history")?.path)

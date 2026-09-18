@@ -60,7 +60,8 @@ class RuleUpSchemeResolver
 
                 "terms" -> NavRoute(AppRoutes.MY_AGREEMENTS)
 
-                "mypage" -> myPageRoute(rest.firstOrNull() ?: uri.path?.trim('/'))
+                // 서버는 두 표기를 섞어 보낸다 — 이의 결과(APPEAL_RESULT)는 `ruleup://me/appeals` 다.
+                "mypage", "me" -> myPageRoute(rest.firstOrNull() ?: uri.path?.trim('/'))
 
                 // 모더레이션 거부(MODERATION_REJECTED) 알림이 쓰는 경로다.
                 "profile" -> NavRoute(AppRoutes.MY_PROFILE_EDIT).takeIf { rest.firstOrNull() == "edit" }
@@ -81,6 +82,7 @@ class RuleUpSchemeResolver
         private fun myPageRoute(section: String?): NavRoute? =
             when (section) {
                 "tier" -> NavRoute(AppRoutes.MY_TIER)
+                "appeals" -> NavRoute(AppRoutes.MY_APPEALS)
                 "account", "security" -> NavRoute(AppRoutes.MY_SETTINGS)
                 "nickname", "profile" -> NavRoute(AppRoutes.MY_PROFILE_EDIT)
 

@@ -17,6 +17,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -77,6 +78,11 @@ object NetworkModule {
         val builder =
             OkHttpClient
                 .Builder()
+                // 기본값(10초)에 기대면 값이 코드에 안 보여 조정할 수도, 근거를 댈 수도 없다.
+                // 읽기·쓰기는 이미지 업로드를 견디도록 넉넉히 둔다.
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .writeTimeout(30, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
                 // 4xx 업무 오류 본문을 Retrofit 이 읽게 한다(#417). authenticator 뒤에 오는 최종
                 // 응답만 보므로 401 재발급 경로는 건드리지 않는다.

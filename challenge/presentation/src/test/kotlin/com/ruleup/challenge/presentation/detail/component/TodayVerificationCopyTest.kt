@@ -1,6 +1,10 @@
 package com.ruleup.challenge.presentation.detail.component
 
 import com.ruleup.verification.domain.entity.FailureReason
+import com.ruleup.verification.domain.entity.PendingReason
+import com.ruleup.verification.domain.entity.TodayResult
+import com.ruleup.verification.domain.entity.TodayResultStatus
+import com.ruleup.verification.domain.entity.VerificationStreak
 import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,6 +35,74 @@ class TodayVerificationCopyTest {
         assertTrue(text.contains("직접 입력"))
         assertTrue(!text.contains("부정") && !text.contains("조작"))
     }
+
+    @Test
+    fun `실패 카드는 사유를 한 번만 말한다`() {
+        // 판정 불가와 실패 사유가 함께 와도 같은 사실을 두 번 읽히지 않는다 — 한 줄이 계속 길어지면
+        // 사용자는 끝까지 안 읽고, 정작 무엇을 해야 하는지는 뒤쪽에 밀린다.
+        val note =
+            todayNote(
+                status = TodayResultStatus.FAILED,
+                today =
+                    failedToday(
+                        failureReason = FailureReason.INSUFFICIENT_STEPS,
+                        pendingReason = PendingReason.NO_SIGNAL,
+                    ),
+            )
+
+        assertEquals(FailureReason.INSUFFICIENT_STEPS.failureText(), note)
+    }
+
+    @Test
+    fun `판정 근거에 섞인 서버 코드가 카드에 새지 않는다`() {
+        // evidenceSummary 는 서버가 「걸음 부족 (INSUFFICIENT_STEPS)」처럼 원문 enum 을 섞어 보낸다.
+        // 그대로 이어 붙이면 사용자 화면에 코드 이름이 뜬다.
+        val note =
+            todayNote(
+                status = TodayResultStatus.FAIL_EXPECTED,
+                today =
+                    failedToday(
+                        failureReason = FailureReason.INSUFFICIENT_STEPS,
+                        evidenceSummary = "걸음 3,120 / 목표 6,000 (INSUFFICIENT_STEPS)",
+                    ),
+            )
+
+        assertTrue(note != null && !note.contains("INSUFFICIENT_STEPS"))
+    }
+
+    @Test
+    fun `연속이 끊겼으면 사유 뒤에 그 사실만 덧붙인다`() {
+        val note =
+            todayNote(
+                status = TodayResultStatus.FAILED,
+                today =
+                    failedToday(
+                        failureReason = FailureReason.WOKE_UP_LATE,
+                        streak = VerificationStreak(before = 4, after = 0),
+                    ),
+            )
+
+        assertEquals("${FailureReason.WOKE_UP_LATE.failureText()} · 연속 4일이 끊겼어요", note)
+    }
+
+    private fun failedToday(
+        failureReason: FailureReason? = null,
+        pendingReason: PendingReason? = null,
+        evidenceSummary: String? = null,
+        streak: VerificationStreak? = null,
+    ) = TodayResult(
+        date = "2026-07-26",
+        verificationId = "v_1",
+        status = TodayResultStatus.FAILED,
+        window = null,
+        confirmedAt = null,
+        failureReason = failureReason,
+        streak = streak,
+        unacknowledged = null,
+        appeal = null,
+        pendingReason = pendingReason,
+        evidenceSummary = evidenceSummary,
+    )
 
     @Test
     fun `이의 마감은 경계 시각이 아니라 낼 수 있는 마지막 날로 안내한다`() {
