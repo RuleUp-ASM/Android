@@ -31,33 +31,36 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | 15 | 14 | 16 | 45 |
-| `:challenge:data` | 48 | – | – | – | – | 48 |
-| `:challenge:domain` | 33 | 4 | – | – | – | 37 |
-| `:challenge:presentation` | 37 | 75 | 64 | – | – | 176 |
+| `:app` | – | – | 15 | 25 | 16 | 56 |
+| `:challenge:data` | 50 | – | – | – | – | 50 |
+| `:challenge:domain` | 34 | 4 | – | – | – | 38 |
+| `:challenge:presentation` | 56 | 71 | 64 | – | – | 191 |
 | `:core:datastore` | – | 13 | – | – | – | 13 |
 | `:core:domain` | 19 | – | – | – | – | 19 |
 | `:core:network` | 5 | – | – | – | – | 5 |
-| `:home:presentation` | 8 | 7 | 6 | – | – | 21 |
+| `:home:presentation` | 9 | 7 | 6 | – | – | 22 |
+| `:logging:domain` | 10 | – | – | – | – | 10 |
 | `:notification:data` | 10 | – | – | – | – | 10 |
 | `:notification:domain` | 12 | – | – | – | – | 12 |
-| `:notification:presentation` | – | 18 | 13 | – | – | 31 |
+| `:notification:presentation` | 3 | 18 | 13 | – | – | 34 |
 | `:observability:data` | 20 | – | – | – | – | 20 |
-| `:observability:domain` | 11 | – | – | – | – | 11 |
-| `:onboarding:data` | 11 | – | – | – | – | 11 |
+| `:onboarding:data` | 14 | – | – | – | – | 14 |
 | `:onboarding:domain` | 8 | 30 | – | – | – | 38 |
-| `:onboarding:presentation` | 3 | 18 | 30 | – | – | 51 |
-| `:profile:data` | 33 | – | – | – | – | 33 |
-| `:profile:presentation` | 4 | 76 | 68 | – | – | 148 |
+| `:onboarding:presentation` | 7 | 26 | 39 | – | – | 72 |
+| `:profile:data` | 32 | – | – | – | – | 32 |
+| `:profile:presentation` | 7 | 73 | 76 | – | – | 156 |
 | `:report:data` | 12 | 8 | – | – | – | 20 |
 | `:report:domain` | 14 | – | – | – | – | 14 |
-| `:report:presentation` | 5 | 9 | 9 | – | – | 23 |
-| `:verification:data` | 55 | 15 | – | – | – | 70 |
-| `:verification:domain` | 22 | 14 | – | – | – | 36 |
-| `:verification:presentation` | 7 | 10 | 3 | – | – | 20 |
-| **합계** | **377** | **297** | **202** | **14** | **16** | **912** |
+| `:report:presentation` | 5 | 9 | 13 | – | – | 27 |
+| `:support:domain` | 12 | – | – | – | – | 12 |
+| `:support:presentation` | 3 | 23 | 10 | – | – | 36 |
+| `:tti:domain` | 13 | – | – | – | – | 13 |
+| `:verification:data` | 57 | 15 | – | – | – | 72 |
+| `:verification:domain` | 27 | 17 | – | – | – | 44 |
+| `:verification:presentation` | 7 | 17 | 8 | – | – | 32 |
+| **합계** | **446** | **331** | **244** | **25** | **16** | **1062** |
 
-테스트 파일 수: 케이스 67, 모듈 44, UI 36, 통합 5, 인수 2
+테스트 파일 수: 케이스 80, 모듈 48, UI 43, 통합 8, 인수 2
 
 앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
 

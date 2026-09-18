@@ -38,6 +38,8 @@ class FakeProfileRepository(
         return requireNotNull(categories) { "getCategories 를 준비하지 않았다" }()
     }
 
+    override suspend fun getMemberProfile(userId: String) = throw NotImplementedError()
+
     override suspend fun checkNickname(nickname: String): NicknameCheck {
         calls += "checkNickname"
         return requireNotNull(checkNickname) { "checkNickname 을 준비하지 않았다" }(nickname)

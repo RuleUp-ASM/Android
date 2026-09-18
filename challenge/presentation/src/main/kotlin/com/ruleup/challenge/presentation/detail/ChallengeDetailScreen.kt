@@ -32,10 +32,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,6 +102,7 @@ import com.ruleup.ui.permission.rememberHealthPermissionLauncher
 import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.TodayResultStatus
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -427,6 +430,19 @@ internal fun ChallengeDetailContent(
                 }
             }
         }
+
+        // 연결 실패는 화면에 남겨 둔다 — 토스트로 스쳐 지나가면 무엇이 실패했는지 모른 채 버튼만 다시 찾는다.
+        if (state.joinRetryable) {
+            JoinRetrySnackbar(
+                onRetry = { onIntent(ChallengeDetailIntent.RetryJoin) },
+                onDismiss = { onIntent(ChallengeDetailIntent.DismissJoinRetry) },
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 88.dp),
+            )
+        }
     }
 
     if (state.isReportSheetOpen) {
@@ -607,6 +623,7 @@ private fun RoomDetailTabs(
                                 onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
                                 onLeave = onConfirmLeave,
                                 onReportMember = { onIntent(ChallengeDetailIntent.OpenUserReport(it)) },
+                                onOpenProfile = { onIntent(ChallengeDetailIntent.OpenMemberProfile(it)) },
                             )
                         }
                     },
@@ -987,7 +1004,52 @@ private fun CloneButton(
 }
 
 /**
- * 가입 차단 안내 (명세 409 `JOIN_BLOCKED` reason 8종).
+ * 참여가 연결 문제로 실패했을 때의 스낵바(Figma 1464:149).
+ *
+ * 화면 안에 두는 이유는 [com.ruleup.domain.helper.MessageHelper] 에 동작 버튼이 달린 스낵바가 없어서다 —
+ * 한 화면 때문에 전역 계약을 넓히는 대신 여기서 그린다.
+ */
+@Composable
+private fun JoinRetrySnackbar(
+    onRetry: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // 5초 뒤 스스로 걷힌다. 남겨 두면 다음 화면 조작을 계속 가린다.
+    val dismiss by rememberUpdatedState(onDismiss)
+    LaunchedEffect(Unit) {
+        delay(SNACKBAR_DURATION_MS)
+        dismiss()
+    }
+
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .background(RuleUpTheme.colors.textPrimary, RuleUpTheme.shapes.medium)
+                .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "연결이 불안정해요",
+            color = RuleUpTheme.colors.surface,
+            style = RuleUpTheme.typography.small,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onRetry) {
+            Text(
+                text = "다시 시도",
+                color = RuleUpTheme.colors.surface,
+                style = RuleUpTheme.typography.smallBold,
+            )
+        }
+    }
+}
+
+private const val SNACKBAR_DURATION_MS = 5_000L
+
+/**
+ * 가입 차단 안내 (명세 409 `JOIN_BLOCKED` reason 8종 · Figma `1464:3`·`1464:76`).
  *
  * 사유마다 문구와 다음 행동이 다르다. **탈퇴·강퇴를 구분하는 문구는 쓰지 않고**(REJOIN_COOLDOWN),
  * 차단 사유도 설명하지 않는다(BANNED) — 둘 다 알려서 얻는 것보다 잃는 게 크다.
@@ -1020,8 +1082,9 @@ private fun JoinBlockedSheet(
                     )
 
             JoinBlockReason.TIER_GATE ->
-                "티어 조건을 만족하지 않아요" to
-                    "필요한 티어 ${requiredTier ?: "-"} · 내 티어 ${myTier ?: "-"}"
+                // 조건을 나열하는 대신 "무엇부터 되는지"를 말한다 — 사용자가 다음에 할 일을 안다.
+                (requiredTier?.let { "$it 티어부터 참여할 수 있어요" } ?: "티어 조건을 만족하지 않아요") to
+                    (myTier?.let { "지금은 $it 예요. 내 티어에서 남은 점수를 볼 수 있어요." } ?: "내 티어를 확인해 주세요.")
 
             JoinBlockReason.BANNED ->
                 "이 챌린지에는 참여할 수 없어요" to "자세한 내용은 안내드릴 수 없어요"

@@ -1,7 +1,9 @@
 package com.ruleup.onboarding.presentation.splash.viewmodel
 
+import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
 import com.ruleup.domain.navigation.PendingDeepLink
@@ -10,6 +12,7 @@ import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.onboarding.domain.account.AccountStatusProvider
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
@@ -155,6 +158,23 @@ class SplashViewModelTest {
             )
         }
 
+    @Test
+    fun `로그인 정지 계정은 홈이 아니라 잠금 화면으로 간다`() =
+        runTest {
+            // 잠금 토큰으로는 제재 이력과 CS 문의 말고 전부 401 이 난다 — 홈으로 보내면 빈 화면만 본다.
+            val nav = RecordingNavigationHelper()
+
+            viewModel(nav = nav, accountStatus = AccountStatus.SUSPENDED).onIntent(SplashIntent.Check)
+
+            assertEquals(
+                AppRoutes.ACCOUNT_LOCKED,
+                nav.pages
+                    .single()
+                    .toRoute()
+                    .path,
+            )
+        }
+
     private fun viewModel(
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         refreshToken: String? = "rt",
@@ -163,6 +183,7 @@ class SplashViewModelTest {
         tokens: FakeTokenRepository = FakeTokenRepository(refreshToken),
         // 대부분의 테스트는 진입 분기(홈·로그인·딥링크)를 보므로 소개를 이미 본 사용자로 둔다.
         walkthroughSeen: Boolean = true,
+        accountStatus: AccountStatus = AccountStatus.ACTIVE,
     ): SplashViewModel {
         val intro =
             FakeIntroRepository().apply {
@@ -184,6 +205,7 @@ class SplashViewModelTest {
                     tokens,
                     RecordingBizLogger(),
                 ),
+            accountStatusProvider = AccountStatusProvider { accountStatus },
             walkthroughRepository = FakeWalkthroughRepository(seen = walkthroughSeen),
             pendingDeepLink = pendingDeepLink,
             // 모르는 경로는 로그인을 요구한다 — 딥링크는 외부에서 들어오므로 안전한 쪽으로 실패한다.

@@ -49,6 +49,11 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** 가입 차단 안내 시트 닫기. */
     data object DismissJoinBlock : ChallengeDetailIntent
 
+    /** 연결 실패 스낵바의 "다시 시도". */
+    data object RetryJoin : ChallengeDetailIntent
+
+    data object DismissJoinRetry : ChallengeDetailIntent
+
     /** 가입 차단 시트의 CTA(참여 중인 방 목록·내 티어·탐색 등)로 이동. */
     data object FollowJoinBlockAction : ChallengeDetailIntent
 
@@ -132,6 +137,11 @@ sealed interface ChallengeDetailIntent : MviIntent {
 
     /** 이 챌린지를 신고하는 시트를 연다. 멤버든 아니든 열 수 있다. */
     data object OpenReport : ChallengeDetailIntent
+
+    /** 멤버 행 탭 — 타인 프로필로 간다. */
+    data class OpenMemberProfile(
+        val userId: String,
+    ) : ChallengeDetailIntent
 
     /** 방 멤버 행의 「신고」 — 사람의 행위라 사유 목록이 챌린지 신고와 다르다. */
     data class OpenUserReport(
@@ -254,6 +264,9 @@ data class ChallengeDetailState(
     val isJoining: Boolean = false,
     // 가입이 막힌 사유. null 이 아니면 사유별 안내 시트를 띄운다.
     val joinBlock: JoinBlock? = null,
+    // 연결 문제로 참여가 실패했다. 토스트가 아니라 재시도를 낀 스낵바로 띄운다 — 사용자가 다시
+    // 버튼을 찾아 누르지 않아도 되고, 무엇이 실패했는지 화면에 남는다(Figma 1464:149).
+    val joinRetryable: Boolean = false,
     // 복제 요청 중(버튼 스피너 + 중복 탭 차단).
     val isCloning: Boolean = false,
     // ---- 방 상세 3탭 (room 이 있을 때만 의미가 있다) ----
@@ -430,6 +443,10 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
     ) : ChallengeDetailReducerEvent
 
     data object JoinBlockDismissed : ChallengeDetailReducerEvent
+
+    data class JoinRetryable(
+        val visible: Boolean,
+    ) : ChallengeDetailReducerEvent
 
     /** 복제 요청 시작/종료. */
     data class Cloning(

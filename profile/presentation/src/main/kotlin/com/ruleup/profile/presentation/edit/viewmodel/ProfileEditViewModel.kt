@@ -3,11 +3,17 @@ package com.ruleup.profile.presentation.edit.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.category.InterestLimits
+import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.entity.user.NicknameValidation
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.navigation.AppRoutes
+import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.profile.domain.entity.NicknameCheckReason
+import com.ruleup.profile.domain.repository.AccountRepository
 import com.ruleup.profile.domain.repository.ProfileRepository
+import com.ruleup.profile.presentation.common.SuspendedBlock
+import com.ruleup.profile.presentation.common.sanctionUntilLabel
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -26,6 +32,7 @@ class ProfileEditViewModel
     @Inject
     constructor(
         private val profileRepository: ProfileRepository,
+        private val accountRepository: AccountRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ProfileEditIntent, ProfileEditState, ProfileEditReducerEvent, ProfileEditEffect>(
             ProfileEditState.initial,
@@ -45,6 +52,11 @@ class ProfileEditViewModel
                 ProfileEditIntent.RemoveImage -> removeImage()
                 ProfileEditIntent.Save -> save()
                 ProfileEditIntent.Back -> navigationHelper.navigateToBack()
+                ProfileEditIntent.DismissSaveBlock -> dispatch(ProfileEditReducerEvent.SaveBlocked(null))
+                ProfileEditIntent.OpenSanctionHistory -> {
+                    dispatch(ProfileEditReducerEvent.SaveBlocked(null))
+                    navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_SANCTIONS))
+                }
             }
         }
 
@@ -54,6 +66,8 @@ class ProfileEditViewModel
         ): ProfileEditState =
             when (event) {
                 ProfileEditReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
+
+                is ProfileEditReducerEvent.SaveBlocked -> state.copy(saveBlock = event.block)
 
                 is ProfileEditReducerEvent.Loaded ->
                     state.copy(
@@ -184,6 +198,17 @@ class ProfileEditViewModel
 
             viewModelScope
                 .launch {
+                    // 정지 상태면 PATCH 를 보내지 않는다 — 서버 거절 문구로는 왜 막혔는지 못 읽는다.
+                    // 조회가 실패하면 보낸다. 정지 여부를 모른다고 저장을 막으면 멀쩡한 사용자가 갇힌다.
+                    val history = runCatching { accountRepository.getSanctions() }.getOrNull()
+                    if (history?.accountStatus == AccountStatus.LOCKED) {
+                        dispatch(
+                            ProfileEditReducerEvent.SaveBlocked(
+                                SuspendedBlock(until = history.activeSanction?.endsAt?.let(::sanctionUntilLabel)),
+                            ),
+                        )
+                        return@launch
+                    }
                     dispatch(ProfileEditReducerEvent.Saving(true))
                     runCatching {
                         if (nicknameChanged) {

@@ -10,6 +10,7 @@ import com.ruleup.profile.data.dto.NicknameCheckRequest
 import com.ruleup.profile.data.dto.UpdateProfileRequest
 import com.ruleup.profile.data.dto.toDomain
 import com.ruleup.profile.domain.entity.CategoryCatalog
+import com.ruleup.profile.domain.entity.MemberProfile
 import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
@@ -36,6 +37,8 @@ class ProfileRepositoryImpl
         override suspend fun getCategories(): CategoryCatalog = api.getCategories().getOrThrow().toDomain()
 
         override suspend fun getProfile(): Profile = api.getProfile().getOrThrow().toDomain()
+
+        override suspend fun getMemberProfile(userId: String): MemberProfile = api.getMemberProfile(userId).getOrThrow().toDomain()
 
         override suspend fun updateProfile(
             nickname: String?,

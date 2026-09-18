@@ -1,12 +1,14 @@
 package com.ruleup.onboarding.presentation.splash.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.navigation.PendingDeepLinkEntry
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
+import com.ruleup.onboarding.domain.account.AccountStatusProvider
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.intro.repository.WalkthroughRepository
 import com.ruleup.onboarding.domain.intro.usecase.IntroGate
@@ -14,6 +16,7 @@ import com.ruleup.onboarding.domain.intro.usecase.LoadIntroUseCase
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.LoginPage
 import com.ruleup.onboarding.domain.navigation.WalkthroughPage
+import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,6 +43,7 @@ class SplashViewModel
     constructor(
         private val loadIntroUseCase: LoadIntroUseCase,
         private val autoLoginUseCase: AutoLoginUseCase,
+        private val accountStatusProvider: AccountStatusProvider,
         private val walkthroughRepository: WalkthroughRepository,
         private val pendingDeepLink: PendingDeepLink,
         private val routeAccessPolicy: RouteAccessPolicy,
@@ -89,6 +93,12 @@ class SplashViewModel
                     IntroGate.Pass -> {
                         val authenticated = autoLoginUseCase()
                         dispatch(SplashReducerEvent.CheckFinished)
+                        // 정지 계정은 어떤 화면도 열지 않는다 — 딥링크가 있어도 잠금이 먼저다.
+                        if (authenticated && accountStatusProvider.current() == AccountStatus.SUSPENDED) {
+                            observability.i(TAG) { "로그인 정지 — 잠금 화면으로 고정 진입" }
+                            navigationHelper.navigateTo(AccountLockedPage)
+                            return@launch
+                        }
                         navigate(authenticated)
                     }
                 }
