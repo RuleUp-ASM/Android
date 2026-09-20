@@ -23,6 +23,7 @@ import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.challenge.presentation.watcher.WatcherAcceptScreen
+import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.home.presentation.HomeScreen
 import com.ruleup.notification.domain.navigation.NotificationCenterPage
@@ -38,6 +39,7 @@ import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
 import com.ruleup.onboarding.domain.navigation.OnboardingPhotoPage
 import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
 import com.ruleup.onboarding.domain.navigation.SplashPage
+import com.ruleup.onboarding.domain.navigation.TermsDocumentPage
 import com.ruleup.onboarding.domain.navigation.WalkthroughPage
 import com.ruleup.onboarding.presentation.intro.screen.LoginScreen
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
@@ -48,6 +50,7 @@ import com.ruleup.onboarding.presentation.onboarding.OnboardingNicknameScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingPhotoScreen
 import com.ruleup.onboarding.presentation.onboarding.OnboardingTermsScreen
 import com.ruleup.onboarding.presentation.splash.SplashScreen
+import com.ruleup.onboarding.presentation.terms.TermsDocumentScreen
 import com.ruleup.onboarding.presentation.walkthrough.WalkthroughScreen
 import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.profile.domain.navigation.FriendInvitePage
@@ -110,6 +113,18 @@ val appRoutes: List<AppRoute> =
             path = SplashPage.PATH,
             isRoot = true,
             render = { SplashScreen() },
+        ),
+        AppRoute(
+            // 가입 화면에서 동의하기 전에 읽을 수 있어야 동의가 성립한다 — 그래서 로그인을 요구하지 않는다.
+            // 원문은 앱 에셋이라 서버를 부르지 않는다.
+            path = TermsDocumentPage.PATH,
+            isLoginRequired = false,
+            render = { args ->
+                // 모르는 키로 들어오면 아무것도 그리지 않는다 — 빈 화면이 낫지, 엉뚱한 약관을 펴면 안 된다.
+                AgreementType.entries
+                    .find { it.key == args[TermsDocumentPage.ARG_TYPE] }
+                    ?.let { TermsDocumentScreen(type = it) }
+            },
         ),
         AppRoute(
             path = WalkthroughPage.PATH,

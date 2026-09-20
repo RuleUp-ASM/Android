@@ -23,6 +23,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.onboarding.domain.logging.OnboardingStep
+import com.ruleup.onboarding.domain.navigation.TermsDocumentPage
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
@@ -30,6 +31,7 @@ import com.ruleup.onboarding.presentation.onboarding.component.RequirementBadge
 import com.ruleup.onboarding.presentation.onboarding.component.RowDivider
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
+import com.ruleup.onboarding.presentation.terms.assetName
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 /**
@@ -97,6 +99,10 @@ fun TermsContent(
                         Modifier.singleClickable(globalGuard = false) {
                             onIntent(OnboardingIntent.ToggleAgreement(type))
                         },
+                    // 원문이 번들된 약관에만 붙인다 — 열 것이 없는데 「보기」를 두면 눌러보고 아무 일이 없다.
+                    onOpenDocument =
+                        { nav.navigateTo(TermsDocumentPage(type)) }
+                            .takeIf { type.assetName() != null },
                 )
                 if (index != AgreementType.SIGNUP.lastIndex) RowDivider()
             }
@@ -119,6 +125,7 @@ private fun AgreementRow(
     modifier: Modifier = Modifier,
     required: Boolean? = null,
     emphasize: Boolean = false,
+    onOpenDocument: (() -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -137,6 +144,16 @@ private fun AgreementRow(
         )
         if (required != null) {
             RequirementBadge(required = required)
+        }
+        onOpenDocument?.let { open ->
+            Box(Modifier.weight(1f))
+            Text(
+                text = "보기",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.smallMedium,
+                // 체크와 겹치지 않게 별도 클릭 — 읽으려다 동의가 토글되면 안 된다.
+                modifier = Modifier.singleClickable(globalGuard = false, onClick = open),
+            )
         }
     }
 }
