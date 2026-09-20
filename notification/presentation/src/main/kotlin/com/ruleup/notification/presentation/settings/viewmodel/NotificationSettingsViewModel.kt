@@ -125,13 +125,17 @@ private fun NotificationGroup.update(enabled: Boolean): NotificationSettingsUpda
 internal fun consentMessage(
     agreed: Boolean,
     syncedAt: String?,
-    zone: ZoneId = ZoneId.systemDefault(),
+    // 처리 기준은 서버(KST)다. 기기 시간대로 옮기면 해외에서 하루 어긋난 날짜가 보인다.
+    zone: ZoneId = SERVICE_ZONE,
 ): String {
     val action = if (agreed) "마케팅 정보 수신에 동의했어요" else "마케팅 정보 수신을 철회했어요"
+    // 분 단위는 사용자가 대조할 방법이 없다 — 확인 가능한 정밀도(날짜)까지만 말한다.
     val at =
         syncedAt
             ?.let { runCatching { OffsetDateTime.parse(it).atZoneSameInstant(zone) }.getOrNull() }
-            ?.format(DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm"))
+            ?.format(DateTimeFormatter.ofPattern("M월 d일"))
             ?: return action
-    return "$action · $at 처리"
+    return "$action · $at 처리됐어요"
 }
+
+private val SERVICE_ZONE: ZoneId = ZoneId.of("Asia/Seoul")

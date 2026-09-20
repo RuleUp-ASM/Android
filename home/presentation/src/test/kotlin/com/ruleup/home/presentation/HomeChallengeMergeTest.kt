@@ -71,7 +71,7 @@ class HomeChallengeMergeTest {
 
     @Test
     fun `진행률에만 있는 끝난 챌린지는 진행 중 카드로 붙이지 않는다`() {
-        // 스냅샷은 완주한 방도 싣는다. 붙이면 끝난 방이 「진행 중 · 오늘 시작」으로 보인다.
+        // 스냅샷은 완주한 방도 싣는다. 붙이면 끝난 방이 진행 중 목록에 진행 중 문구로 보인다.
         val done = progress("done").copy(status = ChallengeStatus.COMPLETED.value)
 
         val merged = mergeHomeChallenges(emptyList(), snapshot(done, progress("ongoing")), emptyList())
@@ -91,7 +91,7 @@ class HomeChallengeMergeTest {
     fun `아직 하루도 성공하지 못했으면 며칠째라고 세지 않는다`() {
         val merged = mergeHomeChallenges(emptyList(), snapshot(progress("ch1", successDays = 0)), emptyList())
 
-        assertTrue(merged.single().subtitle.startsWith("오늘 시작"))
+        assertTrue(merged.single().subtitle.startsWith("진행중"))
     }
 
     @Test

@@ -55,6 +55,7 @@ import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
@@ -796,7 +797,9 @@ private fun DetailHero(detail: ChallengeDetail) {
             style = RuleUpTheme.typography.title,
         )
         Text(
-            text = "${detail.owner?.nickname ?: "방장 없음"} · ${detail.participantCount}명 참여 중",
+            // 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다). "방장 없음"으로 적으면 버려진 방처럼
+            // 보이지만 실제로는 그대로 운영되는 방이다.
+            text = "${detail.ownerLabel()} · ${detail.participantCount}명 참여 중",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.small,
         )
@@ -1048,6 +1051,9 @@ private fun JoinRetrySnackbar(
 }
 
 private const val SNACKBAR_DURATION_MS = 5_000L
+
+/** 방장 표기. 봇 방장은 이름이 없으므로 종류를 그대로 말한다. */
+private fun ChallengeDetail.ownerLabel(): String = owner?.nickname ?: if (ownerType == OwnerType.BOT) "봇 방장" else "방장 없음"
 
 /**
  * 가입 차단 안내 (명세 409 `JOIN_BLOCKED` reason 8종 · Figma `1464:3`·`1464:76`).
