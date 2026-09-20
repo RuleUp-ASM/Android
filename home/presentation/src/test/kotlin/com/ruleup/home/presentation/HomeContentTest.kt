@@ -95,7 +95,7 @@ class HomeContentTest {
     ) = HomeChallengeUi(
         challengeId = id,
         title = title,
-        subtitle = "오늘 시작 · 솔로",
+        subtitle = "진행중 · 솔로",
         progress = 0f,
         todayTarget = todayTarget,
         iconRes = android.R.drawable.ic_menu_help,

@@ -203,6 +203,14 @@ private fun ModeCapacityEditor(
                         )
                     }
                 }
+                // 흐린 칩을 눌러도 아무 일이 없으면 고장으로 읽힌다. 막힌 이유를 먼저 말한다.
+                cap?.let {
+                    Text(
+                        text = "내 티어(${it.label()})보다 높은 티어는 고를 수 없어요",
+                        color = RuleUpTheme.colors.textMuted,
+                        style = RuleUpTheme.typography.caption,
+                    )
+                }
             }
         }
     }

@@ -45,7 +45,7 @@ fun mergeHomeChallenges(
             ?.challenges
             .orEmpty()
             .filter { it.challengeId !in serverIds }
-            // 진행률 스냅샷은 끝난 방도 싣는다 — 거르지 않으면 완주한 방이 「진행 중 · 오늘 시작」으로 뜬다.
+            // 진행률 스냅샷은 끝난 방도 싣는다 — 거르지 않으면 완주한 방이 「진행 중 · 진행중」으로 뜬다.
             .filterNot { ChallengeStatus.fromValue(it.status) == ChallengeStatus.COMPLETED }
             .map { it.toHomeUi() }
 
@@ -58,7 +58,7 @@ fun mergeHomeChallenges(
 }
 
 private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi {
-    val dayPart = if (progress == null || progress.successDays <= 0) "오늘 시작" else "${progress.successDays}일째"
+    val dayPart = if (progress == null || progress.successDays <= 0) "진행중" else "${progress.successDays}일째"
     val groupPart = if (mode.isGroup) "함께" else "솔로"
     return HomeChallengeUi(
         challengeId = challengeId,
@@ -72,7 +72,7 @@ private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi 
 }
 
 private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
-    val dayPart = if (successDays <= 0) "오늘 시작" else "${successDays}일째"
+    val dayPart = if (successDays <= 0) "진행중" else "${successDays}일째"
     // 인증 모듈의 진행률 응답은 아직 구 필드명(participationType)을 문자열로 준다.
     val groupPart =
         when (participationType) {
@@ -95,7 +95,7 @@ private fun MyChallengeSummary.toHomeUi(): HomeChallengeUi =
     HomeChallengeUi(
         challengeId = challengeId,
         title = title,
-        subtitle = "오늘 시작 · ${if (mode.isGroup) "함께" else "솔로"}",
+        subtitle = "진행중 · ${if (mode.isGroup) "함께" else "솔로"}",
         progress = 0f,
         todayTarget = true,
         iconRes = categoryIconRes(category),
