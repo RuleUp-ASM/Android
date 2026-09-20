@@ -20,7 +20,7 @@ class AppealSheetTest {
     @Test
     fun `비공개 고지는 실익과 마감일을 함께 말한다`() {
         // "공개되지 않았다"만 있으면 지금 이의할 이유가 드러나지 않는다.
-        val notice = today(eligibleUntil = "2026-07-27T00:00:00+09:00").privacyNotice()
+        val notice = target(eligibleUntil = "2026-07-27T00:00:00+09:00").privacyNotice()
 
         assertTrue(notice.contains("아직 그룹에 공개되지 않았어요"))
         assertTrue(notice.contains("까지 이의하면 공개되지 않아요"))
@@ -28,31 +28,46 @@ class AppealSheetTest {
 
     @Test
     fun `마감 시각을 모르면 날짜를 지어내지 않는다`() {
-        val today = today(eligibleUntil = null)
+        val target = target(eligibleUntil = null)
 
-        assertNull(today.appealDeadlineText())
-        assertTrue(today.privacyNotice().contains("지금 이의하면"))
+        assertNull(target.appealDeadlineText())
+        assertTrue(target.privacyNotice().contains("지금 이의하면"))
     }
 
     @Test
     fun `마감 안내는 경계 시각이 아니라 낼 수 있는 마지막 날을 쓴다`() {
         // eligibleUntil 은 경계 시각이라 그대로 쓰면 하루 늦게 안내한다.
-        val text = today(eligibleUntil = "2026-07-27T00:00:00+09:00").appealDeadlineText()
+        val text = target(eligibleUntil = "2026-07-27T00:00:00+09:00").appealDeadlineText()
 
         assertTrue(text!!.endsWith("까지"))
         assertTrue(!text.contains("27"))
     }
 
-    private fun today(eligibleUntil: String?): TodayResult =
+    private fun target(eligibleUntil: String?): AppealTarget =
+        AppealTarget(
+            verificationId = "v_1",
+            date = "2026-07-26",
+            failureReason = null,
+            eligibleUntil = eligibleUntil,
+        )
+
+    @Test
+    fun `낼 대상이 없는 오늘 결과는 이의 대상이 되지 않는다`() {
+        // verificationId 가 없으면 보낼 곳이 없다 — 시트를 열어도 제출할 수 없다.
+        assertNull(todayResult(verificationId = null).toAppealTarget())
+        assertEquals("v_1", todayResult(verificationId = "v_1").toAppealTarget()?.verificationId)
+    }
+
+    private fun todayResult(verificationId: String?): TodayResult =
         TodayResult(
             date = "2026-07-26",
-            verificationId = "v_1",
+            verificationId = verificationId,
             status = TodayResultStatus.FAILED,
             window = null,
             confirmedAt = null,
             failureReason = null,
             streak = null,
             unacknowledged = null,
-            appeal = AppealChance(eligibleUntil = eligibleUntil, eligible = true),
+            appeal = AppealChance(eligibleUntil = "2026-07-27T00:00:00+09:00", eligible = true),
         )
 }

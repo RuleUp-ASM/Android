@@ -129,7 +129,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.RefreshPermissions -> refreshPermissions()
                 ChallengeDetailIntent.DismissAppeal -> dispatch(ChallengeDetailReducerEvent.AppealReset)
                 ChallengeDetailIntent.AcknowledgeResult -> acknowledgeResult()
-                is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.reason)
+                is ChallengeDetailIntent.SubmitAppeal -> submitAppeal(intent.verificationId, intent.reason)
                 ChallengeDetailIntent.LeaveChallenge -> leaveChallenge()
                 ChallengeDetailIntent.Back -> navigationHelper.navigateToBack()
             }
@@ -814,8 +814,10 @@ class ChallengeDetailViewModel
          * 오늘 실패 건 이의 제기(인증 정책 §5). **판정 단계가 없다** — 형식 요건만 맞으면 즉시 인용이라
          * "접수했어요"가 아니라 결과를 바로 알린다. 요건 미달·기한 경과는 서버가 접수 자체를 막는다.
          */
-        private fun submitAppeal(reason: String) {
-            val verificationId = currentState.todayResult?.verificationId ?: return
+        private fun submitAppeal(
+            verificationId: String,
+            reason: String,
+        ) {
             val challengeId = currentState.detail?.challengeId ?: currentState.challengeId
             if (currentState.isSubmittingAppeal) return
             viewModelScope.launch {

@@ -1,6 +1,7 @@
 package com.ruleup.profile.presentation.calendar.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.repository.MyPageRepository
@@ -35,6 +36,9 @@ class MyCalendarViewModel
                 is MyCalendarIntent.ChangeMonth -> changeMonth(intent.delta)
                 MyCalendarIntent.Retry -> changeMonth(0)
                 is MyCalendarIntent.SelectDate -> selectDate(intent.date)
+                is MyCalendarIntent.OpenAppeal ->
+                    navigationHelper.navigateTo(ChallengeDetailPage(intent.challengeId))
+
                 MyCalendarIntent.Back -> navigationHelper.navigateToBack()
             }
         }

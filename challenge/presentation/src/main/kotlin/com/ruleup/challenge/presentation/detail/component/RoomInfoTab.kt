@@ -56,7 +56,7 @@ internal fun RoomInfoTab(
     modifier: Modifier = Modifier,
     onRegisterApps: (() -> Unit)? = null,
     onRegisterAnchor: (() -> Unit)? = null,
-    onSubmitAppeal: ((reason: String) -> Unit)? = null,
+    onSubmitAppeal: ((verificationId: String, reason: String) -> Unit)? = null,
     // 수동 방일 때만 넘어온다 — 자동 방에 보조 수동 버튼을 두지 않는 것이 확정 규칙이다.
     onOpenManualCheck: (() -> Unit)? = null,
     onOpenPermissionRepair: (() -> Unit)? = null,
@@ -103,9 +103,11 @@ internal fun RoomInfoTab(
         extraSections()
     }
 
-    if (appealOpen && onSubmitAppeal != null && today != null) {
+    // 낼 대상(verificationId)이 없으면 시트를 열지 않는다 — 열어도 보낼 곳이 없다.
+    val appealTarget = today?.toAppealTarget()
+    if (appealOpen && onSubmitAppeal != null && appealTarget != null) {
         AppealSheet(
-            today = today,
+            target = appealTarget,
             submitting = isSubmittingAppeal,
             imageUrl = appealImageUrl,
             uploadingImage = isUploadingAppealImage,
@@ -113,7 +115,7 @@ internal fun RoomInfoTab(
             onPickImage = onPickAppealImage,
             onSubmit = { reason ->
                 appealOpen = false
-                onSubmitAppeal(reason)
+                onSubmitAppeal(appealTarget.verificationId, reason)
             },
             onDismiss = {
                 appealOpen = false

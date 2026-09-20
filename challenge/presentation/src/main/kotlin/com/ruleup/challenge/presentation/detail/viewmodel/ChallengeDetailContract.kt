@@ -129,9 +129,13 @@ sealed interface ChallengeDetailIntent : MviIntent {
     data object AcknowledgeResult : ChallengeDetailIntent
 
     /**
-     * (방 정보) 오늘 실패 건에 이의를 낸다. 사유 10자 이상이면 즉시 인용된다 — 판정 단계가 없다.
+     * 실패 건에 이의를 낸다. 사유 10자 이상이면 즉시 인용된다 — 판정 단계가 없다.
+     *
+     * 대상을 화면이 지정한다. 오늘 건뿐 아니라 **D+1 유예 중인 지난 건**도 캘린더에서 낼 수 있어야
+     * 하는데, 오늘 결과만 보면 어제 건은 낼 방법이 없다(APL-09).
      */
     data class SubmitAppeal(
+        val verificationId: String,
         val reason: String,
     ) : ChallengeDetailIntent
 

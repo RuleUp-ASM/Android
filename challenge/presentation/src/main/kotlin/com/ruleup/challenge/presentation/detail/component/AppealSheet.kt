@@ -26,7 +26,32 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.AppealPolicy
+import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.TodayResult
+
+/**
+ * 이의 대상 한 건. 시트가 실제로 쓰는 것만 담는다.
+ *
+ * 오늘 건은 [TodayResult] 에서, **D+1 유예 중인 어제 건은 캘린더 날짜에서** 만든다 — 어제 건에는
+ * 오늘 결과 객체가 없고 사유·기한도 안 올 수 있다. 없는 값은 그 줄을 빼고 그린다(지어내지 않는다).
+ */
+internal data class AppealTarget(
+    val verificationId: String,
+    val date: String,
+    val failureReason: FailureReason?,
+    val eligibleUntil: String?,
+)
+
+/** 오늘 결과를 이의 대상으로. [TodayResult.verificationId] 가 없으면 낼 대상이 없다. */
+internal fun TodayResult.toAppealTarget(): AppealTarget? =
+    verificationId?.let {
+        AppealTarget(
+            verificationId = it,
+            date = date,
+            failureReason = failureReason,
+            eligibleUntil = appeal?.eligibleUntil,
+        )
+    }
 
 /**
  * 이의 작성 (Figma `1134:768`).
@@ -40,9 +65,10 @@ import com.ruleup.verification.domain.entity.TodayResult
  * Figma 헤더 우측의 "2/3 남음"은 따르지 않는다 — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2).
  * 그 자리에는 명세가 지정한 **신청 마감 시각**을 둔다.
  */
+
 @Composable
 internal fun AppealSheet(
-    today: TodayResult,
+    target: AppealTarget,
     submitting: Boolean,
     imageUrl: String?,
     uploadingImage: Boolean,
@@ -74,14 +100,14 @@ internal fun AppealSheet(
                     style = RuleUpTheme.typography.section,
                 )
                 Box(Modifier.weight(1f))
-                today.appealDeadlineText()?.let {
+                target.appealDeadlineText()?.let {
                     Text(text = it, color = colors.textMuted, style = RuleUpTheme.typography.caption)
                 }
             }
 
             // 이의의 실익을 먼저 말한다 — 지금 내면 실패가 그룹에 공개되지 않는다.
             Text(
-                text = today.privacyNotice(),
+                text = target.privacyNotice(),
                 color = colors.brand,
                 style = RuleUpTheme.typography.caption,
                 modifier =
@@ -102,8 +128,8 @@ internal fun AppealSheet(
                         .padding(horizontal = 14.dp, vertical = 13.dp),
                 verticalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Text(text = today.date, color = colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
-                today.failureReason?.let {
+                Text(text = target.date, color = colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
+                target.failureReason?.let {
                     Text(text = it.failureText(), color = colors.textMuted, style = RuleUpTheme.typography.caption)
                 }
             }
@@ -189,14 +215,14 @@ internal fun reasonCounter(
 ): String = if (enough) "${length}자 · 제출할 수 있어요" else "${AppealPolicy.MIN_REASON_LENGTH}자 이상 적어 주세요"
 
 /** 헤더 우측 마감 안내. 카드·모달과 같은 계산을 쓴다(경계 시각 −1일). */
-internal fun TodayResult.appealDeadlineText(): String? = appeal?.eligibleUntil?.let { appealDeadlineLabel(it) }?.let { "${it}까지" }
+internal fun AppealTarget.appealDeadlineText(): String? = eligibleUntil?.let { appealDeadlineLabel(it) }?.let { "${it}까지" }
 
 /**
  * 비공개 고지. 아직 공개되지 않았다는 사실과 "지금 내면 공개되지 않는다"를 함께 말한다 —
  * 둘 중 하나만 있으면 실익이 드러나지 않는다.
  */
-internal fun TodayResult.privacyNotice(): String {
-    val until = appeal?.eligibleUntil?.let { appealDeadlineLabel(it) }
+internal fun AppealTarget.privacyNotice(): String {
+    val until = eligibleUntil?.let { appealDeadlineLabel(it) }
     return if (until == null) {
         "아직 그룹에 공개되지 않았어요 — 지금 이의하면 공개되지 않아요"
     } else {

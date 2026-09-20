@@ -142,6 +142,7 @@ internal fun MyCalendarContent(
             Legend()
             state.selectedDate?.let { selected ->
                 DayDetailCard(
+                    onAppeal = { onIntent(MyCalendarIntent.OpenAppeal(it)) },
                     date = selected,
                     day = state.days[selected],
                     detail = state.dayDetail,
@@ -357,6 +358,7 @@ private fun DayDetailCard(
     day: CalendarDay?,
     detail: CalendarDayDetail?,
     isLoading: Boolean,
+    onAppeal: (String) -> Unit,
 ) {
     val parsed = runCatching { LocalDate.parse(date) }.getOrNull()
     val title =
@@ -403,14 +405,17 @@ private fun DayDetailCard(
             else ->
                 detail.items.forEachIndexed { index, item ->
                     if (index > 0) HorizontalDivider(color = RuleUpTheme.colors.border)
-                    DayItemRow(item = item)
+                    DayItemRow(item = item, onAppeal = onAppeal)
                 }
         }
     }
 }
 
 @Composable
-private fun DayItemRow(item: CalendarDayItem) {
+private fun DayItemRow(
+    item: CalendarDayItem,
+    onAppeal: (String) -> Unit,
+) {
     val (statusLabel, statusColor) =
         when (item.status) {
             DayItemStatus.DONE ->
@@ -440,6 +445,16 @@ private fun DayItemRow(item: CalendarDayItem) {
                 text = statusLabel,
                 color = statusColor,
                 style = RuleUpTheme.typography.captionBold,
+            )
+        }
+        // 낼 수 있는 건에만 붙인다. 기한·자격 판단은 서버가 appeal.eligible 로 준다.
+        if (item.appeal?.eligible == true && item.verificationId != null) {
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = "이의 제기",
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.captionBold,
+                modifier = Modifier.singleClickable { onAppeal(item.challengeId) },
             )
         }
     }
