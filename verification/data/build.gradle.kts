@@ -51,6 +51,8 @@ dependencies {
     implementation(project(":verification:domain"))
     implementation(project(":core:network"))
     implementation(project(":core:domain"))
+    // 로그인에 쓴 기기 식별자를 sync 봉투에도 실어야 서버가 활성 기기를 가려낸다(SIG-23).
+    implementation(project(":onboarding:domain"))
     // sync 결과 관측: Analytics 이벤트 방출 + 실패 시 non-fatal 기록.
     implementation(project(":observability:domain"))
 

@@ -216,6 +216,9 @@ data class GapRequest(
  */
 @Serializable
 data class SyncEnvelopeRequest(
+    // 로그인에 쓴 기기와 같은 값이어야 한다 — 서버 strict device gate 의 판정 키다(SIG-23).
+    @SerialName("deviceId")
+    val deviceId: String,
     @SerialName("deviceTimeMillis")
     val deviceTimeMillis: Long,
     @SerialName("elapsedRealtimeMillis")
@@ -365,6 +368,7 @@ private fun SignalGap.toDto(): GapRequest =
  */
 internal fun EnvelopeMetadata.toRequest(batch: SignalBatch): SyncEnvelopeRequest =
     SyncEnvelopeRequest(
+        deviceId = deviceId,
         deviceTimeMillis = clock.deviceTimeMillis,
         elapsedRealtimeMillis = clock.elapsedRealtimeMillis,
         bootSessionId = clock.bootSessionId,

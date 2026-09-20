@@ -18,9 +18,10 @@ import javax.inject.Inject
  *
  * 흐름: 최신 OS 신호 수집 → 로컬 버퍼(신호+gap) 드레인 → envelope 메타데이터 채집 → POST sync → synced 표시.
  * - 200: synced 표시 후 결과 반환(진행률 캐시 갱신·재스케줄은 호출자 Worker).
- * - 400 INVALID_SIGNAL_PAYLOAD: 해당 배치 폐기(synced) + 예외 전파(무한 재전송 금지).
+ * - 400 INVALID_SIGNAL_PAYLOAD: **신호는 남기고** 예외만 전파한다. 봉투/계약이 틀렸다는 뜻이라
+ *   앱을 고치면 같은 신호가 그대로 쓸모 있다 — 폐기하면 그 구간 판정이 조용히 빠진다.
  * - 413 SYNC_PAYLOAD_TOO_LARGE: 배치를 반으로 갈라 순차 재전송하고 응답을 합친다.
- *   더 못 쪼개는데도 초과면 400 과 같이 폐기한다.
+ *   더 못 쪼개는데도 초과면 폐기한다 — 다시 보내도 결과가 같다.
  * - 429 SYNC_TOO_FREQUENT: synced 미표시로 두고 예외 전파 → 호출자가 백오프 재시도.
  *
  * 활성 챌린지가 있으면 신호·gap 이 없어도 빈 envelope 를 전송한다(전송 스펙 §0.5 — 서버가 공백 사유·
@@ -65,8 +66,9 @@ class RunSyncUseCase
                 try {
                     send(merged, effectiveBatch, depth = 0)
                 } catch (e: InvalidSignalPayloadException) {
-                    // 잘못된 배치는 폐기해 무한 재전송을 막는다.
-                    signalRepository.markSynced(collectedAt)
+                    // 400 은 봉투/계약이 틀렸다는 뜻이지 신호가 틀렸다는 뜻이 아니다. 여기서 synced 로
+                    // 찍으면 앱 버그 한 번에 그 구간 신호가 영구히 사라지고 판정에서 조용히 빠진다.
+                    // 표시하지 않으면 다음 배치가 tagPending 으로 같은 행을 다시 끌어온다.
                     throw e
                 } catch (e: SyncPayloadTooLargeException) {
                     // 더 쪼갤 수 없는데도 상한을 넘는다 — 다음 주기에 다시 보내도 결과가 같다.

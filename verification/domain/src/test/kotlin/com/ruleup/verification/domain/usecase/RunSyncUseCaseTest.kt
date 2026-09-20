@@ -113,7 +113,7 @@ class RunSyncUseCaseTest {
         }
 
     @Test
-    fun `400 INVALID_SIGNAL_PAYLOAD 은 배치를 폐기(markSynced)하고 예외 전파한다`() =
+    fun `400 INVALID_SIGNAL_PAYLOAD 이어도 신호를 남겨 앱을 고친 뒤 다시 보낸다`() =
         runBlocking {
             val signalRepo = FakeSignalRepository(drain = nonEmptyBatch())
             val verificationRepo = FakeVerificationRepository(error = InvalidSignalPayloadException())
@@ -127,7 +127,8 @@ class RunSyncUseCaseTest {
 
             assertFailsWith<InvalidSignalPayloadException> { useCase(scope, collectedAt) }
             // 폐기 = synced 표시(무한 재전송 금지).
-            assertTrue(signalRepo.markSyncedCalled)
+            // 400 은 봉투가 틀렸다는 뜻이다. 여기서 폐기하면 앱 버그 한 번에 그 구간 판정이 사라진다.
+            assertFalse(signalRepo.markSyncedCalled)
         }
 
     @Test
@@ -340,6 +341,7 @@ class RunSyncUseCaseTest {
                     ),
                 ),
             ignoredSignalTypes = emptyList(),
+            consentRequired = emptyList(),
         )
 
     private class FakeSignalCollector : SignalCollector {
@@ -378,6 +380,7 @@ class RunSyncUseCaseTest {
         override suspend fun capture(scope: SignalScope): EnvelopeMetadata =
             EnvelopeMetadata(
                 clock = DeviceClock(deviceTimeMillis = 1L, elapsedRealtimeMillis = 1L, bootSessionId = "boot", timeZone = "Asia/Seoul"),
+                deviceId = "d-1",
                 activeChallengeIds = activeChallengeIds,
                 permissions =
                     PermissionSnapshot(

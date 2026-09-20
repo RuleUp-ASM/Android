@@ -14,6 +14,11 @@ data class SyncResult(
     val updatedChallenges: List<UpdatedChallenge>,
     // 미지원으로 무시된 신호 타입(디버그 로그용)
     val ignoredSignalTypes: List<String>,
+    /**
+     * 서버가 요구한 개별 동의(LOCATION_INFO·HEALTH_INFO). 값이 있으면 그 신호는 **저장되지 않는다** —
+     * 버리면 사용자는 인증이 왜 안 되는지 모른 채 실패만 쌓는다.
+     */
+    val consentRequired: List<String>,
 ) {
     /**
      * 413 으로 쪼개 보낸 조각들의 응답을 하나로 합친다. [other] 가 나중에 도착한 조각이다.
@@ -33,6 +38,8 @@ data class SyncResult(
                     .values
                     .toList(),
             ignoredSignalTypes = (ignoredSignalTypes + other.ignoredSignalTypes).distinct(),
+            // 한 조각만 재동의를 요구해도 그 신호는 저장되지 않는다 — 합쳐서 남긴다.
+            consentRequired = (consentRequired + other.consentRequired).distinct(),
         )
 }
 

@@ -180,6 +180,8 @@ data class CoverageWindow(
  */
 data class EnvelopeMetadata(
     val clock: DeviceClock,
+    // 로그인에 쓴 기기 식별자. 서버가 활성 기기를 가려내는 키라, 빠지면 strict 모드에서 전량 거절된다.
+    val deviceId: String,
     val activeChallengeIds: List<String>,
     val permissions: PermissionSnapshot,
     val network: NetworkState,
