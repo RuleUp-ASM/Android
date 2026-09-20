@@ -24,6 +24,15 @@ sealed interface MyCalendarIntent : MviIntent {
     /** 조회에 실패한 달을 다시 불러온다. */
     data object Retry : MyCalendarIntent
 
+    /**
+     * D+1 유예 중인 실패 건의 이의로 간다. 시트가 아니라 **방 상세로 보낸다** — 이의 시트는
+     * challenge:presentation 에 있고 presentation 끼리는 의존하지 않는다. 복제하면 정책 문구가
+     * 두 벌로 갈라져 한쪽만 고쳐진다.
+     */
+    data class OpenAppeal(
+        val challengeId: String,
+    ) : MyCalendarIntent
+
     data object Back : MyCalendarIntent
 }
 

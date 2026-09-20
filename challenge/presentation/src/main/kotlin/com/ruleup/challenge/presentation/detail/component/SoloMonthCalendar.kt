@@ -22,9 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeCalendar
+import com.ruleup.challenge.domain.entity.ChallengeCalendarDay
 import com.ruleup.challenge.domain.entity.ChallengeDayStatus
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.time.ServiceDate
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
@@ -48,7 +50,9 @@ internal fun SoloMonthCalendar(
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
     modifier: Modifier = Modifier,
-    today: LocalDate = LocalDate.now(),
+    today: LocalDate = ServiceDate.today(),
+    // D+1 유예 중인 지난 건에 이의를 내는 유일한 진입점이다. 없으면 어제 건은 낼 방법이 없다.
+    onAppealDay: ((ChallengeCalendarDay) -> Unit)? = null,
 ) {
     Column(
         modifier =
@@ -61,7 +65,7 @@ internal fun SoloMonthCalendar(
     ) {
         MonthHeader(month = month, onPrevMonth = onPrevMonth, onNextMonth = onNextMonth)
         WeekdayRow()
-        MonthGrid(month = month, calendar = calendar, today = today)
+        MonthGrid(month = month, calendar = calendar, today = today, onAppealDay = onAppealDay)
         if (isLoading) {
             Text(
                 text = "불러오는 중…",
@@ -126,6 +130,7 @@ private fun MonthGrid(
     month: String,
     calendar: ChallengeCalendar?,
     today: LocalDate,
+    onAppealDay: ((ChallengeCalendarDay) -> Unit)?,
 ) {
     val yearMonth = parseMonth(month) ?: return
     val first = yearMonth.atDay(1)
@@ -143,10 +148,16 @@ private fun MonthGrid(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         if (dayNumber in 1..length) {
                             val date = yearMonth.atDay(dayNumber)
+                            val day = calendar?.dayOf(date.toString())
                             DayCell(
                                 dayNumber = dayNumber,
-                                status = calendar?.dayOf(date.toString())?.status,
+                                status = day?.status,
                                 isToday = date == today,
+                                // 낼 수 있는 날만 누를 수 있다 — 기한·자격 판단은 서버가 appealable 로 준다.
+                                onClick =
+                                    day
+                                        ?.takeIf { it.appealable && it.verificationId != null }
+                                        ?.let { target -> onAppealDay?.let { open -> { open(target) } } },
                             )
                         }
                     }
@@ -161,6 +172,7 @@ private fun DayCell(
     dayNumber: Int,
     status: ChallengeDayStatus?,
     isToday: Boolean,
+    onClick: (() -> Unit)? = null,
 ) {
     val fill = status.fillColor
     Box(
@@ -170,7 +182,8 @@ private fun DayCell(
                 .aspectRatio(1f)
                 .padding(2.dp)
                 .clip(CircleShape)
-                .background(fill ?: Color.Transparent),
+                .background(fill ?: Color.Transparent)
+                .let { base -> onClick?.let { base.singleClickable(onClick = it) } ?: base },
         contentAlignment = Alignment.Center,
     ) {
         Text(

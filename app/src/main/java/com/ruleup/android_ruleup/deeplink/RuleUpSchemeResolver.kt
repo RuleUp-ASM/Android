@@ -56,6 +56,9 @@ class RuleUpSchemeResolver
                     // 이미 적재된 옛 알림이 6개월 보관 동안 남아 있으므로 받아만 두고 버린다.
                     null
 
+                // FAIL_EXPECTED 알림은 `ruleup://appeal/{verificationId}` 로 온다. 그 건의 이의 시트는
+                // 방 상세 안에 있고 알림은 challengeId 를 주지 않아, 바로 열려면 없는 조회 API 가 필요하다.
+                // 확실히 닿는 이의 내역으로 보낸다 — 세그먼트가 있든 없든 목적지는 같다.
                 "appeal" -> NavRoute(AppRoutes.MY_APPEALS)
 
                 "terms" -> NavRoute(AppRoutes.MY_AGREEMENTS)

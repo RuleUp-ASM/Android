@@ -51,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ruleup.challenge.domain.entity.ChallengeCalendarDay
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
@@ -60,6 +61,8 @@ import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
 import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.detail.component.AppealSheet
+import com.ruleup.challenge.presentation.detail.component.AppealTarget
 import com.ruleup.challenge.presentation.detail.component.MySetupCard
 import com.ruleup.challenge.presentation.detail.component.ReportDoneSheet
 import com.ruleup.challenge.presentation.detail.component.ReportReasonSheet
@@ -538,6 +541,8 @@ private fun RoomDetailTabs(
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
         }
+    // 캘린더에서 고른 지난 건. 방 정보 카드의 오늘 건과 같은 시트를 쓴다.
+    var calendarAppeal by remember { mutableStateOf<ChallengeCalendarDay?>(null) }
     Column(modifier = Modifier.fillMaxSize()) {
         if (state.selectedTab == RoomTab.INFO) {
             RoomInfoHeader(
@@ -564,7 +569,7 @@ private fun RoomDetailTabs(
                     onRegisterAnchor =
                         { onIntent(ChallengeDetailIntent.RegisterAnchor) }
                             .takeIf { state.setup?.requiresAnchors == true },
-                    onSubmitAppeal = { reason -> onIntent(ChallengeDetailIntent.SubmitAppeal(reason)) },
+                    onSubmitAppeal = { id, reason -> onIntent(ChallengeDetailIntent.SubmitAppeal(id, reason)) },
                     onOpenPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
                     isSubmittingAppeal = state.isSubmittingAppeal,
                     appealImageUrl = state.appealImageUrl,
@@ -596,6 +601,8 @@ private fun RoomDetailTabs(
                                 month = state.calendarMonth.orEmpty(),
                                 calendar = state.calendar,
                                 isLoading = state.isCalendarLoading,
+                                // 지난 건은 여기가 유일한 이의 진입점이다 — 오늘 카드로는 어제를 낼 수 없다.
+                                onAppealDay = { day -> calendarAppeal = day },
                                 onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
                                 onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
                             )
@@ -644,6 +651,41 @@ private fun RoomDetailTabs(
                     onSelectScope = { onIntent(ChallengeDetailIntent.SelectRankingScope(it)) },
                     onLoadMoreCross = { onIntent(ChallengeDetailIntent.LoadMoreCrossRanking) },
                 )
+        }
+    }
+
+    calendarAppeal?.let { day ->
+        val verificationId = day.verificationId
+        if (verificationId == null) {
+            calendarAppeal = null
+        } else {
+            AppealSheet(
+                target =
+                    AppealTarget(
+                        verificationId = verificationId,
+                        date = day.date,
+                        // 캘린더는 사유·기한을 주지 않는다. 없는 값을 지어내지 않고 그 줄을 뺀다.
+                        failureReason = null,
+                        eligibleUntil = null,
+                    ),
+                submitting = state.isSubmittingAppeal,
+                imageUrl = state.appealImageUrl,
+                uploadingImage = state.isUploadingAppealImage,
+                reasonError = state.appealReasonError,
+                onPickImage = {
+                    appealImagePicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                    )
+                },
+                onSubmit = { reason ->
+                    calendarAppeal = null
+                    onIntent(ChallengeDetailIntent.SubmitAppeal(verificationId, reason))
+                },
+                onDismiss = {
+                    calendarAppeal = null
+                    onIntent(ChallengeDetailIntent.DismissAppeal)
+                },
+            )
         }
     }
 }
