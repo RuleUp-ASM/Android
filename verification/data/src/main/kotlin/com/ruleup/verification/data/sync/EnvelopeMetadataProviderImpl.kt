@@ -1,6 +1,7 @@
 package com.ruleup.verification.data.sync
 
 import android.util.Base64
+import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
 import com.ruleup.verification.data.db.common.ProgressCacheDao
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.data.signal.common.NetworkStateProvider
@@ -31,6 +32,7 @@ class EnvelopeMetadataProviderImpl
         private val diagnosticsProvider: DiagnosticsProvider,
         private val progressCacheDao: ProgressCacheDao,
         private val settings: VerificationSettingsStore,
+        private val deviceIdentityRepository: DeviceIdentityRepository,
     ) : EnvelopeMetadataProvider {
         override suspend fun capture(scope: SignalScope): EnvelopeMetadata {
             val clock = bootSessionProvider.currentClock()
@@ -49,6 +51,7 @@ class EnvelopeMetadataProviderImpl
 
             return EnvelopeMetadata(
                 clock = clock,
+                deviceId = deviceIdentityRepository.current().deviceId,
                 activeChallengeIds = activeChallengeIds,
                 permissions = permissions,
                 network = network,

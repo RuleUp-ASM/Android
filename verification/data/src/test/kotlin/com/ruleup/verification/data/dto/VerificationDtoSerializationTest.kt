@@ -41,6 +41,7 @@ class VerificationDtoSerializationTest {
     /** 테스트용 envelope 메타데이터(§0.1). 신호 배치와 합쳐 envelope 와이어로 직렬화한다. */
     private fun metadata(gaps: List<SignalGap> = emptyList()): EnvelopeMetadata =
         EnvelopeMetadata(
+            deviceId = "d-1",
             clock =
                 DeviceClock(
                     deviceTimeMillis = 1_719_600_000_000L,
@@ -318,6 +319,29 @@ class VerificationDtoSerializationTest {
         assertNull(result.maxPayloadBytes)
         assertTrue(result.updatedChallenges.isEmpty())
         assertTrue(result.ignoredSignalTypes.isEmpty())
+    }
+
+    @Test
+    fun `동의가 빠져 저장되지 않은 신호 종류를 읽는다`() {
+        // 이 값을 버리면 사용자는 인증이 왜 안 되는지 모른 채 실패만 쌓는다.
+        val payload =
+            """
+            { "syncedAt": "2026-06-21T00:30:00Z", "updatedChallenges": [],
+              "consentRequired": ["LOCATION_INFO", "HEALTH_INFO"] }
+            """.trimIndent()
+
+        val result = json.decodeFromString<SyncResponse>(payload).toDomain()
+
+        assertEquals(listOf("LOCATION_INFO", "HEALTH_INFO"), result.consentRequired)
+    }
+
+    @Test
+    fun `동의 요구가 없으면 빈 목록이다`() {
+        val payload = """{ "syncedAt": "2026-06-21T00:30:00Z", "updatedChallenges": [] }"""
+
+        val result = json.decodeFromString<SyncResponse>(payload).toDomain()
+
+        assertTrue(result.consentRequired.isEmpty())
     }
 
     @Test

@@ -10,6 +10,9 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
+import com.ruleup.domain.helper.PushNotificationHelper
+import com.ruleup.domain.navigation.AppRoutes
+import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.event.Channel
@@ -43,6 +46,7 @@ class VerificationSyncWorker
         private val syncScheduler: SyncScheduler,
         private val settingsStore: VerificationSettingsStore,
         private val syncGate: SyncGate,
+        private val pushNotificationHelper: PushNotificationHelper,
         private val observability: Observability,
     ) : CoroutineWorker(appContext, params) {
         override suspend fun doWork(): Result {
@@ -82,6 +86,7 @@ class VerificationSyncWorker
                             "무시타입=${result.ignoredSignalTypes}, next=${result.flushIntervalSec}s, " +
                             "상한=${result.maxPayloadBytes ?: "미수신"}"
                     }
+                    notifyConsentRequired(result.consentRequired)
                 } else {
                     observability.i(LOG_TAG) { "sync 전송 생략 — 활성 챌린지·신호·gap 0" }
                 }
@@ -105,6 +110,23 @@ class VerificationSyncWorker
                     SyncOutcome.RETRY -> Result.retry()
                 }
             }
+        }
+
+        /**
+         * 개별 동의가 빠져 신호가 저장되지 않았음을 알린다(명세 3.1 `consentRequired`).
+         *
+         * 여기서 넘기면 사용자는 인증이 왜 안 되는지 모른 채 실패만 쌓는다 — sync 는 백그라운드라
+         * 알릴 창구가 시스템 알림뿐이다. 같은 id 를 써서 주기마다 새 알림이 쌓이지 않게 한다.
+         */
+        private fun notifyConsentRequired(consentRequired: List<String>) {
+            if (consentRequired.isEmpty()) return
+            observability.i(LOG_TAG) { "개별 동의 필요 — $consentRequired" }
+            pushNotificationHelper.show(
+                id = CONSENT_NOTIFICATION_ID,
+                title = "동의가 필요해요",
+                message = "동의가 없어 인증 기록이 저장되지 않고 있어요. 확인해 주세요.",
+                route = NavRoute(AppRoutes.MY_AGREEMENTS),
+            )
         }
 
         /**
@@ -136,6 +158,9 @@ class VerificationSyncWorker
             private const val NOTIFICATION_ID = 4801
 
             // 수집·동기화 경로 공통 로그 태그(SignalRepositoryImpl 과 동일). 'VerifySync' 로 필터.
+            // 고정 id — 주기마다 새 알림을 쌓지 않고 기존 것을 갱신한다.
+            private const val CONSENT_NOTIFICATION_ID = 90_101
+
             private const val LOG_TAG = "VerifySync"
         }
     }

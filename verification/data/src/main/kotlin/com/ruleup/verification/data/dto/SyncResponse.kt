@@ -30,6 +30,9 @@ data class SyncResponse(
     // 한 번에 보낼 수 있는 상한(바이트). 실측 후 확정이라 서버가 아직 안 줄 수 있다
     @SerialName("maxPayloadBytes")
     val maxPayloadBytes: Int? = null,
+    // 개별 동의가 빠져 저장되지 않은 신호 종류(LOCATION_INFO·HEALTH_INFO)
+    @SerialName("consentRequired")
+    val consentRequired: List<String>? = null,
 )
 
 internal fun SyncResponse.toDomain(): SyncResult =
@@ -49,6 +52,7 @@ internal fun SyncResponse.toDomain(): SyncResult =
                 )
             },
         ignoredSignalTypes = ignoredSignalTypes.orEmpty(),
+        consentRequired = consentRequired.orEmpty(),
     )
 
 private const val DEFAULT_FLUSH_INTERVAL_SEC = 1800
