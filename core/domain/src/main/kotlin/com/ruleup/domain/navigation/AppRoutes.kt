@@ -27,6 +27,10 @@ object AppRoutes {
     const val ONBOARDING_GENDER = "onboarding/gender"
     const val ONBOARDING_PHOTO = "onboarding/photo"
     const val ONBOARDING_TERMS = "onboarding/terms"
+
+    // 약관 원문 열람. 동의 화면의 「보기」와 마이 > 약관에서 연다. 원문은 앱에 번들돼 있어
+    // 로그인 전에도 열린다 — 동의를 받기 전에 읽을 수 있어야 동의가 성립한다.
+    const val TERMS_DOCUMENT = "terms/document"
     const val HOME = "home" // 진입점
 
     // challenge
