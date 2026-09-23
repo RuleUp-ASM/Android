@@ -13,10 +13,16 @@ class UsageTargetStoreImpl
     constructor(
         private val usageTargetDao: UsageTargetDao,
     ) : UsageTargetStore {
-        override suspend fun replaceAll(packages: Set<String>) {
-            usageTargetDao.clear()
+        override suspend fun replaceFor(
+            challengeId: String,
+            packages: Set<String>,
+        ) {
+            // 지우고 넣는 순서다. 넣고 지우면 같은 패키지가 사라진다.
+            usageTargetDao.clearChallenge(challengeId)
             if (packages.isNotEmpty()) {
-                usageTargetDao.upsertAll(packages.map { UsageTargetEntity(packageName = it) })
+                usageTargetDao.upsertAll(
+                    packages.map { UsageTargetEntity(challengeId = challengeId, packageName = it) },
+                )
             }
         }
 

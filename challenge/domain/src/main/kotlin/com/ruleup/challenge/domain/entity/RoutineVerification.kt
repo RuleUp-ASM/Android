@@ -154,6 +154,25 @@ data class ParamEntry(
     val value: String,
 )
 
+/**
+ * 장소 체류·앱 사용 목표 시간(분)의 키. 서버 운영 카탈로그의 `duration_min` 이다
+ * (`GPS_PRESENCE`·`GPS_AVOID`·`SCREEN_TIME_MAX`·`SCREEN_TIME_MIN` 이 쓴다).
+ */
+const val PARAM_DURATION_MIN = "duration_min"
+
+/**
+ * 목표 체류 시간(분). 이 값이 곧 OS 지오펜스의 `loiteringDelay` 라 **틀리면 DWELL 이 엉뚱한 때에
+ * 발화한다** — 30분 목표 방이 60분으로 등록되면 신호가 아예 안 올라온다(SETUP-04).
+ *
+ * 해당 키가 없거나 숫자로 읽히지 않으면 null 이다. 지어낸 값을 등록하느니 호출자가 정하게 둔다.
+ */
+fun List<ParamSpec>.durationMinutes(): Int? =
+    find { it.key == PARAM_DURATION_MIN }
+        ?.value
+        ?.toDoubleOrNull()
+        ?.toInt()
+        ?.takeIf { it > 0 }
+
 /** [ParamSpec] 의 현재값만 뽑아 요청 형태로 접는다. */
 fun List<ParamSpec>.toEntries(): List<ParamEntry> = map { ParamEntry(key = it.key, value = it.value) }
 

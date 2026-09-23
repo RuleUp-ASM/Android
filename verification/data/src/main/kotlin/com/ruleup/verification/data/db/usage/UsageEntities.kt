@@ -45,10 +45,16 @@ data class UsageEventEntity(
     val collectedAt: String? = null,
 )
 
-/** SCREEN_TIME 대상 패키지(스코프 소스). */
-@Entity(tableName = "usage_target")
+/**
+ * SCREEN_TIME 대상 패키지(스코프 소스).
+ *
+ * **챌린지 단위로 들고 있는다.** 패키지만 두면 한 방의 대상이 바뀔 때 다른 방의 대상까지 지우거나,
+ * 겹치지 않게 남기려다 한 번 담긴 패키지를 영영 못 지운다 — 대상이 아닌 앱의 사용 기록을 계속
+ * 모으게 되므로 둘 다 받아들일 수 없다.
+ */
+@Entity(tableName = "usage_target", primaryKeys = ["challengeId", "packageName"])
 data class UsageTargetEntity(
-    @PrimaryKey
+    val challengeId: String,
     val packageName: String,
 )
 
@@ -93,11 +99,15 @@ interface UsageEventDao {
 
 @Dao
 interface UsageTargetDao {
-    @Query("SELECT packageName FROM usage_target")
+    /** 수집 스코프는 방을 가리지 않는다 — 참여 중인 모든 방의 대상을 합쳐 본다. */
+    @Query("SELECT DISTINCT packageName FROM usage_target")
     suspend fun all(): List<String>
 
     @Upsert
     suspend fun upsertAll(items: List<UsageTargetEntity>)
+
+    @Query("DELETE FROM usage_target WHERE challengeId = :challengeId")
+    suspend fun clearChallenge(challengeId: String)
 
     @Query("DELETE FROM usage_target")
     suspend fun clear()

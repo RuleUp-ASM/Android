@@ -44,7 +44,7 @@ import com.ruleup.verification.data.db.usage.UsageTargetEntity
         HealthSettingsEntity::class,
         SignalGapEntity::class,
     ],
-    version = 8,
+    version = 9,
     exportSchema = false,
 )
 @TypeConverters(VerificationTypeConverters::class)

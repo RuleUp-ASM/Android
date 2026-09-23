@@ -987,7 +987,11 @@ class ChallengeDetailViewModel
                     mapOf(
                         "challengeId" to id,
                         "defaultRadiusM" to "500.0",
-                        "dwellMinutes" to "60",
+                        // ⚠️ 여기만 고정값이 남는다. 목표 체류 시간(`duration_min`)은 초안·방장 설정
+                        // 응답에만 있고 `GET /challenges/{id}/setup` 과 `/room` 에는 없어, 방에
+                        // 들어온 멤버가 앵커를 등록하는 이 경로에서는 읽을 방법이 없다.
+                        // 서버가 setup 응답에 실어 주면 생성 경로와 같은 값을 쓰면 된다(SETUP-04).
+                        "dwellMinutes" to DEFAULT_DWELL_MINUTES.toString(),
                         "targetPackages" to targetAppStore.registered(id).joinToString(","),
                     ),
                 ),
@@ -1051,3 +1055,6 @@ private fun Throwable.reportMessage(): String =
         ReportFailure.NETWORK -> "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요."
         else -> "신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요."
     }
+
+/** 목표 체류 시간을 읽을 수 없을 때의 지오펜스 대기(분). 위 주석 참고. */
+private const val DEFAULT_DWELL_MINUTES = 60

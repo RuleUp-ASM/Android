@@ -128,13 +128,22 @@ class ManualSubmitViewModelTest {
         }
 
     @Test
-    fun `체크 해제는 오늘 인증 건 ID 로 부른다`() =
+    fun `체크 해제는 오늘 인증 건 ID 로 부르고 서버 상태를 다시 받는다`() =
         runTest {
+            // 해제하면 연속 일수의 기준이 바뀐다. 지우기만 하고 두면 화면 재진입 전까지
+            // '아직 인증 전' 옆에 지난 연속 일수가 남는다(MAN-10 · VER-15).
             var cancelled: String? = null
             val repository =
                 FakeVerificationRepository(
                     progress = { throw IllegalStateException("쓰지 않는다") },
-                    todayResult = { today(status = TodayResultStatus.DONE) },
+                    todayResult = {
+                        if (cancelled == null) {
+                            today(status = TodayResultStatus.DONE)
+                        } else {
+                            // 해제하면 오늘 인증이 사라져 서버가 다시 계산한 값을 준다.
+                            today(status = TodayResultStatus.IN_PROGRESS, streakAfter = 0)
+                        }
+                    },
                     cancelManual = { cancelled = it },
                 )
             val viewModel = viewModel(repository)
@@ -144,6 +153,8 @@ class ManualSubmitViewModelTest {
 
             assertEquals(VERIFICATION_ID, cancelled)
             assertFalse(viewModel.uiState.value.checked)
+            // 해제 전 값(9)이 남아 있으면 '아직 인증 전' 화면에 연속 일수가 같이 떠 있는다.
+            assertEquals(0, viewModel.uiState.value.streakAfter)
         }
 
     @Test
@@ -180,18 +191,20 @@ class ManualSubmitViewModelTest {
             navigationHelper = RecordingNavigationHelper(),
         )
 
-    private fun today(status: TodayResultStatus) =
-        TodayResult(
-            date = "2026-09-14",
-            verificationId = VERIFICATION_ID.takeIf { status == TodayResultStatus.DONE },
-            status = status,
-            window = "자정 마감",
-            confirmedAt = null,
-            failureReason = null,
-            streak = VerificationStreak(before = 8, after = 9),
-            unacknowledged = null,
-            appeal = null,
-        )
+    private fun today(
+        status: TodayResultStatus,
+        streakAfter: Int = 9,
+    ) = TodayResult(
+        date = "2026-09-14",
+        verificationId = VERIFICATION_ID.takeIf { status == TodayResultStatus.DONE },
+        status = status,
+        window = "자정 마감",
+        confirmedAt = null,
+        failureReason = null,
+        streak = VerificationStreak(before = 8, after = streakAfter),
+        unacknowledged = null,
+        appeal = null,
+    )
 
     private fun submitted() =
         ManualSubmitResult(

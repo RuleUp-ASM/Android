@@ -7,6 +7,8 @@ import com.ruleup.verification.domain.entity.PendingScreenApps
 import com.ruleup.verification.domain.entity.ScreenApp
 import com.ruleup.verification.domain.entity.ScreenAppsUpdate
 import com.ruleup.verification.domain.entity.SettingChangeLimitException
+import com.ruleup.verification.domain.repository.SyncScheduler
+import com.ruleup.verification.domain.repository.UsageTargetStore
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -165,6 +167,45 @@ class ChallengeTargetsViewModelTest {
         }
 
     @Test
+    fun `고른 앱을 수집기가 읽는 저장소에도 반영하고 즉시 흘려보낸다`() =
+        runTest {
+            // 여기 넣지 않으면 서버 저장은 200 인데 단말은 아무것도 모으지 않아
+            // SCREEN_TIME 신호가 아예 생기지 않는다(SETUP-07 · SIG-07).
+            val usageTargets = RecordingUsageTargetStore()
+            val scheduler = RecordingSyncScheduler()
+            val viewModel =
+                viewModel(
+                    FakeVerificationRepository(
+                        updateScreenApps = { _, _ ->
+                            ScreenAppsUpdate(apps = listOf(app("com.accepted")), appliedFrom = "2026-09-02T00:00:00Z")
+                        },
+                    ),
+                    usageTargets = usageTargets,
+                    scheduler = scheduler,
+                )
+
+            viewModel.onIntent(ChallengeTargetsIntent.Save("ch1", listOf(app("com.picked"))))
+
+            assertEquals(setOf("com.accepted"), usageTargets.byChallenge["ch1"])
+            assertEquals(1, scheduler.catchUpCount)
+        }
+
+    @Test
+    fun `저장에 실패하면 수집 대상도 건드리지 않는다`() =
+        runTest {
+            val usageTargets = RecordingUsageTargetStore()
+            val viewModel =
+                viewModel(
+                    FakeVerificationRepository(updateScreenApps = { _, _ -> throw IllegalStateException("서버 오류") }),
+                    usageTargets = usageTargets,
+                )
+
+            viewModel.onIntent(ChallengeTargetsIntent.Save("ch1", listOf(app("com.picked"))))
+
+            assertTrue(usageTargets.byChallenge.isEmpty())
+        }
+
+    @Test
     fun `저장에 실패하면 등록됨으로 남기지 않고 화면에 머문다`() =
         runTest {
             val store = FakeTargetAppStore()
@@ -217,7 +258,42 @@ class ChallengeTargetsViewModelTest {
         repo: FakeVerificationRepository = FakeVerificationRepository(),
         store: FakeTargetAppStore = FakeTargetAppStore(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-    ) = ChallengeTargetsViewModel(verificationRepository = repo, targetAppStore = store, navigationHelper = nav)
+        usageTargets: RecordingUsageTargetStore = RecordingUsageTargetStore(),
+        scheduler: RecordingSyncScheduler = RecordingSyncScheduler(),
+    ) = ChallengeTargetsViewModel(
+        verificationRepository = repo,
+        targetAppStore = store,
+        usageTargetStore = usageTargets,
+        syncScheduler = scheduler,
+        navigationHelper = nav,
+    )
+
+    /** 수집기가 실제로 읽는 저장소. 화면이 여기까지 반영했는지가 SETUP-07 의 핵심이다. */
+    private class RecordingUsageTargetStore : UsageTargetStore {
+        val byChallenge = mutableMapOf<String, Set<String>>()
+
+        override suspend fun replaceFor(
+            challengeId: String,
+            packages: Set<String>,
+        ) {
+            byChallenge[challengeId] = packages
+        }
+
+        override suspend fun all(): Set<String> = byChallenge.values.flatten().toSet()
+    }
+
+    private class RecordingSyncScheduler : SyncScheduler {
+        var catchUpCount = 0
+            private set
+
+        override fun ensureScheduled() = Unit
+
+        override fun reschedule(flushIntervalSec: Int) = Unit
+
+        override fun enqueueCatchUp() {
+            catchUpCount++
+        }
+    }
 
     private fun app(packageName: String) = ScreenApp(packageName = packageName, appName = packageName)
 }
