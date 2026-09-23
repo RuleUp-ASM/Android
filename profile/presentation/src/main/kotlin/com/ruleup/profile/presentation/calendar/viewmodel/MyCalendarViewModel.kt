@@ -3,6 +3,7 @@ package com.ruleup.profile.presentation.calendar.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.navigation.ChallengeDetailPage
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.domain.time.ServiceDate
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
@@ -73,7 +74,9 @@ class MyCalendarViewModel
         private fun loadInitial(date: String?) {
             if (currentState.month.isNotBlank()) return
             // 딥링크가 준 날짜는 서버 문자열이라 형식을 믿지 않는다 — 파싱에 실패하면 오늘로 연다.
-            val target = date?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: LocalDate.now()
+            // 어느 날짜가 「오늘」인지는 판정 기준(KST)을 따른다 — 기기 기준으로 고르면 자정 근처에
+            // 서버가 아직 판정하지 않은 날을 오늘이라고 펴게 된다.
+            val target = date?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: ServiceDate.today()
             loadMonth(YearMonth.from(target).toString())
             selectDate(target.toString())
         }
@@ -96,7 +99,7 @@ class MyCalendarViewModel
                     .onSuccess { calendar ->
                         val days = calendar.days.associateBy { it.date }
                         // 당월은 인증 확정마다 갱신되므로 캐시하지 않는다 (스펙: 과거 월 캐시).
-                        if (month < YearMonth.from(LocalDate.now()).toString()) monthCache[month] = days
+                        if (month < YearMonth.from(ServiceDate.today()).toString()) monthCache[month] = days
                         dispatch(MyCalendarReducerEvent.MonthLoaded(month, days))
                     }.onFailure {
                         dispatch(

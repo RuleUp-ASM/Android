@@ -43,6 +43,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.time.ServiceDate
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayDetail
 import com.ruleup.profile.domain.entity.CalendarDayItem
@@ -272,7 +273,9 @@ private fun DayCell(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val isToday = date == LocalDate.now()
+    // 판정 경계가 KST 하루 단위다. 기기 기준으로 「오늘」을 정하면 해외 체류 중에 어제 칸이
+    // 오늘로 강조된다 — 같은 순간을 두 날짜로 말하는 셈이다.
+    val isToday = date == ServiceDate.today()
     Column(
         modifier =
             Modifier
@@ -367,7 +370,7 @@ private fun DayDetailCard(
         buildString {
             if (parsed != null) {
                 append("${parsed.monthValue}월 ${parsed.dayOfMonth}일")
-                if (parsed == LocalDate.now()) append(" (오늘)")
+                if (parsed == ServiceDate.today()) append(" (오늘)")
             } else {
                 append(date)
             }
