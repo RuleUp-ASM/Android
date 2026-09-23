@@ -76,8 +76,6 @@ class MyStatsViewModelTest {
             successRate = 0.87,
             totalSuccessCount = 142,
             streak = StatsStreak(current = 6, best = 21),
-            cycles12w = emptyList(),
             completedCount = 24,
-            weeklyScoreDelta = 5,
         )
 }

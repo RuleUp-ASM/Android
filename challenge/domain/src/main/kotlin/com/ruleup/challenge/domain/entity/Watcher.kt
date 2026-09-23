@@ -66,7 +66,13 @@ enum class WatcherChannel(
  * 감시자는 챌린지 × 참여자 단위. 비유저 감시자의 연락처는 초대자에게 원본을 노출하지 않으므로 마스킹 값만 온다.
  */
 data class Watcher(
-    val watcherId: String,
+    /**
+     * 관계 식별자. **미수락 초대(`INVITED`)는 아직 관계가 없어 null 이다.**
+     *
+     * 필수로 두면 초대 한 건 때문에 매핑이 터져 **감시자 섹션과 초대 버튼이 통째로 사라진다**
+     * (WAT-08). 해제처럼 id 가 있어야 하는 동작은 호출부에서 null 을 걸러 낸다.
+     */
+    val watcherId: String?,
     val type: WatcherType,
     val channel: WatcherChannel?,
     val status: WatcherStatus,

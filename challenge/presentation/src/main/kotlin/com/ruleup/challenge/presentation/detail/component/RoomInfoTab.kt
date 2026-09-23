@@ -39,6 +39,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
+import com.ruleup.verification.domain.entity.failureText
 
 /**
  * 정보 탭 (Figma 1134:143) — 오늘 내 상태 · 내 세부 설정 · 인증 규칙 · 진행 정보.

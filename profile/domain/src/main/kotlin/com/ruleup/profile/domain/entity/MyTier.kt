@@ -123,15 +123,45 @@ data class MyTier(
             if (span <= 0) return 1f
             return ((score - displayTier.minScore).toFloat() / span).coerceIn(0f, 1f)
         }
+
+    /**
+     * 화면에 세울 승급 안내. **표시 티어보다 위일 때만 승급이다.**
+     *
+     * 서버의 `promotion` 은 실제 티어([tier]) 기준이라 유예 밴드에서는 [displayTier] 와 같은
+     * 티어를 가리킨다 — 그대로 그리면 **이미 실버인 사람에게 "실버까지 30점"** 이라 말하고
+     * 진행바 양끝 라벨도 같은 티어로 찍힌다(TIER-02 · TIER-03).
+     */
+    val displayPromotion: TierPromotion?
+        get() = promotion?.takeIf { it.nextTier.ordinal > displayTier.ordinal }
+
+    /**
+     * 유예 밴드에서 강등이 확정되는 점수. 유예 중이 아니면 null.
+     *
+     * 유예 중에는 올라갈 자리가 아니라 **지켜야 할 바닥**을 말해야 한다 — 표시 티어는 그대로인데
+     * 점수만 내려가는 구간이라, 승급 문구만 띄우면 무엇이 걸려 있는지 알 수 없다.
+     */
+    val graceFloorScore: Int?
+        get() = demotion?.graceFloor?.takeIf { graceBand }
 }
 
-/** 월말 스냅샷 (명세 `monthly[]`). 하락 사유는 내려오지 않는다 — 정책상 표기하지 않는다. */
-data class TierSnapshot(
-    // YYYY-MM
-    val month: String,
-    val endTier: Tier,
-    val endScore: Int,
-)
+/**
+ * 점수가 움직인 한 시점 (명세 `points[]`).
+ *
+ * 원천은 append-only 원장이라 **월말 스냅샷이 아니라 변동 시점마다** 한 점이 쌓인다.
+ * 구 `monthly[]` 표기를 읽으면 서버가 46개를 줘도 빈 리스트가 되어 그래프가 통째로 사라진다(TIER-10).
+ *
+ * 하락 사유는 내려오지 않는다 — 정책상 그래프에 표기하지 않는다.
+ */
+data class TierPoint(
+    // ISO-8601
+    val occurredAt: String,
+    val tier: Tier,
+    val score: Int,
+) {
+    /** x축 라벨용 `YYYY-MM`. 시각 부분은 그래프에 쓰지 않는다. */
+    val month: String
+        get() = occurredAt.take(7)
+}
 
 /** 역대 최고 (명세 `best`). 보관 1년 범위 안에서의 최고값이다. */
 data class TierBest(
@@ -149,6 +179,6 @@ data class TierBest(
  */
 data class TierHistory(
     val best: TierBest?,
-    val monthly: List<TierSnapshot>,
+    val points: List<TierPoint>,
     val retentionNote: String?,
 )

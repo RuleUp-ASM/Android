@@ -8,8 +8,8 @@ import com.ruleup.profile.domain.entity.ScoreChangeReason
 import com.ruleup.profile.domain.entity.TierBest
 import com.ruleup.profile.domain.entity.TierDemotion
 import com.ruleup.profile.domain.entity.TierHistory
+import com.ruleup.profile.domain.entity.TierPoint
 import com.ruleup.profile.domain.entity.TierPromotion
-import com.ruleup.profile.domain.entity.TierSnapshot
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -137,22 +137,22 @@ data class TierBestResponse(
 )
 
 @Serializable
-data class TierSnapshotResponse(
-    // YYYY-MM
-    @SerialName("month")
-    val month: String? = null,
-    @SerialName("endTier")
-    val endTier: String? = null,
-    @SerialName("endScore")
-    val endScore: Int? = null,
+data class TierPointResponse(
+    // ISO-8601
+    @SerialName("occurredAt")
+    val occurredAt: String? = null,
+    @SerialName("tier")
+    val tier: String? = null,
+    @SerialName("score")
+    val score: Int? = null,
 )
 
 @Serializable
 data class TierHistoryResponse(
     @SerialName("best")
     val best: TierBestResponse? = null,
-    @SerialName("monthly")
-    val monthly: List<TierSnapshotResponse>? = null,
+    @SerialName("points")
+    val points: List<TierPointResponse>? = null,
     @SerialName("retentionNote")
     val retentionNote: String? = null,
 )
@@ -160,8 +160,8 @@ data class TierHistoryResponse(
 internal fun TierHistoryResponse.toDomain(): TierHistory =
     TierHistory(
         best = best?.toDomain(),
-        // 월이 없는 스냅샷은 x축에 세울 자리가 없다.
-        monthly = monthly.orEmpty().mapNotNull { it.toDomain() },
+        // 시각이 없는 점은 x축에 세울 자리가 없다.
+        points = points.orEmpty().mapNotNull { it.toDomain() },
         retentionNote = retentionNote,
     )
 
@@ -171,7 +171,7 @@ internal fun TierBestResponse.toDomain(): TierBest? {
     return TierBest(tier = Tier.fromValue(tier), score = score ?: 0, date = date)
 }
 
-internal fun TierSnapshotResponse.toDomain(): TierSnapshot? {
-    val month = month ?: return null
-    return TierSnapshot(month = month, endTier = Tier.fromValue(endTier), endScore = endScore ?: 0)
+internal fun TierPointResponse.toDomain(): TierPoint? {
+    val occurredAt = occurredAt ?: return null
+    return TierPoint(occurredAt = occurredAt, tier = Tier.fromValue(tier), score = score ?: 0)
 }

@@ -1,13 +1,11 @@
 package com.ruleup.profile.presentation.member.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.user.FeatureCode
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
-import com.ruleup.profile.domain.navigation.MemberProfilePage
 import com.ruleup.profile.domain.repository.AccountRepository
 import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.profile.presentation.common.SuspendedBlock
@@ -38,16 +36,16 @@ class MemberProfileViewModel
         private val accountRepository: AccountRepository,
         private val navigationHelper: NavigationHelper,
         private val messageHelper: MessageHelper,
-        savedStateHandle: SavedStateHandle,
     ) : MviViewModel<MemberProfileIntent, MemberProfileState, MemberProfileReducerEvent, MemberProfileEffect>(
             MemberProfileState.initial,
         ) {
-        private val userId: String = savedStateHandle[MemberProfilePage.ARG_USER_ID] ?: ""
+        /** 진입 인자로 받은 대상. 재시도·신고 등 이후 동작이 같은 값을 본다. */
+        private var userId: String = ""
 
         override fun onIntent(intent: MemberProfileIntent) {
             when (intent) {
-                MemberProfileIntent.Load -> load(force = false)
-                MemberProfileIntent.Retry -> load(force = true)
+                is MemberProfileIntent.Load -> load(intent.userId, force = false)
+                MemberProfileIntent.Retry -> load(userId, force = true)
                 MemberProfileIntent.Back -> navigationHelper.navigateToBack()
                 MemberProfileIntent.Report -> openReport()
                 MemberProfileIntent.Unblock -> unblock()
@@ -77,8 +75,16 @@ class MemberProfileViewModel
                 is MemberProfileReducerEvent.ReportBlocked -> state.copy(reportBlock = event.block)
             }
 
-        private fun load(force: Boolean) {
-            if (userId.isBlank()) return
+        private fun load(
+            userId: String,
+            force: Boolean,
+        ) {
+            this.userId = userId
+            // 대상을 모르면 조회할 것이 없다. 조용히 돌아가면 스피너만 영원히 돈다(REP-01).
+            if (userId.isBlank()) {
+                dispatch(MemberProfileReducerEvent.Failed("누구의 프로필인지 알 수 없어요", offline = false))
+                return
+            }
             if (!force && currentState.profile != null) return
             dispatch(MemberProfileReducerEvent.Loading)
             viewModelScope.launch {
@@ -131,7 +137,7 @@ class MemberProfileViewModel
                     .onSuccess {
                         dispatch(MemberProfileReducerEvent.Unblocking(false))
                         // 해제하면 닉네임·사진이 원래 값으로 돌아온다 — 다시 받아야 화면이 사실과 맞는다.
-                        load(force = true)
+                        load(userId, force = true)
                     }.onFailure {
                         dispatch(MemberProfileReducerEvent.Unblocking(false))
                         messageHelper.showToast(it.message ?: "차단을 해제하지 못했어요")

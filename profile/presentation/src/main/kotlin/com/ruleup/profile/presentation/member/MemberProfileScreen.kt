@@ -47,9 +47,12 @@ import com.ruleup.profile.presentation.member.viewmodel.MemberProfileViewModel
  * 말해 주지 않으면 사용자는 로딩이 덜 됐다고 읽는다.
  */
 @Composable
-fun MemberProfileScreen(viewModel: MemberProfileViewModel = hiltViewModel()) {
+fun MemberProfileScreen(
+    userId: String,
+    viewModel: MemberProfileViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    LaunchedEffect(Unit) { viewModel.onIntent(MemberProfileIntent.Load) }
+    LaunchedEffect(userId) { viewModel.onIntent(MemberProfileIntent.Load(userId)) }
     MemberProfileContent(state = state, onIntent = viewModel::onIntent)
 }
 

@@ -536,13 +536,24 @@ class ChallengeDetailViewModel
          * 모르는 상태를 「켜짐」으로 그리면 사용자가 껐다고 믿은 방에서 푸시가 계속 온다.
          */
         private fun loadMuteState(challengeId: String) {
+            val epoch = muteEpoch
             viewModelScope.launch {
                 runCatching { notificationRepository.getSettings() }
                     .onSuccess {
+                        // 조회를 보낸 뒤 사용자가 토글을 바꿨으면 늦게 도착한 응답은 버린다.
+                        // 음소거는 PUT/DELETE 가 204 라 조회로만 확인되는데, 그 조회가 방금 바꾼 값을
+                        // 옛 값으로 되돌리면 **토글이 꺼짐 그대로 남고 같은 요청만 반복된다**(NOTI-04).
+                        if (epoch != muteEpoch) return@onSuccess
                         dispatch(ChallengeDetailReducerEvent.MuteLoaded(it.isMuted(challengeId)))
                     }
             }
         }
+
+        /**
+         * 사용자가 음소거를 바꾼 횟수. 늦게 도착한 설정 조회가 방금 바꾼 값을 덮지 못하게 하는
+         * 기준이다 — 조회를 보낸 시점의 값과 다르면 그 응답은 이미 낡았다.
+         */
+        private var muteEpoch = 0
 
         /**
          * 음소거 전환. 서버가 멱등(204)이라 재시도해도 안전하다.
@@ -556,8 +567,11 @@ class ChallengeDetailViewModel
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
                 runCatching { notificationRepository.setMuted(challengeId, muted) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted)) }
-                    .onFailure {
+                    .onSuccess {
+                        // 204 라 응답에 상태가 없다. 보낸 값이 곧 저장된 값이다.
+                        muteEpoch++
+                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted))
+                    }.onFailure {
                         dispatch(ChallengeDetailReducerEvent.MuteSubmitting(false))
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "알림 설정을 바꾸지 못했어요"))
                     }

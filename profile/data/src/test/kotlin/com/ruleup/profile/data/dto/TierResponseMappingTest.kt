@@ -95,26 +95,26 @@ class TierHistoryResponseMappingTest {
     fun `월이 없는 스냅샷은 그래프에 올리지 않는다`() {
         val history =
             TierHistoryResponse(
-                monthly = listOf(TierSnapshotResponse(month = null, endTier = "GOLD", endScore = 300)),
+                points = listOf(TierPointResponse(occurredAt = null, tier = "GOLD", score = 300)),
             ).toDomain()
 
-        assertTrue(history.monthly.isEmpty())
+        assertTrue(history.points.isEmpty())
     }
 
     @Test
     fun `받은 월말 스냅샷은 순서 그대로 전한다`() {
         val history =
             TierHistoryResponse(
-                monthly =
+                points =
                     listOf(
-                        TierSnapshotResponse(month = "2026-05", endTier = "SILVER", endScore = 188),
-                        TierSnapshotResponse(month = "2026-06", endTier = "GOLD", endScore = 302),
+                        TierPointResponse(occurredAt = "2026-05-31T00:00:00Z", tier = "SILVER", score = 188),
+                        TierPointResponse(occurredAt = "2026-06-30T00:00:00Z", tier = "GOLD", score = 302),
                     ),
                 retentionNote = "1년 보관",
             ).toDomain()
 
-        assertEquals(listOf("2026-05", "2026-06"), history.monthly.map { it.month })
-        assertEquals(Tier.GOLD, history.monthly.last().endTier)
+        assertEquals(listOf("2026-05", "2026-06"), history.points.map { it.month })
+        assertEquals(Tier.GOLD, history.points.last().tier)
         assertEquals("1년 보관", history.retentionNote)
     }
 }

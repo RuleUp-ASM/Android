@@ -8,7 +8,13 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface MemberProfileIntent : MviIntent {
-    data object Load : MemberProfileIntent
+    /**
+     * 화면 진입. **대상 userId 를 화면이 넘긴다** — 호스트는 라우트 인자를 컴포저블 파라미터로
+     * 주지 `SavedStateHandle` 에 넣지 않아, ViewModel 이 거기서 읽으면 항상 비어 있다(REP-01).
+     */
+    data class Load(
+        val userId: String,
+    ) : MemberProfileIntent
 
     data object Retry : MemberProfileIntent
 
