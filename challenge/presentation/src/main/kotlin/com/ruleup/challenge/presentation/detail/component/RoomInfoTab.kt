@@ -138,7 +138,7 @@ internal fun RoomInfoTab(
  * 실패와 끝난 실패를 같은 얼굴로 보여주면 사용자는 아직 남은 기회를 모른 채 넘긴다.
  */
 @Composable
-private fun TodayVerificationCard(
+internal fun TodayVerificationCard(
     roomStatus: TodayVerificationStatus?,
     today: TodayResult?,
     onAppealClick: (() -> Unit)?,

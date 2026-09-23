@@ -17,6 +17,7 @@ import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import com.ruleup.challenge.domain.entity.CreatedChallenge
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.JoinResult
+import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallengeFilter
 import com.ruleup.challenge.domain.entity.MyChallengePage
@@ -47,6 +48,7 @@ class FakeChallengeRepository(
     private val draftError: Throwable? = null,
     private val join: ((String) -> JoinResult)? = null,
     private val setupInfo: ((String) -> ChallengeSetupInfo)? = null,
+    private val leave: ((String) -> LeaveResult)? = null,
 ) : ChallengeRepository {
     var lastCommand: CreateChallengeCommand? = null
         private set
@@ -151,7 +153,10 @@ class FakeChallengeRepository(
         return requireNotNull(myChallenges) { "getMyChallenges 를 준비하지 않았다" }(filter, cursor)
     }
 
-    override suspend fun leaveChallenge(challengeId: String) = throw NotImplementedError()
+    override suspend fun leaveChallenge(challengeId: String): LeaveResult {
+        calls += "leaveChallenge"
+        return requireNotNull(leave) { "leaveChallenge 를 준비하지 않았다" }(challengeId)
+    }
 }
 
 class RecordingSetupNotifier : SetupNotifier {

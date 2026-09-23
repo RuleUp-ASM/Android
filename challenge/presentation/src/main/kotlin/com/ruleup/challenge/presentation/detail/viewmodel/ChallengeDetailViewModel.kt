@@ -19,6 +19,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
@@ -477,7 +478,9 @@ class ChallengeDetailViewModel
                         // 오늘 인증은 솔로도 필요하다 — 수동 방 CTA 가 체크 여부로 갈린다.
                         loadTodayResult(challengeId)
                         // 방 홈은 그룹 챌린지의 ACTIVE 멤버만 — 조회 성공 시 방 홈으로 확장 렌더링.
-                        if (detail.mode.isGroup) loadRoom(challengeId)
+                        // **솔로는 방 홈을 받지 못하므로 캘린더를 직접 받는다** — loadRoom 안에만 두면
+                        // 솔로 상세에서 캘린더가 영영 조회되지 않는다(APL-08 · APL-09 · VER-01).
+                        if (detail.mode.isGroup) loadRoom(challengeId) else loadCalendar(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }
@@ -497,7 +500,7 @@ class ChallengeDetailViewModel
             // 수동 인증 화면에서 체크하고 돌아오는 동선이 있다 — 오늘 상태를 다시 읽는다.
             loadTodayResult(id)
             // 다른 화면에서 돌아왔을 때 방 홈이 옛 상태로 남지 않도록 함께 재조회한다.
-            if (currentState.room != null) loadRoom(id)
+            if (currentState.room != null) loadRoom(id) else loadCalendar(id)
         }
 
         // 비멤버/솔로의 403 등 실패는 흡수 — room 이 null 이면 기존 공개 상세 그대로 렌더링된다.
@@ -766,7 +769,15 @@ class ChallengeDetailViewModel
             }
         }
 
-        /** 탈퇴(본인, 방장 포함). 성공 시 안내 후 이전 화면으로. 실패 사유는 서버 메시지로 노출. */
+        /**
+         * 탈퇴(본인, 방장 포함). 성공 시 안내 후 **내 챌린지로 고정 이동**한다.
+         *
+         * 뒤로가기로 보내면 안 된다 — 초대 링크로 들어온 경로는 방 상세가 스택의 밑바닥이라
+         * 스택이 비어 앱이 그대로 종료되고, 초대 화면이 남아 있으면 만료된 토큰을 다시 조회해
+         * 410 을 본다(ROOM-10 · ROOM-12). 방금 나온 방으로 되돌아갈 자리는 어차피 없다.
+         *
+         * 실패 사유는 서버 메시지로 노출한다.
+         */
         private fun leaveChallenge() {
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isMemberActionLoading) return
@@ -779,7 +790,7 @@ class ChallengeDetailViewModel
                                 if (result.penaltyApplied) "탈퇴했어요. 진행 이력이 있어 탈퇴 패널티가 적용됐어요" else "챌린지에서 나갔어요",
                             ),
                         )
-                        navigationHelper.navigateToBack()
+                        navigationHelper.replaceStackWith(MyChallengesPage.toRoute())
                     }.onFailure {
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "탈퇴에 실패했어요"))
                     }

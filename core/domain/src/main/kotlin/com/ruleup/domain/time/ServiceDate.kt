@@ -1,7 +1,9 @@
 package com.ruleup.domain.time
 
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 /**
  * 서비스 기준 날짜.
@@ -14,7 +16,15 @@ import java.time.ZoneId
  * 달력이 기기 기준으로 열리는 편이 자연스럽다.
  */
 object ServiceDate {
-    private val ZONE: ZoneId = ZoneId.of("Asia/Seoul")
+    val ZONE: ZoneId = ZoneId.of("Asia/Seoul")
 
     fun today(): LocalDate = LocalDate.now(ZONE)
+
+    /**
+     * 서버가 준 ISO-8601 시각을 서비스 기준(KST)으로 옮긴다. 오프셋이 없으면 null.
+     *
+     * **오프셋을 무시하고 문자열을 자르면 안 된다** — 서버가 `Z`(UTC)로 내려주는 응답이 섞여 있어,
+     * 자르면 10:17 이 01:17 로 보이고 자정 근처에서는 날짜까지 하루 어긋난다(ROOM-01).
+     */
+    fun atZone(iso: String): ZonedDateTime? = runCatching { OffsetDateTime.parse(iso).atZoneSameInstant(ZONE) }.getOrNull()
 }
