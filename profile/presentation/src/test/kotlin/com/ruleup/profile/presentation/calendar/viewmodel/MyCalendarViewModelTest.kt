@@ -41,7 +41,7 @@ class MyCalendarViewModelTest {
         runTest {
             val viewModel = viewModel(repo())
 
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
 
             assertEquals(thisMonth, viewModel.uiState.value.month)
             assertEquals(LocalDate.now().toString(), viewModel.uiState.value.selectedDate)
@@ -52,11 +52,11 @@ class MyCalendarViewModelTest {
         runTest {
             val repo = repo()
             val viewModel = viewModel(repo)
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
             viewModel.onIntent(MyCalendarIntent.ChangeMonth(-1))
             val before = repo.calendarMonths.size
 
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
 
             assertEquals(lastMonth, viewModel.uiState.value.month)
             assertEquals(before, repo.calendarMonths.size)
@@ -67,7 +67,7 @@ class MyCalendarViewModelTest {
         runTest {
             val repo = repo()
             val viewModel = viewModel(repo)
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
 
             viewModel.onIntent(MyCalendarIntent.ChangeMonth(-1))
 
@@ -81,7 +81,7 @@ class MyCalendarViewModelTest {
             // 지난 달 기록은 더 바뀌지 않는다 — 오갈 때마다 왕복하면 낭비다.
             val repo = repo()
             val viewModel = viewModel(repo)
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
             viewModel.onIntent(MyCalendarIntent.ChangeMonth(-1))
             viewModel.onIntent(MyCalendarIntent.ChangeMonth(1))
 
@@ -96,7 +96,7 @@ class MyCalendarViewModelTest {
             // 인증이 확정될 때마다 바뀐다. 캐시하면 방금 성공한 인증이 캘린더에 안 나타난다.
             val repo = repo()
             val viewModel = viewModel(repo)
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
             viewModel.onIntent(MyCalendarIntent.ChangeMonth(-1))
 
             viewModel.onIntent(MyCalendarIntent.ChangeMonth(1))
@@ -109,7 +109,7 @@ class MyCalendarViewModelTest {
         runTest {
             val viewModel = viewModel(FakeMyPageRepository(calendar = { throw IllegalStateException("캘린더 오류") }))
 
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
 
             assertEquals("캘린더 오류", viewModel.uiState.value.errorMessage)
         }
@@ -120,7 +120,7 @@ class MyCalendarViewModelTest {
             // 응답에 없는 날짜는 애초에 할 일이 없던 날이다. 물어봐야 빈 답이 온다.
             val repo = repo()
             val viewModel = viewModel(repo)
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
             val before = repo.calls.count { it == "getCalendarDay" }
 
             viewModel.onIntent(MyCalendarIntent.SelectDate("$thisMonth-28"))
@@ -135,7 +135,7 @@ class MyCalendarViewModelTest {
             val target = "$thisMonth-01"
             val repo = repo(days = listOf(day(target)))
             val viewModel = viewModel(repo)
-            viewModel.onIntent(MyCalendarIntent.Load)
+            viewModel.onIntent(MyCalendarIntent.Load())
 
             viewModel.onIntent(MyCalendarIntent.SelectDate(target))
 

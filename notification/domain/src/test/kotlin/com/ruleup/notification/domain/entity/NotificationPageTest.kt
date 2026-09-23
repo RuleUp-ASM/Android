@@ -128,8 +128,8 @@ class NotificationTypeTest {
     @Test
     fun `제재 고지는 계정 그룹이라 계정 토글로 꺼진다`() {
         // "끌 수 없는 푸시는 없다" — 고지 의무는 알림 센터 적재로 충족된다(테크 스펙 4).
-        assertEquals(NotificationGroup.ACCOUNT, NotificationType.KICK_CONFIRMED.group)
-        assertEquals(NotificationGroup.ACCOUNT, NotificationType.ACCOUNT_LOCK_CHANGED.group)
+        assertEquals(NotificationGroup.ACCOUNT, NotificationType.CHALLENGE_KICKED.group)
+        assertEquals(NotificationGroup.ACCOUNT, NotificationType.ACCOUNT_SANCTION.group)
     }
 
     @Test

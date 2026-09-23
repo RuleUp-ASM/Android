@@ -18,11 +18,26 @@ data object MyTierHistoryPage : Page {
     const val PATH = AppRoutes.MY_TIER_HISTORY
 }
 
-/** 활동 캘린더 페이지 (마이 홈 메뉴 → 월 단위 일자별 상태). */
-data object MyCalendarPage : Page {
-    override fun toRoute(): NavRoute = NavRoute(PATH)
+/**
+ * 활동 캘린더 페이지 (마이 홈 메뉴 → 월 단위 일자별 상태).
+ *
+ * 실패 예정 알림(`ruleup://me/calendar/{date}`)이 그 날짜로 바로 들어온다. 인자가 없으면 당월·오늘이다.
+ */
+data class MyCalendarPage(
+    val date: String? = null,
+) : Page {
+    override fun toRoute(): NavRoute =
+        NavRoute(
+            PATH,
+            buildMap { date?.let { put(ARG_DATE, it) } },
+        )
 
-    const val PATH = AppRoutes.MY_CALENDAR
+    companion object {
+        const val PATH = AppRoutes.MY_CALENDAR
+
+        /** YYYY-MM-DD. */
+        const val ARG_DATE = "date"
+    }
 }
 
 /** 이의 내역 페이지 (마이 홈 메뉴 → 내가 낸 이의). */

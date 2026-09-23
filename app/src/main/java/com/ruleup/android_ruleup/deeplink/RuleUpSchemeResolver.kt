@@ -7,6 +7,8 @@ import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.profile.domain.navigation.MyCalendarPage
+import com.ruleup.support.domain.navigation.InquiryDetailPage
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,7 +34,7 @@ class RuleUpSchemeResolver
             // ruleup://challenge/{id} 의 host 가 "challenge", pathSegments 가 나머지다.
             val head = uri.host ?: return null
             val rest = uri.pathSegments.orEmpty()
-            val route = route(head, rest, uri) ?: return null
+            val route = route(head, rest) ?: return null
             // 등록되지 않은 경로로 보내면 빈 화면이 뜬다 — 레지스트리에 있는 것만 통과시킨다.
             return route.takeIf { appRouteByPath[it.path] != null }
         }
@@ -40,7 +42,6 @@ class RuleUpSchemeResolver
         private fun route(
             head: String,
             rest: List<String>,
-            uri: Uri,
         ): NavRoute? =
             when (head) {
                 "home" -> NavRoute(AppRoutes.HOME)
@@ -64,7 +65,11 @@ class RuleUpSchemeResolver
                 "terms" -> NavRoute(AppRoutes.MY_AGREEMENTS)
 
                 // 서버는 두 표기를 섞어 보낸다 — 이의 결과(APPEAL_RESULT)는 `ruleup://me/appeals` 다.
-                "mypage", "me" -> myPageRoute(rest.firstOrNull() ?: uri.path?.trim('/'))
+                "mypage", "me" -> myPageRoute(rest)
+
+                // 감시 실패 통지(`ruleup://watching/notices/{id}`). 통지 1건짜리 화면이 없어
+                // 감시 관계 목록으로 보낸다 — 어느 관계에서 온 통지인지는 목록에서 읽힌다.
+                "watching" -> NavRoute(AppRoutes.MY_WATCHING)
 
                 // 모더레이션 거부(MODERATION_REJECTED) 알림이 쓰는 경로다.
                 "profile" -> NavRoute(AppRoutes.MY_PROFILE_EDIT).takeIf { rest.firstOrNull() == "edit" }
@@ -82,12 +87,27 @@ class RuleUpSchemeResolver
             }
         }
 
-        private fun myPageRoute(section: String?): NavRoute? =
-            when (section) {
+        private fun myPageRoute(rest: List<String>): NavRoute? =
+            when (rest.firstOrNull()) {
                 "tier" -> NavRoute(AppRoutes.MY_TIER)
                 "appeals" -> NavRoute(AppRoutes.MY_APPEALS)
                 "account", "security" -> NavRoute(AppRoutes.MY_SETTINGS)
                 "nickname", "profile" -> NavRoute(AppRoutes.MY_PROFILE_EDIT)
+
+                // 자동 제재 통지(CHALLENGE_KICKED)가 여는 제재 이력이다.
+                "sanctions" -> NavRoute(AppRoutes.MY_SANCTIONS)
+
+                // 실패 예정 알림은 날짜를 달고 온다 — 그 일자를 펴야 이의 진입점이 보인다.
+                // 날짜가 없으면 캘린더가 오늘을 연다.
+                "calendar" -> MyCalendarPage(rest.getOrNull(1)).toRoute()
+
+                // 문의 답변 통지. id 가 없으면 상세를 못 여니 내역 목록으로 보낸다.
+                "inquiries" ->
+                    rest
+                        .getOrNull(1)
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { InquiryDetailPage(it).toRoute() }
+                        ?: NavRoute(AppRoutes.MY_INQUIRIES)
 
                 // 부정행위 검출 이력 전용 화면이 아직 없다. 검출은 자동 제재(CHALLENGE_KICK)로
                 // 제재 이력에 남으므로 그리로 보낸다 — 탭이 아무 일도 안 하는 것보다 낫다.

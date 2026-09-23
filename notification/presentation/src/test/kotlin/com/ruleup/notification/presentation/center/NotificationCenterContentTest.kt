@@ -68,7 +68,7 @@ class NotificationCenterContentTest {
         show(
             NotificationCenterState.initial.copy(
                 isLoading = false,
-                items = listOf(notification(type = NotificationType.KICK_CONFIRMED, title = "강퇴됐어요")),
+                items = listOf(notification(type = NotificationType.CHALLENGE_KICKED, title = "강퇴됐어요")),
             ),
         )
 

@@ -212,7 +212,7 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = MyCalendarPage.PATH,
-            render = { MyCalendarScreen() },
+            render = { args -> MyCalendarScreen(date = args[MyCalendarPage.ARG_DATE]) },
         ),
         AppRoute(
             path = MyStatsPage.PATH,

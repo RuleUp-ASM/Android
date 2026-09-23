@@ -67,12 +67,13 @@ private val SaturdayBlue = Color(0xFF3B82F6)
 @Composable
 fun MyCalendarScreen(
     modifier: Modifier = Modifier,
+    date: String? = null,
     viewModel: MyCalendarViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.onIntent(MyCalendarIntent.Load)
+        viewModel.onIntent(MyCalendarIntent.Load(date))
     }
 
     MyCalendarContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)

@@ -41,7 +41,7 @@ class MyHomeViewModel
                 MyHomeIntent.Refresh -> load(force = true)
                 MyHomeIntent.OpenProfileEdit -> navigationHelper.navigateByRoute(ProfileEditPage.toRoute())
                 MyHomeIntent.OpenTier -> navigationHelper.navigateByRoute(MyTierPage.toRoute())
-                MyHomeIntent.OpenCalendar -> navigationHelper.navigateByRoute(MyCalendarPage.toRoute())
+                MyHomeIntent.OpenCalendar -> navigationHelper.navigateByRoute(MyCalendarPage().toRoute())
                 MyHomeIntent.OpenAppeals -> navigationHelper.navigateByRoute(MyAppealsPage.toRoute())
                 MyHomeIntent.OpenRanking -> pickChallenge(ChallengePickerTarget.RANKING)
                 MyHomeIntent.OpenWatchers -> pickChallenge(ChallengePickerTarget.WATCHERS)
