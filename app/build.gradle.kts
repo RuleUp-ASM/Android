@@ -108,6 +108,9 @@ android {
         release {
             // 자격 증명이 없으면 null — 서명이 빠질 뿐 빌드는 통과한다(위 경고 참고).
             signingConfig = signingConfigs.findByName("release")
+            // 릴리즈는 운영 서버로 고정한다 — local.properties 를 따르면 개발자의 staging 값이 그대로 배포된다.
+            // 경로 끝의 /api 가 빠지면 전 엔드포인트가 401 LOGIN_REQUIRED 로 막힌다.
+            buildConfigField("String", "BASE_URL", "\"https://prod.ruleup.co.kr/api\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
