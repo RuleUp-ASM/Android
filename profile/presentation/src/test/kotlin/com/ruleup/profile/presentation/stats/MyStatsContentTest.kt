@@ -2,8 +2,6 @@ package com.ruleup.profile.presentation.stats
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import com.ruleup.profile.domain.entity.CycleResult
-import com.ruleup.profile.domain.entity.CycleWeek
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.domain.entity.StatsStreak
 import com.ruleup.profile.presentation.renderScreen
@@ -52,10 +50,11 @@ class MyStatsContentTest {
     }
 
     @Test
-    fun `지나간 주가 없으면 빈 그리드 대신 그 사실을 말한다`() {
-        render(MyStatsState.initial.copy(isLoading = false, report = report(cycles = emptyList())))
+    fun `폐기된 최근 12주 영역을 그리지 않는다`() {
+        // 서버가 값을 내려주지 않아, 자리만 남으면 빈 영역이 계속 노출된다(MY-07).
+        render(MyStatsState.initial.copy(isLoading = false, report = report()))
 
-        compose.onNodeWithText("아직 지나간 주가 없어요").assertExists()
+        compose.onNodeWithText("최근 12주").assertDoesNotExist()
     }
 
     @Test
@@ -67,17 +66,13 @@ class MyStatsContentTest {
         compose.onNodeWithText("최고 연속").assertExists()
     }
 
-    private fun report(
-        successRate: Double? = 0.87,
-        cycles: List<CycleWeek> = listOf(CycleWeek(week = "2026-W27", result = CycleResult.SUCCESS)),
-    ) = StatsReport(
-        successRate = successRate,
-        totalSuccessCount = 142,
-        streak = StatsStreak(current = 6, best = 21),
-        cycles12w = cycles,
-        completedCount = 24,
-        weeklyScoreDelta = 5,
-    )
+    private fun report(successRate: Double? = 0.87) =
+        StatsReport(
+            successRate = successRate,
+            totalSuccessCount = 142,
+            streak = StatsStreak(current = 6, best = 21),
+            completedCount = 24,
+        )
 
     private fun render(
         state: MyStatsState,

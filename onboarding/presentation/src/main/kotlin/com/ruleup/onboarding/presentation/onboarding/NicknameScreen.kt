@@ -177,7 +177,9 @@ private fun NicknameField(
         ) {
             BasicTextField(
                 value = nickname,
-                onValueChange = onNickNameChange,
+                // 상한을 넘겨 계속 쳐지면 카운터가 "13 / 12" 를 띄운 채 사용자가 어디를 지워야
+                // 하는지 알기 어렵다. 범위 상수는 domain 이 갖고 차단만 여기서 한다.
+                onValueChange = { onNickNameChange(it.take(maxLength)) },
                 singleLine = true,
                 textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),
                 cursorBrush = SolidColor(RuleUpTheme.colors.brand),

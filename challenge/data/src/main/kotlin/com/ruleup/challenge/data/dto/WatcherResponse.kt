@@ -97,7 +97,9 @@ data class WatcherResponse(
 
 internal fun WatcherResponse.toDomain(): Watcher =
     Watcher(
-        watcherId = watcherId.requireField("watcherId"),
+        // 미수락 초대는 관계가 아직 없어 id 가 비어 온다. 필수로 읽으면 그 한 건 때문에
+        // 목록 전체가 예외로 날아간다(WAT-08).
+        watcherId = watcherId,
         type = WatcherType.fromValue(type) ?: WatcherType.USER,
         channel = WatcherChannel.fromValue(channel),
         status = WatcherStatus.fromValue(status) ?: WatcherStatus.INVITED,
@@ -147,7 +149,8 @@ internal fun WatchersResponse.toDomain(): ChallengeWatchers =
     ChallengeWatchers(
         // 구독 중이면 한도가 없다 — freeLimit 이 와도 무제한으로 본다.
         limit = if (slots?.subscribed == true) null else slots?.freeLimit ?: limit,
-        watchers = (watchers ?: items).orEmpty().map { it.toDomain() },
+        // 한 행이 망가져도 나머지는 세운다 — 목록 전체를 잃는 것보다 한 줄이 비는 편이 낫다.
+        watchers = (watchers ?: items).orEmpty().mapNotNull { runCatching { it.toDomain() }.getOrNull() },
     )
 
 // 초대 링크 진입(GET /watchers/invitations/{token})과 수락은 웹 동의 페이지가 담당한다 — 앱 DTO 없음.
@@ -159,6 +162,10 @@ data class WatchingItemResponse(
     val watcherId: String? = null,
     @SerialName("challengeTitle")
     val challengeTitle: String? = null,
+    // 서버가 내리는 현행 이름. 구 `ownerNickname` 은 전환기 대비로 함께 받는다 — 한쪽만 읽어
+    // 이름이 통째로 비어 있었다(WAT-12).
+    @SerialName("targetNickname")
+    val targetNickname: String? = null,
     @SerialName("ownerNickname")
     val ownerNickname: String? = null,
     // CONSENTED / ACTIVE / REVOKED
@@ -166,6 +173,8 @@ data class WatchingItemResponse(
     val status: String? = null,
     @SerialName("pushEnabled")
     val pushEnabled: Boolean? = null,
+    @SerialName("acceptedAt")
+    val acceptedAt: String? = null,
     @SerialName("consentAt")
     val consentAt: String? = null,
 )
@@ -184,11 +193,11 @@ internal fun WatchingItemResponse.toDomain(): Watching? {
     return Watching(
         watcherId = id,
         challengeTitle = challengeTitle.orEmpty(),
-        ownerNickname = ownerNickname.orEmpty(),
+        ownerNickname = (targetNickname ?: ownerNickname).orEmpty(),
         status = WatcherStatus.fromValue(status),
         // 모르면 켜져 있다고 본다 — 꺼진 것처럼 그렸다가 알림이 오면 설정이 거짓말한 게 된다.
         pushEnabled = pushEnabled ?: true,
-        consentAt = consentAt,
+        consentAt = acceptedAt ?: consentAt,
     )
 }
 

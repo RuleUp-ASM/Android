@@ -167,6 +167,10 @@ class OnboardingViewModel
         private suspend fun checkNickname(name: String) {
             runCatching { profileRepository.checkNickname(name) }
                 .onSuccess { check ->
+                    // 확인을 보낸 뒤 입력이 바뀌었으면 버린다. 디바운스가 걸린 사이에 특수문자를
+                    // 덧붙이면, 앞 글자에 대한 "사용 가능" 응답이 뒤늦게 도착해 **오류가 떠 있는데도
+                    // 다음 버튼이 열린다**(ONB-03).
+                    if (currentState.nickname != name) return@onSuccess
                     bizLogger.record(
                         OnboardingEvents.nicknameCheck(
                             valid = check.valid,
@@ -181,6 +185,7 @@ class OnboardingViewModel
                         ),
                     )
                 }.onFailure {
+                    if (currentState.nickname != name) return@onFailure
                     // 확인 실패는 "쓸 수 없음"이 아니다. 통과로 두면 제출에서 튕기므로 미확인으로 남긴다.
                     dispatch(
                         OnboardingReducerEvent.NicknameChecked(

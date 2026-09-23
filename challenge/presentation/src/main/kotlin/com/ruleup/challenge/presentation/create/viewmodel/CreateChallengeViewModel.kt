@@ -13,6 +13,7 @@ import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.challenge.domain.entity.durationMinutes
 import com.ruleup.challenge.domain.entity.toEntries
 import com.ruleup.challenge.domain.logging.ChallengeEvents
 import com.ruleup.challenge.domain.logging.CreateEntry
@@ -526,6 +527,9 @@ class CreateChallengeViewModel
                 checkConsentThenCreate(verification.method)
                 return
             }
+            // 통과 표시는 여기서 **소비한다.** 남겨 두면 마이에서 동의를 철회한 뒤에도 같은 세션의
+            // 다음 생성이 시트 없이 통과해, 앱을 껐다 켜야 동의를 다시 묻는다(ONB-14).
+            consentChecked = false
 
             val command =
                 CreateChallengeCommand(
@@ -591,6 +595,7 @@ class CreateChallengeViewModel
             }
         }
 
+        /** 이번 생성 시도가 동의 확인을 통과했는지. **한 번 쓰고 끄는 값이다** — 위 주석 참고. */
         private var consentChecked = false
         private var lastCreated: CreatedChallenge? = null
 
@@ -641,7 +646,14 @@ class CreateChallengeViewModel
                         navigationHelper.navigateByRoute(
                             NavRoute(
                                 AppRoutes.VERIFICATION_LOCATION,
-                                mapOf("challengeId" to id, "defaultRadiusM" to "500.0", "dwellMinutes" to "60", "targetPackages" to ""),
+                                mapOf(
+                                    "challengeId" to id,
+                                    "defaultRadiusM" to "500.0",
+                                    // 목표 체류 시간이 곧 OS 지오펜스의 loiteringDelay 다. 고정값을
+                                    // 등록하면 30분 방이 60분을 기다려 신호가 안 올라온다(SETUP-04).
+                                    "dwellMinutes" to (currentState.params.durationMinutes() ?: DEFAULT_DWELL_MINUTES).toString(),
+                                    "targetPackages" to "",
+                                ),
                             ),
                         )
                     else -> Unit
@@ -681,6 +693,14 @@ class CreateChallengeViewModel
     }
 
 private const val KEY_ROUTINE_DESCRIPTION = "routineDescription"
+
+/**
+ * 목표값에 체류 시간이 없을 때의 지오펜스 대기(분).
+ *
+ * 장소 루틴이면 서버가 `duration_min` 을 반드시 내려주므로 여기까지 오지 않는다. 그래도 0 으로
+ * 두면 스쳐 지나가는 것까지 DWELL 로 잡히므로 보수적인 값을 남겨 둔다.
+ */
+private const val DEFAULT_DWELL_MINUTES = 60
 
 private val VerificationMethod.needsTargetApps: Boolean
     get() = this == VerificationMethod.SCREEN_TIME_MAX || this == VerificationMethod.SCREEN_TIME_MIN

@@ -98,7 +98,7 @@ fun ChallengeConfirmContent(
         ) {
             RuleUpPrimaryButton(
                 text = if (state.isCreating) "만드는 중…" else "이대로 만들기",
-                enabled = state.hasDraft && !state.isCreating,
+                enabled = state.hasDraft && state.paramsInRange && !state.isCreating,
                 onClick = { onIntent(CreateChallengeIntent.Create) },
             )
         }
@@ -334,7 +334,7 @@ private fun CreateChallengeState.verificationLabel(): String =
 
 private fun CreateChallengeState.modeSummary(): String =
     if (mode.isGroup) {
-        val visibilityLabel = if (visibility?.isPrivate == true) "비공개" else "그룹"
+        val visibilityLabel = if (visibility?.isPrivate == true) "비공개" else "공개"
         val tierLabel = minTier?.let { "티어 ${it.label()} 이상" } ?: "티어 제한 없음"
         "$visibilityLabel · 정원 ${capacityLabel(capacity)} · $tierLabel"
     } else {

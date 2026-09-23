@@ -47,9 +47,18 @@ import com.ruleup.ui.helper.LocalMessageHelper
  * 서버가 받지 않는 칸을 두면 사용자는 쓴 글이 검토에 쓰인다고 믿는다.
  */
 @Composable
-fun ReportScreen(viewModel: ReportViewModel = hiltViewModel()) {
+fun ReportScreen(
+    targetName: String,
+    userId: String? = null,
+    challengeId: String? = null,
+    viewModel: ReportViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val messageHelper = LocalMessageHelper.current
+
+    LaunchedEffect(userId, challengeId) {
+        viewModel.onIntent(ReportIntent.Init(userId = userId, challengeId = challengeId, targetName = targetName))
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -284,7 +293,7 @@ private fun HiddenEffect.doneMessage(): String =
 private fun ReportPreview() {
     RuleUpTheme {
         ReportContent(
-            state = ReportState.initial(targetName = "지현", reasons = ReportReason.forUser),
+            state = ReportState.initial.copy(targetName = "지현", reasons = ReportReason.forUser),
             onIntent = {},
         )
     }

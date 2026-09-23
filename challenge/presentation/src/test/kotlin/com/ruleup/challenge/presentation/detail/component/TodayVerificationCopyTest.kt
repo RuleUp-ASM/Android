@@ -5,6 +5,7 @@ import com.ruleup.verification.domain.entity.PendingReason
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import com.ruleup.verification.domain.entity.VerificationStreak
+import com.ruleup.verification.domain.entity.failureText
 import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -70,14 +70,14 @@ class AccountContractAcceptanceTest {
     @Test
     fun `티어 히스토리는 표본이 없어도 보관 안내를 준다`() =
         runBlocking<Unit> {
-            // 갓 만든 계정이라 best·monthly 는 비어 있는 게 정상이다 — 없는 값을 지어내지 않는지 본다.
+            // 갓 만든 계정이라 best·points 는 비어 있는 게 정상이다 — 없는 값을 지어내지 않는지 본다.
             val history = myPage.getTierHistory()
 
-            assertTrue(history.monthly.isEmpty(), "새 계정인데 월말 기록이 있다")
+            assertTrue(history.points.isEmpty(), "새 계정인데 점수 변동 기록이 있다")
         }
 
     @Test
-    fun `통계는 지표 5종 고정 계약으로 온다`() =
+    fun `통계는 지표 4종 고정 계약으로 온다`() =
         runBlocking<Unit> {
             // period 를 요구하던 구 계약이면 400 이 나거나 필드가 통째로 다르다.
             val stats = myPage.getStats()

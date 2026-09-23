@@ -1,8 +1,10 @@
 package com.ruleup.onboarding.presentation.intro.viewmodel
 
+import com.ruleup.domain.entity.user.AccountRestriction
 import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.domain.navigation.Page
 import com.ruleup.domain.navigation.PendingDeepLink
@@ -10,6 +12,7 @@ import com.ruleup.domain.test.RecordingMessageHelper
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.onboarding.domain.account.AccountRestrictionProvider
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
@@ -82,9 +85,9 @@ class LoginViewModelTest {
         }
 
     @Test
-    fun `잠긴 계정도 홈은 열되 잠금 사유를 알려 준다`() =
+    fun `기능만 정지된 계정은 홈을 열되 무엇이 막혔는지 알려 준다`() =
         runTest {
-            // 열람은 되므로 막지 않는다. 다만 왜 편집이 안 되는지 모르면 고장으로 읽힌다.
+            // 열람은 되므로 막지 않는다. 다만 왜 신고가 안 되는지 모르면 고장으로 읽힌다.
             val nav = RecordingNavigationHelper()
             val messages = RecordingMessageHelper()
             val viewModel =
@@ -92,18 +95,48 @@ class LoginViewModelTest {
                     FakeAuthRepository().apply {
                         exchangeResult =
                             OAuthResult.ExistingUser(
-                                AuthSession(token, testUser(accountStatus = AccountStatus.LOCKED)),
+                                AuthSession(token, testUser(accountStatus = AccountStatus.SUSPENDED)),
                                 restored = false,
                             )
                     },
                     nav = nav,
                     messages = messages,
+                    restriction = AccountRestriction.Feature("REPORT"),
                 )
 
             viewModel.onIntent(LoginIntent.AuthorizationReceived(authorization))
 
             assertEquals(listOf<Page>(HomePage), nav.pages)
-            assertTrue(messages.allMessages.single().contains("잠겨"))
+            assertTrue(messages.allMessages.single().contains("신고"))
+        }
+
+    @Test
+    fun `잠긴 계정은 재로그인해도 잠금 화면으로 간다`() =
+        runTest {
+            // 자동 로그인만 막고 여기를 열어 두면 로그아웃 후 재로그인이 잠금을 통째로 우회한다(AUTH-13).
+            val nav = RecordingNavigationHelper()
+            val viewModel =
+                viewModel(
+                    FakeAuthRepository().apply {
+                        exchangeResult =
+                            OAuthResult.ExistingUser(
+                                AuthSession(token, testUser(accountStatus = AccountStatus.SUSPENDED)),
+                                restored = false,
+                            )
+                    },
+                    nav = nav,
+                    restriction = AccountRestriction.Locked,
+                )
+
+            viewModel.onIntent(LoginIntent.AuthorizationReceived(authorization))
+
+            assertEquals(
+                AppRoutes.ACCOUNT_LOCKED,
+                nav.pages
+                    .single()
+                    .toRoute()
+                    .path,
+            )
         }
 
     @Test
@@ -198,6 +231,7 @@ class LoginViewModelTest {
         signupSession: SignupSession = SignupSession(),
         tokens: FakeTokenRepository = FakeTokenRepository(),
         pendingDeepLink: PendingDeepLink = PendingDeepLink(),
+        restriction: AccountRestriction = AccountRestriction.None,
     ) = LoginViewModel(
         socialLoginUseCase = SocialLoginUseCase(auth, FakeDeviceIdentityRepository(), tokens, testObservability()),
         navigationHelper = nav,
@@ -208,5 +242,6 @@ class LoginViewModelTest {
         tokenRepository = tokens,
         signupSession = signupSession,
         pendingDeepLink = pendingDeepLink,
+        accountRestrictionProvider = AccountRestrictionProvider { restriction },
     )
 }

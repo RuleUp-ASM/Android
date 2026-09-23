@@ -8,8 +8,14 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface MyCalendarIntent : MviIntent {
-    /** 화면 진입 — 당월 조회 + 오늘 선택. */
-    data object Load : MyCalendarIntent
+    /**
+     * 화면 진입 — 당월 조회 + 오늘 선택.
+     *
+     * [date] 가 있으면 그 날짜가 든 달을 열고 그 일자를 고른다(실패 예정 알림 딥링크).
+     */
+    data class Load(
+        val date: String? = null,
+    ) : MyCalendarIntent
 
     /** 월 이동 (delta = ±1). */
     data class ChangeMonth(

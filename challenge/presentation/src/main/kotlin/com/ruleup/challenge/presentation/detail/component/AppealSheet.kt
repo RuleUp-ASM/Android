@@ -28,6 +28,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.AppealPolicy
 import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.TodayResult
+import com.ruleup.verification.domain.entity.failureText
 
 /**
  * 이의 대상 한 건. 시트가 실제로 쓰는 것만 담는다.

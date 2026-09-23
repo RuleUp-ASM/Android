@@ -20,11 +20,14 @@ sealed interface LoginOutcome {
     ) : LoginOutcome
 
     /**
-     * 열람 전용 홈. 계정이 잠겼지만 로그인 자체는 허용된다.
+     * 제한이 걸린 계정. 로그인 자체는 허용되지만 **어디까지 막혔는지는 여기서 알 수 없다.**
      *
-     * @property lockInfo 사유와 해제 시각. 안내 문구에 쓴다.
+     * 로그인 응답의 상태값은 정지 종류를 구분하지 않으므로(`SUSPENDED` 하나), 화면이
+     * `AccountRestrictionProvider` 에 한 번 더 물어 전체 잠금과 기능 정지를 가른다.
+     *
+     * @property lockInfo 사유와 해제 시각. 응답에 있으면 안내 문구에 쓴다.
      */
-    data class GoHomeReadOnly(
+    data class Restricted(
         val lockInfo: LockInfo?,
     ) : LoginOutcome
 

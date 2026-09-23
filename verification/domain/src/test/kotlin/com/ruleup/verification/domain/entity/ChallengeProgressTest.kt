@@ -37,9 +37,29 @@ class ChallengeProgressTest {
         assertFalse(progress(lastSyncedAt = "언젠가").signalStale(now))
     }
 
+    @Test
+    fun `오늘 판정이 끝난 방은 신호를 더 기다리지 않는다`() {
+        // 완료한 방에 "신호가 오지 않아요" 를 띄우면 사용자가 성공을 의심하게 된다(VER-10).
+        val stale = "2026-09-18T09:30:00Z"
+
+        assertFalse(progress(lastSyncedAt = stale, todayStatus = TodayStatus.DONE).signalStale(now))
+        assertFalse(progress(lastSyncedAt = stale, todayStatus = TodayStatus.FAILED).signalStale(now))
+        assertFalse(progress(lastSyncedAt = stale, todayStatus = TodayStatus.NOT_TARGET).signalStale(now))
+    }
+
+    @Test
+    fun `실패 예정인 방은 아직 뒤집을 수 있어 경고한다`() {
+        // 경고가 가장 쓸모 있는 상태다 — 지금 권한을 고치면 오늘 판정이 바뀐다.
+        assertTrue(
+            progress(lastSyncedAt = "2026-09-18T09:30:00Z", todayStatus = TodayStatus.FAIL_EXPECTED)
+                .signalStale(now),
+        )
+    }
+
     private fun progress(
         lastSyncedAt: String?,
         todayTarget: Boolean = true,
+        todayStatus: TodayStatus? = null,
     ) = ChallengeProgress(
         challengeId = "c_1",
         title = "매일 걷기",
@@ -51,7 +71,7 @@ class ChallengeProgressTest {
         targetDays = 10,
         remainingDays = 5,
         todayTarget = todayTarget,
-        todayStatus = null,
+        todayStatus = todayStatus,
         lastSyncedAt = lastSyncedAt,
     )
 }

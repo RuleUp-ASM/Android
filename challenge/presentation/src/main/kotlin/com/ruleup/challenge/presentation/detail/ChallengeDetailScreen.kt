@@ -76,8 +76,10 @@ import com.ruleup.challenge.presentation.detail.component.RoomMuteSection
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
 import com.ruleup.challenge.presentation.detail.component.RoomTabRow
 import com.ruleup.challenge.presentation.detail.component.SoloMonthCalendar
+import com.ruleup.challenge.presentation.detail.component.TodayVerificationCard
 import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
 import com.ruleup.challenge.presentation.detail.component.WatcherSection
+import com.ruleup.challenge.presentation.detail.component.toAppealTarget
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
@@ -105,6 +107,7 @@ import com.ruleup.ui.permission.healthReadPermissions
 import com.ruleup.ui.permission.rememberHealthPermissionLauncher
 import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
+import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -305,6 +308,12 @@ internal fun ChallengeDetailContent(
     ) {
         val detail = state.detail
         val room = state.room
+        // 솔로 상세의 이의 시트. 방 홈이 없는 갈래라 RoomDetailTabs 의 시트를 쓸 수 없다.
+        var soloAppeal by remember { mutableStateOf<SoloAppeal?>(null) }
+        val soloAppealImagePicker =
+            rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
+            }
         Column(
             modifier =
                 Modifier
@@ -389,7 +398,14 @@ internal fun ChallengeDetailContent(
                         onConfirmLeave = { confirmAction = MemberConfirm.LEAVE },
                     )
 
-                else -> PublicDetailBody(state = state, detail = detail, onIntent = onIntent)
+                else ->
+                    PublicDetailBody(
+                        state = state,
+                        detail = detail,
+                        onIntent = onIntent,
+                        onOpenTodayAppeal = { soloAppeal = SoloAppeal.Today },
+                        onOpenDayAppeal = { day -> soloAppeal = SoloAppeal.Day(day) },
+                    )
             }
         }
 
@@ -432,6 +448,35 @@ internal fun ChallengeDetailContent(
                         onClick = onCta,
                     )
                 }
+            }
+        }
+
+        soloAppeal?.let { pending ->
+            val target = pending.target(state.todayResult)
+            // 낼 대상(verificationId)이 없으면 시트를 열지 않는다 — 열어도 보낼 곳이 없다.
+            if (target == null) {
+                soloAppeal = null
+            } else {
+                AppealSheet(
+                    target = target,
+                    submitting = state.isSubmittingAppeal,
+                    imageUrl = state.appealImageUrl,
+                    uploadingImage = state.isUploadingAppealImage,
+                    reasonError = state.appealReasonError,
+                    onPickImage = {
+                        soloAppealImagePicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                        )
+                    },
+                    onSubmit = { reason ->
+                        soloAppeal = null
+                        onIntent(ChallengeDetailIntent.SubmitAppeal(target.verificationId, reason))
+                    },
+                    onDismiss = {
+                        soloAppeal = null
+                        onIntent(ChallengeDetailIntent.DismissAppeal)
+                    },
+                )
             }
         }
 
@@ -690,6 +735,29 @@ private fun RoomDetailTabs(
     }
 }
 
+/**
+ * 솔로 상세에서 연 이의 시트의 대상.
+ *
+ * 오늘 건은 사유·기한이 실려 오지만 캘린더의 지난 건은 날짜와 인증 건 ID 뿐이다. 없는 값을
+ * 지어내지 않고 그 줄을 빼는 것이 계약이라 두 갈래를 타입으로 나눈다.
+ */
+private sealed interface SoloAppeal {
+    data object Today : SoloAppeal
+
+    data class Day(
+        val day: ChallengeCalendarDay,
+    ) : SoloAppeal
+
+    fun target(today: TodayResult?): AppealTarget? =
+        when (this) {
+            Today -> today?.toAppealTarget()
+            is Day ->
+                day.verificationId?.let {
+                    AppealTarget(verificationId = it, date = day.date, failureReason = null, eligibleUntil = null)
+                }
+        }
+}
+
 /** 공지는 제품에서 빠져 진입점을 두지 않는다 — 화면도 라우트도 남아 있지 않다. */
 private fun roomMenuItems(
     myRole: MemberRole,
@@ -742,6 +810,8 @@ private fun PublicDetailBody(
     state: ChallengeDetailState,
     detail: ChallengeDetail,
     onIntent: (ChallengeDetailIntent) -> Unit,
+    onOpenTodayAppeal: () -> Unit = {},
+    onOpenDayAppeal: (ChallengeCalendarDay) -> Unit = {},
 ) {
     Column(
         modifier =
@@ -754,8 +824,24 @@ private fun PublicDetailBody(
     ) {
         DetailHero(detail)
         DetailInfoCard(detail)
-        // 솔로 방은 방 홈이 없어 여기 두지 않으면 대상 앱·인증 장소를 등록할 곳이 없다.
+        // 솔로 방은 방 홈(`/room`)이 내려오지 않아 방 정보 탭 전체가 없다. 멤버에게 필요한 것은
+        // 여기서 직접 편다 — 없으면 오늘 결과도, 실패 사유도, 이의 진입점도 화면에 아예 없다
+        // (APL-08 · APL-09 · VER-01).
         if (detail.myRole.isMember) {
+            TodayVerificationCard(
+                // 솔로는 room 이 없어 오늘 상태의 원천이 인증 모듈 응답 하나뿐이다.
+                roomStatus = null,
+                today = state.todayResult,
+                onOpenManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
+                onRegisterAnchor =
+                    { onIntent(ChallengeDetailIntent.RegisterAnchor) }
+                        .takeIf { state.setup?.requiresAnchors == true },
+                onOpenPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
+                // 이의는 서버가 낼 수 있다고 한 건에만, 대상 인증 건 ID 를 알 때만 낸다.
+                onAppealClick =
+                    { onOpenTodayAppeal() }
+                        .takeIf { state.todayResult?.appeal?.eligible == true && state.todayResult.verificationId != null },
+            )
             MySetupCard(
                 onRegisterApps = { onIntent(ChallengeDetailIntent.RegisterApps) }.takeIf { state.setup?.requiresTargetPackages == true },
                 onRegisterAnchor = { onIntent(ChallengeDetailIntent.RegisterAnchor) }.takeIf { state.setup?.requiresAnchors == true },
@@ -767,6 +853,17 @@ private fun PublicDetailBody(
             ManualCheckCard(
                 checked = state.todayResult?.status == TodayResultStatus.DONE,
                 onClick = { onIntent(ChallengeDetailIntent.OpenManualCheck) },
+            )
+        }
+        // 지난 건은 캘린더가 유일한 이의 진입점이다 — 오늘 카드로는 어제를 낼 수 없다.
+        if (detail.myRole.isMember) {
+            SoloMonthCalendar(
+                month = state.calendarMonth.orEmpty(),
+                calendar = state.calendar,
+                isLoading = state.isCalendarLoading,
+                onAppealDay = onOpenDayAppeal,
+                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
+                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
             )
         }
         // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.

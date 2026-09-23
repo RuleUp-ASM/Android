@@ -32,7 +32,7 @@ class MyCalendarViewModel
 
         override fun onIntent(intent: MyCalendarIntent) {
             when (intent) {
-                MyCalendarIntent.Load -> loadInitial()
+                is MyCalendarIntent.Load -> loadInitial(intent.date)
                 is MyCalendarIntent.ChangeMonth -> changeMonth(intent.delta)
                 MyCalendarIntent.Retry -> changeMonth(0)
                 is MyCalendarIntent.SelectDate -> selectDate(intent.date)
@@ -70,11 +70,12 @@ class MyCalendarViewModel
                 is MyCalendarReducerEvent.DetailLoaded -> state.copy(dayDetail = event.detail)
             }
 
-        private fun loadInitial() {
+        private fun loadInitial(date: String?) {
             if (currentState.month.isNotBlank()) return
-            val today = LocalDate.now()
-            loadMonth(YearMonth.from(today).toString())
-            selectDate(today.toString())
+            // 딥링크가 준 날짜는 서버 문자열이라 형식을 믿지 않는다 — 파싱에 실패하면 오늘로 연다.
+            val target = date?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: LocalDate.now()
+            loadMonth(YearMonth.from(target).toString())
+            selectDate(target.toString())
         }
 
         private fun changeMonth(delta: Int) {

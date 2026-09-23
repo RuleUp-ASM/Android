@@ -89,6 +89,9 @@ class ManualSubmitViewModel
                         isSubmitting = false,
                         verificationId = null,
                         status = null,
+                        // 연속 일수는 "오늘 인증을 포함한" 값이다. 해제하면 근거가 사라지는데
+                        // 남겨 두면 '아직 인증 전'인 화면에 "연속 1일" 이 같이 떠 있는다(MAN-10 · VER-15).
+                        streakAfter = null,
                         errorMessage = null,
                     )
             }
@@ -172,8 +175,12 @@ class ManualSubmitViewModel
             dispatch(ManualSubmitReducerEvent.Submitting(true))
             viewModelScope.launch {
                 runCatching { verificationRepository.cancelManual(verificationId) }
-                    .onSuccess { dispatch(ManualSubmitReducerEvent.Unchecked) }
-                    .onFailure {
+                    .onSuccess {
+                        dispatch(ManualSubmitReducerEvent.Unchecked)
+                        // 해제로 연속 일수의 기준이 바뀐다. 얼마로 되돌아가는지는 서버가 정하므로
+                        // 지우기만 하지 않고 오늘 상태를 다시 받는다.
+                        load(state.challengeId, silent = true)
+                    }.onFailure {
                         dispatch(ManualSubmitReducerEvent.Failed(it.userMessage("체크를 해제하지 못했어요")))
                         load(state.challengeId, silent = true)
                     }

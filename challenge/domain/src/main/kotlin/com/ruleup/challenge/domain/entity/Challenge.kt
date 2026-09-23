@@ -289,7 +289,18 @@ enum class ChallengeField(
     ;
 
     companion object {
-        fun fromValue(value: String?): ChallengeField? = entries.find { it.value == value }
+        /**
+         * 서버는 하위 경로까지 찍어 보낸다 — `penalties` 가 아니라 `penalties.watcher` 로 온다.
+         * 점 앞까지만 보고 맞춘다.
+         *
+         * 정확히 일치하는 것만 받으면 그 필드가 **통째로 미수정으로 떨어져** 서버는 수정 가능하다고
+         * 하는데 화면은 자물쇠를 다는 상태가 된다(CRE-16). 앱이 penalties 안에서 손댈 수 있는 건
+         * 감시자 토글 하나뿐이라 하위 경로를 더 쪼갤 이유가 없다.
+         */
+        fun fromValue(value: String?): ChallengeField? {
+            val head = value?.substringBefore('.')
+            return entries.find { it.value == head }
+        }
     }
 }
 

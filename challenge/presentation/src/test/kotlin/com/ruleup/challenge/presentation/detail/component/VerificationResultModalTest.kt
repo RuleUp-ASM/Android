@@ -6,6 +6,7 @@ import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import com.ruleup.verification.domain.entity.UnacknowledgedResult
 import com.ruleup.verification.domain.entity.VerificationStreak
+import com.ruleup.verification.domain.entity.failureText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

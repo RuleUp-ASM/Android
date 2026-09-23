@@ -15,21 +15,21 @@ import kotlin.test.assertTrue
 
 class AutoLoginUseCaseTest {
     @Test
-    fun `refreshToken 이 없으면 재발급을 시도하지 않고 false 를 반환한다`() =
+    fun `refreshToken 이 없으면 재발급을 시도하지 않는다`() =
         runBlocking {
             val auth = FakeAuthRepository()
             val tokens = FakeTokenRepository(refreshToken = null)
 
             val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
-            assertFalse(result)
+            assertEquals(AutoLoginResult.NoSession, result)
             assertNull(auth.refreshCalledWith)
             assertFalse(tokens.cleared)
             assertNull(tokens.savedToken)
         }
 
     @Test
-    fun `재발급에 성공하면 새 토큰을 저장하고 true 를 반환한다`() =
+    fun `재발급에 성공하면 새 토큰을 저장한다`() =
         runBlocking {
             val newToken = Token("a", "r2", "Bearer", 3600)
             val auth = FakeAuthRepository().apply { refreshResult = RefreshedSession(newToken, userId = "u-1") }
@@ -37,7 +37,7 @@ class AutoLoginUseCaseTest {
 
             val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
-            assertTrue(result)
+            assertEquals(AutoLoginResult.Authenticated, result)
             assertEquals(newToken, tokens.savedToken)
             // 갱신 응답의 userId 로 세션이 완성된다. 비면 사용자 귀속이 끊긴 채 홈에 들어간다.
             assertEquals("u-1", tokens.savedUserId)
@@ -69,19 +69,21 @@ class AutoLoginUseCaseTest {
 
             val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
-            assertFalse(result)
+            // 세션 만료와 같은 값으로 접으면 진입 화면이 둘을 구분하지 못해 타임아웃 한 번에
+            // 로그인 화면으로 떨어진다(ENV-03).
+            assertEquals(AutoLoginResult.ConnectionFailed, result)
             assertFalse(tokens.cleared)
         }
 
     @Test
-    fun `재발급에 실패하면 로컬 토큰을 정리하고 false 를 반환한다`() =
+    fun `재발급에 실패하면 로컬 토큰을 정리한다`() =
         runBlocking {
             val auth = FakeAuthRepository().apply { refreshError = RuntimeException("expired") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
             val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
-            assertFalse(result)
+            assertEquals(AutoLoginResult.SessionExpired, result)
             assertTrue(tokens.cleared)
             assertNull(tokens.savedToken)
         }

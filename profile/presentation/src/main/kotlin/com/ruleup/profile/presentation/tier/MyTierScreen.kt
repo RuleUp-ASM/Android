@@ -143,18 +143,36 @@ private fun TierHero(tier: MyTier) {
         ) {
             TierChip(tier = tier.displayTier)
             Box(Modifier.weight(1f))
-            tier.promotion?.let { promotion ->
+            // 유예 중에는 올라갈 자리가 아니라 지켜야 할 바닥을 말한다 — 표시 티어는 그대로인데
+            // 점수만 내려가는 구간이라, 승급 문구만 띄우면 무엇이 걸려 있는지 알 수 없다.
+            val graceFloor = tier.graceFloorScore
+            if (graceFloor != null) {
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "${promotion.nextTier.label}까지",
+                        text = "${tier.displayTier.label} 유지선",
                         color = RuleUpTheme.colors.textMuted,
                         style = RuleUpTheme.typography.caption,
                     )
                     ScoreText(
-                        value = promotion.pointsToPromote,
-                        color = RuleUpTheme.colors.brand,
+                        value = graceFloor,
+                        color = RuleUpTheme.colors.danger,
                         style = RuleUpTheme.typography.numberM,
                     )
+                }
+            } else {
+                tier.displayPromotion?.let { promotion ->
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "${promotion.nextTier.label}까지",
+                            color = RuleUpTheme.colors.textMuted,
+                            style = RuleUpTheme.typography.caption,
+                        )
+                        ScoreText(
+                            value = promotion.pointsToPromote,
+                            color = RuleUpTheme.colors.brand,
+                            style = RuleUpTheme.typography.numberM,
+                        )
+                    }
                 }
             }
         }
@@ -164,6 +182,13 @@ private fun TierHero(tier: MyTier) {
             style = RuleUpTheme.typography.numberXl,
         )
         RuleUpProgressBar(progress = tier.progressInDisplayTier)
+        if (tier.graceFloorScore != null) {
+            Text(
+                text = "점수가 내려갔지만 ${tier.displayTier.label}를 유지하고 있어요. 더 내려가면 강등돼요",
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
+        }
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "${tier.displayTier.label} ${tier.displayTier.minScore.thousandsLabel()}",
@@ -171,7 +196,9 @@ private fun TierHero(tier: MyTier) {
                 style = RuleUpTheme.typography.caption,
             )
             Box(Modifier.weight(1f))
-            tier.promotion?.let {
+            // 오른쪽 끝은 **표시 티어보다 위**인 다음 구간이다. 서버 promotion 을 그대로 쓰면
+            // 유예 중에 양끝이 같은 티어로 찍힌다(TIER-03).
+            tier.displayPromotion?.let {
                 Text(
                     text = "${it.nextTier.label} ${it.nextTier.minScore.thousandsLabel()}",
                     color = RuleUpTheme.colors.textMuted,

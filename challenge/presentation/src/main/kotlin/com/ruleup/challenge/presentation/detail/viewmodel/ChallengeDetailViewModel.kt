@@ -19,6 +19,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
@@ -477,7 +478,9 @@ class ChallengeDetailViewModel
                         // 오늘 인증은 솔로도 필요하다 — 수동 방 CTA 가 체크 여부로 갈린다.
                         loadTodayResult(challengeId)
                         // 방 홈은 그룹 챌린지의 ACTIVE 멤버만 — 조회 성공 시 방 홈으로 확장 렌더링.
-                        if (detail.mode.isGroup) loadRoom(challengeId)
+                        // **솔로는 방 홈을 받지 못하므로 캘린더를 직접 받는다** — loadRoom 안에만 두면
+                        // 솔로 상세에서 캘린더가 영영 조회되지 않는다(APL-08 · APL-09 · VER-01).
+                        if (detail.mode.isGroup) loadRoom(challengeId) else loadCalendar(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.message ?: "챌린지를 불러오지 못했어요")) }
             }
         }
@@ -497,7 +500,7 @@ class ChallengeDetailViewModel
             // 수동 인증 화면에서 체크하고 돌아오는 동선이 있다 — 오늘 상태를 다시 읽는다.
             loadTodayResult(id)
             // 다른 화면에서 돌아왔을 때 방 홈이 옛 상태로 남지 않도록 함께 재조회한다.
-            if (currentState.room != null) loadRoom(id)
+            if (currentState.room != null) loadRoom(id) else loadCalendar(id)
         }
 
         // 비멤버/솔로의 403 등 실패는 흡수 — room 이 null 이면 기존 공개 상세 그대로 렌더링된다.
@@ -533,13 +536,24 @@ class ChallengeDetailViewModel
          * 모르는 상태를 「켜짐」으로 그리면 사용자가 껐다고 믿은 방에서 푸시가 계속 온다.
          */
         private fun loadMuteState(challengeId: String) {
+            val epoch = muteEpoch
             viewModelScope.launch {
                 runCatching { notificationRepository.getSettings() }
                     .onSuccess {
+                        // 조회를 보낸 뒤 사용자가 토글을 바꿨으면 늦게 도착한 응답은 버린다.
+                        // 음소거는 PUT/DELETE 가 204 라 조회로만 확인되는데, 그 조회가 방금 바꾼 값을
+                        // 옛 값으로 되돌리면 **토글이 꺼짐 그대로 남고 같은 요청만 반복된다**(NOTI-04).
+                        if (epoch != muteEpoch) return@onSuccess
                         dispatch(ChallengeDetailReducerEvent.MuteLoaded(it.isMuted(challengeId)))
                     }
             }
         }
+
+        /**
+         * 사용자가 음소거를 바꾼 횟수. 늦게 도착한 설정 조회가 방금 바꾼 값을 덮지 못하게 하는
+         * 기준이다 — 조회를 보낸 시점의 값과 다르면 그 응답은 이미 낡았다.
+         */
+        private var muteEpoch = 0
 
         /**
          * 음소거 전환. 서버가 멱등(204)이라 재시도해도 안전하다.
@@ -553,8 +567,11 @@ class ChallengeDetailViewModel
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
                 runCatching { notificationRepository.setMuted(challengeId, muted) }
-                    .onSuccess { dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted)) }
-                    .onFailure {
+                    .onSuccess {
+                        // 204 라 응답에 상태가 없다. 보낸 값이 곧 저장된 값이다.
+                        muteEpoch++
+                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted))
+                    }.onFailure {
                         dispatch(ChallengeDetailReducerEvent.MuteSubmitting(false))
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "알림 설정을 바꾸지 못했어요"))
                     }
@@ -766,7 +783,15 @@ class ChallengeDetailViewModel
             }
         }
 
-        /** 탈퇴(본인, 방장 포함). 성공 시 안내 후 이전 화면으로. 실패 사유는 서버 메시지로 노출. */
+        /**
+         * 탈퇴(본인, 방장 포함). 성공 시 안내 후 **내 챌린지로 고정 이동**한다.
+         *
+         * 뒤로가기로 보내면 안 된다 — 초대 링크로 들어온 경로는 방 상세가 스택의 밑바닥이라
+         * 스택이 비어 앱이 그대로 종료되고, 초대 화면이 남아 있으면 만료된 토큰을 다시 조회해
+         * 410 을 본다(ROOM-10 · ROOM-12). 방금 나온 방으로 되돌아갈 자리는 어차피 없다.
+         *
+         * 실패 사유는 서버 메시지로 노출한다.
+         */
         private fun leaveChallenge() {
             val id = currentState.detail?.challengeId ?: return
             if (currentState.isMemberActionLoading) return
@@ -779,7 +804,7 @@ class ChallengeDetailViewModel
                                 if (result.penaltyApplied) "탈퇴했어요. 진행 이력이 있어 탈퇴 패널티가 적용됐어요" else "챌린지에서 나갔어요",
                             ),
                         )
-                        navigationHelper.navigateToBack()
+                        navigationHelper.replaceStackWith(MyChallengesPage.toRoute())
                     }.onFailure {
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.message ?: "탈퇴에 실패했어요"))
                     }
@@ -987,7 +1012,11 @@ class ChallengeDetailViewModel
                     mapOf(
                         "challengeId" to id,
                         "defaultRadiusM" to "500.0",
-                        "dwellMinutes" to "60",
+                        // ⚠️ 여기만 고정값이 남는다. 목표 체류 시간(`duration_min`)은 초안·방장 설정
+                        // 응답에만 있고 `GET /challenges/{id}/setup` 과 `/room` 에는 없어, 방에
+                        // 들어온 멤버가 앵커를 등록하는 이 경로에서는 읽을 방법이 없다.
+                        // 서버가 setup 응답에 실어 주면 생성 경로와 같은 값을 쓰면 된다(SETUP-04).
+                        "dwellMinutes" to DEFAULT_DWELL_MINUTES.toString(),
                         "targetPackages" to targetAppStore.registered(id).joinToString(","),
                     ),
                 ),
@@ -1051,3 +1080,6 @@ private fun Throwable.reportMessage(): String =
         ReportFailure.NETWORK -> "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요."
         else -> "신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요."
     }
+
+/** 목표 체류 시간을 읽을 수 없을 때의 지오펜스 대기(분). 위 주석 참고. */
+private const val DEFAULT_DWELL_MINUTES = 60

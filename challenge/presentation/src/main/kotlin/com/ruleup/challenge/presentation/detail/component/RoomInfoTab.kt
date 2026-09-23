@@ -39,6 +39,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
+import com.ruleup.verification.domain.entity.failureText
 
 /**
  * 정보 탭 (Figma 1134:143) — 오늘 내 상태 · 내 세부 설정 · 인증 규칙 · 진행 정보.
@@ -138,7 +139,7 @@ internal fun RoomInfoTab(
  * 실패와 끝난 실패를 같은 얼굴로 보여주면 사용자는 아직 남은 기회를 모른 채 넘긴다.
  */
 @Composable
-private fun TodayVerificationCard(
+internal fun TodayVerificationCard(
     roomStatus: TodayVerificationStatus?,
     today: TodayResult?,
     onAppealClick: (() -> Unit)?,

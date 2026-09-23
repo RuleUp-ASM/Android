@@ -7,6 +7,8 @@ import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.InvalidScreenAppException
 import com.ruleup.verification.domain.entity.ScreenAppSet
 import com.ruleup.verification.domain.entity.SettingChangeLimitException
+import com.ruleup.verification.domain.repository.SyncScheduler
+import com.ruleup.verification.domain.repository.UsageTargetStore
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -26,6 +28,8 @@ class ChallengeTargetsViewModel
     constructor(
         private val verificationRepository: VerificationRepository,
         private val targetAppStore: TargetAppStore,
+        private val usageTargetStore: UsageTargetStore,
+        private val syncScheduler: SyncScheduler,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<ChallengeTargetsIntent, ChallengeTargetsState, ChallengeTargetsReducerEvent, ChallengeTargetsEffect>(
             ChallengeTargetsState.initial,
@@ -74,7 +78,14 @@ class ChallengeTargetsViewModel
                     .onSuccess { accepted ->
                         // 상세 화면의 "등록됨" 게이트 판정용 로컬 반영(서버 성공 시에만).
                         // 서버가 접수한 세트를 쓴다.
-                        targetAppStore.save(intent.challengeId, accepted.apps.map { it.packageName })
+                        val packages = accepted.apps.map { it.packageName }
+                        targetAppStore.save(intent.challengeId, packages)
+                        // **수집기가 읽는 저장소는 이쪽이다.** 여기 넣지 않으면 서버 저장은 200 인데
+                        // 단말은 아무것도 모으지 않아 SCREEN_TIME 신호가 생기지 않는다(SETUP-07 · SIG-07).
+                        usageTargetStore.replaceFor(intent.challengeId, packages.toSet())
+                        // 바뀐 대상을 다음 주기까지 기다리지 않고 한 번 흘려보낸다 — 등록 직후
+                        // "신호가 안 온다" 로 보이는 구간을 없앤다.
+                        syncScheduler.enqueueCatchUp()
                         // 변경은 항상 익일 00:00 부터 적용된다. "등록됐어요" 로만 끝내면 오늘부터
                         // 측정되는 줄 안다. 이번 저장으로 월 1회를 소진했다는 것도 함께 알린다 —
                         // 모르면 곧바로 다시 바꾸려다 막힌다.

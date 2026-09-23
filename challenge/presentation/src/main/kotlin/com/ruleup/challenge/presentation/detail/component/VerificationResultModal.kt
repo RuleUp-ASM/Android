@@ -20,6 +20,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.TodayResult
+import com.ruleup.verification.domain.entity.failureText
 
 /**
  * 판정 결과 모달 (구 노드 `971:23`·`971:117` — 최종 페이지에 프레임이 없어 디자인 시스템으로 구성).

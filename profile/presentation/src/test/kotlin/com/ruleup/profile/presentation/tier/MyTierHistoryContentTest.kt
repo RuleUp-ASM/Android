@@ -7,7 +7,7 @@ import com.ruleup.profile.domain.entity.ScoreChange
 import com.ruleup.profile.domain.entity.ScoreChangeReason
 import com.ruleup.profile.domain.entity.TierBest
 import com.ruleup.profile.domain.entity.TierHistory
-import com.ruleup.profile.domain.entity.TierSnapshot
+import com.ruleup.profile.domain.entity.TierPoint
 import com.ruleup.profile.presentation.renderScreen
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryIntent
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryState
@@ -120,8 +120,8 @@ class MyTierHistoryContentTest {
 
     private fun history(
         best: TierBest? = TierBest(tier = Tier.GOLD, score = 420, date = "2026-05-10"),
-        monthly: List<TierSnapshot> = listOf(TierSnapshot(month = "2026-06", endTier = Tier.GOLD, endScore = 302)),
-    ) = TierHistory(best = best, monthly = monthly, retentionNote = "1년 보관")
+        points: List<TierPoint> = listOf(TierPoint(occurredAt = "2026-06-30T00:00:00Z", tier = Tier.GOLD, score = 302)),
+    ) = TierHistory(best = best, points = points, retentionNote = "1년 보관")
 
     private fun render(
         state: MyTierHistoryState,

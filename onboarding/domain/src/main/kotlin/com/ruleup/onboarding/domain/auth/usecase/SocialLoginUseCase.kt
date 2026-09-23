@@ -45,8 +45,10 @@ class SocialLoginUseCase
                         user.nicknameStatus == NicknameStatus.CONFLICT ->
                             LoginOutcome.ResetNickname(user.nickname)
 
-                        user.accountStatus == AccountStatus.LOCKED ->
-                            LoginOutcome.GoHomeReadOnly(user.lockInfo)
+                        // 서버는 정지를 `SUSPENDED` 로 내린다. `LOCKED` 만 보면 **재로그인이 게이트를
+                        // 통째로 지나쳐** 잠긴 계정이 홈에 들어간다(AUTH-13). 종류는 화면이 가른다.
+                        user.accountStatus != AccountStatus.ACTIVE ->
+                            LoginOutcome.Restricted(user.lockInfo)
 
                         else -> LoginOutcome.GoHome(restored = result.restored)
                     }

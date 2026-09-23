@@ -3,6 +3,7 @@ package com.ruleup.profile.presentation.agreements.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import com.ruleup.profile.domain.entity.AgreementRevokeForbiddenException
 import com.ruleup.profile.domain.entity.AgreementSubmission
 import com.ruleup.profile.domain.entity.AgreementVersionMismatchException
@@ -23,6 +24,7 @@ class AgreementsViewModel
     @Inject
     constructor(
         private val accountRepository: AccountRepository,
+        private val introRepository: IntroRepository,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<AgreementsIntent, AgreementsState, AgreementsReducerEvent, AgreementsEffect>(
             AgreementsState.initial,
@@ -67,13 +69,7 @@ class AgreementsViewModel
             agreed: Boolean,
         ) {
             if (currentState.submitting != null) return
-            // 버전을 모르면 보내지 않는다 — 서버는 현행 버전과 다른 값을 400 으로 막는다.
-            val version = currentState.status?.of(type)?.version
-            if (version == null) {
-                emitEffect(AgreementsEffect.ShowMessage("약관 버전을 확인하지 못했어요. 잠시 후 다시 시도해 주세요"))
-                return
-            }
-            submit(listOf(AgreementSubmission(type = type, agreed = agreed, version = version)), type)
+            submit(listOf(AgreementSubmission(type = type, agreed = agreed, version = currentVersionOf(type))), type)
         }
 
         /** 재동의는 `reconsentRequired` 전부를 한 번에 보낸다 — 서버가 한 트랜잭션으로 처리한다. */
@@ -81,9 +77,8 @@ class AgreementsViewModel
             if (currentState.isReconsenting) return
             val status = currentState.status ?: return
             val submissions =
-                status.reconsentRequired.mapNotNull { type ->
-                    val version = status.of(type)?.version ?: return@mapNotNull null
-                    AgreementSubmission(type = type, agreed = true, version = version)
+                status.reconsentRequired.map { type ->
+                    AgreementSubmission(type = type, agreed = true, version = currentVersionOf(type))
                 }
             if (submissions.isEmpty()) return
             dispatch(AgreementsReducerEvent.Reconsenting(true))
@@ -94,6 +89,18 @@ class AgreementsViewModel
                 dispatch(AgreementsReducerEvent.Reconsenting(false))
             }
         }
+
+        /**
+         * 제출에 실을 약관 버전.
+         *
+         * **응답의 `version` 은 사용자가 동의했던 버전이지 현행 버전이 아니다.** 그걸 그대로
+         * 되보내면 재동의가 자기가 동의했던 구버전을 다시 내밀어 서버가 400
+         * `AGREEMENT_VERSION_MISMATCH` 로 막는다 — 「다시 동의하기」가 영영 성공하지 못한다(ONB-16).
+         *
+         * 현행 버전은 진입 때 받은 `GET /intro` 가 들고 있다. 못 받았으면 폴백으로 떨어지고,
+         * 그때는 서버가 재검증해 400 으로 알려 준다 — 버전을 몰라 화면을 막는 것보다 낫다.
+         */
+        private fun currentVersionOf(type: AgreementType): String = introRepository.lastTermsVersions().of(type)
 
         private fun submit(
             submissions: List<AgreementSubmission>,

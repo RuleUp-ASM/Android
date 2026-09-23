@@ -182,11 +182,17 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = MemberProfilePage.PATH,
-            render = { MemberProfileScreen() },
+            render = { args -> MemberProfileScreen(userId = args[MemberProfilePage.ARG_USER_ID].orEmpty()) },
         ),
         AppRoute(
             path = ReportPage.PATH,
-            render = { ReportScreen() },
+            render = { args ->
+                ReportScreen(
+                    targetName = args[ReportPage.ARG_TARGET_NAME].orEmpty(),
+                    userId = args[ReportPage.ARG_USER_ID],
+                    challengeId = args[ReportPage.ARG_CHALLENGE_ID],
+                )
+            },
         ),
         AppRoute(
             path = AccountLockedPage.PATH,
@@ -212,7 +218,7 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = MyCalendarPage.PATH,
-            render = { MyCalendarScreen() },
+            render = { args -> MyCalendarScreen(date = args[MyCalendarPage.ARG_DATE]) },
         ),
         AppRoute(
             path = MyStatsPage.PATH,

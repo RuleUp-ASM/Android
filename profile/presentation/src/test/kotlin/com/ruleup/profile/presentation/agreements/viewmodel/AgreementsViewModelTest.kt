@@ -2,6 +2,7 @@ package com.ruleup.profile.presentation.agreements.viewmodel
 
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.profile.domain.entity.AgreementState
 import com.ruleup.profile.domain.entity.AgreementStatus
 import com.ruleup.profile.domain.entity.AgreementVersionMismatchException
@@ -22,7 +23,8 @@ import kotlin.test.assertTrue
  * 약관 동의 관리. 동의 시각이 **법적 증거**라 화면이 먼저 바뀌고 서버가 따라오는 낙관적 반영을
  * 하지 않는다 — 서버가 받아들인 것만 화면에 남아야 한다.
  *
- * 버전은 서버의 현행 값과 같아야 하므로, 모르는 채로 보내면 400 을 받는다.
+ * 제출에 실을 버전은 **서버의 현행 값**이다. 응답의 `version` 은 사용자가 동의했던 버전이라
+ * 그걸 되보내면 400 을 받는다 — 재동의가 영영 성공하지 못한다(ONB-16).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgreementsViewModelTest {
@@ -33,22 +35,29 @@ class AgreementsViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
-    fun `버전을 모르는 항목은 보내지 않는다`() =
+    fun `한 번도 동의한 적 없는 항목도 현행 버전으로 보낼 수 있다`() =
         runTest {
-            // 서버는 현행 버전과 다른 값을 400 으로 막는다 — 모르면 시도 자체를 하지 않는다.
-            val repo = FakeAccountRepository(agreements = { status(version = null) })
+            // 응답의 version 은 "동의했던 버전"이라 처음 동의하는 항목은 비어 있다. 그걸 보낼 값으로
+            // 쓰면 선택 약관에 처음 동의하는 길이 통째로 막힌다.
+            val repo = FakeAccountRepository(agreements = { status(version = null) }, submit = { status() })
             val viewModel = viewModel(repo)
             viewModel.onIntent(AgreementsIntent.Load)
 
             viewModel.onIntent(AgreementsIntent.Toggle(AgreementType.MARKETING, true))
 
-            assertTrue(repo.submitted.isEmpty())
+            assertEquals(
+                CURRENT_VERSION,
+                repo.submitted
+                    .single()
+                    .single()
+                    .version,
+            )
         }
 
     @Test
-    fun `토글하면 서버가 준 버전을 그대로 실어 보낸다`() =
+    fun `토글은 동의했던 버전이 아니라 현행 버전을 실어 보낸다`() =
         runTest {
-            val repo = FakeAccountRepository(agreements = { status() }, submit = { status() })
+            val repo = FakeAccountRepository(agreements = { status(version = "1.0") }, submit = { status() })
             val viewModel = viewModel(repo)
             viewModel.onIntent(AgreementsIntent.Load)
 
@@ -56,7 +65,7 @@ class AgreementsViewModelTest {
 
             val sent = repo.submitted.single().single()
             assertEquals(AgreementType.MARKETING, sent.type)
-            assertEquals("1.2", sent.version)
+            assertEquals(CURRENT_VERSION, sent.version)
             assertEquals(true, sent.agreed)
         }
 
@@ -112,10 +121,39 @@ class AgreementsViewModelTest {
             assertTrue(repo.submitted.single().all { it.agreed })
         }
 
+    @Test
+    fun `재동의는 사용자가 동의했던 버전이 아니라 현행 버전을 보낸다`() =
+        runTest {
+            // 응답의 version 은 "동의했던 버전"이다. 그걸 되보내면 서버가 400
+            // AGREEMENT_VERSION_MISMATCH 로 막아 「다시 동의하기」가 영영 실패한다(ONB-16).
+            val repo =
+                FakeAccountRepository(
+                    agreements = { status(version = "1.0", reconsent = listOf(AgreementType.TERMS_OF_SERVICE)) },
+                    submit = { status() },
+                )
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(AgreementsIntent.Load)
+
+            viewModel.onIntent(AgreementsIntent.Reconsent)
+
+            assertEquals(
+                CURRENT_VERSION,
+                repo.submitted
+                    .single()
+                    .single()
+                    .version,
+            )
+        }
+
     private fun viewModel(
         repo: FakeAccountRepository,
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-    ) = AgreementsViewModel(accountRepository = repo, navigationHelper = nav)
+        currentVersion: String = CURRENT_VERSION,
+    ) = AgreementsViewModel(
+        accountRepository = repo,
+        introRepository = FakeIntroRepository().apply { termsVersions(currentVersion) },
+        navigationHelper = nav,
+    )
 
     private fun status(
         version: String? = "1.2",
@@ -133,4 +171,9 @@ class AgreementsViewModelTest {
             },
         reconsentRequired = reconsent,
     )
+
+    private companion object {
+        /** GET /intro 가 내려주는 현행 약관 버전. 사용자가 동의했던 값과 달라야 테스트가 성립한다. */
+        const val CURRENT_VERSION = "2.0"
+    }
 }

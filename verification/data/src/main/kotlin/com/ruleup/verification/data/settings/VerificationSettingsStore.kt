@@ -56,6 +56,16 @@ class VerificationSettingsStore
             dataStore.edit { it[KEY_LAST_GEOFENCE_REREGISTER_AT] = at }
         }
 
+        /**
+         * 전부 비운다(로그아웃·탈퇴).
+         *
+         * 부팅 세션 id 와 전송 커서는 **계정에 귀속된 값이다** — 남겨 두면 다음 계정이 앞 계정의
+         * 커서부터 이어 보내 이미 지난 구간이 통째로 빈다.
+         */
+        suspend fun clear() {
+            dataStore.edit { it.clear() }
+        }
+
         /** Phase 0 서버 정책: 주기 flush 간격(초). 미수신이면 null → 호출자가 기본값(1800) 사용. */
         suspend fun flushIntervalSec(): Long? = dataStore.data.first()[KEY_FLUSH_INTERVAL_SEC]
 

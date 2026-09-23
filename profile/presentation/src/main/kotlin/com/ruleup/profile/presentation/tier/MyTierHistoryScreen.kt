@@ -37,7 +37,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.ScoreChange
 import com.ruleup.profile.domain.entity.TierBest
-import com.ruleup.profile.domain.entity.TierSnapshot
+import com.ruleup.profile.domain.entity.TierPoint
 import com.ruleup.profile.presentation.common.accentColor
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.common.deltaLabel
@@ -117,7 +117,7 @@ private fun HistoryBody(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         state.history?.best?.let { item { BestCard(best = it) } }
-        state.history?.let { item { MonthlyChart(monthly = it.monthly) } }
+        state.history?.let { item { ScoreChart(points = it.points) } }
         item {
             Text(
                 text = "점수 변동",
@@ -227,12 +227,15 @@ private fun BestCard(best: TierBest) {
 }
 
 /**
- * 월말 점수 막대. 축은 **0~2,000 고정**이다 — 최댓값에 맞춰 늘이면 달마다 같은 높이가 다른
+ * 점수 변동 막대. 축은 **0~2,000 고정**이다 — 최댓값에 맞춰 늘이면 같은 높이가 시점마다 다른
  * 점수를 뜻하게 되어 그래프가 거짓말을 한다.
+ *
+ * 원장이라 한 달에도 여러 점이 쌓인다. x축 라벨은 **달이 바뀌는 지점에만** 붙인다 — 점마다 달면
+ * 같은 숫자가 연달아 찍혀 읽을 수 없다.
  */
 @Composable
-private fun MonthlyChart(monthly: List<TierSnapshot>) {
-    if (monthly.isEmpty()) return
+private fun ScoreChart(points: List<TierPoint>) {
+    if (points.isEmpty()) return
     Row(
         modifier =
             Modifier
@@ -241,26 +244,27 @@ private fun MonthlyChart(monthly: List<TierSnapshot>) {
                 .background(RuleUpTheme.colors.surface)
                 .padding(16.dp)
                 .height(120.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
-        monthly.forEach { snapshot ->
+        points.forEachIndexed { index, point ->
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                val ratio = (snapshot.endScore.toFloat() / Tier.RUBY.maxScore).coerceIn(0.02f, 1f)
+                val ratio = (point.score.toFloat() / Tier.RUBY.maxScore).coerceIn(0.02f, 1f)
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .fillMaxHeight(ratio)
                             .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                            .background(snapshot.endTier.accentColor),
+                            .background(point.tier.accentColor),
                 )
+                val newMonth = index == 0 || point.month != points[index - 1].month
                 Text(
-                    text = snapshot.month.takeLast(2),
+                    text = if (newMonth) point.month.takeLast(2) else "",
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.micro,
                     modifier = Modifier.padding(top = 4.dp),

@@ -6,6 +6,8 @@ import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.profile.domain.navigation.MyCalendarPage
+import com.ruleup.support.domain.navigation.InquiryDetailPage
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -144,5 +146,47 @@ class RuleUpSchemeResolverTest {
     @Test
     fun `식별자 없는 챌린지 링크는 버린다`() {
         assertNull(resolver.resolve("ruleup://challenge"))
+    }
+
+    @Test
+    fun `강퇴 알림은 제재 이력으로 간다`() {
+        assertEquals(AppRoutes.MY_SANCTIONS, resolver.resolve("ruleup://me/sanctions")?.path)
+    }
+
+    @Test
+    fun `실패 예정 알림은 그 날짜의 캘린더를 연다`() {
+        // 날짜를 잃으면 이의 기한이 걸린 그 건을 사용자가 손으로 찾아야 한다.
+        val route = resolver.resolve("ruleup://me/calendar/2026-09-20")
+
+        assertEquals(AppRoutes.MY_CALENDAR, route?.path)
+        assertEquals("2026-09-20", route?.args?.get(MyCalendarPage.ARG_DATE))
+    }
+
+    @Test
+    fun `날짜 없는 캘린더 링크도 캘린더로 보낸다`() {
+        val route = resolver.resolve("ruleup://me/calendar")
+
+        assertEquals(AppRoutes.MY_CALENDAR, route?.path)
+        assertNull(route?.args?.get(MyCalendarPage.ARG_DATE))
+    }
+
+    @Test
+    fun `문의 답변 알림은 그 문의 상세를 연다`() {
+        val route = resolver.resolve("ruleup://me/inquiries/inq_1")
+
+        assertEquals(AppRoutes.MY_INQUIRY_DETAIL, route?.path)
+        assertEquals("inq_1", route?.args?.get(InquiryDetailPage.ARG_INQUIRY_ID))
+    }
+
+    @Test
+    fun `식별자 없는 문의 링크는 내역 목록으로 보낸다`() {
+        // 상세를 열 수 없다고 탭을 죽이면 답변이 왔다는 사실만 남고 볼 길이 없다.
+        assertEquals(AppRoutes.MY_INQUIRIES, resolver.resolve("ruleup://me/inquiries")?.path)
+    }
+
+    @Test
+    fun `감시 실패 알림은 감시 관계 목록으로 간다`() {
+        // 통지 1건짜리 화면이 없다 — 목록이 닿을 수 있는 가장 가까운 곳이다.
+        assertEquals(AppRoutes.MY_WATCHING, resolver.resolve("ruleup://watching/notices/n_1")?.path)
     }
 }

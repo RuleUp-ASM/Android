@@ -132,6 +132,22 @@ class ChallengeDetailMuteTest {
             assertTrue(notifications.mutes.isEmpty())
         }
 
+    @Test
+    fun `늦게 도착한 설정 조회가 방금 바꾼 토글을 되돌리지 않는다`() =
+        runTest {
+            // 음소거는 PUT·DELETE 가 204 라 상태를 조회로만 확인한다. 그 조회가 옛 값을 들고 오면
+            // 토글이 꺼짐 그대로 남고 사용자는 같은 요청만 반복하게 된다(NOTI-04).
+            val stale = repo(settings(muted = emptyList()))
+            val viewModel = viewModel(notifications = stale)
+            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
+
+            viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
+            // 화면 재진입처럼 설정을 다시 읽는 경로. 페이크는 여전히 "음소거 없음" 을 준다.
+            viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
+
+            assertEquals(true, viewModel.uiState.value.isMuted)
+        }
+
     private fun repo(
         settings: NotificationSettings,
         mute: ((String, Boolean) -> Unit)? = null,

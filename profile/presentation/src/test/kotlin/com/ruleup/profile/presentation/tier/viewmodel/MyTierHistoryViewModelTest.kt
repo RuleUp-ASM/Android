@@ -6,7 +6,7 @@ import com.ruleup.profile.domain.entity.ScoreChange
 import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.ScoreChangeReason
 import com.ruleup.profile.domain.entity.TierHistory
-import com.ruleup.profile.domain.entity.TierSnapshot
+import com.ruleup.profile.domain.entity.TierPoint
 import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.profile.presentation.fake.FakeMyPageRepository
 import kotlinx.coroutines.Dispatchers
@@ -58,7 +58,7 @@ class MyTierHistoryViewModelTest {
             assertEquals(
                 1,
                 viewModel.uiState.value.history
-                    ?.monthly
+                    ?.points
                     ?.size,
             )
             assertFalse(viewModel.uiState.value.isLoading)
@@ -181,7 +181,7 @@ class MyTierHistoryViewModelTest {
     private fun history() =
         TierHistory(
             best = null,
-            monthly = listOf(TierSnapshot(month = "2026-06", endTier = Tier.GOLD, endScore = 302)),
+            points = listOf(TierPoint(occurredAt = "2026-06-30T00:00:00Z", tier = Tier.GOLD, score = 302)),
             retentionNote = "1년 보관",
         )
 }

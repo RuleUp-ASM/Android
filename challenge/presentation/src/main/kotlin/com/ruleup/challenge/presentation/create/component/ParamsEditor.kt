@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.clamp
+import com.ruleup.challenge.domain.entity.isInRange
+import com.ruleup.challenge.domain.entity.rangeLabel
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -54,24 +56,40 @@ private fun ParamRow(
     modifier: Modifier = Modifier,
     onEdit: (String) -> Unit = {},
 ) {
-    Row(
+    Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .clip(RuleUpTheme.shapes.small)
                 .background(RuleUpTheme.colors.surfaceVariant)
                 .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            text = spec.label(),
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.bodyMedium,
-        )
-        when (spec.kind) {
-            ParamKind.NUMBER -> NumberStepper(spec = spec, onEdit = onEdit)
-            ParamKind.TIME -> TimeField(spec = spec, onEdit = onEdit)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = spec.label(),
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.bodyMedium,
+            )
+            when (spec.kind) {
+                ParamKind.NUMBER -> NumberStepper(spec = spec, onEdit = onEdit)
+                ParamKind.TIME -> TimeField(spec = spec, onEdit = onEdit)
+            }
+        }
+        // 범위를 벗어난 값은 만들기 버튼이 잠기므로, 왜 잠겼는지 여기서 말한다. 안내가 없으면
+        // 사용자는 버튼이 고장난 것으로 읽는다.
+        if (!spec.isInRange) {
+            spec.rangeLabel()?.let { range ->
+                Text(
+                    text = "${range}${spec.unit?.let { " $it" }.orEmpty()} 사이로 입력해 주세요",
+                    color = RuleUpTheme.colors.danger,
+                    style = RuleUpTheme.typography.caption,
+                )
+            }
         }
     }
 }

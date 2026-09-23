@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.fake
 
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.TermsVersions
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.RefreshedSession
@@ -207,6 +208,11 @@ class FakeIntroRepository : IntroRepository {
     }
 
     override fun lastTermsVersions(): TermsVersions = lastTermsVersions ?: TermsVersions(emptyMap())
+
+    /** 진입 조회를 거치지 않고 현행 버전만 심는다 — 약관 화면은 intro 를 스스로 부르지 않는다. */
+    fun termsVersions(version: String) {
+        lastTermsVersions = TermsVersions(AgreementType.entries.associateWith { version })
+    }
 }
 
 /** 워크쓰루 열람 여부 테스트 더블. 기록 호출을 세어 "끝낸 경로가 기록까지 하는가" 를 본다. */

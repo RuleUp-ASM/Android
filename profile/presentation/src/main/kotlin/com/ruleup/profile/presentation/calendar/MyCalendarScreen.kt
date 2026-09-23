@@ -51,6 +51,7 @@ import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarIntent
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarState
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarViewModel
+import com.ruleup.verification.domain.entity.failureTextOf
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -67,12 +68,13 @@ private val SaturdayBlue = Color(0xFF3B82F6)
 @Composable
 fun MyCalendarScreen(
     modifier: Modifier = Modifier,
+    date: String? = null,
     viewModel: MyCalendarViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.onIntent(MyCalendarIntent.Load)
+        viewModel.onIntent(MyCalendarIntent.Load(date))
     }
 
     MyCalendarContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
@@ -424,7 +426,9 @@ private fun DayItemRow(
                     append("완료")
                 } to RuleUpTheme.colors.success
 
-            DayItemStatus.FAILED -> (item.failureReason?.failureLabel() ?: "실패") to RuleUpTheme.colors.danger
+            // 문구 표는 인증 모듈이 갖는다 — 화면마다 따로 두면 한쪽만 늘어나, 같은 실패가
+            // 방에서는 사유로, 캘린더에서는 그냥 "실패" 로 보인다(VER-04 · VER-05).
+            DayItemStatus.FAILED -> failureTextOf(item.failureReason) to RuleUpTheme.colors.danger
             // 확정 실패와 같은 색을 쓰지 않는다 — 아직 뒤집힐 수 있고 이의를 낼 수 있다.
             DayItemStatus.FAIL_EXPECTED -> "실패 예정" to RuleUpPalette.StatusWarn
             DayItemStatus.IN_PROGRESS -> "진행 중" to RuleUpTheme.colors.brand
@@ -466,11 +470,3 @@ private fun String.timeLabel(): String {
     if (time.length < 5) return ""
     return time.take(5)
 }
-
-// 실패 사유 코드 → 사용자 문구 (미지 코드는 일반 문구)
-private fun String.failureLabel(): String =
-    when (this) {
-        "NO_SIGNAL_RECEIVED" -> "인증 신호가 감지되지 않았어요"
-        "MISSED_WINDOW" -> "인증 시간을 놓쳤어요"
-        else -> "실패"
-    }

@@ -7,11 +7,14 @@ import java.time.format.DateTimeParseException
 /**
  * 방 피드·랭킹의 날짜 표시.
  *
- * 서버는 ISO-8601 을 KST 오프셋(+09:00)으로 내려주고, 판정 경계도 KST 하루 단위다. 그래서 기기
- * 타임존으로 변환하지 않고 **문자열의 날짜 부분을 그대로 쓴다** — 변환하면 해외 로밍 중에 어제
- * 성공이 그저께로 밀린다.
+ * 판정 경계가 KST 하루 단위라 **기기 타임존이 아니라 KST 로 옮긴다** — 기기 기준으로 바꾸면
+ * 해외 로밍 중에 어제 성공이 그저께로 밀린다.
+ *
+ * **문자열을 자르지 않는다.** 서버 응답에 `Z`(UTC) 표기가 섞여 있어, 오프셋을 무시하고 자르면
+ * 10:17 이 01:17 로 보이고 자정 근처에서는 날짜까지 하루 어긋난다(ROOM-01).
+ * 오프셋이 아예 없는 값은 이미 서비스 기준 시각으로 보고 그대로 쓴다.
  */
-private fun isoDatePart(iso: String): String = iso.substringBefore('T')
+private fun isoDatePart(iso: String): String = ServiceDate.atZone(iso)?.toLocalDate()?.toString() ?: iso.substringBefore('T')
 
 private fun parseDateOrNull(isoDate: String): LocalDate? =
     try {
@@ -37,8 +40,9 @@ internal fun feedDateHeader(
 /** 같은 날 묶음 판정용 키. 표시 문구가 아니라 그룹핑 전용이다. */
 internal fun feedDateKey(iso: String): String = isoDatePart(iso)
 
-/** 피드 아이템 시각 — "06:12". 시각 부분이 없으면 빈 문자열. */
+/** 피드 아이템 시각 — "06:12"(KST). 시각 부분이 없으면 빈 문자열. */
 internal fun feedTimeLabel(iso: String): String {
+    ServiceDate.atZone(iso)?.let { return "%02d:%02d".format(it.hour, it.minute) }
     val time = iso.substringAfter('T', "")
     if (time.length < 5) return ""
     return time.take(5)

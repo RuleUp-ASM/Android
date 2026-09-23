@@ -9,6 +9,7 @@ import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationConfig
+import com.ruleup.challenge.domain.entity.isInRange
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Tier
@@ -68,6 +69,15 @@ data class CreateChallengeState(
     /** 초안이 도착해 확인 화면을 그릴 수 있는 상태인지. */
     val hasDraft: Boolean
         get() = draftId != null
+
+    /**
+     * 목표값이 전부 서버가 준 허용 범위 안인지.
+     *
+     * 범위를 벗어난 채 보내면 서버가 400 으로 막는데, 그때는 이미 확인 화면을 떠난 뒤라 어느 값이
+     * 문제인지 화면에 남지 않는다 — 보내기 전에 잠근다(CRE-12).
+     */
+    val paramsInRange: Boolean
+        get() = params.all { it.isInRange }
 
     /** 제목을 사용자가 고쳤는지 — AI 생성 뱃지 노출용. 되돌리면 다시 false 가 된다. */
     val titleEdited: Boolean
