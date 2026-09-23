@@ -51,7 +51,10 @@ private fun ErrorBody?.toException(): ApiException =
     ApiException(
         code = this?.code ?: "UNKNOWN",
         message = this?.message ?: "Unknown Error",
-        retryAfterSeconds = this?.retryAfterSeconds,
+        // 서버가 429 의 대기 초를 두 자리에 섞어 보낸다 — 명시 필드가 없으면 `reason` 에 숫자만
+        // 담아 온다. 명시 필드만 읽으면 **대기 시간을 0 으로 읽어 버튼이 즉시 다시 열린다**(CRE-04).
+        // `reason` 이 분기 키(JOIN_BLOCKED 계열)일 때는 숫자가 아니라 null 로 떨어져 영향이 없다.
+        retryAfterSeconds = this?.retryAfterSeconds ?: this?.reason?.trim()?.toIntOrNull(),
         reason = this?.reason,
         rejoinAvailableAt = this?.rejoinAvailableAt,
     )

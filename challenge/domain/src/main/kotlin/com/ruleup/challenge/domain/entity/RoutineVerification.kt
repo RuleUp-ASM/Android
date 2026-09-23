@@ -120,6 +120,34 @@ fun ParamSpec.clamp(value: Double): Double =
         .coerceAtLeast(min ?: Double.NEGATIVE_INFINITY)
         .coerceAtMost(max ?: Double.POSITIVE_INFINITY)
 
+/**
+ * 지금 값이 허용 범위 안인가.
+ *
+ * ± 버튼은 [clamp] 로 접지만 **직접 입력은 접을 수 없다** — 타이핑 도중 값을 접으면 `15` 를 치려고
+ * `1` 을 누르는 순간 하한으로 튀어 편집이 불가능해진다. 그래서 입력은 그대로 두고, 범위를 벗어난
+ * 채로는 제출을 막는다. 그 판단이 여기 있어야 생성·수정 어느 경로로도 같은 값이 나간다(CRE-12).
+ *
+ * 숫자로 읽히지 않는 값은 범위를 따질 수 없으므로 `false` 다 — 비어 있는 편집 중 상태가 여기 든다.
+ * [ParamKind.TIME] 은 선택기로만 받아 범위가 없고, min·max 도 오지 않아 항상 통과한다.
+ */
+val ParamSpec.isInRange: Boolean
+    get() {
+        if (kind == ParamKind.TIME) return value.isNotBlank()
+        val number = value.toDoubleOrNull() ?: return false
+        return number >= (min ?: Double.NEGATIVE_INFINITY) && number <= (max ?: Double.POSITIVE_INFINITY)
+    }
+
+/** 허용 범위 안내 문구. 한쪽만 있으면 그쪽만 말한다 — 없는 경계를 지어내면 안 된다. */
+fun ParamSpec.rangeLabel(): String? =
+    when {
+        min != null && max != null -> "${min.trimZero()} ~ ${max.trimZero()}"
+        min != null -> "${min.trimZero()} 이상"
+        max != null -> "${max.trimZero()} 이하"
+        else -> null
+    }
+
+private fun Double.trimZero(): String = if (this % 1.0 == 0.0) toLong().toString() else toString()
+
 /** 생성·수정 요청에 실리는 목표값 (명세 `params[]` — `{key, value}` 만). */
 data class ParamEntry(
     val key: String,

@@ -526,6 +526,9 @@ class CreateChallengeViewModel
                 checkConsentThenCreate(verification.method)
                 return
             }
+            // 통과 표시는 여기서 **소비한다.** 남겨 두면 마이에서 동의를 철회한 뒤에도 같은 세션의
+            // 다음 생성이 시트 없이 통과해, 앱을 껐다 켜야 동의를 다시 묻는다(ONB-14).
+            consentChecked = false
 
             val command =
                 CreateChallengeCommand(
@@ -591,6 +594,7 @@ class CreateChallengeViewModel
             }
         }
 
+        /** 이번 생성 시도가 동의 확인을 통과했는지. **한 번 쓰고 끄는 값이다** — 위 주석 참고. */
         private var consentChecked = false
         private var lastCreated: CreatedChallenge? = null
 

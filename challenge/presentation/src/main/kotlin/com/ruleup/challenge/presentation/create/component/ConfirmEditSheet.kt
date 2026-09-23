@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
+import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.common.CapacitySlider
 import com.ruleup.challenge.presentation.create.ChallengeDates
@@ -175,8 +176,31 @@ private fun ModeCapacityEditor(
                 )
             },
         )
-        // 정원·티어는 그룹 전용 계약이다. 솔로에서 보여주면 보내지지도 않을 값을 고르게 하는 셈이다.
+        // 공개 범위·정원·티어는 그룹 전용 계약이다. 솔로에서 보여주면 보내지지도 않을 값을 고르게 하는 셈이다.
         if (state.isGroup) {
+            // 모드(그룹·솔로)와 공개 범위(공개·비공개)는 **서로 다른 축이다.** 고를 자리가 없으면
+            // 네 조합 중 비공개 그룹을 만들 길이 아예 없다(CRE-07).
+            SegmentedControl(
+                options = listOf("공개", "비공개"),
+                selectedIndex = if (state.visibility?.isPrivate == true) 1 else 0,
+                onSelect = { index ->
+                    onIntent(
+                        CreateChallengeIntent.SetVisibility(
+                            if (index == 1) ChallengeVisibility.PRIVATE else ChallengeVisibility.PUBLIC,
+                        ),
+                    )
+                },
+            )
+            Text(
+                text =
+                    if (state.visibility?.isPrivate == true) {
+                        "초대 링크를 받은 사람만 들어올 수 있어요"
+                    } else {
+                        "탐색에 노출돼 누구나 참여할 수 있어요"
+                    },
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
             CapacitySlider(
                 capacity = state.capacity,
                 onChange = { onIntent(CreateChallengeIntent.SetCapacity(it)) },
