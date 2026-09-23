@@ -1,5 +1,6 @@
 package com.ruleup.profile.domain.entity
 
+import com.ruleup.domain.entity.user.AccountRestriction
 import com.ruleup.domain.entity.user.AccountStatus
 
 /**
@@ -108,4 +109,28 @@ data class SanctionHistory(
 ) {
     val isEmpty: Boolean
         get() = activeSanction == null && admin.isEmpty() && auto.isEmpty()
+
+    /**
+     * 이 계정에 걸린 제한. **게이트가 보는 유일한 값이다.**
+     *
+     * [accountStatus] 는 정지 여부만 말하고 종류는 [activeSanction] 이 들고 있다 —
+     * 서버는 기능 정지도 전체 잠금도 `SUSPENDED` 로 내린다(백오피스 테크 스펙 부록 A).
+     * 그래서 둘을 여기서 한 번만 합치고, 화면은 합쳐진 값만 본다.
+     *
+     * 정지인데 활성 제재가 없으면 전체 잠금으로 본다 — 종류를 모르는 정지를 통과시키면
+     * 제재가 조용히 풀린다. 서버도 같은 경우를 방어적으로 다룬다(부록 A).
+     */
+    val restriction: AccountRestriction
+        get() =
+            if (accountStatus == AccountStatus.ACTIVE) {
+                AccountRestriction.None
+            } else {
+                when (activeSanction?.type) {
+                    SanctionType.FEATURE_SUSPENSION -> AccountRestriction.Feature(activeSanction.featureCode)
+                    SanctionType.BAN -> AccountRestriction.Banned
+                    // CHALLENGE_KICK 은 방에서만 효력이 있어 계정을 잠그지 않는다.
+                    SanctionType.CHALLENGE_KICK -> AccountRestriction.None
+                    SanctionType.LOCK, null -> AccountRestriction.Locked
+                }
+            }
 }

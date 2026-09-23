@@ -3,7 +3,6 @@ package com.ruleup.profile.presentation.edit.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.category.InterestLimits
-import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NickNameUtil
 import com.ruleup.domain.entity.user.NicknameValidation
 import com.ruleup.domain.helper.NavigationHelper
@@ -198,10 +197,11 @@ class ProfileEditViewModel
 
             viewModelScope
                 .launch {
-                    // 정지 상태면 PATCH 를 보내지 않는다 — 서버 거절 문구로는 왜 막혔는지 못 읽는다.
-                    // 조회가 실패하면 보낸다. 정지 여부를 모른다고 저장을 막으면 멀쩡한 사용자가 갇힌다.
+                    // 쓰기가 막힌 상태면 PATCH 를 보내지 않는다 — 서버 거절 문구로는 왜 막혔는지
+                    // 못 읽는다. 조회가 실패하면 보낸다(restriction = None). 정지 여부를 모른다고
+                    // 저장을 막으면 멀쩡한 사용자가 갇힌다.
                     val history = runCatching { accountRepository.getSanctions() }.getOrNull()
-                    if (history?.accountStatus == AccountStatus.LOCKED) {
+                    if (history?.restriction?.isFullLock == true) {
                         dispatch(
                             ProfileEditReducerEvent.SaveBlocked(
                                 SuspendedBlock(until = history.activeSanction?.endsAt?.let(::sanctionUntilLabel)),

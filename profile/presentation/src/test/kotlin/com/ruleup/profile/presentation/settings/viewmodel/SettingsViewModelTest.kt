@@ -1,6 +1,7 @@
 package com.ruleup.profile.presentation.settings.viewmodel
 
 import com.ruleup.domain.entity.user.AccountStatus
+import com.ruleup.domain.helper.LocalUserDataCleaner
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.onboarding.domain.auth.usecase.LogoutUseCase
@@ -161,11 +162,14 @@ class SettingsViewModelTest {
             accountRepository = repo,
             profileRepository = profile,
             inquiryRepository = inquiries,
-            logoutUseCase = LogoutUseCase(auth, tokens),
-            withdrawUseCase = WithdrawUseCase(auth, tokens),
+            logoutUseCase = LogoutUseCase(auth, tokens, noopCleaner),
+            withdrawUseCase = WithdrawUseCase(auth, tokens, noopCleaner),
             navigationHelper = nav,
         )
     }
+
+    /** 이 화면의 테스트는 정리 동작을 보지 않는다 — 무엇을 지우는지는 LogoutUseCase 쪽 테스트가 본다. */
+    private val noopCleaner = LocalUserDataCleaner {}
 
     private fun history(active: Boolean) =
         SanctionHistory(

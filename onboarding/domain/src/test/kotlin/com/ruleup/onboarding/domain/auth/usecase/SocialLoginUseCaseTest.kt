@@ -67,7 +67,7 @@ class SocialLoginUseCaseTest {
         }
 
     @Test
-    fun `잠금 계정은 열람 전용 홈으로 보낸다`() =
+    fun `잠금 계정은 제한 갈래로 보낸다`() =
         runBlocking {
             val lock = LockInfo(reason = "신고 누적", unlockAt = "2026-09-01T00:00:00+09:00")
             val auth = existingUser(testUser(accountStatus = AccountStatus.LOCKED, lockInfo = lock))
@@ -75,8 +75,20 @@ class SocialLoginUseCaseTest {
 
             val result = useCase(auth, tokens)(authorization)
 
-            assertEquals(LoginOutcome.GoHomeReadOnly(lock), result)
+            assertEquals(LoginOutcome.Restricted(lock), result)
             assertEquals(token, tokens.savedToken)
+        }
+
+    @Test
+    fun `정지 계정도 제한 갈래로 보낸다`() =
+        runBlocking {
+            // 서버가 실제로 내리는 값은 SUSPENDED 다. LOCKED 만 보면 재로그인이 게이트를 지나쳐
+            // 잠긴 계정이 홈에 들어간다(AUTH-13).
+            val auth = existingUser(testUser(accountStatus = AccountStatus.SUSPENDED))
+
+            val result = useCase(auth, FakeTokenRepository())(authorization)
+
+            assertEquals(LoginOutcome.Restricted(null), result)
         }
 
     @Test

@@ -2,7 +2,7 @@ package com.ruleup.profile.presentation.member.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.ruleup.domain.entity.user.AccountStatus
+import com.ruleup.domain.entity.user.FeatureCode
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
@@ -104,9 +104,11 @@ class MemberProfileViewModel
         private fun openReport() {
             val profile = currentState.profile ?: return
             viewModelScope.launch {
+                // 신고 기능만 정지된 계정도 여기서 막힌다 — 전체 잠금이 아니라고 통과시키면
+                // 정지된 기능이 서버 거절로만 드러난다.
                 // 조회가 실패하면 보낸다 — 정지 여부를 모른다고 신고를 막으면 멀쩡한 사용자가 갇힌다.
                 val history = runCatching { accountRepository.getSanctions() }.getOrNull()
-                if (history?.accountStatus == AccountStatus.LOCKED) {
+                if (history?.restriction?.blocks(FeatureCode.REPORT) == true) {
                     dispatch(
                         MemberProfileReducerEvent.ReportBlocked(
                             SuspendedBlock(until = history.activeSanction?.endsAt?.let(::sanctionUntilLabel)),

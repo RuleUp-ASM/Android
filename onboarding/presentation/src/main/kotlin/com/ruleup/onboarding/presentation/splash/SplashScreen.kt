@@ -47,7 +47,10 @@ fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
     }
     // 스플래시는 항상 그린다. 강제 업데이트는 그 위에 얹는 다이얼로그다 — 화면을 갈아치우면
     // 인트로 응답이 도착하는 순간 로고가 사라졌다 나타난다.
-    SplashContent()
+    SplashContent(
+        connectionFailed = state.connectionFailed,
+        onRetry = { viewModel.onIntent(SplashIntent.Retry) },
+    )
     if (state.forceUpdate) {
         ForceUpdateDialog(
             message = updateMessage(state.minAppVersion),
@@ -56,8 +59,16 @@ fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
     }
 }
 
+/**
+ * 연결 실패는 화면을 갈아치우지 않고 로고 아래에 붙인다 — 세션은 살아 있고 할 일은 재시도뿐이라,
+ * 별도 오류 화면으로 보내면 로그인이 풀린 것처럼 읽힌다.
+ */
 @Composable
-private fun SplashContent(modifier: Modifier = Modifier) {
+private fun SplashContent(
+    modifier: Modifier = Modifier,
+    connectionFailed: Boolean = false,
+    onRetry: () -> Unit = {},
+) {
     Box(
         modifier =
             modifier
@@ -107,18 +118,39 @@ private fun SplashContent(modifier: Modifier = Modifier) {
                 )
             }
 
-            Row(
-                modifier = Modifier.padding(top = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                repeat(3) {
-                    Box(
-                        modifier =
-                            Modifier
-                                .size(8.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(Color.White),
+            if (connectionFailed) {
+                Column(
+                    modifier = Modifier.padding(top = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        text = "지금은 연결이 불안정해요",
+                        color = Color.White,
+                        style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = onRetry) {
+                        Text(
+                            text = "다시 시도",
+                            color = Color.White,
+                            style = RuleUpTheme.typography.cardTitle,
+                        )
+                    }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    repeat(3) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color.White),
+                        )
+                    }
                 }
             }
         }
@@ -195,6 +227,12 @@ private fun Context.openPlayStore() {
 @Composable
 private fun SplashScreenPreview() {
     RuleUpTheme { SplashContent() }
+}
+
+@Preview
+@Composable
+private fun SplashConnectionFailedPreview() {
+    RuleUpTheme { SplashContent(connectionFailed = true) }
 }
 
 @Preview

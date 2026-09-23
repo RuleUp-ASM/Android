@@ -1,6 +1,8 @@
 package com.ruleup.onboarding.presentation.intro.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.entity.user.AccountRestriction
+import com.ruleup.domain.entity.user.FeatureCode
 import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.PendingDeepLink
@@ -8,6 +10,7 @@ import com.ruleup.domain.token.TokenRepository
 import com.ruleup.logging.domain.BizLogger
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
+import com.ruleup.onboarding.domain.account.AccountRestrictionProvider
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
@@ -19,6 +22,7 @@ import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
 import com.ruleup.onboarding.presentation.common.toAuthFailureUi
+import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -39,6 +43,7 @@ class LoginViewModel
         private val tokenRepository: TokenRepository,
         private val signupSession: SignupSession,
         private val pendingDeepLink: PendingDeepLink,
+        private val accountRestrictionProvider: AccountRestrictionProvider,
     ) : MviViewModel<LoginIntent, LoginState, LoginReducerEvent, LoginEffect>(LoginState.initial) {
         override fun onIntent(intent: LoginIntent) {
             when (intent) {
@@ -88,6 +93,32 @@ class LoginViewModel
                 }
             }
 
+        /**
+         * 제한 계정의 진입. 전체 잠금은 잠금 화면에 고정하고, 기능 정지는 그 기능만 막힌다는 것을
+         * 알린 뒤 평소처럼 홈으로 보낸다.
+         */
+        private suspend fun enterRestricted(result: LoginOutcome.Restricted) {
+            when (val restriction = accountRestrictionProvider.current()) {
+                is AccountRestriction.Feature -> {
+                    messageHelper.showSnackBar("${FeatureCode.label(restriction.featureCode)} 기능이 정지된 상태예요")
+                    navigationHelper.goHomeOrPending(pendingDeepLink)
+                }
+
+                AccountRestriction.Locked, AccountRestriction.Banned ->
+                    navigationHelper.navigateTo(AccountLockedPage)
+
+                // 제재 조회가 실패했다. 잠금 화면에 가두지 않고 사유만 알린 뒤 들여보낸다 —
+                // 막힌 기능은 각 화면이 서버 거절로 안내한다.
+                AccountRestriction.None -> {
+                    messageHelper.showSnackBar(
+                        result.lockInfo?.let { "계정이 잠겨 있어요 (해제: ${it.unlockAt})" }
+                            ?: "계정에 제한이 걸려 있어요",
+                    )
+                    navigationHelper.goHomeOrPending(pendingDeepLink)
+                }
+            }
+        }
+
         private fun socialLogin(authorization: OAuthAuthorization) {
             viewModelScope.launch {
                 runCatching {
@@ -105,15 +136,10 @@ class LoginViewModel
                     when (result) {
                         is LoginOutcome.GoHome -> navigationHelper.goHomeOrPending(pendingDeepLink)
 
-                        // 잠금 계정도 로그인은 된다. 홈은 열되 잠금 사유를 알려 준다 —
-                        // 편집 등 막힌 기능은 각 화면이 ACCOUNT_LOCKED 로 안내한다.
-                        is LoginOutcome.GoHomeReadOnly -> {
-                            messageHelper.showSnackBar(
-                                result.lockInfo?.let { "계정이 잠겨 있어요 (해제: ${it.unlockAt})" }
-                                    ?: "계정이 잠겨 열람만 가능해요",
-                            )
-                            navigationHelper.goHomeOrPending(pendingDeepLink)
-                        }
+                        // 제한이 걸린 계정도 로그인은 된다. 어디까지 막혔는지는 응답이 말하지
+                        // 않으므로 제재를 한 번 더 물어 **스플래시와 같은 기준으로** 가른다 —
+                        // 여기서만 홈으로 보내면 로그아웃 후 재로그인이 잠금을 우회한다(AUTH-13).
+                        is LoginOutcome.Restricted -> enterRestricted(result)
 
                         // 복원 중 닉네임을 선점당했다. 바꾸기 전엔 홈으로 보내지 않는다.
                         is LoginOutcome.ResetNickname -> {

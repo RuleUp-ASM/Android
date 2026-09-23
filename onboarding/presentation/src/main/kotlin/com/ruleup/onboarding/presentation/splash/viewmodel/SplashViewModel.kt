@@ -1,14 +1,16 @@
 package com.ruleup.onboarding.presentation.splash.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.ruleup.domain.entity.user.AccountStatus
+import com.ruleup.domain.entity.user.AccountRestriction
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.PendingDeepLink
 import com.ruleup.domain.navigation.PendingDeepLinkEntry
 import com.ruleup.domain.navigation.RouteAccessPolicy
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
-import com.ruleup.onboarding.domain.account.AccountStatusProvider
+import com.ruleup.onboarding.domain.account.AccountRestrictionProvider
+import com.ruleup.onboarding.domain.auth.usecase.AutoLoginResult
 import com.ruleup.onboarding.domain.auth.usecase.AutoLoginUseCase
 import com.ruleup.onboarding.domain.intro.repository.WalkthroughRepository
 import com.ruleup.onboarding.domain.intro.usecase.IntroGate
@@ -43,8 +45,9 @@ class SplashViewModel
     constructor(
         private val loadIntroUseCase: LoadIntroUseCase,
         private val autoLoginUseCase: AutoLoginUseCase,
-        private val accountStatusProvider: AccountStatusProvider,
+        private val accountRestrictionProvider: AccountRestrictionProvider,
         private val walkthroughRepository: WalkthroughRepository,
+        private val tokenRepository: TokenRepository,
         private val pendingDeepLink: PendingDeepLink,
         private val routeAccessPolicy: RouteAccessPolicy,
         private val navigationHelper: NavigationHelper,
@@ -59,6 +62,12 @@ class SplashViewModel
         override fun onIntent(intent: SplashIntent) {
             when (intent) {
                 is SplashIntent.Check -> resolveEntry()
+
+                // 다시 시도는 진입 절차를 처음부터 돌린다 — 버전 게이트도 같이 다시 본다.
+                is SplashIntent.Retry -> {
+                    started = false
+                    resolveEntry()
+                }
             }
         }
 
@@ -74,11 +83,20 @@ class SplashViewModel
                 is SplashReducerEvent.ForceUpdateRequired -> {
                     state.copy(isChecking = false, forceUpdate = true, minAppVersion = event.minAppVersion)
                 }
+
+                is SplashReducerEvent.CheckStarted -> {
+                    state.copy(isChecking = true, connectionFailed = false)
+                }
+
+                is SplashReducerEvent.ConnectionFailed -> {
+                    state.copy(isChecking = false, connectionFailed = true)
+                }
             }
 
         private fun resolveEntry() {
             if (started) return
             started = true
+            dispatch(SplashReducerEvent.CheckStarted)
             viewModelScope.launch {
                 // 버전 게이트가 먼저다. 걸리면 자동 로그인도 하지 않는다 — 업데이트 전에는 어떤
                 // 화면도 열지 않으므로 세션을 되살릴 이유가 없다.
@@ -91,13 +109,29 @@ class SplashViewModel
                     }
 
                     IntroGate.Pass -> {
-                        val authenticated = autoLoginUseCase()
-                        dispatch(SplashReducerEvent.CheckFinished)
-                        // 정지 계정은 어떤 화면도 열지 않는다 — 딥링크가 있어도 잠금이 먼저다.
-                        if (authenticated && accountStatusProvider.current() == AccountStatus.SUSPENDED) {
-                            observability.i(TAG) { "로그인 정지 — 잠금 화면으로 고정 진입" }
-                            navigationHelper.navigateTo(AccountLockedPage)
+                        val login = autoLoginUseCase()
+                        // 연결이 안 돼 세션을 확인하지 못했다. 로그인 화면으로 보내면 아직 며칠 남은
+                        // 세션을 사용자가 버린 것처럼 보인다 — 여기 머문 채 다시 시도하게 한다(ENV-03).
+                        if (login is AutoLoginResult.ConnectionFailed) {
+                            observability.i(TAG) { "자동 로그인 전송 실패 — 세션은 유지하고 재시도를 기다린다" }
+                            dispatch(SplashReducerEvent.ConnectionFailed)
                             return@launch
+                        }
+                        val authenticated = login is AutoLoginResult.Authenticated
+                        dispatch(SplashReducerEvent.CheckFinished)
+                        // 전체 잠금 계정은 어떤 화면도 열지 않는다 — 딥링크가 있어도 잠금이 먼저다.
+                        // **기능 정지는 여기서 막지 않는다.** 정지된 기능은 그 기능만 막으면 되고,
+                        // 앱 전체를 잠그면 신고 하나 막힌 계정이 아무것도 못 하게 된다.
+                        if (authenticated) {
+                            val restriction = accountRestrictionProvider.current()
+                            if (restriction.isFullLock) {
+                                observability.i(TAG) { "로그인 정지 — 잠금 화면으로 고정 진입" }
+                                navigationHelper.navigateTo(AccountLockedPage)
+                                return@launch
+                            }
+                            if (restriction is AccountRestriction.Feature) {
+                                observability.i(TAG) { "기능 정지 — 진입은 통과: feature=${restriction.featureCode}" }
+                            }
                         }
                         navigate(authenticated)
                     }
@@ -124,8 +158,13 @@ class SplashViewModel
         /**
          * 로그인 안 된 사용자의 첫 화면. 소개를 아직 못 봤으면 워크쓰루가 먼저다.
          *
+         * **로그인한 적이 있으면 워크쓰루로 보내지 않는다.** 세션이 끝나 돌아온 기존 가입자에게
+         * "01 만들기" 소개를 다시 펴면 가입 전으로 되돌아간 것처럼 보인다(AUTH-05 · NAV-10).
+         * 소개를 건너뛰고 로그인한 사용자는 `isSeen()` 이 false 라 이 조건이 따로 필요하다.
+         *
          * 보류 딥링크가 있을 때는 이 경로로 오지 않는다 — 목적지가 있는 사용자를 소개로 붙잡으면
          * 링크를 타고 온 이유가 한 번 더 밀린다.
          */
-        private suspend fun guestEntry() = if (walkthroughRepository.isSeen()) LoginPage else WalkthroughPage
+        private suspend fun guestEntry() =
+            if (walkthroughRepository.isSeen() || tokenRepository.hasEverLoggedIn()) LoginPage else WalkthroughPage
     }

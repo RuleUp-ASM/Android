@@ -29,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.user.FeatureCode
 import com.ruleup.profile.domain.entity.ActiveSanction
 import com.ruleup.profile.domain.entity.AdminSanction
 import com.ruleup.profile.domain.entity.AutoSanction
@@ -144,7 +145,7 @@ private fun ActiveCard(sanction: ActiveSanction) {
                 .padding(16.dp),
     ) {
         Text(
-            text = sanction.type.label,
+            text = sanction.type.label(sanction.featureCode),
             color = RuleUpTheme.colors.danger,
             style = RuleUpTheme.typography.cardTitle,
         )
@@ -177,8 +178,8 @@ private fun ActiveCard(sanction: ActiveSanction) {
 @Composable
 private fun AdminCard(sanction: AdminSanction) {
     HistoryCard(
-        title = sanction.type.label,
-        subtitle = sanction.featureCode ?: sanction.reasonCode.orEmpty(),
+        title = sanction.type.label(sanction.featureCode),
+        subtitle = sanction.reasonCode.orEmpty(),
         trailing = sanction.startsAt?.let(::dateDotLabel).orEmpty(),
     )
 }
@@ -187,7 +188,7 @@ private fun AdminCard(sanction: AdminSanction) {
 private fun AutoCard(sanction: AutoSanction) {
     val rejoinAt = sanction.rejoinAvailableAt
     HistoryCard(
-        title = sanction.challengeTitle ?: sanction.type.label,
+        title = sanction.challengeTitle ?: sanction.type.label(),
         subtitle =
             when {
                 sanction.permanent -> "다시 참여할 수 없어요"
@@ -234,13 +235,19 @@ private fun SectionLabel(text: String) {
     )
 }
 
-/** 모르는 종류는 "제재"로만 말한다 — 잠금인지 강퇴인지 지어내면 사용자가 잘못된 대응을 한다. */
-private val SanctionType?.label: String
-    get() =
-        when (this) {
-            SanctionType.FEATURE_SUSPENSION -> "기능 정지"
-            SanctionType.LOCK -> "계정 잠금"
-            SanctionType.BAN -> "영구 정지"
-            SanctionType.CHALLENGE_KICK -> "챌린지 강퇴"
-            null -> "제재"
-        }
+/**
+ * 제재 한 줄 제목.
+ *
+ * 기능 정지는 **무엇이 막혔는지까지 적는다** — 대상을 `featureCode` 영문 원문으로 흘리면
+ * 사용자가 무엇을 못 하게 됐는지 읽을 수 없다.
+ *
+ * 모르는 종류는 "제재"로만 말한다 — 잠금인지 강퇴인지 지어내면 사용자가 잘못된 대응을 한다.
+ */
+private fun SanctionType?.label(featureCode: String? = null): String =
+    when (this) {
+        SanctionType.FEATURE_SUSPENSION -> "${FeatureCode.label(featureCode)} 기능 정지"
+        SanctionType.LOCK -> "계정 잠금"
+        SanctionType.BAN -> "영구 정지"
+        SanctionType.CHALLENGE_KICK -> "챌린지 강퇴"
+        null -> "제재"
+    }

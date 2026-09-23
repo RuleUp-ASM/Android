@@ -3,6 +3,7 @@ package com.ruleup.verification.data.di
 import com.ruleup.verification.data.repository.HealthTargetStoreImpl
 import com.ruleup.verification.data.repository.SignalRepositoryImpl
 import com.ruleup.verification.data.repository.UsageTargetStoreImpl
+import com.ruleup.verification.data.repository.VerificationLocalStoreImpl
 import com.ruleup.verification.data.repository.VerificationRepositoryImpl
 import com.ruleup.verification.data.signal.common.PermissionSnapshotProvider
 import com.ruleup.verification.data.signal.common.SignalCollectorImpl
@@ -25,6 +26,7 @@ import com.ruleup.verification.domain.repository.SyncPolicyStore
 import com.ruleup.verification.domain.repository.SyncScheduler
 import com.ruleup.verification.domain.repository.SyncScopeProvider
 import com.ruleup.verification.domain.repository.UsageTargetStore
+import com.ruleup.verification.domain.repository.VerificationLocalStore
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.Binds
 import dagger.Module
@@ -88,4 +90,8 @@ abstract class VerificationBindingsModule {
     @Binds
     @Singleton
     abstract fun bindUsageTargetStore(impl: UsageTargetStoreImpl): UsageTargetStore
+
+    @Binds
+    @Singleton
+    abstract fun bindVerificationLocalStore(impl: VerificationLocalStoreImpl): VerificationLocalStore
 }
