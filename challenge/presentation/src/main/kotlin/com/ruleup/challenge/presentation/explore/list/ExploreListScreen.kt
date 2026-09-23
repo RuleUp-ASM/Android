@@ -53,6 +53,7 @@ import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.time.ServiceDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -662,11 +663,16 @@ private fun TagChip(
     }
 }
 
-/** 종료일까지 남은 일수. 파싱 불가/없음(상시)은 null, 지난 날짜는 0. */
+/**
+ * 종료일까지 남은 일수. 파싱 불가/없음(상시)은 null, 지난 날짜는 0.
+ *
+ * 기준일은 **KST** 다 — 기기 기준으로 세면 같은 방의 D-day 가 목록과 상세에서 하루 어긋난다.
+ * 상세는 서버가 계산한 `remainingDays` 를 그대로 쓴다.
+ */
 private fun ddayOf(endDate: String?): Long? {
     if (endDate.isNullOrBlank()) return null
     return runCatching {
-        ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(endDate)).coerceAtLeast(0)
+        ChronoUnit.DAYS.between(ServiceDate.today(), LocalDate.parse(endDate)).coerceAtLeast(0)
     }.getOrNull()
 }
 
