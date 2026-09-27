@@ -1,6 +1,7 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.helper.LocalUserDataCleaner
+import com.ruleup.domain.helper.PushTokenRevoker
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeTokenRepository
 import kotlinx.coroutines.runBlocking
@@ -16,7 +17,7 @@ class LogoutUseCaseTest {
             val auth = FakeAuthRepository()
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
-            LogoutUseCase(auth, tokens, RecordingCleaner())()
+            LogoutUseCase(auth, tokens, RecordingCleaner(), noopRevoker)()
 
             assertEquals("r1", auth.loggedOutWith)
             assertTrue(tokens.cleared)
@@ -28,7 +29,7 @@ class LogoutUseCaseTest {
             val auth = FakeAuthRepository().apply { logoutError = RuntimeException("server down") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
-            LogoutUseCase(auth, tokens, RecordingCleaner())()
+            LogoutUseCase(auth, tokens, RecordingCleaner(), noopRevoker)()
 
             assertTrue(tokens.cleared)
         }
@@ -39,7 +40,7 @@ class LogoutUseCaseTest {
             val auth = FakeAuthRepository()
             val tokens = FakeTokenRepository(refreshToken = null)
 
-            LogoutUseCase(auth, tokens, RecordingCleaner())()
+            LogoutUseCase(auth, tokens, RecordingCleaner(), noopRevoker)()
 
             assertNull(auth.loggedOutWith)
             assertTrue(tokens.cleared)
@@ -52,10 +53,41 @@ class LogoutUseCaseTest {
             // 자기 것으로 올린다(AUTH-10).
             val cleaner = RecordingCleaner()
 
-            LogoutUseCase(FakeAuthRepository(), FakeTokenRepository(refreshToken = "r1"), cleaner)()
+            LogoutUseCase(FakeAuthRepository(), FakeTokenRepository(refreshToken = "r1"), cleaner, noopRevoker)()
 
             assertTrue(cleaner.called)
         }
+
+    @Test
+    fun `푸시 토큰은 세션 revoke 와 로컬 정리보다 먼저 해제한다`() =
+        runBlocking {
+            // 순서가 뒤집히면 서버가 요청자를 못 찾아 토큰이 이전 계정에 남고, 로그아웃한 기기에 푸시가 온다.
+            val auth = FakeAuthRepository()
+            val tokens = FakeTokenRepository(refreshToken = "r1")
+            var revokedWhileSessionAlive = false
+            val revoker =
+                PushTokenRevoker {
+                    revokedWhileSessionAlive = auth.loggedOutWith == null && !tokens.cleared
+                }
+
+            LogoutUseCase(auth, tokens, RecordingCleaner(), revoker)()
+
+            assertTrue(revokedWhileSessionAlive)
+        }
+
+    @Test
+    fun `refreshToken 이 없어도 푸시 토큰은 해제한다`() =
+        runBlocking {
+            var revoked = false
+
+            LogoutUseCase(FakeAuthRepository(), FakeTokenRepository(refreshToken = null), RecordingCleaner()) {
+                revoked = true
+            }()
+
+            assertTrue(revoked)
+        }
+
+    private val noopRevoker = PushTokenRevoker {}
 
     private class RecordingCleaner : LocalUserDataCleaner {
         var called = false
