@@ -55,8 +55,9 @@ class PushTokenRegister
         private suspend fun fetchToken(): String =
             suspendCancellableCoroutine { continuation ->
                 FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                    val token = task.result
-                    if (task.isSuccessful && token != null) {
+                    // 실패한 Task 의 result 는 던진다 — 메인 스레드 콜백이라 앱이 죽는다(#501).
+                    val token = if (task.isSuccessful) task.result else null
+                    if (token != null) {
                         continuation.resume(token)
                     } else {
                         continuation.resumeWithException(
