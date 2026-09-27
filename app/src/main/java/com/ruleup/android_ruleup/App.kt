@@ -25,6 +25,8 @@ import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -130,9 +132,13 @@ class App :
             }
         }
 
-        // FCM 토큰 등록(로그인 상태 upsert — PushTokenRegister 내부에서 판단). 실패는 다음 시작/onNewToken 이 보정.
+        // FCM 토큰 등록. 시작 시 1회만 하면 로그인 직후엔 등록되지 않아 재시작 전까지 푸시가 안 온다(#501).
+        // 실패는 다음 로그인 전이/시작/onNewToken 이 보정.
         appScope.launch {
-            pushTokenRegister.registerCurrentToken()
+            tokenRepository.isLoggedIn
+                .distinctUntilChanged()
+                .filter { it }
+                .collect { pushTokenRegister.registerCurrentToken() }
         }
 
         // isLoggedIn 이 아니라 userId 를 구독한다 — 갱신 응답이 userId 를 안 주는 배포본에서는
