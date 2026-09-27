@@ -1,0 +1,15 @@
+{
+  "eval_id": 1,
+  "eval_name": "entity-case-tests",
+  "prompt": "challenge/domain 의 Challenge 엔티티에 테스트가 없네. 테스트 짜줘",
+  "assertions": [
+    "테스트 파일이 challenge/domain/src/test/…/entity/ 아래에 놓였다 (케이스 층 위치)",
+    "모든 @Test 이름이 백틱으로 감싼 한국어 문장이다",
+    "테스트 이름이 서로 겹치지 않는다 (같은 이름 둘이면 CI 빨간불에 어느 규칙인지 특정 못 한다)",
+    "테스트 이름에 예외 타입명(IllegalArgumentException 등)이 등장하지 않는다",
+    "열거의 근거를 코드 타입에 뒀다 (entries 순회 / entries.size 고정 — 값이 늘면 자동으로 깨짐)",
+    "Fake·Mock 협력자를 쓰지 않는다 (케이스 층이므로 불필요)",
+    "kotlin.test 를 쓴다 (org.junit.Assert 가 아니라)",
+    "테스트 이름에 구현 심볼(isGroup·fromValue 같은 코드 식별자)을 그대로 노출하지 않는다"
+  ]
+}

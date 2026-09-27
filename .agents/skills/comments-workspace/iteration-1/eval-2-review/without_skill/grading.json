@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "개별 지목",
+      "passed": true,
+      "evidence": "줄번호 인용 22건"
+    },
+    {
+      "text": "'안 고른 대안' 보존 판정",
+      "passed": true,
+      "evidence": "동일하게 keep 판정"
+    },
+    {
+      "text": "뺄 것마다 근거",
+      "passed": true,
+      "evidence": "중복 출처 5곳 명시"
+    },
+    {
+      "text": "12줄 KDoc 지적",
+      "passed": true,
+      "evidence": "'유일하게 과하게 긴 블록'으로 지목"
+    },
+    {
+      "text": "개수를 기준으로 안 삼음",
+      "passed": true,
+      "evidence": "사실오류·중복 중심"
+    }
+  ]
+}

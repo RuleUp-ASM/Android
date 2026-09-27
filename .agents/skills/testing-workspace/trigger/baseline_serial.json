@@ -1,0 +1,171 @@
+{
+  "skill_name": "testing",
+  "description": "RuleUp Android \ub808\ud3ec\uc5d0\uc11c \ud14c\uc2a4\ud2b8\ub97c \uc124\uacc4\u00b7\uc791\uc131\u00b7\uac10\uc0ac\ud558\uace0 TEST_STRATEGY.md \ub97c \uac31\uc2e0\ud558\ub294 \uc808\ucc28. \ucf00\uc774\uc2a4(\uc5d4\ud2f0\ud2f0\u00b7\uac12\uac1d\uccb4\u00b7\ub9e4\ud37c) \u00b7 \ubaa8\ub4c8(UseCase\u00b7Repository \uad6c\ud604\u00b7ViewModel) \u00b7 UI(Robolectric Compose) \u00b7 \ud1b5\ud569(\ubaa8\ub4c8 \uacbd\uacc4\u00b7\ub124\ube44\uac8c\uc774\uc158\u00b7\uc9c1\ub82c\ud654) \u00b7 \uc778\uc218(\uc2e4\uc11c\ubc84 \uc0ac\uc6a9\uc790 \uc2a4\ud1a0\ub9ac) \ub2e4\uc12f \uce35\uc758 \uacbd\uacc4, \uc774\ub984 \uaddc\uce59, \uc0c1\ud0dc \uacbd\ub85c\uc640 \uc5d0\ub7ec \uc694\uc778\uc744 \ube60\uc9d0\uc5c6\uc774 \uc5f4\uac70\ud558\ub294 \ubc29\ubc95\uc774 \uc5ec\uae30\uc5d0\ub9cc \uc788\ub2e4. \"\ud14c\uc2a4\ud2b8 \uc9dc\uc918\", \"\ud14c\uc2a4\ud2b8 \ucf00\uc774\uc2a4\", \"\ucee4\ubc84\ub9ac\uc9c0\", \"\uc774\uac70 \ud14c\uc2a4\ud2b8 \uc5b4\ub5bb\uac8c \ud574\", \"UI \ud14c\uc2a4\ud2b8\", \"\ud1b5\ud569 \ud14c\uc2a4\ud2b8\", \"\uc778\uc218 \ud14c\uc2a4\ud2b8\", \"\ube60\uc9c4 \ud14c\uc2a4\ud2b8 \ucc3e\uc544\uc918\", \"\ud14c\uc2a4\ud2b8 \uc804\ub7b5\" \uac19\uc740 \ub9d0\uc774 \ub098\uc624\uba74 \ud14c\uc2a4\ud2b8 \ud30c\uc77c\uc744 \uc5f4\uae30 \uc804\uc5d0 \ubc18\ub4dc\uc2dc \uc774 \uc2a4\ud0ac\uc744 \uba3c\uc800 \uc77d\ub294\ub2e4. \uba85\uc2dc\uc801 \uc694\uccad\uc774 \uc544\ub2c8\uc5b4\ub3c4 \ub9c8\ucc2c\uac00\uc9c0\ub2e4 \u2014 \uc0c8 \uc5d4\ud2f0\ud2f0\u00b7UseCase\u00b7ViewModel\u00b7\ud654\uba74\uc744 \ub9cc\ub4e4\uac70\ub098 \ubc84\uadf8\ub97c \uace0\uce58\ub294 \uc791\uc5c5\uc740 \ud14c\uc2a4\ud2b8\ub3c4 \uac19\uc774 \uc4f0\uac8c \ub418\ubbc0\ub85c \ucf54\ub4dc\ub97c \uc4f0\uae30 \uc804\uc5d0 \uc77d\uace0, PR \ub9ac\ubdf0\uc5d0\uc11c \ub0a8\uc758 \ud14c\uc2a4\ud2b8\ub97c \ud3c9\uac00\ud560 \ub54c\ub3c4 \uc774 \uae30\uc900\uc73c\ub85c \ud310\uc815\ud55c\ub2e4. \uce35\uc744 \uc798\ubabb \uace0\ub974\uba74 \uc870\ud569 \ud3ed\ubc1c\uc744 \ub9cc\ub4e4\uac70\ub098 \ub9ac\ubdf0\uc5d0\uc11c \ud1b5\uc9f8\ub85c \ub418\ub3cc\uc544\uc628\ub2e4.",
+  "results": [
+    {
+      "query": "verification/domain \uc5d0 SignalBatch \ucabc\uac1c\ub294 \ub85c\uc9c1 \uc0c8\ub85c \ub123\uc5c8\ub294\ub370 \uc774\uac70 \ud14c\uc2a4\ud2b8 \uc5b4\ub5bb\uac8c \uc9dc\uc57c\ub420\uc9c0 \ubaa8\ub974\uaca0\uc5b4. \ubc30\uce58 \ud06c\uae30 \ub118\uc5b4\uac00\uba74 \ub098\ub220\uc9c0\ub294\uac74\ub370 \uacbd\uacc4\uac12\ub9cc \ubcf4\uba74 \ub418\ub098?",
+      "should_trigger": true,
+      "trigger_rate": 0.3333333333333333,
+      "triggers": 1,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "ChallengeSettingsViewModel \ud14c\uc2a4\ud2b8 \uc880 \ucd94\uac00\ud574\uc918",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "\uc6b0\ub9ac \uc571 \ud14c\uc2a4\ud2b8\uac00 \uc9c0\uae08 \uc5b4\ub514\uae4c\uc9c0 \ucee4\ubc84\ub418\ub294\uc9c0 \uc815\ub9ac\ud574\uc11c \ubb38\uc11c\ub85c \ub0a8\uae30\uace0 \uc2f6\uc5b4. \ub098\uc911\uc5d0 \ud488\uc9c8 \uc9c0\ud45c\ub85c \uc4f0\uac8c",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "ExploreScreen \ud654\uba74 \ud14c\uc2a4\ud2b8 \ub9cc\ub4e4\uc5b4\uc918. \ud544\ud130 \ub20c\ub800\uc744\ub54c \uc81c\ub300\ub85c \ubc18\uc751\ud558\ub294\uc9c0 \ud655\uc778\ud558\uace0 \uc2f6\uc74c",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "profile/data \uc5d0 CalendarResponse \ub9e4\ud37c \ucd94\uac00\ud588\uc5b4. \uc11c\ubc84\uac00 \ud544\ub4dc \uc548\uc8fc\ub294 \uacbd\uc6b0\uac00 \uc788\ub294\ub370 \uadf8\uac83\ub3c4 \uac19\uc774 \uac80\uc99d\ud558\uac8c \ud574\uc918",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "PR \uc62c\ub77c\uc628\uac70 \ubcf4\ub294\ub370 \ud14c\uc2a4\ud2b8 \uc774\ub984\ub4e4\uc774 \ub2e4 `test1` `test2` \uc774\ub7f0\uc2dd\uc774\uc57c. \uc774\uac70 \ub9ac\ubdf0\uc5d0\uc11c \ubb50\ub77c\uace0 \ucf54\uba58\ud2b8 \ub2ec\uc544\uc57c\ub420\uae4c",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "\uc2e4\uc81c \uc11c\ubc84 \ubd99\uc5ec\uc11c \ucc4c\ub9b0\uc9c0 \ub9cc\ub4e4\uace0 \ucc38\uc5ec\ud558\ub294\uac83\uae4c\uc9c0 \ud55c\ubc88\uc5d0 \ub3cc\ub824\ubcf4\ub294 \ud14c\uc2a4\ud2b8 \ub9cc\ub4e4\uc218 \uc788\uc744\uae4c? \ubc30\ud3ec \uc804\uc5d0 \ud55c\ubc88\uc529 \ub3cc\ub9ac\uac8c",
+      "should_trigger": true,
+      "trigger_rate": 0.3333333333333333,
+      "triggers": 1,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "onboarding \ucabd\uc5d0 \ube60\uc9c4 \ud14c\uc2a4\ud2b8 \uc788\uc73c\uba74 \ucc3e\uc544\uc918",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "TokenAuthenticator 401 \uac31\uc2e0\ub418\ub294 \ubd80\ubd84\uc774 \uc9c0\uae08 \uac80\uc99d\uc774 \ud558\ub098\ub3c4 \uc548\ub418\uc5b4\uc788\ub294\uac83 \uac19\uc740\ub370 \ud655\uc778 \uc880",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "\uc0c8\ub85c \ub9cc\ub4e0 JoinBlockReason enum \uac12\uc774 6\uac1c\uc778\ub370 \ub098\uc911\uc5d0 \uc11c\ubc84\uc5d0\uc11c \ud558\ub098 \ub354 \ub298\uc5b4\ub098\uba74 \uc790\ub3d9\uc73c\ub85c \uac78\ub9ac\uac8c \ud558\uace0\uc2f6\uc5b4",
+      "should_trigger": true,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": false
+    },
+    {
+      "query": "./gradlew test \ub3cc\ub838\ub294\ub370 :app:testDebugUnitTest \uc5d0\uc11c google-services.json \uc5c6\ub2e4\uace0 \uae68\uc838. local.properties \ubb38\uc81c\uc778\uac00?",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "\ucc4c\ub9b0\uc9c0 \ubc29 \ub098\uac00\uae30 API \ubd99\uc5ec\uc57c\ub3fc. DELETE /challenges/{id}/members/me \uc774\uace0 \uc751\ub2f5\uc740 204\uc57c",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "https://www.figma.com/design/JDWCrvnTlAyrtzMI2MtpcC/RuleUp-\ub514\uc790\uc778?node-id=1134-1930 \uc774 \uc194\ub85c \uc0c1\uc138 \ud654\uba74 \uad6c\ud604\ud574\uc918",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "ktlintCheck \uc5d0\uc11c \uc790\uafb8 \uac78\ub9ac\ub294\ub370 max line length \ub97c 140 \uc73c\ub85c \uc62c\ub9b4\uc218 \uc788\ub098? .editorconfig \uc5b4\ub514 \uace0\uccd0\uc57c\ub3fc",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "RunSyncUseCase \uc5d0 \uc8fc\uc11d\uc774 \ub108\ubb34 \ub9ce\uc774 \ub2ec\ub824\uc788\uc5b4\uc11c \uc815\ub9ac\ud558\uace0 \uc2f6\uc5b4",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "verification \ucabd \uc9c0\uc624\ud39c\uc2a4\uac00 \uc2e4\uae30\uae30\uc5d0\uc11c \uc798 \uc548\uc7a1\ud788\ub294\ub370 \uc5d0\ubbac\ub808\uc774\ud130\ub85c \uc704\uce58 \ubaa8\ud0b9\ud574\uc11c \ud655\uc778\ud558\ub294 adb \uba85\ub839\uc5b4 \ubb50\uc600\uc9c0",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "ChallengeDetailViewModel \uc774 1000\uc904 \ub118\uc5b4\uac00\uc11c \uc880 \ucabc\uac1c\uace0 \uc2f6\uc740\ub370 \uc5b4\ub5bb\uac8c \ub098\ub204\ub294\uac8c \uc88b\uc744\uae4c",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "\ud648 \ud654\uba74 \uc9c4\uc785\ud560\ub54c \ub809\uc774 \uac78\ub9ac\ub294\uac83 \uac19\uc740\ub370 \uc5b4\ub514\uc11c \uc2dc\uac04\uc744 \uc7a1\uc544\uba39\ub294\uc9c0 \uce21\uc815\ud574\ubcfc \ubc29\ubc95 \uc5c6\uc744\uae4c",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "CI \uc5d0\uc11c androidTest \ub3c4 \uac19\uc774 \ub3cc\ub9ac\ub824\uba74 \uc6cc\ud06c\ud50c\ub85c \uc5b4\ub5bb\uac8c \ucd94\uac00\ud574\uc57c\ub3fc? \uc5d0\ubbac\ub808\uc774\ud130 \ub744\uc6b0\ub294\uac70 \ud544\uc694\ud558\uc9c0?",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    },
+    {
+      "query": "\ucc4c\ub9b0\uc9c0 \uc0dd\uc131\ud560\ub54c \uc8fc\uac04 \ud69f\uc218 \ubc94\uc704\uac00 1~7 \uc778\ub370 \uc774 \uc0c1\uc218\ub97c domain \uc5b4\ub514\uc5d0 \ub450\ub294\uac8c \ub9de\uc544?",
+      "should_trigger": false,
+      "trigger_rate": 0.0,
+      "triggers": 0,
+      "runs": 3,
+      "pass": true
+    }
+  ],
+  "summary": {
+    "total": 20,
+    "passed": 10,
+    "failed": 10
+  }
+}

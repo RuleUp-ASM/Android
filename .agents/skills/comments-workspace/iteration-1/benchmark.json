@@ -1,0 +1,68 @@
+{
+  "skill_name": "comments",
+  "iteration": 1,
+  "configurations": {
+    "with_skill": {
+      "pass_rate": 1.0,
+      "mean_duration_seconds": 138.23333333333332,
+      "mean_tokens": 57993.0,
+      "per_eval": [
+        {
+          "eval_id": "eval-0-new-code",
+          "pass_rate": 1.0,
+          "passed": 6,
+          "total": 6,
+          "duration_seconds": 124.6,
+          "total_tokens": 59564
+        },
+        {
+          "eval_id": "eval-1-cleanup",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_seconds": 79.1,
+          "total_tokens": 45790
+        },
+        {
+          "eval_id": "eval-2-review",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_seconds": 211.0,
+          "total_tokens": 68625
+        }
+      ]
+    },
+    "without_skill": {
+      "pass_rate": 0.9444444444444445,
+      "mean_duration_seconds": 112.53333333333335,
+      "mean_tokens": 53232.0,
+      "per_eval": [
+        {
+          "eval_id": "eval-0-new-code",
+          "pass_rate": 0.8333333333333334,
+          "passed": 5,
+          "total": 6,
+          "duration_seconds": 67.7,
+          "total_tokens": 53739
+        },
+        {
+          "eval_id": "eval-1-cleanup",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_seconds": 100.8,
+          "total_tokens": 47806
+        },
+        {
+          "eval_id": "eval-2-review",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_seconds": 169.1,
+          "total_tokens": 58151
+        }
+      ]
+    }
+  }
+}

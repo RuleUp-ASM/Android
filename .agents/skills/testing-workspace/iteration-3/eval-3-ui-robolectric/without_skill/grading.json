@@ -1,0 +1,48 @@
+{
+  "eval_id": 3,
+  "run": "without_skill",
+  "expectations": [
+    {
+      "text": "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+      "passed": true,
+      "evidence": "toml robolectric 핀: True"
+    },
+    {
+      "text": "isIncludeAndroidResources = true 를 설정했다",
+      "passed": true,
+      "evidence": "isIncludeAndroidResources=True"
+    },
+    {
+      "text": "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+      "passed": true,
+      "evidence": "properties sdk=True, @Config sdk=False"
+    },
+    {
+      "text": "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+      "passed": false,
+      "evidence": "RobolectricTestRunner=False"
+    },
+    {
+      "text": "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+      "passed": true,
+      "evidence": "테스트 위치: ['challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailScreenTest.kt', 'challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailSheetTest.kt', 'challenge/presentation/src/test/kotlin/com/ruleup/challenge/present"
+    },
+    {
+      "text": "setContent 안을 RuleUpTheme 으로 감쌌다",
+      "passed": true,
+      "evidence": "RuleUpTheme=True"
+    },
+    {
+      "text": "기대 문구의 출처가 Figma 임을 밝힌다 (노드 ID·프레임 이름을 NOTES 나 KDoc 에 남긴다)",
+      "passed": false,
+      "evidence": "Figma 근거: 없음"
+    },
+    {
+      "text": "디자인에 없는 상태를 지어내지 않고 미확정으로 표시한다",
+      "passed": false,
+      "evidence": "표시 없음"
+    }
+  ],
+  "passed": 5,
+  "total": 8
+}

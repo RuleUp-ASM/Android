@@ -1,0 +1,73 @@
+{
+  "skill_name": "testing",
+  "evals": [
+    {
+      "id": 1,
+      "name": "entity-case-tests",
+      "prompt": "challenge/domain 의 Challenge 엔티티에 테스트가 없네. 테스트 짜줘",
+      "expected_output": "Challenge.kt 의 불변식마다 하나씩, 조건→결과 형태의 한국어 백틱 이름을 가진 케이스 층 테스트. kotlin.test + assertFailsWith, Fake 없이. 유효 기본값 팩토리 + copy 로 한 축만 흔드는 형태.",
+      "files": [],
+      "assertions": [
+        "테스트 파일이 challenge/domain/src/test/…/entity/ 아래에 놓였다 (케이스 층 위치)",
+        "모든 @Test 이름이 백틱으로 감싼 한국어 문장이다",
+        "테스트 이름이 서로 겹치지 않는다 (같은 이름 둘이면 CI 빨간불에 어느 규칙인지 특정 못 한다)",
+        "테스트 이름에 예외 타입명(IllegalArgumentException 등)이 등장하지 않는다",
+        "열거의 근거를 코드 타입에 뒀다 (entries 순회 / entries.size 고정 — 값이 늘면 자동으로 깨짐)",
+        "Fake·Mock 협력자를 쓰지 않는다 (케이스 층이므로 불필요)",
+        "kotlin.test 를 쓴다 (org.junit.Assert 가 아니라)",
+        "테스트 이름에 구현 심볼(isGroup·fromValue 같은 코드 식별자)을 그대로 노출하지 않는다"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "viewmodel-tests",
+      "prompt": "ExploreListViewModel 테스트 추가해줘",
+      "expected_output": "Dispatchers.setMain/resetMain 을 세우고, NavigationHelper 대역으로 이동 여부를 검증하며, effect 를 toList 로 수집(first() 무한대기 회피)하는 모듈 층 테스트. build.gradle.kts 에 kotlinx-coroutines-test 추가.",
+      "files": [],
+      "assertions": [
+        "Dispatchers.setMain 과 resetMain 을 @Before/@After 에 세웠다",
+        "build.gradle.kts 에 kotlinx-coroutines-test 를 추가했다 (버전 카탈로그 경유)",
+        "NavigationHelper 대역을 만들어 화면 이동 여부를 검증한다",
+        "effect 를 단독 first() 로 기다리지 않는다 (수집 job/toList 사용 — 무한대기 회피)",
+        "목킹 라이브러리(mockk·mockito)를 새로 도입하지 않았다",
+        "모든 @Test 이름이 백틱 한국어 문장이다",
+        "State 전체를 통째로 assertEquals 하지 않는다",
+        "실패 경로(예외 → 화면 상태)를 최소 하나 검증한다"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ui-robolectric",
+      "prompt": "ChallengeDetailScreen UI 테스트 만들어줘",
+      "expected_output": "Robolectric 실행 기반 신설(libs.versions.toml 버전 등록, isIncludeAndroidResources, robolectric.properties 로 SDK 고정) + 상태 호이스팅된 Composable 대상 @RunWith(RobolectricTestRunner) 테스트. 상태 분기별 렌더와 조작→Intent 만 검증.",
+      "files": [],
+      "assertions": [
+        "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+        "isIncludeAndroidResources = true 를 설정했다",
+        "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+        "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+        "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+        "setContent 안을 RuleUpTheme 으로 감쌌다",
+        "색·간격·폰트 같은 스타일 값을 단언하지 않는다",
+        "조작 → Intent 를 검증하는 테스트가 최소 하나 있다"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "coverage-audit-doc",
+      "prompt": "테스트 어디가 비어 있는지 보고 TEST_STRATEGY.md 만들어줘",
+      "expected_output": "층×모듈 커버리지 격자와 빈 구멍을 뽑아낸 뒤, 미검증 목록(무엇을 못 잡는가·왜·풀리는 조건)을 중심에 둔 루트 TEST_STRATEGY.md.",
+      "files": [],
+      "assertions": [
+        "루트 경로에 TEST_STRATEGY.md 를 만들었다",
+        "층 × 모듈 커버리지 격자(표)가 있다",
+        "미검증 목록이 '왜 안 했는지'를 항목마다 담는다",
+        "미검증 목록이 '무엇이 있어야 풀리는지'를 담는다",
+        "인수 시나리오 ↔ 하위 테스트 매핑 절이 있다",
+        "VERIFICATION_TEST_PLAN.md 를 베끼지 않고 참조한다",
+        "실행 명령에 모듈 스코프 형태(:module:testDebugUnitTest)를 포함한다",
+        "빈 구멍을 실제 레포 파일 경로로 짚는다 (일반론이 아니라)"
+      ]
+    }
+  ]
+}

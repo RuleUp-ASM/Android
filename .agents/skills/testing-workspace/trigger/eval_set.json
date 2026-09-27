@@ -1,0 +1,22 @@
+[
+  {"query": "verification/domain 에 SignalBatch 쪼개는 로직 새로 넣었는데 이거 테스트 어떻게 짜야될지 모르겠어. 배치 크기 넘어가면 나눠지는건데 경계값만 보면 되나?", "should_trigger": true},
+  {"query": "ChallengeSettingsViewModel 테스트 좀 추가해줘", "should_trigger": true},
+  {"query": "우리 앱 테스트가 지금 어디까지 커버되는지 정리해서 문서로 남기고 싶어. 나중에 품질 지표로 쓰게", "should_trigger": true},
+  {"query": "ExploreScreen 화면 테스트 만들어줘. 필터 눌렀을때 제대로 반응하는지 확인하고 싶음", "should_trigger": true},
+  {"query": "profile/data 에 CalendarResponse 매퍼 추가했어. 서버가 필드 안주는 경우가 있는데 그것도 같이 검증하게 해줘", "should_trigger": true},
+  {"query": "PR 올라온거 보는데 테스트 이름들이 다 `test1` `test2` 이런식이야. 이거 리뷰에서 뭐라고 코멘트 달아야될까", "should_trigger": true},
+  {"query": "실제 서버 붙여서 챌린지 만들고 참여하는것까지 한번에 돌려보는 테스트 만들수 있을까? 배포 전에 한번씩 돌리게", "should_trigger": true},
+  {"query": "onboarding 쪽에 빠진 테스트 있으면 찾아줘", "should_trigger": true},
+  {"query": "TokenAuthenticator 401 갱신되는 부분이 지금 검증이 하나도 안되어있는것 같은데 확인 좀", "should_trigger": true},
+  {"query": "새로 만든 JoinBlockReason enum 값이 6개인데 나중에 서버에서 하나 더 늘어나면 자동으로 걸리게 하고싶어", "should_trigger": true},
+  {"query": "./gradlew test 돌렸는데 :app:testDebugUnitTest 에서 google-services.json 없다고 깨져. local.properties 문제인가?", "should_trigger": false},
+  {"query": "챌린지 방 나가기 API 붙여야돼. DELETE /challenges/{id}/members/me 이고 응답은 204야", "should_trigger": false},
+  {"query": "https://www.figma.com/design/JDWCrvnTlAyrtzMI2MtpcC/RuleUp-디자인?node-id=1134-1930 이 솔로 상세 화면 구현해줘", "should_trigger": false},
+  {"query": "ktlintCheck 에서 자꾸 걸리는데 max line length 를 140 으로 올릴수 있나? .editorconfig 어디 고쳐야돼", "should_trigger": false},
+  {"query": "RunSyncUseCase 에 주석이 너무 많이 달려있어서 정리하고 싶어", "should_trigger": false},
+  {"query": "verification 쪽 지오펜스가 실기기에서 잘 안잡히는데 에뮬레이터로 위치 모킹해서 확인하는 adb 명령어 뭐였지", "should_trigger": false},
+  {"query": "ChallengeDetailViewModel 이 1000줄 넘어가서 좀 쪼개고 싶은데 어떻게 나누는게 좋을까", "should_trigger": false},
+  {"query": "홈 화면 진입할때 렉이 걸리는것 같은데 어디서 시간을 잡아먹는지 측정해볼 방법 없을까", "should_trigger": false},
+  {"query": "CI 에서 androidTest 도 같이 돌리려면 워크플로 어떻게 추가해야돼? 에뮬레이터 띄우는거 필요하지?", "should_trigger": false},
+  {"query": "챌린지 생성할때 주간 횟수 범위가 1~7 인데 이 상수를 domain 어디에 두는게 맞아?", "should_trigger": false}
+]

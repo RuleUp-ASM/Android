@@ -1,0 +1,546 @@
+{
+  "metadata": {
+    "skill_name": "testing",
+    "skill_path": ".claude/skills/testing",
+    "executor_model": "claude-opus-5[1m]",
+    "analyzer_model": "claude-opus-5[1m]",
+    "timestamp": "2026-08-31T08:23:11Z",
+    "evals_run": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "eval_name": "entity-case-tests",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 158.5,
+        "tokens": 80609,
+        "tool_calls": 20,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "테스트 파일이 challenge/domain/src/test/…/entity/ 아래에 놓였다 (케이스 층 위치)",
+          "passed": true,
+          "evidence": "테스트 파일: ['challenge/domain/src/test/kotlin/com/ruleup/challenge/domain/entity/ChallengeTest.kt']"
+        },
+        {
+          "text": "모든 @Test 이름이 백틱으로 감싼 한국어 문장이다",
+          "passed": true,
+          "evidence": "10개 중 한글 이름 10개"
+        },
+        {
+          "text": "테스트 이름이 서로 겹치지 않는다 (같은 이름 둘이면 CI 빨간불에 어느 규칙인지 특정 못 한다)",
+          "passed": true,
+          "evidence": "중복 이름: [] (10개 중 고유 10개)"
+        },
+        {
+          "text": "테스트 이름에 예외 타입명(IllegalArgumentException 등)이 등장하지 않는다",
+          "passed": true,
+          "evidence": "예외명 포함 이름: []"
+        },
+        {
+          "text": "열거의 근거를 코드 타입에 뒀다 (entries 순회 / entries.size 고정 — 값이 늘면 자동으로 깨짐)",
+          "passed": true,
+          "evidence": "entries 기반 열거 6회"
+        },
+        {
+          "text": "Fake·Mock 협력자를 쓰지 않는다 (케이스 층이므로 불필요)",
+          "passed": true,
+          "evidence": "Fake/Mock 사용 흔적 없음"
+        },
+        {
+          "text": "kotlin.test 를 쓴다 (org.junit.Assert 가 아니라)",
+          "passed": true,
+          "evidence": "kotlin.test=True, junit.Assert=False"
+        },
+        {
+          "text": "테스트 이름에 구현 심볼(isGroup·fromValue 같은 코드 식별자)을 그대로 노출하지 않는다",
+          "passed": true,
+          "evidence": "구현 심볼 노출: []"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "eval_name": "entity-case-tests",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.75,
+        "passed": 6,
+        "failed": 2,
+        "total": 8,
+        "time_seconds": 135.4,
+        "tokens": 67658,
+        "tool_calls": 15,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "테스트 파일이 challenge/domain/src/test/…/entity/ 아래에 놓였다 (케이스 층 위치)",
+          "passed": true,
+          "evidence": "테스트 파일: ['challenge/domain/src/test/kotlin/com/ruleup/challenge/domain/entity/CreateChallengeCommandTest.kt', 'challenge/domain/src/test/kotlin/com/ruleup/challenge/domain/entity/ChallengeTest.kt']"
+        },
+        {
+          "text": "모든 @Test 이름이 백틱으로 감싼 한국어 문장이다",
+          "passed": true,
+          "evidence": "15개 중 한글 이름 15개"
+        },
+        {
+          "text": "테스트 이름이 서로 겹치지 않는다 (같은 이름 둘이면 CI 빨간불에 어느 규칙인지 특정 못 한다)",
+          "passed": false,
+          "evidence": "중복 이름: ['명세의 2종을 모두 매핑한다'] (15개 중 고유 14개)"
+        },
+        {
+          "text": "테스트 이름에 예외 타입명(IllegalArgumentException 등)이 등장하지 않는다",
+          "passed": true,
+          "evidence": "예외명 포함 이름: []"
+        },
+        {
+          "text": "열거의 근거를 코드 타입에 뒀다 (entries 순회 / entries.size 고정 — 값이 늘면 자동으로 깨짐)",
+          "passed": true,
+          "evidence": "entries 기반 열거 4회"
+        },
+        {
+          "text": "Fake·Mock 협력자를 쓰지 않는다 (케이스 층이므로 불필요)",
+          "passed": true,
+          "evidence": "Fake/Mock 사용 흔적 없음"
+        },
+        {
+          "text": "kotlin.test 를 쓴다 (org.junit.Assert 가 아니라)",
+          "passed": true,
+          "evidence": "kotlin.test=True, junit.Assert=False"
+        },
+        {
+          "text": "테스트 이름에 구현 심볼(isGroup·fromValue 같은 코드 식별자)을 그대로 노출하지 않는다",
+          "passed": false,
+          "evidence": "구현 심볼 노출: ['그룹만 isGroup 이다', 'PRIVATE 만 isPrivate 이다']"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "viewmodel-tests",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 589.3,
+        "tokens": 143150,
+        "tool_calls": 42,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Dispatchers.setMain 과 resetMain 을 @Before/@After 에 세웠다",
+          "passed": true,
+          "evidence": "setMain=True, resetMain=True"
+        },
+        {
+          "text": "build.gradle.kts 에 kotlinx-coroutines-test 를 추가했다 (버전 카탈로그 경유)",
+          "passed": true,
+          "evidence": "gradle 에 coroutines-test"
+        },
+        {
+          "text": "NavigationHelper 대역을 만들어 화면 이동 여부를 검증한다",
+          "passed": true,
+          "evidence": "NavigationHelper 대역 정의됨"
+        },
+        {
+          "text": "effect 를 단독 first() 로 기다리지 않는다 (수집 job/toList 사용 — 무한대기 회피)",
+          "passed": true,
+          "evidence": "bare first()=False, 수집자=True"
+        },
+        {
+          "text": "목킹 라이브러리(mockk·mockito)를 새로 도입하지 않았다",
+          "passed": true,
+          "evidence": "목킹 라이브러리 없음"
+        },
+        {
+          "text": "모든 @Test 이름이 백틱 한국어 문장이다",
+          "passed": true,
+          "evidence": "33개 테스트, 한글 33개"
+        },
+        {
+          "text": "State 전체를 통째로 assertEquals 하지 않는다",
+          "passed": true,
+          "evidence": "State 통째 비교 없음"
+        },
+        {
+          "text": "실패 경로(예외 → 화면 상태)를 최소 하나 검증한다",
+          "passed": true,
+          "evidence": "실패 경로 검증 흔적"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "eval_name": "viewmodel-tests",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 499.1,
+        "tokens": 115668,
+        "tool_calls": 30,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "Dispatchers.setMain 과 resetMain 을 @Before/@After 에 세웠다",
+          "passed": true,
+          "evidence": "setMain=True, resetMain=True"
+        },
+        {
+          "text": "build.gradle.kts 에 kotlinx-coroutines-test 를 추가했다 (버전 카탈로그 경유)",
+          "passed": true,
+          "evidence": "gradle 에 coroutines-test"
+        },
+        {
+          "text": "NavigationHelper 대역을 만들어 화면 이동 여부를 검증한다",
+          "passed": true,
+          "evidence": "NavigationHelper 대역 정의됨"
+        },
+        {
+          "text": "effect 를 단독 first() 로 기다리지 않는다 (수집 job/toList 사용 — 무한대기 회피)",
+          "passed": true,
+          "evidence": "bare first()=False, 수집자=True"
+        },
+        {
+          "text": "목킹 라이브러리(mockk·mockito)를 새로 도입하지 않았다",
+          "passed": true,
+          "evidence": "목킹 라이브러리 없음"
+        },
+        {
+          "text": "모든 @Test 이름이 백틱 한국어 문장이다",
+          "passed": true,
+          "evidence": "34개 테스트, 한글 34개"
+        },
+        {
+          "text": "State 전체를 통째로 assertEquals 하지 않는다",
+          "passed": true,
+          "evidence": "State 통째 비교 없음"
+        },
+        {
+          "text": "실패 경로(예외 → 화면 상태)를 최소 하나 검증한다",
+          "passed": true,
+          "evidence": "실패 경로 검증 흔적"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "ui-robolectric",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 709.7,
+        "tokens": 200029,
+        "tool_calls": 47,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+          "passed": true,
+          "evidence": "toml robolectric 핀: True"
+        },
+        {
+          "text": "isIncludeAndroidResources = true 를 설정했다",
+          "passed": true,
+          "evidence": "isIncludeAndroidResources=True"
+        },
+        {
+          "text": "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+          "passed": true,
+          "evidence": "properties sdk=True, @Config sdk=False"
+        },
+        {
+          "text": "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+          "passed": true,
+          "evidence": "RobolectricTestRunner=True"
+        },
+        {
+          "text": "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+          "passed": true,
+          "evidence": "테스트 위치: ['challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailScreenTest.kt']"
+        },
+        {
+          "text": "setContent 안을 RuleUpTheme 으로 감쌌다",
+          "passed": true,
+          "evidence": "RuleUpTheme=True"
+        },
+        {
+          "text": "색·간격·폰트 같은 스타일 값을 단언하지 않는다",
+          "passed": true,
+          "evidence": "스타일 단언 없음"
+        },
+        {
+          "text": "조작 → Intent 를 검증하는 테스트가 최소 하나 있다",
+          "passed": true,
+          "evidence": "performClick=True"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "eval_name": "ui-robolectric",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 8,
+        "failed": 0,
+        "total": 8,
+        "time_seconds": 698.4,
+        "tokens": 206078,
+        "tool_calls": 43,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+          "passed": true,
+          "evidence": "toml robolectric 핀: True"
+        },
+        {
+          "text": "isIncludeAndroidResources = true 를 설정했다",
+          "passed": true,
+          "evidence": "isIncludeAndroidResources=True"
+        },
+        {
+          "text": "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+          "passed": true,
+          "evidence": "properties sdk=True, @Config sdk=False"
+        },
+        {
+          "text": "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+          "passed": true,
+          "evidence": "RobolectricTestRunner=True"
+        },
+        {
+          "text": "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+          "passed": true,
+          "evidence": "테스트 위치: ['challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailRoomTabsTest.kt', 'challenge/presentation/src/test/kotlin/com/ruleup/challenge/presentation/detail/ChallengeDetailScreenTest.kt']"
+        },
+        {
+          "text": "setContent 안을 RuleUpTheme 으로 감쌌다",
+          "passed": true,
+          "evidence": "RuleUpTheme=True"
+        },
+        {
+          "text": "색·간격·폰트 같은 스타일 값을 단언하지 않는다",
+          "passed": true,
+          "evidence": "스타일 단언 없음"
+        },
+        {
+          "text": "조작 → Intent 를 검증하는 테스트가 최소 하나 있다",
+          "passed": true,
+          "evidence": "performClick=True"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "coverage-audit-doc",
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.875,
+        "passed": 7,
+        "failed": 1,
+        "total": 8,
+        "time_seconds": 281.4,
+        "tokens": 96660,
+        "tool_calls": 18,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "루트 경로에 TEST_STRATEGY.md 를 만들었다",
+          "passed": true,
+          "evidence": "파일: ['TEST_STRATEGY.md', 'NOTES.md']"
+        },
+        {
+          "text": "층 × 모듈 커버리지 격자(표)가 있다",
+          "passed": true,
+          "evidence": "층 격자 표 존재"
+        },
+        {
+          "text": "미검증 목록이 '왜 안 했는지'를 항목마다 담는다",
+          "passed": true,
+          "evidence": "미검증 사유 열 존재"
+        },
+        {
+          "text": "미검증 목록이 '무엇이 있어야 풀리는지'를 담는다",
+          "passed": true,
+          "evidence": "해소 조건 존재"
+        },
+        {
+          "text": "인수 시나리오 ↔ 하위 테스트 매핑 절이 있다",
+          "passed": true,
+          "evidence": "인수 시나리오 절 존재"
+        },
+        {
+          "text": "VERIFICATION_TEST_PLAN.md 를 베끼지 않고 참조한다",
+          "passed": true,
+          "evidence": "기존 문서 참조=True"
+        },
+        {
+          "text": "실행 명령에 모듈 스코프 형태(:module:testDebugUnitTest)를 포함한다",
+          "passed": true,
+          "evidence": "모듈 스코프 실행 명령 존재"
+        },
+        {
+          "text": "빈 구멍을 실제 레포 파일 경로로 짚는다 (일반론이 아니라)",
+          "passed": false,
+          "evidence": "실존하는 레포 경로 0개 / 언급 3개"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 4,
+      "eval_name": "coverage-audit-doc",
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.375,
+        "passed": 3,
+        "failed": 5,
+        "total": 8,
+        "time_seconds": 350.4,
+        "tokens": 110449,
+        "tool_calls": 23,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "루트 경로에 TEST_STRATEGY.md 를 만들었다",
+          "passed": true,
+          "evidence": "파일: ['TEST_STRATEGY.md', 'NOTES.md']"
+        },
+        {
+          "text": "층 × 모듈 커버리지 격자(표)가 있다",
+          "passed": false,
+          "evidence": "층 격자 표 존재"
+        },
+        {
+          "text": "미검증 목록이 '왜 안 했는지'를 항목마다 담는다",
+          "passed": true,
+          "evidence": "미검증 사유 열 존재"
+        },
+        {
+          "text": "미검증 목록이 '무엇이 있어야 풀리는지'를 담는다",
+          "passed": true,
+          "evidence": "해소 조건 존재"
+        },
+        {
+          "text": "인수 시나리오 ↔ 하위 테스트 매핑 절이 있다",
+          "passed": false,
+          "evidence": "인수 시나리오 절 존재"
+        },
+        {
+          "text": "VERIFICATION_TEST_PLAN.md 를 베끼지 않고 참조한다",
+          "passed": false,
+          "evidence": "기존 문서 참조=False"
+        },
+        {
+          "text": "실행 명령에 모듈 스코프 형태(:module:testDebugUnitTest)를 포함한다",
+          "passed": false,
+          "evidence": "모듈 스코프 실행 명령 존재"
+        },
+        {
+          "text": "빈 구멍을 실제 레포 파일 경로로 짚는다 (일반론이 아니라)",
+          "passed": false,
+          "evidence": "실존하는 레포 경로 0개 / 언급 14개"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9688,
+        "stddev": 0.0541,
+        "min": 0.875,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 434.725,
+        "stddev": 223.2227,
+        "min": 158.5,
+        "max": 709.7
+      },
+      "tokens": {
+        "mean": 130112,
+        "stddev": 46443.4055,
+        "min": 80609,
+        "max": 200029
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.7812,
+        "stddev": 0.2558,
+        "min": 0.375,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 420.825,
+        "stddev": 205.9138,
+        "min": 135.4,
+        "max": 698.4
+      },
+      "tokens": {
+        "mean": 124963.25,
+        "stddev": 50399.8003,
+        "min": 67658,
+        "max": 206078
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.19",
+      "time_seconds": "+13.90",
+      "tokens": "+5148.75"
+    }
+  },
+  "notes": [
+    "eval-2·eval-3 은 양쪽 8/8 로 정량 기준이 변별하지 못한다 — 차이는 테스트 개수와 층 배치에 있고 정성 검토가 필요하다.",
+    "테스트 개수: eval-1 스킬 10 vs 기준 15, eval-2 33 vs 34, eval-3 20 vs 50. 스킬은 층을 갈라 곱셈을 피하고 기준선은 한 층에 쌓는다.",
+    "eval-4 는 격차가 가장 크다(7/8 vs 3/8). 양쪽 다 같은 공백을 찾아냈으므로 차이는 발견력이 아니라 문서 형식 — 미검증 사유·해소 조건·인수 매핑 유무다.",
+    "eval-1 의 초기 기준 2개(조건절 어미·copy 패턴)는 대상이 enum 이라 부적절했고 교체했다. 교체 전에는 더 나은 산출물이 낮은 점수를 받았다.",
+    "스킬은 eval-1·eval-4 에서 더 빠르고, eval-2·eval-3 에서는 인프라를 제대로 세우느라 더 느리고 토큰을 더 쓴다.",
+    "eval-3 양쪽 모두 SingleClickGuard 300ms 가드가 Robolectric 에서 첫 클릭을 삼키는 함정을 찾아냈다 — 스킬 ui.md 에 없던 내용이라 반영해야 한다.",
+    "eval-3 with_skill 은 ui.md 의 오류 2건(ui-test-manifest 는 debugImplementation, robolectric.properties 에 화면 qualifier 필요)을 정정했다."
+  ]
+}

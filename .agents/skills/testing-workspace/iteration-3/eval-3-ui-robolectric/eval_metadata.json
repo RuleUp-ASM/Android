@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "ui-robolectric",
+  "prompt": "ChallengeDetailScreen UI 테스트 만들어줘",
+  "assertions": [
+    "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+    "isIncludeAndroidResources = true 를 설정했다",
+    "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+    "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+    "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+    "setContent 안을 RuleUpTheme 으로 감쌌다",
+    "기대 문구의 출처가 Figma 임을 밝힌다 (노드 ID·프레임 이름을 NOTES 나 KDoc 에 남긴다)",
+    "디자인에 없는 상태를 지어내지 않고 미확정으로 표시한다"
+  ]
+}

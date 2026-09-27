@@ -1,0 +1,24 @@
+{
+  "expectations": [
+    {
+      "text": "주석을 개별로 지목해 판정",
+      "passed": true,
+      "evidence": "줄번호 인용"
+    },
+    {
+      "text": "'안 고른 대안'을 남기라고 판정",
+      "passed": true,
+      "evidence": "동일"
+    },
+    {
+      "text": "빼자고 한 주석마다 근거",
+      "passed": true,
+      "evidence": "동일"
+    },
+    {
+      "text": "주석 개수를 기준으로 삼지 않음",
+      "passed": true,
+      "evidence": "사실오류 중심 + 빠진 주석 2건 제안"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "eval_id": 3,
+  "eval_name": "ui-robolectric",
+  "prompt": "ChallengeDetailScreen UI 테스트 만들어줘",
+  "assertions": [
+    "libs.versions.toml 에 robolectric 을 고정 버전으로 등록했다 (동적 버전 아님)",
+    "isIncludeAndroidResources = true 를 설정했다",
+    "robolectric.properties 또는 @Config(sdk=[..]) 로 SDK 를 고정했다 (compileSdk 37 회피)",
+    "@RunWith(RobolectricTestRunner::class) 를 쓴다",
+    "테스트를 src/test 에 뒀다 (androidTest 가 아니라 — CI 커버 목적)",
+    "setContent 안을 RuleUpTheme 으로 감쌌다",
+    "색·간격·폰트 같은 스타일 값을 단언하지 않는다",
+    "조작 → Intent 를 검증하는 테스트가 최소 하나 있다"
+  ]
+}
