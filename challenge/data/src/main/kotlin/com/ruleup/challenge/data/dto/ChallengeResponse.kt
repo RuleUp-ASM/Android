@@ -11,7 +11,6 @@ import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeModeration
-import com.ruleup.challenge.domain.entity.ChallengeOwner
 import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
@@ -40,11 +39,9 @@ import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 초안 생성 (POST /challenges/draft) ----------
+// 초안 생성 (POST /challenges/draft)
 
-/**
- * `result=FALLBACK` 이면 `draftId`·`draft` 가 null 이고 `message` 만 온다. **HTTP 200 이고 에러가 아니다.**
- */
+/** `result=FALLBACK` 이면 `draftId`·`draft` 가 null 이고 `message` 만 온다. */
 @Serializable
 data class DraftResponse(
     @SerialName("result")
@@ -54,11 +51,11 @@ data class DraftResponse(
     @SerialName("message")
     val message: String? = null,
     @SerialName("draft")
-    val draft: DraftDto? = null,
+    val draft: DraftContentResponse? = null,
 )
 
 internal fun DraftResponse.toDomain(): DraftResult =
-    // result 가 비어 오면 draftId 유무로 판별한다 — 폴백을 성공으로 오인해 빈 확인 화면을 띄우지 않기 위해서다.
+    // result 가 비어 오면 draftId 유무로 판별한다
     if (result == RESULT_FALLBACK || (result == null && draftId == null)) {
         DraftResult.Fallback(message = message?.takeIf { it.isNotBlank() } ?: FALLBACK_DEFAULT_MESSAGE)
     } else {
@@ -71,9 +68,9 @@ internal fun DraftResponse.toDomain(): DraftResult =
 private const val RESULT_FALLBACK = "FALLBACK"
 private const val FALLBACK_DEFAULT_MESSAGE = "루틴을 파악하지 못했어요. 조금 더 구체적으로 적어주세요."
 
-// ---------- 템플릿 초안 (POST /challenges/recommendation/by-template) · 복제 (POST clone) ----------
+// 템플릿 초안 (POST /challenges/recommendation/by-template) · 복제 (POST clone)
 
-/** 두 API 모두 `draftId` + 동일 스키마 `draft` 를 주며, 복제만 `sourceChallengeId` 를 덧붙인다. */
+/** 생성·복제 공통 초안 응답. */
 @Serializable
 data class TemplateDraftResponse(
     @SerialName("draftId")
@@ -81,7 +78,7 @@ data class TemplateDraftResponse(
     @SerialName("sourceChallengeId")
     val sourceChallengeId: String? = null,
     @SerialName("draft")
-    val draft: DraftDto? = null,
+    val draft: DraftContentResponse? = null,
 )
 
 internal fun TemplateDraftResponse.toDomain(): DraftResult.Ok =
@@ -91,7 +88,7 @@ internal fun TemplateDraftResponse.toDomain(): DraftResult.Ok =
         sourceChallengeId = sourceChallengeId,
     )
 
-// ---------- 추천 루틴 3개 (GET /challenges/recommendations) ----------
+// 추천 루틴 3개 (GET /challenges/recommendations)
 @Serializable
 data class RoutineTemplateResponse(
     @SerialName("templateId")
@@ -128,7 +125,7 @@ internal fun RoutineTemplatesResponse.toDomain(): List<RoutineTemplate> =
         )
     }
 
-// ---------- 챌린지 생성 (POST /challenges 201) ----------
+// 챌린지 생성 (POST /challenges 201)
 @Serializable
 data class CreateChallengeResponse(
     @SerialName("challengeId")
@@ -136,9 +133,9 @@ data class CreateChallengeResponse(
     @SerialName("status")
     val status: String? = null,
     @SerialName("moderation")
-    val moderation: ModerationDto? = null,
+    val moderation: ModerationResponse? = null,
     @SerialName("verification")
-    val verification: VerificationDto? = null,
+    val verification: VerificationResponse? = null,
     @SerialName("personalSetupRequired")
     val personalSetupRequired: Boolean? = null,
     @SerialName("createdAt")
@@ -162,7 +159,7 @@ private val NO_MODERATION =
         image = ModerationState.NONE,
     )
 
-// ---------- 방장 전용 설정 조회 (GET /challenges/{id}/settings) ----------
+// 방장 전용 설정 조회 (GET /challenges/{id}/settings)
 @Serializable
 data class ChallengeConfigResponse(
     @SerialName("title")
@@ -186,13 +183,13 @@ data class ChallengeConfigResponse(
     @SerialName("minTier")
     val minTier: String? = null,
     @SerialName("period")
-    val period: PeriodDto? = null,
+    val period: PeriodResponse? = null,
     @SerialName("params")
-    val params: List<ParamSpecDto>? = null,
+    val params: List<ParamSpecResponse>? = null,
     @SerialName("verification")
-    val verification: VerificationDto? = null,
+    val verification: VerificationResponse? = null,
     @SerialName("penalties")
-    val penalties: PenaltiesDto? = null,
+    val penalties: PenaltiesResponse? = null,
 )
 
 @Serializable
@@ -204,7 +201,7 @@ data class ChallengeSettingsResponse(
     @SerialName("version")
     val version: Int? = null,
     @SerialName("moderation")
-    val moderation: ModerationDto? = null,
+    val moderation: ModerationResponse? = null,
 )
 
 internal fun ChallengeSettingsResponse.toDomain(): ChallengeSettings {
@@ -222,27 +219,27 @@ internal fun ChallengeSettingsResponse.toDomain(): ChallengeSettings {
                 capacity = config.capacity,
                 minTier = config.minTier?.let(Tier::fromValue),
                 period = config.period.toDomain(),
-                // 서버가 빠뜨리면 7(매일)로 본다 — 0 이면 "아무 날도 안 함"이 돼 화면이 거짓말을 한다.
+                // 서버가 빠뜨리면 7(매일)로 본다
                 weeklyCount = (config.weeklyCount ?: DEFAULT_WEEKLY_COUNT).coerceIn(1, 7),
                 params = config.params.orEmpty().map { it.toDomain() },
                 verification = config.verification.toDomain(),
                 penalties = config.penalties.toDomain(),
             ),
-        // 모르는 필드명은 버린다 — 서버가 필드를 추가해도 구버전 앱이 폼을 잘못 여는 것보다 낫다.
+        // 모르는 필드명은 버린다
         editableFields = editableFields.orEmpty().mapNotNull(ChallengeField::fromValue).toSet(),
         version = version.requireField("version"),
         moderation = moderation?.toDomain() ?: NO_MODERATION,
     )
 }
 
-// ---------- 챌린지 수정 (PATCH /challenges/{id}) ----------
+// 챌린지 수정 (PATCH /challenges/{id})
 @Serializable
 data class UpdateChallengeResponse(
     @SerialName("challengeId")
     val challengeId: String? = null,
     @SerialName("moderation")
-    val moderation: ModerationDto? = null,
-    // 반영된 필드 맵 — 키만 쓰고 값은 화면이 이미 들고 있다.
+    val moderation: ModerationResponse? = null,
+    // 반영된 필드 맵
     @SerialName("updated")
     val updated: Map<String, kotlinx.serialization.json.JsonElement>? = null,
 )
@@ -259,7 +256,7 @@ internal fun UpdateChallengeResponse.toDomain(): ChallengeUpdateResult =
                 .toSet(),
     )
 
-// ---------- 공개 상세 (GET /challenges/{challengeId}) ----------
+// 공개 상세 (GET /challenges/{challengeId})
 @Serializable
 data class ChallengeOwnerResponse(
     @SerialName("userId")
@@ -315,9 +312,9 @@ data class ChallengeDetailResponse(
     @SerialName("isFull")
     val isFull: Boolean? = null,
     @SerialName("period")
-    val period: PeriodDto? = null,
+    val period: PeriodResponse? = null,
     @SerialName("verification")
-    val verification: VerificationDto? = null,
+    val verification: VerificationResponse? = null,
     @SerialName("stats")
     val stats: ChallengeStatsResponse? = null,
     @SerialName("gate")
@@ -332,26 +329,28 @@ data class ChallengeDetailResponse(
     val cloneable: Boolean? = null,
     @SerialName("myRole")
     val myRole: String? = null,
+    @SerialName("penalties")
+    val penalties: PenaltiesResponse? = null,
     @SerialName("moderation")
-    val moderation: ModerationDto? = null,
+    val moderation: ModerationResponse? = null,
 )
 
-/**
- * 필수는 식별자뿐이다. 지표·자격이 하나 빠졌다고 상세를 실패시키면 서버가 필드를 늘릴 때 구버전 앱이 통째로
- * 막힌다. 다만 **완주율·유지율의 null 은 기본값으로 접지 않는다** — 표본 미달을 뜻하는 값이라 0으로 바꾸면
- * 거짓 정보가 된다.
- */
+/** 필수는 식별자뿐이다. */
 internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
     ChallengeDetail(
-        challengeId = challengeId.requireField("challengeId"),
         title = title.orEmpty(),
-        description = description,
         imageUrl = imageUrl,
         category = Category.fromValue(category.orEmpty()),
+        challengeId = challengeId.requireField("challengeId"),
+        description = description,
         mode = ChallengeMode.fromValue(mode) ?: ChallengeMode.GROUP,
         visibility = visibility?.let(ChallengeVisibility::fromValue),
         status = ChallengeStatus.fromValue(status) ?: ChallengeStatus.ACTIVE,
-        owner = owner?.let { ChallengeOwner(userId = it.userId.orEmpty(), nickname = it.nickname.orEmpty()) },
+        owner =
+            owner?.let {
+                com.ruleup.domain.entity.user
+                    .User(it.userId.orEmpty(), it.nickname.orEmpty(), null)
+            },
         ownerType = OwnerType.fromValue(ownerType),
         participantCount = participantCount ?: 0,
         capacity = capacity,
@@ -367,7 +366,7 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
             ChallengeGate(
                 minTier = gate?.minTier?.let(Tier::fromValue),
                 myDisplayTier = gate?.myDisplayTier?.let(Tier::fromValue),
-                // 자격을 모르면 막는 쪽으로 떨어뜨린다 — 못 들어갈 방에 참여 버튼을 열어주면 안 된다.
+                // 자격을 모르면 막는 쪽으로 떨어뜨린다
                 eligible = gate?.eligible ?: false,
             ),
         joinBlockReason = JoinBlockReason.fromValue(joinBlockReason),
@@ -376,9 +375,10 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         cloneable = cloneable ?: false,
         myRole = MemberRole.fromValue(myRole) ?: MemberRole.NONE,
         moderation = moderation?.toDomain(),
+        penalties = penalties?.toDomain(),
     )
 
-// ---------- 탈퇴 (DELETE members/me) ----------
+// 탈퇴 (DELETE members/me)
 @Serializable
 data class LeaveChallengeResponse(
     @SerialName("penaltyApplied")
@@ -387,7 +387,7 @@ data class LeaveChallengeResponse(
 
 internal fun LeaveChallengeResponse.toDomain(): LeaveResult = LeaveResult(penaltyApplied = penaltyApplied ?: false)
 
-// ---------- 챌린지 가입 (POST members) ----------
+// 챌린지 가입 (POST members)
 @Serializable
 data class JoinResponse(
     @SerialName("joined")
@@ -407,7 +407,7 @@ internal fun JoinResponse.toDomain(): JoinResult =
         personalSetupRequired = personalSetupRequired ?: false,
     )
 
-// ---------- 멤버 목록 (GET members) ----------
+// 멤버 목록 (GET members)
 @Serializable
 data class ChallengeMemberResponse(
     @SerialName("userId")
@@ -426,9 +426,9 @@ data class ChallengeMemberResponse(
 
 internal fun ChallengeMemberResponse.toDomain(): ChallengeMember =
     ChallengeMember(
-        userId = userId.requireField("userId"),
-        nickname = nickname.requireField("nickname"),
-        profileImageUrl = profileImageUrl,
+        user =
+            com.ruleup.domain.entity.user
+                .User(userId.requireField("userId"), nickname.requireField("nickname"), profileImageUrl),
         role = MemberRole.fromValue(role) ?: MemberRole.MEMBER,
         tier = tier?.let(Tier::fromValue),
         joinedAt = joinedAt.requireField("joinedAt"),
@@ -454,14 +454,14 @@ internal fun ChallengeMembersResponse.toDomain(): ChallengeMembers =
         members = members?.map { it.toDomain() }.orEmpty(),
     )
 
-// ---------- 챌린지 대표 이미지 업로드 ----------
+// 챌린지 대표 이미지 업로드
 @Serializable
 data class ChallengeImageResponse(
     @SerialName("imageUrl")
     val imageUrl: String? = null,
 )
 
-// ---------- 내 챌린지 목록 조회 (GET /challenges) ----------
+// 내 챌린지 목록 조회 (GET /challenges)
 @Serializable
 data class MyChallengeResponse(
     @SerialName("challengeId")
@@ -488,14 +488,13 @@ data class MyChallengeResponse(
     val weeklyCount: Int? = null,
     @SerialName("visibility")
     val visibility: String? = null,
-    // 명세는 startDate·endDate 를 최상위로 준다. period 객체는 구 계약이라 둘 다 받는다 —
-    // 어느 쪽이 오든 기간이 빈칸으로 남지 않게 하려는 것이다.
+    // 명세는 startDate·endDate 를 최상위로 준다.
     @SerialName("startDate")
     val startDate: String? = null,
     @SerialName("endDate")
     val endDate: String? = null,
     @SerialName("period")
-    val period: PeriodDto? = null,
+    val period: PeriodResponse? = null,
     @SerialName("myRole")
     val myRole: String? = null,
     @SerialName("ownerType")
@@ -521,14 +520,14 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
         participantCount = participantCount ?: 0,
         capacity = capacity,
         minTier = minTier?.let(Tier::fromValue),
-        // 주간 횟수를 모르면 1 로 둔다 — 0 이면 "판정이 없는 방"처럼 보인다.
+        // 주간 횟수를 모르면 1 로 둔다
         weeklyCount = (weeklyCount ?: 1).coerceIn(1, 7),
         period = period?.toDomain() ?: ChallengePeriod(start = startDate.orEmpty(), end = endDate.orEmpty()),
         myRole = MemberRole.fromValue(myRole) ?: MemberRole.MEMBER,
         ownerType = OwnerType.fromValue(ownerType),
         leftType = LeftType.fromValue(leftType),
         leftAt = leftAt,
-        // 표본이 없으면 서버가 비운다. 0 으로 접으면 「전부 실패」로 읽힌다.
+        // 표본이 없으면 서버가 비운다.
         successRate = successRate?.coerceIn(0.0, 1.0),
     )
 
@@ -536,7 +535,7 @@ internal fun MyChallengeResponse.toDomain(): MyChallenge =
 data class MyChallengesResponse(
     @SerialName("challenges")
     val challenges: List<MyChallengeResponse>? = null,
-    // 서버가 items 로 바꿔도 견디게 둘 다 받는다 — 계약이 "수정중"이라 흔들릴 여지가 있다.
+    // 서버가 items 로 바꿔도 견디게 둘 다 받는다
     @SerialName("items")
     val items: List<MyChallengeResponse>? = null,
     @SerialName("nextCursor")
@@ -549,18 +548,18 @@ internal fun MyChallengesResponse.toDomain(): MyChallengePage =
     MyChallengePage(
         challenges = (challenges ?: items).orEmpty().map { it.toDomain() },
         nextCursor = nextCursor,
-        // 커서가 있으면 다음 장이 있는 것이다. 플래그만 믿으면 서버가 안 줬을 때 목록이 잘린다
+        // 커서가 있으면 다음 장이 있는 것이다.
         hasNext = hasNext ?: (nextCursor != null),
     )
 
-// ---------- 챌린지 최초 조회 (GET setup) ----------
+// 챌린지 최초 조회 (GET setup)
 @Serializable
 data class ChallengeSetupInfoResponse(
     @SerialName("setupStatus")
     val setupStatus: String? = null,
     @SerialName("manual")
     val manual: Boolean? = null,
-    // 명세는 단수 String 이다. 서버가 배열을 주던 구 계약은 폐기됐다
+    // 명세는 단수 String 이다.
     @SerialName("verificationMethod")
     val verificationMethod: String? = null,
     @SerialName("requiredPermissions")
@@ -576,9 +575,9 @@ data class ChallengeSetupInfoResponse(
 internal fun ChallengeSetupInfoResponse.toDomain(): ChallengeSetupInfo =
     ChallengeSetupInfo(
         manual = manual ?: false,
-        // 모르면 아직 셋업 전으로 본다 — 준비됐다고 접으면 판정이 안 도는 이유를 화면이 설명 못 한다.
+        // 모르면 아직 셋업 전으로 본다
         ready = setupStatus == SETUP_STATUS_READY,
-        // 미인식 값은 SELF_CHECK — 모르는 자동 인증을 처리하는 척하는 것보다 수동으로 보이는 편이 안전하다.
+        // 미인식 값은 SELF_CHECK
         verificationMethod = VerificationMethod.fromValue(verificationMethod) ?: VerificationMethod.SELF_CHECK,
         requiredPermissions = requiredPermissions.orEmpty(),
         requiresAnchors = requiresAnchors ?: false,
@@ -588,7 +587,7 @@ internal fun ChallengeSetupInfoResponse.toDomain(): ChallengeSetupInfo =
 
 private const val SETUP_STATUS_READY = "READY"
 
-// ---------- 챌린지 월 캘린더 (GET /challenges/{id}/calendar) ----------
+// 챌린지 월 캘린더 (GET /challenges/{id}/calendar)
 @Serializable
 data class ChallengeCalendarDayResponse(
     @SerialName("date")
@@ -614,7 +613,7 @@ data class ChallengeCalendarResponse(
 internal fun ChallengeCalendarResponse.toDomain(requestedMonth: String): ChallengeCalendar =
     ChallengeCalendar(
         challengeId = challengeId.requireField("challengeId"),
-        // 응답이 월을 비우면 물어본 달로 둔다 — 캘린더 헤더가 빈칸이 되는 것보다 낫다.
+        // 응답이 월을 비우면 물어본 달로 둔다
         month = month?.takeIf { it.isNotBlank() } ?: requestedMonth,
         days = days.orEmpty().mapNotNull { it.toDomain() },
     )
@@ -626,7 +625,7 @@ internal fun ChallengeCalendarDayResponse.toDomain(): ChallengeCalendarDay? {
         date = date,
         status = ChallengeDayStatus.fromValue(status),
         verificationId = verificationId,
-        // 모르면 이의를 열지 않는다 — 못 내는 버튼을 보여 주면 눌렀다가 에러를 본다.
+        // 모르면 이의를 열지 않는다
         appealable = appealable ?: false,
     )
 }

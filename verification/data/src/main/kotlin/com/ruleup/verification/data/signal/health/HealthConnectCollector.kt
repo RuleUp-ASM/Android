@@ -24,14 +24,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import javax.inject.Inject
 
-/**
- * 움직임·수면(HEALTH·SLEEP) 온디바이스 수집(전송 스펙 §2·§5). 하루치 누적은 매 sync 마다 최신
- * 스냅샷으로 교체하고, 재전송이 중복이 되지 않는 근거는 `recordId` 다.
- * 화이트리스트·MANUAL 거부·합산은 서버 소관 — 클라는 그 판단의 입력을 빠짐없이 올리는 데까지만 책임진다.
- */
+/** 움직임·수면(HEALTH·SLEEP) 온디바이스 수집. */
 class HealthConnectCollector
     @Inject
     constructor(
@@ -46,7 +41,7 @@ class HealthConnectCollector
         ) {
             if (healthTargets.isEmpty() && !sleepRequested) return
 
-            // HC 가용성 분기(전송 스펙 §2.1) — 미지원/구버전 provider 는 gap 으로 사유를 보고하고 종료.
+            // HC 가용성 분기
             when (
                 androidx.health.connect.client.HealthConnectClient
                     .getSdkStatus(context)
@@ -91,7 +86,7 @@ class HealthConnectCollector
             granted: Set<String>,
             targets: Set<HealthTarget>,
         ) {
-            val zone = ZoneId.systemDefault()
+            val zone = com.ruleup.domain.time.ServiceDate.ZONE
             val now = Instant.now()
             val todayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant()
             val date = LocalDate.now(zone).toString()
@@ -106,12 +101,12 @@ class HealthConnectCollector
                         HealthMetric.EXERCISE_DURATION -> rows += readExercise(client, granted, range, date, target.exerciseType)
                     }
                 } catch (e: SecurityException) {
-                    // 권한 회수 등 — 해당 metric 만 건너뛴다.
+                    // 권한 회수 등
                 } catch (e: IllegalStateException) {
-                    // HC 클라이언트 일시 오류 — 다음 sync 에서 재시도.
+                    // HC 클라이언트 일시 오류
                 }
             }
-            // 미전송 스냅샷을 최신값으로 교체(같은 날 누적이 sync 마다 갱신, 명세 §8).
+            // 미전송 스냅샷을 최신값으로 교체.
             healthReadingDao.deleteUntagged()
             if (rows.isNotEmpty()) healthReadingDao.insertAll(rows)
         }
@@ -193,7 +188,7 @@ class HealthConnectCollector
         ) {
             if (HealthPermission.getReadPermission(SleepSessionRecord::class) !in granted) return
             val now = Instant.now()
-            // 익일 배치라 지난밤을 포함하도록 36h 윈도우(명세 §6.2 SLEEP lag).
+            // 익일 배치라 지난밤을 포함하도록 36h 윈도우.
             val range = TimeRangeFilter.between(now.minus(Duration.ofHours(SLEEP_WINDOW_HOURS)), now)
             val rows = ArrayList<SleepSessionEntity>()
             try {
@@ -225,10 +220,7 @@ class HealthConnectCollector
             if (rows.isNotEmpty()) sleepSessionDao.insertAll(rows)
         }
 
-        /**
-         * 전송 계약(전송 스펙 §2)에 있는 값만 담는다. 단위·운동 종류·기기 종류는 보내지 않으므로
-         * 버퍼에도 넣지 않는다 — 운동 종류는 수집 시점 필터로 이미 쓰이고 끝난다.
-         */
+        /** 전송 계약에 있는 값만 담는다. */
         private fun reading(
             metric: HealthMetric,
             value: Double,
@@ -269,10 +261,7 @@ class HealthConnectCollector
                 else -> "OTHER"
             }
 
-        /**
-         * 실제 수면 구간 합(전송 스펙 §5). writer 가 stage 를 안 주면 null 이고 서버가 durationMillis 로
-         * 대체한다 — 0 으로 접으면 "잠자리에 있었지만 한숨도 안 잤다"는 없던 사실이 된다.
-         */
+        /** 실제 수면 구간 합. */
         private fun SleepSessionRecord.sleepMillisOrNull(): Long? {
             if (stages.isEmpty()) return null
             return stages

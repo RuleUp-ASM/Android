@@ -1,5 +1,7 @@
 package com.ruleup.onboarding.domain.fake
 
+import com.ruleup.domain.device.DeviceIdentity
+import com.ruleup.domain.device.DeviceIdentityRepository
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.TermsVersions
@@ -7,14 +9,12 @@ import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
-import com.ruleup.onboarding.domain.auth.entity.DeviceIdentity
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
 import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.auth.entity.SignupForm
 import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
-import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
 import com.ruleup.onboarding.domain.intro.entity.IntroInfo
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import com.ruleup.onboarding.domain.intro.repository.WalkthroughRepository
@@ -29,8 +29,6 @@ import kotlinx.coroutines.flow.flowOf
 class FakeTokenRepository(
     private var refreshToken: String? = null,
 ) : TokenRepository {
-    // 실제 구현처럼 refreshToken 유무를 반영해 흘려보낸다. 정적 값으로 두면 세션 종료 전이를
-    // 관찰하는 코드를 테스트할 수 없다.
     private val loggedIn = MutableStateFlow(refreshToken != null)
 
     var savedToken: Token? = null
@@ -109,7 +107,7 @@ class FakeAuthRepository : AuthRepository {
         Withdrawal(withdrawn = true, archiveExpiresAt = null, restoreNote = null)
     var withdrawError: Throwable? = null
 
-    /** 서버가 검증하는 고정 문구를 그대로 보냈는지 — 문구가 어긋나면 400 이라 계약의 일부다. */
+    /** 서버가 검증하는 고정 문구를 그대로 보냈는지 */
     var withdrawnWith: String? = null
 
     override suspend fun exchangeToken(
@@ -156,15 +154,15 @@ class FakeDeviceIdentityRepository(
     override suspend fun current(): DeviceIdentity = identity
 }
 
-/** 프로필 업로드·조회를 주입하는 테스트 더블. 나머지는 미사용. */
+/** 프로필 업로드·조회를 주입하는 테스트 더블. */
 class FakeProfileRepository : ProfileRepository {
     var uploadResult: String = ""
     var uploadCalledWith: String? = null
 
-    /** 값이 있으면 업로드가 이 예외를 던진다. 실패를 흡수하는지 확인할 때 쓴다. */
+    /** 값이 있으면 업로드가 이 예외를 던진다. */
     var uploadError: Throwable? = null
 
-    /** [getMyProfile] 이 돌려줄 값. null 이면 [profileError] 를 던진다. */
+    /** [getMyProfile] 이 돌려줄 값. */
     var myProfile: MyProfile? = null
     var profileError: Throwable = NotImplementedError()
     var getProfileCallCount = 0
@@ -209,13 +207,13 @@ class FakeIntroRepository : IntroRepository {
 
     override fun lastTermsVersions(): TermsVersions = lastTermsVersions ?: TermsVersions(emptyMap())
 
-    /** 진입 조회를 거치지 않고 현행 버전만 심는다 — 약관 화면은 intro 를 스스로 부르지 않는다. */
+    /** 진입 조회를 거치지 않고 현행 버전만 심는다 */
     fun termsVersions(version: String) {
         lastTermsVersions = TermsVersions(AgreementType.entries.associateWith { version })
     }
 }
 
-/** 워크쓰루 열람 여부 테스트 더블. 기록 호출을 세어 "끝낸 경로가 기록까지 하는가" 를 본다. */
+/** 워크쓰루 열람 여부 테스트 더블. */
 class FakeWalkthroughRepository(
     private var seen: Boolean = false,
 ) : WalkthroughRepository {

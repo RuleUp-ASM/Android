@@ -10,12 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.core.content.ContextCompat
+import com.ruleup.verification.domain.entity.PermissionSnapshot
 import kotlinx.coroutines.CompletableDeferred
 
-/**
- * AUTO 인증에 필요한 런타임 권한을 OS 다이얼로그로 요청하는 추상화.
- * 서버가 내려준 권한 토큰을 플랫폼 권한으로 매핑·요청하고, 허용된 토큰 집합을 돌려준다.
- */
+/** AUTO 인증에 필요한 런타임 권한을 OS 다이얼로그로 요청하는 추상화. */
 interface PermissionRequester {
     suspend fun request(tokens: List<String>): Set<String>
 }
@@ -35,7 +33,7 @@ fun rememberPermissionRequester(): PermissionRequester {
     return remember(context) {
         object : PermissionRequester {
             override suspend fun request(tokens: List<String>): Set<String> {
-                // 토큰 → android 권한. 매핑 안 되는 토큰은 요청 불가 → 낙관적 허용으로 통과.
+                // 토큰 → android 권한.
                 val tokenToPerm = tokens.associateWith { androidPermission(it) }
                 val granted =
                     tokens
@@ -68,10 +66,7 @@ fun rememberPermissionRequester(): PermissionRequester {
     }
 }
 
-/**
- * 요청 묶음. Android 11(API 30)+ 는 백그라운드 위치를 다른 권한과 한 번에 요청하면 다이얼로그 없이 거부하므로
- * 전경 권한을 먼저 묶고 백그라운드 위치는 마지막에 따로 요청한다.
- */
+/** 요청 묶음. */
 internal fun permissionRequestBatches(permissions: List<String>): List<List<String>> {
     val background = Manifest.permission.ACCESS_BACKGROUND_LOCATION
     val foreground = permissions.filter { it != background }
@@ -102,10 +97,7 @@ private class AndroidPermissionHolder {
     }
 }
 
-/**
- * 런타임 권한만 본다 — 매핑되지 않는 토큰(usage/health 등 특수권한)은 허용으로 간주한다.
- * 상세 화면이 "참여하기" 시 권한 허용 모달을 띄울지 판단하는 데 쓴다.
- */
+/** 런타임 권한만 본다 */
 fun challengePermissionsGranted(
     context: Context,
     tokens: List<String>,
@@ -115,9 +107,9 @@ fun challengePermissionsGranted(
         perm == null || ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED
     }
 
-// TODO(server-contract): 서버 권한 토큰 어휘 확정 시 매핑 보완.
+// TODO(server-contract): 서버 권한 토큰 확정 후 매핑 보완.
 private fun androidPermission(token: String): String? =
-    when (token.uppercase()) {
+    when (PermissionSnapshot.normalizeToken(token)) {
         "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> Manifest.permission.ACCESS_FINE_LOCATION
         "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> Manifest.permission.ACCESS_BACKGROUND_LOCATION
         "CAMERA", "PHOTO" -> Manifest.permission.CAMERA

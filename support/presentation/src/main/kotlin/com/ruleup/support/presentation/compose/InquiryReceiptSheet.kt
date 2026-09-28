@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -26,17 +27,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.support.presentation.common.shortInquiryId
 
-/**
- * 문의 접수 완료 (Figma `1419:2`).
- *
- * 접수번호를 여기서만 처음 보여 준다. **복사는 줄이지 않은 원문을 넘긴다** — 화면에 줄여 쓴 값을
- * 붙여넣으면 CS 담당자가 조회하지 못한다.
- *
- * Figma 와 다르게 간 곳
- * - **"답변이 오면 알림함으로 알려드려요"를 뺐다.** 답변을 알림함으로 알리지 않기로 했다
- *   (2026-09-11). 대신 어디서 확인하는지를 말한다 — 알려 주지 않으면 사용자는 답변을 기다리다
- *   같은 문의를 다시 넣고 하루 상한만 깎인다.
- */
+/** 문의 접수 완료. */
 @Composable
 internal fun InquiryReceiptSheet(
     inquiryId: String,
@@ -113,5 +104,13 @@ internal fun InquiryReceiptSheet(
             Spacer(Modifier.height(24.dp))
             RuleUpPrimaryButton(text = "확인", onClick = onConfirm)
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InquiryReceiptSheetPreview() {
+    RuleUpTheme {
+        InquiryReceiptSheet(inquiryId = "미리보기", onConfirm = { })
     }
 }

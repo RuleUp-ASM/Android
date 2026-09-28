@@ -16,12 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-/**
- * 제재 이력. **잠금 상태에서도 열려야 하는 화면**이라 조회가 막히면 사용자는 자기가 왜 잠겼는지
- * 알 방법이 없다 — 실패해도 사유가 화면에 남아야 한다.
- *
- * 이력은 확정된 과거라 화면 안에서 바뀌지 않는다. 그래서 한 번 받으면 다시 받지 않는다.
- */
+/** 제재 이력. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SanctionsViewModelTest {
     @BeforeTest
@@ -60,12 +55,11 @@ class SanctionsViewModelTest {
     @Test
     fun `조회에 실패하면 사유를 남긴다`() =
         runTest {
-            // 잠금 사유를 볼 유일한 경로라, 빈 화면으로 두면 사용자가 상황을 알 방법이 없다.
             val viewModel = viewModel(FakeAccountRepository(sanctions = { throw IllegalStateException("서버 오류") }))
 
             viewModel.onIntent(SanctionsIntent.Load)
 
-            assertEquals("서버 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("제재 이력을 불러오지 못했어요", viewModel.uiState.value.errorMessage)
         }
 
     private fun viewModel(

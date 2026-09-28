@@ -39,19 +39,13 @@ import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.locked.viewmodel.AccountLockedIntent
 import com.ruleup.profile.presentation.locked.viewmodel.AccountLockedState
 import com.ruleup.profile.presentation.locked.viewmodel.AccountLockedViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 잠금 화면 (Figma `1465:37` 기간 · `1465:89` 영구).
- *
- * 두 디자인은 아이콘·제목·해제 예정 값·안내 문구만 다르고 뼈대가 같다. 화면을 둘로 나누면 같은
- * 레이아웃이 두 벌이 되고, 한쪽만 고치는 실수가 생긴다 — [ActiveSanction.type] 으로 가른다.
- *
- * **뒤로가기로 빠져나갈 수 없다.** 라우트를 루트로 등록해 백스택을 비운다 — 여기서 나갈 수 있으면
- * 게이트가 아니다.
- */
+/** 잠금 화면. */
 @Composable
 fun AccountLockedScreen(viewModel: AccountLockedViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     LaunchedEffect(Unit) { viewModel.onIntent(AccountLockedIntent.Load) }
     AccountLockedContent(state = state, onIntent = viewModel::onIntent)
 }
@@ -92,7 +86,7 @@ internal fun AccountLockedContent(
             )
         }
         LockedFooter(
-            // 재검토는 제재당 1회다. 서버가 이미 받았으면 버튼을 내려 보내지 않는다.
+            // 재검토는 제재당 1회다.
             reviewRequestable = state.sanction?.reviewRequestable ?: false,
             onRequestReview = { onIntent(AccountLockedIntent.RequestReview) },
             onLogout = { onIntent(AccountLockedIntent.Logout) },
@@ -159,12 +153,12 @@ private fun SanctionInfoCard(
         verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.md),
     ) {
         InfoRow(label = "제재 종류", value = if (permanent) "영구 정지" else "로그인 정지 · 1개월")
-        // 모더레이션 거부 사유는 회피 방지로 상세가 오지 않는다 — 비면 줄을 지운다.
+        // 모더레이션 거부 사유는 회피 방지로 상세가 오지 않는다
         sanction.reasonText?.let { InfoRow(label = "사유", value = it) }
         sanction.startsAt?.let { InfoRow(label = "정지 시작", value = dateDotLabel(it)) }
         InfoRow(
             label = "해제 예정",
-            // 영구 정지에는 해제일이 없다. null 을 "곧 풀림"으로 접으면 안 된다.
+            // 영구 정지에는 해제일이 없다.
             value = sanction.endsAt?.let(::dateDotLabel) ?: "해제되지 않아요",
             emphasize = true,
         )
@@ -222,7 +216,7 @@ private fun NoticeCard(permanent: Boolean) {
     }
 }
 
-/** 잠금 중에도 열리는 두 화면. 정책이 허용한 것이 이 둘과 CS 문의뿐이다. */
+/** 잠금 중에도 열리는 두 화면. */
 @Composable
 private fun MenuCard(
     onOpenHistory: () -> Unit,

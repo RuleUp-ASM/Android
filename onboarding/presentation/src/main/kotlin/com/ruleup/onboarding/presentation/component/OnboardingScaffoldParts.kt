@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -26,5 +27,13 @@ fun BottomBar(
         contentAlignment = Alignment.Center,
     ) {
         content()
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun BottomBarPreview() {
+    RuleUpTheme {
+        BottomBar(content = { })
     }
 }

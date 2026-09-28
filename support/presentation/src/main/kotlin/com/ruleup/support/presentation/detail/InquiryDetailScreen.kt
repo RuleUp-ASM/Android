@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,15 +45,9 @@ import com.ruleup.support.presentation.common.shortInquiryId
 import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailIntent
 import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailState
 import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 문의 상세 (Figma `1419:87`).
- *
- * Figma 와 다르게 간 곳
- * - **"답변 후 7일 안에 한 번 더 질문할 수 있어요"를 뺐다.** 재문의가 명세에서 폐지됐다 — 같은
- *   사안이라도 새 문의로 받는다. 없는 경로를 안내하면 사용자가 입력창을 찾다 시간을 버린다.
- * - 그래서 하단이 입력바가 아니라 **새 문의 작성 진입**이다.
- */
+/** 문의 상세. */
 @Composable
 fun InquiryDetailScreen(
     inquiryId: String,
@@ -60,6 +55,7 @@ fun InquiryDetailScreen(
     viewModel: InquiryDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(inquiryId) { viewModel.onIntent(InquiryDetailIntent.Load(inquiryId)) }
 
@@ -201,7 +197,7 @@ private fun AnswerSection(detail: InquiryDetail) {
     val answer = detail.answerText
 
     if (answer == null) {
-        // 미답변에 빈 자리를 두지 않는다 — 답변 영역이 비어 있으면 로딩 실패로 읽힌다.
+        // 미답변에 빈 자리를 두지 않는다
         Box(
             modifier =
                 Modifier
@@ -268,6 +264,21 @@ private fun ErrorBody(
             color = colors.brand,
             style = RuleUpTheme.typography.labelMedium,
             modifier = Modifier.singleClickable(onClick = onRetry).padding(8.dp),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InquiryDetailContentPreview() {
+    RuleUpTheme {
+        InquiryDetailContent(
+            state =
+                com.ruleup.support.presentation.detail.viewmodel.InquiryDetailState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
         )
     }
 }

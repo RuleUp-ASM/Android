@@ -8,6 +8,7 @@ import com.ruleup.profile.presentation.fake.FakeMyPageRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -20,11 +21,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 활동 캘린더. 월을 오가는 화면이라 **어떤 월을 다시 묻고 어떤 월은 묻지 않는지**가 계약이다 —
- * 지난 달 기록은 더 바뀌지 않지만 이번 달은 인증이 확정될 때마다 바뀌므로, 이번 달까지 캐시하면
- * 방금 성공한 인증이 캘린더에 안 나타난다.
- */
+/** 활동 캘린더. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyCalendarViewModelTest {
     private val thisMonth = YearMonth.from(LocalDate.now()).toString()
@@ -78,7 +75,7 @@ class MyCalendarViewModelTest {
     @Test
     fun `지난 달로 되돌아오면 다시 묻지 않는다`() =
         runTest {
-            // 지난 달 기록은 더 바뀌지 않는다 — 오갈 때마다 왕복하면 낭비다.
+            // 지난 달 기록은 더 바뀌지 않는다
             val repo = repo()
             val viewModel = viewModel(repo)
             viewModel.onIntent(MyCalendarIntent.Load())
@@ -93,7 +90,7 @@ class MyCalendarViewModelTest {
     @Test
     fun `이번 달로 돌아오면 다시 묻는다`() =
         runTest {
-            // 인증이 확정될 때마다 바뀐다. 캐시하면 방금 성공한 인증이 캘린더에 안 나타난다.
+            // 인증이 확정될 때마다 바뀐다.
             val repo = repo()
             val viewModel = viewModel(repo)
             viewModel.onIntent(MyCalendarIntent.Load())
@@ -117,7 +114,7 @@ class MyCalendarViewModelTest {
     @Test
     fun `인증 대상이 아닌 날은 상세를 묻지 않는다`() =
         runTest {
-            // 응답에 없는 날짜는 애초에 할 일이 없던 날이다. 물어봐야 빈 답이 온다.
+            // 응답에 없는 날짜는 애초에 할 일이 없던 날이다.
             val repo = repo()
             val viewModel = viewModel(repo)
             viewModel.onIntent(MyCalendarIntent.Load())
@@ -155,6 +152,34 @@ class MyCalendarViewModelTest {
         assertEquals(1, nav.backCount)
         assertEquals(emptyList(), nav.routes)
     }
+
+    @Test
+    fun `월 조회가 늦어도 딥링크 선택일 상세를 가져온다`() =
+        runTest {
+            val target = "$thisMonth-01"
+            val repository =
+                FakeMyPageRepository(
+                    calendar = { month ->
+                        kotlinx.coroutines.delay(100)
+                        ActivityCalendar(month, listOf(day(target)))
+                    },
+                    calendarDay = { date -> CalendarDayDetail(date, emptyList()) },
+                )
+            val model = viewModel(repository)
+            model.onIntent(MyCalendarIntent.Load(target))
+            assertEquals(
+                target,
+                model.uiState.value.dayDetail
+                    ?.date,
+            )
+            advanceUntilIdle()
+            model.onIntent(MyCalendarIntent.ChangeMonth(-1))
+            assertEquals(
+                target,
+                model.uiState.value.selectedDay
+                    ?.date,
+            )
+        }
 
     private fun repo(days: List<CalendarDay> = emptyList()) =
         FakeMyPageRepository(

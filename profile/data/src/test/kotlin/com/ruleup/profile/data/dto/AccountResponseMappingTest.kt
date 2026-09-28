@@ -9,10 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 동의 응답 매핑. 동의 상태는 **법적 증거**라 여기서 값을 지어내면 받지도 않은 동의를 받았다고
- * 화면이 말하게 된다.
- */
+/** 동의 응답 매핑. */
 class AgreementResponseMappingTest {
     @Test
     fun `모르는 동의 항목은 화면에 세우지 않는다`() {
@@ -57,9 +54,7 @@ class AgreementResponseMappingTest {
     }
 }
 
-/**
- * 제재 응답 매핑. 해제일이 없는 것과 곧 풀리는 것을 섞으면 **영구 정지를 임시 제재처럼** 보여 준다.
- */
+/** 제재 응답 매핑. */
 class SanctionResponseMappingTest {
     @Test
     fun `영구 정지는 해제일 없이 그대로 전한다`() {
@@ -74,7 +69,7 @@ class SanctionResponseMappingTest {
 
     @Test
     fun `재검토 가능 여부를 모르면 버튼을 열지 않는다`() {
-        // 눌러도 되는지는 서버만 안다 — 열어 두면 사용자가 헛되이 시도한다.
+        // 눌러도 되는지는 서버만 안다
         val history =
             SanctionHistoryResponse(
                 activeSanction = ActiveSanctionResponse(sanctionId = "s1", reviewRequestable = null),
@@ -84,15 +79,15 @@ class SanctionResponseMappingTest {
     }
 
     @Test
-    fun `식별자 없는 이력은 목록에 세우지 않는다`() {
+    fun `식별자 없는 이력도 제재 정보를 보존한다`() {
         val history =
             SanctionHistoryResponse(
                 admin = listOf(AdminSanctionResponse(sanctionId = null)),
                 auto = listOf(AutoSanctionResponse(sanctionId = null)),
             ).toDomain()
 
-        assertTrue(history.admin.isEmpty())
-        assertTrue(history.auto.isEmpty())
+        assertEquals(1, history.admin.size)
+        assertEquals(1, history.auto.size)
     }
 
     @Test

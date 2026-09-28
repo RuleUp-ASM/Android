@@ -29,13 +29,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 챌린지 상세. 네 갈래(로딩·조회 실패·방 홈·공개 상세)로 갈리는데, **못 불러온 것과 없는 것을
- * 섞으면** 사용자가 남의 방을 기웃거리다 튕긴 것처럼 느낀다.
- *
- * 상단바 제목은 회귀 방지다 — 비참여자에게 리터럴 "챌린지" 를 보여 주던 버그를 #372 에서
- * 고쳤다(Figma `1134:1291` 은 챌린지 제목).
- */
+/** 챌린지 상세. */
 @RunWith(RobolectricTestRunner::class)
 class ChallengeDetailContentTest {
     @get:Rule
@@ -65,8 +59,6 @@ class ChallengeDetailContentTest {
 
     @Test
     fun `비참여자에게도 챌린지 제목을 보여 준다`() {
-        // 리터럴 "챌린지" 를 띄우던 회귀(#372). 어느 방을 보고 있는지 모르면 참여 판단을 못 한다.
-        // 제목은 상단바와 본문 양쪽에 나오므로 "리터럴이 아니다" 쪽으로 못 박는다.
         render(loaded(title = "평일 아침 헬스장 출석"))
 
         compose.onAllNodesWithText("평일 아침 헬스장 출석").onFirst().assertExists()
@@ -113,11 +105,11 @@ class ChallengeDetailContentTest {
 
     private fun detail(title: String) =
         ChallengeDetail(
-            challengeId = "ch1",
             title = title,
-            description = "평일 오전, 등록한 헬스장에 도착하면",
-            imageUrl = null,
             category = Category.entries.first(),
+            imageUrl = null,
+            challengeId = "ch1",
+            description = "평일 오전, 등록한 헬스장에 도착하면",
             mode = ChallengeMode.GROUP,
             visibility = ChallengeVisibility.PUBLIC,
             status = ChallengeStatus.ACTIVE,

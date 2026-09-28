@@ -3,8 +3,9 @@ package com.ruleup.challenge.presentation.ranking.viewmodel
 import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.MyRank
 import com.ruleup.challenge.domain.entity.RankingEntry
-import com.ruleup.challenge.domain.entity.RoomUser
 import com.ruleup.challenge.presentation.fake.FakeRoomRepository
+import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.UserRelationship
 import com.ruleup.domain.test.RecordingNavigationHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,10 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
-/**
- * 그룹 랭킹. 순위는 서버가 확정해 내려주므로 화면은 **받은 순서를 흔들지 않는 것**이 계약이다 —
- * 클라이언트가 다시 정렬하면 서버와 다른 등수를 보여 주게 된다.
- */
+/** 그룹 랭킹. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RankingViewModelTest {
     @BeforeTest
@@ -42,7 +40,7 @@ class RankingViewModelTest {
                 listOf("u3", "u1", "u2"),
                 viewModel.uiState.value.ranking
                     ?.items
-                    ?.map { it.user.userId },
+                    ?.map { it.user.id },
             )
             assertFalse(viewModel.uiState.value.isLoading)
         }
@@ -50,7 +48,7 @@ class RankingViewModelTest {
     @Test
     fun `등재되지 않은 내 순위를 0등으로 접지 않는다`() =
         runTest {
-            // 10회 미만은 미등재다. null 을 0 으로 바꾸면 "꼴찌"로 보인다.
+            // 10회 미만은 미등재다.
             val viewModel =
                 viewModel(
                     FakeRoomRepository(
@@ -92,7 +90,7 @@ class RankingViewModelTest {
 
             viewModel.onIntent(RankingIntent.Load("ch1"))
 
-            assertEquals("랭킹 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("랭킹을 불러오지 못했어요", viewModel.uiState.value.errorMessage)
             assertFalse(viewModel.uiState.value.isLoading)
         }
 
@@ -118,7 +116,13 @@ class RankingViewModelTest {
                 userIds.mapIndexed { index, id ->
                     RankingEntry(
                         rank = index + 1,
-                        user = RoomUser(userId = id, nickname = id, profileImageUrl = null, blocked = false),
+                        user =
+                            User(
+                                id = id,
+                                nickname = id,
+                                profileImageUrl = null,
+                                relationship = UserRelationship(blocked = false),
+                            ),
                         successRate = 0.9,
                         successCount = 9,
                         participations = 10,

@@ -5,19 +5,25 @@ import com.ruleup.verification.data.db.usage.UsageTargetEntity
 import com.ruleup.verification.domain.repository.UsageTargetStore
 import javax.inject.Inject
 
-/**
- * SCREEN_TIME 대상 패키지 로컬 보관(명세 §3.2). 참여/설정 플로우가 채우고 sync 스코프가 읽는다.
- */
+/** SCREEN_TIME 대상 패키지 로컬 보관. */
 class UsageTargetStoreImpl
     @Inject
     constructor(
         private val usageTargetDao: UsageTargetDao,
     ) : UsageTargetStore {
+        override suspend fun replaceAll(targets: Map<String, Set<String>>) {
+            usageTargetDao.replaceAll(
+                targets.flatMap { (id, packages) ->
+                    packages.map { UsageTargetEntity(challengeId = id, packageName = it) }
+                },
+            )
+        }
+
         override suspend fun replaceFor(
             challengeId: String,
             packages: Set<String>,
         ) {
-            // 지우고 넣는 순서다. 넣고 지우면 같은 패키지가 사라진다.
+            // 지우고 넣는 순서다.
             usageTargetDao.clearChallenge(challengeId)
             if (packages.isNotEmpty()) {
                 usageTargetDao.upsertAll(

@@ -12,9 +12,6 @@ plugins {
 }
 
 // Firebase(google-services) 플러그인은 google-services.json 이 있어야 동작한다.
-// Crashlytics 도 같은 설정에 의존하므로 함께 적용한다(자동 크래시/ANR 수집).
-// App Distribution 도 앱 ID 를 이 파일에서 읽으므로 같은 조건에 묶는다 — 파일이 없는 개발자에게는
-// 배포 태스크가 아예 생기지 않고, 대신 빌드가 깨지지도 않는다.
 if (project.file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
@@ -37,10 +34,7 @@ val appAuthRedirectScheme: String =
         .orEmpty()
         .substringBefore(":")
 
-/**
- * 릴리즈 서명 자격 증명. 커밋하지 않으므로(.gitignore) CI 와 키를 받지 않은 개발자에게는 없다 —
- * 없으면 서명만 건너뛰고 빌드는 계속 돼야 한다. 키 목록은 CLAUDE.md 「릴리즈 서명」.
- */
+/** 릴리즈 서명 자격 증명. */
 val keystoreProperties =
     Properties().apply {
         val f = rootProject.file("keystore.properties")
@@ -56,7 +50,7 @@ val releaseStoreFile =
         ?.let { rootProject.file(it) }
         ?.takeIf { it.isFile }
 
-// 서명 없는 릴리즈는 설치도 스토어 업로드도 안 되는 산출물이다. 조용히 나가면 배포 직전에 안다.
+// 서명 없는 릴리즈는 설치도 스토어 업로드도 안 되는 산출물이다.
 if (releaseStoreFile == null &&
     gradle.startParameter.taskNames.any { it.contains("assembleRelease") || it.contains("bundleRelease") }
 ) {
@@ -87,9 +81,9 @@ android {
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
         manifestPlaceholders["appAuthRedirectScheme"] = appAuthRedirectScheme
         buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKey\"")
-        // Retrofit base URL — Hilt AppModule(@BaseUrl)이 소비한다.
+        // Retrofit base URL
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
-        // Amplitude 수집 키 — 비어 있으면 ObservabilityAppModule 이 출구를 달지 않는다.
+        // Amplitude 수집 키
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
     }
 
@@ -106,10 +100,9 @@ android {
 
     buildTypes {
         release {
-            // 자격 증명이 없으면 null — 서명이 빠질 뿐 빌드는 통과한다(위 경고 참고).
+            // 자격 증명이 없으면 null
             signingConfig = signingConfigs.findByName("release")
-            // 릴리즈는 운영 서버로 고정한다 — local.properties 를 따르면 개발자의 staging 값이 그대로 배포된다.
-            // 경로 끝의 /api 가 빠지면 전 엔드포인트가 401 LOGIN_REQUIRED 로 막힌다.
+            // 릴리즈는 운영 서버로 고정한다
             buildConfigField("String", "BASE_URL", "\"https://prod.ruleup.co.kr/api\"")
             isMinifyEnabled = false
             proguardFiles(
@@ -136,7 +129,7 @@ android {
 
 kotlin {
     compilerOptions {
-        // core:ui 가 -Xexplicit-backing-fields(실험 기능)로 컴파일되어 pre-release 메타데이터를 가지므로 건너뛴다.
+        // core:ui 실험 기능 메타데이터 호환.
         freeCompilerArgs.add("-Xskip-prerelease-check")
         jvmTarget = JvmTarget.JVM_11
     }
@@ -144,15 +137,15 @@ kotlin {
 
 dependencies {
     // :app 이 컴포지션 루트(AppRoot/내비게이션) + 전 feature·core 모듈 집계점.
-    // Hilt 컴포넌트가 모든 모듈의 @Module/@HiltViewModel 바인딩을 한곳에서 모은다.
     implementation(project(":core:domain"))
+    implementation(project(":core:device"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":core:network"))
     implementation(project(":core:datastore"))
     implementation(project(":observability:data"))
     implementation(project(":logging:data"))
-    // 인스펙터 싱크는 디버그 변형에만 물린다 — 릴리스 APK 에 포함되지 않는다.
+    // 인스펙터 싱크는 디버그 변형에만 물린다
     debugImplementation(project(":observability:debug"))
     implementation(project(":onboarding:domain"))
     implementation(project(":onboarding:data"))
@@ -192,7 +185,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    // 프로세스가 후면으로 내려가는 신호. TTI 완성 기록을 그 세션에서 내보내는 데 쓴다.
+    // 프로세스가 후면으로 내려가는 신호.
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
@@ -206,25 +199,25 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation(libs.kakao.user)
-    // KakaoMapSdk.init(앱키) 호출용. 지도 렌더링은 :core:map.
+    // KakaoMapSdk.init(앱키) 호출용.
     implementation(libs.kakao.map)
 
-    // FCM 수신(공지 fan-out 등) + 토큰 등록. google-services 설정은 위 조건부 플러그인과 공유한다.
+    // FCM 수신(공지 fan-out 등) + 토큰 등록.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
 
-    // 프레임 jank 측정(JankStats). 디버그 빌드에서만 트래킹 → 관측 파이프라인으로 기록.
+    // 프레임 jank 측정(JankStats).
     implementation(libs.androidx.metrics.performance)
 
     testImplementation(libs.junit)
     testImplementation(libs.konsist)
-    // 딥링크 파서가 android.net.Uri 를 쓴다 — 순수 JVM 으로는 파싱이 안 된다.
+    // 딥링크 파서가 android.net.Uri 를 쓴다
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(testFixtures(project(":observability:domain")))
     testImplementation(testFixtures(project(":logging:domain")))
 
-    // 인수 테스트는 앱이 실제로 쓰는 Retrofit api·DTO 를 그대로 써서 실서버를 두드린다 —
-    // 서버가 계약을 바꾸면 역직렬화에서 터지는 것이 목적이다.
+    // 인수 테스트는 앱이 실제로 쓰는 Retrofit api·DTO 를 그대로 써서 실서버를 두드린다
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.retrofit)
     testImplementation(libs.retrofit.converter.kotlinx.serialization)
@@ -239,32 +232,15 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
 
-/**
- * Firebase App Distribution 배포 설정.
- *
- * **내려보내는 변형은 debug 다.** 업로드 키(`keystore.properties`)가 없는 개발자·CI 에서도 서명된
- * 산출물이 나오는 유일한 변형이고, `applicationId` 에 suffix 를 붙이지 않아 `google-services.json`
- * 의 앱 ID 와 그대로 맞는다. release 를 배포하려면 키를 먼저 받아야 한다.
- *
- * 앱 ID·프로젝트는 `google-services.json` 에서 읽으므로 여기 적지 않는다 — 두 곳에 적으면 한쪽만
- * 고쳐진다. 업로드 자격 증명은 `firebase login` 또는 `GOOGLE_APPLICATION_CREDENTIALS` 로 준다.
- *
- * 배포: `./gradlew assembleDebug appDistributionUploadDebug`
- */
+/** Firebase App Distribution 배포 설정. */
 if (project.file("google-services.json").exists()) {
     firebaseAppDistributionDefault {
         artifactType = "APK"
 
-        // 내부 확인용 채널. release 그룹은 실서버를 보는 빌드를 받는 자리라, 스테이징을
-        // 가리키는 이 빌드를 거기로 보내면 테스터가 데이터를 혼동한다.
+        // 내부 확인용 채널.
         groups = "beta"
 
-        // 무엇이 담긴 빌드인지 테스터가 알 수 있게 적는다. `-PreleaseNotes="..."` 로 사람이 쓴
-        // 문장을 넘길 수 있고, 없으면 최근 커밋으로 채운다.
-        //
-        // **머지 커밋은 건너뛴다**(--no-merges) — "Merge pull request #436 from ..." 은 테스터에게
-        // 아무것도 말해 주지 않는다. providers.exec 라 배포 태스크가 실제로 도는 순간에만 git 을
-        // 부르고, 평소 빌드의 설정 단계는 늦추지 않는다.
+        // 무엇이 담긴 빌드인지 테스터가 알 수 있게 적는다.
         releaseNotes =
             (project.findProperty("releaseNotes") as String?)?.takeIf { it.isNotBlank() }
                 ?: providers

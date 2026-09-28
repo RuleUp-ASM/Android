@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail.viewmodel
 
+import com.ruleup.challenge.domain.entity.Challenge
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeGate
 import com.ruleup.challenge.domain.entity.ChallengeMode
@@ -15,7 +16,6 @@ import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
-import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
@@ -38,6 +38,8 @@ import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.test.FakeVerificationRepository
+import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
+import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -52,10 +54,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 챌린지 신고. 접수는 되돌릴 수 없고 서버가 결과를 알려주지 않으므로, **잘못 보내지 않는 것**과
- * **보냈는지 확실히 알려주는 것** 두 가지가 이 흐름의 전부다.
- */
+/** 챌린지 신고. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeDetailReportTest {
     @BeforeTest
@@ -67,7 +66,7 @@ class ChallengeDetailReportTest {
     @Test
     fun `상세를 못 받았으면 신고를 보내지 않는다`() =
         runTest {
-            // 어느 챌린지인지 모르는 상태다 — 보내면 서버가 대상 오류로 튕긴다.
+            // 어느 챌린지인지 모르는 상태다
             val reports = FakeReportRepository()
             val model = viewModel(reports = reports)
 
@@ -173,7 +172,6 @@ class ChallengeDetailReportTest {
     @Test
     fun `멤버 행에서 신고하면 그 사용자를 방 맥락으로 신고한다`() =
         runTest {
-            // 사용자 신고 진입점이 없으면 부정 인증을 목격해도 알릴 방법이 없다(REP-01·REP-02).
             val reports = FakeReportRepository()
             val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), reports = reports)
             model.onIntent(ChallengeDetailIntent.Load("ch1"))
@@ -191,7 +189,6 @@ class ChallengeDetailReportTest {
     @Test
     fun `접수에 성공하면 가림이 반영된 상세를 다시 불러온다`() =
         runTest {
-            // 가림은 서버가 적용해 내려준다 — 다시 읽지 않으면 신고한 방 이름이 그대로 보인다(REP-06).
             val repo = FakeChallengeRepository(detail = { detail() })
             val model = viewModel(repo = repo, reports = FakeReportRepository(result = ReportResult("r-1", HiddenEffect.CHALLENGE_MASKED)))
             model.onIntent(ChallengeDetailIntent.Load("ch1"))
@@ -204,7 +201,7 @@ class ChallengeDetailReportTest {
             assertTrue(repo.calls.count { it == "getChallenge" } > before)
         }
 
-    /** 상세를 받아 두고 신고 시트까지 연 상태. 신고는 이 지점부터만 성립한다. */
+    /** 상세를 받아 두고 신고 시트까지 연 상태. */
     private fun loaded(reports: FakeReportRepository): ChallengeDetailViewModel {
         val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), reports = reports)
         model.onIntent(ChallengeDetailIntent.Load("ch1"))
@@ -214,11 +211,11 @@ class ChallengeDetailReportTest {
 
     private fun detail() =
         ChallengeDetail(
-            challengeId = "ch1",
             title = "아침 6시 기상",
-            description = null,
-            imageUrl = null,
             category = Category.entries.first(),
+            imageUrl = null,
+            challengeId = "ch1",
+            description = null,
             mode = ChallengeMode.GROUP,
             visibility = ChallengeVisibility.PUBLIC,
             status = ChallengeStatus.ACTIVE,
@@ -271,10 +268,10 @@ class ChallengeDetailReportTest {
             bizLogger = bizLogger,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
-            // 음소거 상태는 부가 정보다 — 준비하지 않으면 조회가 실패하고 토글이 그려지지 않는다.
             notificationRepository = FakeNotificationRepository(),
             navigationHelper = RecordingNavigationHelper(),
-            sensitiveConsent = SensitiveConsent(FakeAccountRepository(), FakeIntroRepository()),
+            checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, FakeAccountRepository()),
+            agreeVerificationConsent = AgreeVerificationConsentUseCase(FakeAccountRepository(), FakeIntroRepository()),
         )
     }
 }

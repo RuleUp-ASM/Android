@@ -41,16 +41,13 @@ import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughInten
 import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughPageIndex
 import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughState
 import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 첫 실행 워크쓰루(Figma `1460:2`·`1461:2`·`1462:2`).
- *
- * 세 장의 뼈대가 같다 — 상단바 · 일러스트 무대 · 문구 · 점 표시 + CTA. 그래서 [WalkthroughFrame]
- * 하나에 장마다 다른 무대만 끼워 넣는다. 장을 옮길 때 문구와 점이 어긋나는 흔한 실수를 구조로 막는다.
- */
+/** 첫 실행 워크쓰루. */
 @Composable
 fun WalkthroughScreen(viewModel: WalkthroughViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
     WalkthroughContent(state = state, onIntent = viewModel::onIntent)
 }
 
@@ -74,7 +71,7 @@ internal fun WalkthroughContent(
     }
 }
 
-/** 세 장이 공유하는 뼈대. 문구는 장마다 다르지만 위치·간격은 하나로 묶는다. */
+/** 세 장이 공유하는 뼈대. */
 @Composable
 private fun WalkthroughFrame(
     page: WalkthroughPageIndex,
@@ -90,7 +87,7 @@ private fun WalkthroughFrame(
                 .background(RuleUpTheme.colors.surface),
     ) {
         WalkthroughTopBar(
-            // 마지막 장에는 건너뛰기가 없다 — CTA 가 곧 끝내기라 같은 일을 하는 버튼이 둘이 된다.
+            // 마지막 장에는 건너뛰기가 없다
             onSkip = onSkip.takeUnless { page.isLast },
         )
         Box(
@@ -175,7 +172,7 @@ private fun WalkthroughFooter(
     }
 }
 
-/** 현재 장만 길쭉한 알약이 된다. 개수는 [WalkthroughPageIndex] 가 정한다 — 장이 늘면 점도 따라 는다. */
+/** 현재 장만 길쭉한 알약이 된다. */
 @Composable
 private fun PageDots(current: WalkthroughPageIndex) {
     Row(horizontalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.xs)) {
@@ -193,7 +190,7 @@ private fun PageDots(current: WalkthroughPageIndex) {
     }
 }
 
-// ---------- 01 · 만들기 ----------
+// 01 · 만들기
 
 @Composable
 private fun CreateStage() {
@@ -297,7 +294,7 @@ private fun DraftRow(
     }
 }
 
-// ---------- 02 · 지키기 ----------
+// 02 · 지키기
 
 @Composable
 private fun KeepStage() {
@@ -369,7 +366,7 @@ private fun SignalCard(
     }
 }
 
-// ---------- 03 · 남기기 ----------
+// 03 · 남기기
 
 @Composable
 private fun StayStage() {
@@ -446,7 +443,7 @@ private fun StayStage() {
     }
 }
 
-/** 티어 사다리의 한 칸. 현재 티어만 테두리와 진한 라벨로 짚어 준다. */
+/** 티어 사다리의 한 칸. */
 @Composable
 private fun TierStep(
     icon: Int,
@@ -508,9 +505,9 @@ private fun Avatar(
     }
 }
 
-// ---------- 공통 조각 ----------
+// 공통 조각
 
-/** 무대 위의 흰 카드. 세 장이 같은 표면을 쓰므로 여백만 바꿔 끼운다. */
+/** 무대 위의 흰 카드. */
 @Composable
 private fun StageCard(
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(RuleUpTheme.spacing.xs),
@@ -549,16 +546,12 @@ private fun IconBadge(
     }
 }
 
-/** 골드 구간 진행률(70/100). 소개용 고정 값이라 상태로 올리지 않는다. */
+/** 골드 구간 진행률(70/100). */
 private const val TIER_PROGRESS = 0.7f
 private val DOT_SIZE = 6.dp
 private val ACTIVE_DOT_WIDTH = 20.dp
 
-/**
- * 티어 색. Figma 의 `primitive` 아래 티어별 변수인데 디자인 시스템 토큰 15종에는 없다 —
- * 지금 쓰는 화면이 여기뿐이라 팔레트를 늘리지 않고 이 파일에 둔다. 티어 화면이 색을 쓰기 시작하면
- * 그때 `RuleUpPalette` 로 올린다.
- */
+/** 티어 색. */
 private object TierPalette {
     val BronzeSoft = Color(0xFFF5EADF)
     val BronzeIcon = Color(0xFF8A5424)

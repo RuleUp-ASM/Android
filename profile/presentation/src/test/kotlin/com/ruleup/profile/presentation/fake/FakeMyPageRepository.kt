@@ -10,29 +10,24 @@ import com.ruleup.profile.domain.entity.ScoreChangePage
 import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.domain.entity.TierHistory
 
-/**
- * 테스트용 [MyPageRepository]. 검증 대상 메서드만 답을 돌려주고 나머지는 호출되면 실패한다 —
- * ViewModel 이 의도치 않은 조회를 해도 조용히 지나가지 않게 하려는 것이다.
- *
- * 답은 **호출마다 계산**하므로(`() -> T`) 재시도·재조회에서 중간에 결과를 바꿔 끼울 수 있다.
- */
+/** 테스트용 [MyPageRepository]. */
 class FakeMyPageRepository(
     private val home: (() -> MyHome)? = null,
     private val tier: (() -> MyTier)? = null,
     private val tierHistory: (() -> TierHistory)? = null,
     private val scoreChanges: ((String?) -> ScoreChangePage)? = null,
-    private val calendar: ((String) -> ActivityCalendar)? = null,
+    private val calendar: (suspend (String) -> ActivityCalendar)? = null,
     private val calendarDay: ((String) -> CalendarDayDetail)? = null,
     private val stats: (() -> StatsReport)? = null,
     private val invitation: (() -> FriendInvitation)? = null,
     private val groupChallenges: (() -> List<GroupChallengeSummary>)? = null,
 ) : com.ruleup.profile.domain.repository.MyPageRepository {
-    /** 어떤 인자로 몇 번 불렸는지. "안 불렀다"도 계약이라 호출 자체를 남긴다. */
+    /** 어떤 인자로 몇 번 불렸는지. */
     val calls = mutableListOf<String>()
 
     val historyMonths = mutableListOf<Int>()
 
-    /** 어떤 커서로 이력을 물었는지. 첫 페이지는 null 이다. */
+    /** 어떤 커서로 이력을 물었는지. */
     val changeCursors = mutableListOf<String?>()
     val calendarMonths = mutableListOf<String>()
 

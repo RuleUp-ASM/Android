@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,21 +41,17 @@ import com.ruleup.profile.presentation.settings.viewmodel.SettingsEffect
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsIntent
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsState
 import com.ruleup.profile.presentation.settings.viewmodel.SettingsViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 설정 허브 (Figma 1134:2164).
- *
- * 「연결된 계정」은 `GET /users/me` 의 `provider` 로 그린다(명세 2026-09-07 신규). **연결을 끊거나
- * 갈아 끼우는 수단은 없다** — 소셜 계정이 곧 로그인 수단이라 떼면 들어올 길이 사라진다. 그래서
- * 이 행은 누를 수 없는 표기다.
- */
+/** 설정 허브. */
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) { viewModel.onIntent(SettingsIntent.Load) }
@@ -69,7 +66,7 @@ fun SettingsScreen(
     SettingsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsContent(
@@ -135,7 +132,7 @@ internal fun SettingsContent(
                 MenuRow(
                     label = "내 문의 내역",
                     onClick = { onIntent(SettingsIntent.OpenInquiryHistory) },
-                    // 답변은 푸시도 알림함도 쓰지 않는다 — 이 뱃지가 답변을 알리는 유일한 신호다.
+                    // 답변은 푸시도 알림함도 쓰지 않는다
                     trailing = if (state.answeredInquiryCount > 0) "새 답변 ${state.answeredInquiryCount}건" else null,
                     highlightTrailing = true,
                 )
@@ -178,10 +175,7 @@ internal fun SettingsContent(
     }
 }
 
-/**
- * 확인 시트. 탈퇴 문구는 **되돌릴 수 없다는 사실보다 복원 조건**을 먼저 말한다 — 실제로 1년 안에는
- * 같은 계정으로 돌아올 수 있고, 그걸 숨기면 사용자가 겁을 먹고 문의로 온다.
- */
+/** 확인 시트. */
 @Composable
 private fun ConfirmSheet(
     dialog: SettingsDialog,
@@ -265,12 +259,7 @@ private fun MenuDivider() {
     HorizontalDivider(color = RuleUpTheme.colors.border)
 }
 
-/**
- * 「연결된 계정 · 카카오」. 누를 수 없는 표기 행이다.
- *
- * 제공자를 모르면(구버전 서버·미지 값) **「연결됨」까지만 말한다** — 카카오로 가입한 사람에게
- * 구글이라고 말하느니 이름을 비우는 편이 낫다.
- */
+/** 「연결된 계정 · 카카오」. */
 @Composable
 private fun ConnectedAccountRow(provider: SocialProvider?) {
     Row(
@@ -343,6 +332,19 @@ private fun MenuRow(
             text = "›",
             color = RuleUpTheme.colors.textMuted,
             style = RuleUpTheme.typography.section,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun SettingsContentPreview() {
+    RuleUpTheme {
+        SettingsContent(
+            state =
+                com.ruleup.profile.presentation.settings.viewmodel.SettingsState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
         )
     }
 }

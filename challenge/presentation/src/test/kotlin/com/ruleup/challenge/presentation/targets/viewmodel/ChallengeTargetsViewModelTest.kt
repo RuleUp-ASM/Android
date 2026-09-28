@@ -23,12 +23,10 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 대상 앱 등록. 이 화면의 저장은 **월 1회**만 되고 **내일부터** 적용된다 — 둘 다 모르면 사용자가
- * 오늘부터 측정되는 줄 알거나, 막힌 줄 모르고 계속 눌러 본다. 그래서 안내 문구가 곧 기능이다.
- */
+/** 대상 앱 등록. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeTargetsViewModelTest {
     @BeforeTest
@@ -40,7 +38,6 @@ class ChallengeTargetsViewModelTest {
     @Test
     fun `적용 대기 중인 세트가 있으면 그쪽을 시드로 복원한다`() =
         runTest {
-            // 사용자가 마지막으로 고른 것이 대기 세트다. 적용 중인 세트를 보여 주면 방금 고른 게 사라진다.
             val viewModel =
                 viewModel(
                     FakeVerificationRepository(
@@ -57,27 +54,31 @@ class ChallengeTargetsViewModelTest {
             viewModel.onIntent(ChallengeTargetsIntent.Load("ch1"))
 
             assertEquals(setOf("com.new"), viewModel.uiState.value.restoredPackages)
+            assertFalse(viewModel.uiState.value.isLoading)
         }
 
     @Test
     fun `아직 등록한 적이 없으면 조용히 빈 상태로 시작한다`() =
         runTest {
-            // 최초 진입이라 복원할 게 없는 것뿐이다 — 오류로 다루면 없던 문제를 보여 준다.
+            // 최초 진입이라 복원할 게 없는 것뿐이다
             val viewModel = viewModel(FakeVerificationRepository(myScreenApps = { null }))
 
             viewModel.onIntent(ChallengeTargetsIntent.Load("ch1"))
 
             assertEquals(emptySet<String>(), viewModel.uiState.value.restoredPackages)
+            assertFalse(viewModel.uiState.value.isLoading)
         }
 
     @Test
-    fun `복원 조회에 실패해도 화면을 막지 않는다`() =
+    fun `복원 조회에 실패하면 재시도 상태를 표시한다`() =
         runTest {
             val viewModel = viewModel(FakeVerificationRepository(myScreenApps = { throw IllegalStateException("조회 실패") }))
 
             viewModel.onIntent(ChallengeTargetsIntent.Load("ch1"))
 
             assertEquals(emptySet<String>(), viewModel.uiState.value.restoredPackages)
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertTrue(viewModel.uiState.value.loadFailed)
         }
 
     @Test
@@ -96,7 +97,6 @@ class ChallengeTargetsViewModelTest {
     @Test
     fun `저장에 성공하면 내일부터 적용된다는 것과 다음 변경 시점을 함께 알린다`() =
         runTest {
-            // "등록됐어요" 로만 끝내면 오늘부터 측정되는 줄 알고, 월 1회 소진을 모르면 곧바로 또 바꾸려 한다.
             val viewModel =
                 viewModel(
                     FakeVerificationRepository(
@@ -161,7 +161,7 @@ class ChallengeTargetsViewModelTest {
 
             viewModel.onIntent(ChallengeTargetsIntent.Save("ch1", listOf(app("com.picked"))))
 
-            // 서버가 접수한 세트를 남긴다 — 고른 것과 다를 수 있다.
+            // 서버가 접수한 세트를 남긴다
             assertEquals(listOf("com.accepted"), store.registered("ch1"))
             assertEquals(1, nav.backCount)
         }
@@ -169,13 +169,12 @@ class ChallengeTargetsViewModelTest {
     @Test
     fun `고른 앱을 수집기가 읽는 저장소에도 반영하고 즉시 흘려보낸다`() =
         runTest {
-            // 여기 넣지 않으면 서버 저장은 200 인데 단말은 아무것도 모으지 않아
-            // SCREEN_TIME 신호가 아예 생기지 않는다(SETUP-07 · SIG-07).
             val usageTargets = RecordingUsageTargetStore()
             val scheduler = RecordingSyncScheduler()
             val viewModel =
                 viewModel(
                     FakeVerificationRepository(
+                        myScreenApps = { MyScreenApps(listOf(app("com.current")), null, null) },
                         updateScreenApps = { _, _ ->
                             ScreenAppsUpdate(apps = listOf(app("com.accepted")), appliedFrom = "2026-09-02T00:00:00Z")
                         },
@@ -186,7 +185,7 @@ class ChallengeTargetsViewModelTest {
 
             viewModel.onIntent(ChallengeTargetsIntent.Save("ch1", listOf(app("com.picked"))))
 
-            assertEquals(setOf("com.accepted"), usageTargets.byChallenge["ch1"])
+            assertEquals(setOf("com.current"), usageTargets.byChallenge["ch1"])
             assertEquals(1, scheduler.catchUpCount)
         }
 
@@ -226,7 +225,7 @@ class ChallengeTargetsViewModelTest {
     @Test
     fun `이번 달 변경을 다 썼으면 잠시 후 다시 시도하라고 하지 않는다`() =
         runTest {
-            // 기본 문구로 뭉개면 사용자가 계속 눌러 본다. 다음 달까지 기다려야 하는 실패다.
+            // 기본 문구로 뭉개면 사용자가 계속 눌러 본다.
             val viewModel =
                 viewModel(FakeVerificationRepository(updateScreenApps = { _, _ -> throw SettingChangeLimitException() }))
             val effects = collectEffects(viewModel)
@@ -268,9 +267,14 @@ class ChallengeTargetsViewModelTest {
         navigationHelper = nav,
     )
 
-    /** 수집기가 실제로 읽는 저장소. 화면이 여기까지 반영했는지가 SETUP-07 의 핵심이다. */
+    /** 수집기가 실제로 읽는 저장소. */
     private class RecordingUsageTargetStore : UsageTargetStore {
         val byChallenge = mutableMapOf<String, Set<String>>()
+
+        override suspend fun replaceAll(targets: Map<String, Set<String>>) {
+            byChallenge.clear()
+            byChallenge.putAll(targets)
+        }
 
         override suspend fun replaceFor(
             challengeId: String,
@@ -285,6 +289,8 @@ class ChallengeTargetsViewModelTest {
     private class RecordingSyncScheduler : SyncScheduler {
         var catchUpCount = 0
             private set
+
+        override fun cancel() = Unit
 
         override fun ensureScheduled() = Unit
 

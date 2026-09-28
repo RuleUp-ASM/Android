@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
@@ -29,22 +30,15 @@ import com.ruleup.support.domain.entity.InquiryCategory
 import com.ruleup.support.presentation.category.viewmodel.InquiryCategoryIntent
 import com.ruleup.support.presentation.category.viewmodel.InquiryCategoryViewModel
 import com.ruleup.support.presentation.category.viewmodel.InquiryShortcut
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 문의하기 · 카테고리 (Figma `1417:2`).
- *
- * 분류를 먼저 받는 이유는 담당자 배정이 여기서 갈리기 때문이다 — 본문만 받으면 운영자가 읽고
- * 다시 나눠야 하고 그만큼 답변이 늦어진다.
- *
- * Figma 와 다르게 간 곳
- * - **「유저·챌린지를 신고할래요」 바로가기를 빼고 안내 문장으로 바꿨다.** 신고는 대상이 있어야
- *   성립해 전용 진입 화면이 없다. 누를 곳이 없는 칩을 두면 눌러 보고 아무 일도 안 일어난다.
- */
+/** 문의하기 · 카테고리. */
 @Composable
 fun InquiryCategoryScreen(
     modifier: Modifier = Modifier,
     viewModel: InquiryCategoryViewModel = hiltViewModel(),
 ) {
+    TtiScreenEffect()
     InquiryCategoryContent(onIntent = viewModel::onIntent, modifier = modifier)
 }
 
@@ -225,6 +219,15 @@ private fun ShortcutChip(
     }
 }
 
-/** 운영 시간·응답 기한·하루 상한을 한 줄로 붙여 둔다 — 접수 전에 기대치를 맞추는 문장이다. */
+/** 운영 시간·응답 기한·하루 상한을 한 줄로 붙여 둔다 */
 private const val OPERATION_NOTICE =
     "평일 10:00~18:00 운영 · 영업일 2일 안에 답변드려요 · 하루 3건까지 접수할 수 있어요"
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InquiryCategoryContentPreview() {
+    RuleUpTheme {
+        TtiScreenEffect()
+        InquiryCategoryContent(onIntent = { })
+    }
+}

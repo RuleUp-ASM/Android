@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  적응형 아이콘 배경. Figma `1396:7`. 108dp 캔버스를 432 뷰포트로 옮겼다.
-  두 번째 레이어는 좌상단 하이라이트 — 원형 그라데이션을 x 로만 늘려 타원으로 만든다.
--->
+<!-- 적응형 아이콘 배경. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"

@@ -7,33 +7,38 @@ import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.entity.InquirySubmission
 import com.ruleup.support.domain.repository.InquiryRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 문의하기 · 작성 ViewModel (Figma `1417:117`, 명세 POST /api/v1/inquiries).
- *
- * **접수는 되돌릴 수 없다.** 수정·삭제 경로가 없고 재시도는 같은 내용을 한 건 더 쌓으면서 하루
- * 상한을 함께 깎는다. 그래서 응답이 오기 전에는 버튼을 잠근다.
- */
+/** 문의하기 · 작성 ViewModel. */
 @HiltViewModel
 class InquiryComposeViewModel
     @Inject
     constructor(
         private val inquiryRepository: InquiryRepository,
         private val navigationHelper: NavigationHelper,
+        private val savedStateHandle: androidx.lifecycle.SavedStateHandle = androidx.lifecycle.SavedStateHandle(),
     ) : MviViewModel<InquiryComposeIntent, InquiryComposeState, InquiryComposeReducerEvent, NoEffect>(
             InquiryComposeState.initial,
         ) {
+        init {
+            savedStateHandle.get<String>("inquiryBody")?.let { dispatch(InquiryComposeReducerEvent.BodyEdited(it)) }
+        }
+
         override fun onIntent(intent: InquiryComposeIntent) {
             when (intent) {
                 is InquiryComposeIntent.Load -> dispatch(InquiryComposeReducerEvent.CategoryLoaded(intent.category))
                 InquiryComposeIntent.Back -> navigationHelper.navigateToBack()
                 InquiryComposeIntent.ChangeCategory -> navigationHelper.navigateToBack()
-                is InquiryComposeIntent.BodyChanged -> dispatch(InquiryComposeReducerEvent.BodyEdited(intent.value))
+                is InquiryComposeIntent.BodyChanged -> {
+                    savedStateHandle["inquiryBody"] = intent.value
+                    dispatch(InquiryComposeReducerEvent.BodyEdited(intent.value))
+                }
+                is InquiryComposeIntent.RetryImage -> upload(intent.uri, retry = true)
                 is InquiryComposeIntent.ImagePicked -> upload(intent.uri)
                 is InquiryComposeIntent.ImageRemoved -> dispatch(InquiryComposeReducerEvent.ImageRemoved(intent.uri))
                 InquiryComposeIntent.Submit -> submit()
@@ -49,9 +54,17 @@ class InquiryComposeViewModel
                 is InquiryComposeReducerEvent.CategoryLoaded -> state.copy(category = event.category)
 
                 is InquiryComposeReducerEvent.BodyEdited ->
-                    // 입력을 자르지 않는다 — 붙여넣기가 조용히 잘리면 사용자가 지워진 걸 모른다.
-                    // 상한 초과는 글자 수 표기가 빨개지고 버튼이 잠기는 것으로 알린다.
+                    // 문의 본문.
                     state.copy(body = event.value, errorMessage = null)
+
+                is InquiryComposeReducerEvent.ImageRetrying ->
+                    state.copy(
+                        attachments =
+                            state.attachments.map {
+                                if (it.uri == event.uri) it.copy(failed = false) else it
+                            },
+                        errorMessage = null,
+                    )
 
                 is InquiryComposeReducerEvent.ImageAdded ->
                     state.copy(
@@ -63,7 +76,7 @@ class InquiryComposeViewModel
                     state.copy(
                         attachments =
                             state.attachments.map {
-                                if (it.uri == event.uri) it.copy(uploadedUrl = event.url) else it
+                                if (it.uri == event.uri) it.copy(uploadedUrl = event.url, failed = false) else it
                             },
                     )
 
@@ -91,9 +104,17 @@ class InquiryComposeViewModel
                     state.copy(submitting = false, errorMessage = event.message)
             }
 
-        private fun upload(uri: String) {
-            if (!currentState.canAddImage) return
-            dispatch(InquiryComposeReducerEvent.ImageAdded(uri))
+        private fun upload(
+            uri: String,
+            retry: Boolean = false,
+        ) {
+            if (retry) {
+                if (currentState.attachments.none { it.uri == uri && it.failed }) return
+                dispatch(InquiryComposeReducerEvent.ImageRetrying(uri))
+            } else {
+                if (!currentState.canAddImage || currentState.attachments.any { it.uri == uri }) return
+                dispatch(InquiryComposeReducerEvent.ImageAdded(uri))
+            }
             viewModelScope.launch {
                 runCatching { inquiryRepository.uploadImage(uri) }
                     .onSuccess { dispatch(InquiryComposeReducerEvent.ImageUploaded(uri, it)) }
@@ -113,31 +134,28 @@ class InquiryComposeViewModel
                     InquirySubmission(
                         category = state.category,
                         body = InquiryBody.of(state.body),
-                        // 실패한 장은 빼고 보낸다 — 주소가 없어 서버가 받을 수 없다.
+                        // 실패한 장은 빼고 보낸다
                         imageUrls = state.attachments.mapNotNull { it.uploadedUrl },
                     )
                 }.getOrElse {
-                    dispatch(InquiryComposeReducerEvent.SubmitFailed(it.message ?: "문의 내용을 다시 확인해 주세요"))
+                    dispatch(InquiryComposeReducerEvent.SubmitFailed(it.userFacingMessage("문의 내용을 다시 확인해 주세요")))
                     return
                 }
 
             dispatch(InquiryComposeReducerEvent.Submitting)
             viewModelScope.launch {
                 runCatching { inquiryRepository.submit(submission) }
-                    .onSuccess { dispatch(InquiryComposeReducerEvent.Submitted(it.inquiryId)) }
-                    .onFailure {
+                    .onSuccess {
+                        savedStateHandle.remove<String>("inquiryBody")
+                        dispatch(InquiryComposeReducerEvent.Submitted(it.inquiryId))
+                    }.onFailure {
                         dispatch(InquiryComposeReducerEvent.SubmitFailed(it.userMessage("문의를 접수하지 못했어요")))
                     }
             }
         }
     }
 
-/**
- * 실패를 사용자 문구로 옮긴다.
- *
- * 하루 상한과 길이 초과는 **서버 문구를 그대로 쓴다** — 남은 건수나 초과 글자 수처럼 서버만 아는
- * 숫자가 문장에 들어 있어, 앱이 다시 쓰면 그 숫자가 빠진 밋밋한 안내가 된다.
- */
+/** 실패를 사용자 문구로 옮긴다. */
 private fun Throwable.userMessage(fallback: String): String =
     when ((this as? InquiryException)?.failure) {
         InquiryFailure.NETWORK -> "지금은 연결이 불안정해요. 잠시 후 다시 시도해 주세요."

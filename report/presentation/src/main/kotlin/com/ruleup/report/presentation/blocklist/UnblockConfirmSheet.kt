@@ -21,12 +21,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.report.presentation.blocklist.viewmodel.BlockTarget
 
-/**
- * 차단 해제 확인 (Figma `1287:62`).
- *
- * 본문의 "신고 기록은 그대로 남아요"가 이 시트의 핵심이다 — 해제를 신고 취소로 오해하면,
- * 가해자가 피해자에게 해제를 종용해 기록을 지우게 만드는 경로가 생긴다. 문구를 줄이지 않는다.
- */
+/** 차단 해제 확인. */
 @Composable
 internal fun UnblockConfirmSheet(
     target: BlockTarget,
@@ -102,3 +97,11 @@ internal fun BlockTarget.confirmBody(): String =
         is BlockTarget.User -> "이 사람의 글과 프로필이 다시 보여요. 신고 기록은 그대로 남아요."
         is BlockTarget.Challenge -> "이 챌린지가 탐색 목록에 다시 나타나요. 신고 기록은 그대로 남아요."
     }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun UnblockConfirmSheetPreview() {
+    RuleUpTheme {
+        UnblockConfirmSheet(target = BlockTarget.User("preview-user", "룰업"), submitting = false, onConfirm = {}, onDismiss = {})
+    }
+}

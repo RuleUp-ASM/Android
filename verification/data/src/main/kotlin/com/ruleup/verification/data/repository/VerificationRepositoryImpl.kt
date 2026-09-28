@@ -12,7 +12,6 @@ import com.ruleup.verification.data.dto.SubmitAppealRequest
 import com.ruleup.verification.data.dto.UpdateScreenAppsRequest
 import com.ruleup.verification.data.dto.buildChallengeSetupRequest
 import com.ruleup.verification.data.dto.toDomain
-import com.ruleup.verification.data.dto.toDto
 import com.ruleup.verification.data.dto.toPlaceOrNull
 import com.ruleup.verification.data.dto.toRequest
 import com.ruleup.verification.data.dto.toUpdateRequest
@@ -76,7 +75,7 @@ class VerificationRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 429/413/400 은 호출자가 백오프·분할·폐기로 분기할 수 있도록 도메인 예외로 변환한다(명세 sync).
+                // 429/413/400 은 호출자가 백오프·분할·폐기로 분기할 수 있도록 도메인 예외로 변환한다.
                 when (e.code) {
                     CODE_SYNC_TOO_FREQUENT -> throw SyncTooFrequentException()
                     CODE_INVALID_SIGNAL_PAYLOAD -> throw InvalidSignalPayloadException()
@@ -110,8 +109,7 @@ class VerificationRepositoryImpl
                     ).getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 400 앵커 검증 실패는 화면이 입력 수정으로 분기하도록 도메인 예외로 변환(명세 setup).
-                // 404/403/401 은 그대로 전파해 호출자가 메시지를 노출한다.
+                // 400 앵커 검증 실패는 화면이 입력 수정으로 분기하도록 도메인 예외로 변환.
                 when (e.code) {
                     CODE_INVALID_ANCHOR -> throw InvalidAnchorException()
                     else -> throw e
@@ -126,7 +124,6 @@ class VerificationRepositoryImpl
                     .toDomain()
             } catch (e: ApiException) {
                 // 앵커 미등록(400)은 정상 상태이므로 null 로 내려 호출자가 "등록 안 됨"으로 분기한다.
-                // 401/403 등은 그대로 전파해 화면이 메시지를 노출한다.
                 if (e.code == CODE_GEOFENCE_NOT_CONFIGURED) null else throw e
             }
 
@@ -140,8 +137,7 @@ class VerificationRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 화면이 문구를 갈라야 하는 실패만 도메인 어휘로 올린다(명세 my-location PUT).
-                // 개수 초과는 AnchorSet 이 이미 막지만 서버가 되돌려주면 같은 인라인 안내로 흐른다.
+                // 화면이 문구를 갈라야 하는 실패만 도메인 어휘로 올린다.
                 when (e.code) {
                     CODE_LOCATION_LOCKED_IN_WINDOW -> throw LocationLockedInWindowException()
                     CODE_SETTING_CHANGE_LIMIT -> throw SettingChangeLimitException()
@@ -158,7 +154,6 @@ class VerificationRepositoryImpl
                     .toDomain()
             } catch (e: ApiException) {
                 // 대상 앱 미설정(400)은 정상 상태이므로 null 로 내려 호출자가 "등록 안 됨"으로 분기한다.
-                // 401/403 등은 그대로 전파해 화면이 메시지를 노출한다.
                 if (e.code == CODE_SCREENTIME_NOT_CONFIGURED) null else throw e
             }
 
@@ -170,14 +165,13 @@ class VerificationRepositoryImpl
                 api
                     .updateMyScreenApps(
                         challengeId = challengeId,
-                        request = UpdateScreenAppsRequest(apps.apps.map { it.toDto() }),
+                        request = UpdateScreenAppsRequest(apps.apps.map { it.toRequest() }),
                     ).getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 429 쿨다운·400 형식 위반은 화면이 안내로 분기하도록 도메인 예외로 변환(명세 my-screen-apps).
-                // 그 외(403/401 등)는 그대로 전파한다.
+                // 429 쿨다운·400 형식 위반은 화면이 안내로 분기하도록 도메인 예외로 변환.
                 when (e.code) {
-                    // 앵커 변경과 같은 월 1회 규칙이다 — 코드도 예외도 하나로 모은다.
+                    // 앵커 변경과 같은 월 1회 규칙이다
                     CODE_SETTING_CHANGE_LIMIT -> throw SettingChangeLimitException()
                     CODE_INVALID_APP -> throw InvalidScreenAppException()
                     else -> throw e
@@ -197,8 +191,7 @@ class VerificationRepositoryImpl
                     ).getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 셋 다 화면이 다르게 말해야 하는 실패다 — 특히 NOT_FAILED 는 오류가 아니라
-                // "이미 정정됨"이라 실패처럼 보여주면 안 된다(명세 appeals).
+                // 셋 다 화면이 다르게 말해야 하는 실패다
                 when (e.code) {
                     CODE_INVALID_REASON -> throw InvalidAppealReasonException()
                     CODE_APPEAL_WINDOW_CLOSED -> throw AppealWindowClosedException()
@@ -229,7 +222,7 @@ class VerificationRepositoryImpl
                 .toDomain()
 
         override suspend fun acknowledgeResult(verificationId: String) {
-            // 멱등이라 결과 플래그를 도메인으로 올리지 않는다 — 성공했으면 확인된 것이다.
+            // 멱등이라 결과 플래그를 도메인으로 올리지 않는다
             api.acknowledgeResult(verificationId).throwOnError()
         }
 
@@ -237,8 +230,7 @@ class VerificationRepositoryImpl
             try {
                 api.cancelManual(verificationId).throwOnError()
             } catch (e: ApiException) {
-                // 기한 경과만 화면이 갈라 안내한다. 자동 판정 건 취소(NOT_MANUAL_VERIFICATION)는
-                // 화면이 그 버튼을 두지 않는 것이 전제라 그대로 전파한다.
+                // 기한 경과만 화면이 갈라 안내한다.
                 when (e.code) {
                     CODE_CANCEL_WINDOW_CLOSED -> throw CancelWindowClosedException()
                     else -> throw e
@@ -259,8 +251,7 @@ class VerificationRepositoryImpl
                     ).getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 화면이 문구를 갈라야 하는 실패만 도메인 어휘로 올린다(명세 수동 인증 제출).
-                // 자동 방 제출(NOT_MANUAL_CHALLENGE)은 화면이 그 버튼을 두지 않는 것이 전제라 전파한다.
+                // 화면이 문구를 갈라야 하는 실패만 도메인 어휘로 올린다.
                 when (e.code) {
                     CODE_ALREADY_VERIFIED -> throw AlreadyVerifiedException()
                     CODE_INVALID_TARGET_DATE -> throw InvalidTargetDateException()
@@ -282,7 +273,7 @@ class VerificationRepositoryImpl
                     radiusM = radiusM,
                 ).toDomain()
 
-        // 카카오 로컬 좌표→주소(명세 §5.3).
+        // 카카오 로컬 좌표→주소.
         override suspend fun reverseGeocode(
             lat: Double,
             lng: Double,

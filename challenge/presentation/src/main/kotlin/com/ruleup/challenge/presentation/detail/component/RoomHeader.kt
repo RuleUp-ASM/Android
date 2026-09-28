@@ -30,17 +30,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 방 상세 상단바 (Figma 1134:156).
- *
- * 제목은 방 이름이다. 오른쪽 ⋯ 에는 **자주 쓰지 않는 관리 동작**만 모은다 — 세 탭 어디서나 같은
- * 자리에 있어야 하므로 본문이 아니라 상단바가 자리다.
- */
+/** 방 상세 상단바. */
 @Composable
 internal fun RoomAppBar(
     title: String,
@@ -105,7 +101,7 @@ internal fun RoomAppBar(
     }
 }
 
-/** 상단바 ⋯ 메뉴 항목. 노출 여부(방장·관리자 등)는 호출부가 판단해 목록을 만들어 넘긴다. */
+/** 상단바 ⋯ 메뉴 항목. */
 internal data class RoomMenuItem(
     val label: String,
     val onClick: () -> Unit,
@@ -134,12 +130,7 @@ private fun IconSlot(
     }
 }
 
-/**
- * 정보 탭 헤더 (Figma 1134:164) — 카테고리 칩 · 종료까지 D-N · 내 달성률 · 진행 바.
- *
- * [myProgressRate] 는 방 안 랭킹의 내 성공률(0~1)이다. 참여 10회 미만이라 미등재면 null 이고,
- * 이때는 숫자 대신 "-" 를 둔다 — 0% 로 채우면 아직 집계되지 않은 것을 실패로 보이게 한다.
- */
+/** 정보 탭 헤더 */
 @Composable
 internal fun RoomInfoHeader(
     categoryLabel: String?,
@@ -227,7 +218,7 @@ private fun RoomProgressBar(rate: Double?) {
     }
 }
 
-/** 정보 · 피드 · 랭킹 탭 (Figma 1134:181). */
+/** 정보 · 피드 · 랭킹 탭. */
 @Composable
 internal fun RoomTabRow(
     selected: RoomTab,
@@ -276,7 +267,7 @@ internal fun RoomTabRow(
     }
 }
 
-/** 랭킹 탭의 멤버 ↔ 방 순위 세그먼트 (Figma 1134:355). */
+/** 랭킹 탭의 멤버 ↔ 방 순위 세그먼트. */
 @Composable
 internal fun <T> RoomSegmentedControl(
     options: List<T>,
@@ -352,7 +343,7 @@ internal fun RoomSectionHeader(
     }
 }
 
-/** 아바타 자리. 프로필 이미지 로더가 없으므로 닉네임 첫 글자로 대체한다(Figma 1134:269 와 동일 크기). */
+/** 아바타 자리. */
 @Composable
 internal fun RoomAvatar(
     nickname: String,
@@ -421,4 +412,65 @@ internal fun RoomVerticalDivider() {
                 .height(36.dp)
                 .background(RuleUpTheme.colors.border),
     )
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomAppBarPreview() {
+    RuleUpTheme {
+        RoomAppBar(title = "매일 꾸준히 걷기", menuItems = emptyList(), onBack = { })
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomInfoHeaderPreview() {
+    RuleUpTheme {
+        RoomInfoHeader(categoryLabel = null, remainingDays = 1, myProgressRate = null)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomTabRowPreview() {
+    RuleUpTheme {
+        RoomTabRow(
+            selected =
+                com.ruleup.challenge.presentation.detail.viewmodel.RoomTab.entries
+                    .first(),
+            onSelect = { },
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomSectionHeaderPreview() {
+    RuleUpTheme {
+        RoomSectionHeader(title = "매일 꾸준히 걷기")
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomAvatarPreview() {
+    RuleUpTheme {
+        RoomAvatar(nickname = "룰업")
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomEmptyStatePreview() {
+    RuleUpTheme {
+        RoomEmptyState(message = "아직 등록된 내용이 없어요")
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomVerticalDividerPreview() {
+    RuleUpTheme {
+        RoomVerticalDivider()
+    }
 }

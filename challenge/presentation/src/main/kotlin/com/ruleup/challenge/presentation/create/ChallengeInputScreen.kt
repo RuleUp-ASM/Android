@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
@@ -45,15 +46,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalNavigationHelper
 import kotlinx.coroutines.delay
 
-/**
- * 생성 입력 화면 (Figma `1134:544` · 생성 · 입력).
- *
- * 두 경로의 출발점이다. **경로 A(추천 칩)** 는 대기가 없고, **경로 B(설명 입력)** 만 LLM 로딩이 있다.
- * 둘 다 같은 확인 화면으로 수렴한다.
- *
- * 하단 고정 CTA 를 두지 않는다 — 디자인이 "만들기" 를 입력 박스 안에 넣었다. 입력과 실행이 붙어 있어야
- * 무엇에 대한 버튼인지 분명하고, 아래 추천 카드와도 섞이지 않는다.
- */
+/** 생성 입력 화면. */
 @Composable
 fun ChallengeInputContent(
     onIntent: (CreateChallengeIntent) -> Unit,
@@ -62,7 +55,7 @@ fun ChallengeInputContent(
 ) {
     val nav = LocalNavigationHelper.current
 
-    // 초안 생성 중에는 화면을 잠그되 뒤로가기로 취소할 수 있게 한다(프론트 스펙 5).
+    // 초안 생성 중에는 화면을 잠그되 뒤로가기로 취소할 수 있게 한다.
     BackHandler(enabled = state.isDrafting) { onIntent(CreateChallengeIntent.CancelDrafting) }
 
     Box(modifier = modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
@@ -121,15 +114,7 @@ fun ChallengeInputContent(
     }
 }
 
-/**
- * 초안 실패 안내 (`result=FALLBACK`).
- *
- * **에러가 아니다** — HTTP 200 이고 서버가 루틴을 못 알아본 것뿐이다. 그래서 에러 색을 쓰지 않는다.
- * 실패로 인지되면 다시 안 쓰고 나가버린다.
- *
- * 다이얼로그로 띄우는 이유는 **뒤에 방금 쓴 문장이 그대로 보이기 때문**이다. 화면을 갈아타면
- * 무엇을 고쳐야 할지 감이 없어진다. 닫아도 입력은 지우지 않는다.
- */
+/** 초안 실패 안내 (`result=FALLBACK`). */
 @Composable
 private fun DraftFallbackDialog(
     message: String,
@@ -147,7 +132,7 @@ private fun DraftFallbackDialog(
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // 왜 막혔는지는 서버가 더 잘 안다 — 서버 문구를 먼저 쓴다.
+                // 왜 막혔는지는 서버가 더 잘 안다
                 Text(
                     text = message,
                     color = RuleUpTheme.colors.textSecondary,
@@ -192,11 +177,7 @@ private fun InputAppBar(onClose: () -> Unit) {
     }
 }
 
-/**
- * 설명 입력 박스. 글자수와 "만들기" 가 **박스 안에** 있다.
- *
- * 429 로 막혀 있으면 버튼 자리에 남은 시간을 보여준다 — 언제 되는지 모르면 계속 누르게 된다.
- */
+/** 설명 입력 박스. */
 @Composable
 private fun RoutineDescriptionBox(
     state: CreateChallengeState,
@@ -285,10 +266,7 @@ private fun OrDivider() {
     }
 }
 
-/**
- * 추천 루틴 카드. 아이콘은 서버가 준 카테고리로 고른다 — 디자인의 3종 글리프를 그대로 박으면
- * 서버가 다른 루틴을 내려줄 때 아이콘이 어긋난다.
- */
+/** 추천 루틴 카드. */
 @Composable
 private fun TemplateCard(
     template: RoutineTemplate,
@@ -324,7 +302,7 @@ private fun TemplateCard(
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(template.title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
-            // 추천 사유가 곧 부제다 — 디자인의 "원하는 시각 ±10분 · 주 5일" 자리.
+            // 추천 사유가 곧 부제다
             Text(template.reason, color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.captionMedium)
         }
         Icon(
@@ -370,11 +348,7 @@ private fun RetryRow(onRetry: () -> Unit) {
     }
 }
 
-/**
- * 초안 생성 대기 오버레이.
- *
- * p95 5초 · 최대 10초까지 걸릴 수 있어 **문구를 단계적으로 바꿔** 멈춘 화면처럼 보이지 않게 한다.
- */
+/** 초안 생성 대기 오버레이. */
 @Composable
 private fun DraftingOverlay() {
     var stage by remember { mutableIntStateOf(0) }
@@ -389,7 +363,7 @@ private fun DraftingOverlay() {
             Modifier
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.background.copy(alpha = 0.92f))
-                // 뒤 화면 조작을 막는다. 빠져나갈 길은 뒤로가기다.
+                // 뒤 화면 조작을 막는다.
                 .singleClickable {},
         contentAlignment = Alignment.Center,
     ) {
@@ -422,3 +396,13 @@ private val DRAFTING_MESSAGES =
 private val DESCRIPTION_MIN_HEIGHT = 72.dp
 private const val DRAFTING_STAGE_MS = 3_000L
 private const val SKELETON_COUNT = 3
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ChallengeInputContentPreview() {
+    com.ruleup.ui.helper.PreviewEnvironment {
+        RuleUpTheme {
+            ChallengeInputContent(onIntent = { })
+        }
+    }
+}

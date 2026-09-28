@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeMode
@@ -46,7 +47,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import kotlin.math.roundToInt
 
-/** 확인 화면 요약 줄에 대응하는 편집 시트 (Figma 1134:669 — 4종). */
+/** 확인 화면 요약 줄에 대응하는 편집 시트. */
 enum class ConfirmEditSection {
     TITLE_DESCRIPTION,
     MODE_CAPACITY,
@@ -55,13 +56,7 @@ enum class ConfirmEditSection {
     PENALTIES,
 }
 
-/**
- * 항목별 편집 바텀시트.
- *
- * 값은 **타이핑 즉시 상태에 반영**하고 "저장" 은 시트를 닫는 역할만 한다 — 확인 화면 전체가 아직
- * 서버에 올라가지 않은 초안이라, 여기서 따로 커밋 개념을 만들면 "저장했는데 왜 또 만들기를 눌러야
- * 하냐" 는 혼동만 생긴다.
- */
+/** 항목별 편집 바텀시트. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ConfirmEditSheet(
@@ -115,7 +110,7 @@ internal fun ConfirmEditSheet(
 
                 ConfirmEditSection.PENALTIES -> PenaltyEditor(state, onIntent)
             }
-            SheetSaveButton(onClick = onDismiss)
+            SheetSaveButton(onClick = onDismiss, enabled = section != ConfirmEditSection.VERIFICATION || state.paramsInRange)
         }
     }
 }
@@ -129,7 +124,7 @@ private fun ConfirmEditSection.title(): String =
         ConfirmEditSection.PENALTIES -> "실패하면"
     }
 
-// ---------- 이름과 설명 ----------
+// 이름과 설명
 
 @Composable
 private fun TitleDescriptionEditor(
@@ -155,7 +150,7 @@ private fun TitleDescriptionEditor(
     }
 }
 
-// ---------- 모드와 인원 ----------
+// 모드와 인원
 
 @Composable
 private fun ModeCapacityEditor(
@@ -176,10 +171,9 @@ private fun ModeCapacityEditor(
                 )
             },
         )
-        // 공개 범위·정원·티어는 그룹 전용 계약이다. 솔로에서 보여주면 보내지지도 않을 값을 고르게 하는 셈이다.
+        // 공개 범위·정원·티어는 그룹 전용 계약이다.
         if (state.isGroup) {
-            // 모드(그룹·솔로)와 공개 범위(공개·비공개)는 **서로 다른 축이다.** 고를 자리가 없으면
-            // 네 조합 중 비공개 그룹을 만들 길이 아예 없다(CRE-07).
+            // 모드(그룹·솔로)와 공개 범위(공개·비공개)는 서로 다른 축이다.
             SegmentedControl(
                 options = listOf("공개", "비공개"),
                 selectedIndex = if (state.visibility?.isPrivate == true) 1 else 0,
@@ -214,7 +208,7 @@ private fun ModeCapacityEditor(
                 )
             }
             if (showTiers) {
-                // 상한은 생성자 표시 티어다 — 그 위를 고르면 서버가 MIN_TIER_EXCEEDS_OWNER 로 막는다.
+                // 상한은 생성자 표시 티어다
                 val cap = state.ownerTierCap
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Tier.entries.forEach { tier ->
@@ -227,7 +221,7 @@ private fun ModeCapacityEditor(
                         )
                     }
                 }
-                // 흐린 칩을 눌러도 아무 일이 없으면 고장으로 읽힌다. 막힌 이유를 먼저 말한다.
+                // 흐린 칩을 눌러도 아무 일이 없으면 고장으로 읽힌다.
                 cap?.let {
                     Text(
                         text = "내 티어(${it.label()})보다 높은 티어는 고를 수 없어요",
@@ -240,7 +234,7 @@ private fun ModeCapacityEditor(
     }
 }
 
-// ---------- 인증 방법 ----------
+// 인증 방법
 
 @Composable
 private fun VerificationEditor(
@@ -251,7 +245,7 @@ private fun VerificationEditor(
         SegmentedControl(
             options = listOf("자동 인증", "수동 체크"),
             selectedIndex = if (state.isAuto) 0 else 1,
-            // 초안이 수동으로 왔으면 자동을 켤 수 없다 — 그 루틴은 자동 인증을 지원하지 않는다.
+            // 초안이 수동으로 왔으면 자동을 켤 수 없다
             enabledIndices = if (state.canUseAuto) setOf(0, 1) else setOf(1),
             onSelect = { index ->
                 onIntent(
@@ -261,7 +255,7 @@ private fun VerificationEditor(
                 )
             },
         )
-        // 목표값은 루틴 템플릿이 정한다 — 키별 화면을 하드코딩하지 않고 kind·unit·min·max 로 그린다.
+        // 목표값은 루틴 템플릿이 정한다
         if (state.params.isNotEmpty()) {
             ParamsEditor(
                 params = state.params,
@@ -281,7 +275,7 @@ private fun VerificationEditor(
     }
 }
 
-// ---------- 빈도와 기간 ----------
+// 빈도와 기간
 
 @Composable
 private fun PeriodEditor(
@@ -290,8 +284,7 @@ private fun PeriodEditor(
     onPickPeriod: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        // 빈도는 **요일이 아니라 그 주에 몇 번**이다. 판정 주기가 1주 고정이라 어느 날 하든 상관없고,
-        // 요일 체크박스를 두면 지키지도 않을 요일을 고르게 만든다.
+        // 빈도는 요일이 아니라 그 주에 몇 번이다.
         WeeklyCountSlider(
             count = state.weeklyCount,
             onChange = { onIntent(CreateChallengeIntent.SetWeeklyCount(it)) },
@@ -313,10 +306,7 @@ private fun PeriodEditor(
 private val weeklyCountRange =
     ChallengeLimits.WEEKLY_COUNT_MIN.toFloat()..ChallengeLimits.WEEKLY_COUNT_MAX.toFloat()
 
-/**
- * 눈금이 7칸뿐이라 [Slider] 의 `steps` 로 딱 떨어지게 잡고, 숫자 라벨을 직접 탭해도 선택되게 둔다 —
- * 슬라이더 손잡이만으로 한 칸을 정확히 맞추는 건 손가락으로 하기 번거롭다.
- */
+/** 주간 수행 횟수 슬라이더. */
 @Composable
 private fun WeeklyCountSlider(
     count: Int,
@@ -340,7 +330,7 @@ private fun WeeklyCountSlider(
             value = count.toFloat(),
             onValueChange = { onChange(it.roundToInt()) },
             valueRange = weeklyCountRange,
-            // 양 끝을 뺀 내부 눈금 수 — 1~7 이면 5개다.
+            // 양 끝을 뺀 내부 눈금 수
             steps = ChallengeLimits.WEEKLY_COUNT_MAX - ChallengeLimits.WEEKLY_COUNT_MIN - 1,
             colors =
                 SliderDefaults.colors(
@@ -372,15 +362,9 @@ private fun WeeklyCountSlider(
     }
 }
 
-// ---------- 실패하면 ----------
+// 실패 패널티.
 
-/**
- * 패널티.
- *
- * `score`·`groupShare` 는 **서버가 강제**한다 — 자동 인증 방이면 점수 차감이, 그룹 방이면 그룹 공개가
- * 항상 켜지고 클라가 뭘 보내든 무시된다. 그래도 잠근 채 노출한다(무엇이 걸려 있는지 알고 만들어야 한다).
- * 고를 수 있는 건 감시자 알림 하나뿐이다.
- */
+/** 패널티. */
 @Composable
 private fun PenaltyEditor(
     state: CreateChallengeState,
@@ -442,7 +426,7 @@ private fun PenaltyToggleRow(
     }
 }
 
-// ---------- 공용 조각 ----------
+// 공용 조각
 
 @Composable
 private fun SheetHandle(modifier: Modifier = Modifier) {
@@ -464,6 +448,7 @@ private fun SheetHandle(modifier: Modifier = Modifier) {
 private fun SheetSaveButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Box(
         modifier =
@@ -471,8 +456,8 @@ private fun SheetSaveButton(
                 .fillMaxWidth()
                 .height(46.dp)
                 .clip(RuleUpTheme.shapes.medium)
-                .background(RuleUpTheme.colors.brand)
-                .singleClickable(onClick = onClick),
+                .background(if (enabled) RuleUpTheme.colors.brand else RuleUpTheme.colors.surfaceVariant)
+                .singleClickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text("저장", color = RuleUpTheme.colors.onSuccess, style = RuleUpTheme.typography.cardTitle)
@@ -522,7 +507,7 @@ private fun OutlinedField(
     }
 }
 
-/** 2분할 세그먼트 컨트롤. 고를 수 없는 칸은 눌러도 반응하지 않고 흐리게 보인다. */
+/** 2분할 세그먼트 컨트롤. */
 @Composable
 private fun SegmentedControl(
     options: List<String>,
@@ -569,7 +554,7 @@ private fun SegmentedControl(
     }
 }
 
-/** 테두리 한 줄 (좌: 라벨 / 우: 값). 잠긴 줄은 배경을 깔아 눌러도 되는 줄과 구분한다. */
+/** 테두리 한 줄 (좌: 라벨 / 우: 값). */
 @Composable
 private fun BorderedRow(
     modifier: Modifier = Modifier,
@@ -625,6 +610,22 @@ private fun ChoiceChip(
                     else -> RuleUpTheme.colors.textMuted
                 },
             style = RuleUpTheme.typography.smallMedium,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ConfirmEditSheetPreview() {
+    RuleUpTheme {
+        ConfirmEditSheet(
+            section =
+                com.ruleup.challenge.presentation.create.component.ConfirmEditSection.entries
+                    .first(),
+            state = com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState.initial,
+            onIntent = {
+            },
+            onDismiss = { },
         )
     }
 }

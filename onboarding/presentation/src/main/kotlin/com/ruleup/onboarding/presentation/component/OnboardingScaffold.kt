@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
@@ -32,33 +33,24 @@ import com.ruleup.onboarding.domain.logging.OnboardingEvents
 import com.ruleup.onboarding.domain.logging.OnboardingStep
 import com.ruleup.ui.helper.LocalBizLogger
 
-/** 온보딩 전체 단계 수. 화면·진행바·로깅이 같은 값을 봐야 해서 한곳에 둔다. */
+/** 온보딩 전체 단계 수. */
 const val ONBOARDING_TOTAL_STEPS = 6
 
-/**
- * 온보딩 6단계 공통 골격 — AppBar(뒤로 + n/6) · 진행바 · 본문 · 하단 CTA.
- *
- * 진행 표시는 점이 아니라 **막대**다 — 6단계에서 점을 쓰면 지금 어디쯤인지 한눈에 안 들어온다.
- *
- * @param step 화면 문구(`n/6`)·진행률·로깅이 같은 값을 본다. Int 가 아니라 enum 으로 받아
- *   단계 이름과 번호가 갈라지지 않게 한다.
- * @param nextEnabled false 면 CTA 를 흐리게 두고 눌러도 넘어가지 않는다. 유효하지 않은 입력으로
- *   전진하면 마지막 제출에서야 서버가 튕겨, 사용자가 되짚어야 할 단계가 멀어진다.
- */
+/** 온보딩 6단계 공통 골격 */
 @Composable
 fun OnboardingScaffold(
     step: OnboardingStep,
     buttonText: String,
     modifier: Modifier = Modifier,
     nextEnabled: Boolean = true,
-    // 그 단계에서 아무것도 고르지 않고 넘어갔는지. 관심사·사진 선택률이 이 값에서 나온다.
+    // 그 단계에서 아무것도 고르지 않고 넘어갔는지.
     skipped: Boolean = false,
     onBack: () -> Unit = {},
     onNext: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val bizLogger = LocalBizLogger.current
-    // 단계 진입·완료 로깅을 여기서 한다. 6개 화면에 따로 심으면 반드시 하나가 빠진다.
+    // 단계 진입·완료 로깅을 여기서 한다.
     LaunchedEffect(step) {
         bizLogger.record(OnboardingEvents.stepView(step))
     }
@@ -97,7 +89,7 @@ fun OnboardingScaffold(
     }
 }
 
-/** 뒤로 + 우측 `n/6`. 진행 상황은 스크린리더가 읽도록 라벨을 준다. */
+/** 뒤로 + 우측 `n/6`. */
 @Composable
 private fun OnboardingTopBar(
     step: Int,
@@ -162,3 +154,21 @@ private fun OnboardingProgress(step: Int) {
 }
 
 private const val DISABLED_ALPHA = 0.4f
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun OnboardingScaffoldPreview() {
+    RuleUpTheme {
+        com.ruleup.ui.helper.PreviewEnvironment {
+            OnboardingScaffold(
+                step =
+                    com.ruleup.onboarding.domain.logging.OnboardingStep.entries
+                        .first(),
+                buttonText = "다음",
+                content = {
+                    Text("프로필을 설정해 주세요")
+                },
+            )
+        }
+    }
+}

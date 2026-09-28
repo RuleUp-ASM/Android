@@ -12,10 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 프로필 편집. 저장은 되돌리기 어려운 동작이라 **저장 중에 다시 눌리면 안 된다** — 연타하면
- * 수정 요청이 두 번 나가고 그 사이 서버 버전이 어긋난다.
- */
+/** 프로필 편집. */
 @RunWith(RobolectricTestRunner::class)
 class ProfileEditContentTest {
     @get:Rule
@@ -44,8 +41,6 @@ class ProfileEditContentTest {
 
     @Test
     fun `저장 중이면 진행 중임을 문구로 알린다`() {
-        // 연타 방지 자체는 ViewModel 이 한다(ProfileEditViewModelTest). 화면은 진행 중이라는
-        // 사실을 알리는 몫이라, 여기서는 문구가 바뀌는 것만 본다 — 층을 건너뛰어 다시 세지 않는다.
         render(loaded().copy(isSaving = true))
 
         compose.onNodeWithText("저장 중…").assertExists()
@@ -77,10 +72,10 @@ class ProfileEditContentTest {
 
     private fun profile() =
         Profile(
-            id = "u1",
-            nickname = "지현",
+            user =
+                com.ruleup.domain.entity.user
+                    .User("u1", "지현", null),
             email = null,
-            profileImageUrl = null,
             nicknameChangedAt = null,
             nicknameChangeableAfter = null,
             mannerTemperature = 36.5,

@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -109,7 +110,7 @@ fun SmallBadge(
     }
 }
 
-/** 이름과 달리 그라데이션이 아니다 — Figma 에 그라데이션 토큰이 없어 단색 brand 로 칠한다. */
+/** 이름과 달리 그라데이션이 아니다 */
 @Composable
 fun GradientSwitch(
     checked: Boolean,
@@ -163,5 +164,54 @@ fun InfoNote(
     ) {
         Text(emoji, style = RuleUpTheme.typography.body)
         Text(text, color = textColor, style = RuleUpTheme.typography.caption)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun CreateChallengeTopBarPreview() {
+    RuleUpTheme {
+        CreateChallengeTopBar(title = "매일 꾸준히 걷기")
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun SectionLabelPreview() {
+    RuleUpTheme {
+        SectionLabel(text = "꾸준히 함께해요")
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun SmallBadgePreview() {
+    RuleUpTheme {
+        SmallBadge(
+            text = "꾸준히 함께해요",
+            background = com.ruleup.designsystem.theme.RuleUpTheme.colors.brand,
+            textColor = com.ruleup.designsystem.theme.RuleUpTheme.colors.brand,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun GradientSwitchPreview() {
+    RuleUpTheme {
+        GradientSwitch(checked = true)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InfoNotePreview() {
+    RuleUpTheme {
+        InfoNote(
+            emoji = "✨",
+            text = "꾸준히 함께해요",
+            background = com.ruleup.designsystem.theme.RuleUpTheme.colors.brand,
+            textColor = com.ruleup.designsystem.theme.RuleUpTheme.colors.brand,
+        )
     }
 }

@@ -44,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.Place
@@ -61,10 +62,7 @@ import com.ruleup.verification.presentation.location.viewmodel.VerificationLocat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * 지도 위치 선택 화면(명세 §5, 피그마 "01 · 인증 셋업 UX 시안" ①②). 검색·지도 탭으로 찍은 핀을
- * 하단 시트에서 확인해 앵커로 담고, 앵커 목록 시트에서 삭제·제출한다. 자동완성은 카카오 로컬(§5.2).
- */
+/** 지도 위치 선택 화면. */
 @Composable
 fun VerificationLocationScreen(
     challengeId: String,
@@ -75,9 +73,10 @@ fun VerificationLocationScreen(
     viewModel: VerificationLocationViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isChecking, measureLargeContentSeparately = true)
     val messageHelper = LocalMessageHelper.current
     var query by remember { mutableStateOf("") }
-    // 결과 선택 직후 query 를 그 이름으로 채울 때, 디바운스 검색이 다시 도는 것을 한 번 건너뛴다.
+    // 선택 결과 반영 시 검색 한 번 생략.
     var suppressSearch by remember { mutableStateOf(false) }
 
     val locator = rememberLocationLocator()
@@ -92,7 +91,7 @@ fun VerificationLocationScreen(
         }
     }
 
-    // 진입 시 앵커 조회로 등록 여부 확인. 이미 등록돼 있으면 재등록 없이 종료된다.
+    // 진입 시 앵커 조회로 등록 여부 확인.
     LaunchedEffect(Unit) {
         viewModel.onIntent(VerificationLocationIntent.Init(challengeId))
     }
@@ -119,8 +118,7 @@ fun VerificationLocationScreen(
     }
 
     val pin = state.pending?.let { MapLatLng(lat = it.lat, lng = it.lng) }
-    // 반경은 서버가 정한 값이 원본이다 — 아직 못 받았을 때만 호출자가 넘긴 값으로 그린다.
-    // 화면이 임의 값을 그리면 지도 원과 실제 판정 범위가 어긋난다.
+    // 서버 기준 인증 반경.
     val radiusM = state.serverRadiusM ?: defaultRadiusM
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -202,7 +200,7 @@ fun VerificationLocationScreen(
                         anchors = state.anchors,
                         radiusM = radiusM,
                         isSubmitting = state.isSubmitting,
-                        // 편집 중 이번 달 변경이 남아 있지 않으면 저장을 잠근다 — 눌러 봐야 429 다.
+                        // 편집 중 이번 달 변경이 남아 있지 않으면 저장을 잠근다
                         submitEnabled = !state.isEditing || state.changeAvailable,
                         submitLabel = if (state.isEditing) "이 장소로 바꾸기" else "이 장소로 등록",
                         lockNotice = state.changeLockNotice(),
@@ -222,7 +220,7 @@ fun VerificationLocationScreen(
     }
 }
 
-/** 뒤로가기를 품은 플로팅 검색 필(시안 ①, 네이버 지도식). */
+/** 뒤로가기를 품은 플로팅 검색 필. */
 @Composable
 private fun FloatingSearchPill(
     query: String,
@@ -309,7 +307,7 @@ private fun FloatingSearchPill(
     }
 }
 
-/** 카카오 로컬 자동완성 목록(상한 15개, 명세 §5.2). 선택 시 핀이 찍히고 목록이 닫힌다. */
+/** 카카오 로컬 자동완성 목록. */
 @Composable
 private fun SearchResults(
     places: List<Place>,
@@ -358,7 +356,7 @@ private fun SearchResults(
     }
 }
 
-/** 현재 위치 원형 FAB(시안 ①). 시트 위 우측에 얹혀 시트에 가리지 않는다. */
+/** 현재 위치 원형 FAB. */
 @Composable
 private fun CurrentLocationFab(
     onClick: () -> Unit,
@@ -384,7 +382,7 @@ private fun CurrentLocationFab(
     }
 }
 
-/** 바텀시트 공통 컨테이너(핸들 포함, 시안 ①②). */
+/** 바텀시트 공통 컨테이너. */
 @Composable
 private fun SheetContainer(
     modifier: Modifier = Modifier,
@@ -418,9 +416,7 @@ private fun SheetContainer(
     }
 }
 
-/**
- * 핀 위치 확인 시트(시안 ①·명세 §5.3). 역지오코딩 중이거나 앵커가 가득 차면 추가 버튼을 잠근다.
- */
+/** 핀 위치 확인 시트. */
 @Composable
 private fun SelectionSheet(
     pending: PendingSelection,
@@ -530,10 +526,7 @@ private fun SelectionSheet(
     }
 }
 
-/**
- * 앵커 목록 시트(시안 ②). 담아둔 앵커를 번호 뱃지 + 이름/주소로 보여주고 개별 삭제한다.
- * 제출은 최초 등록이면 setup, 편집 중이면 my-location 교체다 — 그래서 라벨이 [submitLabel] 로 갈린다.
- */
+/** 앵커 목록 시트. */
 @Composable
 private fun AnchorListSheet(
     anchors: List<LocationPin>,
@@ -576,7 +569,7 @@ private fun AnchorListSheet(
                 )
             }
         }
-        // 왜 저장할 수 없는지 버튼 위에서 먼저 말한다 — 비활성 버튼만 있으면 이유를 알 수 없다.
+        // 저장 제한 안내.
         lockNotice?.let {
             Text(
                 text = it,
@@ -592,10 +585,7 @@ private fun AnchorListSheet(
     }
 }
 
-/**
- * 변경이 잠긴 이유(편집 중 + 이번 달 소진일 때만). 언제부터 가능한지 모르면 날짜를 지어내지 않는다 —
- * 틀린 날짜를 확정처럼 보여주는 쪽이 더 나쁘다.
- */
+/** 변경이 잠긴 이유(편집 중 + 이번 달 소진일 때만). */
 internal fun VerificationLocationState.changeLockNotice(): String? {
     if (!isEditing || changeAvailable) return null
     val parts = nextChangeAvailableAt?.substringBefore('T')?.split('-')?.takeIf { it.size == 3 }
@@ -608,7 +598,7 @@ internal fun VerificationLocationState.changeLockNotice(): String? {
     }
 }
 
-/** 앵커 1행(시안 ②): 번호 뱃지 + 이름/주소·반경 + 삭제. [onRemove] 가 null 이면 삭제 비활성. */
+/** 앵커 1행: 번호 뱃지 + 이름/주소·반경 + 삭제. */
 @Composable
 private fun AnchorRow(
     number: Int,
@@ -673,9 +663,33 @@ private fun AnchorRow(
     }
 }
 
-// 초기 카메라 — 서울 시청. 사용자가 검색·탭·현재위치로 옮긴다.
+// 초기 카메라
 private const val DEFAULT_LAT = 37.5665
 private const val DEFAULT_LNG = 126.9780
 
 // 자동완성 디바운스(ms): 타이핑이 멈춘 뒤 이만큼 지나면 검색.
 private const val SEARCH_DEBOUNCE_MS = 300L
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun VerificationLocationComponentsPreview() {
+    RuleUpTheme {
+        Column {
+            FloatingSearchPill(query = "집 근처 공원", isSearching = false, onQueryChange = {}, onClear = {}, onBack = {})
+            AnchorListSheet(
+                anchors =
+                    listOf(
+                        LocationPin(lat = 37.5665, lng = 126.9780, label = "공원"),
+                    ),
+                radiusM = 100f,
+                isSubmitting = false,
+                submitEnabled = true,
+                submitLabel = "이 장소로 등록",
+                lockNotice = null,
+                onRemove = {
+                },
+                onSubmit = {},
+            )
+        }
+    }
+}

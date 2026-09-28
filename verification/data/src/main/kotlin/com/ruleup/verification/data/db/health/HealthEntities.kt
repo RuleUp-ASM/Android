@@ -9,16 +9,12 @@ import androidx.room.Upsert
 import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.RecordingMethod
 
-/**
- * 움직임(HEALTH) 읽기 버퍼(전송 스펙 §2). 하루치 누적이 sync 마다 갱신되므로 미태깅 스냅샷을
- * 갈아끼우고(deleteUntagged→insert) 최신값을 재전송한다 — 중복 판정을 막는 근거는 [recordId] 뿐이다.
- * [date] 는 로컬 귀속 날짜(YYYY-MM-DD). 전송하지 않는 값(단위·운동 종류·기기 종류)은 담지 않는다.
- */
+/** 움직임(HEALTH) 읽기 버퍼. */
 @Entity(tableName = "health_reading")
 data class HealthReadingEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    // Health Connect metadata.id — 멱등 dedup 키
+    // Health Connect metadata.id
     val recordId: String,
     val metric: HealthMetric,
     val value: Double,
@@ -32,10 +28,7 @@ data class HealthReadingEntity(
     val collectedAt: String? = null,
 )
 
-/**
- * 수면 세션 버퍼(전송 스펙 §5). stage 로 쪼개지 않고 세션 1건이 행 1개다.
- * [sleepMillis] 는 stage 를 못 받았을 때 null — 0 으로 접으면 "안 잤다"가 된다.
- */
+/** 수면 세션 버퍼. */
 @Entity(tableName = "sleep_session")
 data class SleepSessionEntity(
     @PrimaryKey(autoGenerate = true)
@@ -54,7 +47,7 @@ data class SleepSessionEntity(
     val collectedAt: String? = null,
 )
 
-/** 움직임 수집 대상(스코프 소스, 명세 §3.2·§8). [metric] PK. */
+/** 움직임 수집 대상. */
 @Entity(tableName = "health_target")
 data class HealthTargetEntity(
     @PrimaryKey
@@ -88,7 +81,19 @@ interface HealthReadingDao {
     @Query("UPDATE health_reading SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    @Query("DELETE FROM health_reading WHERE synced = 1 AND occurredAt < :threshold")
+    @Query(
+        "SELECT MIN(occurredAt) FROM health_reading WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM health_reading ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun oldestEvicted(threshold: Long): Long?
+
+    @Query(
+        "SELECT MAX(occurredAt) FROM health_reading WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM health_reading ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun newestEvicted(threshold: Long): Long?
+
+    @Query(
+        "DELETE FROM health_reading WHERE occurredAt < :threshold OR id NOT IN (SELECT id FROM health_reading ORDER BY occurredAt DESC, id DESC LIMIT 10000)",
+    )
     suspend fun purge(threshold: Long)
 }
 
@@ -109,7 +114,19 @@ interface SleepSessionDao {
     @Query("UPDATE sleep_session SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    @Query("DELETE FROM sleep_session WHERE synced = 1 AND occurredAt < :threshold")
+    @Query(
+        "SELECT MIN(occurredAt) FROM sleep_session WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM sleep_session ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun oldestEvicted(threshold: Long): Long?
+
+    @Query(
+        "SELECT MAX(occurredAt) FROM sleep_session WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM sleep_session ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun newestEvicted(threshold: Long): Long?
+
+    @Query(
+        "DELETE FROM sleep_session WHERE occurredAt < :threshold OR id NOT IN (SELECT id FROM sleep_session ORDER BY occurredAt DESC, id DESC LIMIT 10000)",
+    )
     suspend fun purge(threshold: Long)
 }
 

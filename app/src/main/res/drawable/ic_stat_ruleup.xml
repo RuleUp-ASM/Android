@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  알림 아이콘. Figma `1399:14`. 시스템이 실루엣의 알파만 쓰고 색을 갈아끼우므로 흰색 단색이다 —
-  색을 넣으면 상태바에서 흰 사각형으로 뭉개진다.
--->
+<!-- 알림 아이콘. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"

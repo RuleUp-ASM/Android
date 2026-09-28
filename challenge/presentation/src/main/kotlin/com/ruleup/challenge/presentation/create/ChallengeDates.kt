@@ -3,17 +3,16 @@ package com.ruleup.challenge.presentation.create
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-/**
- * 챌린지 기간 계산용 날짜 유틸.
- * 날짜는 ISO(yyyy-MM-dd) 문자열로 주고받는다. 요일은 일요일 시작(1=일 ~ 7=토) 정수로 표현한다.
- */
+/** 챌린지 기간 계산용 날짜 유틸. */
 internal object ChallengeDates {
     private val dayLabels = listOf("일", "월", "화", "수", "목", "금", "토")
 
-    /** ISO 요일(월=1~일=7)을 일요일 시작(일=1~토=7)으로 변환. DayOfWeek.ordinal: 월=0~일=6. */
+    /** ISO 요일(월=1~일=7)을 일요일 시작(일=1~토=7)으로 변환. */
     private fun LocalDate.sundayBasedDow(): Int = (dayOfWeek.ordinal + 1) % 7 + 1
 
-    fun today(): LocalDate = LocalDate.now()
+    fun today(): LocalDate =
+        com.ruleup.domain.time.ServiceDate
+            .today()
 
     fun todayIso(): String = today().toString()
 
@@ -34,7 +33,7 @@ internal object ChallengeDates {
         durationDays: Int,
     ): String = plusDays(startIso, durationDays - 1)
 
-    /** [startIso]~[endIso] 사이의 일수(시작일 제외). endDate(s, n) 의 역연산. */
+    /** [startIso]~[endIso] 사이의 일수(시작일 제외). */
     fun daysBetween(
         startIso: String,
         endIso: String,
@@ -62,10 +61,7 @@ internal object ChallengeDates {
             else -> "${durationDays}일"
         }
 
-    /**
-     * 캘린더 한 페이지(6주 = 42칸).
-     * @param month 0-based(0=1월 ~ 11=12월).
-     */
+    /** 캘린더 한 페이지(6주 = 42칸). */
     fun monthCells(
         year: Int,
         month: Int,

@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,19 +49,16 @@ import com.ruleup.profile.presentation.common.titleLabel
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierIntent
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierState
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 내 티어 (Figma 1134:1520). 점수·다음 티어까지의 거리·구간표·최근 변동 10건.
- *
- * Figma 의 「이번 주 변동 +12 / 최대 ±20」 행은 그리지 않는다 — 명세가 `weeklyDelta` 를 폐기했다
- * (점수 한도가 챌린지별 사이클 순변동으로 바뀌면서 '계정 주간'이라는 단위가 사라졌다, 정책 §4.7).
- */
+/** 내 티어. */
 @Composable
 fun MyTierScreen(
     modifier: Modifier = Modifier,
     viewModel: MyTierViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) {
         viewModel.onIntent(MyTierIntent.Load)
@@ -68,7 +67,7 @@ fun MyTierScreen(
     MyTierContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun MyTierContent(
     state: MyTierState,
@@ -91,12 +90,17 @@ internal fun MyTierContent(
                 }
 
             state.tier == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "티어 정보를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(MyTierIntent.Load) }) { Text("다시 시도") }
                 }
 
             else ->
@@ -133,7 +137,7 @@ private fun TierBody(
     }
 }
 
-/** 현재 티어·점수와 다음 티어까지의 진행 (Figma 1134:1538). */
+/** 현재 티어·점수와 다음 티어까지의 진행. */
 @Composable
 private fun TierHero(tier: MyTier) {
     TierCard {
@@ -143,8 +147,7 @@ private fun TierHero(tier: MyTier) {
         ) {
             TierChip(tier = tier.displayTier)
             Box(Modifier.weight(1f))
-            // 유예 중에는 올라갈 자리가 아니라 지켜야 할 바닥을 말한다 — 표시 티어는 그대로인데
-            // 점수만 내려가는 구간이라, 승급 문구만 띄우면 무엇이 걸려 있는지 알 수 없다.
+            // 유예 중에는 올라갈 자리가 아니라 지켜야 할 바닥을 말한다
             val graceFloor = tier.graceFloorScore
             if (graceFloor != null) {
                 Column(horizontalAlignment = Alignment.End) {
@@ -196,8 +199,7 @@ private fun TierHero(tier: MyTier) {
                 style = RuleUpTheme.typography.caption,
             )
             Box(Modifier.weight(1f))
-            // 오른쪽 끝은 **표시 티어보다 위**인 다음 구간이다. 서버 promotion 을 그대로 쓰면
-            // 유예 중에 양끝이 같은 티어로 찍힌다(TIER-03).
+            // 오른쪽 끝은 표시 티어보다 위인 다음 구간이다.
             tier.displayPromotion?.let {
                 Text(
                     text = "${it.nextTier.label} ${it.nextTier.minScore.thousandsLabel()}",
@@ -209,7 +211,7 @@ private fun TierHero(tier: MyTier) {
     }
 }
 
-/** 숫자 + "점". 숫자만 크게 두고 단위는 작게 붙인다(Figma 1134:1543). */
+/** 숫자 + "점". */
 @Composable
 private fun ScoreText(
     value: Int,
@@ -227,7 +229,7 @@ private fun ScoreText(
     }
 }
 
-/** 5구간 표 (Figma 1134:1565). 높은 티어가 위로 오도록 뒤집어 그린다. */
+/** 5구간 표. */
 @Composable
 private fun TierBandTable(current: Tier) {
     TierCard(contentPadding = 0.dp) {
@@ -266,7 +268,7 @@ private fun TierBandTable(current: Tier) {
     }
 }
 
-/** 최근 변동 (Figma 1134:1582). 서버 고정 10건이라 페이징이 없다. */
+/** 최근 변동. */
 @Composable
 private fun RecentChangesCard(
     changes: List<ScoreChange>,
@@ -320,7 +322,7 @@ private fun RecentChangesCard(
     }
 }
 
-/** 카드 한 장. 티어 화면의 섹션은 전부 같은 흰 배경 + 라운드다(Figma 1134:1537). */
+/** 카드 한 장. */
 @Composable
 private fun TierCard(
     contentPadding: Dp = 16.dp,
@@ -338,7 +340,7 @@ private fun TierCard(
     )
 }
 
-/** 현재 표시 티어 칩 (Figma 1134:1541). */
+/** 현재 표시 티어 칩. */
 @Composable
 private fun TierChip(tier: Tier) {
     Box(
@@ -353,6 +355,19 @@ private fun TierChip(tier: Tier) {
             color = RuleUpTheme.colors.textPrimary,
             style = RuleUpTheme.typography.smallBold,
             fontWeight = FontWeight.Bold,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyTierContentPreview() {
+    RuleUpTheme {
+        MyTierContent(
+            state =
+                com.ruleup.profile.presentation.tier.viewmodel.MyTierState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
         )
     }
 }

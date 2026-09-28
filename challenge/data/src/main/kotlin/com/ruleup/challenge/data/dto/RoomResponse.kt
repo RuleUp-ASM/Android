@@ -5,14 +5,15 @@ import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.RoomSummary
 import com.ruleup.challenge.domain.entity.RoomTopRanker
-import com.ruleup.challenge.domain.entity.RoomUser
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
+import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.UserRelationship
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 방 내부 조회 (GET /challenges/{id}/room) ----------
+// 방 내부 조회 (GET /challenges/{id}/room)
 
-/** 스레드·랭킹이 공유하는 사람 표현. 서버가 마스킹을 마친 값이 온다. */
+/** 스레드·랭킹이 공유하는 사람 표현. */
 @Serializable
 data class RoomUserResponse(
     @SerialName("userId")
@@ -25,19 +26,19 @@ data class RoomUserResponse(
     val blocked: Boolean? = null,
 )
 
-internal fun RoomUserResponse?.toDomain(): RoomUser =
-    RoomUser(
-        userId = this?.userId.orEmpty(),
-        nickname = this?.nickname.orEmpty(),
-        profileImageUrl = this?.profileImageUrl,
-        blocked = this?.blocked ?: false,
+internal fun RoomUserResponse?.toDomain(): User =
+    User(
+        id = this?.userId.orEmpty(),
+        nickname = if (this?.blocked == true) "차단한 사용자" else this?.nickname.orEmpty(),
+        profileImageUrl = if (this?.blocked == true) null else this?.profileImageUrl,
+        relationship = UserRelationship(blocked = this?.blocked ?: false),
     )
 
 @Serializable
 data class RoomSummaryResponse(
     @SerialName("title")
     val title: String? = null,
-    // 방 전체 성공률 0~1. 판정 이력이 없으면 null 로 내려온다
+    // 방 전체 성공률 0~1.
     @SerialName("roomSuccessRate")
     val roomSuccessRate: Double? = null,
     @SerialName("remainingDays")
@@ -48,7 +49,7 @@ data class RoomSummaryResponse(
     val capacity: Int? = null,
 )
 
-/** 방 홈 상위 3 랭킹. 전체 랭킹과 달리 user 오브젝트 없이 평평하게 내려온다. */
+/** 방 홈 상위 3 랭킹. */
 @Serializable
 data class RoomTopRankerResponse(
     @SerialName("rank")
@@ -63,19 +64,14 @@ data class RoomTopRankerResponse(
     val successRate: Double? = null,
 )
 
-/**
- * 상위 3 에는 **등재자만** 올라온다(참여 10회 이상) — [rank]·[successRate] 는 항상 있다.
- * 없으면 미등재가 아니라 깨진 행이므로 0 등·0% 로 채우지 않고 버린다.
- */
+/** 상위 3 에는 등재자만 올라온다(참여 10회 이상) */
 internal fun RoomTopRankerResponse.toDomain(): RoomTopRanker? {
     val rank = rank ?: return null
     val successRate = successRate ?: return null
     val userId = userId ?: return null
     return RoomTopRanker(
         rank = rank,
-        userId = userId,
-        nickname = nickname.orEmpty(),
-        profileImageUrl = profileImageUrl,
+        user = User(userId, nickname.orEmpty(), profileImageUrl),
         successRate = successRate,
     )
 }
@@ -88,7 +84,7 @@ data class RoomResponse(
     val ownerType: String? = null,
     @SerialName("summary")
     val summary: RoomSummaryResponse? = null,
-    // 응답의 pinnedNotice 는 읽지 않는다 — 공지가 제품에서 빠졌다.
+    // 응답의 pinnedNotice 는 읽지 않는다
     @SerialName("topRanking")
     val topRanking: List<RoomTopRankerResponse>? = null,
     @SerialName("myTodayStatus")
@@ -103,13 +99,13 @@ internal fun RoomResponse.toDomain(): ChallengeRoom =
         summary =
             RoomSummary(
                 title = summary?.title.orEmpty(),
-                // 표본 없음(null)을 0% 로 접지 않는다 — 갓 만든 방이 실패한 방처럼 보인다
+                // 표본 없음(null)을 0% 로 접지 않는다
                 roomSuccessRate = summary?.roomSuccessRate,
                 remainingDays = summary?.remainingDays ?: 0,
                 participantCount = summary?.participantCount ?: 0,
                 capacity = summary?.capacity,
             ),
         topRanking = topRanking.orEmpty().mapNotNull { it.toDomain() },
-        // 미지 값은 null — 성공·실패 어느 쪽으로도 임의로 접지 않고 표기를 생략한다
+        // 미지 값은 null
         myTodayStatus = TodayVerificationStatus.fromValue(myTodayStatus),
     )

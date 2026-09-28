@@ -24,6 +24,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
@@ -47,31 +49,23 @@ import com.ruleup.notification.presentation.settings.viewmodel.NotificationSetti
 import com.ruleup.notification.presentation.settings.viewmodel.NotificationSettingsIntent
 import com.ruleup.notification.presentation.settings.viewmodel.NotificationSettingsState
 import com.ruleup.notification.presentation.settings.viewmodel.NotificationSettingsViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 알림 설정.
- *
- * **3계층이고 가장 제한적인 것이 이긴다** — 마스터를 끄면 그룹 토글이 켜져 있어도 푸시가 안 나가므로
- * 그때는 그룹 행을 흐리게 만들어 그 사실을 말한다.
- *
- * Figma 1134:2411 은 **구 모델**(유형 4토글 + 야간 토글)이라 따르지 않는다 — 9/5 개정으로 유형별
- * 토글과 `nightPush` 가 삭제됐고, 야간 보류는 사용자 토글이 아니라 서버 고정 규칙이다.
- *
- * 알림 센터 항목은 여기 없다 — 어떤 설정으로도 적재를 막을 수 없다.
- */
+/** 알림 설정. */
 @Composable
 fun NotificationSettingsScreen(
     modifier: Modifier = Modifier,
     viewModel: NotificationSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
     val context = LocalContext.current
 
     LaunchedEffect(Unit) { viewModel.onIntent(NotificationSettingsIntent.Load) }
 
-    // OS 설정에서 돌아왔을 수 있다 — 복귀마다 권한을 다시 본다. 서버는 이 값을 모른다.
+    // OS 설정에서 돌아왔을 수 있다
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.onPermissionChecked(!NotificationManagerCompat.from(context).areNotificationsEnabled())
     }
@@ -100,7 +94,7 @@ fun NotificationSettingsScreen(
     NotificationSettingsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun NotificationSettingsContent(
     state: NotificationSettingsState,
@@ -123,12 +117,17 @@ internal fun NotificationSettingsContent(
                 }
 
             state.settings == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "알림 설정을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(NotificationSettingsIntent.Load) }) { Text("다시 시도") }
                 }
 
             else -> SettingsBody(state = state, settings = state.settings, onIntent = onIntent)
@@ -225,7 +224,7 @@ private fun SettingsBody(
     }
 }
 
-/** OS 권한이 꺼졌을 때. **서버 설정값은 건드리지 않고** 배너만 얹는다(정책 §3.1). */
+/** OS 권한이 꺼졌을 때. */
 @Composable
 private fun PermissionBanner(onClick: () -> Unit) {
     Column(
@@ -262,7 +261,7 @@ private fun GroupRow(
 ) {
     ToggleRow(
         label = label,
-        // 마스터가 꺼져 있으면 이 토글이 켜져 있어도 푸시가 안 나간다 — 그 사실을 말한다.
+        // 마스터가 꺼져 있으면 이 토글이 켜져 있어도 푸시가 안 나간다
         note = if (settings.pushEnabled) note else "푸시 알림이 꺼져 있어 지금은 오지 않아요",
         checked = settings.groups.of(group),
         enabled = !state.submitting && settings.pushEnabled,
@@ -323,4 +322,19 @@ private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
                 .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(16.dp)),
         content = content,
     )
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun NotificationSettingsContentPreview() {
+    RuleUpTheme {
+        NotificationSettingsContent(
+            state =
+                com.ruleup.notification.presentation.settings.viewmodel.NotificationSettingsState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
 }

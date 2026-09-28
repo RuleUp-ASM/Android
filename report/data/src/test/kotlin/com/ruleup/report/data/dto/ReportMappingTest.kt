@@ -14,12 +14,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ReportRequestMappingTest {
-    // 앱의 NetworkModule 과 같은 설정이다 — 여기서만 기본값을 내보내면 실제 요청과 달라진다.
     private val json = Json { encodeDefaults = false }
 
     @Test
     fun `프로필에서 한 사용자 신고는 챌린지 필드를 아예 보내지 않는다`() {
-        // 빈 문자열로 보내면 서버가 parseUuid 에서 400 INVALID_REPORT_TARGET 을 낸다.
         val body =
             json.encodeToString(
                 ReportRequest.serializer(),
@@ -67,7 +65,6 @@ class ReportResponseMappingTest {
 
     @Test
     fun `모르는 가림 효과가 와도 접수는 성공으로 남는다`() {
-        // 접수는 이미 끝난 상태다. 효과 문구를 몰라 실패로 뒤집으면 사용자가 다시 신고한다.
         val result = ReportCreateResponse("r-1", "SOMETHING_NEW").toDomain()
 
         assertEquals("r-1", result.reportId)
@@ -127,6 +124,7 @@ class ReportFailureMappingTest {
     fun `명세의 에러 코드를 화면 어휘로 옮긴다`() {
         val mapped =
             listOf(
+                "ALREADY_REPORTED" to ReportFailure.ALREADY_REPORTED,
                 "REPORT_SUSPENDED" to ReportFailure.SUSPENDED,
                 "CANNOT_REPORT_SELF" to ReportFailure.SELF_TARGET,
                 "INVALID_REPORT_TARGET" to ReportFailure.INVALID_TARGET,

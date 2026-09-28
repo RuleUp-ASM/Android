@@ -15,7 +15,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface ChallengeSettingsIntent : MviIntent {
-    /** 화면 진입 — 현재 설정·editableFields·version 을 불러온다. */
+    /** 화면 진입 */
     data class Load(
         val challengeId: String,
     ) : ChallengeSettingsIntent
@@ -32,7 +32,7 @@ sealed interface ChallengeSettingsIntent : MviIntent {
         val uri: String?,
     ) : ChallengeSettingsIntent
 
-    /** 대표 이미지를 기본 이미지로 되돌린다 — PATCH 에서 유일하게 명시적 null 을 보내는 경로다. */
+    /** 대표 이미지를 기본 이미지로 되돌린다 */
     data object RemoveCoverImage : ChallengeSettingsIntent
 
     // null 이면 무제한
@@ -57,7 +57,7 @@ sealed interface ChallengeSettingsIntent : MviIntent {
         val end: String,
     ) : ChallengeSettingsIntent
 
-    /** 주간 수행 횟수 1~7. 요일이 아니라 "그 주에 몇 번" 이다. */
+    /** 주간 수행 횟수 1~7. */
     data class SetWeeklyCount(
         val count: Int,
     ) : ChallengeSettingsIntent
@@ -67,7 +67,7 @@ sealed interface ChallengeSettingsIntent : MviIntent {
         val value: String,
     ) : ChallengeSettingsIntent
 
-    /** 인증 방식 — AUTO → MANUAL 단방향만 허용된다. */
+    /** 인증 방식 */
     data class SetVerificationType(
         val type: VerificationType,
     ) : ChallengeSettingsIntent
@@ -87,28 +87,20 @@ sealed interface ChallengeSettingsEffect : MviEffect {
     ) : ChallengeSettingsEffect
 }
 
-/**
- * 챌린지 수정 화면 상태.
- *
- * 원본([loaded])을 불변으로 들고 편집본을 따로 둔다 — **바뀐 필드만 PATCH 로 보내야 하므로**
- * 무엇이 달라졌는지 비교할 기준이 필요하다.
- *
- * 잠금은 [ChallengeSettings.editableFields] 를 그대로 따른다. 클라이언트가 규칙을 재구현하면
- * 서버와 어긋나는 순간 409 를 받고서야 알게 된다.
- */
+/** 챌린지 수정 화면 상태. */
 data class ChallengeSettingsState(
     val challengeId: String,
     val isLoading: Boolean,
     val isSaving: Boolean,
     val loaded: ChallengeSettings?,
     val errorMessage: String?,
-    // ---- 편집본 ----
+    // 편집본
     val title: String,
     val description: String,
     val imageUrl: String?,
-    // 새로 고른 로컬 이미지. 저장 시 업로드해 URL 로 바꾼다.
+    // 새로 고른 로컬 이미지.
     val coverImageUri: String?,
-    // 기본 이미지로 되돌리기를 눌렀는지 — imageUrl 에 명시적 null 을 보낼지 가른다.
+    // 기본 이미지로 되돌리기를 눌렀는지
     val removeImage: Boolean,
     // null 이면 무제한
     val capacity: Int?,
@@ -122,20 +114,17 @@ data class ChallengeSettingsState(
     val watcherPenalty: Boolean,
     // 반복 거부로 1시간 수정 잠금이 걸렸을 때 남은 초.
     val moderationLockedSeconds: Int?,
-    // 현재 참여 인원. settings 응답에 없어 공개 상세에서 함께 받아 온다.
+    // 현재 참여 인원.
     val participantCount: Int?,
 ) : UiState {
     val moderation: ChallengeModeration?
         get() = loaded?.moderation
 
-    /** 정원 하한. 현재 참여 인원보다 작게 줄일 수 없다(서버도 `CAPACITY_BELOW_CURRENT` 로 막는다). */
+    /** 정원 하한. */
     val capacityFloor: Int
         get() = participantCount ?: 1
 
-    /**
-     * 고를 수 있는 정원 단계. 현재 인원보다 작은 단계는 빼고, 단계 밖의 기존 정원(예: 개편 전 50명)은
-     * 지금 값으로 남긴다 — 빼면 슬라이더가 엉뚱한 단계를 가리킨다.
-     */
+    /** 고를 수 있는 정원 단계. */
     val capacitySteps: List<Int?>
         get() =
             (ChallengeLimits.CREATE_CAPACITY_STEPS.filter { it == null || it >= capacityFloor } + capacity)
@@ -144,7 +133,7 @@ data class ChallengeSettingsState(
 
     fun editable(field: ChallengeField): Boolean = loaded?.editableFields?.contains(field) == true
 
-    /** 자동 인증으로 되돌릴 수 있는지 — 원본이 AUTO 였을 때만 가능하다(단방향 전환). */
+    /** 자동 인증으로 되돌릴 수 있는지 */
     val canUseAuto: Boolean
         get() =
             loaded
@@ -153,7 +142,7 @@ data class ChallengeSettingsState(
                 ?.type
                 ?.isAuto == true
 
-    /** 저장할 게 있는지. 아무것도 안 바꿨으면 버튼을 열지 않는다. */
+    /** 저장할 게 있는지. */
     val hasChanges: Boolean
         get() {
             val origin = loaded?.config ?: return false
@@ -206,11 +195,12 @@ sealed interface ChallengeSettingsReducerEvent : ReducerEvent {
         val challengeId: String,
     ) : ChallengeSettingsReducerEvent
 
-    /** 설정 수신 — 편집본을 원본값으로 초기화한다. 409 후 재조회도 같은 경로를 탄다. */
+    /** 설정 수신 */
     data class Loaded(
         val settings: ChallengeSettings,
-        // 정원 하한 계산용. 공개 상세에서 함께 받으며 실패하면 null(하한만 못 잠근다).
+        // 정원 하한 계산용.
         val participantCount: Int?,
+        val preserveEdits: Boolean = false,
     ) : ChallengeSettingsReducerEvent
 
     data class Failed(

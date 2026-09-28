@@ -3,16 +3,14 @@ package com.ruleup.profile.presentation.sanctions.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.repository.AccountRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 제재 통지·이력 ViewModel. **열람 전용**이다 — 강퇴는 CS 문의, 직권 제재는 CS 경유 재검토 1회로만
- * 다투므로 화면에서 보낼 수 있는 요청이 없다.
- */
+/** 제재 통지·이력 ViewModel. */
 @HiltViewModel
 class SanctionsViewModel
     @Inject
@@ -48,7 +46,7 @@ class SanctionsViewModel
             viewModelScope.launch {
                 runCatching { accountRepository.getSanctions() }
                     .onSuccess { dispatch(SanctionsReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(SanctionsReducerEvent.Failed(it.message ?: "제재 이력을 불러오지 못했어요")) }
+                    .onFailure { dispatch(SanctionsReducerEvent.Failed(it.userFacingMessage("제재 이력을 불러오지 못했어요"))) }
             }
         }
     }

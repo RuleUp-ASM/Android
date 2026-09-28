@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.Watcher
 import com.ruleup.challenge.domain.entity.WatcherStatus
@@ -27,14 +28,7 @@ import com.ruleup.designsystem.R
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 챌린지 상세의 "내 감시자" 관리 섹션(참여자 본인 전용 — 감시자는 챌린지 × 참여자 단위).
- * 내가 실패하면 통지받을 감시자를 카카오톡 공유로 초대하고, 목록에서 상태를 확인한다.
- *
- * **해제 버튼이 없다** — 정책상 감시자 해제가 폐지됐다(테크 스펙 4·2026-08-31). 관계는 루틴이
- * 끝나면 배치가 지우고, 받는 쪽이 「내가 받는 알림」에서 수신을 닫는다.
- * 한도는 서버 값([limit], 무료 3 · 구독 시 null=무제한) — 초과 시도는 ViewModel 이 구독 안내로 처리한다.
- */
+/** 내 감시자 관리. */
 @Composable
 internal fun WatcherSection(
     watchers: List<Watcher>,
@@ -65,7 +59,7 @@ internal fun WatcherSection(
             )
             val activeCount = watchers.count { it.status.isActive }
             Text(
-                // 무료 한도 대비 현재 유효(만료·해제 제외) 감시자 수. 구독(limit=null)이면 무제한
+                // 무료 한도 대비 현재 유효(만료·해제 제외) 감시자 수.
                 text = limit?.let { "$activeCount/$it" } ?: "${activeCount}명",
                 color = RuleUpTheme.colors.textSecondary,
                 style = RuleUpTheme.typography.smallMedium,
@@ -171,5 +165,13 @@ private fun InviteButton(
             color = Color.White,
             style = RuleUpTheme.typography.bodyBold,
         )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun WatcherSectionPreview() {
+    RuleUpTheme {
+        WatcherSection(watchers = emptyList(), limit = null, isInviting = false, onInvite = { })
     }
 }

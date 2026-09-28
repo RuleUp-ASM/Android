@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,19 +38,16 @@ import com.ruleup.report.presentation.blocklist.viewmodel.BlockListIntent
 import com.ruleup.report.presentation.blocklist.viewmodel.BlockListState
 import com.ruleup.report.presentation.blocklist.viewmodel.BlockListViewModel
 import com.ruleup.report.presentation.blocklist.viewmodel.BlockTarget
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 신고한 사용자·챌린지 (Figma `1286:30`, 빈 상태 `1287:2`).
- *
- * "차단 목록"이라 부르지 않는다 — 설정에 이미 감시자 지정 요청을 막는 **다른** 차단 목록이 있어
- * 같은 이름을 쓰면 사용자가 둘을 구분하지 못한다.
- */
+/** 신고한 사용자·챌린지. */
 @Composable
 fun BlockListScreen(
     modifier: Modifier = Modifier,
     viewModel: BlockListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) {
         viewModel.onIntent(BlockListIntent.Load)
@@ -158,7 +156,7 @@ private fun BlockBody(
     ) {
         if (state.blocks.users.isNotEmpty()) {
             item { SectionLabel("사용자") }
-            // 두 목록이 한 LazyColumn 을 공유한다. 키가 겹치면 행이 조용히 사라지므로 접두사로 가른다.
+            // 두 목록이 한 LazyColumn 을 공유한다.
             items(state.blocks.users, key = { "u-${it.userId}" }) { user ->
                 BlockRow(
                     title = user.maskedNickname.ifBlank { "이름이 가려진 사용자" },
@@ -241,7 +239,7 @@ private fun BlockRow(
     }
 }
 
-/** 해제를 신고 취소로 오해하지 않게 못 박는다 — 서버는 해제해도 신고 기록을 지우지 않는다. */
+/** 해제를 신고 취소로 오해하지 않게 못 박는다 */
 @Composable
 private fun UnblockNotice() {
     Text(
@@ -253,7 +251,7 @@ private fun UnblockNotice() {
     )
 }
 
-/** "참여 중 · 8.30 차단". 없는 조각은 붙이지 않는다. */
+/** "참여 중 · 8.30 차단". */
 internal fun BlockedChallenge.subtitle(): String =
     listOfNotNull(
         "참여 중".takeIf { participating },
@@ -262,11 +260,24 @@ internal fun BlockedChallenge.subtitle(): String =
 
 internal fun BlockedUser.subtitle(): String = blockedAt?.let { blockedLabel(it) } ?: "차단됨"
 
-/** "8.30 차단". 연도는 뗀다 — 목록 안에서 반복될 이유가 없다. */
+/** "8.30 차단". */
 internal fun blockedLabel(iso: String): String {
     val parts = iso.substringBefore('T').split('-')
     if (parts.size != 3) return "차단됨"
     val month = parts[1].toIntOrNull() ?: return "차단됨"
     val day = parts[2].toIntOrNull() ?: return "차단됨"
     return "$month.$day 차단"
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun BlockListContentPreview() {
+    RuleUpTheme {
+        BlockListContent(
+            state =
+                com.ruleup.report.presentation.blocklist.viewmodel.BlockListState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
+        )
+    }
 }

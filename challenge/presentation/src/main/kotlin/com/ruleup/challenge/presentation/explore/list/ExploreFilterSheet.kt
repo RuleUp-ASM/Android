@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ExploreFilter
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -32,12 +33,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 
-/**
- * 04 · 챌린지 필터 시트. 유형(그룹/솔로)·인증(자동/수동)·매너 온도 컷을 편집하고
- * "결과 보기 · N개" 로 확정한다. 조건 변경 시마다 [onPreview] 로 카운트를 미리 집계한다.
- * 매너 온도 컷은 API 정의대로 on/off(joinableOnly) — 온도 값은 서버가 토큰 사용자 기준으로 계산한다.
- * 카테고리 필터는 시트에서 다루지 않는다(초기화에서도 유지).
- */
+/** 04 · 챌린지 필터 시트. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ExploreFilterSheet(
@@ -46,7 +42,7 @@ internal fun ExploreFilterSheet(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 시트에서는 선택만 하고 "적용"을 눌렀을 때 1회 조회한다 — 체크마다 부르지 않는다.
+    // 시트에서는 선택만 하고 "적용"을 눌렀을 때 1회 조회한다
     var draft by remember { mutableStateOf(applied) }
 
     fun update(next: ExploreFilter) {
@@ -105,10 +101,10 @@ internal fun ExploreFilterSheet(
 // 같은 값을 다시 누르면 해제(전체)되는 nullable 토글.
 private fun <T> T?.toggle(value: T): T? = if (this == value) null else value
 
-/** 카테고리는 복수 선택이라 집합에서 넣고 뺀다. 비어 있으면 "전체"를 뜻한다. */
+/** 카테고리는 복수 선택이라 집합에서 넣고 뺀다. */
 private fun Set<Category>.toggleMember(value: Category): Set<Category> = if (value in this) this - value else this + value
 
-/** 카테고리 12종 복수 선택. 선택한 것 중 하나라도 해당하면 노출된다(OR). */
+/** 카테고리 12종 복수 선택. */
 @Composable
 private fun CategorySection(
     selected: Set<Category>,
@@ -131,7 +127,7 @@ private fun CategorySection(
 
 @Composable
 private fun SheetDragHandle() {
-    // Figma 시트 공통 핸들 규격(1134:682) — 위 10 · 아래 4, 36x4 r2
+    // Figma 시트 공통 핸들 규격(1134:682)
     Box(
         modifier =
             Modifier
@@ -237,7 +233,6 @@ private fun TierCutSection(
         }
         Spacer(Modifier.height(6.dp))
         // 티어 값은 서버가 내 표시 티어 기준으로 계산하므로(API eligibleOnly) on/off 만 고른다.
-        // 기본은 off 다 — 켜 두면 초기 풀이 작아 빈 결과가 급증한다(정책 가드레일).
         Text(
             text = "내 티어로 들어갈 수 있는 챌린지만 보여요",
             color = RuleUpTheme.colors.textSecondary,
@@ -277,6 +272,20 @@ private fun ApplyButton(onClick: () -> Unit) {
             text = "적용",
             color = Color.White,
             style = RuleUpTheme.typography.cardTitle,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ExploreFilterSheetPreview() {
+    RuleUpTheme {
+        ExploreFilterSheet(
+            applied =
+                com.ruleup.challenge.domain.entity
+                    .ExploreFilter(),
+            onApply = { },
+            onDismiss = { },
         )
     }
 }

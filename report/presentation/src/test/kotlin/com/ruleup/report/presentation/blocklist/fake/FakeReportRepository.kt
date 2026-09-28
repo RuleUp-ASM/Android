@@ -7,7 +7,7 @@ import com.ruleup.report.domain.entity.ReportResult
 import com.ruleup.report.domain.entity.ReportTarget
 import com.ruleup.report.domain.repository.ReportRepository
 
-/** 검증 대상만 답한다. 나머지는 NotImplementedError — 의도치 않은 호출이 조용히 지나가지 않는다. */
+/** 테스트 대상 API 대역. */
 class FakeReportRepository(
     private val pages: List<BlockList> = emptyList(),
     private val loadError: Throwable? = null,
@@ -47,7 +47,12 @@ fun blockedUser(
     id: String = "u-1",
     nickname: String = "임시 이름 4f2a",
     at: String? = "2026-08-28T10:00:00Z",
-) = BlockedUser(userId = id, maskedNickname = nickname, blockedAt = at)
+) = BlockedUser(
+    user =
+        com.ruleup.domain.entity.user
+            .User(id, nickname, null),
+    blockedAt = at,
+)
 
 fun blockedChallenge(
     id: String = "c-1",

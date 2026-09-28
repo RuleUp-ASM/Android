@@ -1,7 +1,7 @@
 package com.ruleup.verification.data.sync
 
 import android.util.Base64
-import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
+import com.ruleup.domain.device.DeviceIdentityRepository
 import com.ruleup.verification.data.db.common.ProgressCacheDao
 import com.ruleup.verification.data.settings.VerificationSettingsStore
 import com.ruleup.verification.data.signal.common.NetworkStateProvider
@@ -15,13 +15,7 @@ import com.ruleup.verification.domain.entity.SignalScope
 import com.ruleup.verification.domain.repository.EnvelopeMetadataProvider
 import javax.inject.Inject
 
-/**
- * envelope 메타데이터 채집기(전송 스펙 §0.1). 디바이스 시계(부팅 세션·monotonic), 권한 스냅샷,
- * VPN, Play Integrity, 진단 heartbeat, 활성 챌린지 id, 권한 부재 기반 gap 을 한 번에 모은다.
- *
- * 권한 부재 gap: 스코프에 든 신호인데 그 권한이 DENIED 면 PERMISSION_MISSING 을 계산형 gap 으로 넣어,
- * 서버가 신호 부재를 "권한 없음"으로 구분하게 한다(§0.5). 수집기가 적재한 버퍼형 gap 은 유스케이스가 합친다.
- */
+/** envelope 메타데이터 채집기. */
 class EnvelopeMetadataProviderImpl
     @Inject
     constructor(
@@ -41,10 +35,10 @@ class EnvelopeMetadataProviderImpl
             val nonce = integrityNonce(clock.bootSessionId, clock.deviceTimeMillis)
             val integrity = integrityTokenProvider.snapshot(nonce)
             val diagnostics = diagnosticsProvider.snapshot()
-            val activeChallengeIds = runCatching { progressCacheDao.allChallengeIds() }.getOrDefault(emptyList())
+            val activeChallengeIds =
+                scope.activeChallengeIds?.toList() ?: runCatching { progressCacheDao.allChallengeIds() }.getOrDefault(emptyList())
             val windowFrom = settings.lastSuccessfulFlushAt() ?: (clock.deviceTimeMillis - DEFAULT_WINDOW_MS)
-            // 첫 전송은 기본 창만큼만 선언한다. 기기 시계가 되감겼으면 시작을 지금으로 당긴다 — 끝이 시작보다
-            // 앞선 구간은 서버가 받지 않는다.
+            // 첫 전송은 기본 창만큼만 선언한다.
             val coveredFrom =
                 (settings.lastCoveredUntil() ?: (clock.deviceTimeMillis - DEFAULT_WINDOW_MS))
                     .coerceAtMost(clock.deviceTimeMillis)
@@ -96,7 +90,7 @@ class EnvelopeMetadataProviderImpl
                 }
             }
 
-        // 클라 nonce(bootSession + 시각). 정식 운영은 서버 발급 nonce 바인딩 필요(§6.5, Phase 2).
+        // 클라 nonce(bootSession + 시각).
         private fun integrityNonce(
             bootSessionId: String,
             deviceTimeMillis: Long,

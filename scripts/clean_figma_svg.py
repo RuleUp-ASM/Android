@@ -25,7 +25,7 @@ def main() -> int:
     vb = root.get("viewBox")
     w, h = root.get("width"), root.get("height")
 
-    # 부모 맵 구성 후 id=group_id 인 그룹과 그 조상 transform 누적
+    # 대상 그룹과 상위 transform 수집
     parents = {c: p for p in root.iter() for c in p}
     icon = next((e for e in root.iter() if e.get("id") == group_id), None)
     if icon is None:
@@ -56,7 +56,7 @@ def main() -> int:
     if h:
         out.set("height", h)
     out.set("fill", "none")
-    # 아이콘이 url(#...) 로 defs 를 참조할 때만 defs 보존(미사용 필터/그라데이션 잔재 제거).
+    # 참조 중인 defs만 보존
     icon_str = ET.tostring(icon, encoding="unicode")
     if defs is not None and "url(#" in icon_str:
         out.append(defs)

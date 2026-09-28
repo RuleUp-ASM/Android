@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,15 +48,9 @@ import com.ruleup.support.presentation.compose.viewmodel.InquiryAttachment
 import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeIntent
 import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeState
 import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 문의하기 · 작성 (Figma `1417:117`).
- *
- * Figma 와 다르게 간 곳
- * - **"답변은 알림함으로 알려드려요"를 뺐다.** 답변을 알림함으로 알리지 않기로 했다(2026-09-11).
- *   그 자리에 자동 첨부 고지를 둔다 — 앱 버전·기기 정보는 토글 없이 함께 전송되므로(명세) 보내기
- *   전에 알려야 한다.
- */
+/** 문의하기 · 작성. */
 @Composable
 fun InquiryComposeScreen(
     category: InquiryCategory,
@@ -63,6 +58,7 @@ fun InquiryComposeScreen(
     viewModel: InquiryComposeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = false)
     LaunchedEffect(category) { viewModel.onIntent(InquiryComposeIntent.Load(category)) }
     InquiryComposeContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
@@ -217,7 +213,7 @@ private fun BodyField(
             }
             BasicTextField(
                 value = state.body,
-                onValueChange = { onIntent(InquiryComposeIntent.BodyChanged(it)) },
+                onValueChange = { if (it.length <= InquiryLimits.BODY_MAX_LENGTH) onIntent(InquiryComposeIntent.BodyChanged(it)) },
                 textStyle = RuleUpTheme.typography.small.copy(color = colors.textPrimary),
                 cursorBrush = SolidColor(colors.brand),
                 modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
@@ -252,6 +248,7 @@ private fun AttachmentRow(
             AttachmentThumb(
                 attachment = attachment,
                 onRemove = { onIntent(InquiryComposeIntent.ImageRemoved(attachment.uri)) },
+                onRetry = { onIntent(InquiryComposeIntent.RetryImage(attachment.uri)) },
             )
         }
         if (state.canAddImage) {
@@ -264,6 +261,7 @@ private fun AttachmentRow(
 private fun AttachmentThumb(
     attachment: InquiryAttachment,
     onRemove: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     val colors = RuleUpTheme.colors
     Box(
@@ -285,13 +283,13 @@ private fun AttachmentThumb(
             attachment.uploading ->
                 CircularProgressIndicator(color = colors.brand, modifier = Modifier.size(20.dp))
 
-            // 실패한 장은 남겨 두고 표시만 바꾼다 — 조용히 지우면 사용자는 올라간 줄 안다.
+            // 실패한 장은 남겨 두고 표시만 바꾼다
             attachment.failed ->
                 Box(
-                    modifier = Modifier.fillMaxSize().background(colors.dangerContainer),
+                    modifier = Modifier.fillMaxSize().background(colors.dangerContainer).singleClickable(onClick = onRetry),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(text = "실패", color = colors.danger, style = RuleUpTheme.typography.caption)
+                    Text(text = "재시도", color = colors.danger, style = RuleUpTheme.typography.caption)
                 }
         }
     }
@@ -322,10 +320,7 @@ private fun AddAttachmentBox(
     }
 }
 
-/**
- * 갤러리에서 사진 한 장을 고른다. 카메라 촬영은 두지 않았다 — 문의 첨부는 대부분 앱 화면 캡처라
- * 카메라를 띄우면 한 번 더 고르게 만드는 단계만 는다.
- */
+/** 갤러리에서 사진 한 장을 고른다. */
 @Composable
 private fun rememberImagePicker(onPick: (String) -> Unit): () -> Unit {
     if (LocalInspectionMode.current) return {}
@@ -334,4 +329,12 @@ private fun rememberImagePicker(onPick: (String) -> Unit): () -> Unit {
             if (uri != null) onPick(uri.toString())
         }
     return { launcher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InquiryComposeContentPreview() {
+    RuleUpTheme {
+        InquiryComposeContent(state = com.ruleup.support.presentation.compose.viewmodel.InquiryComposeState.initial, onIntent = { })
+    }
 }

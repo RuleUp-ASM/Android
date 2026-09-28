@@ -3,22 +3,23 @@ package com.ruleup.challenge.domain.entity
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Tier
 
-/**
- * 생성·수정 입력의 허용 범위 (명세). 화면 위젯과 [CreateChallengeCommand] 검증이 **같은 값**을 본다 —
- * 숫자가 화면마다 따로 살면 한쪽만 고쳐져도 아무도 모른다.
- */
+/** 챌린지. */
+sealed interface Challenge {
+    val title: String
+    val category: Category?
+    val imageUrl: String?
+}
+
+/** 생성·수정 입력의 허용 범위. */
 object ChallengeLimits {
-    // 주간 수행 횟수. 벗어나면 서버가 400 INVALID_WEEKLY_COUNT 로 막는다
+    // 주간 수행 횟수.
     const val WEEKLY_COUNT_MIN = 1
     const val WEEKLY_COUNT_MAX = 7
 
-    // 그룹 정원 단계(5·30·100·300·무제한). 무제한은 null 이다 — 서버도 null 로 저장한다(테크 스펙 challenges.capacity)
+    // 그룹 정원 단계(5·30·100·300·무제한).
     val CREATE_CAPACITY_STEPS: List<Int?> = listOf(5, 30, 100, 300, null)
 
-    /**
-     * [capacity] 이상인 가장 가까운 정원 단계. 300 을 넘거나 무제한(null)이면 무제한이다 —
-     * 원한 인원보다 작게 접으면 방이 먼저 차 버린다.
-     */
+    /** [capacity] 이상인 가장 가까운 정원 단계. */
     fun createCapacityStepAtLeast(capacity: Int?): Int? =
         capacity?.let { wanted ->
             CREATE_CAPACITY_STEPS.filterNotNull().firstOrNull {
@@ -28,7 +29,7 @@ object ChallengeLimits {
         }
 }
 
-/** 참여 형태 (명세 `mode`). 구 `participationType` 을 대체한다. */
+/** 참여 형태. */
 enum class ChallengeMode(
     val value: String,
 ) {
@@ -36,7 +37,7 @@ enum class ChallengeMode(
     GROUP("GROUP"),
     ;
 
-    /** 남과 함께하는 챌린지인가 — 방 홈·랭킹·멤버 관리는 여기서만 열린다. */
+    /** 남과 함께하는 챌린지인가 */
     val isGroup: Boolean
         get() = this == GROUP
 
@@ -45,7 +46,7 @@ enum class ChallengeMode(
     }
 }
 
-/** 공개 범위 (명세 `visibility`). 그룹 전용 — 솔로는 null 이다. PRIVATE 은 초대 링크로만 입장한다. */
+/** 공개 범위. */
 enum class ChallengeVisibility(
     val value: String,
 ) {
@@ -53,7 +54,7 @@ enum class ChallengeVisibility(
     PRIVATE("PRIVATE"),
     ;
 
-    /** 초대로만 들어올 수 있는가 — 탐색 노출과 참여 게이트가 달라진다. */
+    /** 초대로만 들어올 수 있는가 */
     val isPrivate: Boolean
         get() = this == PRIVATE
 
@@ -62,7 +63,7 @@ enum class ChallengeVisibility(
     }
 }
 
-/** 챌린지 생애주기 (명세 `status`). 기간 만료 후 자동 삭제는 배치가 처리하므로 클라는 404 로만 인지한다. */
+/** 챌린지 생애주기. */
 enum class ChallengeStatus(
     val value: String,
 ) {
@@ -76,14 +77,9 @@ enum class ChallengeStatus(
     }
 }
 
-/**
- * 항목별 모더레이션 상태 (명세 `moderation.{title,description,image}`).
- *
- * **심사 중에도 모집·입장·인증에 제한이 없다** — 구 명세의 `CHALLENGE_UNDER_REVIEW` 모집 차단은 폐기됐다.
- * 상태는 방장 본인 화면의 뱃지 표시에만 쓴다.
- */
+/** 항목별 모더레이션 상태. */
 enum class ModerationState {
-    // 심사를 앱이 하지 않으므로 "심사 대상 아님"(EXEMPT)도 여기로 합쳐 받는다 — data 가 매핑한다.
+    // 심사를 앱이 하지 않으므로 "심사 대상 아님"(EXEMPT)도 여기로 합쳐 받는다
     APPROVED,
     IN_REVIEW,
     REJECTED,
@@ -92,88 +88,70 @@ enum class ModerationState {
     NONE,
 }
 
-/** 제목·설명·이미지의 심사 상태 묶음 (명세 `moderation`). 방장 본인 조회에서만 내려온다. */
+/** 제목·설명·이미지의 심사 상태 묶음. */
 data class ChallengeModeration(
     val title: ModerationState,
     val description: ModerationState,
     val image: ModerationState,
 )
 
-/** 챌린지 기간 (명세 `period`). 사이클은 1주 고정이라 주기 필드는 계약에 없다. */
+/** 챌린지 기간. */
 data class ChallengePeriod(
     // ISO date
     val start: String,
     // ISO date
     val end: String,
-    // 공개 상세에서만 동반. 목록은 dday 를 따로 준다.
+    // 공개 상세에서만 동반.
     val remainingDays: Int? = null,
 )
 
-/**
- * 패널티 설정 (명세 `penalties`).
- *
- * [score]·[groupShare] 는 **서버가 강제**한다 — score 는 AUTO 방이면 on, groupShare 는 GROUP 이면 on 이며
- * 클라가 무엇을 보내든 무시된다. UI 에는 셋 다 노출하되 이 둘은 잠근 채 보여준다(인지 목적).
- * 사용자가 고를 수 있는 건 [watcher] 하나뿐이다.
- */
+/** 패널티 설정. */
 data class ChallengePenalties(
     val score: Boolean,
     val groupShare: Boolean,
     val watcher: Boolean,
 )
 
-/**
- * 생성 초안 (명세 `draft`). `POST /challenges/draft` · `by-template` · `clone` 이 **같은 스키마**로 준다 —
- * 확인 화면과 폼 채움 로직을 그대로 재사용한다.
- *
- * 이 값은 **기본값일 뿐**이다. 사용자가 확인 화면에서 고친 뒤 생성 요청에 담은 값이 최종값이다.
- */
+/** 생성 초안. */
 data class ChallengeDraft(
-    val title: String,
+    override val title: String,
+    override val category: Category?,
+    override val imageUrl: String?,
     val description: String,
-    val category: Category?,
     val mode: ChallengeMode,
-    // 그룹만 — 솔로는 null
+    // 그룹만
     val visibility: ChallengeVisibility?,
-    // 솔로만 — 그룹은 null
+    // 솔로만
     val rankingVisible: Boolean?,
     // null 이면 무제한
     val capacity: Int?,
     // 기본·상한 모두 생성자 표시 티어
     val minTier: Tier?,
     val period: ChallengePeriod,
-    /**
-     * 주간 수행 횟수 1~7 (명세 `weeklyCount`). **요일을 지정하지 않는다** — 판정 주기는 1주 고정이고
-     * 그 주 안에서 아무 날이나 이 횟수를 채우면 된다. 구 `repeatDays`(요일 선택)를 대체한다.
-     */
+    /** 주간 수행 횟수 1~7. */
     val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verification: VerificationConfig,
     val penalties: ChallengePenalties,
-)
+) : Challenge
 
-/**
- * 초안 생성 결과 (명세 `POST /challenges/draft` 200).
- *
- * [Fallback] 은 **에러가 아니라 정상 분기**다 — HTTP 200 으로 내려오며, 화면은 입력을 지우지 않고
- * 재입력 안내 배너를 띄운다. 에러 색을 쓰면 실패로 인지돼 이탈로 이어지므로 쓰지 않는다.
- */
+/** 초안 생성 결과. */
 sealed interface DraftResult {
     data class Ok(
-        // 서버 발급 초안 ID — 24시간 유효. 생성 요청에 그대로 전달한다.
+        // 서버 발급 초안 ID
         val draftId: String,
         val draft: ChallengeDraft,
-        // clone 경로에서만 채워진다. 출처 노출 여부는 정책 미확정이라 표시하지 않는다.
+        // clone 경로에서만 채워진다.
         val sourceChallengeId: String? = null,
     ) : DraftResult
 
     data class Fallback(
-        // 서버가 준 안내 문구. 사용자를 탓하지 않고 다음 행동을 알려주는 문장이다.
+        // 서버가 준 안내 문구.
         val message: String,
     ) : DraftResult
 }
 
-/** 생성 화면 추천 칩 (명세 `GET /challenges/recommendations` items[]). 서버가 **항상 3개**를 보장한다. */
+/** 생성 화면 추천 칩. */
 data class RoutineTemplate(
     val templateId: Long,
     val title: String,
@@ -185,13 +163,7 @@ data class RoutineTemplate(
     val reason: String,
 )
 
-/**
- * 챌린지 생성 요청 (명세 `POST /challenges` request).
- *
- * **수정 여부는 보내지 않는다** — 서버가 [draftId] 로 보관 중인 원본 초안과 요청값을 대조해 심사 대상을
- * 판정한다. 클라 자가 신고(`titleEdited`)는 변조 클라이언트가 심사를 우회하던 경로라 폐기됐다.
- * AI 임시 제목·복제 출처도 서버가 draft 행에서 가져오므로 클라가 지정할 수 없다.
- */
+/** 챌린지 생성 요청. */
 data class CreateChallengeCommand(
     val draftId: String,
     val title: String,
@@ -201,27 +173,21 @@ data class CreateChallengeCommand(
     val mode: ChallengeMode,
     val visibility: ChallengeVisibility?,
     val rankingVisible: Boolean?,
-    // 그룹 전용. [ChallengeLimits.CREATE_CAPACITY_STEPS] 중 하나 — 그룹의 null 은 무제한이다
+    // 그룹 전용.
     val capacity: Int?,
     // ≤ 생성자 표시 티어
     val minTier: Tier?,
     val period: ChallengePeriod,
-    // 주간 수행 횟수. 범위는 [ChallengeLimits]
+    // 주간 수행 횟수.
     val weeklyCount: Int,
     val params: List<ParamEntry>,
     val verification: VerificationConfig,
     // 선택 가능한 유일한 패널티
     val watcherPenalty: Boolean,
-    // 챌린지 이미지 업로드 API 가 발급한 URL 만 허용. null 이면 기본 이미지(심사 없음).
+    // 챌린지 이미지 업로드 API 가 발급한 URL 만 허용.
     val imageUrl: String?,
 ) {
-    /**
-     * 범위와 [mode] 별 필드 조합을 타입이 보장한다.
-     *
-     * 화면도 같은 범위로 입력을 막지만 그건 UX 이지 정합성이 아니다 — 상태 복원·테스트처럼 화면을
-     * 거치지 않는 경로가 남는다. 이 요청은 **송신 전용**이라(서버 응답이 이 타입으로 들어오지 않는다)
-     * 여기서 던지는 예외는 언제나 우리 코드의 버그다.
-     */
+    /** 범위와 [mode] 별 필드 조합을 타입이 보장한다. */
     init {
         require(weeklyCount in ChallengeLimits.WEEKLY_COUNT_MIN..ChallengeLimits.WEEKLY_COUNT_MAX) {
             "주간 횟수가 범위를 벗어났습니다: $weeklyCount"
@@ -240,11 +206,7 @@ data class CreateChallengeCommand(
     }
 }
 
-/**
- * 생성 결과 (명세 `POST /challenges` 201).
- *
- * [personalSetupRequired] 가 true 면 개인 인증 설정(앵커·대상 앱) 화면으로 보낸다 — 가입 응답과 같은 계약이다.
- */
+/** 생성 결과. */
 data class CreatedChallenge(
     val challengeId: String,
     val status: ChallengeStatus,
@@ -255,13 +217,7 @@ data class CreatedChallenge(
     val createdAt: String,
 )
 
-/**
- * 방장 전용 설정 스냅샷 (명세 `GET /challenges/{id}/settings`).
- *
- * [editableFields] 는 **서버가 잠금 규칙으로 계산한 결과**다 — 클라이언트 판단을 최종 권위로 보지 않고
- * 이 목록 기준으로 폼을 잠근다. [version] 은 PATCH 에 그대로 되돌려 보내 충돌을 감지한다(가입·탈퇴·강퇴로
- * 참여 인원이 바뀌어도 증가하므로, 그 사이 수정 가능 범위가 바뀐 것을 잡아낸다).
- */
+/** 방장 전용 설정 스냅샷. */
 data class ChallengeSettings(
     val config: ChallengeConfig,
     val editableFields: Set<ChallengeField>,
@@ -269,7 +225,7 @@ data class ChallengeSettings(
     val moderation: ChallengeModeration,
 )
 
-/** 수정 폼이 다루는 필드 식별자. 서버가 모르는 값을 보내면 조용히 버린다. */
+/** 수정 폼이 다루는 필드 식별자. */
 enum class ChallengeField(
     val value: String,
 ) {
@@ -289,14 +245,7 @@ enum class ChallengeField(
     ;
 
     companion object {
-        /**
-         * 서버는 하위 경로까지 찍어 보낸다 — `penalties` 가 아니라 `penalties.watcher` 로 온다.
-         * 점 앞까지만 보고 맞춘다.
-         *
-         * 정확히 일치하는 것만 받으면 그 필드가 **통째로 미수정으로 떨어져** 서버는 수정 가능하다고
-         * 하는데 화면은 자물쇠를 다는 상태가 된다(CRE-16). 앱이 penalties 안에서 손댈 수 있는 건
-         * 감시자 토글 하나뿐이라 하위 경로를 더 쪼갤 이유가 없다.
-         */
+        /** 서버는 하위 경로까지 찍어 보낸다 */
         fun fromValue(value: String?): ChallengeField? {
             val head = value?.substringBefore('.')
             return entries.find { it.value == head }
@@ -304,7 +253,7 @@ enum class ChallengeField(
     }
 }
 
-/** 방장 화면이 보는 현재 설정값 (명세 `settings.config`). 제목·설명·이미지는 심사 대체 없이 입력 원본이다. */
+/** 방장 화면이 보는 현재 설정값. */
 data class ChallengeConfig(
     val title: String,
     val description: String,
@@ -317,22 +266,14 @@ data class ChallengeConfig(
     val capacity: Int?,
     val minTier: Tier?,
     val period: ChallengePeriod,
-    // 주간 수행 횟수 1~7 — 시작 전 + 방장 혼자일 때만 수정 가능
+    // 주간 수행 횟수 1~7
     val weeklyCount: Int,
     val params: List<ParamSpec>,
     val verification: VerificationConfig,
     val penalties: ChallengePenalties,
 )
 
-/**
- * 챌린지 수정 입력 (명세 `PATCH /challenges/{id}` request).
- *
- * **부분 수정** — null 인 필드는 "미변경"이며 전송하지 않는다. 예외적으로 [removeImage] 가 true 면
- * `imageUrl: null` 을 명시 전송해 "기본 이미지로 되돌리기"를 뜻한다. 그 외 필드에 null 을 보내면
- * 서버가 400 `INVALID_FIELD_VALUE` 로 막는다 — "값 삭제"와 "미변경"의 모호함을 없애기 위해서다.
- *
- * [version] 은 필수다(낙관적 잠금).
- */
+/** 챌린지 수정 입력. */
 data class ChallengeUpdate(
     val version: Int,
     val title: String? = null,
@@ -343,7 +284,7 @@ data class ChallengeUpdate(
     val visibility: ChallengeVisibility? = null,
     val rankingVisible: Boolean? = null,
     val capacity: Int? = null,
-    // true 면 `capacity: null` 을 명시 전송해 정원을 무제한으로 바꾼다 — [capacity] 의 null 은 "미변경"이다
+    // true 면 `capacity: null` 을 명시 전송해 정원을 무제한으로 바꾼다
     val unlimitedCapacity: Boolean = false,
     val minTier: Tier? = null,
     val period: ChallengePeriod? = null,
@@ -353,34 +294,25 @@ data class ChallengeUpdate(
     val watcherPenalty: Boolean? = null,
 )
 
-/** 수정 결과 (명세 `PATCH` 200). [moderation] 은 이번 수정으로 심사가 발생한 항목만 채워진다. */
+/** 수정 결과. */
 data class ChallengeUpdateResult(
     val challengeId: String,
     val moderation: ChallengeModeration?,
     val updatedFields: Set<ChallengeField>,
 )
 
-/**
- * 수정 가능 범위 밖 필드를 보냈다 (명세 409 `CHALLENGE_NOT_EDITABLE`).
- * 서버가 현재 [editableFields] 를 함께 주므로 화면은 그 기준으로 폼을 다시 그린다.
- */
+/** 수정 가능 범위 밖 필드를 보냈다. */
 class ChallengeNotEditableException(
     val editableFields: Set<ChallengeField> = emptySet(),
 ) : Exception("지금은 수정할 수 없는 항목이 포함되어 있습니다.")
 
-/** 주간 횟수가 1~7 범위를 벗어났다 (명세 400 `INVALID_WEEKLY_COUNT`). */
+/** 주간 횟수가 1~7 범위를 벗어났다. */
 class InvalidWeeklyCountException : Exception("주간 횟수는 1~7회 사이여야 합니다.")
 
-/**
- * 설정 버전 충돌 (명세 409 `VERSION_CONFLICT`). 다른 수정이나 가입·탈퇴로 잠금 범위가 바뀌었다.
- * 화면은 settings 를 재조회해 다시 그린 뒤 재시도한다.
- */
+/** 설정 버전 충돌. */
 class ChallengeVersionConflictException : Exception("설정이 변경되었습니다. 다시 불러온 뒤 시도해 주세요.")
 
-/**
- * 반복 거부로 수정이 잠겼다 (명세 429 `MODERATION_LOCKED` — 1시간 내 3회 거부 → 1시간 잠금).
- * 화면은 [retryAfterSeconds] 로 해제 시각을 명시한다.
- */
+/** 반복 거부로 수정이 잠겼다. */
 class ModerationLockedException(
     val retryAfterSeconds: Int? = null,
 ) : Exception("심사 거부가 반복돼 잠시 수정할 수 없습니다.")

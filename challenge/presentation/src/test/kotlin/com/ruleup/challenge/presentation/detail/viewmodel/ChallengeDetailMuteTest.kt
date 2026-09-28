@@ -15,7 +15,6 @@ import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
-import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
@@ -33,6 +32,8 @@ import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.test.FakeVerificationRepository
+import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
+import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -47,12 +48,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 방별 알림 음소거 — 알림 3계층의 ③.
- *
- * 이 토글이 지키는 건 **틀린 상태를 그리지 않는 것**이다. 껐다고 믿은 방에서 푸시가 계속 오면
- * 사용자는 원인을 찾을 길이 없고, 결국 앱 전체 알림을 차단해 강퇴·잠금 고지까지 잃는다.
- */
+/** 방별 알림 음소거 */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeDetailMuteTest {
     @BeforeTest
@@ -123,7 +119,7 @@ class ChallengeDetailMuteTest {
     @Test
     fun `상세를 아직 못 받았으면 토글해도 보내지 않는다`() =
         runTest {
-            // 어느 방을 끌지 모르는 상태다 — 보내면 엉뚱한 방이 조용해진다.
+            // 어느 방을 끌지 모르는 상태다
             val notifications = repo(settings(muted = emptyList()))
             val viewModel = viewModel(notifications = notifications)
 
@@ -135,14 +131,12 @@ class ChallengeDetailMuteTest {
     @Test
     fun `늦게 도착한 설정 조회가 방금 바꾼 토글을 되돌리지 않는다`() =
         runTest {
-            // 음소거는 PUT·DELETE 가 204 라 상태를 조회로만 확인한다. 그 조회가 옛 값을 들고 오면
-            // 토글이 꺼짐 그대로 남고 사용자는 같은 요청만 반복하게 된다(NOTI-04).
             val stale = repo(settings(muted = emptyList()))
             val viewModel = viewModel(notifications = stale)
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
             viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
-            // 화면 재진입처럼 설정을 다시 읽는 경로. 페이크는 여전히 "음소거 없음" 을 준다.
+
             viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
 
             assertEquals(true, viewModel.uiState.value.isMuted)
@@ -162,11 +156,11 @@ class ChallengeDetailMuteTest {
 
     private fun detail() =
         ChallengeDetail(
-            challengeId = "ch1",
             title = "아침 6시 기상",
-            description = null,
-            imageUrl = null,
             category = Category.entries.first(),
+            imageUrl = null,
+            challengeId = "ch1",
+            description = null,
             mode = ChallengeMode.GROUP,
             visibility = ChallengeVisibility.PUBLIC,
             status = ChallengeStatus.ACTIVE,
@@ -223,7 +217,8 @@ class ChallengeDetailMuteTest {
             reportRepository = reports,
             notificationRepository = notifications,
             navigationHelper = nav,
-            sensitiveConsent = SensitiveConsent(FakeAccountRepository(), FakeIntroRepository()),
+            checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, FakeAccountRepository()),
+            agreeVerificationConsent = AgreeVerificationConsentUseCase(FakeAccountRepository(), FakeIntroRepository()),
         )
     }
 }

@@ -15,14 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/**
- * 로그인 직후 1회 도는 인트로. **순서가 곧 계약**이다 — 서버가 내린 간격을 저장한 뒤 그 간격으로
- * 재예약해야 한다. 뒤집히면 다음 주기가 낡은 간격으로 돌고, 서버가 부하를 줄이려 늘린 간격이
- * 다음 앱 시작까지 반영되지 않는다.
- *
- * 네트워크 실패는 호출자가 흡수한다(다음 주기 sync 응답이 정책을 보정한다). 그래서 여기서
- * 삼키지 않고 **그대로 올려 보내는 것**이 맞다 — 삼키면 호출자가 실패를 알 방법이 없다.
- */
+/** 로그인 직후 1회 도는 인트로. */
 class SubmitDeviceIntroUseCaseTest {
     @Test
     fun `기기 프로필을 보내고 받은 정책을 저장한다`() =
@@ -106,7 +99,7 @@ class SubmitDeviceIntroUseCaseTest {
         )
 }
 
-/** 저장 시점을 [order] 에 남긴다 — 재예약과의 순서가 계약이라 그 자체를 본다. */
+/** 저장 시점을 [order] 에 남긴다 */
 private class RecordingPolicyStore(
     private val order: MutableList<String> = mutableListOf(),
 ) : SyncPolicyStore {
@@ -124,6 +117,8 @@ private class RecordingScheduler(
 ) : SyncScheduler {
     var rescheduledTo: Int? = null
         private set
+
+    override fun cancel() = Unit
 
     override fun ensureScheduled() = throw NotImplementedError()
 

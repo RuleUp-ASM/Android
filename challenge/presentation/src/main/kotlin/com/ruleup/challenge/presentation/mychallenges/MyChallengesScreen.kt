@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -55,25 +56,20 @@ import com.ruleup.designsystem.component.RuleUpProgressBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import java.time.Instant
 
-/**
- * 내 챌린지 (Figma 1134:1205 · 1162:2 · 빈 상태 1134:2085). 하단 「챌린지」 탭의 루트 화면.
- *
- * 완료 카드의 「최종 88%」는 목록 응답의 `successRate` 다(명세 2026-09-07 신규). **판정 이력이
- * 없으면 서버가 null 을 주고 그 줄은 그리지 않는다** — 0% 로 접으면 하루도 판정받지 못하고 끝난
- * 방과 전부 실패한 방이 같아 보인다. 진행 중 카드의 달성률은 인증 진행률에서 오므로 그 조회가
- * 실패하면 비운다.
- */
+/** 내 챌린지. */
 @Composable
 fun MyChallengesScreen(
     modifier: Modifier = Modifier,
     viewModel: MyChallengesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) { viewModel.onIntent(MyChallengesIntent.Load) }
@@ -90,7 +86,7 @@ fun MyChallengesScreen(
     MyChallengesContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun MyChallengesContent(
     state: MyChallengesState,
@@ -153,12 +149,7 @@ internal fun MyChallengesContent(
     }
 }
 
-/**
- * 세그먼트 (Figma 1134:1220).
- *
- * 완료·이탈 개수는 **아직 다 못 받았으면 붙이지 않는다** — 받은 만큼만 세어 붙이면 뒤 페이지를
- * 불러올 때마다 숫자가 늘어 사용자가 방이 새로 생긴 줄 안다.
- */
+/** 세그먼트. */
 @Composable
 private fun SegmentBar(
     state: MyChallengesState,
@@ -221,7 +212,7 @@ private fun ChallengeList(
     val listState = rememberLazyListState()
     val finished = state.segment == MyChallengeSegment.FINISHED
 
-    // 끝에서 두 번째 항목이 보이면 다음 장을 당긴다 — 바닥에 닿고 나서 부르면 빈 화면이 한 번 보인다.
+    // 끝에서 두 번째 항목이 보이면 다음 장을 당긴다
     if (finished && state.finishedPaging.hasNext) {
         val shouldLoadMore by remember(state.finished.size) {
             derivedStateOf {
@@ -271,7 +262,7 @@ private fun ChallengeList(
 
 private fun ProgressSnapshot?.of(challengeId: String): ChallengeProgress? = this?.challenges?.firstOrNull { it.challengeId == challengeId }
 
-/** 진행 중 카드 (Figma 1158:2). 달성률·D-day 는 진행률 응답이 있어야 그린다. */
+/** 진행 중 카드. */
 @Composable
 private fun InProgressCard(
     challenge: MyChallenge,
@@ -291,7 +282,7 @@ private fun InProgressCard(
                         style = RuleUpTheme.typography.cardTitle,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    dDayLabel(challenge, progress)?.let {
+                    dDayLabel(challenge)?.let {
                         Spacer(Modifier.width(8.dp))
                         Text(
                             text = it,
@@ -329,8 +320,7 @@ private fun InProgressCard(
             Spacer(Modifier.height(6.dp))
             RuleUpProgressBar(progress = (progress.progressRate / 100.0).toFloat().coerceIn(0f, 1f))
 
-            // 오늘 인증해야 하는데 신호가 끊긴 상태다. 판정 결과가 아니라 **측정이 안 되고 있다**는
-            // 사실이라, 실패로 굳기 전에 권한을 점검하라고 알린다(명세 §6.1).
+            // 오늘 인증해야 하는데 신호가 끊긴 상태다.
             if (progress.signalStale(Instant.now())) {
                 Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -351,12 +341,7 @@ private fun InProgressCard(
     }
 }
 
-/**
- * 이 방의 읽지 않은 알림 수 (Figma 1314:2 `Badge · Unread`).
- *
- * 상한을 넘으면 `99+` 다 — 정확한 수를 쓰면 클라가 100건을 다 세야 하고, 그러면 목록을 무한정
- * 읽게 된다. 알림 센터에 들어가야 0 이 되고 이 화면을 보는 것만으로는 리셋되지 않는다.
- */
+/** 이 방의 읽지 않은 알림 수. */
 @Composable
 private fun UnreadBadge(text: String) {
     Box(
@@ -374,7 +359,7 @@ private fun UnreadBadge(text: String) {
     }
 }
 
-/** 완료·이탈 카드 (Figma 1162:2). 기간과 끝난 방식만 말한다. */
+/** 완료·이탈 카드. */
 @Composable
 private fun FinishedCard(
     challenge: MyChallenge,
@@ -498,35 +483,25 @@ private fun EmptyState(
     }
 }
 
-/** "그룹 8명 · 주 5일" / "솔로 · 주 5일" (Figma 1158:10). */
+/** "그룹 8명 · 주 5일" / "솔로 · 주 5일". */
 private val MyChallenge.compositionLabel: String
     get() {
         val who = if (mode.isGroup) "그룹 ${participantCount}명" else "솔로"
         return "$who · 주 ${weeklyCount}일"
     }
 
-/**
- * "최종 88%" (Figma 1162:2). 표본이 없으면 **null 이라 줄 자체가 사라진다.**
- *
- * 반올림해 정수로 줄인다 — 0.875 를 87.5% 로 보여 줄 자리가 카드에 없고, 사용자가 이 숫자로
- * 하는 일은 방들을 견주는 것뿐이라 소수점이 판단을 바꾸지 않는다.
- */
+/** "최종 88%". */
 private val MyChallenge.finalSuccessLabel: String?
     get() = successRate?.let { "최종 ${Math.round(it * 100)}%" }
 
-/** "6.2 – 7.13" / 이탈이면 "5.1 – 5.20 중단" (Figma 1162:2). */
+/** 챌린지 기간 표기. */
 private val MyChallenge.finishedSubtitle: String
     get() {
         val range = "${monthDay(period.start)} – ${monthDay(period.end)}"
         return if (leftType != null) "$range 중단" else range
     }
 
-/**
- * "2026-06-02" → "6.2".
- *
- * 파싱하지 않고 자른다 — 이 자리에 필요한 건 날짜 계산이 아니라 표기이고, 서버가 형식을 바꾸면
- * 조용히 틀린 날짜를 만드는 것보다 원문이 그대로 보이는 편이 낫다.
- */
+/** "2026-06-02" → "6.2". */
 private fun monthDay(isoDate: String): String {
     val parts = isoDate.substringBefore('T').split('-')
     if (parts.size != 3) return isoDate
@@ -535,22 +510,25 @@ private fun monthDay(isoDate: String): String {
     return "$month.$day"
 }
 
-/**
- * D-12. 남은 일수는 진행률 응답에서만 온다 — 목록 응답에 없고, 종료일로 클라가 계산하면
- * 서버의 판정 경계(KST 자정)와 하루 어긋난다.
- *
- * 시작 전 방은 남은 일수 대신 기간이 아직 시작하지 않았다는 사실이 더 중요해 D-day 를 붙이지 않는다.
- */
-private fun dDayLabel(
-    challenge: MyChallenge,
-    progress: ChallengeProgress?,
-): String? {
+/** D-12. */
+private fun dDayLabel(challenge: MyChallenge): String? {
     if (challenge.status == ChallengeStatus.UPCOMING) return "시작 전"
-    val remaining = progress?.remainingDays ?: return null
-    return if (remaining <= 0) "오늘 종료" else "D-$remaining"
+    val end = runCatching { java.time.LocalDate.parse(challenge.period.end) }.getOrNull() ?: return null
+    val remaining =
+        java.time.temporal.ChronoUnit.DAYS
+            .between(
+                com.ruleup.domain.time.ServiceDate
+                    .today(),
+                end,
+            )
+    return when {
+        remaining < 0 -> "종료"
+        remaining == 0L -> "오늘 종료"
+        else -> "D-$remaining"
+    }
 }
 
-/** 이탈 방식 라벨. 지금은 카드에 쓰지 않지만 상세 진입 전 뱃지 문구가 필요해지면 여기서 쓴다. */
+/** 이탈 방식 라벨. */
 internal val LeftType.label: String
     get() =
         when (this) {
@@ -563,3 +541,18 @@ internal val LeftType.label: String
             LeftType.AUTO_CLOSED -> "챌린지 종료로 자동 탈퇴"
             LeftType.KICK_REPORT, LeftType.KICK_BY_OWNER -> "강퇴"
         }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyChallengesContentPreview() {
+    RuleUpTheme {
+        MyChallengesContent(
+            state =
+                com.ruleup.challenge.presentation.mychallenges.viewmodel.MyChallengesState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
+}

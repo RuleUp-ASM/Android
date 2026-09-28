@@ -19,12 +19,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,7 +47,6 @@ import com.ruleup.challenge.presentation.create.component.InfoNote
 import com.ruleup.challenge.presentation.create.component.ParamsEditor
 import com.ruleup.challenge.presentation.create.component.SectionLabel
 import com.ruleup.challenge.presentation.create.component.SmallBadge
-import com.ruleup.challenge.presentation.create.component.rememberChallengeImagePicker
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsEffect
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsIntent
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsState
@@ -53,16 +57,12 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
+import com.ruleup.ui.image.rememberImagePicker
 import kotlin.math.roundToInt
 
-/**
- * 챌린지 수정 화면(방장 전용).
- *
- * **잠금은 서버가 준 `editableFields` 를 그대로 따른다** — 클라이언트가 규칙을 재구현하면 서버와
- * 어긋나는 순간 409 를 받고서야 알게 된다. 잠긴 항목은 회색 처리로 끝내지 않고 자물쇠와 사유를
- * 함께 보여준다.
- */
+/** 챌린지 수정 화면(방장 전용). */
 @Composable
 fun ChallengeSettingsScreen(
     challengeId: String,
@@ -70,6 +70,7 @@ fun ChallengeSettingsScreen(
     viewModel: ChallengeSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(challengeId) { viewModel.onIntent(ChallengeSettingsIntent.Load(challengeId)) }
@@ -89,12 +90,29 @@ fun ChallengeSettingsScreen(
 }
 
 @Composable
-// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다.
 internal fun ChallengeSettingsContent(
     state: ChallengeSettingsState,
     onIntent: (ChallengeSettingsIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var confirmExit by rememberSaveable { mutableStateOf(false) }
+    val back = { if (state.hasChanges) confirmExit = true else onIntent(ChallengeSettingsIntent.Back) }
+    androidx.activity.compose.BackHandler(enabled = state.hasChanges) { back() }
+    if (confirmExit) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { confirmExit = false },
+            title = { Text("수정을 그만둘까요?") },
+            text = { Text("저장하지 않은 내용은 사라져요.") },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    confirmExit = false
+                    onIntent(ChallengeSettingsIntent.Back)
+                }) { Text("나가기") }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { confirmExit = false }) { Text("계속 수정") } },
+        )
+    }
     Column(
         modifier =
             modifier
@@ -104,7 +122,7 @@ internal fun ChallengeSettingsContent(
     ) {
         CreateChallengeTopBar(
             title = "챌린지 수정",
-            onBack = { onIntent(ChallengeSettingsIntent.Back) },
+            onBack = back,
         )
 
         when {
@@ -112,11 +130,14 @@ internal fun ChallengeSettingsContent(
 
             state.loaded == null ->
                 CenterBox {
-                    Text(
-                        text = state.errorMessage ?: "설정을 불러오지 못했어요",
-                        color = RuleUpTheme.colors.textSecondary,
-                        style = RuleUpTheme.typography.body,
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = state.errorMessage ?: "설정을 불러오지 못했어요",
+                            color = RuleUpTheme.colors.textSecondary,
+                            style = RuleUpTheme.typography.body,
+                        )
+                        TextButton(onClick = { onIntent(ChallengeSettingsIntent.Load(state.challengeId)) }) { Text("다시 시도") }
+                    }
                 }
 
             else -> ChallengeSettingsForm(state = state, loaded = state.loaded, onIntent = onIntent)
@@ -124,14 +145,11 @@ internal fun ChallengeSettingsContent(
     }
 }
 
-/**
- * 불러오기가 끝난 뒤의 편집 본문. 폼과 저장 버튼이 한 덩어리라 [ChallengeSettingsContent] 는
- * 로딩·실패·편집 세 갈래를 고르는 일만 남는다.
- */
+/** 불러오기가 끝난 뒤의 편집 본문. */
 @Composable
 private fun ColumnScope.ChallengeSettingsForm(
     state: ChallengeSettingsState,
-    // 설정을 받은 뒤에만 그리는 폼이다 — 그 사실을 시그니처에 드러낸다.
+    // 설정을 받은 뒤에만 그리는 폼이다
     loaded: ChallengeSettings,
     onIntent: (ChallengeSettingsIntent) -> Unit,
 ) {
@@ -180,14 +198,14 @@ private fun ColumnScope.ChallengeSettingsForm(
     ) {
         RuleUpPrimaryButton(
             text = if (state.isSaving) "저장하는 중…" else "저장",
-            // 아무것도 안 바꿨으면 열지 않는다 — 빈 PATCH 는 제목·설명을 괜히 재심사에 걸리게 한다.
+            // 아무것도 안 바꿨으면 열지 않는다
             enabled = state.hasChanges && !state.isSaving && state.moderationLockedSeconds == null,
             onClick = { onIntent(ChallengeSettingsIntent.Save) },
         )
     }
 }
 
-/** 반복 거부로 1시간 수정 잠금이 걸린 상태. 언제 풀리는지 명시한다. */
+/** 반복 거부로 1시간 수정 잠금이 걸린 상태. */
 @Composable
 private fun ModerationLockNote(seconds: Int) {
     val minutes = (seconds + SECONDS_PER_MINUTE - 1) / SECONDS_PER_MINUTE
@@ -244,7 +262,7 @@ private fun CoverSection(
     onIntent: (ChallengeSettingsIntent) -> Unit,
 ) {
     val editable = state.editable(ChallengeField.IMAGE_URL)
-    val picker = rememberChallengeImagePicker { onIntent(ChallengeSettingsIntent.SetCoverImage(it)) }
+    val picker = rememberImagePicker { onIntent(ChallengeSettingsIntent.SetCoverImage(it)) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionLabel("대표 이미지") { ModerationBadge(state.moderation?.image) }
         Box(
@@ -388,10 +406,7 @@ private fun MinTierSection(
     }
 }
 
-/**
- * 주간 수행 횟수 (1~7). **요일이 아니라 그 주에 몇 번**이다 — 판정 주기가 1주 고정이라 어느 날 채워도 된다.
- * 시작 전 + 방장 혼자일 때만 열린다(서버가 editableFields 로 알려준다).
- */
+/** 주간 수행 횟수 (1~7). */
 @Composable
 private fun WeeklyCountSection(
     state: ChallengeSettingsState,
@@ -416,7 +431,7 @@ private fun WeeklyCountSection(
             onValueChange = { onIntent(ChallengeSettingsIntent.SetWeeklyCount(it.roundToInt())) },
             enabled = editable,
             valueRange = weeklyCountRange,
-            // 양 끝을 뺀 내부 눈금 수 — 1~7 이면 5개다.
+            // 양 끝을 뺀 내부 눈금 수
             steps = ChallengeLimits.WEEKLY_COUNT_MAX - ChallengeLimits.WEEKLY_COUNT_MIN - 1,
             colors =
                 SliderDefaults.colors(
@@ -479,7 +494,7 @@ private fun VerificationSection(
             ChoiceChip(
                 text = "자동 인증",
                 selected = state.verificationType?.isAuto == true,
-                // 수동으로 바꾼 뒤에는 되돌릴 수 없다 — 이미 수동이면 자동 칩을 열지 않는다.
+                // 수동으로 바꾼 뒤에는 되돌릴 수 없다
                 enabled = editable && state.verificationType?.isAuto == true,
                 onClick = { onIntent(ChallengeSettingsIntent.SetVerificationType(VerificationType.AUTO)) },
             )
@@ -515,7 +530,7 @@ private fun WatcherPenaltySection(
     )
 }
 
-/** 방장 본인 화면에서만 붙는 심사 뱃지. 심사 중에도 모집·입장·인증에는 제한이 없다. */
+/** 방장 본인 화면에서만 붙는 심사 뱃지. */
 @Composable
 private fun ModerationBadge(state: ModerationState?) {
     when (state) {
@@ -558,7 +573,7 @@ private fun LockableTextField(
     }
 }
 
-/** 잠긴 값 표시. 회색 처리만 하지 않고 자물쇠와 사유를 함께 보여준다. */
+/** 잠긴 값 표시. */
 @Composable
 private fun LockedRow(
     reason: String,
@@ -669,3 +684,18 @@ private fun Tier.label(): String =
     }
 
 private const val SECONDS_PER_MINUTE = 60
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ChallengeSettingsContentPreview() {
+    RuleUpTheme {
+        ChallengeSettingsContent(
+            state =
+                com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
+}

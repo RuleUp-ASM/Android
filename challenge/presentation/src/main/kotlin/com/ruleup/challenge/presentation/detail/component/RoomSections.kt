@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
@@ -36,7 +37,7 @@ import java.util.Locale
 
 // 방 홈(그룹 챌린지 ACTIVE 멤버 전용 — GET room 성공 시 상세에 확장 렌더링)에서만 쓰인다.
 
-/** 성공률 0~1 → 표시용 백분율. 0.92 → "92", 0.925 → "92.5". */
+/** 성공률 0~1 → 표시용 백분율. */
 internal fun Double.toPercentText(): String {
     val percent = this * 100
     return if (percent % 1.0 == 0.0) {
@@ -46,11 +47,7 @@ internal fun Double.toPercentText(): String {
     }
 }
 
-/**
- * 나가기는 방장을 포함한 모두에게 연다 — 방장이 나가면 봇방장 방이 되고, 0명이 되면 삭제 배치가 방을
- * 지운다(챌린지 정책 §11·§12). 위임·공동 관리자·삭제는 페이지1에 없다.
- * 디자인 시안이 없어 방 홈 섹션 카드 컨벤션을 따른다.
- */
+/** 나가기는 방장을 포함한 모두에게 연다 */
 @Composable
 internal fun RoomMemberSection(
     members: List<ChallengeMember>,
@@ -59,7 +56,7 @@ internal fun RoomMemberSection(
     maxParticipants: Int?,
     myUserId: String?,
     actionEnabled: Boolean,
-    // 비공개 그룹 방의 방장만 — 초대 링크가 유일한 입장 경로다
+    // 비공개 그룹 방의 방장만
     canInviteMember: Boolean,
     onInviteMember: () -> Unit,
     onLeave: () -> Unit,
@@ -80,7 +77,7 @@ internal fun RoomMemberSection(
         members.forEach { member ->
             MemberRow(
                 member = member,
-                // 나 자신은 신고할 수 없다 — 내 userId 를 모르면 서버가 막도록 열어 둔다.
+                // 나 자신은 신고할 수 없다
                 onReport = { onReportMember(member.userId) }.takeIf { member.userId != myUserId },
                 // 내 프로필은 마이페이지가 원본이라 여기서 열지 않는다.
                 onOpenProfile = { onOpenProfile(member.userId) }.takeIf { member.userId != myUserId },
@@ -227,16 +224,7 @@ private fun Dot(color: Color) {
     )
 }
 
-/**
- * 이 방의 알림 음소거 (알림 3계층의 ③).
- *
- * 마스터·그룹을 켜 둔 채 **이 방만** 조용히 하고 싶을 때 쓴다. 끈다고 기록이 사라지지 않는다 —
- * 알림 센터 적재는 어떤 설정으로도 막히지 않는 것이 절대 규칙이고, 그 사실을 말해 두지 않으면
- * 사용자는 끄면 고지까지 놓친다고 여겨 켜 둔 채 앱 전체 알림을 차단한다.
- *
- * 상태를 모르면(설정 조회 실패) 이 줄을 그리지 않는다 — 모르는 값을 「켜짐」으로 그리면 껐다고
- * 믿은 방에서 푸시가 계속 온다.
- */
+/** 이 방의 알림 음소거 (알림 3계층의 ③). */
 @Composable
 internal fun RoomMuteSection(
     muted: Boolean,
@@ -271,5 +259,30 @@ internal fun RoomMuteSection(
             enabled = enabled,
             colors = SwitchDefaults.colors(checkedTrackColor = RuleUpTheme.colors.brand),
         )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomMemberSectionPreview() {
+    RuleUpTheme {
+        RoomMemberSection(
+            members = emptyList(),
+            participantCount = 1,
+            maxParticipants = null,
+            myUserId = null,
+            actionEnabled = true,
+            canInviteMember = true,
+            onInviteMember = {},
+            onLeave = {},
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomMuteSectionPreview() {
+    RuleUpTheme {
+        RoomMuteSection(muted = true, enabled = true, onToggle = { })
     }
 }

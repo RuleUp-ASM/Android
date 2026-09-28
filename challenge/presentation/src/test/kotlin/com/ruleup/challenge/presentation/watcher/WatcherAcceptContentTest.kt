@@ -14,10 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 감시자 초대 수락. **수락이 곧 수신 동의**라, 무엇에 동의하는지를 누르기 전에 말해야 한다 —
- * 알림이 언제 어떤 내용으로 가는지가 동의의 실질이다.
- */
+/** 감시자 초대 수락. */
 @RunWith(RobolectricTestRunner::class)
 class WatcherAcceptContentTest {
     @get:Rule
@@ -32,12 +29,13 @@ class WatcherAcceptContentTest {
     }
 
     @Test
-    fun `수락하면 알림을 끄는 방법을 함께 알려 준다`() {
-        // 되돌릴 방법이 없다고 느끼면 수락 자체를 꺼리게 된다.
+    fun `수락하면 실패 확정일의 알림을 안내한다`() {
+        // 제공하지 않는 설정 경로는 안내하지 않는다.
         render(WatcherAcceptState.initial.copy(accepted = acceptance()))
 
         compose.onNodeWithText("이제 감시자예요").assertExists()
-        compose.onNodeWithText("내가 받는 알림", substring = true).assertExists()
+        compose.onNodeWithText("실패가 확정된 날에만 알림이 가요.").assertExists()
+        compose.onNodeWithText("내가 받는 알림", substring = true).assertDoesNotExist()
     }
 
     @Test

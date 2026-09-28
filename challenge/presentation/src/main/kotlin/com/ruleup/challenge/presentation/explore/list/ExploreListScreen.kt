@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,6 +55,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.time.ServiceDate
+import com.ruleup.tti.presentation.TtiScreenEffect
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -66,10 +68,10 @@ private const val DDAY_URGENT_THRESHOLD = 7L
 // 다음 페이지 프리페치를 시작할 하단 잔여 아이템 수.
 private const val LOAD_MORE_PREFETCH = 3
 
-// 카드 노출로 인정하는 최소 체류 시간(기능 스펙 9번 — 제안값이라 데이터팀 합의 후 조정).
+// 카드 노출로 인정하는 최소 체류 시간.
 private const val IMPRESSION_DWELL_MS = 1_000L
 
-/** 챌린지 둘러보기(Figma 02 · 챌린지 둘러보기). 필터(AND) + 정렬 6종 + 커서 무한 스크롤. */
+/** 챌린지 둘러보기. */
 @Composable
 fun ExploreListScreen(
     category: String?,
@@ -78,12 +80,13 @@ fun ExploreListScreen(
     viewModel: ExploreListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     LaunchedEffect(Unit) { viewModel.onIntent(ExploreListIntent.Load(category = category, sort = sort)) }
     ExploreListContent(modifier = modifier, state = state, onIntent = viewModel::onIntent)
 }
 
 @Composable
-// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다.
 internal fun ExploreListContent(
     state: ExploreListState,
     onIntent: (ExploreListIntent) -> Unit,
@@ -191,7 +194,7 @@ private fun TotalCountLabel(totalCount: Int) {
     }
 }
 
-/** 적용된 카테고리 칩. 카테고리 타일로 들어와 프리필된 것도 여기서 해제할 수 있다. */
+/** 적용된 카테고리 칩. */
 @Composable
 private fun AppliedCategoryChips(
     categories: Set<Category>,
@@ -303,8 +306,7 @@ private fun ChallengeList(
     onIntent: (ExploreListIntent) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    // 하단 근접 시 다음 커서 페이지를 미리 요청한다(프론트 스펙 5: 하단 70% 프리페치).
-    // size 기본 10 기준 잔여 3개면 70% 지점이다. 진행 중 요청은 canLoadMore 가 막는다.
+    // 하단 근접 시 다음 커서 페이지를 미리 요청한다.
     val shouldLoadMore by remember(state.canLoadMore) {
         derivedStateOf {
             val info = listState.layoutInfo
@@ -318,8 +320,7 @@ private fun ChallengeList(
         if (shouldLoadMore) currentOnIntent(ExploreListIntent.LoadMore)
     }
 
-    // 노출 기준은 뷰포트 50% 이상 · 1초 이상이다(기능 스펙 9번).
-    // collectLatest 라 1초 안에 스크롤로 지나간 카드는 대기가 취소돼 세지 않는다.
+    // 노출 기준은 뷰포트 50% 이상 · 1초 이상이다.
     LaunchedEffect(listState) {
         snapshotFlow {
             val info = listState.layoutInfo
@@ -477,7 +478,7 @@ private fun ExploreChallengeCard(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (item.isFull) {
-                    // 정원이 차도 흐리게 처리하지 않는다 — 탈퇴로 자리가 날 수 있다.
+                    // 정원이 차도 흐리게 처리하지 않는다
                     TagChip(
                         text = "정원 마감",
                         background = RuleUpTheme.colors.dangerContainer,
@@ -501,7 +502,7 @@ private fun ExploreChallengeCard(
                 if (item.verificationType.isAuto) {
                     TagChip(
                         text = "자동인증",
-                        // 자동인증 표식의 파랑은 Figma 팔레트 15색에 없다. 화면 디자인에서 온 값이라 남긴다.
+                        // 자동인증 표식의 파랑은 Figma 팔레트 15색에 없다.
                         background = Color(0xFF3B82F6).copy(alpha = 0.12f),
                         textColor = Color(0xFF2563EB),
                     )
@@ -518,10 +519,7 @@ private fun ExploreChallengeCard(
     }
 }
 
-/**
- * 카드 하단 지표 라인: 참여자 · 완주(템플릿 완주율) · 템플릿(사용자 수).
- * 활성 정렬이 완주율/성공·실패 비율인데 표본 부족(null)이면 스펙 안내 문구로 대체한다.
- */
+/** 카드 하단 지표 라인: 참여자 · 완주(템플릿 완주율) · 템플릿(사용자 수). */
 @Composable
 private fun CardStats(
     item: ExploreChallenge,
@@ -557,7 +555,7 @@ private fun StatsLine(
             color = RuleUpTheme.colors.brand,
             style = RuleUpTheme.typography.smallBold,
         )
-        // null 은 "표본 미달"이지 0이 아니다 — 값이 없으면 영역 자체를 그리지 않는다.
+        // null 은 "표본 미달"이지 0이 아니다
         item.completionRate?.let {
             Dot()
             Text(
@@ -577,7 +575,7 @@ private fun StatsLine(
     }
 }
 
-/** 빈 결과 — 사유별로 문구와 다음 행동이 다르다. */
+/** 빈 결과 */
 @Composable
 private fun EmptyResult(
     reason: EmptyReason?,
@@ -663,12 +661,7 @@ private fun TagChip(
     }
 }
 
-/**
- * 종료일까지 남은 일수. 파싱 불가/없음(상시)은 null, 지난 날짜는 0.
- *
- * 기준일은 **KST** 다 — 기기 기준으로 세면 같은 방의 D-day 가 목록과 상세에서 하루 어긋난다.
- * 상세는 서버가 계산한 `remainingDays` 를 그대로 쓴다.
- */
+/** 종료일까지 남은 일수. */
 private fun ddayOf(endDate: String?): Long? {
     if (endDate.isNullOrBlank()) return null
     return runCatching {
@@ -676,7 +669,7 @@ private fun ddayOf(endDate: String?): Long? {
     }.getOrNull()
 }
 
-/** 1,000 이상은 "5.6k" 압축 표기(Figma 카드 "템플릿 5.6k"). */
+/** 1,000 이상은 "5.6k" 압축 표기. */
 private fun compactCount(count: Int): String =
     if (count >= 1000) {
         val k = count / 1000.0
@@ -696,3 +689,18 @@ internal val ExploreSort.shortLabel: String
             ExploreSort.RECENT -> "최근 생성"
             ExploreSort.DEADLINE -> "마감 임박"
         }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ExploreListContentPreview() {
+    RuleUpTheme {
+        ExploreListContent(
+            state =
+                com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
+}

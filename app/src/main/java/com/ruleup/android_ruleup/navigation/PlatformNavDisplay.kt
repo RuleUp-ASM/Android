@@ -13,6 +13,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.navigation.LoginPage
+import com.ruleup.tti.presentation.TtiPage
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
 
@@ -43,7 +44,9 @@ fun PlatformNavDisplay(
                         LocalNavigationHelper.current.navigateTo(LoginPage)
                         return@entry
                     }
-                    route.render(navKey.args)
+                    TtiPage(pageName = navKey.path.replace('/', '_')) {
+                        route.render(navKey.args)
+                    }
                 }
             },
     )

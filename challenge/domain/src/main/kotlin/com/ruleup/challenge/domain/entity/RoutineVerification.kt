@@ -1,9 +1,6 @@
 package com.ruleup.challenge.domain.entity
 
-/**
- * 인증 방식 (명세 `verification.type`). 방 단위로 고정되며 **AUTO → MANUAL 단방향 전환만** 허용한다.
- * 역방향(MANUAL → AUTO)은 서버가 `ROUTINE_AUTO_NOT_SUPPORTED` 로 막는다.
- */
+/** 인증 방식. */
 enum class VerificationType(
     val value: String,
 ) {
@@ -11,7 +8,7 @@ enum class VerificationType(
     MANUAL("MANUAL"),
     ;
 
-    /** 신호를 자동 수집해 판정하는가. 아니면 사용자가 직접 체크한다. */
+    /** 신호를 자동 수집해 판정하는가. */
     val isAuto: Boolean
         get() = this == AUTO
 
@@ -20,15 +17,7 @@ enum class VerificationType(
     }
 }
 
-/**
- * 자동 인증 신호원 (명세 `verification.method`).
- *
- * 구 `SCREEN_TIME` 은 상한/하한이 갈려 `SCREEN_TIME_MAX`·`SCREEN_TIME_MIN` 이 됐고, `GPS_AVOID`·`SLEEP`
- * 이 새로 생겼다(2026-08-11 명세). 구 `PHOTO` 는 폐기됐다.
- *
- * 서버가 값을 추가해도 구버전 앱이 통째로 막히지 않도록 미인식 값은 [SELF_CHECK] 로 떨어뜨린다 —
- * 모르는 자동 인증을 자동으로 처리하는 척하는 것보다 수동으로 보이는 편이 안전하다.
- */
+/** 자동 인증 신호원. */
 enum class VerificationMethod(
     val value: String,
 ) {
@@ -53,7 +42,7 @@ enum class VerificationMethod(
     // 취침
     SLEEP("SLEEP"),
 
-    // 수동 — 직접 체크
+    // 수동
     SELF_CHECK("SELF_CHECK"),
     ;
 
@@ -62,22 +51,16 @@ enum class VerificationMethod(
     }
 }
 
-/**
- * 챌린지에 박히는 인증 스냅샷 (명세 `verification`).
- *
- * [requiredPermissions] 는 **가입·생성 전에 클라이언트가 확보해야 하는** OS 권한 목록이다(수동 방이면 빈 배열).
- * 서버는 권한 보유 여부를 게이트로 검사하지 않는다 — Android 권한 상태를 서버가 신뢰성 있게 알 수 없고
- * 가입 후 언제든 철회될 수 있기 때문. 가입 후 권한 거부를 탈퇴로 롤백하는 경로는 폐기됐다.
- */
+/** 챌린지에 박히는 인증 스냅샷. */
 data class VerificationConfig(
     val type: VerificationType,
     val method: VerificationMethod,
-    // 표시 문구(예: "기상 06:00 ±10분 내 10걸음"). 공개 상세에서만 내려온다.
+    // 표시 문구(예: "기상 06:00 ±10분 내 10걸음").
     val detail: String? = null,
     val requiredPermissions: List<String> = emptyList(),
 )
 
-/** 목표값 입력 종류 — 입력 위젯 분기용. 미인식 값은 [NUMBER] 로 떨어진다. */
+/** 목표값 입력 종류 */
 enum class ParamKind(
     val value: String,
 ) {
@@ -90,15 +73,7 @@ enum class ParamKind(
     }
 }
 
-/**
- * 수정 가능한 목표값 스펙 (명세 `draft.params[]` · `settings.config.params[]`).
- *
- * **루틴별 분기를 클라이언트에 하드코딩하지 않는다** — 입력 위젯과 검증 범위를 [kind]·[unit]·[min]·[max]
- * 로 결정한다. 루틴 테이블이 서버에서 계속 늘어나기 때문.
- *
- * 값은 전선(wire)과 같이 문자열이다 — `"06:00"` 처럼 숫자가 아닌 값이 섞여 있어 숫자 타입으로 좁히면
- * 표현이 깨진다. 숫자 해석이 필요한 곳은 [kind] 를 보고 파싱한다.
- */
+/** 수정 가능한 목표값 스펙. */
 data class ParamSpec(
     val key: String,
     val value: String,
@@ -110,34 +85,21 @@ data class ParamSpec(
     val max: Double?,
 )
 
-/**
- * 이 스펙이 허용하는 값으로 접는다. [min]·[max] 는 **서버가 파라미터마다 다르게** 주므로 상수로
- * 굳힐 수 없지만, "허용 범위로 접는다"는 판단 자체는 도메인 규칙이라 화면이 아니라 여기 둔다.
- * 한쪽이 null 이면 그쪽 방향은 열려 있다.
- */
+/** 이 스펙이 허용하는 값으로 접는다. */
 fun ParamSpec.clamp(value: Double): Double =
     value
         .coerceAtLeast(min ?: Double.NEGATIVE_INFINITY)
         .coerceAtMost(max ?: Double.POSITIVE_INFINITY)
 
-/**
- * 지금 값이 허용 범위 안인가.
- *
- * ± 버튼은 [clamp] 로 접지만 **직접 입력은 접을 수 없다** — 타이핑 도중 값을 접으면 `15` 를 치려고
- * `1` 을 누르는 순간 하한으로 튀어 편집이 불가능해진다. 그래서 입력은 그대로 두고, 범위를 벗어난
- * 채로는 제출을 막는다. 그 판단이 여기 있어야 생성·수정 어느 경로로도 같은 값이 나간다(CRE-12).
- *
- * 숫자로 읽히지 않는 값은 범위를 따질 수 없으므로 `false` 다 — 비어 있는 편집 중 상태가 여기 든다.
- * [ParamKind.TIME] 은 선택기로만 받아 범위가 없고, min·max 도 오지 않아 항상 통과한다.
- */
+/** 지금 값이 허용 범위 안인가. */
 val ParamSpec.isInRange: Boolean
     get() {
-        if (kind == ParamKind.TIME) return value.isNotBlank()
+        if (kind == ParamKind.TIME) return runCatching { java.time.LocalTime.parse(value) }.isSuccess
         val number = value.toDoubleOrNull() ?: return false
         return number >= (min ?: Double.NEGATIVE_INFINITY) && number <= (max ?: Double.POSITIVE_INFINITY)
     }
 
-/** 허용 범위 안내 문구. 한쪽만 있으면 그쪽만 말한다 — 없는 경계를 지어내면 안 된다. */
+/** 허용 범위 안내 문구. */
 fun ParamSpec.rangeLabel(): String? =
     when {
         min != null && max != null -> "${min.trimZero()} ~ ${max.trimZero()}"
@@ -148,24 +110,16 @@ fun ParamSpec.rangeLabel(): String? =
 
 private fun Double.trimZero(): String = if (this % 1.0 == 0.0) toLong().toString() else toString()
 
-/** 생성·수정 요청에 실리는 목표값 (명세 `params[]` — `{key, value}` 만). */
+/** 생성·수정 요청에 실리는 목표값. */
 data class ParamEntry(
     val key: String,
     val value: String,
 )
 
-/**
- * 장소 체류·앱 사용 목표 시간(분)의 키. 서버 운영 카탈로그의 `duration_min` 이다
- * (`GPS_PRESENCE`·`GPS_AVOID`·`SCREEN_TIME_MAX`·`SCREEN_TIME_MIN` 이 쓴다).
- */
+/** 장소 체류·앱 사용 목표 시간(분)의 키. */
 const val PARAM_DURATION_MIN = "duration_min"
 
-/**
- * 목표 체류 시간(분). 이 값이 곧 OS 지오펜스의 `loiteringDelay` 라 **틀리면 DWELL 이 엉뚱한 때에
- * 발화한다** — 30분 목표 방이 60분으로 등록되면 신호가 아예 안 올라온다(SETUP-04).
- *
- * 해당 키가 없거나 숫자로 읽히지 않으면 null 이다. 지어낸 값을 등록하느니 호출자가 정하게 둔다.
- */
+/** 목표 체류 시간(분). */
 fun List<ParamSpec>.durationMinutes(): Int? =
     find { it.key == PARAM_DURATION_MIN }
         ?.value
@@ -176,18 +130,10 @@ fun List<ParamSpec>.durationMinutes(): Int? =
 /** [ParamSpec] 의 현재값만 뽑아 요청 형태로 접는다. */
 fun List<ParamSpec>.toEntries(): List<ParamEntry> = map { ParamEntry(key = it.key, value = it.value) }
 
-/**
- * 초안 생성 rate limit 초과 (명세 429 `RECOMMENDATION_RATE_LIMITED` — 사용자당 1분 10회).
- *
- * 화면은 [retryAfterSeconds] 카운트다운을 버튼에 표시하고 비활성한다. **자동 재시도는 금지** —
- * 남은 rate limit 을 소진시킨다. 추천 칩 경로는 제한이 없으므로 대안으로 안내한다.
- */
+/** 초안 생성 rate limit 초과. */
 class RecommendationRateLimitedException(
     val retryAfterSeconds: Int? = null,
 ) : Exception("초안 생성 요청이 너무 잦습니다.")
 
-/**
- * 초안이 만료·소실됐다 (명세 400 `DRAFT_NOT_FOUND` / `DRAFT_EXPIRED`).
- * 서버는 초안을 24시간만 보관한다 — 화면은 초안 재생성을 안내한다.
- */
+/** 초안이 만료·소실됐다. */
 class DraftExpiredException : Exception("초안이 만료되었습니다.")

@@ -1,5 +1,6 @@
 package com.ruleup.verification.domain.entity
 
+import com.ruleup.domain.entity.user.AgreementType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,9 +9,39 @@ import kotlin.test.assertTrue
 
 class PermissionSnapshotTest {
     @Test
+    fun `전경과 백그라운드 위치 권한은 같은 위치 동의를 요구한다`() {
+        listOf("LOCATION", "access_fine_location", "GPS", "GEOFENCE", "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION").forEach {
+            assertEquals(AgreementType.LOCATION_INFO, PermissionSnapshot.requiredConsentFor(it))
+        }
+    }
+
+    @Test
+    fun `건강 데이터 권한은 종류와 관계없이 건강 동의를 요구한다`() {
+        listOf(
+            "READ_DISTANCE",
+            "HEALTH_DISTANCE",
+            "READ_STEPS",
+            "HEALTH_STEPS",
+            "HEALTH",
+            "read_sleep",
+            "HEALTH_SLEEP",
+            "SLEEP",
+            "READ_HEALTH_DATA_IN_BACKGROUND",
+            "HEALTH_BACKGROUND",
+        ).forEach {
+            assertEquals(AgreementType.HEALTH_INFO, PermissionSnapshot.requiredConsentFor(it))
+        }
+    }
+
+    @Test
+    fun `알림과 카메라와 사용 기록 및 미지원 권한은 개별 동의를 추론하지 않는다`() {
+        listOf("POST_NOTIFICATIONS", "CAMERA", "PACKAGE_USAGE_STATS", "FUTURE_PERMISSION").forEach {
+            assertNull(PermissionSnapshot.requiredConsentFor(it))
+        }
+    }
+
+    @Test
     fun `사용정보 접근과 헬스 커넥트가 허용 여부로 판정된다`() {
-        // 종전에는 이 둘이 런타임 권한이 아니라는 이유로 "요청 불가 → 허용"으로 통과했고,
-        // 권한 없이 참여가 성립해 매일 NO_SIGNAL_RECEIVED 로 실패했다.
         val denied = snapshot(usageStats = PermissionState.DENIED, healthSteps = PermissionState.DENIED)
 
         assertFalse(denied.isGranted("PACKAGE_USAGE_STATS")!!)
@@ -27,22 +58,17 @@ class PermissionSnapshotTest {
 
     @Test
     fun `모르는 토큰은 판단을 보류한다`() {
-        // 서버가 토큰을 추가했을 때 그 하나 때문에 참여를 막으면 구버전 앱이 통째로 잠긴다.
         assertNull(snapshot().isGranted("FUTURE_PERMISSION"))
     }
 
     @Test
     fun `신체 활동 토큰은 더 이상 알아보지 않는다`() {
-        // 서버가 requiredPermissions 에서 뺐고 앱도 걷어냈다. 낡은 스냅샷이 이 토큰을 실어 보내도
-        // 판단 보류로 떨어져 참여를 막지 않는다 — 요청할 권한이 없으니 막으면 영영 못 들어간다.
         assertNull(snapshot().isGranted("ACTIVITY_RECOGNITION"))
         assertNull(snapshot().isGranted("PHYSICAL_ACTIVITY"))
     }
 
     @Test
     fun `권한마다 여는 문이 다르다`() {
-        // 사용정보 접근과 Health Connect 를 한 덩어리로 묶으면 걸음 권한이 필요한 사용자를
-        // 사용정보 접근 화면으로 보내게 되고, 거기서는 아무리 켜도 그 권한이 생기지 않는다.
         assertEquals(PermissionRequestKind.USAGE_ACCESS_SETTINGS, PermissionSnapshot.requestKindOf("PACKAGE_USAGE_STATS"))
         assertEquals(PermissionRequestKind.HEALTH_CONNECT, PermissionSnapshot.requestKindOf("READ_SLEEP"))
         assertEquals(PermissionRequestKind.HEALTH_CONNECT, PermissionSnapshot.requestKindOf("READ_STEPS"))
@@ -53,6 +79,24 @@ class PermissionSnapshotTest {
     @Test
     fun `대소문자가 달라도 같은 토큰으로 읽는다`() {
         assertEquals(snapshot().isGranted("access_fine_location"), snapshot().isGranted("ACCESS_FINE_LOCATION"))
+    }
+
+    @Test
+    fun `전체 Android 권한 이름도 허용 상태와 동의 및 요청 경로가 같다`() {
+        listOf(
+            "android.permission.ACCESS_FINE_LOCATION",
+            "android.permission.ACCESS_BACKGROUND_LOCATION",
+            "android.permission.PACKAGE_USAGE_STATS",
+            "android.permission.health.READ_STEPS",
+            "android.permission.health.READ_DISTANCE",
+            "android.permission.health.READ_SLEEP",
+            "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND",
+        ).forEach { full ->
+            val short = full.substringAfterLast('.')
+            assertEquals(snapshot().isGranted(short), snapshot().isGranted(full))
+            assertEquals(PermissionSnapshot.requiredConsentFor(short), PermissionSnapshot.requiredConsentFor(full))
+            assertEquals(PermissionSnapshot.requestKindOf(short), PermissionSnapshot.requestKindOf(full))
+        }
     }
 
     private fun snapshot(

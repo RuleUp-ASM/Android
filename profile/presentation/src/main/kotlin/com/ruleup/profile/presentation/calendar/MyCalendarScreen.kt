@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +53,7 @@ import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarIntent
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarState
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.verification.domain.entity.failureTextOf
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -59,13 +61,10 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
 
-// 달력 관례로 토요일은 파랑이다. Figma 팔레트 15색에 파랑이 없어 화면이 들고 있는다.
+// 달력 관례로 토요일은 파랑이다.
 private val SaturdayBlue = Color(0xFF3B82F6)
 
-/**
- * 활동 캘린더 (피그마 434:361). kizitonwose Calendar-Compose 월 그리드 + 일자 상세.
- * day status 는 서버 판정 값 그대로 — 확정된 날짜 기준이라 클라 재계산이 없다.
- */
+/** 활동 캘린더. */
 @Composable
 fun MyCalendarScreen(
     modifier: Modifier = Modifier,
@@ -73,6 +72,7 @@ fun MyCalendarScreen(
     viewModel: MyCalendarViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) {
         viewModel.onIntent(MyCalendarIntent.Load(date))
@@ -81,7 +81,7 @@ fun MyCalendarScreen(
     MyCalendarContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun MyCalendarContent(
     state: MyCalendarState,
@@ -147,9 +147,9 @@ internal fun MyCalendarContent(
                 DayDetailCard(
                     onAppeal = { onIntent(MyCalendarIntent.OpenAppeal(it)) },
                     date = selected,
-                    day = state.days[selected],
+                    day = state.selectedDay,
                     detail = state.dayDetail,
-                    isLoading = state.isLoadingDetail,
+                    isLoading = state.isLoadingDetail || (state.isLoading && selected.take(7) == state.month),
                 )
             }
         }
@@ -205,7 +205,7 @@ private fun MonthGrid(
     onSelect: (String) -> Unit,
 ) {
     val daysOfWeek = remember { daysOfWeek(firstDayOfWeek = DayOfWeek.SUNDAY) }
-    // 월 이동은 상단 화살표(ChangeMonth 인텐트)로만 — 그리드는 표시 중인 한 달만 렌더링한다.
+    // 월 이동은 상단 화살표(ChangeMonth 인텐트)로만
     val calendarState =
         rememberCalendarState(
             startMonth = month,
@@ -273,8 +273,7 @@ private fun DayCell(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    // 판정 경계가 KST 하루 단위다. 기기 기준으로 「오늘」을 정하면 해외 체류 중에 어제 칸이
-    // 오늘로 강조된다 — 같은 순간을 두 날짜로 말하는 셈이다.
+    // 판정 경계가 KST 하루 단위다.
     val isToday = date == ServiceDate.today()
     Column(
         modifier =
@@ -313,12 +312,11 @@ private fun CalendarDayStatus?.dotColor(isSelected: Boolean): Color =
         CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
         CalendarDayStatus.PARTIAL -> RuleUpPalette.StatusWarn
         CalendarDayStatus.FAILED -> RuleUpTheme.colors.danger
-        // 실패 예정은 확정 전이라 실패가 아니다. 미확정 색을 함께 쓰고 범례를 늘리지 않는다
-        // (프론트엔드 테크스펙: 장시간 구간 범례를 추가하지 않고 카드에서만 안내).
+        // 실패 예정은 확정 전이라 실패가 아니다.
         CalendarDayStatus.IN_PROGRESS,
         CalendarDayStatus.FAIL_EXPECTED,
         -> if (isSelected) RuleUpPalette.BgSurface else RuleUpTheme.colors.brand
-        // 판정 대상일만 내려오므로 null 은 비대상일이거나 모르는 값이다 — 어느 쪽이든 칠하지 않는다.
+        // 판정 대상일만 내려오므로 null 은 비대상일이거나 모르는 값이다
         null -> Color.Transparent
     }
 
@@ -429,10 +427,9 @@ private fun DayItemRow(
                     append("완료")
                 } to RuleUpTheme.colors.success
 
-            // 문구 표는 인증 모듈이 갖는다 — 화면마다 따로 두면 한쪽만 늘어나, 같은 실패가
-            // 방에서는 사유로, 캘린더에서는 그냥 "실패" 로 보인다(VER-04 · VER-05).
+            // 문구 표는 인증 모듈이 갖는다
             DayItemStatus.FAILED -> failureTextOf(item.failureReason) to RuleUpTheme.colors.danger
-            // 확정 실패와 같은 색을 쓰지 않는다 — 아직 뒤집힐 수 있고 이의를 낼 수 있다.
+            // 확정 실패와 같은 색을 쓰지 않는다
             DayItemStatus.FAIL_EXPECTED -> "실패 예정" to RuleUpPalette.StatusWarn
             DayItemStatus.IN_PROGRESS -> "진행 중" to RuleUpTheme.colors.brand
             // 모르는 상태는 완료·실패 어느 쪽으로도 접지 않고 표기를 생략한다.
@@ -454,7 +451,7 @@ private fun DayItemRow(
                 style = RuleUpTheme.typography.captionBold,
             )
         }
-        // 낼 수 있는 건에만 붙인다. 기한·자격 판단은 서버가 appeal.eligible 로 준다.
+        // 낼 수 있는 건에만 붙인다.
         if (item.appeal?.eligible == true && item.verificationId != null) {
             Spacer(Modifier.weight(1f))
             Text(
@@ -472,4 +469,19 @@ private fun String.timeLabel(): String {
     val time = substringAfter('T', missingDelimiterValue = "")
     if (time.length < 5) return ""
     return time.take(5)
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyCalendarContentPreview() {
+    RuleUpTheme {
+        MyCalendarContent(
+            state =
+                com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
 }

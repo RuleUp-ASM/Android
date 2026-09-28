@@ -7,20 +7,13 @@ import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 멤버 초대 링크 진입 ViewModel.
- *
- * 미리보기와 수락이 갈려 있다 — 조회는 토큰을 소모하지 않고, 수락에서만 소모된다. 그래서
- * **들어온 것만으로 가입시키지 않는다**: 어떤 방인지 보여 주고 누를 때만 가입한다.
- *
- * 수락에 성공하면 **백스택을 방 상세로 교체**한다. 초대 화면으로 되돌아가면 이미 쓴 토큰으로
- * 다시 수락을 시도하게 된다.
- */
+/** 멤버 초대 링크 진입 ViewModel. */
 @HiltViewModel
 class ChallengeInviteViewModel
     @Inject
@@ -41,7 +34,7 @@ class ChallengeInviteViewModel
 
                 ChallengeInviteIntent.Accept -> accept()
                 ChallengeInviteIntent.GoHome -> navigationHelper.replaceStackWith(NavRoute(AppRoutes.HOME))
-                ChallengeInviteIntent.Back -> navigationHelper.navigateToBack()
+                ChallengeInviteIntent.Back -> navigationHelper.replaceStackWith(NavRoute(AppRoutes.HOME))
             }
         }
 
@@ -70,8 +63,12 @@ class ChallengeInviteViewModel
             dispatch(ChallengeInviteReducerEvent.Loading)
             viewModelScope.launch {
                 runCatching { challengeRepository.getInvitation(token) }
-                    .onSuccess { dispatch(ChallengeInviteReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(ChallengeInviteReducerEvent.Failed(it.message ?: "초대를 불러오지 못했어요")) }
+                    .onSuccess {
+                        dispatch(ChallengeInviteReducerEvent.Loaded(it))
+                        if (it.blockReason == com.ruleup.challenge.domain.entity.JoinBlockReason.ALREADY_JOINED) {
+                            navigationHelper.replaceStackWith(ChallengeDetailPage(it.challenge.challengeId).toRoute())
+                        }
+                    }.onFailure { dispatch(ChallengeInviteReducerEvent.Failed(it.userFacingMessage("초대를 불러오지 못했어요"))) }
             }
         }
 

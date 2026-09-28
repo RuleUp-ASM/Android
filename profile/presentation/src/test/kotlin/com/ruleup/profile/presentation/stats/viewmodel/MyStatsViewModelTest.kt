@@ -16,10 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-/**
- * 통계 리포트. 지표 5종이 고정되면서 **기간 탭이 사라져** 조회가 진입 시 한 번으로 줄었다 —
- * 그 절약이 실제로 성립하는지가 이 화면의 계약이다.
- */
+/** 통계 리포트. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyStatsViewModelTest {
     @BeforeTest
@@ -62,7 +59,7 @@ class MyStatsViewModelTest {
 
             viewModel.onIntent(MyStatsIntent.Load)
 
-            assertEquals("서버 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("통계를 불러오지 못했어요", viewModel.uiState.value.errorMessage)
             assertFalse(viewModel.uiState.value.isLoading)
         }
 

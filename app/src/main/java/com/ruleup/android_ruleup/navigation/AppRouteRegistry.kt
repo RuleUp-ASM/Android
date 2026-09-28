@@ -103,10 +103,7 @@ import com.ruleup.verification.presentation.permission.PermissionRepairScreen
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * 앱의 모든 페이지 메타데이터 + 렌더러 모음.
- * 새 화면 추가 시 본 리스트에 한 줄을 더한다.
- */
+/** 앱의 모든 페이지 메타데이터 + 렌더러 모음. */
 val appRoutes: List<AppRoute> =
     listOf(
         AppRoute(
@@ -115,12 +112,11 @@ val appRoutes: List<AppRoute> =
             render = { SplashScreen() },
         ),
         AppRoute(
-            // 가입 화면에서 동의하기 전에 읽을 수 있어야 동의가 성립한다 — 그래서 로그인을 요구하지 않는다.
-            // 원문은 앱 에셋이라 서버를 부르지 않는다.
+            // 가입 화면에서 동의하기 전에 읽을 수 있어야 동의가 성립한다
             path = TermsDocumentPage.PATH,
             isLoginRequired = false,
             render = { args ->
-                // 모르는 키로 들어오면 아무것도 그리지 않는다 — 빈 화면이 낫지, 엉뚱한 약관을 펴면 안 된다.
+                // 모르는 키로 들어오면 아무것도 그리지 않는다
                 AgreementType.entries
                     .find { it.key == args[TermsDocumentPage.ARG_TYPE] }
                     ?.let { TermsDocumentScreen(type = it) }
@@ -129,7 +125,7 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = WalkthroughPage.PATH,
             isRoot = true,
-            // 로그인 이전 화면이다. 인증이 필요한 API 를 부르지 않고 기기 저장소 플래그만 읽는다.
+            // 로그인 이전 화면이다.
             isLoginRequired = false,
             render = { WalkthroughScreen() },
         ),
@@ -159,7 +155,7 @@ val appRoutes: List<AppRoute> =
         AppRoute(
             path = MyChallengesPage.PATH,
             isBottomTab = true,
-            // 챌린지 탭도 홈 위에 쌓인다 — 뒤로가기 시 홈으로 돌아간다(탐색·마이와 같은 규칙).
+            // 챌린지 탭도 홈 위에 쌓인다
             syntheticStack = {
                 listOf(
                     GenericNavKey(HomePage.PATH),
@@ -196,7 +192,7 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = AccountLockedPage.PATH,
-            // 루트다. 뒤로가기로 빠져나갈 수 있으면 게이트가 아니다(제재 정책 §5.3).
+            // 루트다.
             isRoot = true,
             render = { AccountLockedScreen() },
         ),
@@ -305,8 +301,7 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = ChallengeInvitePage.PATH,
-            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 홈을 깔고 그 위에 연다.
-            // 홈만 넣으면 콜드 스타트 링크가 초대 화면 대신 홈을 보여 준다.
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다
             syntheticStack = { args -> listOf(GenericNavKey(HomePage.PATH), GenericNavKey(ChallengeInvitePage.PATH, args)) },
             render = { args ->
                 ChallengeInviteScreen(token = args[ChallengeInvitePage.ARG_TOKEN].orEmpty())
@@ -314,7 +309,7 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = WatcherAcceptPage.PATH,
-            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다 — 뒤로가기가 홈으로 가도록 홈을 깔고 그 위에 연다.
+            // 카카오톡 링크로 들어오는 화면이라 백스택이 없다
             syntheticStack = { args -> listOf(GenericNavKey(HomePage.PATH), GenericNavKey(WatcherAcceptPage.PATH, args)) },
             render = { args ->
                 WatcherAcceptScreen(token = args[WatcherAcceptPage.ARG_TOKEN].orEmpty())
@@ -328,7 +323,7 @@ val appRoutes: List<AppRoute> =
             path = InquiryComposePage.PATH,
             render = { args ->
                 InquiryComposeScreen(
-                    // 모르는 값이면 기타로 둔다 — 분류 없이 폼을 띄우면 접수가 400 으로 막힌다.
+                    // 모르는 값이면 기타로 둔다
                     category =
                         InquiryCategory.fromValue(args[InquiryComposePage.ARG_CATEGORY])
                             ?: InquiryCategory.ERROR_ETC,
@@ -353,14 +348,16 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = VerificationPermissionRepairPage.PATH,
-            render = { PermissionRepairScreen() },
+            render = { args ->
+                PermissionRepairScreen(requiredPermissions = args[VerificationPermissionRepairPage.ARG_PERMISSIONS]?.split(","))
+            },
         ),
         AppRoute(
             path = VerificationLocationPage.PATH,
             render = { args ->
                 VerificationLocationScreen(
                     challengeId = args[VerificationLocationPage.ARG_CHALLENGE_ID].orEmpty(),
-                    // 지도 원을 그릴 반경. 서버 설정값을 셋업 응답으로 받기 전까지 쓰는 표시용 기본값이다.
+                    // 지도 원을 그릴 반경.
                     defaultRadiusM =
                         args[VerificationLocationPage.ARG_RADIUS]
                             ?.toFloatOrNull()
@@ -374,8 +371,7 @@ val appRoutes: List<AppRoute> =
                 )
             },
         ),
-        // 온보딩 6단계. syntheticStack 은 딥링크·프로세스 복구로 중간 단계에 바로 들어왔을 때
-        // 뒤로가기가 앞 단계를 거치도록 스택을 세워 준다.
+        // 온보딩 6단계.
         AppRoute(
             path = OnboardingNicknamePage.PATH,
             render = { OnboardingNicknameScreen() },
@@ -429,12 +425,7 @@ private fun onboardingStack(vararg paths: String): List<GenericNavKey> =
 
 val appRouteByPath: Map<String, AppRoute> = appRoutes.associateBy { it.path }
 
-/**
- * [appRoutes] 를 그대로 읽는 [RouteAccessPolicy] 구현.
- *
- * 모르는 경로는 로그인 요구로 떨어뜨린다 — 딥링크는 외부 입력이라, 등록되지 않은 경로를 공개로
- * 보면 오타 하나가 인증 우회 통로가 된다.
- */
+/** [appRoutes] 를 그대로 읽는 [RouteAccessPolicy] 구현. */
 @Singleton
 class AppRouteAccessPolicy
     @Inject

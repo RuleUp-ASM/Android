@@ -18,7 +18,6 @@ import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
-import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
@@ -35,6 +34,8 @@ import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.test.FakeVerificationRepository
+import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
+import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -49,13 +50,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 챌린지 가입. **거절 사유가 곧 다음 화면을 정한다** — 이미 참여 중이면 알릴 게 없어 조용히
- * 방으로 전환하고, 정원·재입장 대기 같은 사유는 시트로 알린다. 뭉개면 이미 들어와 있는
- * 사용자에게 "참여할 수 없다"는 시트가 뜬다.
- *
- * 이 파일은 가입 경로만 본다 — 상세 화면(1000줄)의 나머지 전이는 대상이 넓어 별도 단위다.
- */
+/** 챌린지 가입. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeDetailJoinTest {
     @BeforeTest
@@ -67,7 +62,7 @@ class ChallengeDetailJoinTest {
     @Test
     fun `상세를 못 받았으면 가입을 시도하지 않는다`() =
         runTest {
-            // 어느 방에 들어갈지 모르는 상태다 — 보내면 서버가 튕긴다.
+            // 어느 방에 들어갈지 모르는 상태다
             val repo = FakeChallengeRepository()
             val viewModel = viewModel(repo)
 
@@ -119,7 +114,7 @@ class ChallengeDetailJoinTest {
     @Test
     fun `이미 참여 중이면 차단 시트를 띄우지 않는다`() =
         runTest {
-            // 알릴 게 없다 — 시트를 띄우면 들어와 있는 사용자가 "참여할 수 없다"를 본다.
+            // 알릴 게 없다
             val viewModel = viewModel(repo(join = { throw JoinBlockedException(JoinBlockReason.ALREADY_JOINED) }))
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
@@ -144,7 +139,6 @@ class ChallengeDetailJoinTest {
     @Test
     fun `가입에 성공하면 상세를 다시 받는다`() =
         runTest {
-            // 정원·자격은 수시로 변한다 — 캐시를 그대로 두면 방금 들어간 방이 여전히 "참여하기"로 보인다.
             val repo =
                 repo(join = { JoinResult(countFromCycle = null, requiredPermissions = emptyList(), personalSetupRequired = false) })
             val viewModel = viewModel(repo)
@@ -167,7 +161,11 @@ class ChallengeDetailJoinTest {
             model.onIntent(ChallengeDetailIntent.Proceed)
 
             assertTrue(repo.calls.none { it == "join" })
-            assertEquals(AgreementType.LOCATION_INFO, model.uiState.value.pendingConsent)
+            assertEquals(
+                listOf(AgreementType.LOCATION_INFO),
+                model.uiState.value.pendingAccess
+                    ?.missingConsents,
+            )
         }
 
     @Test
@@ -179,21 +177,128 @@ class ChallengeDetailJoinTest {
             model.onIntent(ChallengeDetailIntent.Load("ch1"))
             model.onIntent(ChallengeDetailIntent.Proceed)
 
-            model.onIntent(ChallengeDetailIntent.AgreeSensitiveConsent)
+            model.onIntent(ChallengeDetailIntent.ConfirmVerificationAccess)
 
             assertEquals(AgreementType.LOCATION_INFO, account.submitted.single().type)
             assertTrue(repo.calls.any { it == "join" })
         }
 
-    private fun repo(join: (String) -> JoinResult) = FakeChallengeRepository(detail = { detail() }, join = join)
+    @Test
+    fun `위치와 건강 권한이 함께 필요하면 두 동의를 받은 뒤 참여한다`() =
+        runTest {
+            val tokens = listOf("ACCESS_FINE_LOCATION", "READ_SLEEP")
+            val repo = repo(requiredPermissions = tokens, join = { JoinResult(null, emptyList(), false) })
+            val account = FakeAccountRepository()
+            val model = viewModel(repo = repo, account = account)
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.Proceed)
 
-    private fun detail() =
+            model.onIntent(ChallengeDetailIntent.ConfirmVerificationAccess)
+            assertEquals(listOf(AgreementType.LOCATION_INFO, AgreementType.HEALTH_INFO), account.submitted.map { it.type })
+            assertEquals(1, repo.calls.count { it == "join" })
+        }
+
+    @Test
+    fun `동의 조회가 실패하면 참여하지 않는다`() =
+        runTest {
+            val repo = repo(join = { JoinResult(null, emptyList(), false) })
+            val model = viewModel(repo = repo, account = FakeAccountRepository(readError = IllegalStateException("조회 실패")))
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+
+            model.onIntent(ChallengeDetailIntent.Proceed)
+
+            assertTrue("join" !in repo.calls)
+            assertNull(model.uiState.value.pendingAccess)
+        }
+
+    @Test
+    fun `서버 동의를 받았어도 기기 권한이 없으면 참여하지 않고 권한 상태를 갱신한다`() =
+        runTest {
+            val repo = repo(join = { JoinResult(null, emptyList(), false) })
+            val model = viewModel(repo = repo, permissions = snapshot().copy(location = PermissionState.DENIED))
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+
+            model.onIntent(ChallengeDetailIntent.Proceed)
+
+            assertTrue("join" !in repo.calls)
+            assertEquals(
+                PermissionState.DENIED,
+                model.uiState.value.permissions
+                    ?.location,
+            )
+        }
+
+    @Test
+    fun `권한 설정에서 돌아오면 같은 설정을 갱신하고 준비된 경우에만 참여한다`() =
+        runTest {
+            val repo = repo(join = { JoinResult(null, emptyList(), false) })
+            val account = FakeAccountRepository()
+            var permissions = snapshot().copy(location = PermissionState.DENIED)
+            val model = viewModel(repo = repo, account = account, permissionStatus = PermissionStatusProvider { permissions })
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.Proceed)
+            model.onIntent(ChallengeDetailIntent.ConfirmVerificationAccess)
+
+            model.onIntent(ChallengeDetailIntent.VerificationPermissionsReturned)
+            assertTrue("join" !in repo.calls)
+            assertEquals(
+                listOf("ACCESS_FINE_LOCATION"),
+                model.uiState.value.pendingAccess
+                    ?.missingPermissions,
+            )
+
+            permissions = snapshot()
+            model.onIntent(ChallengeDetailIntent.VerificationPermissionsReturned)
+            model.onIntent(ChallengeDetailIntent.VerificationPermissionsReturned)
+            assertNull(model.uiState.value.pendingAccess)
+            assertEquals(1, repo.calls.count { it == "join" })
+            assertEquals(1, account.submissionBatches.size)
+        }
+
+    @Test
+    fun `권한 허용하기로 연 설정을 마쳐도 장소와 앱 등록을 건너뛰어 참여하지 않는다`() =
+        runTest {
+            val repo = repo(join = { JoinResult(null, emptyList(), false) })
+            var permissions = snapshot().copy(location = PermissionState.DENIED)
+            val model = viewModel(repo = repo, permissionStatus = PermissionStatusProvider { permissions })
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.OpenVerificationAccess)
+            model.onIntent(ChallengeDetailIntent.ConfirmVerificationAccess)
+
+            permissions = snapshot()
+            model.onIntent(ChallengeDetailIntent.VerificationPermissionsReturned)
+
+            assertNull(model.uiState.value.pendingAccess)
+            assertTrue("join" !in repo.calls)
+        }
+
+    @Test
+    fun `참여 설정을 닫으면 늦게 도착한 권한 결과로 참여하지 않는다`() =
+        runTest {
+            val repo = repo(join = { JoinResult(null, emptyList(), false) })
+            val model = viewModel(repo = repo, account = FakeAccountRepository())
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.Proceed)
+
+            model.onIntent(ChallengeDetailIntent.DismissVerificationAccess)
+            model.onIntent(ChallengeDetailIntent.VerificationPermissionsReturned)
+
+            assertNull(model.uiState.value.pendingAccess)
+            assertTrue("join" !in repo.calls)
+        }
+
+    private fun repo(
+        requiredPermissions: List<String> = listOf("ACCESS_FINE_LOCATION"),
+        join: (String) -> JoinResult,
+    ) = FakeChallengeRepository(detail = { detail(requiredPermissions) }, join = join)
+
+    private fun detail(requiredPermissions: List<String>) =
         ChallengeDetail(
-            challengeId = "ch1",
             title = "아침 6시 기상",
-            description = null,
-            imageUrl = null,
             category = Category.entries.first(),
+            imageUrl = null,
+            challengeId = "ch1",
+            description = null,
             mode = ChallengeMode.GROUP,
             visibility = ChallengeVisibility.PUBLIC,
             status = ChallengeStatus.ACTIVE,
@@ -206,7 +311,8 @@ class ChallengeDetailJoinTest {
             verification =
                 VerificationConfig(
                     type = VerificationType.entries.first(),
-                    method = VerificationMethod.entries.first(),
+                    method = VerificationMethod.SELF_CHECK,
+                    requiredPermissions = requiredPermissions,
                 ),
             stats = ChallengeStats(completionRate = null, retentionRate = null),
             gate = ChallengeGate(minTier = null, myDisplayTier = null, eligible = true),
@@ -235,6 +341,8 @@ class ChallengeDetailJoinTest {
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         reports: FakeReportRepository = FakeReportRepository(),
         account: FakeAccountRepository = FakeAccountRepository(agreed = AgreementType.entries.toSet()),
+        permissions: PermissionSnapshot = snapshot(),
+        permissionStatus: PermissionStatusProvider = PermissionStatusProvider { permissions },
     ): ChallengeDetailViewModel {
         val bizLogger = RecordingBizLogger()
         return ChallengeDetailViewModel(
@@ -242,17 +350,16 @@ class ChallengeDetailJoinTest {
             roomRepository = FakeRoomRepository(),
             watcherRepository = FakeWatcherRepository(),
             verificationRepository = FakeVerificationRepository(),
-            permissionStatusProvider = PermissionStatusProvider { snapshot() },
+            permissionStatusProvider = permissionStatus,
             exploreRepository = FakeExploreRepository(),
             tokenRepository = FakeTokenRepository(storedUserId = "u1"),
             bizLogger = bizLogger,
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
-            // 음소거 상태는 부가 정보다 — 준비하지 않으면 조회가 실패하고 토글이 그려지지 않는다.
             notificationRepository = FakeNotificationRepository(),
             navigationHelper = nav,
-            // 가입 규칙을 보는 테스트들이라 개별 동의는 이미 받은 상태로 둔다 — 동의 흐름은 따로 본다.
-            sensitiveConsent = SensitiveConsent(account, FakeIntroRepository()),
+            checkVerificationAccess = CheckVerificationAccessUseCase(permissionStatus, account),
+            agreeVerificationConsent = AgreeVerificationConsentUseCase(account, FakeIntroRepository()),
         )
     }
 }

@@ -17,13 +17,13 @@ import com.ruleup.verification.domain.entity.VerificationSignal
 import com.ruleup.verification.domain.repository.SignalRepository
 import javax.inject.Inject
 
-// 수집·동기화 경로 공통 로그 태그(Worker 와 동일). 디버그 오버레이/Logcat 에서 'VerifySync' 로 필터.
+// 수집·동기화 경로 공통 로그 태그(Worker 와 동일).
 private const val SYNC_LOG_TAG = "VerifySync"
 
 // 상세 로그 폭주 방지: 타입별 최대 이만큼만 값까지 찍고 나머지는 "…외 N건" 으로 줄인다.
 private const val MAX_DETAIL_PER_TYPE = 30
 
-// line(it) 은 로그 게이트를 통과한 뒤에만 평가된다 — Timber 시절의 treeCount 가드가 필요 없어졌다.
+// line(it) 은 로그 게이트를 통과한 뒤에만 평가된다
 private fun <T> List<T>.logSignalDetail(
     observability: Observability,
     type: String,
@@ -36,10 +36,7 @@ private fun <T> List<T>.logSignalDetail(
     }
 }
 
-/**
- * Room 기반 로컬 신호 버퍼(명세 §2.4·전송 스펙 §0.5). 드레인은 tagPending(배치키 부여) → byBatch → markSynced 흐름.
- * geofence/location/usage/health/sleep 신호 + signal_gap 공백 버퍼를 한 배치로 묶는다.
- */
+/** Room 기반 로컬 신호 버퍼. */
 class SignalRepositoryImpl
     @Inject
     constructor(
@@ -53,7 +50,7 @@ class SignalRepositoryImpl
         private val observability: Observability,
     ) : SignalRepository {
         override suspend fun drainPending(collectedAt: String): SignalBatch? {
-            // 미전송 행 전부에 이번 배치키를 부여한다 — 앞 배치가 실패해 키만 남은 행도 다시 싣는다(#319).
+            // 미전송 행 전부에 이번 배치키를 부여한다
             geofenceTransitionDao.tagPending(collectedAt)
             locationSampleDao.tagPending(collectedAt)
             usageEventDao.tagPending(collectedAt)
@@ -93,8 +90,7 @@ class SignalRepositoryImpl
             }
 
             val appEvents = usage.mapNotNull { it.toAppEvent() }
-            // WAKE 는 배치가 아니라 당일 전체에서 뽑는다 — 첫 잠금해제는 하루 한 번뿐이라
-            // 그 이벤트가 앞선 배치로 나갔으면 이후 sync 에서 값이 사라진다.
+            // WAKE 는 배치가 아니라 당일 전체에서 뽑는다
             val wake = wakeSignalProvider.collect()
 
             val signals =
@@ -109,7 +105,7 @@ class SignalRepositoryImpl
                     if (locations.isNotEmpty()) {
                         add(VerificationSignal.Locations(locations.map { it.toDomain() }))
                     }
-                    // metric 이 신호 레벨 필드라(전송 스펙 §2) 날짜뿐 아니라 metric 으로도 갈라 묶는다.
+                    // metric 이 신호 레벨 필드라 날짜뿐 아니라 metric 으로도 갈라 묶는다.
                     healthReadings
                         .groupBy { it.date to it.metric }
                         .forEach { (key, rows) ->
@@ -146,11 +142,48 @@ class SignalRepositoryImpl
 
         override suspend fun purgeExpired(ttlMillis: Long) {
             val threshold = System.currentTimeMillis() - ttlMillis
-            geofenceTransitionDao.purge(threshold)
-            locationSampleDao.purge(threshold)
-            usageEventDao.purge(threshold)
-            healthReadingDao.purge(threshold)
-            sleepSessionDao.purge(threshold)
             signalGapDao.purge(threshold)
+
+            suspend fun evict(
+                type: String,
+                oldest: Long?,
+                newest: Long?,
+                purge: suspend () -> Unit,
+            ) {
+                if (oldest != null) {
+                    signalGapDao.insert(
+                        com.ruleup.verification.data.db.common.SignalGapEntity(
+                            signalType = type,
+                            reason = com.ruleup.verification.domain.entity.GapReason.BUFFER_EVICTED,
+                            fromMillis = oldest,
+                            toMillis = newest ?: oldest,
+                            recoverable = false,
+                            occurredAt = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                purge()
+            }
+            evict("GEOFENCE", geofenceTransitionDao.oldestEvicted(threshold), geofenceTransitionDao.newestEvicted(threshold)) {
+                geofenceTransitionDao.purge(threshold)
+            }
+            evict("LOCATION", locationSampleDao.oldestEvicted(threshold), locationSampleDao.newestEvicted(threshold)) {
+                locationSampleDao.purge(threshold)
+            }
+            evict(
+                "SCREEN_TIME",
+                usageEventDao.oldestEvicted(threshold),
+                usageEventDao.newestEvicted(threshold),
+            ) { usageEventDao.purge(threshold) }
+            evict(
+                "HEALTH",
+                healthReadingDao.oldestEvicted(threshold),
+                healthReadingDao.newestEvicted(threshold),
+            ) { healthReadingDao.purge(threshold) }
+            evict(
+                "SLEEP",
+                sleepSessionDao.oldestEvicted(threshold),
+                sleepSessionDao.newestEvicted(threshold),
+            ) { sleepSessionDao.purge(threshold) }
         }
     }

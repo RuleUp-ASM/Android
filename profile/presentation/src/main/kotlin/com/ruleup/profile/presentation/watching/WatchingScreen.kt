@@ -20,12 +20,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,20 +38,17 @@ import com.ruleup.profile.presentation.watching.viewmodel.WatchingEffect
 import com.ruleup.profile.presentation.watching.viewmodel.WatchingIntent
 import com.ruleup.profile.presentation.watching.viewmodel.WatchingState
 import com.ruleup.profile.presentation.watching.viewmodel.WatchingViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 패널티 수신 관리 — 「내가 받는 알림」 (Figma 1134:2221).
- *
- * **조회 전용이다** — 감시자 해제와 관계별 수신 설정이 폐지됐고, 관계는 루틴이 끝나면 배치가 지운다.
- * 푸시는 알림 설정에서 켜고 끈다.
- */
+/** 패널티 수신 관리 */
 @Composable
 fun WatchingScreen(
     modifier: Modifier = Modifier,
     viewModel: WatchingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) { viewModel.onIntent(WatchingIntent.Load) }
@@ -64,7 +63,7 @@ fun WatchingScreen(
     WatchingContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun WatchingContent(
     state: WatchingState,
@@ -87,12 +86,17 @@ internal fun WatchingContent(
                 }
 
             state.errorMessage != null && state.items.isEmpty() ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage,
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(WatchingIntent.Load) }) { Text("다시 시도") }
                 }
 
             state.items.isEmpty() ->
@@ -180,5 +184,18 @@ private fun WatchingRow(item: Watching) {
                 style = RuleUpTheme.typography.caption,
             )
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun WatchingContentPreview() {
+    RuleUpTheme {
+        WatchingContent(
+            state =
+                com.ruleup.profile.presentation.watching.viewmodel.WatchingState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
+        )
     }
 }

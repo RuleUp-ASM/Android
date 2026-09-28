@@ -13,38 +13,27 @@ import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 
-/**
- * PATCH 본문 조립 전용 직렬화기. `explicitNulls = false` 라 값 없는 필드가 `null` 로 새어 나가지 않는다 —
- * 부분 수정에서 null 은 "기본 이미지로 되돌리기"라는 별도 의미를 갖기 때문에 실수로 실리면 안 된다.
- */
+/** PATCH 본문 조립 전용 직렬화기. */
 private val ChallengeJson = Json { explicitNulls = false }
 
-// ---------- 초안 생성 (POST /challenges/draft) ----------
+// 초안 생성 (POST /challenges/draft)
 @Serializable
 data class DraftRequest(
-    // 루틴 설명 — 유일한 입력, 1~200자
+    // 루틴 설명
     @SerialName("description")
     val description: String,
 )
 
-// ---------- 템플릿 초안 (POST /challenges/recommendation/by-template) ----------
+// 템플릿 초안 (POST /challenges/recommendation/by-template)
 @Serializable
 data class RecommendByTemplateRequest(
     @SerialName("templateId")
     val templateId: Long,
 )
 
-// ---------- 챌린지 생성 (POST /challenges) ----------
+// 챌린지 생성 (POST /challenges)
 
-/**
- * 생성 요청.
- *
- * **수정 여부 필드가 없다** — 심사 대상 판정은 서버가 [draftId] 로 보관 중인 원본 초안과 대조해서 한다.
- * 구 `titleEdited`·`descriptionEdited`·`aiTitle`·`sourceChallengeId` 요청 필드는 폐기됐다(변조 클라이언트가
- * 악성 제목을 미수정으로 위장해 심사를 우회하던 경로).
- *
- * `penalties` 에는 `watcher` 만 싣는다 — score·groupShare 는 서버가 강제한다.
- */
+/** 생성 요청. */
 @Serializable
 data class CreateChallengeRequest(
     @SerialName("draftId")
@@ -66,23 +55,20 @@ data class CreateChallengeRequest(
     @SerialName("minTier")
     val minTier: String? = null,
     @SerialName("period")
-    val period: PeriodDto,
+    val period: PeriodRequest,
     @SerialName("weeklyCount")
     val weeklyCount: Int,
     @SerialName("params")
-    val params: List<ParamEntryDto>,
+    val params: List<ParamEntryRequest>,
     @SerialName("verification")
-    val verification: VerificationDto,
+    val verification: VerificationRequest,
     @SerialName("penalties")
-    val penalties: PenaltiesDto,
+    val penalties: PenaltiesRequest,
     @SerialName("imageUrl")
     val imageUrl: String? = null,
 )
 
-/**
- * 생성 요청 본문. 그룹 무제한 정원은 `capacity: null` 을 **명시해** 보낸다 — 공용 Json 이 null 키를 빼 버리면
- * 서버가 무제한인지 누락인지 가를 수 없다.
- */
+/** 생성 요청 본문. */
 internal fun CreateChallengeCommand.toRequestBody(): JsonObject {
     val body = ChallengeJson.encodeToJsonElement(toRequest()).jsonObject
     return if (mode.isGroup && capacity == null) JsonObject(body + ("capacity" to JsonNull)) else body
@@ -99,27 +85,17 @@ internal fun CreateChallengeCommand.toRequest(): CreateChallengeRequest =
         rankingVisible = rankingVisible,
         capacity = capacity,
         minTier = minTier?.value,
-        period = period.toDto(),
+        period = period.toRequest(),
         weeklyCount = weeklyCount,
-        params = params.map { it.toDto() },
-        verification = verification.toDto(),
-        penalties = PenaltiesDto(watcher = watcherPenalty),
+        params = params.map { it.toRequest() },
+        verification = verification.toRequest(),
+        penalties = PenaltiesRequest(watcher = watcherPenalty),
         imageUrl = imageUrl,
     )
 
-// ---------- 챌린지 수정 (PATCH /challenges/{id}) ----------
+// 챌린지 수정 (PATCH /challenges/{id})
 
-/**
- * 수정 요청 본문을 직접 조립한다.
- *
- * 명세가 **"미포함 = 미변경"과 "null = 기본 이미지로 되돌리기"를 구분**하라고 요구하는데, 데이터 클래스로는
- * 둘을 표현할 수 없다(nullable 필드 하나로는 "안 보냄"과 "null 보냄"이 같은 모양이 된다). 그래서 넣을 키만
- * 담은 [JsonObject] 를 만든다 — `imageUrl` 만 [JsonNull] 을 실을 수 있고, 나머지에 null 을 보내면 서버가
- * 400 `INVALID_FIELD_VALUE` 로 막는다.
- *
- * 파생 필드(`mode` 변경에 따른 `visibility`·`rankingVisible`·`penalties.groupShare` 정규화)는 **서버 책임**이라
- * 클라가 맞춰 보내지 않는다.
- */
+/** 수정 요청 본문을 직접 조립한다. */
 internal fun ChallengeUpdate.toRequestBody(): JsonObject =
     buildJsonObject {
         put("version", version)
@@ -137,10 +113,10 @@ internal fun ChallengeUpdate.toRequestBody(): JsonObject =
             capacity != null -> put("capacity", capacity)
         }
         minTier?.let { put("minTier", it.value) }
-        period?.let { put("period", ChallengeJson.encodeToJsonElement(it.toDto())) }
+        period?.let { put("period", ChallengeJson.encodeToJsonElement(it.toRequest())) }
         weeklyCount?.let { put("weeklyCount", it) }
-        params?.let { entries -> put("params", ChallengeJson.encodeToJsonElement(entries.map { it.toDto() })) }
-        verification?.let { put("verification", ChallengeJson.encodeToJsonElement(it.toDto())) }
+        params?.let { entries -> put("params", ChallengeJson.encodeToJsonElement(entries.map { it.toRequest() })) }
+        verification?.let { put("verification", ChallengeJson.encodeToJsonElement(it.toRequest())) }
         watcherPenalty?.let {
             put("penalties", buildJsonObject { put("watcher", JsonPrimitive(it)) })
         }

@@ -5,12 +5,12 @@ import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationType
-import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.mvi.ReducerEvent
+import com.ruleup.verification.domain.entity.VerificationAccess
 
 sealed interface CreateChallengeReducerEvent : ReducerEvent {
-    // ---- 입력 화면 ----
+    // 입력 화면
     data class RoutineDescriptionEntered(
         val description: String,
     ) : CreateChallengeReducerEvent
@@ -27,12 +27,14 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
 
     data object DraftFailed : CreateChallengeReducerEvent
 
-    /** 폴백 — 입력을 지우지 않고 안내만 띄운다. */
+    data object DraftExpired : CreateChallengeReducerEvent
+
+    /** 폴백 */
     data class DraftFellBack(
         val message: String,
     ) : CreateChallengeReducerEvent
 
-    /** 429 — 버튼을 잠그고 카운트다운을 표시한다. */
+    /** 429 */
     data class DraftRateLimited(
         val retryAfterSeconds: Int?,
     ) : CreateChallengeReducerEvent
@@ -42,16 +44,16 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
 
     data object RateLimitCleared : CreateChallengeReducerEvent
 
-    /** 폴백 화면을 벗어났다. 안내만 치우고 입력은 그대로 둔다. */
+    /** 폴백 화면을 벗어났다. */
     data object FallbackDismissed : CreateChallengeReducerEvent
 
-    /** 초안 수신 — 편집본을 초안값으로 채우고 idempotency key 를 1회 발급한다. */
+    /** 초안 수신 */
     data class DraftReceived(
         val draft: DraftResult.Ok,
         val idempotencyKey: String,
     ) : CreateChallengeReducerEvent
 
-    // ---- 확인 화면 ----
+    // 확인 화면
     data class TitleEntered(
         val title: String,
     ) : CreateChallengeReducerEvent
@@ -106,19 +108,19 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
         val enabled: Boolean,
     ) : CreateChallengeReducerEvent
 
-    data class PermissionsGranted(
-        val tokens: Set<String>,
+    data class VerificationAccessSubmitting(
+        val submitting: Boolean,
     ) : CreateChallengeReducerEvent
 
     data object Creating : CreateChallengeReducerEvent
 
     data object CreateFailed : CreateChallengeReducerEvent
 
-    data class SensitiveConsentRequested(
-        val type: AgreementType?,
+    data class VerificationAccessRequested(
+        val access: VerificationAccess?,
     ) : CreateChallengeReducerEvent
 
-    /** 생성 성공 — 권한 요청이 남았을 때만 화면에 머문다. */
+    /** 생성 성공 */
     data class Created(
         val challengeId: String,
     ) : CreateChallengeReducerEvent

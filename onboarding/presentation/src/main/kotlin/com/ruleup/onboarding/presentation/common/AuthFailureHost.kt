@@ -15,10 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * [AuthFailureUi] 를 실제 화면으로 그린다. 화면마다 다이얼로그를 새로 만들면 같은 실패가 어디서는
- * 토스트, 어디서는 전체 화면으로 갈린다. 토스트만 컴포지션 밖(MessageHelper) 소관이라 여기 없다.
- */
+/** [AuthFailureUi] 를 실제 화면으로 그린다. */
 @Composable
 fun AuthFailureHost(
     ui: AuthFailureUi?,
@@ -66,5 +63,13 @@ fun AuthFailureHost(
                     }
                 }
             }
+    }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun AuthFailureHostPreview() {
+    RuleUpTheme {
+        AuthFailureHost(ui = AuthFailureUi.Dialog("잠시 후 다시 시도해 주세요"), onDismiss = {})
     }
 }

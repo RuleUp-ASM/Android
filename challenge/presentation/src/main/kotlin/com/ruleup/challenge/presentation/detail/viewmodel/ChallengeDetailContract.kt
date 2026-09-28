@@ -12,7 +12,6 @@ import com.ruleup.challenge.domain.entity.CrossChallengeRanking
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
-import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.report.domain.entity.ReportResult
 import com.ruleup.ui.mvi.MviEffect
@@ -21,6 +20,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.TodayResult
+import com.ruleup.verification.domain.entity.VerificationAccess
 
 sealed interface ChallengeDetailIntent : MviIntent {
     /** 화면 진입 시 상세 + 셋업 요구사항 조회. */
@@ -28,7 +28,7 @@ sealed interface ChallengeDetailIntent : MviIntent {
         val challengeId: String,
     ) : ChallengeDetailIntent
 
-    /** 재진입(ON_RESUME) 시 셋업 상태 재확인 — 등록 화면에서 돌아오면 버튼 모드가 갱신되도록. */
+    /** 재진입(ON_RESUME) 시 셋업 상태 재확인 */
     data object RefreshSetup : ChallengeDetailIntent
 
     /** "앱 등록하기" → 대상 앱 등록 화면으로 이동. */
@@ -37,10 +37,7 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** "인증 장소 등록하기" → 지도(앵커) 등록 화면으로 이동. */
     data object RegisterAnchor : ChallengeDetailIntent
 
-    /**
-     * 필요한 권한·등록이 모두 끝난 뒤 가입한다.
-     * **권한 확보 전에는 호출되지 않는다** — 가입 후 롤백 경로가 폐기됐기 때문이다.
-     */
+    /** 필요한 권한·등록이 모두 끝난 뒤 가입한다. */
     data object Proceed : ChallengeDetailIntent
 
     /** "이 템플릿으로 만들기" → 복제 초안 생성 후 생성 확인 화면으로. */
@@ -60,25 +57,20 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
 
-    /** (방장) 비공개 방 멤버 초대 링크 발급 후 공유. 공개 방·솔로 방에는 노출하지 않는다. */
+    /** (방장) 비공개 방 멤버 초대 링크 발급 후 공유. */
     data object InviteMember : ChallengeDetailIntent
 
-    /** (방 상세) 상단 탭 전환. 아직 안 받아온 탭이면 그때 조회한다. */
+    /** (방 상세) 상단 탭 전환. */
     data class SelectTab(
         val tab: RoomTab,
     ) : ChallengeDetailIntent
 
-    /**
-     * (정보 탭) 이 챌린지의 알림 음소거 전환.
-     *
-     * 알림 3계층의 ③이다 — 마스터·그룹을 켜 둔 채 이 방만 조용히 하고 싶을 때 쓴다.
-     * 알림 센터 적재는 막지 않는다(테크 스펙 2번 절대 규칙).
-     */
+    /** (정보 탭) 이 챌린지의 알림 음소거 전환. */
     data class ToggleMute(
         val muted: Boolean,
     ) : ChallengeDetailIntent
 
-    /** (솔로 정보 탭) 캘린더 월 이동. `+1` 이면 다음 달, `-1` 이면 이전 달. */
+    /** (솔로 정보 탭) 캘린더 월 이동. */
     data class ShiftCalendarMonth(
         val offset: Long,
     ) : ChallengeDetailIntent
@@ -86,7 +78,7 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (피드 탭) 하단 도달 → 다음 페이지. */
     data object LoadMoreThreads : ChallengeDetailIntent
 
-    /** (피드 탭) 실패 후 "다시 불러오기". 기존 목록은 유지한 채 이어 받는다. */
+    /** (피드 탭) 실패 후 "다시 불러오기". */
     data object RetryThreads : ChallengeDetailIntent
 
     /** (랭킹 탭) 멤버 ↔ 방 순위 세그먼트 전환. */
@@ -100,97 +92,86 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (방 홈) 그룹 랭킹으로 이동. */
     data object OpenRanking : ChallengeDetailIntent
 
-    /** 권한 재연결 화면으로 — 인증에 필요한 권한이 끊겼을 때. */
+    /** 권한 재연결 화면 이동. */
     data object OpenPermissionRepair : ChallengeDetailIntent
 
-    /**
-     * 수동 인증 화면으로. 체크·해제·메모를 거기서 한다.
-     *
-     * 상세 안에서 바로 제출하지 않는 이유는 **메모** 다 — 요청에 실을 수 있는데 상세에는 그것을
-     * 적을 자리가 없었다. 솔로도 같은 화면을 쓴다.
-     */
+    /** 수동 인증 화면으로. */
     data object OpenManualCheck : ChallengeDetailIntent
 
-    /**
-     * 권한 현황 재조회. 화면 진입·설정에서 복귀할 때마다 부른다 — 권한 상태는 저장하지 않고
-     * 매번 OS 에 다시 묻는다(프론트엔드 테크스펙 4-5).
-     */
+    /** 권한 현황 재조회. */
     data object RefreshPermissions : ChallengeDetailIntent
 
-    /** 이의 증빙 사진 선택. 고른 즉시 올려 두고 제출 때 URL 만 실어 보낸다. */
+    /** 이의 증빙 사진 선택. */
     data class PickAppealImage(
         val imageUri: String,
     ) : ChallengeDetailIntent
 
-    /** 이의 시트를 닫는다. 다음에 열 때 사진·오류 표시가 남지 않도록 비운다. */
+    /** 이의 시트를 닫는다. */
     data object DismissAppeal : ChallengeDetailIntent
 
-    /** 판정 결과 모달 확인. ack 를 보내고 모달을 닫는다. */
+    /** 판정 결과 모달 확인. */
     data object AcknowledgeResult : ChallengeDetailIntent
 
-    /**
-     * 실패 건에 이의를 낸다. 사유 10자 이상이면 즉시 인용된다 — 판정 단계가 없다.
-     *
-     * 대상을 화면이 지정한다. 오늘 건뿐 아니라 **D+1 유예 중인 지난 건**도 캘린더에서 낼 수 있어야
-     * 하는데, 오늘 결과만 보면 어제 건은 낼 방법이 없다(APL-09).
-     */
+    /** 실패 건에 이의를 낸다. */
     data class SubmitAppeal(
         val verificationId: String,
         val reason: String,
     ) : ChallengeDetailIntent
 
-    /** 이 챌린지를 신고하는 시트를 연다. 멤버든 아니든 열 수 있다. */
+    /** 이 챌린지를 신고하는 시트를 연다. */
     data object OpenReport : ChallengeDetailIntent
 
-    /** 멤버 행 탭 — 타인 프로필로 간다. */
+    /** 멤버 행 탭 */
     data class OpenMemberProfile(
         val userId: String,
     ) : ChallengeDetailIntent
 
-    /** 방 멤버 행의 「신고」 — 사람의 행위라 사유 목록이 챌린지 신고와 다르다. */
+    /** 방 멤버 행의 「신고」 */
     data class OpenUserReport(
         val userId: String,
     ) : ChallengeDetailIntent
 
-    /** 신고 사유 선택. 고르기 전에는 제출 버튼이 눌리지 않는다. */
+    /** 신고 사유 선택. */
     data class SelectReportReason(
         val reason: ReportReason,
     ) : ChallengeDetailIntent
 
-    /** 고른 사유로 신고를 접수한다. 성공하면 완료 시트로 바뀐다. */
+    /** 고른 사유로 신고를 접수한다. */
     data object SubmitReport : ChallengeDetailIntent
 
     /** 신고 시트(사유 선택·완료 공용)를 닫는다. */
     data object DismissReport : ChallengeDetailIntent
 
-    /** 위치·건강 개별 동의 시트에서 동의하고 참여. */
-    data object AgreeSensitiveConsent : ChallengeDetailIntent
+    data object OpenVerificationAccess : ChallengeDetailIntent
 
-    data object DismissSensitiveConsent : ChallengeDetailIntent
+    data object VerificationPermissionsReturned : ChallengeDetailIntent
+
+    /** 자동 인증 설정 시트에서 수집·이용에 동의하고 권한 요청을 이어간다. */
+    data object ConfirmVerificationAccess : ChallengeDetailIntent
+
+    data object DismissVerificationAccess : ChallengeDetailIntent
 
     /** (방 홈, 방장 전용) 챌린지 수정 화면으로 이동. */
     data object OpenSettings : ChallengeDetailIntent
 
-    /** 챌린지 탈퇴(방장 포함). 성공 시 이전 화면으로. 방장이 나가면 봇방장 방이 된다. */
+    /** 챌린지 탈퇴(방장 포함). */
     data object LeaveChallenge : ChallengeDetailIntent
 
     data object Back : ChallengeDetailIntent
 }
 
 sealed interface ChallengeDetailEffect : MviEffect {
-    /**
-     * 초대 생성 성공 → 사용자 본인 명의 카카오톡 공유 실행(룰업 직접 발송 금지).
-     * 카드 문구는 서버 kakaoShare 페이로드를 그대로 쓴다(없으면 ViewModel 이 기본 문구 구성).
-     */
+    data class RequestPermissions(
+        val tokens: List<String>,
+    ) : ChallengeDetailEffect
+
+    /** 초대 생성 성공 → 사용자 본인 명의 카카오톡 공유 실행(룰업 직접 발송 금지). */
     data class ShareWatcherInvite(
         val card: WatcherInviteCard,
         val inviteUrl: String,
     ) : ChallengeDetailEffect
 
-    /**
-     * 멤버 초대 링크 공유. 감시자 초대와 카드 문구가 달라 이펙트를 갈라 둔다 —
-     * 감시자는 "지켜봐 달라"이고 멤버는 "같이 하자"다.
-     */
+    /** 멤버 초대 링크 공유. */
     data class ShareMemberInvite(
         val challengeTitle: String,
         val inviteUrl: String,
@@ -201,7 +182,7 @@ sealed interface ChallengeDetailEffect : MviEffect {
     ) : ChallengeDetailEffect
 }
 
-/** 방 상세 상단 탭 (Figma 1134:181 — 정보 · 피드 · 랭킹). 비멤버 공개 상세에는 탭이 없다. */
+/** 방 상세 상단 탭. */
 enum class RoomTab(
     val label: String,
 ) {
@@ -210,22 +191,18 @@ enum class RoomTab(
     RANKING("랭킹"),
 }
 
-/** 랭킹 탭의 세그먼트 (Figma 1134:355). 비교 단위가 사람이냐 방이냐로 갈린다. */
+/** 랭킹 탭의 세그먼트. */
 enum class RankingScope(
     val label: String,
 ) {
-    // 같은 방의 참여자끼리 — GET /challenges/{id}/ranking
+    // 같은 방의 참여자끼리
     MEMBER("멤버"),
 
-    // 같은 모드의 방끼리 — GET /rankings/challenges (하루 1회 배치)
+    // 같은 모드의 방끼리
     ROOM("방 순위"),
 }
 
-/**
- * 상세 하단 CTA 버튼이 유도할 다음 셋업 단계. GET setup 의 requiresTargetPackages/requiresAnchors 로
- * 필요한 등록만 노출한다: 권한 → (필요 시) 앱 등록 → (필요 시) 지도 앵커 → 시작.
- * 권한 허용 여부는 OS 런타임 권한(Context)으로 화면에서, 앱 등록 여부는 로컬 저장으로 판단한다.
- */
+/** 상세 하단 CTA 버튼이 유도할 다음 셋업 단계. */
 enum class DetailSetupAction {
     GRANT_PERMISSION,
     REGISTER_APPS,
@@ -238,103 +215,92 @@ data class ChallengeDetailState(
     val isLoading: Boolean,
     val detail: ChallengeDetail?,
     val errorMessage: String?,
-    // 셋업 요구사항(GET setup). requiresAnchors/requiresTargetPackages 로 필요한 등록만 유도.
+    // 셋업 요구사항(GET setup).
     val setup: ChallengeSetupInfo? = null,
     // 대상 앱이 로컬에 등록됐는지(앱 등록 화면 저장 여부).
     val targetAppsRegistered: Boolean = false,
-    // 이 챌린지에서의 "내 감시자"(감시자는 챌린지 × 참여자 단위). 조회 성공 시에만 값이 있고
-    // null 이면(미참여 403 등) 감시자 섹션을 숨긴다 — 권한 판단은 서버에 위임.
+    // 이 챌린지에서의 "내 감시자"(감시자는 챌린지 × 참여자 단위).
     val watchers: ChallengeWatchers? = null,
     // 초대 생성 요청 중(버튼 중복 탭 방지).
     val isInvitingWatcher: Boolean = false,
-    // 방 홈 일괄 조회 결과. 그룹 챌린지의 ACTIVE 멤버만 조회에 성공하며(비멤버 403 흡수 → null),
-    // 값이 있으면 상세를 방 홈(요약·랭킹·오늘 상태)으로 확장 렌더링한다.
+    // 방 홈 일괄 조회 결과.
     val room: ChallengeRoom? = null,
-    // 방 홈 멤버 목록(GET members). 방 홈일 때만 조회하며, 멤버 섹션에 쓴다.
+    // 방 홈 멤버 목록(GET members).
     val members: ChallengeMembers? = null,
     // 탈퇴 요청 중(버튼 중복 탭 방지).
     val isMemberActionLoading: Boolean = false,
-    // 현재 사용자 ID. 피드·랭킹의 "내 행" 강조와 멤버 신고 대상에서 나를 빼는 데 쓴다.
+    // 현재 사용자 ID.
     val myUserId: String? = null,
-    // 이 방의 알림 음소거 여부. null 이면 아직 모른다 — 조회 실패 시 토글을 그리지 않는다
+    // 이 방의 알림 음소거 여부.
     val isMuted: Boolean? = null,
     val isMuteSubmitting: Boolean = false,
-    // 솔로 캘린더가 보고 있는 달 YYYY-MM. 화면 진입 시 이번 달로 채워진다.
+    // 솔로 캘린더가 보고 있는 달 YYYY-MM.
     val calendarMonth: String? = null,
-    // 그 달의 판정 기록. 조회 실패·미참여면 null 이라 캘린더가 날짜만 그린다
+    // 그 달의 판정 기록.
     val calendar: ChallengeCalendar? = null,
     val isCalendarLoading: Boolean = false,
-    // 가입 요청 중(버튼 중복 탭 방지). 정원 경합은 재시도해도 서버가 막는다.
+    // 가입 요청 중(버튼 중복 탭 방지).
     val isJoining: Boolean = false,
-    // 가입이 막힌 사유. null 이 아니면 사유별 안내 시트를 띄운다.
+    // 가입이 막힌 사유.
     val joinBlock: JoinBlock? = null,
-    // 연결 문제로 참여가 실패했다. 토스트가 아니라 재시도를 낀 스낵바로 띄운다 — 사용자가 다시
-    // 버튼을 찾아 누르지 않아도 되고, 무엇이 실패했는지 화면에 남는다(Figma 1464:149).
+    // 연결 문제로 참여가 실패했다.
     val joinRetryable: Boolean = false,
     // 복제 요청 중(버튼 스피너 + 중복 탭 차단).
     val isCloning: Boolean = false,
-    // ---- 방 상세 3탭 (room 이 있을 때만 의미가 있다) ----
+    // 방 상세 3탭 (room 이 있을 때만 의미가 있다)
     val selectedTab: RoomTab = RoomTab.INFO,
-    // 피드. 커서 누적이라 목록·커서를 함께 들고 있는다.
+    // 피드.
     val threads: List<ThreadItem> = emptyList(),
     val threadsCursor: String? = null,
-    // 첫 페이지 로딩(스켈레톤) / 다음 페이지 로딩(하단 스피너)을 구분한다 — 스크롤 중 목록이 사라지면 안 된다.
+    // 첫 페이지 로딩(스켈레톤) / 다음 페이지 로딩(하단 스피너)을 구분한다
     val isThreadsLoading: Boolean = false,
     val isThreadsPaging: Boolean = false,
     val threadsError: String? = null,
-    // 방 안 랭킹. 정보 탭 헤더의 "내 달성률"도 여기서 온다(room 응답에는 내 성공률이 없다).
+    // 방 안 랭킹.
     val ranking: ChallengeRanking? = null,
     val isRankingLoading: Boolean = false,
     val rankingScope: RankingScope = RankingScope.MEMBER,
-    // 방 밖 랭킹. 세그먼트를 처음 열 때 받아온다 — 하루 1회 갱신이라 미리 받아둘 이유가 없다.
+    // 방 밖 랭킹.
     val crossRanking: CrossChallengeRanking? = null,
     val isCrossRankingLoading: Boolean = false,
-    // 오늘 인증 결과(인증 모듈). room 의 myTodayStatus 보다 자세해서 인증 시각·실패 사유·연속 일수·
-    // 이의 신청 기한을 여기서 가져온다(잔여 횟수는 없다 — 한도 폐기). 조회 실패는 흡수하고 room 값으로 떨어진다.
+    // 오늘 인증 결과(인증 모듈).
     val todayResult: TodayResult? = null,
-    // 이번 진입에서 판정 결과 모달을 이미 닫았는지. ack 가 실패해도 모달을 다시 올리지 않기 위한
-    // 화면 로컬 플래그다 — 서버는 다음 진입에 같은 미확인 판정을 다시 내려준다.
+    // 이번 진입에서 판정 결과 모달을 이미 닫았는지.
     val resultAcknowledged: Boolean = false,
-    // 이의 시트에 첨부된 사진의 업로드 결과 URL. 제출 body 에 그대로 실린다.
+    // 이의 시트에 첨부된 사진의 업로드 결과 URL.
     val appealImageUrl: String? = null,
     val isUploadingAppealImage: Boolean = false,
-    // 사유 입력 하단에 인라인으로 붙는 오류. 서버가 형식을 되돌려줬을 때만 채운다.
+    // 사유 입력 하단에 인라인으로 붙는 오류.
     val appealReasonError: String? = null,
-    // 지금 이 기기의 권한 현황. 런타임 권한만이 아니라 사용정보 접근·Health Connect 까지 포함한다.
+    // 지금 이 기기의 권한 현황.
     val permissions: PermissionSnapshot? = null,
     // 이의 제출 중(중복 탭 방지).
     val isSubmittingAppeal: Boolean = false,
-    // 신고 시트가 열려 있는지. 사유 선택과 완료를 한 플래그로 가르지 않는 이유는 reportResult 참고.
+    // 신고 시트가 열려 있는지.
     val isReportSheetOpen: Boolean = false,
-    // 신고 대상 사용자. null 이면 챌린지 신고다.
+    // 신고 대상 사용자.
     val reportUserId: String? = null,
-    // 참여 전에 받아야 하는 위치·건강 개별 동의. null 이 아니면 동의 시트를 띄운다.
-    val pendingConsent: AgreementType? = null,
+    // 참여에 필요한 동의와 권한.
+    val pendingAccess: VerificationAccess? = null,
+    val isAccessSubmitting: Boolean = false,
     val selectedReportReason: ReportReason? = null,
     val isSubmittingReport: Boolean = false,
-    // 접수 결과. null 이 아니면 완료 시트를 띄운다 — 접수는 끝났고 되돌릴 수 없으므로
-    // 사유 선택 화면으로 되돌아갈 수 있게 두지 않는다.
+    // 접수 결과.
     val reportResult: ReportResult? = null,
 ) : UiState {
-    /**
-     * 참여 버튼을 아예 숨길지. 비공개 방은 초대 링크가 유일한 입장 경로라 버튼을 노출하지 않는다 —
-     * 눌러봐야 막히는 버튼을 두면 사용자가 원인을 오해한다.
-     */
+    /** 참여 버튼을 아예 숨길지. */
     val hideJoinButton: Boolean
         get() = detail?.joinBlockReason?.isPrivateInviteOnly == true
 
-    /** 복제 버튼을 활성할 수 있는지. 공개 그룹만 복제된다. */
+    /** 복제 버튼을 활성할 수 있는지. */
     val canClone: Boolean
         get() = detail?.cloneable == true && !isCloning
 
-    /**
-     * 정보 탭 헤더의 내 달성률(0~1). 방 안 랭킹의 내 성공률이 원천이며, 참여 10회 미만이라
-     * 미등재면 null 이다 — 이때 헤더는 값 대신 "-" 를 그린다.
-     */
+    /** 정보 탭 헤더의 내 달성률(0~1). */
     val myProgressRate: Double?
         get() = ranking?.me?.successRate
 
-    /** 피드를 더 받아올 수 있는지. 커서가 없으면 마지막 페이지다. */
+    /** 피드를 더 받아올 수 있는지. */
     val canLoadMoreThreads: Boolean
         get() = threadsCursor != null && !isThreadsPaging && !isThreadsLoading && threadsError == null
 
@@ -353,18 +319,18 @@ data class ChallengeDetailState(
     }
 }
 
-/**
- * 가입 차단 안내에 필요한 값. 사유마다 문구와 다음 행동이 다르다.
- *
- * [reason] 이 null 이면 앱이 모르는 사유(서버가 추가한 값)이므로 일반 안내로 떨어뜨린다.
- */
+/** 가입 차단 안내에 필요한 값. */
 data class JoinBlock(
     val reason: JoinBlockReason?,
-    // REJOIN_COOLDOWN 일 때만 — 재입장 가능 시각(ISO)
+    // REJOIN_COOLDOWN 일 때만
     val rejoinAvailableAt: String? = null,
 )
 
 sealed interface ChallengeDetailReducerEvent : ReducerEvent {
+    data class VerificationAccessSubmitting(
+        val submitting: Boolean,
+    ) : ChallengeDetailReducerEvent
+
     data class Loading(
         val challengeId: String,
     ) : ChallengeDetailReducerEvent
@@ -377,7 +343,7 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val submitting: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 월 이동. 목록은 비우고 새 달을 읽는다 — 이전 달 색이 남으면 잘못된 기록으로 읽힌다. */
+    /** 월 이동. */
     data class CalendarMonthChanged(
         val month: String,
     ) : ChallengeDetailReducerEvent
@@ -406,7 +372,7 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val targetAppsRegistered: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 내 감시자 목록 갱신(초대·해제 후 재조회 포함). 조회 성공 = 참여자 = 섹션 노출. */
+    /** 내 감시자 목록 갱신(초대·해제 후 재조회 포함). */
     data class WatchersLoaded(
         val watchers: ChallengeWatchers,
     ) : ChallengeDetailReducerEvent
@@ -416,7 +382,7 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val inviting: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 방 홈 조회 성공 — 그룹 챌린지의 ACTIVE 멤버에게만 내려온다. */
+    /** 방 홈 조회 성공 */
     data class RoomLoaded(
         val room: ChallengeRoom,
     ) : ChallengeDetailReducerEvent
@@ -441,7 +407,7 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val joining: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 가입이 게이트에 막힘 — 사유별 시트를 띄운다. */
+    /** 가입이 게이트에 막힘 */
     data class JoinBlocked(
         val block: JoinBlock,
     ) : ChallengeDetailReducerEvent
@@ -465,18 +431,18 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val scope: RankingScope,
     ) : ChallengeDetailReducerEvent
 
-    /** 피드 조회 시작. [first] 면 첫 페이지(스켈레톤), 아니면 다음 페이지(하단 스피너). */
+    /** 피드 조회 시작. */
     data class ThreadsLoading(
         val first: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 피드 페이지 도착. [reset] 이면 기존 목록을 버리고 새로 시작한다(커서 무효·재진입). */
+    /** 피드 페이지 도착. */
     data class ThreadsLoaded(
         val page: ChallengeThreads,
         val reset: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 피드 조회 실패. 기존 목록은 남기고 재시도 행만 붙인다. */
+    /** 피드 조회 실패. */
     data class ThreadsFailed(
         val message: String,
     ) : ChallengeDetailReducerEvent
@@ -493,13 +459,13 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val loading: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 방 밖 랭킹 페이지 도착. [append] 면 기존 목록 뒤에 잇는다. */
+    /** 방 밖 랭킹 페이지 도착. */
     data class CrossRankingLoaded(
         val ranking: CrossChallengeRanking,
         val append: Boolean,
     ) : ChallengeDetailReducerEvent
 
-    /** 오늘 인증 결과 도착(인증 모듈). 실패해도 방 렌더를 막지 않으므로 성공 시에만 온다. */
+    /** 오늘 인증 결과 도착(인증 모듈). */
     data object ResultAcknowledged : ChallengeDetailReducerEvent
 
     data class AppealImageUploading(
@@ -536,8 +502,8 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
 
     data object ReportSheetDismissed : ChallengeDetailReducerEvent
 
-    data class SensitiveConsentRequested(
-        val type: AgreementType?,
+    data class VerificationAccessRequested(
+        val access: VerificationAccess?,
     ) : ChallengeDetailReducerEvent
 
     data class ReportReasonSelected(

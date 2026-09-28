@@ -3,13 +3,14 @@ package com.ruleup.profile.presentation.stats.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.repository.MyPageRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 통계 리포트 ViewModel. 지표 5종이 고정이라 조회는 진입 시 한 번이다. */
+/** 통계 리포트 ViewModel. */
 @HiltViewModel
 class MyStatsViewModel
     @Inject
@@ -46,7 +47,7 @@ class MyStatsViewModel
             viewModelScope.launch {
                 runCatching { myPageRepository.getStats() }
                     .onSuccess { dispatch(MyStatsReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(MyStatsReducerEvent.Failed(it.message ?: "통계를 불러오지 못했어요")) }
+                    .onFailure { dispatch(MyStatsReducerEvent.Failed(it.userFacingMessage("통계를 불러오지 못했어요"))) }
             }
         }
     }

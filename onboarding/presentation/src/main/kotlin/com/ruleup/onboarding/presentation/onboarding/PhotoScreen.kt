@@ -34,15 +34,11 @@ import com.ruleup.onboarding.domain.navigation.OnboardingTermsPage
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
-import com.ruleup.onboarding.presentation.onboarding.component.rememberProfileImagePicker
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.image.rememberImagePicker
 
-/**
- * 05 · 프로필 사진. 선택이라 고르지 않고 넘어가도 된다 — 건너뛰면 닉네임 첫 글자 아바타로 시작한다.
- *
- * 사진은 가입 요청에 실리지 않는다. 가입을 마치고 발급받은 accessToken 으로 따로 올린다.
- */
+/** 05 · 프로필 사진. */
 @Composable
 fun PhotoContent(
     onIntent: (OnboardingIntent) -> Unit,
@@ -51,7 +47,7 @@ fun PhotoContent(
 ) {
     val nav = LocalNavigationHelper.current
     val imagePicker =
-        rememberProfileImagePicker { uri -> onIntent(OnboardingIntent.SetProfileIcon(uri)) }
+        rememberImagePicker { uri -> onIntent(OnboardingIntent.SetProfileIcon(uri)) }
 
     OnboardingScaffold(
         step = OnboardingStep.PHOTO,

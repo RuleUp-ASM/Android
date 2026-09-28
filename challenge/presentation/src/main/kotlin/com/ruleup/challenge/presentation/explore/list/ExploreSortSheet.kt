@@ -22,12 +22,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ExploreSort
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-// 정렬 시트 노출 순서·라벨(명세 6종). 기본값인 인기순을 맨 위에 둔다.
+// 정렬 시트 노출 순서·라벨.
 private val sortOptions =
     listOf(
         SortOption(
@@ -68,7 +69,7 @@ private data class SortOption(
     val description: String,
 )
 
-/** 05 · 챌린지 정렬 시트. 명세 6종 중 하나를 고르면 즉시 적용된다(방향은 정의로 고정, 미노출). */
+/** 05 · 챌린지 정렬 시트. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ExploreSortSheet(
@@ -121,7 +122,7 @@ internal fun ExploreSortSheet(
 
 @Composable
 private fun SortSheetDragHandle() {
-    // Figma 시트 공통 핸들 규격(1134:682) — 위 10 · 아래 4, 36x4 r2
+    // Figma 시트 공통 핸들 규격(1134:682)
     Box(
         modifier =
             Modifier
@@ -197,6 +198,20 @@ private fun RadioMark(selected: Boolean) {
                     .size(24.dp)
                     .clip(CircleShape)
                     .border(1.5.dp, RuleUpTheme.colors.borderStrong, CircleShape),
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ExploreSortSheetPreview() {
+    RuleUpTheme {
+        ExploreSortSheet(
+            selected =
+                com.ruleup.challenge.domain.entity.ExploreSort.entries
+                    .first(),
+            onSelect = { },
+            onDismiss = { },
         )
     }
 }

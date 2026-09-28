@@ -25,13 +25,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.R
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/** 하단 탭 항목. 루트 화면(홈·탐색·챌린지·마이)이 공유한다. */
+/** 하단 탭 항목. */
 enum class RuleUpBottomTab(
     val label: String,
     @DrawableRes val iconRes: Int,
@@ -42,10 +43,7 @@ enum class RuleUpBottomTab(
     MY("마이", R.drawable.ic_person),
 }
 
-/**
- * 화면 하단 고정 탭 바 (Figma 1134:2062). 생성 버튼을 바 밖(우측 하단)으로 빼면 목록 마지막 카드를 가린다.
- * [onTabClick] 은 현재 선택된 탭이 아닌 탭을 눌렀을 때만 호출된다.
- */
+/** 화면 하단 고정 탭 바. */
 @Composable
 fun RuleUpBottomTabBar(
     selected: RuleUpBottomTab,
@@ -135,6 +133,19 @@ private fun BottomTabItem(
             color = tint,
             fontSize = 10.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RuleUpBottomTabBarPreview() {
+    RuleUpTheme {
+        RuleUpBottomTabBar(
+            selected =
+                com.ruleup.designsystem.component.RuleUpBottomTab.entries
+                    .first(),
+            onTabClick = { },
         )
     }
 }

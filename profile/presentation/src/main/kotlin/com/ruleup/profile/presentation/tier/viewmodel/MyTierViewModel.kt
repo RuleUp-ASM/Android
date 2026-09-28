@@ -4,16 +4,14 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.navigation.MyTierHistoryPage
 import com.ruleup.profile.domain.repository.MyPageRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 내 티어 상세 ViewModel. 승·강등 판정은 서버가 하고 화면은 조회·표시만 한다.
- * 최근 변동은 서버 고정 10건이라 "더 불러오기"가 없다.
- */
+/** 내 티어 상세 ViewModel. */
 @HiltViewModel
 class MyTierViewModel
     @Inject
@@ -51,7 +49,7 @@ class MyTierViewModel
             viewModelScope.launch {
                 runCatching { myPageRepository.getTier() }
                     .onSuccess { dispatch(MyTierReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(MyTierReducerEvent.Failed(it.message ?: "티어 정보를 불러오지 못했어요")) }
+                    .onFailure { dispatch(MyTierReducerEvent.Failed(it.userFacingMessage("티어 정보를 불러오지 못했어요"))) }
             }
         }
     }

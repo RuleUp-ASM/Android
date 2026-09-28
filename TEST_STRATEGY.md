@@ -1,6 +1,6 @@
 # RuleUp 테스트 전략
 
-마지막 갱신: 2026-09-07 · 현황 표는 `.claude/skills/testing/scripts/coverage_map.py` 출력
+마지막 갱신: 2026-09-28 · 현황 표는 `.claude/skills/testing/scripts/coverage_map.py` 출력
 
 이 문서의 중심은 커버리지 숫자가 아니라 **3절 미검증 목록**이다. 숫자만 있는 문서는 늘어나는 걸
 보며 안심하게 만들 뿐, 다음에 뭘 해야 하는지 말해주지 않는다.
@@ -12,62 +12,71 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | 층 | 무엇을 지키는가 | 대상 | 실행 |
 |---|---|---|---|
 | 케이스 | 규칙 하나 | entity·값 객체·매퍼·순수 함수 | `./gradlew test` |
-| 모듈 | 한 모듈의 계약 | UseCase·RepositoryImpl·ViewModel | `./gradlew test` |
-| UI | 상태 → 화면, 조작 → 의도 (기대값의 출처는 **Figma**) | Composable (Robolectric) | `./gradlew test` |
-| 통합 | 모듈 경계를 건너는 결합 | 네비게이션·직렬화·아키텍처 규칙 | `./gradlew test` |
-| 인수 | 사용자 스토리 | 실서버 관통 | 수동/야간 |
-
-**경로는 갈라지는 층에서 한 번만 검증한다.** 위층은 아래층을 옳게 엮었는지만 본다 — 층마다
-되풀이하면 테스트 수가 곱으로 늘고, 그러면 아무도 리팩터링을 못 한다.
-
-층을 고르는 기준은 하나다: **이 규칙이 깨지면 어느 파일을 고칠 것인가.** 그 파일이 사는 층에 둔다.
-`presentation` 안에 있다고 UI 층이 아니다 — Composable 에서 뽑아낸 순수 함수는 케이스 층이다.
-
-작성 기준 전체는 `.claude/skills/testing/SKILL.md`.
-
-## 2. 현황
-
-숫자는 `@Test` 개수. `–` 는 그 층 테스트가 없다는 뜻이다.
-
 | 모듈 | 케이스 | 모듈 | UI | 통합 | 인수 | 합계 |
 |---|---|---|---|---|---|---|
-| `:app` | – | – | 15 | 25 | 16 | 56 |
-| `:challenge:data` | 50 | – | – | – | – | 50 |
-| `:challenge:domain` | 34 | 4 | – | – | – | 38 |
-| `:challenge:presentation` | 56 | 71 | 64 | – | – | 191 |
-| `:core:datastore` | – | 13 | – | – | – | 13 |
-| `:core:domain` | 19 | – | – | – | – | 19 |
-| `:core:network` | 5 | – | – | – | – | 5 |
-| `:home:presentation` | 9 | 7 | 6 | – | – | 22 |
-| `:logging:domain` | 10 | – | – | – | – | 10 |
-| `:notification:data` | 10 | – | – | – | – | 10 |
-| `:notification:domain` | 12 | – | – | – | – | 12 |
-| `:notification:presentation` | 3 | 18 | 13 | – | – | 34 |
-| `:observability:data` | 20 | – | – | – | – | 20 |
-| `:onboarding:data` | 14 | – | – | – | – | 14 |
-| `:onboarding:domain` | 8 | 30 | – | – | – | 38 |
-| `:onboarding:presentation` | 7 | 26 | 39 | – | – | 72 |
-| `:profile:data` | 32 | – | – | – | – | 32 |
-| `:profile:presentation` | 7 | 73 | 76 | – | – | 156 |
-| `:report:data` | 12 | 8 | – | – | – | 20 |
-| `:report:domain` | 14 | – | – | – | – | 14 |
-| `:report:presentation` | 5 | 9 | 13 | – | – | 27 |
-| `:support:domain` | 12 | – | – | – | – | 12 |
-| `:support:presentation` | 3 | 23 | 10 | – | – | 36 |
-| `:tti:domain` | 13 | – | – | – | – | 13 |
-| `:verification:data` | 57 | 15 | – | – | – | 72 |
-| `:verification:domain` | 27 | 17 | – | – | – | 44 |
-| `:verification:presentation` | 7 | 17 | 8 | – | – | 32 |
-| **합계** | **446** | **331** | **244** | **25** | **16** | **1062** |
+| `(unknown)` | 114 | – | – | – | – | 114 |
+| `:.agents\skills\testing-workspace\iteration-1\eval-2-viewmodel-tests\with_skill\outputs\challenge\presentation` | 8 | 25 | – | – | – | 33 |
+| `:.agents\skills\testing-workspace\iteration-1\eval-2-viewmodel-tests\without_skill\outputs\challenge\presentation` | – | 34 | – | – | – | 34 |
+| `:.agents\skills\testing-workspace\iteration-1\eval-3-ui-robolectric\with_skill\outputs\challenge\presentation` | – | – | 20 | – | – | 20 |
+| `:.agents\skills\testing-workspace\iteration-1\eval-3-ui-robolectric\without_skill\outputs\challenge\presentation` | – | – | 50 | – | – | 50 |
+| `:.agents\skills\testing-workspace\iteration-2\eval-2-viewmodel-tests\with_skill\outputs\challenge\presentation` | 7 | 26 | – | – | – | 33 |
+| `:.agents\skills\testing-workspace\iteration-2\eval-2-viewmodel-tests\without_skill\outputs\challenge\presentation` | 7 | 26 | – | – | – | 33 |
+| `:.agents\skills\testing-workspace\iteration-2\eval-3-ui-robolectric\with_skill\outputs\challenge\presentation` | – | – | 28 | – | – | 28 |
+| `:.agents\skills\testing-workspace\iteration-2\eval-3-ui-robolectric\without_skill\outputs\challenge\presentation` | 5 | – | 69 | – | – | 74 |
+| `:.agents\skills\testing-workspace\iteration-3\eval-2-viewmodel-tests\with_skill\outputs\challenge\presentation` | 11 | 26 | – | – | – | 37 |
+| `:.agents\skills\testing-workspace\iteration-3\eval-2-viewmodel-tests\without_skill\outputs\challenge\presentation` | – | 32 | – | – | – | 32 |
+| `:.agents\skills\testing-workspace\iteration-3\eval-3-ui-robolectric\with_skill\outputs\challenge\presentation` | – | – | 22 | – | – | 22 |
+| `:.agents\skills\testing-workspace\iteration-3\eval-3-ui-robolectric\without_skill\outputs\challenge\presentation` | 37 | – | – | – | – | 37 |
+| `:app` | – | – | 27 | 25 | 16 | 68 |
+| `:challenge\data` | 50 | – | – | – | – | 50 |
+| `:challenge\domain` | 34 | 4 | – | – | – | 38 |
+| `:challenge\presentation` | 74 | 82 | 68 | – | – | 224 |
+| `:core\datastore` | – | 13 | – | – | – | 13 |
+| `:core\domain` | 23 | – | – | – | – | 23 |
+| `:core\network` | 5 | – | – | – | – | 5 |
+| `:home\presentation` | 9 | 7 | 6 | – | – | 22 |
+| `:logging\domain` | 10 | – | – | – | – | 10 |
+| `:notification\data` | 10 | – | – | – | – | 10 |
+| `:notification\domain` | 12 | – | – | – | – | 12 |
+| `:notification\presentation` | 3 | 18 | 13 | – | – | 34 |
+| `:observability\data` | 20 | – | – | – | – | 20 |
+| `:onboarding\data` | 17 | – | – | – | – | 17 |
+| `:onboarding\domain` | 8 | 35 | – | – | – | 43 |
+| `:onboarding\presentation` | 14 | 31 | 39 | – | – | 84 |
+| `:profile\data` | 30 | – | – | – | – | 30 |
+| `:profile\domain` | 5 | – | – | – | – | 5 |
+| `:profile\presentation` | 8 | 75 | 76 | – | – | 159 |
+| `:report\data` | 12 | 8 | – | – | – | 20 |
+| `:report\domain` | 14 | – | – | – | – | 14 |
+| `:report\presentation` | 5 | 9 | 13 | – | – | 27 |
+| `:support\domain` | 12 | – | – | – | – | 12 |
+| `:support\presentation` | 3 | 23 | 10 | – | – | 36 |
+| `:tti\domain` | 13 | – | – | – | – | 13 |
+| `:verification\data` | 59 | 15 | – | – | – | 74 |
+| `:verification\domain` | 36 | 32 | – | – | – | 68 |
+| `:verification\presentation` | 7 | 17 | 8 | – | – | 32 |
+| **합계** | **682** | **538** | **449** | **25** | **16** | **1710** |
 
-테스트 파일 수: 케이스 80, 모듈 48, UI 43, 통합 8, 인수 2
-
-앞의 네 층은 전부 JVM 에서 돌아 CI(`test.yml`)가 그대로 커버한다. 인수만 밖에 있다.
-
-**표가 말하지 않는 것** — `:app` 의 통합 18건 중 8건은 `src/androidTest` 라 CI(`./gradlew test`)가
-돌리지 않는다. 딥링크 파서 테스트가 여기 있어서 **외부 진입점 회귀가 초록불로 지나간다.**
+테스트 파일 수: 케이스 108, 모듈 56, UI 58, 통합 8, 인수 2
 
 ## 3. 미검증 — 알면서 안 하고 있는 것
+
+### 2026-09-28 권한·동의 및 안내 모달 통합 검증 (#504 · #505)
+
+현황 표는 2026-09-28 다시 집계했다. 이번 변경에서는 presentation의 `SensitiveConsentTest`를
+verification domain의 아래 테스트로 대체하고 생성·참여 연동 검증을 추가했다.
+
+- `PermissionSnapshotTest`: 서버 권한 토큰에 따른 위치·건강 동의 매핑, 다른 권한과 미지원 토큰 제외.
+- `CheckVerificationAccessUseCaseTest`: 기기 권한과 서버 동의의 독립성, 중복 동의 제거, 빈 권한 목록, 조회 실패.
+- `AgreeVerificationConsentUseCaseTest`: 기존·인트로 약관 버전 선택, 두 동의의 일괄 저장,
+  빈 동의 목록·중복 제거, 저장 실패, 인증과 무관한 약관 제출 방지.
+- `CreateChallengeViewModelTest`·`ChallengeDetailJoinTest`: 서버 권한 목록 우선, 수동 인증 전환,
+  동의 저장 후 권한 요청, 거부 시 설정 유지, 복귀 후 생성·참여 재개, 닫은 설정의 늦은 결과 무시.
+  권한 설정만 연 경우에는 장소·앱 등록을 건너뛰어 참여하지 않는다.
+- `VerificationAccessContentTest`: 사용자 요청(#505)에 따른 단일 안내의 동의·권한 표시,
+  저장 중 연타 차단, 동의 완료 후 권한 요청 버튼, 다음에 하기 동작.
+
+실제 OS·Health Connect 권한창과 서버 연결을 함께 거치는 실기기 검증은 아래 환경 항목에 남아 있다.
 
 품질 논의는 이 절에서 한다. 각 항목은 *무엇을 못 잡는가 · 왜 안 했나 · 풀리는 조건*을 적는다.
 
@@ -101,6 +110,16 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | 계측 테스트 8건이 CI 밖 | `test.yml` 이 `./gradlew test` 만 돈다 | 위와 같은 워크플로 |
 | ~~인수 테스트 실행 확인~~ | — | **2026-09-07 해소.** 시크릿을 받아 스테이징에서 14건 전부 통과시켰다. 그 과정에서 하네스 버그 둘(봉투 미해제·`dev/tokens` 경로 이중 `/api`)과 `#417`(4xx 미변환)을 잡았다 | — |
 | `TokenAuthenticator` 401 갱신 | 자동 로그아웃 분기가 어긋나면 전 사용자가 튕긴다 | `core:network` 에 테스트 소스셋이 **생겼다**(`ErrorBodyInterceptorTest`) — 이제 막는 건 시간뿐이다 | 이어서 진행 |
+
+
+### 2026-09-28 · 권한·공통 모델·화면 계측
+
+- `PreviewSmokeTest`: 이번에 추가한 79개 Preview를 호스트 주입이나 네트워크 없이 렌더링한다. 카카오 지도는 inspection placeholder로 검사한다.
+- `ScreenTrackingTest`: 복원된 첫 화면, 같은 경로의 다른 인자, 뒤로 가기, 중복/미등록 경로의 screen_view를 검사한다.
+- `TtiScreenTest`: 초기 로딩 완료·렌더 프레임·지도 완료 이후 1회 전송을 검사한다. 실제 기기의 TTI 수치와 jank는 측정하지 않았다.
+- 공통 User/Challenge 포함 구조와 DTO request/response 변경은 기존 매퍼·ViewModel·UI 테스트를 새 모델로 이행해 검증한다.
+- `ChallengeTargetsViewModelTest`: 데이터 없음·조회 실패도 초기 로딩을 종료하는지 검사한다.
+- `assembleDebug`, `test`, `lint` 통과. 서버 인수 테스트는 기본 실행에서 제외되며, OS 권한창·FCM·실제 지도·Health Connect·릴리즈 설치는 이번에 실행하지 않았다.
 
 ## 4. 인수 시나리오 ↔ 하위 테스트
 
@@ -145,3 +164,24 @@ CI 가 남의 네트워크 사정에 인질이 된다.
 테스트를 늘리거나 줄이는 PR 은 이 문서도 같이 고친다. 코드와 같은 PR 에 있어야 안 썩는다.
 2절 표는 손으로 세지 말고 스크립트 출력을 붙인다. 3절은 손으로 쓴다 — **왜 안 했는지가 값이고,
 그건 기계가 모른다.**
+
+
+## #509 QA 수정 검증 (2026-09-28)
+
+- 완료: 종료일 기준 D-day, 복제 초안 1회 전달, 초기 캘린더 선택일 조회, 제재 ID 누락 보존, 빈 약관 버전 폴백, 미래 생일 구분, KST 제재 시각, 429 기본 대기, 수집 대상 복구와 실패 시 기존 대상 보존, 중복 신고 코드 매핑의 회귀 검증.
+- 완료: `ktlintFormat test assembleDebug assembleRelease lint --no-parallel --no-daemon --continue` 전체 성공. debug/release 테스트 및 릴리즈 빌드 포함. 현재 release는 minify 비활성 상태이므로 R8 검증은 포함하지 않는다.
+- 미검증: Play 설치 referrer→가입→초대 알림 종단, 실제 FCM/Crashlytics·카카오 키, API 26·OEM 절전·GPS 체류·Health Connect 판정·서버 자정 전환. API36 실기기에서 권한·수집 대상 복구·sync 요청 성공까지 확인. 실제 건강 기록·GPS 체류·서버 발행 조건이 필요한 판정은 미검증.
+- 미검증: Room 버퍼 15일/10,000행 상한의 대량 실데이터 성능과 BUFFER_EVICTED 서버 수신 결과. SQL 컴파일은 확인했으나 단말 부하 시험은 별도 필요.
+- 미검증: 가로 화면/분할 화면의 카드·칩·실패 예정 카드 여백은 재현 화면과 크기 조건 필요.
+
+
+## #509 실기기 QA (2026-09-28)
+
+- 환경: Samsung SM-S948N, Android 16/API36, staging debug, chore/503. 사용자 승인 계정 및 실제 신호로 검증.
+- 완료: APK 데이터 유지 업데이트, 로그인 후 홈/마이 조회, cold/warm deeplink extra의 활동 캘린더 선택 날짜와 상세 표시.
+- 완료: 전경·백그라운드 위치, 사용정보 접근, Health Connect 걸음·거리·수면 권한 요청과 복귀 상태 반영. FCM 토큰 서버 등록.
+- 추가 수정: 전체 Android 권한 이름을 정규화해 허용 상태·수집 대상·정보 수집 동의·권한 요청 경로·권한 복구 행 필터에서 동일하게 해석. 실제 서버의 android.permission.health.READ_STEPS/READ_DISTANCE로 수집 대상 0→2 복구 확인.
+- 완료: 21:41 KST 실제 동기화 HTTP 200, Worker SUCCESS. 건강 수집 대상 2개, 실제 건강 기록 0건으로 판정 성공은 미검증. GPS 챌린지는 서버 인증 장소 미설정 상태.
+- 검증: verification:domain 전체 단위 테스트 및 debug 앱/계측 APK 빌드 성공. PermissionSnapshotTest 10건, RestoreVerificationTargetsUseCaseTest 4건 성공. 실기기 계측 테스트 8건 성공(URI 7건 + 앱 컨텍스트 1건).
+- 남음: Health Connect 실제 기록 제공 및 판정, 건강 백그라운드 읽기(현재 DENIED), GPS 장소 설정·체류·재부팅, OEM 절전 장시간 생존, 실제 FCM/Crashlytics, Play 설치 경로, API26, 자정 전환. 현재 기기만으로 모든 환경 조건을 대체할 수 없음.
+- 추가 확인: challenge:presentation·verification:presentation 단위 테스트와 변경 모듈 ktlintCheck 성공. git diff --check 통과.

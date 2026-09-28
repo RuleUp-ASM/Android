@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -59,11 +60,12 @@ import com.ruleup.profile.presentation.home.viewmodel.MyHomeEffect
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeState
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
 private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 
-/** 마이 허브 (Figma 1134:1353). 하단 MY 탭의 루트 화면. */
+/** 마이 허브. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyHomeScreen(
@@ -71,6 +73,7 @@ fun MyHomeScreen(
     viewModel: MyHomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) {
@@ -91,7 +94,7 @@ fun MyHomeScreen(
     MyHomeContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MyHomeContent(
@@ -240,7 +243,7 @@ private fun MyHomeHeader() {
     )
 }
 
-/** 프로필 행 (Figma 1134:1372). 탭하면 프로필 수정으로 간다. */
+/** 프로필 행. */
 @Composable
 private fun ProfileRow(
     home: MyHome,
@@ -274,7 +277,7 @@ private fun ProfileRow(
                 Text(
                     text = home.nickname.take(1),
                     color = RuleUpPalette.BgSurface,
-                    // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+                    // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -324,18 +327,12 @@ private fun nicknameBadgeLabel(status: NicknameStatus): String? =
     when (status) {
         NicknameStatus.PENDING -> "검수 중"
         NicknameStatus.REJECTED -> "반려됨"
-        // 복원 중 선점 충돌. 로그인 직후 재설정을 강제하므로 마이 홈까지 오는 경우는 없지만,
-        // 상태값이 존재하는 이상 뱃지로 이유를 알려 준다.
+        // 복원 중 선점 충돌.
         NicknameStatus.CONFLICT -> "변경 필요"
         NicknameStatus.APPROVED -> null
     }
 
-/**
- * 티어 요약 (Figma 1134:1380).
- *
- * 표시 티어를 쓴다 — 유예 밴드에서는 실제 티어보다 높고, 방 입장 판정도 이 값이라
- * 화면이 다른 값을 보여 주면 "들어갈 수 있는 방"이 어긋난다.
- */
+/** 티어 요약. */
 @Composable
 private fun TierCard(
     home: MyHome,
@@ -406,12 +403,7 @@ private fun TierCard(
     }
 }
 
-/**
- * 표시 티어 구간 안에서의 진행률.
- *
- * 상세 화면은 서버가 준 값으로 그리지만 `GET /me/home` 은 구간 경계를 내려주지 않아 여기서만
- * 티어 표로 계산한다. 유예 밴드에서 음수가 되므로 0 으로 자른다.
- */
+/** 표시 티어 구간 안에서의 진행률. */
 private fun tierProgress(home: MyHome): Float {
     val tier = home.displayTier
     val span = tier.maxScore - tier.minScore
@@ -419,7 +411,7 @@ private fun tierProgress(home: MyHome): Float {
     return ((home.score - tier.minScore).toFloat() / span).coerceIn(0f, 1f)
 }
 
-/** 진행 중 · 완료 · 전체 성공률 (Figma 1134:1394). 성공률만 `/me/stats` 에서 온다. */
+/** 진행 중 · 완료 · 전체 성공률. */
 @Composable
 private fun CountsRow(
     home: MyHome,
@@ -449,7 +441,7 @@ private fun CountsRow(
         )
         CellDivider()
         CountCell(
-            // 아직 안 왔거나 표본이 없으면 "—". 0% 로 접으면 전부 실패한 것처럼 보인다.
+            // 아직 안 왔거나 표본이 없으면 "—".
             value = stats?.successRate?.let { "${(it * 100).toInt()}%" } ?: "—",
             label = "전체 성공률",
             valueColor = RuleUpTheme.colors.brand,
@@ -486,20 +478,20 @@ private fun CountCell(
     }
 }
 
-/** 기록 메뉴 (Figma 1134:1408). */
+/** 기록 메뉴. */
 @Composable
 private fun RecordMenuCard(onIntent: (MyHomeIntent) -> Unit) {
     MenuCard {
         MenuRow(label = "인증 기록") { onIntent(MyHomeIntent.OpenCalendar) }
         MenuDivider()
-        // Figma 의 "이번 달 2회 남음"은 그리지 않는다 — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2).
+        // Figma 의 "이번 달 2회 남음"은 그리지 않는다
         MenuRow(label = "이의 내역") { onIntent(MyHomeIntent.OpenAppeals) }
         MenuDivider()
         MenuRow(label = "감시자", trailing = "챌린지별 설정") { onIntent(MyHomeIntent.OpenWatchers) }
     }
 }
 
-/** 계정 메뉴 (Figma 1134:1423). */
+/** 계정 메뉴. */
 @Composable
 private fun AccountMenuCard(onIntent: (MyHomeIntent) -> Unit) {
     MenuCard {
@@ -509,12 +501,7 @@ private fun AccountMenuCard(onIntent: (MyHomeIntent) -> Unit) {
     }
 }
 
-/**
- * Figma 최종안에 자리가 없는 기존 화면들.
- *
- * 통계·그룹 랭킹·친구 초대·차단 목록은 이미 동작하는 화면이라, 디자인에서 빠졌다는 이유만으로
- * 진입점을 지우면 도달할 방법이 사라진다. 자리를 옮길지는 디자인 확인 후 정한다.
- */
+/** Figma 최종안에 자리가 없는 기존 화면들. */
 @Composable
 private fun ExtraMenuCard(onIntent: (MyHomeIntent) -> Unit) {
     MenuCard {
@@ -579,6 +566,19 @@ private fun MenuRow(
             text = "›",
             color = RuleUpTheme.colors.textMuted,
             style = RuleUpTheme.typography.section,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyHomeContentPreview() {
+    RuleUpTheme {
+        MyHomeContent(
+            state =
+                com.ruleup.profile.presentation.home.viewmodel.MyHomeState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
         )
     }
 }

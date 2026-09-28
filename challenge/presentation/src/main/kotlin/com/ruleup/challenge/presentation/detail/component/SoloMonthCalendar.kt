@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeCalendar
 import com.ruleup.challenge.domain.entity.ChallengeCalendarDay
@@ -31,17 +32,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
 
-/**
- * 솔로 상세의 월 캘린더 (Figma 1134:1930).
- *
- * **판정 대상일만 색을 갖는다.** 주 3회 방이면 한 달에 12~13칸만 응답에 오고 나머지는 빈 날짜다 —
- * 없는 날을 실패로 칠하면 사용자가 쉬는 날에 실패했다고 읽는다.
- *
- * 유예 창(`FAIL_EXPECTED`)을 실패와 다른 색으로 그린다. 그 구간은 아직 뒤집힐 수 있고(인증 정책
- * §2.1), 확정 실패와 같아 보이면 이의를 낼 수 있는데도 포기하게 된다.
- *
- * 그룹 방에서는 그리지 않는다 — 같은 자리를 랭킹·피드가 쓴다.
- */
+/** 솔로 상세의 월 캘린더. */
 @Composable
 internal fun SoloMonthCalendar(
     month: String,
@@ -51,7 +42,7 @@ internal fun SoloMonthCalendar(
     onNextMonth: () -> Unit,
     modifier: Modifier = Modifier,
     today: LocalDate = ServiceDate.today(),
-    // D+1 유예 중인 지난 건에 이의를 내는 유일한 진입점이다. 없으면 어제 건은 낼 방법이 없다.
+    // D+1 유예 중인 지난 건에 이의를 내는 유일한 진입점이다.
     onAppealDay: ((ChallengeCalendarDay) -> Unit)? = null,
 ) {
     Column(
@@ -121,10 +112,7 @@ private fun WeekdayRow() {
     }
 }
 
-/**
- * 6주 격자를 고정으로 그리지 않고 **그 달에 필요한 줄 수만** 그린다 — 달마다 카드 높이가
- * 달라지는 편이, 빈 줄 하나가 늘 붙어 있는 것보다 낫다.
- */
+/** 6주 격자를 고정으로 그리지 않고 그 달에 필요한 줄 수만 그린다 */
 @Composable
 private fun MonthGrid(
     month: String,
@@ -134,7 +122,7 @@ private fun MonthGrid(
 ) {
     val yearMonth = parseMonth(month) ?: return
     val first = yearMonth.atDay(1)
-    // 일요일 시작. DayOfWeek 는 월=1..일=7 이라 7을 0으로 접는다.
+    // 일요일 시작.
     val leading = first.dayOfWeek.value % 7
     val length = yearMonth.lengthOfMonth()
     val cells = leading + length
@@ -153,7 +141,7 @@ private fun MonthGrid(
                                 dayNumber = dayNumber,
                                 status = day?.status,
                                 isToday = date == today,
-                                // 낼 수 있는 날만 누를 수 있다 — 기한·자격 판단은 서버가 appealable 로 준다.
+                                // 낼 수 있는 날만 누를 수 있다
                                 onClick =
                                     day
                                         ?.takeIf { it.appealable && it.verificationId != null }
@@ -190,6 +178,8 @@ private fun DayCell(
             text = "$dayNumber",
             color =
                 when {
+                    status == ChallengeDayStatus.FAILED -> RuleUpTheme.colors.danger
+                    status == ChallengeDayStatus.FAIL_EXPECTED -> RuleUpTheme.colors.warning
                     fill != null -> RuleUpTheme.colors.onSuccess
                     isToday -> RuleUpTheme.colors.brand
                     else -> RuleUpTheme.colors.textMuted
@@ -234,10 +224,7 @@ private fun LegendItem(
     }
 }
 
-/**
- * 칸 색. **판정 대상이 아닌 날과 오늘은 색을 갖지 않는다** — 아직 결과가 없는 것이지 실패가
- * 아니다. 모르는 상태(서버가 enum 을 늘린 경우)도 같은 이유로 비운다.
- */
+/** 칸 색. */
 private val ChallengeDayStatus?.fillColor: Color?
     @Composable
     get() =
@@ -248,7 +235,7 @@ private val ChallengeDayStatus?.fillColor: Color?
             ChallengeDayStatus.IN_PROGRESS, null -> null
         }
 
-/** "2026-09" → "2026년 9월". 파싱 못 하면 원문 그대로 — 지어내지 않는다. */
+/** "2026-09" → "2026년 9월". */
 internal fun monthTitle(month: String): String {
     val parsed = parseMonth(month) ?: return month
     return "${parsed.year}년 ${parsed.monthValue}월"
@@ -262,3 +249,11 @@ internal fun parseMonth(month: String): YearMonth? =
     }
 
 private val WEEKDAYS = listOf("일", "월", "화", "수", "목", "금", "토")
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun SoloMonthCalendarPreview() {
+    RuleUpTheme {
+        SoloMonthCalendar(month = "2026-09", calendar = null, isLoading = false, onPrevMonth = { }, onNextMonth = { })
+    }
+}

@@ -32,7 +32,7 @@ jobs:
 
       - run: chmod +x ./gradlew
 
-      # google-services.json 은 레포에 커밋하지 않으므로(.gitignore) 시크릿에서 복원한다.
+      # Firebase 설정을 시크릿에서 복원
       - name: Create google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
@@ -41,7 +41,7 @@ jobs:
       - name: ktlint
         run: ./gradlew ktlintCheck --no-daemon --stacktrace
 
-      # ktlint 가 실패해도 android lint 결과까지 함께 보고하도록 항상 실행한다.
+      # ktlint 실패 시에도 Android lint 실행
       - name: Android lint
         if: ${{ !cancelled() }}
         run: ./gradlew lint --no-daemon --stacktrace

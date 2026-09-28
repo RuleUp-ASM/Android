@@ -8,11 +8,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface MyCalendarIntent : MviIntent {
-    /**
-     * 화면 진입 — 당월 조회 + 오늘 선택.
-     *
-     * [date] 가 있으면 그 날짜가 든 달을 열고 그 일자를 고른다(실패 예정 알림 딥링크).
-     */
+    /** 화면 진입 */
     data class Load(
         val date: String? = null,
     ) : MyCalendarIntent
@@ -30,11 +26,7 @@ sealed interface MyCalendarIntent : MviIntent {
     /** 조회에 실패한 달을 다시 불러온다. */
     data object Retry : MyCalendarIntent
 
-    /**
-     * D+1 유예 중인 실패 건의 이의로 간다. 시트가 아니라 **방 상세로 보낸다** — 이의 시트는
-     * challenge:presentation 에 있고 presentation 끼리는 의존하지 않는다. 복제하면 정책 문구가
-     * 두 벌로 갈라져 한쪽만 고쳐진다.
-     */
+    /** D+1 유예 중인 실패 건의 이의로 간다. */
     data class OpenAppeal(
         val challengeId: String,
     ) : MyCalendarIntent
@@ -46,7 +38,7 @@ data class MyCalendarState(
     // YYYY-MM (표시 중인 월)
     val month: String,
     val isLoading: Boolean,
-    // date(YYYY-MM-DD) → 일자 상태. 응답에 없는 날짜는 비대상일.
+    // date(YYYY-MM-DD) → 일자 상태.
     val days: Map<String, CalendarDay>,
     // 선택한 일자 (YYYY-MM-DD)
     val selectedDate: String?,
@@ -54,6 +46,7 @@ data class MyCalendarState(
     val dayDetail: CalendarDayDetail?,
     val isLoadingDetail: Boolean,
     val errorMessage: String?,
+    val selectedDay: CalendarDay? = null,
 ) : UiState {
     companion object {
         val initial =
@@ -96,5 +89,5 @@ sealed interface MyCalendarReducerEvent : ReducerEvent {
     ) : MyCalendarReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias MyCalendarEffect = NoEffect

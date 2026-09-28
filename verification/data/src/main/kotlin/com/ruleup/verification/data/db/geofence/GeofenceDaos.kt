@@ -5,10 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Upsert
 
-/**
- * 미전송분 드레인: tagPending(배치키) → byBatch → markSynced(명세 §2.4·§3.4). **미태깅 행으로 좁히면
- * 전송 실패분이 버퍼에 갇힌다**(#319) — 재전송이 안전한 근거는 서버 멱등(recordId · userId+signalType+observedAt).
- */
+/** 미전송분 드레인: tagPending(배치키) → byBatch → markSynced. */
 @Dao
 interface GeofenceTransitionDao {
     @Insert
@@ -23,7 +20,19 @@ interface GeofenceTransitionDao {
     @Query("UPDATE geofence_transition SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    @Query("DELETE FROM geofence_transition WHERE synced = 1 AND occurredAt < :threshold")
+    @Query(
+        "SELECT MIN(occurredAt) FROM geofence_transition WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM geofence_transition ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun oldestEvicted(threshold: Long): Long?
+
+    @Query(
+        "SELECT MAX(occurredAt) FROM geofence_transition WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM geofence_transition ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun newestEvicted(threshold: Long): Long?
+
+    @Query(
+        "DELETE FROM geofence_transition WHERE occurredAt < :threshold OR id NOT IN (SELECT id FROM geofence_transition ORDER BY occurredAt DESC, id DESC LIMIT 10000)",
+    )
     suspend fun purge(threshold: Long)
 }
 
@@ -41,7 +50,19 @@ interface LocationSampleDao {
     @Query("UPDATE location_sample SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    @Query("DELETE FROM location_sample WHERE synced = 1 AND occurredAt < :threshold")
+    @Query(
+        "SELECT MIN(occurredAt) FROM location_sample WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM location_sample ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun oldestEvicted(threshold: Long): Long?
+
+    @Query(
+        "SELECT MAX(occurredAt) FROM location_sample WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM location_sample ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun newestEvicted(threshold: Long): Long?
+
+    @Query(
+        "DELETE FROM location_sample WHERE occurredAt < :threshold OR id NOT IN (SELECT id FROM location_sample ORDER BY occurredAt DESC, id DESC LIMIT 10000)",
+    )
     suspend fun purge(threshold: Long)
 }
 

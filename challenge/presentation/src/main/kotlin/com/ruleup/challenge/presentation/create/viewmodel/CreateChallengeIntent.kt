@@ -13,22 +13,24 @@ enum class TextEditField {
 }
 
 sealed interface CreateChallengeIntent : MviIntent {
-    // ---- 입력 화면 ----
+    // 입력 화면
 
-    /** 화면 진입 — 추천 루틴 3개를 불러온다. */
+    /** 화면 진입 */
     data object Load : CreateChallengeIntent
+
+    data object ConfirmOpened : CreateChallengeIntent
 
     data class SetRoutineDescription(
         val description: String,
     ) : CreateChallengeIntent
 
-    /** 경로 B: 설명으로 초안 생성(LLM). 폴백이면 이 화면에 머문다. */
+    /** 경로 B: 설명으로 초안 생성(LLM). */
     data object SubmitDescription : CreateChallengeIntent
 
-    /** 폴백 화면에서 입력 화면으로 돌아간다. 쓰던 설명은 지우지 않는다. */
+    /** 폴백 화면에서 입력 화면으로 돌아간다. */
     data object DismissFallback : CreateChallengeIntent
 
-    /** 초안 생성 취소(뒤로가기). 화면을 잠그되 빠져나갈 길은 남긴다. */
+    /** 초안 생성 취소(뒤로가기). */
     data object CancelDrafting : CreateChallengeIntent
 
     /** 경로 A: 추천 칩 탭 → 템플릿 초안(LLM 미경유, 대기 없음). */
@@ -39,7 +41,7 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 추천 영역만 재시도. */
     data object RetryTemplates : CreateChallengeIntent
 
-    // ---- 확인 화면 ----
+    // 확인 화면
     data class SetTitle(
         val title: String,
     ) : CreateChallengeIntent
@@ -77,18 +79,18 @@ sealed interface CreateChallengeIntent : MviIntent {
         val end: String,
     ) : CreateChallengeIntent
 
-    /** 주간 수행 횟수 1~7. 요일이 아니라 "그 주에 몇 번" 이다. */
+    /** 주간 수행 횟수 1~7. */
     data class SetWeeklyCount(
         val count: Int,
     ) : CreateChallengeIntent
 
-    /** 목표값 편집. 값은 위젯이 문자열로 만들어 올린다(kind 로 위젯을 고른다). */
+    /** 목표값 편집. */
     data class EditParam(
         val key: String,
         val value: String,
     ) : CreateChallengeIntent
 
-    /** 인증 방식 선택. 초안이 AUTO 로 온 루틴이면 확인 화면에서 오갈 수 있다. */
+    /** 인증 방식 선택. */
     data class SetVerificationType(
         val type: VerificationType,
     ) : CreateChallengeIntent
@@ -98,15 +100,9 @@ sealed interface CreateChallengeIntent : MviIntent {
         val enabled: Boolean,
     ) : CreateChallengeIntent
 
-    /** 화면이 OS 다이얼로그로 받은 허용 토큰을 돌려준다. */
-    data class PermissionsResult(
-        val granted: Set<String>,
-    ) : CreateChallengeIntent
+    data object VerificationPermissionsReturned : CreateChallengeIntent
 
-    /**
-     * 텍스트 입력에서 포커스가 빠졌다. 타이핑마다 보내지 않고 **여기서 원본과 비교해 1회** 기록한다.
-     * 되돌려 원문과 같아졌으면 보내지 않는다.
-     */
+    /** 텍스트 입력에서 포커스가 빠졌다. */
     data class ConfirmTextEdit(
         val field: TextEditField,
     ) : CreateChallengeIntent
@@ -114,8 +110,8 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 이대로 만들기. */
     data object Create : CreateChallengeIntent
 
-    /** 위치·건강 개별 동의 시트에서 동의하고 계속. */
-    data object AgreeSensitiveConsent : CreateChallengeIntent
+    /** 자동 인증 설정 시트에서 수집·이용에 동의하고 권한 요청을 이어간다. */
+    data object ConfirmVerificationAccess : CreateChallengeIntent
 
-    data object DismissSensitiveConsent : CreateChallengeIntent
+    data object DismissVerificationAccess : CreateChallengeIntent
 }

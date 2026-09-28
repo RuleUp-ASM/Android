@@ -14,10 +14,7 @@ enum class UsageEventKind {
     SCREEN,
 }
 
-/**
- * usage_event.eventType. 한 컬럼에 두 계열이 섞이므로 [UsageEventKind] 별 값 집합의 합집합이다.
- * [appEventType] 이 있는 값만 APP 행에 오고, 없는 값(UNLOCK·SCREEN_ON)은 SCREEN 행에만 온다.
- */
+/** usage_event.eventType. */
 enum class UsageEventType(
     val appEventType: AppEventType?,
 ) {
@@ -28,10 +25,7 @@ enum class UsageEventType(
     SCREEN_ON(null),
 }
 
-/**
- * 스크린타임/WAKE 버퍼(명세 §2.2). 시스템이 며칠 내 정리하므로 매 sync 마다 커서~now 를 누적 적재한다.
- * RESUMED/PAUSED 시퀀스를 그대로 보존(누적 foregroundSec 단일값 금지).
- */
+/** 스크린타임/WAKE 버퍼. */
 @Entity(tableName = "usage_event")
 data class UsageEventEntity(
     @PrimaryKey(autoGenerate = true)
@@ -45,20 +39,14 @@ data class UsageEventEntity(
     val collectedAt: String? = null,
 )
 
-/**
- * SCREEN_TIME 대상 패키지(스코프 소스).
- *
- * **챌린지 단위로 들고 있는다.** 패키지만 두면 한 방의 대상이 바뀔 때 다른 방의 대상까지 지우거나,
- * 겹치지 않게 남기려다 한 번 담긴 패키지를 영영 못 지운다 — 대상이 아닌 앱의 사용 기록을 계속
- * 모으게 되므로 둘 다 받아들일 수 없다.
- */
+/** SCREEN_TIME 대상 패키지(스코프 소스). */
 @Entity(tableName = "usage_target", primaryKeys = ["challengeId", "packageName"])
 data class UsageTargetEntity(
     val challengeId: String,
     val packageName: String,
 )
 
-/** queryEvents 증분 수집용 커서(직전 조회 시각). 단일 행(id=0). */
+/** queryEvents 증분 수집용 커서(직전 조회 시각). */
 @Entity(tableName = "usage_cursor")
 data class UsageCursorEntity(
     @PrimaryKey
@@ -80,10 +68,7 @@ interface UsageEventDao {
     @Query("UPDATE usage_event SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    /**
-     * 당일 첫 화면 이벤트 시각(전송 스펙 §4 WAKE). **미전송분이 아니라 [since] 이후 전부**를 본다 —
-     * 첫 잠금해제는 하루 한 번뿐이라, 앞선 배치로 이미 나갔으면 이후 sync 에서 값이 사라진다(서버는 멱등).
-     */
+    /** 당일 첫 화면 이벤트 시각. */
     @Query(
         "SELECT MIN(occurredAt) FROM usage_event " +
             "WHERE kind = 'SCREEN' AND eventType = :eventType AND occurredAt >= :since",
@@ -93,13 +78,31 @@ interface UsageEventDao {
         since: Long,
     ): Long?
 
-    @Query("DELETE FROM usage_event WHERE synced = 1 AND occurredAt < :threshold")
+    @Query(
+        "SELECT MIN(occurredAt) FROM usage_event WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM usage_event ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun oldestEvicted(threshold: Long): Long?
+
+    @Query(
+        "SELECT MAX(occurredAt) FROM usage_event WHERE synced = 0 AND (occurredAt < :threshold OR id NOT IN (SELECT id FROM usage_event ORDER BY occurredAt DESC, id DESC LIMIT 10000))",
+    )
+    suspend fun newestEvicted(threshold: Long): Long?
+
+    @Query(
+        "DELETE FROM usage_event WHERE occurredAt < :threshold OR id NOT IN (SELECT id FROM usage_event ORDER BY occurredAt DESC, id DESC LIMIT 10000)",
+    )
     suspend fun purge(threshold: Long)
 }
 
 @Dao
 interface UsageTargetDao {
-    /** 수집 스코프는 방을 가리지 않는다 — 참여 중인 모든 방의 대상을 합쳐 본다. */
+    @androidx.room.Transaction
+    suspend fun replaceAll(items: List<UsageTargetEntity>) {
+        clear()
+        upsertAll(items)
+    }
+
+    /** 수집 스코프는 방을 가리지 않는다 */
     @Query("SELECT DISTINCT packageName FROM usage_target")
     suspend fun all(): List<String>
 

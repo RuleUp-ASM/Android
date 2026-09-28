@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeRankEntry
 import com.ruleup.challenge.domain.entity.CrossChallengeRanking
@@ -40,15 +41,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.RankingScope
 import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 랭킹 탭 (Figma 1134:326 · 1134:428).
- *
- * 세그먼트로 비교 단위를 바꾼다 — **멤버**는 같은 방 사람끼리 요청 시 실시간 집계, **방 순위**는 같은
- * 모드의 방끼리 하루 1회 03시 배치 스냅샷이다. 등재 기준도 갱신 주기도 달라 한 목록에 섞지 않는다.
- *
- * 등재 미달은 목록에서 빼지 않고 등수 자리에 "-" 를 둔다 — 빼 버리면 자기가 왜 안 보이는지 알 수 없고,
- * 등수가 있는 사람들의 순번도 어긋난다.
- */
+/** 랭킹 탭. */
 @Composable
 internal fun RoomRankingTab(
     state: ChallengeDetailState,
@@ -59,7 +52,7 @@ internal fun RoomRankingTab(
     val listState = rememberLazyListState()
     val isRoomScope = state.rankingScope == RankingScope.ROOM
 
-    // 방 순위만 페이징이 있다. 하단 3개 안에 들어오면 다음 페이지를 미리 받는다.
+    // 방 순위만 페이징이 있다.
     val shouldPage by remember(state.crossRanking?.items?.size, isRoomScope) {
         derivedStateOf {
             if (!isRoomScope) return@derivedStateOf false
@@ -70,7 +63,7 @@ internal fun RoomRankingTab(
             last >= listState.layoutInfo.totalItemsCount - 3
         }
     }
-    // 이펙트를 콜백 신원 변화로 재시작시키지 않는다 — 재구성마다 새 람다가 오면 페이징이 헛돈다.
+    // 이펙트를 콜백 신원 변화로 재시작시키지 않는다
     val loadMore by rememberUpdatedState(onLoadMoreCross)
     LaunchedEffect(listState, state.canLoadMoreCrossRanking) {
         snapshotFlow { shouldPage }.collect { if (it && state.canLoadMoreCrossRanking) loadMore() }
@@ -113,8 +106,8 @@ private fun LazyListScope.memberRanking(state: ChallengeDetailState) {
             if (ranking.items.isEmpty()) {
                 item(key = "empty") { RoomEmptyState(message = "아직 순위에 오른 멤버가 없어요") }
             } else {
-                items(ranking.items, key = { "member-${it.user.userId}" }) { entry ->
-                    MemberRankRow(entry = entry, isMe = entry.user.userId == state.myUserId)
+                items(ranking.items, key = { "member-${it.user.id}" }) { entry ->
+                    MemberRankRow(entry = entry, isMe = entry.user.id == state.myUserId)
                 }
                 item(key = "footnote") {
                     RankingFootnote("인증 ${RankingPolicy.IN_ROOM_MIN_PARTICIPATIONS}회부터 순위에 올라요")
@@ -164,7 +157,7 @@ private fun LazyListScope.roomRanking(state: ChallengeDetailState) {
     }
 }
 
-/** 내 순위 요약 (Figma 1134:360) — 내 순위 · 성공률 · 참여. */
+/** 내 순위 요약 */
 @Composable
 private fun MyRankSummary(
     me: MyRank,
@@ -188,8 +181,7 @@ private fun MyRankSummary(
             modifier = Modifier.weight(1f),
         )
         RoomVerticalDivider()
-        // 연속 일수는 랭킹이 아니라 오늘 인증 결과에서 온다. 조회가 실패했으면 등재까지 얼마나
-        // 남았는지가 이 자리에서 그다음으로 쓸모 있는 값이다.
+        // 연속 일수는 랭킹이 아니라 오늘 인증 결과에서 온다.
         if (streakDays != null) {
             RankStat(
                 label = "연속",
@@ -376,4 +368,20 @@ private fun RankingFootnote(text: String) {
         style = RuleUpTheme.typography.caption,
         modifier = Modifier.padding(top = 10.dp),
     )
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomRankingTabPreview() {
+    RuleUpTheme {
+        RoomRankingTab(
+            state =
+                com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState.initial.copy(
+                    isLoading = false,
+                ),
+            onSelectScope = {
+            },
+            onLoadMoreCross = { },
+        )
+    }
 }

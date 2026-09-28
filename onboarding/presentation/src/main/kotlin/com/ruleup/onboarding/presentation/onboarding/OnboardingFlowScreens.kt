@@ -17,25 +17,15 @@ import com.ruleup.onboarding.presentation.common.AuthFailureHost
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingEffect
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/**
- * 온보딩 6단계 화면. 전부 액티비티 스코프의 단일 [OnboardingViewModel] 을 공유해 입력값이 페이지
- * 이동에도 누적된다.
- *
- * 단순 전진/후진은 각 Content 가 LocalNavigationHelper 로 직접 처리하고, 비동기 분기(닉네임 검사·
- * 가입 제출)와 실패 안내는 ViewModel 이 맡는다.
- */
+/** 온보딩 6단계 화면. */
 @Composable
 private fun sharedOnboardingViewModel(): OnboardingViewModel = hiltViewModel(viewModelStoreOwner = rememberActivityViewModelStoreOwner())
 
-/**
- * 실패 안내를 화면에 붙인다.
- *
- * 6단계가 같은 처리를 반복하지 않도록 한곳에 모았다 — 토스트는 컴포지션 밖(MessageHelper)에서,
- * 다이얼로그·전체 화면은 컴포지션 안에서 그려야 해서 화면마다 따로 쓰면 금세 갈린다.
- */
+/** 실패 안내를 화면에 붙인다. */
 @Composable
 private fun OnboardingFailureHost(viewModel: OnboardingViewModel) {
     val messageHelper = LocalMessageHelper.current
@@ -69,7 +59,7 @@ private fun OnboardingFailureHost(viewModel: OnboardingViewModel) {
         AlertDialog(
             onDismissRequest = { confirmExit = false },
             title = { Text("가입을 그만둘까요?") },
-            // 5분짜리 가입 토큰이라 되돌아올 수 없다. 그 사실을 알려야 실수로 나가지 않는다.
+            // 5분짜리 가입 토큰이라 되돌아올 수 없다.
             text = { Text("지금 나가면 처음부터 다시 해야 해요") },
             confirmButton = {
                 TextButton(onClick = {
@@ -84,11 +74,12 @@ private fun OnboardingFailureHost(viewModel: OnboardingViewModel) {
     }
 }
 
-/** 1/6 · 닉네임. 가입 토큰은 SignupSession 이 들고 있어 화면이 넘겨받지 않는다. */
+/** 1/6 · 닉네임. */
 @Composable
 fun OnboardingNicknameScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
 
     NicknameContent(
         modifier = modifier,
@@ -101,11 +92,12 @@ fun OnboardingNicknameScreen(modifier: Modifier = Modifier) {
     OnboardingFailureHost(viewModel)
 }
 
-/** 2/6 · 관심 분야. 0~6개이며 아무것도 안 고르고 넘어갈 수 있다. */
+/** 2/6 · 관심 분야. */
 @Composable
 fun OnboardingInterestScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
 
     InterestContent(
         modifier = modifier,
@@ -114,11 +106,12 @@ fun OnboardingInterestScreen(modifier: Modifier = Modifier) {
     )
 }
 
-/** 3/6 · 생일. 필수이고 만 14세 미만은 진행할 수 없다. */
+/** 3/6 · 생일. */
 @Composable
 fun OnboardingBirthScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
 
     BirthDateContent(
         modifier = modifier,
@@ -129,11 +122,12 @@ fun OnboardingBirthScreen(modifier: Modifier = Modifier) {
     )
 }
 
-/** 4/6 · 성별. 필수이며 고르기 전에는 다음으로 넘어갈 수 없다. */
+/** 4/6 · 성별. */
 @Composable
 fun OnboardingGenderScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
 
     GenderContent(
         modifier = modifier,
@@ -142,11 +136,12 @@ fun OnboardingGenderScreen(modifier: Modifier = Modifier) {
     )
 }
 
-/** 5/6 · 프로필 사진. 선택이며 가입 후 별도로 업로드된다. */
+/** 5/6 · 프로필 사진. */
 @Composable
 fun OnboardingPhotoScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
 
     PhotoContent(
         modifier = modifier,
@@ -155,11 +150,12 @@ fun OnboardingPhotoScreen(modifier: Modifier = Modifier) {
     )
 }
 
-/** 6/6 · 약관. "시작하기" 가 가입을 제출하고 성공 시 ViewModel 이 홈으로 보낸다. */
+/** 6/6 · 약관. */
 @Composable
 fun OnboardingTermsScreen(modifier: Modifier = Modifier) {
     val viewModel = sharedOnboardingViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect()
 
     TermsContent(
         modifier = modifier,

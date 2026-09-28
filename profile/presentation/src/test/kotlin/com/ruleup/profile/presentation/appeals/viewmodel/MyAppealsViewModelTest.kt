@@ -16,11 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
-/**
- * 이의 내역. 이 화면은 **한 번 실패해도 곧바로 한 번 더 시도한다**(테크스펙 4-6) — 일시적 실패로
- * "이의를 낸 적 없다"처럼 보이는 빈 화면을 보여주지 않으려는 것이다. 그 재시도가 실제로 도는지,
- * 그리고 두 번 다 실패했을 때 조용히 비지 않는지가 이 화면의 계약이다.
- */
+/** 이의 내역. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyAppealsViewModelTest {
     @BeforeTest
@@ -76,14 +72,14 @@ class MyAppealsViewModelTest {
 
             viewModel.onIntent(MyAppealsIntent.Load)
 
-            assertEquals("서버 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("이의 내역을 불러오지 못했어요", viewModel.uiState.value.errorMessage)
             assertEquals(emptyList(), viewModel.uiState.value.history)
         }
 
     @Test
     fun `재시도는 세 번째 요청을 만들지 않는다`() =
         runTest {
-            // 자동 재시도는 1회다. 더 늘리면 사용자가 기다리는 시간만 배로 늘어난다.
+            // 자동 재시도는 1회다.
             val repo = FakeVerificationRepository(myAppeals = { throw IllegalStateException("서버 오류") })
 
             viewModel(repo).onIntent(MyAppealsIntent.Load)

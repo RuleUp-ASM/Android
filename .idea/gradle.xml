@@ -16,6 +16,8 @@
             <option value="$PROJECT_DIR$/challenge/presentation" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/datastore" />
+            <option value="$PROJECT_DIR$/core/designsystem" />
+            <option value="$PROJECT_DIR$/core/device" />
             <option value="$PROJECT_DIR$/core/domain" />
             <option value="$PROJECT_DIR$/core/entity" />
             <option value="$PROJECT_DIR$/core/map" />
