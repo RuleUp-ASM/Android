@@ -7,7 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class UsageSignalMappingTest {
-    // 코드 값: ACTIVITY_RESUMED=1, ACTIVITY_PAUSED=2, ACTIVITY_STOPPED=23, KEYGUARD_HIDDEN=18, SCREEN_INTERACTIVE=15
     @Test
     fun `RESUMED(1)은 APP RESUMED`() {
         val mapping = usageMappingOf(1)

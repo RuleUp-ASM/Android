@@ -6,9 +6,9 @@ import com.ruleup.verification.domain.entity.SyncPolicy
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- Phase 0 인트로 응답 = 서버 정책 (전송 스펙 §0.3 settings) ----------
+// Phase 0 인트로 응답 = 서버 정책
 
-/** 신호별 cadence(§0.3 collection.*). */
+/** 신호별 cadence. */
 @Serializable
 data class CadenceResponse(
     @SerialName("enabled")
@@ -37,7 +37,7 @@ data class BackoffResponse(
     val factor: Double? = null,
 )
 
-/** 인트로 응답 = 서버 정책(§0.3 settings). */
+/** 인트로 응답 = 서버 정책. */
 @Serializable
 data class IntroResponse(
     @SerialName("serverTimeMillis")
@@ -52,7 +52,7 @@ data class IntroResponse(
     val sessionId: String? = null,
 )
 
-// enabled 가 비어 오면 수집을 켠 것으로 본다 — 서버가 끄지 않은 신호를 임의로 끄면 인증이 빈다.
+// enabled 가 비어 오면 수집을 켠 것으로 본다
 private fun CadenceResponse.toDomain(): SignalCadence = SignalCadence(enabled = enabled ?: true, pollSec = pollSec)
 
 internal fun IntroResponse.toDomain(): SyncPolicy =

@@ -10,20 +10,13 @@ import com.ruleup.ui.mvi.UiState
 sealed interface MyTierHistoryIntent : MviIntent {
     data object Load : MyTierHistoryIntent
 
-    /** 목록 끝에 닿았다. 다음 커서가 없으면 아무 일도 없다. */
+    /** 목록 끝에 닿았다. */
     data object LoadMore : MyTierHistoryIntent
 
     data object Back : MyTierHistoryIntent
 }
 
-/**
- * 이 화면은 **원천이 둘**이다 — 그래프는 `/me/tier/history`(월말 스냅샷), 아래 목록은
- * `/me/tier/changes`(변동 건). 명세가 둘을 다른 API 로 나눈 이유가 페이징 단위가 달라서라
- * ([history] 는 한 번에 다 오고 [changes] 는 커서로 이어 붙는다) 상태도 따로 둔다.
- *
- * 한쪽이 실패해도 다른 쪽은 그린다. 그래프가 없다고 이력까지 감추면 사용자는 자기 점수가 왜
- * 움직였는지 볼 길이 사라진다.
- */
+/** 이 화면은 원천이 둘이다 */
 data class MyTierHistoryState(
     val isLoading: Boolean,
     val history: TierHistory?,
@@ -75,5 +68,5 @@ sealed interface MyTierHistoryReducerEvent : ReducerEvent {
     ) : MyTierHistoryReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias MyTierHistoryEffect = NoEffect

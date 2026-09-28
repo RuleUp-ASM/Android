@@ -14,10 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-/**
- * 생성 요청 본문의 정원. 무제한은 null 이라, 공용 Json 처럼 null 키를 빼면 서버가 무제한인지 누락인지
- * 가를 수 없다.
- */
+/** 생성 요청 본문의 정원. */
 class CreateChallengeRequestBodyTest {
     @Test
     fun `그룹 무제한 정원은 capacity 를 null 로 명시해 보낸다`() {

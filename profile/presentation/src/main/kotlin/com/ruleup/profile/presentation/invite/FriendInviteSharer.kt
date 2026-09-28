@@ -8,12 +8,9 @@ import com.kakao.sdk.share.WebSharerClient
 import com.kakao.sdk.template.model.Link
 import com.kakao.sdk.template.model.TextTemplate
 
-/**
- * 친구 초대 링크 카카오톡 공유. 초대는 사용자 본인 명의 채널로만 전달한다(룰업 직접 발송 금지 —
- * 감시자 초대와 동일 원칙). 카카오톡 미설치면 웹 공유(브라우저)로 폴백한다.
- */
+/** 친구 초대 링크 카카오톡 공유. */
 object FriendInviteSharer {
-    /** @return 공유 UI 를 띄우지 못했으면 false (호출부가 안내 토스트 처리) */
+    /** @return 공유 화면 표시 여부. */
     fun share(
         context: Context,
         inviteUrl: String,

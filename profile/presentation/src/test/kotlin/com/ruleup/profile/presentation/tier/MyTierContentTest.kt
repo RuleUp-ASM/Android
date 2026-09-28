@@ -18,12 +18,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 내 티어 (Figma 1134:1520). 점수는 사용자가 자기 위치를 확인하는 값이라 **못 불러온 것과 낮은 것을
- * 섞으면** 하지도 않은 일로 강등된 줄 안다.
- *
- * 표시 티어와 실제 티어가 갈리는 유예 구간이 이 화면의 핵심이다 — 방 입장 판정도 표시 티어를 쓴다.
- */
+/** 내 티어. */
 @RunWith(RobolectricTestRunner::class)
 class MyTierContentTest {
     @get:Rule
@@ -52,7 +47,6 @@ class MyTierContentTest {
 
     @Test
     fun `유예 구간에서는 실제 티어가 아니라 표시 티어를 현재로 표시한다`() {
-        // 방 입장 판정이 표시 티어를 쓰므로, 화면이 실제 티어를 가리키면 들어갈 수 있는 방이 어긋난다.
         render(
             MyTierState.initial.copy(
                 isLoading = false,
@@ -65,7 +59,6 @@ class MyTierContentTest {
 
     @Test
     fun `강등 대상이어도 강등 안내 카드를 띄우지 않는다`() {
-        // 안내 카드는 디자인에서 제거됐다(Figma 1134:1562). 되살아나면 지운 문구가 다시 노출된다.
         render(
             MyTierState.initial.copy(
                 isLoading = false,
@@ -97,7 +90,6 @@ class MyTierContentTest {
 
     @Test
     fun `모르는 변동 사유도 행을 지우지 않고 증감폭을 보여 준다`() {
-        // 사유 enum 이 늘었다고 행이 사라지면 사용자는 점수가 왜 줄었는지 알 방법이 없다.
         render(
             MyTierState.initial.copy(
                 isLoading = false,

@@ -7,43 +7,32 @@ import com.ruleup.profile.domain.entity.MyProfile
 import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
 
-/**
- * 계정 프로필 계약 (명세 4.6~4.11). 구현은 :profile:data.
- * 계정 정보의 소유자가 profile 이라 온보딩이 이 계약을 빌려 쓴다(:onboarding:domain → :profile:domain).
- */
+/** 계정 프로필 계약. */
 interface ProfileRepository {
-    /**
-     * 내 프로필 조회 (GET /api/v1/users/me). 로그인 응답에 없는 생일·성별·약관 동의가 여기 있다.
-     * 매너 온도·닉네임 변경 이력은 아직 이 응답에 없어 레거시 [getProfile] 과 공존한다.
-     */
+    /** 내 프로필 조회 (GET /api/v1/users/me). */
     suspend fun getMyProfile(): MyProfile
 
-    /** 닉네임 형식/중복 검사 (명세 4.6). */
+    /** 닉네임 형식/중복 검사. */
     suspend fun checkNickname(nickname: String): NicknameCheck
 
-    /** 관심 카테고리 마스터 조회 (명세 4.7). */
+    /** 관심 카테고리 마스터 조회. */
     suspend fun getCategories(): CategoryCatalog
 
-    /** 내 프로필 조회 (명세 4.8). */
+    /** 내 프로필 조회. */
     suspend fun getProfile(): Profile
 
-    /** 프로필 수정(명세 PATCH /users/me/profile). 변경할 필드만 전달하고, 저장 뒤 다시 조회한 값을 돌려준다. */
+    /** 프로필 수정. */
     suspend fun updateProfile(
         nickname: String? = null,
         interestCategories: List<Category>? = null,
     ): Profile
 
-    /** 프로필 사진 업로드 후 URL 반환 (명세 4.10). */
+    /** 프로필 사진 업로드 후 URL 반환. */
     suspend fun uploadProfileImage(imageUri: String): String
 
-    /** 프로필 사진 제거(명세 PATCH /users/me/profile removeProfileImage). */
+    /** 프로필 사진 제거. */
     suspend fun deleteProfileImage()
 
-    /**
-     * 타인 프로필 조회 (명세 GET /users/{userId}/profile).
-     *
-     * 내 프로필([getMyProfile])과 타입을 나눈 이유는 공개 범위가 다르기 때문이다 — 같은 타입을
-     * 쓰면 화면이 없는 값을 기대하게 되고, 비어 있는 점수·통계를 0 으로 그리게 된다.
-     */
+    /** 타인 프로필 조회. */
     suspend fun getMemberProfile(userId: String): MemberProfile
 }

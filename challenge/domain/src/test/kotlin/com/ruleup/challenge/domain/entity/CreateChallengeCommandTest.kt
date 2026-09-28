@@ -6,10 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-/**
- * 생성 요청이 스스로를 검증한다. 화면도 같은 범위로 입력을 막지만 그건 UX 이고, 여기 걸리는 건
- * 화면을 거치지 않는 경로(상태 복원·테스트·나중 리팩터링)에서 규칙이 빠졌다는 뜻이다.
- */
+/** 생성 요청이 스스로를 검증한다. */
 class CreateChallengeCommandTest {
     @Test
     fun `주간 횟수가 1~7 을 벗어나면 만들 수 없다`() {
@@ -42,7 +39,7 @@ class CreateChallengeCommandTest {
             )
 
         assertFailsWith<IllegalArgumentException> { group.copy(capacity = 0) }
-        // 단계 사이 값 — 슬라이더에 없는 인원이 새어 나간 것이다
+        // 단계 사이 값
         assertFailsWith<IllegalArgumentException> { group.copy(capacity = 50) }
         assertFailsWith<IllegalArgumentException> { group.copy(capacity = 10_001) }
         // 무제한(null)을 포함한 모든 단계는 만들어진다.
@@ -58,7 +55,7 @@ class CreateChallengeCommandTest {
     }
 }
 
-/** 초안 정원을 단계로 맞추는 규칙. 내리면 사용자가 원한 인원보다 방이 먼저 찬다. */
+/** 초안 정원을 단계로 맞추는 규칙. */
 class CreateCapacityStepTest {
     @Test
     fun `초안 정원은 그 이상인 가장 가까운 단계로 올리고 300 을 넘거나 무제한이면 무제한이 된다`() {

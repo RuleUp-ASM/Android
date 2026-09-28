@@ -7,10 +7,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface InquiryDetailIntent : MviIntent {
-    /**
-     * 화면 진입. **인자를 여기로 받는다** — 이 내비게이션은 `SavedStateHandle` 을 채우지 않아
-     * ViewModel 이 라우트 인자를 직접 읽을 수 없다.
-     */
+    /** 화면 진입. */
     data class Load(
         val inquiryId: String,
     ) : InquiryDetailIntent
@@ -19,10 +16,7 @@ sealed interface InquiryDetailIntent : MviIntent {
 
     data object Back : InquiryDetailIntent
 
-    /**
-     * 같은 사안을 다시 묻는 유일한 경로. **재문의가 아니라 새 문의다** — 답변 뒤 같은 스레드에
-     * 글을 더하는 계약이 없어(명세) 분류부터 다시 고른다.
-     */
+    /** 같은 사안을 다시 묻는 유일한 경로. */
     data object NewInquiry : InquiryDetailIntent
 }
 

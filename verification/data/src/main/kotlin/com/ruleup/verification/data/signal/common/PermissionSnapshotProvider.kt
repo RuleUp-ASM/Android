@@ -17,12 +17,7 @@ import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * 신호별 권한 현황 스냅샷 채집(전송 스펙 §0.1·§0.4). 매 flush 마다 현재 grant 상태를 읽어
- * envelope `permissions` 로 보낸다. 회수/복구가 여기서 반영된다.
- *
- * Health Connect 권한은 런타임 checkSelfPermission 이 아니라 권한 컨트롤러의 grant 집합으로 확인한다.
- */
+/** 신호별 권한 현황 스냅샷 채집. */
 class PermissionSnapshotProvider
     @Inject
     constructor(

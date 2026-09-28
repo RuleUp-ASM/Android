@@ -8,9 +8,7 @@ import com.ruleup.verification.domain.entity.HealthTarget
 import com.ruleup.verification.domain.repository.HealthTargetStore
 import javax.inject.Inject
 
-/**
- * 움직임·수면(HEALTH·SLEEP) 수집 대상 로컬 보관(명세 §3.2·§8). 셋업 플로우가 채우고 sync 스코프가 읽는다.
- */
+/** 움직임·수면(HEALTH·SLEEP) 수집 대상 로컬 보관. */
 class HealthTargetStoreImpl
     @Inject
     constructor(

@@ -12,7 +12,6 @@ class CalendarResponseTest {
 
     @Test
     fun `월 캘린더의 오늘과 실패 예정이 상태로 살아 있다`() {
-        // 종전에는 이 두 값을 몰라 NOT_TARGET 으로 접었고, 오늘 날짜가 "판정 대상 아님"으로 비어 보였다.
         val payload =
             """
             {"month":"2026-07","days":[
@@ -28,7 +27,7 @@ class CalendarResponseTest {
 
     @Test
     fun `모르는 일자 상태는 칠하지 않는다`() {
-        // 특정 상태로 접으면 그 날짜에 대해 거짓말을 한다 — 표기를 생략하는 편이 낫다.
+        // 특정 상태로 접으면 그 날짜에 대해 거짓말을 한다
         val payload = """{"month":"2026-07","days":[{"date":"2026-07-24","status":"FUTURE_VALUE"}]}"""
 
         val calendar = json.decodeFromString<ActivityCalendarResponse>(payload).toDomain()
@@ -38,7 +37,6 @@ class CalendarResponseTest {
 
     @Test
     fun `일자 상세의 성공과 이의 조건이 매핑된다`() {
-        // 종전에는 DONE 을 몰라 PENDING 으로 접었고, 성공한 인증이 "판정 대기"로 보였다.
         val payload =
             """
             {"date":"2026-07-20","items":[

@@ -13,12 +13,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 
-/**
- * 첫 실행 소개. 기대 문구의 출처는 Figma(`1460:2`·`1461:2`·`1462:2`)다.
- *
- * 마지막 장에서 **건너뛰기가 사라지고 CTA 문구가 바뀌는 것**이 계약이다 — 둘 다 끝내기라서,
- * 남겨 두면 같은 일을 하는 버튼이 한 화면에 둘이 된다.
- */
+/** 첫 실행 소개. */
 @RunWith(RobolectricTestRunner::class)
 class WalkthroughContentTest {
     @get:Rule

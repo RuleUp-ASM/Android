@@ -21,24 +21,18 @@ import javax.inject.Inject
 
 private const val TAG = "TokenStore"
 
-/**
- * 토큰 저장소. DataStore 의 `IOException` 을 여기서 끊고 "저장된 게 없다"(= 로그아웃)로 환원한다 —
- * 읽는 쪽(인터셉터 `runBlocking`·`App.onCreate` 의 `first()`)이 예외를 감당하지 못한다.
- */
+/** 토큰 저장소. */
 class TokenRepositoryImpl
     @Inject
     constructor(
         private val dataStore: DataStore<Preferences>,
         private val observability: Observability,
     ) : TokenRepository {
-        // 인터셉터가 코루틴 없이 읽어 가는 스냅샷. 저장·조회·삭제마다 같이 갱신한다.
+        // 인터셉터가 코루틴 없이 읽어 가는 스냅샷.
         @Volatile
         private var cachedAccess: String? = null
 
-        /**
-         * 읽기 경로의 단일 입구. `IOException` 만 삼킨다 —
-         * 취소나 프로그래밍 오류까지 덮으면 진짜 버그가 "로그인 안 됨"으로 위장된다.
-         */
+        /** 읽기 경로의 단일 입구. */
         private val preferences: Flow<Preferences> =
             dataStore.data.catch { cause ->
                 if (cause !is IOException) throw cause
@@ -49,7 +43,7 @@ class TokenRepositoryImpl
         override val isLoggedIn: Flow<Boolean> =
             preferences.map { prefs -> prefs[KEY_REFRESH] != null }
 
-        // 갱신 응답이 userId 를 안 주는 배포본에서는 비어 있을 수 있다 — 사용자 귀속이 필요한 쪽은 이 Flow 를 본다.
+        // 갱신 응답이 userId 를 안 주는 배포본에서는 비어 있을 수 있다
         override val userId: Flow<String?> =
             preferences.map { prefs -> prefs[KEY_USER_ID] }
 
@@ -57,9 +51,9 @@ class TokenRepositoryImpl
             token: Token,
             userId: String,
         ) {
-            // 캐시를 먼저 채운다 — 디스크 쓰기가 실패해도 이번 실행 동안의 세션은 살아 있다.
+            // 캐시를 먼저 채운다
             cachedAccess = token.accessToken
-            // 한 번의 edit 이라 원자적이다. 나눠 쓰면 그 사이에 isLoggedIn 만 true 인 구간이 생긴다.
+            // 한 번의 edit 이라 원자적이다.
             write("saveSession") { prefs ->
                 prefs[KEY_ACCESS] = token.accessToken
                 prefs[KEY_REFRESH] = token.refreshToken
@@ -100,17 +94,14 @@ class TokenRepositoryImpl
         override suspend fun clear() {
             cachedAccess = null
             write("clear") { prefs ->
-                // 로그인 이력만 남긴다. 지우면 재로그인이 첫 설치로 집계된다.
+                // 로그인 이력만 남긴다.
                 val everLoggedIn = prefs[KEY_EVER_LOGGED_IN]
                 prefs.clear()
                 everLoggedIn?.let { prefs[KEY_EVER_LOGGED_IN] = it }
             }
         }
 
-        /**
-         * 쓰기 경로의 단일 입구. `IOException` 을 호출부로 전파하지 않는다 —
-         * 전파하면 `AutoLoginUseCase` 의 진입 판정이 끝나지 않아 스플래시에서 멈춘다.
-         */
+        /** 쓰기 경로의 단일 입구. */
         private suspend fun write(
             op: String,
             block: (MutablePreferences) -> Unit,

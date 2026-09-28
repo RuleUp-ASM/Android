@@ -6,13 +6,7 @@ import com.lemonappdev.konsist.api.verify.assertFalse
 import com.lemonappdev.konsist.api.verify.assertTrue
 import org.junit.Test
 
-/**
- * 모듈 레이어 규칙(헥사고날) 아키텍처 테스트.
- *
- * - domain: 순수 코틀린. Android/안쪽 어댑터를 모른다.
- * - data / presentation: domain 에만 의존하는 어댑터. 서로를 모른다.
- * - 포트 구현체(…RepositoryImpl)는 어댑터 모듈에만 둔다.
- */
+/** 모듈 의존 방향 검사. */
 class ArchitectureTest {
     @Test
     fun `domain 모듈은 Android 프레임워크를 import 하지 않는다`() {

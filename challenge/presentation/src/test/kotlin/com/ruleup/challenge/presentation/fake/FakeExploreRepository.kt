@@ -9,7 +9,7 @@ import com.ruleup.challenge.domain.entity.TrendingSnapshot
 import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.domain.entity.category.Category
 
-/** 테스트용 [ExploreRepository]. 준비하지 않은 메서드는 호출되면 실패한다. */
+/** 테스트용 [ExploreRepository]. */
 class FakeExploreRepository(
     private val trending: (() -> TrendingSnapshot)? = null,
     private val categories: (() -> List<ChallengeCategoryCount>)? = null,
@@ -28,7 +28,7 @@ class FakeExploreRepository(
         return requireNotNull(categories) { "getCategories 를 준비하지 않았다" }()
     }
 
-    /** 어떤 조건으로 몇 번 물었는지. 자가 복구 경로에서 조건이 바뀌는지 보려면 이게 있어야 한다. */
+    /** 어떤 조건으로 몇 번 물었는지. */
     val exploreQueries = mutableListOf<Triple<ExploreFilter, ExploreSort, String?>>()
 
     override suspend fun explore(

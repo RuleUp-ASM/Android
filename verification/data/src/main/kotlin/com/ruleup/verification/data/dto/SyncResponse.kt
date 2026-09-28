@@ -6,7 +6,7 @@ import com.ruleup.verification.domain.entity.UpdatedChallenge
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 3.1 sync 응답 ----------
+// 3.1 sync 응답
 @Serializable
 data class UpdatedChallengeResponse(
     @SerialName("challengeId")
@@ -27,7 +27,7 @@ data class SyncResponse(
     val updatedChallenges: List<UpdatedChallengeResponse>? = null,
     @SerialName("ignoredSignalTypes")
     val ignoredSignalTypes: List<String>? = null,
-    // 한 번에 보낼 수 있는 상한(바이트). 실측 후 확정이라 서버가 아직 안 줄 수 있다
+    // 한 번에 보낼 수 있는 상한(바이트).
     @SerialName("maxPayloadBytes")
     val maxPayloadBytes: Int? = null,
     // 개별 동의가 빠져 저장되지 않은 신호 종류(LOCATION_INFO·HEALTH_INFO)
@@ -40,7 +40,7 @@ internal fun SyncResponse.toDomain(): SyncResult =
         syncedAt = syncedAt.orEmpty(),
         // 명세 응답 예시 기본 1800초(30분).
         flushIntervalSec = flushIntervalSec ?: DEFAULT_FLUSH_INTERVAL_SEC,
-        // 상한은 폴백을 두지 않는다 — 모르는 값을 상수로 메우면 서버가 상한을 낮춰도 알 길이 없다.
+        // 상한은 폴백을 두지 않는다
         maxPayloadBytes = maxPayloadBytes,
         updatedChallenges =
             updatedChallenges.orEmpty().mapNotNull { dto ->

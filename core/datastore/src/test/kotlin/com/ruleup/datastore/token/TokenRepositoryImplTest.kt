@@ -21,12 +21,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
-/**
- * 저장소 고장이 앱 고장으로 번지지 않는지 검증한다.
- *
- * 실제 `DataStore` 대신 대역을 쓴다 — 파일 손상·디스크 오류를 결정적으로 재현해야 하는데,
- * 진짜 파일로는 그걸 안정적으로 만들 수 없다.
- */
+/** 저장소 고장이 앱 고장으로 번지지 않는지 검증한다. */
 class TokenRepositoryImplTest {
     private fun token(
         access: String = "a1",
@@ -40,7 +35,7 @@ class TokenRepositoryImplTest {
 
     private val diagnostics get() = sink.payloads.filterIsInstance<DiagnosticPayload>()
 
-    // ---------- 정상 동작 ----------
+    // 정상 동작
 
     @Test
     fun `저장한 토큰을 다시 읽는다`() =
@@ -57,8 +52,6 @@ class TokenRepositoryImplTest {
     @Test
     fun `로그아웃해도 로그인 이력은 남는다`() =
         runTest {
-            // 로그인 화면이 첫 설치와 재로그인을 가르는 근거다. 지워지면 재로그인이 첫 설치로
-            // 집계돼 완주율의 분모가 뒤섞인다.
             val repo = repo(FakeDataStore())
             repo.saveSession(token(), userId = "u-1")
 
@@ -94,7 +87,7 @@ class TokenRepositoryImplTest {
             val repo = repo(FakeDataStore())
             repo.saveSession(token(), userId = "u-1")
 
-            // 서버가 userId 를 안 내려주는 배포본. 덮어 비우면 사용자 귀속이 끊긴다.
+            // 서버가 userId 를 안 내려주는 배포본.
             repo.saveTokens(token(access = "a2", refresh = "r2"))
 
             assertEquals("r2", repo.getRefreshToken())
@@ -106,7 +99,6 @@ class TokenRepositoryImplTest {
         runTest {
             val repo = repo(FakeDataStore())
 
-            // 갱신 응답이 userId 를 함께 준다. 이것만으로 세션이 완성돼야 별도 조회가 필요 없다.
             repo.saveTokens(token(), userId = "u-1")
 
             assertEquals("u-1", repo.getUserId())
@@ -125,7 +117,7 @@ class TokenRepositoryImplTest {
             assertFalse(repo.isLoggedIn.first())
         }
 
-    // ---------- 읽기 실패 ----------
+    // 읽기 실패
 
     @Test
     fun `읽기가 IOException 이면 빈 값으로 환원하고 앱은 로그아웃 상태가 된다`() =
@@ -161,7 +153,7 @@ class TokenRepositoryImplTest {
             assertTrue("프로그래밍 오류가 '로그아웃' 으로 위장되면 안 된다", thrown is IllegalStateException)
         }
 
-    // ---------- 쓰기 실패 ----------
+    // 쓰기 실패
 
     @Test
     fun `쓰기가 실패해도 호출부로 전파되지 않는다`() =
@@ -192,12 +184,11 @@ class TokenRepositoryImplTest {
 
             repo.saveTokens(token())
 
-            // 인터셉터는 cachedAccessToken 을 먼저 본다 — 디스크가 죽어도 이번 실행은 인증된다.
             assertEquals("a1", repo.cachedAccessToken())
         }
 }
 
-/** 메모리 위에서 도는 DataStore 대역. [failWritesWith] 를 채우면 쓰기가 실패한다. */
+/** 메모리 위에서 도는 DataStore 대역. */
 private class FakeDataStore(
     private val failWritesWith: Throwable? = null,
 ) : DataStore<Preferences> {
@@ -213,7 +204,7 @@ private class FakeDataStore(
     }
 }
 
-/** 쓰기 횟수를 세는 대역. 원자성(한 번의 edit) 검증용. */
+/** 쓰기 횟수를 세는 대역. */
 private class CountingDataStore : DataStore<Preferences> {
     private val state = MutableStateFlow<Preferences>(emptyPreferences())
     var writeCount = 0
@@ -229,7 +220,7 @@ private class CountingDataStore : DataStore<Preferences> {
     }
 }
 
-/** 읽기가 항상 [cause] 로 실패하는 대역. 손상 파일·디스크 오류 재현용. */
+/** 읽기가 항상 [cause] 로 실패하는 대역. */
 private class ThrowingDataStore(
     private val cause: Throwable,
 ) : DataStore<Preferences> {

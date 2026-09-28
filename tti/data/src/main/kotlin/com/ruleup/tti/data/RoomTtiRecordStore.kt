@@ -10,23 +10,13 @@ import com.ruleup.tti.domain.TtiRecordStore
 import com.ruleup.tti.domain.TtiTimeline
 import javax.inject.Inject
 
-/**
- * Room 으로 받은 [TtiRecordStore].
- *
- * **"처음 값을 지킨다"는 규칙은 SQL 이 맡는다** — 두 insert 모두 IGNORE 이고, 닫기는
- * `endedAt IS NULL` 인 행만 건드린다. 그래서 같은 호출이 몇 번 와도 결과가 같다.
- */
+/** Room 으로 받은 [TtiRecordStore]. */
 internal class RoomTtiRecordStore
     @Inject
     constructor(
         private val dao: TtiDao,
     ) : TtiRecordStore {
-        /**
-         * 기록 행과 구간 행을 잇달아 넣는다.
-         *
-         * 트랜잭션으로 묶지 않는 것은 중간에 끊겨도 해가 없기 때문이다 — 구간이 없는 기록은 완성으로
-         * 잡히지 않고 [deleteCreatedBefore] 가 데려간다.
-         */
+        /** 기록 행과 구간 행을 잇달아 넣는다. */
         override suspend fun openSpan(
             tti: Tti,
             pageName: String,

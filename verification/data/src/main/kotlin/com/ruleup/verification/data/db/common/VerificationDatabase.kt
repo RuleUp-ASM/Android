@@ -25,10 +25,7 @@ import com.ruleup.verification.data.db.usage.UsageEventEntity
 import com.ruleup.verification.data.db.usage.UsageTargetDao
 import com.ruleup.verification.data.db.usage.UsageTargetEntity
 
-/**
- * 자동인증 로컬 버퍼 DB (단일 진실원, 명세 §2.4).
- * 마이그레이션 대신 파괴적 재생성으로 둔다.
- */
+/** 자동인증 로컬 버퍼 DB. */
 @Database(
     entities = [
         GeofenceTransitionEntity::class,
@@ -72,12 +69,7 @@ abstract class VerificationDatabase : RoomDatabase() {
     abstract fun signalGapDao(): SignalGapDao
 }
 
-/**
- * 프로세스 전역 단일 인스턴스 홀더.
- *
- * BroadcastReceiver(지오펜스·부팅)는 OS 가 인스턴스화하므로 Hilt 그래프에 접근할 수 없다.
- * Hilt DI 모듈과 리시버가 **같은** DB 파일/인스턴스를 공유하도록 본 홀더를 단일 출처로 둔다.
- */
+/** 프로세스 전역 단일 인스턴스 홀더. */
 internal object VerificationDatabaseHolder {
     @Volatile
     private var instance: VerificationDatabase? = null

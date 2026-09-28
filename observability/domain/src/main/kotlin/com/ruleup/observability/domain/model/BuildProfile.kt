@@ -6,7 +6,7 @@ enum class BuildProfile {
     PRODUCTION,
     ;
 
-    /** 개발자에게 더 보여줘도 되는 빌드인가 — 상세 로그·실패 즉시 노출의 기준. */
+    /** 개발자에게 더 보여줘도 되는 빌드인가 */
     val isDebuggable: Boolean
         get() = this != PRODUCTION
 }

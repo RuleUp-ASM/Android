@@ -53,7 +53,6 @@ class AppealSheetTest {
 
     @Test
     fun `낼 대상이 없는 오늘 결과는 이의 대상이 되지 않는다`() {
-        // verificationId 가 없으면 보낼 곳이 없다 — 시트를 열어도 제출할 수 없다.
         assertNull(todayResult(verificationId = null).toAppealTarget())
         assertEquals("v_1", todayResult(verificationId = "v_1").toAppealTarget()?.verificationId)
     }

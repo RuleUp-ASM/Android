@@ -10,7 +10,7 @@ import com.ruleup.verification.domain.entity.VerificationStreak
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 오늘 인증 결과 (GET /challenges/{id}/verifications/today) ----------
+// 오늘 인증 결과 (GET /challenges/{id}/verifications/today)
 
 @Serializable
 data class StreakResponse(
@@ -30,7 +30,7 @@ data class UnacknowledgedResultResponse(
 
 @Serializable
 data class AppealChanceResponse(
-    // 귀속일+2일 00:00 KST — 최종 확정 시각과 같다
+    // 귀속일+2일 00:00 KST
     @SerialName("eligibleUntil")
     val eligibleUntil: String? = null,
     @SerialName("eligible")
@@ -41,8 +41,7 @@ data class AppealChanceResponse(
 data class TodayResultResponse(
     @SerialName("date")
     val date: String? = null,
-    // 이의 접수 대상 인증 건 ID. 명세에 아직 없어 서버가 안 줄 수 있고, 그때는
-    // unacknowledgedResult 쪽 ID 로 폴백한다(BE 에 최상위 노출 요청 중).
+    // 이의 접수 대상 인증 건 ID.
     @SerialName("verificationId")
     val verificationId: String? = null,
     @SerialName("status")
@@ -71,7 +70,7 @@ internal fun TodayResultResponse.toDomain(): TodayResult =
     TodayResult(
         date = date.orEmpty(),
         verificationId = verificationId ?: unacknowledgedResult?.verificationId,
-        // 미인식 상태는 null — 모르는 값을 성공·실패로 접지 않는다.
+        // 미인식 상태는 null
         status = TodayResultStatus.fromValue(status),
         window = window,
         confirmedAt = confirmedAt,
@@ -89,7 +88,7 @@ internal fun TodayResultResponse.toDomain(): TodayResult =
             appeal?.let {
                 AppealChance(
                     eligibleUntil = it.eligibleUntil,
-                    // 한도가 없어졌으므로 eligible 이 없으면 기한만 남은 조건이다 — 낼 수 있다고 본다.
+                    // 한도가 없어졌으므로 eligible 이 없으면 기한만 남은 조건이다
                     eligible = it.eligible ?: true,
                 )
             },
@@ -97,9 +96,9 @@ internal fun TodayResultResponse.toDomain(): TodayResult =
         evidenceSummary = evidenceSummary?.takeIf { it.isNotBlank() },
     )
 
-// ---------- 판정 결과 확인 (POST /verifications/{verificationId}/ack) ----------
+// 판정 결과 확인 (POST /verifications/{verificationId}/ack)
 
-/** 멱등 응답 — 이미 확인한 건을 다시 불러도 `true` 로 온다. */
+/** 멱등 응답 */
 @Serializable
 data class AcknowledgeResponse(
     @SerialName("acknowledged")

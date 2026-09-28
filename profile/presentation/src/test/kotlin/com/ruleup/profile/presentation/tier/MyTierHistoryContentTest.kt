@@ -16,13 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 티어 히스토리. 보관이 1년이라 **오래된 기록이 사라진다** — 그 사실을 말하지 않으면 사용자는
- * 기록이 유실됐다고 여긴다.
- *
- * 화면은 원천이 둘이다 — 그래프(월말 스냅샷)와 점수 변동 이력. **한쪽이 없어도 다른 쪽은 그린다.**
- * 하락 사유 비표기는 그래프 한정이라(2026-09-07 개정) 이력에는 사유를 쓴다.
- */
+/** 티어 히스토리. */
 @RunWith(RobolectricTestRunner::class)
 class MyTierHistoryContentTest {
     @get:Rule
@@ -37,7 +31,6 @@ class MyTierHistoryContentTest {
 
     @Test
     fun `변동 행은 챌린지명과 사유를 함께 보여 준다`() {
-        // id 만으로는 사용자가 어느 방인지 읽을 수 없다 — challengeTitle 이 그래서 신설됐다.
         render(MyTierHistoryState.initial.copy(isLoading = false, history = history(), changes = listOf(change())))
 
         compose.onNodeWithText("아침 6:30 기상 · 사이클 성공").assertExists()
@@ -46,7 +39,7 @@ class MyTierHistoryContentTest {
 
     @Test
     fun `챌린지명이 없으면 사유만 남기고 자리를 비우지 않는다`() {
-        // 완료된 방은 원본이 하드 삭제돼 서버도 이름을 못 채운다 — 정상 경로다.
+        // 완료된 방은 원본이 하드 삭제돼 서버도 이름을 못 채운다
         render(
             MyTierHistoryState.initial.copy(
                 isLoading = false,
@@ -82,7 +75,7 @@ class MyTierHistoryContentTest {
 
     @Test
     fun `역대 최고가 없으면 지어내지 않는다`() {
-        // 가입 직후에는 표본이 없다 — 0점을 최고 기록으로 세우면 없던 이력이 생긴다.
+        // 가입 직후에는 표본이 없다
         render(MyTierHistoryState.initial.copy(isLoading = false, history = history(best = null)))
 
         compose.onNodeWithText("역대 최고", substring = true).assertDoesNotExist()

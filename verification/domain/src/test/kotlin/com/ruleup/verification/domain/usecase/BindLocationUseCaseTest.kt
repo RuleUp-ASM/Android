@@ -30,7 +30,7 @@ class BindLocationUseCaseTest {
 
             assertEquals("u1#c1", register.boundPrefix)
             assertEquals(listOf("u1#c1#0", "u1#c1#1"), register.bound.map { it.requestId })
-            // 반경은 앵커별이 아니라 서버 설정 단일값이다(인증 정책 §1.1).
+            // 반경은 앵커별이 아니라 서버 설정 단일값이다.
             assertEquals(listOf(500f, 500f), register.bound.map { it.radiusM })
             assertEquals(60, register.bound.first().dwellMinutes)
         }

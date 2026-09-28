@@ -4,7 +4,7 @@ import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** 서버는 UTC 로 준다. 문자열을 잘라 그리면 KST 사용자에게 9시간 이른 접수 시각이 보인다(#452). */
+/** 서버는 UTC 로 준다. */
 class InquiryFormatTest {
     private val seoul = ZoneId.of("Asia/Seoul")
 

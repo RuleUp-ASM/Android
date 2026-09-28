@@ -30,13 +30,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * 관측 파이프라인 배선. **[BuildProfile] 은 `:app` 이 제공해야 한다** — 이 모듈은 앱의 `BuildConfig` 를
- * 볼 수 없고, 라이브러리 자체 `BuildConfig.DEBUG` 는 QA 플레이버를 구분하지 못한다.
- *
- * 출구는 데코레이터 체인으로 조립한다. 라우팅·임계값을 어댑터 안에 숨기면 그게 곧 [Policy] 설정에도
- * 안 잡히는 "안 찍히는 이유"가 된다.
- */
+/** 관측 파이프라인 배선. */
 @Module
 @InstallIn(SingletonComponent::class)
 object ObservabilityModule {
@@ -57,15 +51,7 @@ object ObservabilityModule {
     @Provides
     fun resourceSampler(collector: ResourceProbeCollector): ResourceSampler = collector
 
-    /**
-     * 출구 체인. 진단의 `WARN` 하한은 **Crashlytics 쿼터 보호**용이고, 성능 채널이 Analytics 로 가는
-     * 건 Firebase Performance 의 커스텀 지표가 제한적이어서다(자체 서버가 생기면 이 줄만 바꾼다).
-     *
-     * 사용자 행동은 여기로 오지 않는다 — `:logging:data` 가 자기 출구로 보낸다.
-     *
-     * Amplitude 는 Firebase 와 **병행**한다 — 같은 이벤트가 두 곳에 쌓이므로 집계할 때 출처를 섞지
-     * 않는다. 키가 비면 출구를 아예 달지 않는 이유는 #259.
-     */
+    /** 출구 체인. */
     @Provides
     @Singleton
     fun sink(

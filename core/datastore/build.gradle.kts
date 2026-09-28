@@ -30,7 +30,7 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":observability:domain"))
 
-    // DataStore<Preferences> 는 TokenRepositoryImpl 생성자와 DataStoreModule @Provides 에 노출되므로 api.
+    // 공개 시그니처의 DataStore 타입.
     api(libs.androidx.datastore.preferences)
     implementation(libs.kotlinx.coroutines.core)
 

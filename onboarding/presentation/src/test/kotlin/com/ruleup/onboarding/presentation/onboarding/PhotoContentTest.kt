@@ -8,12 +8,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 
-/**
- * 05 · 사진. **건너뛸 수 있는 단계**다 — 사진이 없어도 닉네임 첫 글자 아바타로 시작한다.
- * 여기서 잠그면 사진이 없는 사용자가 가입을 마치지 못한다.
- *
- * 기대 문구 출처: Figma `1134:1832`「온보딩 5 · 사진」.
- */
+/** 05 · 사진. */
 @RunWith(RobolectricTestRunner::class)
 class PhotoContentTest {
     @get:Rule

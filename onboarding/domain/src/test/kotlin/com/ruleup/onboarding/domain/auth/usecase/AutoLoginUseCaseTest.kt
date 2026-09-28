@@ -39,7 +39,7 @@ class AutoLoginUseCaseTest {
 
             assertEquals(AutoLoginResult.Authenticated, result)
             assertEquals(newToken, tokens.savedToken)
-            // 갱신 응답의 userId 로 세션이 완성된다. 비면 사용자 귀속이 끊긴 채 홈에 들어간다.
+
             assertEquals("u-1", tokens.savedUserId)
             assertFalse(tokens.cleared)
         }
@@ -47,7 +47,7 @@ class AutoLoginUseCaseTest {
     @Test
     fun `갱신 응답에 userId 가 없으면 기존 값을 유지한다`() =
         runBlocking {
-            // 이 필드를 안 내려주는 서버 배포본. 덮어 비우면 사용자 귀속이 끊긴다.
+            // 이 필드를 안 내려주는 서버 배포본.
             val auth =
                 FakeAuthRepository().apply {
                     refreshResult = RefreshedSession(Token("a", "r2", "Bearer", 3600), userId = null)
@@ -62,15 +62,11 @@ class AutoLoginUseCaseTest {
     @Test
     fun `연결이 끊겨 재발급하지 못하면 토큰을 남겨 다음 실행에 다시 시도한다`() =
         runBlocking {
-            // 전송 실패는 세션이 끝난 게 아니다. 여기서 지우면 지하철에서 앱을 한 번 연 것만으로
-            // 며칠 남은 refreshToken 이 사라지고 소셜 로그인부터 다시 해야 한다.
             val auth = FakeAuthRepository().apply { refreshError = SocketTimeoutException("timeout") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
 
             val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
-            // 세션 만료와 같은 값으로 접으면 진입 화면이 둘을 구분하지 못해 타임아웃 한 번에
-            // 로그인 화면으로 떨어진다(ENV-03).
             assertEquals(AutoLoginResult.ConnectionFailed, result)
             assertFalse(tokens.cleared)
         }

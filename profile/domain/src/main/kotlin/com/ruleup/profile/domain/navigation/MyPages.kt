@@ -18,11 +18,7 @@ data object MyTierHistoryPage : Page {
     const val PATH = AppRoutes.MY_TIER_HISTORY
 }
 
-/**
- * 활동 캘린더 페이지 (마이 홈 메뉴 → 월 단위 일자별 상태).
- *
- * 실패 예정 알림(`ruleup://me/calendar/{date}`)이 그 날짜로 바로 들어온다. 인자가 없으면 당월·오늘이다.
- */
+/** 활동 캘린더 페이지 (마이 홈 메뉴 → 월 단위 일자별 상태). */
 data class MyCalendarPage(
     val date: String? = null,
 ) : Page {
@@ -82,11 +78,7 @@ data object MyAgreementsPage : Page {
     const val PATH = AppRoutes.MY_AGREEMENTS
 }
 
-/**
- * 제재 통지·이력 페이지 (설정 허브 → 제재 이력).
- *
- * **잠금 상태에서도 열려야 한다** — 잠금 사유와 해제일을 볼 유일한 경로다.
- */
+/** 제재 통지·이력 페이지 (설정 허브 → 제재 이력). */
 data object MySanctionsPage : Page {
     override fun toRoute(): NavRoute = NavRoute(PATH)
 

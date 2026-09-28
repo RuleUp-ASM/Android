@@ -21,13 +21,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 알림 설정.
- *
- * 두 가지가 계약이다. **보낸 필드만 보낸다** — 서버가 허용되지 않은 키를 400 으로 막으므로 빈
- * 그룹 객체를 실어 보내면 안 된다. 그리고 **낙관적 반영을 하지 않는다** — 마케팅 토글은 수신
- * 동의를 같은 트랜잭션에서 바꾸고 그 시각이 법적 기록이다.
- */
+/** 알림 설정. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationSettingsViewModelTest {
     @BeforeTest
@@ -146,7 +140,7 @@ class NotificationSettingsViewModelTest {
     @Test
     fun `OS 권한 상태는 서버 설정값을 건드리지 않는다`() =
         runTest {
-            // 권한을 거부해도 서버 값은 그대로다(정책 §3.1) — 배너만 뜬다.
+            // 권한을 거부해도 서버 값은 그대로다
             val viewModel = viewModel(repo())
             viewModel.onIntent(NotificationSettingsIntent.Load)
 

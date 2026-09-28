@@ -31,8 +31,7 @@ class NavigationHelperImpl
         }
 
         override fun navigateByDeeplink(deeplink: String) {
-            // 해석 못 하면 아무 일도 하지 않는다 — 서버가 타입을 늘리는 건 정상이고, 그때
-            // 엉뚱한 화면으로 보내는 것보다 제자리에 두는 편이 낫다.
+            // 해석 못 하면 아무 일도 하지 않는다
             deeplinkResolver.resolve(deeplink)?.let(::navigateByRoute)
         }
 

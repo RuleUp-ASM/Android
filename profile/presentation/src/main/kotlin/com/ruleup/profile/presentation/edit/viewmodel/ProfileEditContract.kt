@@ -10,7 +10,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface ProfileEditIntent : MviIntent {
-    /** 진입 — 내 프로필 + 카테고리 마스터 조회로 폼 프리필. */
+    /** 진입 */
     data object Load : ProfileEditIntent
 
     data class ChangeNickname(
@@ -28,12 +28,12 @@ sealed interface ProfileEditIntent : MviIntent {
 
     data object RemoveImage : ProfileEditIntent
 
-    /** 저장 — 닉네임 변경 시 선검사(4.6) 후 변경 필드만 PATCH. */
+    /** 저장 */
     data object Save : ProfileEditIntent
 
     data object DismissSaveBlock : ProfileEditIntent
 
-    /** 제재 이력으로 간다 — 사유와 해제일의 원본은 그 화면이다. */
+    /** 제재 이력으로 간다 */
     data object OpenSanctionHistory : ProfileEditIntent
 
     data object Back : ProfileEditIntent
@@ -51,15 +51,15 @@ data class ProfileEditState(
     val profile: Profile?,
     val nickname: String,
     val selectedCategories: List<Category>,
-    // 카테고리 선택 상한. 서버가 주며, 응답이 비면 [InterestLimits] 가 기본값이다
+    // 카테고리 선택 상한.
     val maxSelectable: Int,
-    // 닉네임 30일 제한 — 변경 가능일까지 남은 일수 (0 = 변경 가능)
+    // 닉네임 30일 제한
     val nicknameLockedDays: Int,
     val isSaving: Boolean,
     // 이미지 업로드/제거 진행 중
     val isImageBusy: Boolean,
     val errorMessage: String?,
-    // 저장 진입점은 숨기지 않는다 — 눌렀을 때 왜 막혔는지 시트로 말한다(제재 정책 §5.1).
+    // 저장 진입점은 숨기지 않는다
     val saveBlock: SuspendedBlock?,
 ) : UiState {
     val nicknameLocked: Boolean get() = nicknameLockedDays > 0

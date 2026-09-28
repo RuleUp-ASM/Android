@@ -2,10 +2,7 @@ package com.ruleup.observability.domain.api
 
 import com.ruleup.observability.domain.model.Severity
 
-/*
- * `Log.d` 관습대로 쓰기 위한 [Observability.log] 의 inline 단축 호출.
- * 전부 코어 API 위의 얇은 층이라, 이 파일만 지워도 코어는 영향받지 않는다.
- */
+// `Log.d` 관습대로 쓰기 위한 [Observability.log] 의 inline 단축 호출.
 
 inline fun Observability.v(
     tag: String,

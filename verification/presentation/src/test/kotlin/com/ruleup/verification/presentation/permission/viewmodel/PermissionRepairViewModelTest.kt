@@ -16,10 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/**
- * 권한 재연결 화면의 전이. 이 화면은 사용자가 **설정에서 권한을 켜고 돌아오는** 동선이 본체라
- * 재조회가 곧 기능이다. 조회 실패를 어떻게 다루느냐가 이 화면의 핵심 계약이다.
- */
+/** 권한 재연결 화면의 전이. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PermissionRepairViewModelTest {
     @BeforeTest

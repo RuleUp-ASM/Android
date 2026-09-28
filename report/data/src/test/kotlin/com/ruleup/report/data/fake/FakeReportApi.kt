@@ -8,9 +8,7 @@ import com.ruleup.report.data.dto.BlockListResponse
 import com.ruleup.report.data.dto.ReportCreateResponse
 import com.ruleup.report.data.dto.ReportRequest
 
-/**
- * 검증 대상만 값을 돌려준다. 나머지는 [NotImplementedError] 라, 의도치 않은 호출이 조용히 지나가지 않는다.
- */
+/** 검증 대상만 값을 돌려준다. */
 class FakeReportApi(
     private val createResponse: BaseResponse<ReportCreateResponse>? = null,
     private val blockListResponse: BaseResponse<BlockListResponse>? = null,

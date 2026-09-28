@@ -26,14 +26,7 @@ import com.ruleup.designsystem.R
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 연결이 끊겼을 때의 전체 화면 상태 (Figma `1465:2`).
- *
- * 화면마다 따로 그리지 않고 하나로 둔다 — 같은 상황에 문구가 갈리면 사용자는 앱이 서로 다른 말을
- * 한다고 읽는다. 목록 안의 부분 실패는 여전히 인라인 안내를 쓴다. 이건 **화면 전체가 빈 경우**다.
- *
- * @param note 화면마다 다른 안심 문구. 자동 인증처럼 "끊겨도 잃지 않는다"고 말할 게 있을 때만 준다.
- */
+/** 연결이 끊겼을 때의 전체 화면 상태. */
 @Composable
 fun RuleUpNetworkError(
     onRetry: () -> Unit,

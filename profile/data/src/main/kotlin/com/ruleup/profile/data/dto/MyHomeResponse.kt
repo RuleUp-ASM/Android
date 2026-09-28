@@ -10,7 +10,7 @@ import com.ruleup.profile.domain.entity.MyHomeCounts
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 마이 홈 일괄 조회 (GET /me/home) ----------
+// 마이 홈 일괄 조회 (GET /me/home)
 @Serializable
 data class MyHomeCountsResponse(
     @SerialName("inProgress")
@@ -31,7 +31,7 @@ data class LockInfoResponse(
 
 @Serializable
 data class MyHomeResponse(
-    // 본인 화면 — 검수 상태 무관하게 본인이 정한 닉네임
+    // 본인 화면
     @SerialName("nickname")
     val nickname: String? = null,
     // PENDING / APPROVED / REJECTED / CONFLICT (검수 뱃지용)
@@ -60,7 +60,7 @@ internal fun MyHomeResponse.toDomain(): MyHome =
         profileImageUrl = profileImageUrl,
         tier = Tier.fromValue(tier),
         score = score ?: 0,
-        // 표시 티어가 비면 실제 티어로 떨어뜨린다 — 유예 밴드를 모르는 쪽이 부풀리는 쪽보다 안전하다.
+        // 표시 티어가 비면 실제 티어로 떨어뜨린다
         displayTier = displayTier?.let(Tier::fromValue) ?: Tier.fromValue(tier),
         counts =
             MyHomeCounts(
@@ -72,7 +72,7 @@ internal fun MyHomeResponse.toDomain(): MyHome =
         lockInfo = lockInfo?.toDomain(),
     )
 
-/** 사유·해제 시각 중 하나라도 비면 잠금 안내를 그리지 않는다 — 빈칸 배너는 불안만 준다. */
+/** 사유·해제 시각 중 하나라도 비면 잠금 안내를 그리지 않는다 */
 internal fun LockInfoResponse.toDomain(): LockInfo? {
     val reason = reason ?: return null
     val unlockAt = unlockAt ?: return null

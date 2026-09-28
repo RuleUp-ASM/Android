@@ -12,11 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 권한 재연결. 이 화면이 못 하면 **인증이 조용히 멈추다 강퇴로 간다** — 사용자는 스스로
- * 알아챌 방법이 없다. 그래서 "언제까지 무엇을 하지 않으면 어떻게 되는가"를 시점과 함께 말하는
- * 것이 곧 기능이다. "권한이 필요해요"로는 급한 줄 모른다.
- */
+/** 권한 재연결. */
 @RunWith(RobolectricTestRunner::class)
 class PermissionRepairContentTest {
     @get:Rule

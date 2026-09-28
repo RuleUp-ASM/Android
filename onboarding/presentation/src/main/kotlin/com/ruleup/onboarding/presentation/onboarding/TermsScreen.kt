@@ -34,12 +34,7 @@ import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.onboarding.presentation.terms.assetName
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/**
- * 06 · 약관 동의 (6/6). 필수 3종(이용약관·개인정보·위치기반)에 모두 동의해야 가입할 수 있다.
- *
- * [checked] 에 없는 항목도 전송 시 `agreed=false` 로 기록된다 — 선택 약관의 "동의 안 함"까지
- * 남겨야 약관이 개정됐을 때 재동의 판정을 할 수 있다.
- */
+/** 06 · 약관 동의 (6/6). */
 @Composable
 fun TermsContent(
     onIntent: (OnboardingIntent) -> Unit,
@@ -89,7 +84,7 @@ fun TermsContent(
                     .background(RuleUpTheme.colors.surface)
                     .border(1.dp, RuleUpTheme.colors.border, RuleUpTheme.shapes.card),
         ) {
-            // 가입에서 받는 5종만 — 위치·건강 개별 동의는 그 인증 수단을 처음 쓸 때 따로 받는다.
+            // 가입에서 받는 5종만
             AgreementType.SIGNUP.forEachIndexed { index, type ->
                 AgreementRow(
                     checked = type in checked,
@@ -99,7 +94,7 @@ fun TermsContent(
                         Modifier.singleClickable(globalGuard = false) {
                             onIntent(OnboardingIntent.ToggleAgreement(type))
                         },
-                    // 원문이 번들된 약관에만 붙인다 — 열 것이 없는데 「보기」를 두면 눌러보고 아무 일이 없다.
+                    // 원문이 번들된 약관에만 붙인다
                     onOpenDocument =
                         { nav.navigateTo(TermsDocumentPage(type)) }
                             .takeIf { type.assetName() != null },
@@ -117,7 +112,7 @@ fun TermsContent(
     }
 }
 
-/** 동의 한 줄: 체크 원 + 라벨 + (필수/선택) 배지. [required] 가 null 이면 배지를 숨긴다(전체 동의). */
+/** 동의 한 줄: 체크 원 + 라벨 + (필수/선택) 배지. */
 @Composable
 private fun AgreementRow(
     checked: Boolean,
@@ -151,7 +146,7 @@ private fun AgreementRow(
                 text = "보기",
                 color = RuleUpTheme.colors.textMuted,
                 style = RuleUpTheme.typography.smallMedium,
-                // 체크와 겹치지 않게 별도 클릭 — 읽으려다 동의가 토글되면 안 된다.
+                // 체크와 겹치지 않게 별도 클릭
                 modifier = Modifier.singleClickable(globalGuard = false, onClick = open),
             )
         }
@@ -181,7 +176,7 @@ private fun CheckCircle(checked: Boolean) {
     }
 }
 
-/** 약관 표시명. 서버 키(`AgreementType.key`)와 달리 화면 문구라 여기서 정한다. */
+/** 약관 표시명. */
 private fun AgreementType.label(): String =
     when (this) {
         AgreementType.TERMS_OF_SERVICE -> "서비스 이용약관"
@@ -189,7 +184,7 @@ private fun AgreementType.label(): String =
         AgreementType.LOCATION_SERVICE -> "위치·센서 정보 활용 (자동 인증)"
         AgreementType.MARKETING -> "마케팅 정보 수신"
         AgreementType.EVENT -> "이벤트 정보 수신"
-        // 가입 화면에는 뜨지 않는다(AgreementType.SIGNUP 만 그린다). when 을 exhaustive 하게 두려고 남긴다.
+        // 가입 화면에는 뜨지 않는다(AgreementType.SIGNUP 만 그린다).
         AgreementType.LOCATION_INFO -> "위치정보 수집·이용"
         AgreementType.HEALTH_INFO -> "건강정보 수집·이용"
     }

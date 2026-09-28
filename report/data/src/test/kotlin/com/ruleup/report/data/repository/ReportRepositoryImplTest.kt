@@ -39,7 +39,7 @@ class ReportRepositoryImplTest {
     @Test
     fun `신고 기능이 정지되면 정지 실패로 번역한다`() =
         runTest {
-            // 화면이 "다시 시도"를 권하면 안 되는 유일한 실패다 — 재시도로 풀리지 않는다.
+            // 화면이 "다시 시도"를 권하면 안 되는 유일한 실패다
             val api = FakeReportApi(createResponse = failure("REPORT_SUSPENDED"))
 
             val thrown = assertFailsWith<ReportException> { ReportRepositoryImpl(api).report(profileReport) }
@@ -60,7 +60,6 @@ class ReportRepositoryImplTest {
     @Test
     fun `서버에 닿지 못하면 네트워크 실패로 번역한다`() =
         runTest {
-            // 서버가 거절한 것과 아예 닿지 못한 것을 화면이 구분해야 "다시 시도"를 권할 수 있다.
             val api = FakeReportApi(throwOnCall = IOException("offline"))
 
             val thrown = assertFailsWith<ReportException> { ReportRepositoryImpl(api).report(profileReport) }
@@ -111,7 +110,6 @@ class ReportRepositoryImplTest {
     @Test
     fun `이미 풀린 차단을 다시 풀면 차단 내역 없음으로 번역한다`() =
         runTest {
-            // 목록을 열어 둔 채 다른 기기에서 해제한 경우다. 화면은 목록만 새로 고치면 된다.
             val api = FakeReportApi(deleteResponse = failure("BLOCK_ENTRY_NOT_FOUND"))
 
             val thrown = assertFailsWith<ReportException> { ReportRepositoryImpl(api).unblockUser("u-1") }

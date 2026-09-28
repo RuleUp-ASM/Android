@@ -9,7 +9,7 @@ sealed interface LoginEffect : MviEffect {
         val provider: OAuthProvider,
     ) : LoginEffect
 
-    /** 실패 안내. 무게(토스트·다이얼로그·전체 화면)는 [AuthFailureUi] 가 정한다. */
+    /** 실패 안내. */
     data class ShowFailure(
         val ui: AuthFailureUi,
     ) : LoginEffect

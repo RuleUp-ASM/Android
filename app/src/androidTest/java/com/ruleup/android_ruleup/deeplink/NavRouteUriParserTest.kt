@@ -8,13 +8,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * 진입 URI 파서. `android.net.Uri` 가 프레임워크 타입이라 계측 테스트로 둔다.
- *
- * 인자 필터링은 없앴다(#208). 방어는 **매니페스트에 `/app` 필터가 없다**는 사실이 담당한다 —
- * 웹페이지가 이 주소로 앱 화면을 열 수 없고, 알림은 MainActivity 를 명시한 인텐트로 들어온다.
- * `/app` 필터가 생기면 필터링을 되살려야 한다.
- */
+/** 진입 URI 파서. */
 @RunWith(AndroidJUnit4::class)
 class NavRouteUriParserTest {
     private fun parse(url: String) = Uri.parse(url).toNavRoute()
@@ -29,8 +23,7 @@ class NavRouteUriParserTest {
 
     @Test
     fun `인자를_걸러내지_않는다`() {
-        // 필터링을 없앤 근거는 매니페스트에 /app 필터가 없다는 것이다. 이 테스트가 깨진다면
-        // 누군가 필터링을 되살린 것이고, 그건 /app 을 노출했다는 뜻이어야 한다.
+        // 필터링을 없앤 근거는 매니페스트에 /app 필터가 없다는 것이다.
         val route =
             parse(
                 "https://android.ruleup.co.kr/app/verification/location" +

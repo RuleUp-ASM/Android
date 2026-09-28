@@ -31,7 +31,7 @@ class InquiryRepositoryImpl
     ) : InquiryRepository {
         override suspend fun submit(submission: InquirySubmission): InquiryReceipt =
             translating {
-                // 진단 정보 채집이 실패해도 접수는 나가야 한다 — provider 가 빈 값을 채워 돌려준다.
+                // 진단 정보 채집이 실패해도 접수는 나가야 한다
                 val context = deviceContextProvider.capture()
                 api
                     .submit(submission.toRequest(context))
@@ -65,14 +65,7 @@ class InquiryRepositoryImpl
                     .requireField("imageUrl")
             }
 
-        /**
-         * 모든 실패를 [InquiryException] 하나로 모은다. 화면이 `ApiException` 코드 문자열을 읽지
-         * 않게 하려는 것이고, [IOException] 을 따로 잡는 이유는 "다시 시도"를 권할 수 있는
-         * 실패인지가 거기서 갈리기 때문이다 — 서버가 거절한 것과 아예 닿지 못한 것은 다르다.
-         *
-         * 서버 문구를 그대로 싣는다. 접수 상한·길이 초과는 서버가 사용자 문장으로 내려주고,
-         * 여기서 다시 쓰면 같은 규칙이 두 곳에 살아 한쪽만 고쳐진다.
-         */
+        /** 모든 실패를 [InquiryException] 하나로 모은다. */
         private inline fun <T> translating(block: () -> T): T =
             try {
                 block()

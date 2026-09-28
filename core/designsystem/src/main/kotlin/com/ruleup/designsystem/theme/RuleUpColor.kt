@@ -2,10 +2,7 @@ package com.ruleup.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
-/**
- * Figma `🎨 00 · 디자인 시스템 · 컬러 토큰`(node `1177:9`)의 변수 15개. 이름·값 모두 Figma 를 따른다.
- * 화면에서 직접 쓰지 말고 [RuleUpTheme] 의 시맨틱 토큰을 통해 접근한다.
- */
+/** 색상 토큰. */
 object RuleUpPalette {
     val Primary600 = Color(0xFF6C5CE7)
     val Primary300 = Color(0xFFA89DF0)
@@ -26,17 +23,17 @@ object RuleUpPalette {
     val StatusWarn = Color(0xFFF59E0B)
     val StatusWarnBg = Color(0xFFFFF4E2)
 
-    /** 카카오 브랜드 색. 카카오가 정한 값이라 팔레트 교체와 무관하게 고정이다. */
+    /** 카카오 브랜드 색. */
     val Kakao = Color(0xFFFEE500)
     val KakaoLabel = Color(0xFF191919)
 
-    /** Google 로그인 버튼 색(브랜딩 가이드라인 라이트). 다크 한 벌도 규정돼 있으나 테마가 라이트 고정이다. */
+    /** Google 로그인 버튼 색(브랜딩 가이드라인 라이트). */
     val GoogleSurface = Color(0xFFFFFFFF)
     val GoogleStroke = Color(0xFF747775)
     val GoogleLabel = Color(0xFF1F1F1F)
 }
 
-/** 시맨틱 컬러 토큰. 라이트 한 벌뿐이다 — Figma 에 다크 토큰이 없어 지어내면 디자인과 다른 화면이 나간다. */
+/** 시맨틱 컬러 토큰. */
 data class RuleUpColorScheme(
     val brand: Color,
     val brandStrong: Color,
@@ -60,10 +57,7 @@ data class RuleUpColorScheme(
     val warningContainer: Color,
 )
 
-/**
- * Figma 변수 → 시맨틱 토큰 매핑. 대응 변수가 없는 토큰은 지우지 않고 가장 가까운 Figma 값으로 재지정해 둔다 —
- * 쓰는 화면이 많아 한 번에 고칠 수 없고, 디자인에 없는 색이 나가는 것보다 강조 단계가 주는 편이 낫다.
- */
+/** Figma 변수 → 시맨틱 토큰 매핑. */
 val LightRuleUpColors =
     RuleUpColorScheme(
         brand = RuleUpPalette.Primary600,
@@ -93,7 +87,7 @@ val LightRuleUpColors =
         warningContainer = RuleUpPalette.StatusWarnBg,
     )
 
-/** `@Composable` 이 아닌 곳(데이터 상수 등)에서 쓰는 정적 접근자. 컴포저블 안에서는 [RuleUpTheme.colors]. */
+/** `@Composable` 이 아닌 곳(데이터 상수 등)에서 쓰는 정적 접근자. */
 object RuleUpColors {
     val Kakao = RuleUpPalette.Kakao
     val KakaoText = RuleUpPalette.KakaoLabel

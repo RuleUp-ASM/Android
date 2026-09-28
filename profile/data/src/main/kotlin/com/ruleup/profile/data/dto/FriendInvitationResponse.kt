@@ -6,7 +6,7 @@ import com.ruleup.profile.domain.entity.FriendInvitee
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 친구 초대 정보 (GET /me/invitation) ----------
+// 친구 초대 정보 (GET /me/invitation)
 @Serializable
 data class FriendInviteeResponse(
     @SerialName("nickname")

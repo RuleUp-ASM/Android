@@ -10,7 +10,7 @@ import com.ruleup.profile.domain.entity.AgreementVersionMismatchException
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 동의 현황 (GET · POST /users/me/agreements) ----------
+// 동의 현황 (GET · POST /users/me/agreements)
 @Serializable
 data class AgreementItemResponse(
     // TOS / PRIVACY / LOCATION / MARKETING / EVENT / LOCATION_INFO / HEALTH_INFO
@@ -36,7 +36,7 @@ data class AgreementStatusResponse(
 
 internal fun AgreementStatusResponse.toDomain(): AgreementStatus =
     AgreementStatus(
-        // 모르는 항목은 버린다 — 이름도 설명도 없는 토글을 화면에 세울 수 없다.
+        // 모르는 항목은 버린다
         agreements = agreements.orEmpty().mapNotNull { it.toDomain() },
         reconsentRequired = reconsentRequired.orEmpty().mapNotNull(AgreementType::fromApiType),
     )
@@ -45,7 +45,7 @@ internal fun AgreementItemResponse.toDomain(): AgreementState? {
     val type = AgreementType.fromApiType(type) ?: return null
     return AgreementState(
         type = type,
-        // 필수 여부를 모르면 서버가 아니라 항목 정의를 믿는다 — 필수를 선택으로 보이면 철회 버튼이 열린다.
+        // 필수 여부를 모르면 서버가 아니라 항목 정의를 믿는다
         required = required ?: type.required,
         agreed = agreed ?: false,
         version = version,
@@ -77,12 +77,7 @@ internal fun List<AgreementSubmission>.toRequest(): AgreementSubmitRequest =
             },
     )
 
-/**
- * 동의 제출 실패를 화면이 분기할 수 있는 타입으로 옮긴다.
- *
- * 필수 약관 철회는 "탈퇴 안내"로, 버전 불일치는 "다시 불러오기"로 갈린다 — 둘을 같은 토스트로
- * 접으면 사용자가 무엇을 해야 할지 알 수 없다.
- */
+/** 동의 제출 실패를 화면이 분기할 수 있는 타입으로 옮긴다. */
 internal fun ApiException.toAgreementFailure(): Throwable =
     when (code) {
         "AGREEMENT_REVOKE_FORBIDDEN" -> AgreementRevokeForbiddenException()

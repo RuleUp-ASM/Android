@@ -4,10 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 대상 앱 고르기의 목록 좁히기. 사용자가 수백 개 중에서 찾아야 하므로, 못 찾으면 **아예 등록을
- * 포기한다** — 그러면 자동 인증이 성립하지 않는다.
- */
+/** 대상 앱 고르기의 목록 좁히기. */
 class FilterAppsTest {
     @Test
     fun `이름의 일부만 쳐도 찾는다`() {
@@ -18,9 +15,6 @@ class FilterAppsTest {
 
     @Test
     fun `줄임말로는 찾지 못한다`() {
-        // 부분 일치라 "카톡"은 "카카오톡"에 걸리지 않는다. 한국어 앱은 줄임말로 검색하는 일이
-        // 흔해서 사용자가 못 찾고 등록을 포기할 수 있다 — 초성·줄임말 매칭을 넣을지는 기획
-        // 판단이라 여기서는 현재 동작만 못 박는다.
         assertEquals(emptyList(), filterApps(apps, query = "카톡", category = null))
     }
 

@@ -6,12 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * 세션 상태를 메모리에 들고 있는 [TokenRepository].
- *
- * 실제 구현처럼 저장 여부를 흐름으로도 흘려보낸다 — 정적 값으로 두면 세션 종료 전이를 관찰하는
- * 코드를 테스트할 수 없다. 여러 feature 의 테스트가 쓰므로 `core:domain` testFixtures 에 둔다.
- */
+/** 세션 상태를 메모리에 들고 있는 [TokenRepository]. */
 class FakeTokenRepository(
     private var refreshToken: String? = null,
     private var storedUserId: String? = null,
@@ -46,7 +41,7 @@ class FakeTokenRepository(
     ) {
         savedToken = token
         refreshToken = token.refreshToken
-        // null 이면 기존 값을 그대로 둔다 — 덮어 비우면 사용자 귀속이 끊긴다(실제 구현과 같은 규칙).
+
         userId?.let {
             storedUserId = it
             userIdFlow.value = it

@@ -11,7 +11,7 @@ sealed interface OnboardingReducerEvent : ReducerEvent {
         val nickname: String,
     ) : OnboardingReducerEvent
 
-    /** 디바운스된 확인 결과. [available] 이 null 이면 확인 전 상태로 되돌린다. */
+    /** 디바운스된 확인 결과. */
     data class NicknameChecked(
         val available: Boolean?,
         val message: String?,
@@ -25,7 +25,7 @@ sealed interface OnboardingReducerEvent : ReducerEvent {
         val uri: String?,
     ) : OnboardingReducerEvent
 
-    /** 검증까지 마친 생일 입력. [birthDate] 가 null 이면 아직 유효하지 않다. */
+    /** 검증까지 마친 생일 입력. */
     data class BirthDateEntered(
         val digits: String,
         val birthDate: LocalDate?,

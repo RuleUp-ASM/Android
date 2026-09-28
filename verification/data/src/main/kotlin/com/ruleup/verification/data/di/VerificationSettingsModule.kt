@@ -13,10 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * 자동인증 전용 Preferences DataStore 를 [VerificationPrefs] qualifier 로 제공한다.
- * core:datastore 의 token DataStore<Preferences> 와 별도 파일(`verification`)·별도 바인딩이다.
- */
+/** 자동인증 전용 Preferences DataStore 를 [VerificationPrefs] qualifier 로 제공한다. */
 @Module
 @InstallIn(SingletonComponent::class)
 object VerificationSettingsModule {

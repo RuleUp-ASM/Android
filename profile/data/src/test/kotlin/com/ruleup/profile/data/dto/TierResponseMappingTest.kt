@@ -7,10 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 티어 응답 매핑. 승·강등은 **서버 판정**이고 화면은 그걸 옮겨 적을 뿐이라, 여기서 값을 지어내면
- * 사용자는 실제로는 오지 않은 강등을 보거나 이미 온 강등을 못 본다.
- */
+/** 티어 응답 매핑. */
 class MyTierResponseMappingTest {
     @Test
     fun `표시 티어를 안 주면 실제 티어로 떨어뜨린다`() {
@@ -41,7 +38,6 @@ class MyTierResponseMappingTest {
 
     @Test
     fun `모르는 변동 사유는 사유만 비우고 증감폭은 남긴다`() {
-        // 사유 enum 이 늘었다고 그 행이 통째로 사라지면 사용자는 점수가 왜 줄었는지 알 수 없다.
         val tier =
             MyTierResponse(
                 recentChanges = listOf(ScoreChangeResponse(date = "2026-08-01", reason = "SEASON_RESET", delta = -3)),
@@ -79,10 +75,7 @@ class MyTierResponseMappingTest {
     }
 }
 
-/**
- * 티어 히스토리 매핑. 그래프의 x 축이라 **월이 없는 점은 세울 자리가 없고**, 표본이 없는 계정에
- * 역대 최고를 지어내면 없던 기록이 생긴다.
- */
+/** 티어 히스토리 매핑. */
 class TierHistoryResponseMappingTest {
     @Test
     fun `역대 최고에 날짜가 없으면 최고 기록으로 세우지 않는다`() {

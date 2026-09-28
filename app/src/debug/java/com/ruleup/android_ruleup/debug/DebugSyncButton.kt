@@ -27,19 +27,10 @@ import com.ruleup.verification.data.signal.usage.hasUsageAccess
 import com.ruleup.verification.data.signal.usage.usageAccessSettingsIntent
 import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 
-// 수집·동기화 로그 태그(Worker/Repository 와 동일). 디버그 오버레이/Logcat 에서 'VerifySync' 로 필터.
+// 수집·동기화 로그 태그(Worker/Repository 와 동일).
 private const val LOG_TAG = "VerifySync"
 
-/**
- * 디버그 빌드 전용 "지금 수집·동기화" 트리거. 누르면 수집을 막을 수 있는 권한을 모두 요청/안내한 뒤
- * expedited catch-up 으로 [com.ruleup.verification.data.sync.VerificationSyncWorker] 를 즉시 한 번 돌린다.
- *
- * OS 가 코드로의 조용한 grant 를 막으므로 순서대로 사용자에게 받아낸다:
- * 런타임(위치·활동인식·알림) → 백그라운드 위치(별도 단계) → Health Connect → 사용량 접근(설정 화면).
- * 사용량 접근은 설정에서 토글해야 하므로, 미허용이면 설정만 열고 안내한다(허용 후 다시 누르면 전체 수집).
- *
- * 결과는 Logcat + 화면 우측 상단 [DebugLogOverlay] 에 'VerifySync' 태그로 뜬다.
- */
+/** 디버그 빌드 전용 "지금 수집·동기화" 트리거. */
 @Composable
 fun DebugSyncButton(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -124,12 +115,12 @@ private fun enqueueCollect(
     context: Context,
     observability: Observability,
 ) {
-    // 디버그 수동 트리거는 REPLACE — 이전 실패(재시도 백오프)로 대기 중인 작업이 있어도 지금 새로 돌린다.
+    // 디버그 수동 트리거는 REPLACE
     observability.i(LOG_TAG) { "✔ 권한 확인 완료 — catch-up 수집·동기화 enqueue (REPLACE)" }
     VerificationSyncSchedulerImpl.enqueueCatchUp(context, ExistingWorkPolicy.REPLACE)
 }
 
-// 요청할 런타임 권한(OS 버전별 추가). 백그라운드 위치는 포그라운드 허용 후 별도 단계라 여기 넣지 않는다.
+// 요청할 런타임 권한(OS 버전별 추가).
 private fun runtimePermissions(): Array<String> =
     buildList {
         add(Manifest.permission.ACCESS_FINE_LOCATION)

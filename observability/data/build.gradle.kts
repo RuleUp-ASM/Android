@@ -31,7 +31,7 @@ kotlin {
 }
 
 dependencies {
-    // 계약을 재노출한다. :app 이 이 모듈만 의존해도 Observability 타입을 함께 본다.
+    // 계약을 재노출한다.
     api(project(":observability:domain"))
 
     implementation(libs.amplitude.analytics)

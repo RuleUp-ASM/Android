@@ -10,7 +10,7 @@ import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.domain.entity.category.Category
 
-/** 목록 항목 픽스처. 테스트 본문에는 그 테스트가 신경 쓰는 값만 넘긴다. */
+/** 목록 항목 픽스처. */
 internal fun myChallenge(
     id: String = "ch1",
     title: String = "아침 6시 기상",

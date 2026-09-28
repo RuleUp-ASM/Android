@@ -10,12 +10,7 @@ import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 04 · 성별. 고르기 전에는 넘어가지 않는다 — 마지막 제출에서 되돌아오면 signupToken(5분)이
- * 만료돼 처음부터 다시 해야 한다.
- *
- * 기대 문구 출처: Figma `1134:1798`「온보딩 4 · 성별」.
- */
+/** 04 · 성별. */
 @RunWith(RobolectricTestRunner::class)
 class GenderContentTest {
     @get:Rule

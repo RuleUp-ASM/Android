@@ -46,10 +46,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-/**
- * 03 · 생일. **필수**이고 만 14세 미만은 가입할 수 없다(법적 요구사항). 생일이 유효해야 "다음"으로
- * 넘어간다 — 여기서 막지 않으면 약관까지 다 채운 뒤 마지막 제출에서 `BIRTHDATE_UNDERAGE` 로 튕긴다.
- */
+/** 03 · 생일. */
 @Composable
 fun BirthDateContent(
     onIntent: (OnboardingIntent) -> Unit,
@@ -87,10 +84,7 @@ fun BirthDateContent(
     }
 }
 
-/**
- * 생일 입력: 달력에서 고르거나 직접 친다. 직접 입력을 남겨둔 건 달력만 두면 8자리를 빠르게 치던
- * 사람이 더 느려져서다.
- */
+/** 생일 입력: 달력에서 고르거나 직접 친다. */
 @Composable
 private fun BirthDateSection(
     digits: String,
@@ -172,10 +166,7 @@ private fun BirthDateScreenPreview() {
     }
 }
 
-/**
- * 생일 달력. **만 14세가 되는 날 이후는 고를 수 없다** — 되돌릴 수 없는 법적 요건이라 고른 뒤 문구로
- * 알리는 것보다 못 고르게 하는 편이 낫다. 미래 날짜도 같은 상한에 함께 걸린다.
- */
+/** 생일 달력. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BirthDatePickerDialog(
@@ -191,7 +182,7 @@ private fun BirthDatePickerDialog(
     val state =
         rememberDatePickerState(
             initialSelectedDateMillis = initial.toEpochMillisOrNull(zone) ?: latestMillis,
-            // 달력을 열자마자 고를 수 없는 해가 보이면 혼란스럽다 — 선택 가능한 범위만 보여준다.
+            // 달력을 열자마자 고를 수 없는 해가 보이면 혼란스럽다
             initialDisplayedMonthMillis = initial.toEpochMillisOrNull(zone) ?: latestMillis,
             yearRange = EARLIEST_YEAR..latestAllowed.year,
             selectableDates =
@@ -216,7 +207,7 @@ private fun BirthDatePickerDialog(
     }
 }
 
-/** `YYYYMMDD` 8자리를 달력이 쓰는 epoch millis 로. 자릿수가 안 맞거나 없는 날짜면 null. */
+/** `YYYYMMDD` 8자리를 달력이 쓰는 epoch millis 로. */
 private fun String.toEpochMillisOrNull(zone: ZoneId): Long? {
     if (length != BIRTH_DIGITS) return null
     val date =
@@ -234,5 +225,5 @@ private fun Long.toBirthDigits(zone: ZoneId): String {
 
 private const val BIRTH_DIGITS = 8
 
-// 달력 연도 하한. 실제 가입자 범위를 넉넉히 덮으면서 스크롤이 무의미하게 길어지지 않는 값이다.
+// 달력 연도 하한.
 private const val EARLIEST_YEAR = 1920

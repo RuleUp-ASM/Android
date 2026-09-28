@@ -16,13 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-/**
- * 서버 에러 → 도메인 예외 번역. 화면은 **예외 타입으로 다음 행동을 정하므로**, 여기서 뭉개면
- * 사용자에게 엉뚱한 안내가 나가거나(잠금인데 "잠시 후 다시 시도") 아무 안내도 못 하게 된다.
- *
- * 특히 가입 거절은 코드 하나(409 JOIN_BLOCKED)에 사유가 여럿 묶인 계약이라, code 만 보고
- * 끝내면 정원 마감과 티어 미달이 같은 문구로 합쳐진다.
- */
+/** 서버 에러 → 도메인 예외 번역. */
 class ChallengeRepositoryErrorMappingTest {
     @Test
     fun `가입 거절은 사유까지 실어 올린다`() =
@@ -52,7 +46,6 @@ class ChallengeRepositoryErrorMappingTest {
     @Test
     fun `앱이 모르는 거절 사유는 지어내지 않고 비운다`() =
         runBlocking {
-            // 서버가 사유를 늘려도 화면은 일반 안내로 떨어지면 된다 — 아무 사유나 붙이면 거짓말이 된다.
             val failure =
                 assertFailsWith<JoinBlockedException> {
                     repository(error("JOIN_BLOCKED", reason = "SOMETHING_NEW")).join("ch1")

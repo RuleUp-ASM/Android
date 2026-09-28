@@ -36,7 +36,7 @@ class RoomRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 커서가 만료·변조된 경우다. 화면이 첫 페이지부터 다시 받도록 구분되는 타입으로 올린다.
+                // 커서가 만료·변조된 경우다.
                 if (e.code == CODE_CURSOR_INVALID) throw ThreadCursorInvalidException()
                 throw e
             }

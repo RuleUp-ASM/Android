@@ -7,10 +7,7 @@ import com.ruleup.verification.domain.entity.NetworkState
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * VPN 활성 여부 동기 게이트(전송 스펙 §6.1). VPN ON 이면 서버가 해당 위치 신호를 무효 처리한다
- * (페이크 GPS + VPN 우회를 싸게 거른다). `ACCESS_NETWORK_STATE`(자동 권한) 기반.
- */
+/** VPN 활성 여부 동기 게이트. */
 class NetworkStateProvider
     @Inject
     constructor(

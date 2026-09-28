@@ -73,8 +73,7 @@ abstract class VerificationBindingsModule {
     @Singleton
     abstract fun bindSyncPolicyStore(impl: SyncPolicyStoreImpl): SyncPolicyStore
 
-    // 화면이 참여 전 권한을 검사할 때도 sync 가 쓰는 것과 같은 스냅샷을 본다 — 기준이 둘로 갈리면
-    // "참여는 됐는데 신호는 안 올라가는" 상태가 생긴다.
+    // 화면이 참여 전 권한을 검사할 때도 sync 가 쓰는 것과 같은 스냅샷을 본다
     @Binds
     @Singleton
     abstract fun bindPermissionStatusProvider(impl: PermissionSnapshotProvider): PermissionStatusProvider

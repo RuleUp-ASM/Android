@@ -11,10 +11,7 @@ import com.ruleup.verification.domain.entity.DeviceDiagnostics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * worker heartbeat 진단 채집(전송 스펙 §0.7). 백그라운드 실행 건강성(standby bucket·배터리 제한·
- * HC 가용성)을 매 flush 동봉한다. 전부 best-effort 라 조회 실패/미지원이면 null.
- */
+/** worker heartbeat 진단 채집. */
 class DiagnosticsProvider
     @Inject
     constructor(
@@ -27,7 +24,7 @@ class DiagnosticsProvider
                 standbyBucket = standbyBucket(),
                 backgroundRestricted = backgroundRestricted(),
                 isIgnoringBatteryOptimizations = isIgnoringBatteryOptimizations(),
-                // 실행 지연 추정(쿼터 강등 정황)은 Worker 가 산정해 채운다 — 여기선 미산정.
+                // 실행 지연 추정(쿼터 강등 정황)은 Worker 가 산정해 채운다
                 expeditedDeferred = null,
                 lastGeofenceReregisterAt = settings.lastGeofenceReregisterAt(),
                 hcSdkStatus = hcSdkStatus(),

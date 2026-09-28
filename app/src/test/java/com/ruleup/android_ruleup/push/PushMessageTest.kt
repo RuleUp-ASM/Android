@@ -4,12 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/**
- * 푸시 표시 판정.
- *
- * **`notification_id` 가 없으면 만들지 않는다** — 그게 트레이 tag 이자 중복 방어의 키라(테크 스펙 7),
- * 없으면 재시도로 온 같은 알림이 두 번 쌓인다. 알림 센터에는 이미 적재돼 있으니 버려도 잃는 게 없다.
- */
+/** 푸시 표시 판정. */
 class PushMessageTest {
     @Test
     fun `식별자가 없으면 표시하지 않는다`() {
@@ -38,7 +33,6 @@ class PushMessageTest {
 
     @Test
     fun `딥링크가 비면 없는 것으로 본다`() {
-        // 빈 문자열로 Intent 를 만들면 탭했을 때 아무 화면도 안 열리고 원인이 안 보인다.
         val push =
             PushMessage.from(
                 data = mapOf("notification_id" to "n1", "deeplink" to "  "),

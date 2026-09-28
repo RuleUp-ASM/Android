@@ -4,10 +4,7 @@ import com.ruleup.logging.domain.bizAttributes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * 팩토리 출력을 그대로 고정한다. 이벤트 이름·키·값 타입이 곧 분석 백엔드와의 계약이라, 이름 하나가
- * 바뀌면 대시보드가 조용히 비는데 컴파일은 그대로 통과한다.
- */
+/** 기본값 팩토리 검사. */
 class OnboardingEventsTest {
     @Test
     fun `login_screen_view 는 진입 유형을 싣는다`() {

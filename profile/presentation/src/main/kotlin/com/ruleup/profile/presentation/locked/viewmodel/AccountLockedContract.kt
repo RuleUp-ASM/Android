@@ -11,12 +11,12 @@ sealed interface AccountLockedIntent : MviIntent {
 
     data object Retry : AccountLockedIntent
 
-    /** 제재 이력. 잠금 상태에서도 열리는 두 화면 중 하나다(제재 정책 §5.3). */
+    /** 제재 이력. */
     data object OpenHistory : AccountLockedIntent
 
     data object OpenNotifications : AccountLockedIntent
 
-    /** 재검토. 별도 API 가 아니라 CS 문의(`신고 · 제재` 분류)로 간다(제재 정책 §7). */
+    /** 재검토. */
     data object RequestReview : AccountLockedIntent
 
     data object Logout : AccountLockedIntent

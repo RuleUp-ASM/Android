@@ -9,12 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 권한 재연결 ViewModel (프론트엔드 테크스펙 4-1「권한 · 재연결」).
- *
- * 권한 상태를 **저장하지 않는다.** 사용자가 설정에서 켜고 돌아오는 것이 이 화면의 주된 동선이라
- * 캐시가 곧 거짓이 된다 — 화면에 들어올 때마다, 설정에서 돌아올 때마다 OS 에 다시 묻는다.
- */
+/** 권한 재연결 ViewModel. */
 @HiltViewModel
 class PermissionRepairViewModel
     @Inject
@@ -41,7 +36,7 @@ class PermissionRepairViewModel
 
         private fun refresh() {
             viewModelScope.launch {
-                // 조회에 실패하면 직전 값을 유지한다 — 모른다고 "다 끊겼다"로 그리면 없던 사고가 된다.
+                // 조회 실패 시 이전 상태 유지.
                 runCatching { permissionStatusProvider.capture() }
                     .onSuccess { dispatch(PermissionRepairReducerEvent.Captured(it)) }
             }

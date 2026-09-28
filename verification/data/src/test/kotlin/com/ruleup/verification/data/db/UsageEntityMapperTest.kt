@@ -28,7 +28,6 @@ class UsageEntityMapperTest {
 
     @Test
     fun `SCREEN 행은 앱 사용 이벤트로 변환되지 않는다`() {
-        // 화면·잠금해제는 SCREEN_TIME 에 섞지 않는다 — 당일 첫 시각만 뽑아 WAKE 로 따로 나간다.
         val screen =
             UsageEventEntity(
                 kind = UsageEventKind.SCREEN,
@@ -42,7 +41,6 @@ class UsageEntityMapperTest {
 
     @Test
     fun `APP 행이어도 화면 이벤트면 AppEventType 을 지어내지 않는다`() {
-        // 예전 폴백(`?: RESUMED`)이 살아나면 잠금해제 한 번이 앱 실행으로 둔갑해 사용 시간에 섞인다.
         val broken =
             UsageEventEntity(
                 kind = UsageEventKind.APP,

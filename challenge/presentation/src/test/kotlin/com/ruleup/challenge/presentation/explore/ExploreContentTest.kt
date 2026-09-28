@@ -11,12 +11,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 탐색 홈. 인기·카테고리 두 섹션이 **따로 실패할 수 있고**, 한쪽이 죽어도 나머지는 보여야 한다.
- * 인기가 없을 때 섹션째 감추는 것도 계약이다 — 빈 섹션을 남기면 고장으로 읽힌다.
- *
- * 기대 문구 출처: Figma `1134:1108`「탐색」.
- */
+/** 탐색 홈. */
 @RunWith(RobolectricTestRunner::class)
 class ExploreContentTest {
     @get:Rule

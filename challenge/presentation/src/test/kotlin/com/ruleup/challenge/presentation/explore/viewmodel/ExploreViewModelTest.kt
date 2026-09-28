@@ -20,12 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 탐색 홈. 인기·카테고리 두 섹션이 **따로 실패할 수 있고**, 한쪽이 죽어도 나머지는 보여야 한다.
- *
- * 관측 쪽 계약이 더 까다롭다 — 탐색 홈 진입은 전환율의 **분모**라 두 섹션이 각각 끝나도 딱
- * 한 번만 나가야 한다. 두 번 나가면 분모가 부풀어 전환율이 실제보다 낮게 보인다.
- */
+/** 탐색 홈. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExploreViewModelTest {
     @BeforeTest
@@ -65,7 +60,7 @@ class ExploreViewModelTest {
     @Test
     fun `인기가 죽어도 카테고리는 보여 준다`() =
         runTest {
-            // 두 섹션은 서로 독립이다. 하나가 실패했다고 화면 전체를 비우면 안 된다.
+            // 두 섹션은 서로 독립이다.
             val viewModel =
                 viewModel(
                     FakeExploreRepository(
@@ -82,7 +77,7 @@ class ExploreViewModelTest {
     @Test
     fun `탐색 홈 진입은 두 섹션이 다 끝나도 한 번만 센다`() =
         runTest {
-            // 전환율의 분모다. 두 번 나가면 전환율이 실제보다 낮게 보인다.
+            // 전환율의 분모다.
             val bizLogger = RecordingBizLogger()
             val viewModel = viewModel(repo(trendingCount = 3), bizLogger = bizLogger)
 

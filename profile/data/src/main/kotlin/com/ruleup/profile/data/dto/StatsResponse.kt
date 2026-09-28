@@ -5,7 +5,7 @@ import com.ruleup.profile.domain.entity.StatsStreak
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 통계 리포트 (GET /me/stats) ----------
+// 통계 리포트 (GET /me/stats)
 @Serializable
 data class StatsStreakResponse(
     @SerialName("current")
@@ -29,7 +29,7 @@ data class StatsResponse(
 
 internal fun StatsResponse.toDomain(): StatsReport =
     StatsReport(
-        // 표본이 없으면 서버가 비운다. 0 으로 접으면 "전부 실패"로 읽힌다.
+        // 표본이 없으면 서버가 비운다.
         successRate = successRate?.coerceIn(0.0, 1.0),
         totalSuccessCount = totalSuccessCount ?: 0,
         streak = StatsStreak(current = streak?.current ?: 0, best = streak?.best ?: 0),

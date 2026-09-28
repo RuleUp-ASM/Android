@@ -13,10 +13,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 활동 캘린더. 월을 오가는 화면이라 **어느 달을 보고 있는지 정해지기 전에는 달력을 그리지 않는다** —
- * 빈 달력을 먼저 그리면 사용자는 그 달에 기록이 없다고 읽는다.
- */
+/** 활동 캘린더. */
 @RunWith(RobolectricTestRunner::class)
 class MyCalendarContentTest {
     @get:Rule

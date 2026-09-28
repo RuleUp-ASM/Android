@@ -14,11 +14,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 둘러보기 목록. 결과가 0건일 때 **왜 비었는지에 따라 할 말이 다르다** — "조건이 좁다"와
- * "기록이 아직 없다"는 사용자가 취할 행동이 정반대다. 하나로 뭉개면 조건을 풀어야 할 사람이
- * 기다리고, 기다려야 할 사람이 조건을 푼다.
- */
+/** 둘러보기 목록. */
 @RunWith(RobolectricTestRunner::class)
 class ExploreListContentTest {
     @get:Rule
@@ -26,7 +22,6 @@ class ExploreListContentTest {
 
     @Test
     fun `티어 조건 때문에 비었으면 조건을 끌 수 있게 해 준다`() {
-        // 이 사유만 사용자가 즉시 되돌릴 수 있다 — 버튼이 없으면 왜 비었는지 알고도 못 고친다.
         render(state(filter = ExploreFilter(eligibleOnly = true)))
 
         compose.onNodeWithText("내 티어로 들어갈 수 있는 챌린지가 없어요").assertExists()
@@ -69,7 +64,6 @@ class ExploreListContentTest {
 
     @Test
     fun `아직 불러오는 중이면 비었다고 하지 않는다`() {
-        // 곧 채워질 화면에 "없어요"가 스쳐 지나가면 사용자는 조건을 잘못 걸었다고 오해한다.
         render(state().copy(isLoading = true))
 
         compose.onNodeWithText("이 카테고리에는 아직 챌린지가 없어요").assertDoesNotExist()

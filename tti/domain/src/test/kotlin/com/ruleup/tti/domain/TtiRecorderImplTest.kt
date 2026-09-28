@@ -8,11 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 기록기의 계약. **측정이 조용히 사라지거나 같은 건이 두 번 나가는 것**이 여기서 막힌다.
- *
- * 계측이 실패해도 앱이 죽지 않아야 하므로, 저장소가 던지는 경우도 함께 본다.
- */
+/** 기록기의 계약. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TtiRecorderImplTest {
     @Test
@@ -34,7 +30,7 @@ class TtiRecorderImplTest {
                     .single()
                     .pageName,
             )
-            // 쏜 건은 저장소에서 지운다 — 남겨 두면 다음 init 이 같은 건을 또 보낸다.
+            // 쏜 건은 저장소에서 지운다
             assertTrue(store.records.isEmpty())
         }
 
@@ -59,7 +55,6 @@ class TtiRecorderImplTest {
     @Test
     fun `같은 구간의 두 번째 start 는 처음 시각을 지킨다`() =
         runTest {
-            // 컴포지션은 언제든 다시 실행된다. 두 번째 start 가 기준을 덮으면 구간이 짧게 잡힌다.
             val store = FakeStore()
             val clock = FakeClock()
             val recorder = recorder(store, RecordingShooter(), clock)
@@ -110,8 +105,6 @@ class TtiRecorderImplTest {
     @Test
     fun `init 은 지난 실행이 남긴 완성 기록을 쏜다`() =
         runTest {
-            // 안드로이드는 프로세스 종료를 알려주지 않는다. 못 쏘고 죽은 기록을 실제로 회수하는
-            // 곳은 대부분 여기다.
             val store = FakeStore()
             store.records["old"] = completedRecord("old")
             val shooter = RecordingShooter()
@@ -126,7 +119,7 @@ class TtiRecorderImplTest {
     @Test
     fun `쏘기가 실패하면 기록을 지우지 않는다`() =
         runTest {
-            // 지워 버리면 그 측정은 영영 사라진다. 남겨 두면 다음 기회에 다시 나간다.
+            // 지워 버리면 그 측정은 영영 사라진다.
             val store = FakeStore()
             store.records["old"] = completedRecord("old")
             val failing = TtiShooter { error("전송 실패") }
@@ -213,7 +206,7 @@ private class RecordingShooter : TtiShooter {
     }
 }
 
-/** 처음 한 번만 던지고 그 뒤로는 정상 동작한다 — 실패가 기록기를 멈추지 않는지 본다. */
+/** 처음 한 번만 던지고 그 뒤로는 정상 동작한다 */
 private class ThrowingOnceStore : TtiRecordStore {
     private val delegate = FakeStore()
     private var thrown = false

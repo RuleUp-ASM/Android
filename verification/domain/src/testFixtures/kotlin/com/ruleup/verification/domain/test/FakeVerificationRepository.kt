@@ -20,13 +20,7 @@ import com.ruleup.verification.domain.entity.SyncResult
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.repository.VerificationRepository
 
-/**
- * 테스트용 [VerificationRepository]. 검증 대상 메서드만 답을 돌려주고 **나머지는 호출되면 실패한다** —
- * 화면이 의도치 않은 조회를 해도 조용히 지나가지 않게 하려는 것이다.
- *
- * 답은 호출마다 계산하므로(`() -> T`) 재시도 경로에서 중간에 결과를 바꿔 끼울 수 있다.
- * 여러 feature 의 presentation 이 함께 쓰기 때문에 testFixtures 에 둔다.
- */
+/** 테스트용 [VerificationRepository]. */
 class FakeVerificationRepository(
     private val progress: (() -> ProgressSnapshot)? = null,
     private val todayResult: ((String) -> TodayResult)? = null,
@@ -39,7 +33,7 @@ class FakeVerificationRepository(
     private val submitManual: ((String, String?, String?) -> ManualSubmitResult)? = null,
     private val cancelManual: ((String) -> Unit)? = null,
 ) : VerificationRepository {
-    /** 어떤 메서드가 몇 번 불렸는지. "안 불렀다"도 계약이라 호출 자체를 남긴다. */
+    /** 어떤 메서드가 몇 번 불렸는지. */
     val calls = mutableListOf<String>()
 
     private fun <T> answer(

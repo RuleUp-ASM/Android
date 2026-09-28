@@ -8,12 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 정지 계정의 상태값은 종류와 무관하게 `SUSPENDED` 하나다(백오피스 테크 스펙 부록 A).
- *
- * 그래서 **상태만 보면 기능 정지와 전체 잠금이 구분되지 않는다** — 한쪽으로 뭉뚱그리면 신고 하나
- * 막힌 계정이 앱 전체에서 쫓겨나거나(SAN-05), 잠긴 계정이 그대로 통과한다(AUTH-13).
- */
+/** 정지 계정의 상태값은 종류와 무관하게 `SUSPENDED` 하나다. */
 class SanctionRestrictionTest {
     @Test
     fun `활성 계정은 제한이 없다`() {
@@ -37,13 +32,13 @@ class SanctionRestrictionTest {
 
     @Test
     fun `종류를 모르는 정지는 전체 잠금으로 본다`() {
-        // 통과시키면 제재가 조용히 풀린다 — 서버도 같은 경우를 방어적으로 다룬다.
+        // 통과시키면 제재가 조용히 풀린다
         assertTrue(history(AccountStatus.SUSPENDED, type = null).restriction.isFullLock)
     }
 
     @Test
     fun `챌린지 강퇴는 계정을 잠그지 않는다`() {
-        // 강퇴는 그 방에서만 효력이 있다. 계정을 잠그면 다른 방까지 못 쓰게 된다.
+        // 강퇴는 그 방에서만 효력이 있다.
         assertEquals(
             AccountRestriction.None,
             history(AccountStatus.SUSPENDED, SanctionType.CHALLENGE_KICK).restriction,

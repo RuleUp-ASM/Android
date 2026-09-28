@@ -13,12 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 내 문의 내역 ViewModel (Figma `1419:27`, 명세 GET /api/v1/inquiries).
- *
- * 화면에 들어올 때마다 다시 부른다 — 운영자가 답변을 달아도 앱은 알림을 받지 않으므로(2026-09-11
- * 결정) 이 조회가 새 답변을 알아채는 유일한 경로다. 캐시를 두면 답변이 왔는데 옛 목록이 남는다.
- */
+/** 내 문의 내역 ViewModel. */
 @HiltViewModel
 class InquiryListViewModel
     @Inject

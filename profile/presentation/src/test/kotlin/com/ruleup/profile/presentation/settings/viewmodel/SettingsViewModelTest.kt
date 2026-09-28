@@ -28,13 +28,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 설정 허브. 여기는 **진입점 목록**이라, 뱃지용 조회가 실패했다고 로그아웃·탈퇴 경로까지 막히면
- * 사용자가 계정을 어쩌지 못하게 된다.
- *
- * 로그아웃과 탈퇴는 실패 처리가 반대다 — 로그아웃은 서버가 실패해도 나가고, 탈퇴는 서버가
- * 받아들였을 때만 내보낸다.
- */
+/** 설정 허브. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
     @BeforeTest
@@ -117,7 +111,7 @@ class SettingsViewModelTest {
     @Test
     fun `답변이 달린 문의 수를 뱃지로 센다`() =
         runTest {
-            // 답변은 푸시도 알림함도 쓰지 않는다 — 이 숫자가 답변을 알리는 유일한 신호다.
+            // 답변은 푸시도 알림함도 쓰지 않는다
             val inquiries =
                 FakeInquiryRepository(
                     inquiries = {
@@ -138,7 +132,6 @@ class SettingsViewModelTest {
     @Test
     fun `문의 조회가 실패해도 나머지 행은 그대로 그린다`() =
         runTest {
-            // 설정 허브는 진입점 목록이다. 뱃지 하나 때문에 로그아웃 경로까지 막으면 안 된다.
             val inquiries = FakeInquiryRepository(inquiries = { throw IllegalStateException("조회 실패") })
             val viewModel = viewModel(FakeAccountRepository(), inquiries = inquiries)
 
@@ -154,7 +147,6 @@ class SettingsViewModelTest {
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         // 프로필은 「연결된 계정」 표기 전용이라 실패해도 나머지 행은 그대로 그린다.
         profile: FakeProfileRepository = FakeProfileRepository(),
-        // 문의 목록은 「내 문의 내역」 뱃지 전용. 기본은 빈 목록이라 뱃지가 뜨지 않는다.
         inquiries: FakeInquiryRepository = FakeInquiryRepository(),
     ): SettingsViewModel {
         val tokens = FakeTokenRepository()
@@ -168,7 +160,7 @@ class SettingsViewModelTest {
         )
     }
 
-    /** 이 화면의 테스트는 정리 동작을 보지 않는다 — 무엇을 지우는지는 LogoutUseCase 쪽 테스트가 본다. */
+    /** 이 화면의 테스트는 정리 동작을 보지 않는다 */
     private val noopCleaner = LocalUserDataCleaner {}
 
     private fun history(active: Boolean) =

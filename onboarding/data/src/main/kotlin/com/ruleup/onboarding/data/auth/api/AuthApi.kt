@@ -17,33 +17,32 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface AuthApi {
-    // OAuth 로그인 (provider: kakao / google). base(.../api/) + v1/... → /api/v1/auth/oauth/{provider}.
+    // OAuth 로그인 (provider: kakao / google).
     @POST("v1/auth/oauth/{provider}")
     suspend fun socialLogin(
         @Path("provider") provider: String,
         @Body request: SocialLoginAuthRequest,
     ): BaseResponse<SocialLoginAuthResponse>
 
-    // 회원가입 완료. → /api/v1/auth/signup.
+    // 회원가입 완료.
     @POST("v1/auth/signup")
     suspend fun signup(
         @Body request: SignUpRequest,
     ): BaseResponse<SignUpResponse>
 
-    // 앱 토큰 재발급. → /api/v1/auth/refresh.
+    // 앱 토큰 재발급.
     @POST("v1/auth/refresh")
     suspend fun refreshToken(
         @Body request: TokenRefreshRequest,
     ): BaseResponse<TokenRefreshResponse>
 
-    // 로그아웃 (refreshToken revoke). → /api/v1/auth/logout.
+    // 로그아웃 (refreshToken revoke).
     @POST("v1/auth/logout")
     suspend fun logout(
         @Body request: LogoutRequest,
     ): BaseResponse<EmptyData>
 
-    // 회원 탈퇴. → /api/v1/users/me. 확인 문구를 본문으로 받으므로 @HTTP 로 body 를 허용한다
-    // (@DELETE 는 본문을 실을 수 없다).
+    // 회원 탈퇴.
     @HTTP(method = "DELETE", path = "v1/users/me", hasBody = true)
     suspend fun withdraw(
         @Body request: WithdrawRequest,

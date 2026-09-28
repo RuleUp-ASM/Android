@@ -9,14 +9,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-/**
- * 마이 홈 응답 매핑. 이 화면은 **사용자가 자기 상태를 확인하는 곳**이라, 조용히 접힌 값이
- * 곧 "내 기록이 사라졌다"로 읽힌다.
- */
+/** 마이 홈 응답 매핑. */
 class MyHomeResponseMappingTest {
     @Test
     fun `집계를 통째로 안 주면 0 으로 채운다`() {
-        // 카드 자체를 못 그리는 것보다는 0 이 낫다 — 사용자가 화면을 열 수는 있어야 한다.
         val home = MyHomeResponse(nickname = "지현", counts = null).toDomain()
 
         assertEquals(0, home.counts.inProgress)
@@ -32,8 +28,6 @@ class MyHomeResponseMappingTest {
 
     @Test
     fun `모르는 닉네임 검수 상태는 통과로 본다`() {
-        // 서버가 상태를 넓혔을 때 구버전 앱이 멀쩡한 닉네임을 "검수 중"으로 묶어 두면,
-        // 사용자는 하지도 않은 위반으로 기능이 막힌 것처럼 느낀다.
         val home = MyHomeResponse(nickname = "지현", nicknameStatus = "UNDER_REVIEW_V2").toDomain()
 
         assertEquals(NicknameStatus.APPROVED, home.nicknameStatus)
@@ -41,7 +35,6 @@ class MyHomeResponseMappingTest {
 
     @Test
     fun `표시 티어를 안 주면 실제 티어로 떨어뜨린다`() {
-        // 없는 유예를 있는 것처럼 그리면 못 들어가는 방을 들어갈 수 있는 것처럼 보여 준다.
         val home = MyHomeResponse(nickname = "지현", tier = "SILVER", displayTier = null).toDomain()
 
         assertEquals(Tier.SILVER, home.displayTier)

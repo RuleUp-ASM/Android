@@ -47,7 +47,6 @@ class ReportReasonSheetTest {
 
     @Test
     fun `챌린지 신고에는 부정 인증 의심 사유가 보이지 않는다`() {
-        // 서버가 400 INVALID_REPORT_REASON 으로 막는 조합이라 고를 수 있게 두면 안 된다.
         show()
 
         compose.onNodeWithText(ReportReason.CHEATING_SUSPECT.label()).assertDoesNotExist()
@@ -92,7 +91,6 @@ class ReportReasonSheetTest {
 
     @Test
     fun `처리 결과를 알려주지 않는다는 것을 미리 알린다`() {
-        // 모르면 소식 없는 것을 "무시당했다"로 읽는다. 서버는 익명성·보복 방지로 통지하지 않는다.
         show()
 
         compose.onNodeWithText("처리 결과는 따로 알려드리지 않아요 · 사유는 검토 참고용이에요").assertIsDisplayed()
@@ -100,7 +98,6 @@ class ReportReasonSheetTest {
 
     @Test
     fun `자유 입력칸을 두지 않는다`() {
-        // 서버가 사유 선택만 받는다(2026-08-26 개편). 칸을 두면 어디에도 안 가는 글을 쓰게 된다.
         show()
 
         compose.onNodeWithText("신고 사유를 입력해 주세요").assertDoesNotExist()

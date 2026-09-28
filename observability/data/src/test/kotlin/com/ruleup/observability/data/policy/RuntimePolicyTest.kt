@@ -14,11 +14,11 @@ class RuntimePolicyTest {
 
     @Test
     fun `채널 floor 는 서로 독립이다`() {
-        // 프로덕션의 전형적 설정 — 진단만 WARN 으로 올린다.
+        // 프로덕션의 전형적 설정
         val p = policy(PolicyConfig.of(channelFloors = mapOf(Channel.DIAGNOSTIC to Severity.WARN)))
 
         assertFalse(p.isEnabled(Channel.DIAGNOSTIC, Severity.INFO, null))
-        // 비즈니스·성능 페이로드는 전부 INFO 다. 진단 floor 가 여기까지 적용되면 지표가 통째로 사라진다.
+
         assertTrue(p.isEnabled(Channel.PERFORMANCE, Severity.INFO, null))
         assertTrue(p.isEnabled(Channel.PERFORMANCE, Severity.INFO, null))
     }
@@ -74,7 +74,6 @@ class RuntimePolicyTest {
         threads.forEach(Thread::start)
         threads.forEach(Thread::join)
 
-        // read-modify-write 를 CAS 로 하지 않으면 일부 키가 통째로 사라진다.
         assertEquals(8, p.config().extras.size)
     }
 }

@@ -6,7 +6,7 @@ import com.ruleup.challenge.domain.entity.ThreadItemType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 방 스레드 피드 (GET /challenges/{id}/threads) ----------
+// 방 스레드 피드 (GET /challenges/{id}/threads)
 
 @Serializable
 data class ThreadItemResponse(
@@ -16,7 +16,7 @@ data class ThreadItemResponse(
     val id: String? = null,
     @SerialName("user")
     val user: RoomUserResponse? = null,
-    // 노출 기준 시각 = 정렬축. VERIFY_FAIL 은 판정 시각이 아니라 공유 가능 시각이다
+    // 노출 기준 시각 = 정렬축.
     @SerialName("at")
     val at: String? = null,
     @SerialName("streak")
@@ -25,8 +25,7 @@ data class ThreadItemResponse(
     val failDate: String? = null,
 )
 
-// 앱이 모르는 type(공지 등)은 null 을 돌려주고 호출부가 아이템 자체를 버린다 — 정체를 모르는
-// 카드를 빈 껍데기로 그리는 것보다 낫다.
+// 앱이 모르는 type(공지 등)은 null 을 돌려주고 호출부가 아이템 자체를 버린다
 internal fun ThreadItemResponse.toDomainOrNull(): ThreadItem? {
     val itemType = ThreadItemType.fromValue(type) ?: return null
     return ThreadItem(
@@ -41,7 +40,7 @@ internal fun ThreadItemResponse.toDomainOrNull(): ThreadItem? {
 
 @Serializable
 data class ThreadsResponse(
-    // 응답의 pinnedNotice 는 읽지 않는다 — 공지가 제품에서 빠졌다.
+    // 응답의 pinnedNotice 는 읽지 않는다
     @SerialName("items")
     val items: List<ThreadItemResponse>? = null,
     // null 이면 마지막 페이지

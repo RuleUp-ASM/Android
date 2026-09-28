@@ -15,20 +15,11 @@ import javax.inject.Inject
 
 private const val TAG = "[Push]"
 
-// 페이로드 명세("서버 FCM 푸시 페이로드 명세")의 type 딱지. 서버는 항상 데이터 전용 메시지를 보낸다.
+// 페이로드 명세의 type 딱지.
 private const val TYPE_SETUP_REQUIRED = "SETUP_REQUIRED"
 private const val TYPE_PERMISSION_REQUIRED = "PERMISSION_REQUIRED"
 
-/**
- * FCM 수신 진입점.
- *
- * **여기가 도는 건 포그라운드일 때뿐이다** — 백그라운드·종료 상태에서는 OS 가 payload 의
- * `notification` 블록을 자동 표시한다. 그래서 이 코드가 없다고 알림이 안 오는 게 아니라,
- * 앱을 보고 있을 때만 우리가 직접 그린다.
- *
- * 셋업·권한 쪽지는 여전히 무음이다 — 상태 재확인은 해당 화면 재진입이 담당한다.
- * `notification_id` 가 없는 메시지는 조용히 버린다(명세 규칙 3 — 서버·앱 독립 배포 보장).
- */
+/** FCM 수신 진입점. */
 @AndroidEntryPoint
 class RuleUpMessagingService : FirebaseMessagingService() {
     @Inject
@@ -52,7 +43,7 @@ class RuleUpMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         val data = message.data
         when (val type = data["type"]) {
-            // 무음 쪽지: 알림 없음. 셋업/권한 재확인은 상세 화면 ON_RESUME 재조회가 담당한다.
+            // 무음 쪽지: 알림 없음.
             TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
 
             else -> {

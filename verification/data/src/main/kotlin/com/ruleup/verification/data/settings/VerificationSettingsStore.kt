@@ -9,15 +9,12 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Qualifier
 
-/** verification 전용 Preferences DataStore 식별 qualifier(core:datastore 의 token DataStore 와 분리). */
+/** 자동 인증 전용 DataStore 식별자. */
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class VerificationPrefs
 
-/**
- * 자동인증 클라이언트 상태 영속(전송 스펙 §0.1·§0.3·§0.7 — 부팅 세션·진단 앵커·서버 정책).
- * 부팅 epoch 앵커가 바뀌면 새 세션 id 를 발급한다 — 서버는 같은 세션 안의 시각 점프로 위조를 본다(§6.4).
- */
+/** 자동인증 클라이언트 상태 영속. */
 class VerificationSettingsStore
     @Inject
     constructor(
@@ -43,7 +40,7 @@ class VerificationSettingsStore
             dataStore.edit { it[KEY_LAST_FLUSH_AT] = at }
         }
 
-        /** 서버가 받아들인 마지막 sync 구간 끝(`coveredUntil`). 다음 구간의 시작이다. */
+        /** 서버가 받아들인 마지막 sync 구간 끝(`coveredUntil`). */
         suspend fun lastCoveredUntil(): Long? = dataStore.data.first()[KEY_LAST_COVERED_UNTIL]
 
         suspend fun setLastCoveredUntil(at: Long) {
@@ -56,17 +53,12 @@ class VerificationSettingsStore
             dataStore.edit { it[KEY_LAST_GEOFENCE_REREGISTER_AT] = at }
         }
 
-        /**
-         * 전부 비운다(로그아웃·탈퇴).
-         *
-         * 부팅 세션 id 와 전송 커서는 **계정에 귀속된 값이다** — 남겨 두면 다음 계정이 앞 계정의
-         * 커서부터 이어 보내 이미 지난 구간이 통째로 빈다.
-         */
+        /** 전부 비운다(로그아웃·탈퇴). */
         suspend fun clear() {
             dataStore.edit { it.clear() }
         }
 
-        /** Phase 0 서버 정책: 주기 flush 간격(초). 미수신이면 null → 호출자가 기본값(1800) 사용. */
+        /** Phase 0 서버 정책: 주기 flush 간격(초). */
         suspend fun flushIntervalSec(): Long? = dataStore.data.first()[KEY_FLUSH_INTERVAL_SEC]
 
         suspend fun setFlushIntervalSec(sec: Long) {

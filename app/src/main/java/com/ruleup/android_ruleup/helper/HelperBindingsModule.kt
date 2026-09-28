@@ -32,7 +32,7 @@ abstract class HelperBindingsModule {
     @Singleton
     abstract fun bindRouteAccessPolicy(impl: AppRouteAccessPolicy): RouteAccessPolicy
 
-    /** 알림 딥링크(`ruleup://…`) 해석. 라우트 표를 아는 건 컴포지션 루트뿐이다. */
+    /** 알림 딥링크(`ruleup://…`) 해석. */
     @Binds
     @Singleton
     abstract fun bindDeeplinkResolver(impl: RuleUpSchemeResolver): DeeplinkResolver

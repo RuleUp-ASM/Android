@@ -14,12 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 제재 이력. **영구 정지에는 해제일이 없다** — 빈칸으로 두면 "곧 풀린다"로 읽혀서, 사용자가
- * 기다리다 문의로 온다.
- *
- * 열람 전용이라 이의 제기 버튼이 없다는 것도 화면이 말해 줘야 한다.
- */
+/** 제재 이력. */
 @RunWith(RobolectricTestRunner::class)
 class SanctionsContentTest {
     @get:Rule

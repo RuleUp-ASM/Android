@@ -20,10 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 내 문의 내역. 답변을 푸시로도 알림함으로도 알리지 않기로 해(2026-09-11) **이 조회가 답변을
- * 알아채는 유일한 경로**다. 캐시를 두면 답변이 왔는데 옛 목록이 남는다.
- */
+/** 내 문의 내역. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class InquiryListViewModelTest {
     @BeforeTest

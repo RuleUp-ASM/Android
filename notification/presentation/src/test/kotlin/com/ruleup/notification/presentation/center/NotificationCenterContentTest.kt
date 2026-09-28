@@ -11,14 +11,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.Test
 
-/**
- * 알림 센터 (Figma 1134:1455).
- *
- * **비어 있으면 정말 알림이 없는 것이다** — 모든 알림은 푸시 여부·설정과 무관하게 여기 적재되므로,
- * 빈 화면이 "설정 때문에 안 보인다"로 읽히면 안 된다.
- *
- * 모르는 타입도 목록에 세운다 — 서버가 타입을 늘렸다고 적재된 고지가 화면에서 사라지면 안 된다.
- */
+/** 알림 센터. */
 @RunWith(RobolectricTestRunner::class)
 class NotificationCenterContentTest {
     @get:Rule val compose = createComposeRule()
