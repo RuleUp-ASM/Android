@@ -3,11 +3,9 @@ package com.ruleup.onboarding.data.di
 import com.ruleup.domain.token.TokenRefresher
 import com.ruleup.onboarding.data.auth.repository.AuthRepositoryImpl
 import com.ruleup.onboarding.data.auth.repository.TokenRefresherImpl
-import com.ruleup.onboarding.data.device.DeviceIdentityRepositoryImpl
 import com.ruleup.onboarding.data.intro.repository.IntroRepositoryImpl
 import com.ruleup.onboarding.data.intro.repository.WalkthroughRepositoryImpl
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
-import com.ruleup.onboarding.domain.auth.repository.DeviceIdentityRepository
 import com.ruleup.onboarding.domain.intro.repository.IntroRepository
 import com.ruleup.onboarding.domain.intro.repository.WalkthroughRepository
 import dagger.Binds
@@ -21,6 +19,12 @@ import javax.inject.Singleton
 abstract class OnboardingRepositoryModule {
     @Binds
     @Singleton
+    abstract fun bindSignupInviteStore(
+        impl: com.ruleup.onboarding.data.auth.repository.SignupInviteStoreImpl,
+    ): com.ruleup.onboarding.domain.auth.repository.SignupInviteStore
+
+    @Binds
+    @Singleton
     abstract fun bindAuthRepository(impl: AuthRepositoryImpl): AuthRepository
 
     @Binds
@@ -30,10 +34,6 @@ abstract class OnboardingRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindIntroRepository(impl: IntroRepositoryImpl): IntroRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindDeviceIdentityRepository(impl: DeviceIdentityRepositoryImpl): DeviceIdentityRepository
 
     @Binds
     @Singleton

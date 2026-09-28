@@ -126,8 +126,8 @@ class RunSyncUseCaseTest {
                 )
 
             assertFailsWith<InvalidSignalPayloadException> { useCase(scope, collectedAt) }
-            // 폐기 = synced 표시(무한 재전송 금지).
-            // 400 은 봉투가 틀렸다는 뜻이다. 여기서 폐기하면 앱 버그 한 번에 그 구간 판정이 사라진다.
+            assertTrue(signalRepo.purgeCalled)
+
             assertFalse(signalRepo.markSyncedCalled)
         }
 
@@ -152,7 +152,6 @@ class RunSyncUseCaseTest {
     @Test
     fun `413 이면 배치를 반으로 갈라 나눠 보낸다`() =
         runBlocking {
-            // 다음 주기로 미루면 같은 크기로 다시 막힌다 — 이번 실행 안에서 쪼개야 신호가 나간다.
             val signalRepo = FakeSignalRepository(drain = healthBatch(readings = 4))
             val verificationRepo =
                 FakeVerificationRepository(
@@ -179,7 +178,6 @@ class RunSyncUseCaseTest {
     @Test
     fun `쪼갠 조각들의 갱신이 하나로 합쳐진다`() =
         runBlocking {
-            // 앞 조각의 updatedChallenges 를 버리면 그 챌린지의 진행률 캐시가 이번 sync 를 통째로 놓친다.
             var seq = 0
             val verificationRepo =
                 FakeVerificationRepository(
@@ -202,7 +200,6 @@ class RunSyncUseCaseTest {
     @Test
     fun `gap 은 첫 조각에만 실린다`() =
         runBlocking {
-            // 같은 공백 구간을 조각 수만큼 되풀이해 보고할 이유가 없다 — 판정 입력이 아니라 안내용이다.
             val verificationRepo = FakeVerificationRepository(maxEvents = 2, resultFor = { syncResult() })
             val useCase =
                 RunSyncUseCase(
@@ -220,7 +217,6 @@ class RunSyncUseCaseTest {
     @Test
     fun `더 쪼갤 수 없는데도 413 이면 폐기한다`() =
         runBlocking {
-            // 다음 주기에 같은 배치를 다시 보내도 결과가 같다 — 버퍼에 남겨 두면 영영 막힌다.
             val signalRepo = FakeSignalRepository(drain = healthBatch(readings = 1))
             val useCase =
                 RunSyncUseCase(
@@ -254,7 +250,6 @@ class RunSyncUseCaseTest {
     @Test
     fun `전송이 막히면 구간을 넘기지 않는다`() =
         runBlocking {
-            // 넘기면 다음 전송이 막힌 구간을 다시 선언하지 않아 그 사이 신호가 없던 일이 된다.
             val provider = FakeEnvelopeMetadataProvider()
             val useCase =
                 RunSyncUseCase(
@@ -271,7 +266,6 @@ class RunSyncUseCaseTest {
     @Test
     fun `413 으로 쪼개면 마지막 조각만 구간 전체를 선언한다`() =
         runBlocking {
-            // 앞 조각이 전체 구간을 선언하면 뒤 조각이 실패했을 때 서버가 신호 절반으로 날을 확정한다.
             val verificationRepo = FakeVerificationRepository(maxEvents = 2, resultFor = { syncResult() })
             val useCase =
                 RunSyncUseCase(
@@ -404,7 +398,6 @@ class RunSyncUseCaseTest {
     private class FakeVerificationRepository(
         private val result: SyncResult? = null,
         private val error: Throwable? = null,
-        // 서버 상한 흉내 — 이벤트 수가 이 값을 넘으면 413 을 던진다. null 이면 상한 없음.
         private val maxEvents: Int? = null,
         private val resultFor: ((SignalBatch) -> SyncResult)? = null,
     ) : VerificationRepository {
@@ -493,7 +486,7 @@ class RunSyncUseCaseTest {
 private const val COVERED_FROM = 100L
 private const val COVERED_UNTIL = 200L
 
-/** 배치가 실어 보내는 이벤트 총 개수 — 테스트에서 서버 상한을 흉내 낼 때 쓴다. */
+/** 배치가 실어 보내는 이벤트 총 개수 */
 private fun SignalBatch.eventCount(): Int =
     signals.sumOf { signal ->
         when (signal) {

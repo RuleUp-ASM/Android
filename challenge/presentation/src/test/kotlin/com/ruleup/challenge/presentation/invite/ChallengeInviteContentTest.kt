@@ -13,12 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 멤버 초대 링크 진입 (Figma 1134:1646 위쪽 카드).
- *
- * 막힌 이유를 **수락 버튼 대신** 보여 주는 것이 이 화면의 핵심이다 — 버튼을 눌러 보게 두면
- * 409 를 받고 나서야 이유를 알게 된다.
- */
+/** 멤버 초대 링크 진입. */
 @RunWith(RobolectricTestRunner::class)
 class ChallengeInviteContentTest {
     @get:Rule
@@ -68,7 +63,7 @@ class ChallengeInviteContentTest {
 
     @Test
     fun `초대를 불러오지 못하면 홈으로 갈 길을 남긴다`() {
-        // 링크로 들어온 화면이라 뒤로 갈 곳이 없다 — 막다른 길이 되면 안 된다.
+        // 링크로 들어온 화면이라 뒤로 갈 곳이 없다
         render(ChallengeInviteState.initial.copy(isLoading = false, errorMessage = "초대가 만료됐어요"))
 
         compose.onNodeWithText("초대가 만료됐어요").assertExists()
@@ -82,10 +77,10 @@ class ChallengeInviteContentTest {
         invitationId = "inv1",
         challenge =
             InvitedChallenge(
-                challengeId = "ch1",
                 title = "새벽 러닝 크루",
-                imageUrl = null,
                 category = null,
+                imageUrl = null,
+                challengeId = "ch1",
                 participantCount = 4,
                 capacity = 10,
                 minTier = null,

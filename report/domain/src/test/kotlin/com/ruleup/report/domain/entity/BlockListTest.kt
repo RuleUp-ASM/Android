@@ -5,7 +5,12 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class BlockListTest {
-    private fun user(id: String = "u-1") = BlockedUser(id, "차단한 사용자", blockedAt = null)
+    private fun user(id: String = "u-1") =
+        BlockedUser(
+            com.ruleup.domain.entity.user
+                .User(id, "차단한 사용자", null),
+            blockedAt = null,
+        )
 
     private fun challenge(id: String = "c-1") = BlockedChallenge(id, "가려진 챌린지", participating = false, blockedAt = null)
 

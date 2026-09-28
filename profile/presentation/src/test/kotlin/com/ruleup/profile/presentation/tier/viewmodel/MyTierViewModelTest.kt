@@ -18,10 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
-/**
- * 내 티어 상세. 점수는 서버가 판정 직후에만 움직이므로 **화면 안에서 값이 바뀔 일이 없다** —
- * 그래서 한 번 받으면 다시 받지 않는다. 그 절약이 실제로 성립하는지가 이 화면의 계약이다.
- */
+/** 내 티어 상세. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyTierViewModelTest {
     @BeforeTest
@@ -65,7 +62,7 @@ class MyTierViewModelTest {
 
             viewModel.onIntent(MyTierIntent.Load)
 
-            assertEquals("서버 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("티어 정보를 불러오지 못했어요", viewModel.uiState.value.errorMessage)
             assertFalse(viewModel.uiState.value.isLoading)
         }
 

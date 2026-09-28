@@ -28,14 +28,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.presentation.common.VerificationAccessSheet
 import com.ruleup.challenge.presentation.common.capacityLabel
+import com.ruleup.challenge.presentation.common.unitLabel
 import com.ruleup.challenge.presentation.create.component.ConfirmEditSection
 import com.ruleup.challenge.presentation.create.component.ConfirmEditSheet
-import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.designsystem.R
@@ -45,15 +47,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/**
- * 확인 화면 (Figma 1134:604) — 초안을 **요약 한 장**으로 보여주고, 고칠 항목만 바텀시트로 연다.
- *
- * 항목을 전부 펼쳐 놓지 않는다. 초안은 대부분 그대로 쓰이므로 스크롤 한 화면에 요약을 담고,
- * 고칠 사람만 해당 줄을 탭해 들어가게 한다.
- *
- * 잠긴 줄(카테고리)은 회색 처리로 끝내지 않고 **자물쇠와 함께** 보여준다 — 왜 못 고치는지
- * 모른 채 눌러보게 두지 않기 위해서다.
- */
+/** 확인 화면 */
 @Composable
 fun ChallengeConfirmContent(
     onIntent: (CreateChallengeIntent) -> Unit,
@@ -98,17 +92,18 @@ fun ChallengeConfirmContent(
         ) {
             RuleUpPrimaryButton(
                 text = if (state.isCreating) "만드는 중…" else "이대로 만들기",
-                enabled = state.hasDraft && state.paramsInRange && !state.isCreating,
+                enabled = state.hasDraft && state.paramsInRange && !state.isCreating && !state.isAccessSubmitting,
                 onClick = { onIntent(CreateChallengeIntent.Create) },
             )
         }
     }
 
-    state.pendingConsent?.let { type ->
-        SensitiveConsentSheet(
-            type = type,
-            onAgree = { onIntent(CreateChallengeIntent.AgreeSensitiveConsent) },
-            onDismiss = { onIntent(CreateChallengeIntent.DismissSensitiveConsent) },
+    state.pendingAccess?.let { access ->
+        VerificationAccessSheet(
+            access = access,
+            isSubmitting = state.isAccessSubmitting,
+            onContinue = { onIntent(CreateChallengeIntent.ConfirmVerificationAccess) },
+            onDismiss = { onIntent(CreateChallengeIntent.DismissVerificationAccess) },
         )
     }
 
@@ -245,8 +240,7 @@ private fun SummaryCard(
             value = state.frequencyPeriodSummary(),
             onClick = { onEdit(ConfirmEditSection.PERIOD) },
         )
-        // 점수 차감·그룹 공개는 서버가 강제하지만 감시자 알림은 고를 수 있다 — 줄 전체를 잠그면
-        // 유일하게 고를 수 있는 항목까지 같이 막힌다. 시트 안에서 잠긴 둘과 구분해 보여준다.
+        // 점수 차감·그룹 공개는 서버가 강제하지만 감시자 알림은 고를 수 있다
         SummaryRow(
             label = "실패하면",
             value = state.penaltySummary(),
@@ -317,7 +311,7 @@ private fun SummaryRow(
     }
 }
 
-// ---------- 요약 문구 ----------
+// 요약 문구
 
 /** 헤더 칩에 쓰는 짧은 인증 라벨. */
 private fun CreateChallengeState.verificationLabel(): String =
@@ -342,12 +336,11 @@ private fun CreateChallengeState.modeSummary(): String =
         "솔로 · $ranking"
     }
 
-/**
- * 인증 요약. 목표값이 있으면 그 값이 곧 인증 조건이므로 앞세운다 — "오전 6:00 · 기상 인증" 처럼.
- * 서버가 표시 문구([detail])를 주면 그게 가장 정확하므로 우선한다.
- */
+/** 인증 요약. */
 private fun CreateChallengeState.verificationSummary(): String {
-    verification?.detail?.takeIf { it.isNotBlank() }?.let { return it }
+    if (params == original?.params && verification?.type == original?.verification?.type) {
+        verification?.detail?.takeIf { it.isNotBlank() }?.let { return it }
+    }
     val paramPart = params.joinToString(" · ") { it.summary() }
     return listOf(paramPart, verificationLabel()).filter { it.isNotBlank() }.joinToString(" · ")
 }
@@ -369,11 +362,11 @@ private fun CreateChallengeState.penaltySummary(): String {
     return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: "패널티 없음"
 }
 
-/** 목표값 한 줄 표기. 단위는 서버가 준 값을 그대로 붙인다(루틴별 분기 하드코딩 금지). */
+/** 목표값 한 줄 표기. */
 internal fun ParamSpec.summary(): String =
     when (kind) {
         ParamKind.TIME -> value
-        ParamKind.NUMBER -> listOfNotNull(value.takeIf { it.isNotBlank() }, unit).joinToString("")
+        ParamKind.NUMBER -> listOfNotNull(value.takeIf { it.isNotBlank() }, unitLabel).joinToString("")
     }
 
 internal fun Tier.label(): String =
@@ -384,3 +377,13 @@ internal fun Tier.label(): String =
         Tier.DIAMOND -> "다이아"
         Tier.RUBY -> "루비"
     }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ChallengeConfirmContentPreview() {
+    com.ruleup.ui.helper.PreviewEnvironment {
+        RuleUpTheme {
+            ChallengeConfirmContent(onIntent = { })
+        }
+    }
+}

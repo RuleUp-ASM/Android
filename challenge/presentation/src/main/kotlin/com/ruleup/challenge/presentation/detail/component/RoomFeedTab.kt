@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.ThreadItem
@@ -39,15 +40,7 @@ import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 피드 탭 (Figma 1134:231) — 멤버들의 인증 판정이 시간순으로 흐른다.
- *
- * 자동 인증은 아무도 버튼을 누르지 않으므로, 이 피드가 **"같은 방에 사람이 있다"는 유일한 신호**다.
- * 실패는 이의 기간(1일)이 지난 뒤에야 흐르고 인용되면 아예 오지 않는다 — 서버가 이미 걸러 내리므로
- * 화면은 받은 것을 그대로 그리되, 날짜를 명시한 과거형으로 적어 지금 실패한 것처럼 읽히지 않게 한다.
- *
- * 공지·댓글·반응은 제품에서 빠졌다 — 이 피드에는 판정 카드만 흐른다.
- */
+/** 피드 탭. */
 @Composable
 internal fun RoomFeedTab(
     state: ChallengeDetailState,
@@ -57,7 +50,7 @@ internal fun RoomFeedTab(
 ) {
     val listState = rememberLazyListState()
 
-    // 하단 근처(마지막 3개)에 닿으면 다음 페이지를 미리 받는다. 진행 중 중복 요청은 상태가 막는다.
+    // 하단 근처(마지막 3개)에 닿으면 다음 페이지를 미리 받는다.
     val shouldPage by remember(state.threads.size) {
         derivedStateOf {
             val last =
@@ -67,7 +60,7 @@ internal fun RoomFeedTab(
             last >= listState.layoutInfo.totalItemsCount - 3
         }
     }
-    // 이펙트를 콜백 신원 변화로 재시작시키지 않는다 — 재구성마다 새 람다가 오면 페이징이 헛돈다.
+    // 이펙트를 콜백 신원 변화로 재시작시키지 않는다
     val loadMore by rememberUpdatedState(onLoadMore)
     LaunchedEffect(listState, state.canLoadMoreThreads) {
         snapshotFlow { shouldPage }
@@ -102,7 +95,7 @@ internal fun RoomFeedTab(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                // 같은 날짜끼리 묶어 "오늘 / 어제 / 7월 25일" 헤더를 세운다. 목록은 이미 최신순이다.
+                // 같은 날짜끼리 묶어 "오늘 / 어제 / 7월 25일" 헤더를 세운다.
                 var lastDateKey: String? = null
                 state.threads.forEach { item ->
                     val key = feedDateKey(item.at)
@@ -118,7 +111,7 @@ internal fun RoomFeedTab(
                         }
                     }
                     item(key = "${item.type.value}-${item.id}") {
-                        ThreadItemCard(item = item, isMe = item.user.userId == state.myUserId)
+                        ThreadItemCard(item = item, isMe = item.user.id == state.myUserId)
                     }
                 }
 
@@ -136,7 +129,7 @@ internal fun RoomFeedTab(
                     }
                 }
 
-                // 이어받기 실패는 기존 목록을 지우지 않는다 — 스크롤을 잃지 않게 하단에만 알린다.
+                // 이어받기 실패는 기존 목록을 지우지 않는다
                 state.threadsError?.takeIf { state.threads.isNotEmpty() }?.let { message ->
                     item(key = "paging-error") {
                         Column(
@@ -166,12 +159,7 @@ internal fun RoomFeedTab(
     }
 }
 
-/**
- * 빈 피드 (Figma 1134:2133).
- *
- * 봇방장 방은 방장 자리가 비어 있다는 사실만 함께 알린다 — 멤버가 방장이 되는 경로는 없다(정책 §11).
- * 그 외에는 첫 인증을 기다리는 상태라는 사실만 알린다 — 없는 기능을 권하지 않는다.
- */
+/** 빈 피드. */
 @Composable
 private fun FeedEmptyState(
     ownerType: OwnerType?,
@@ -199,7 +187,7 @@ private fun FeedEmptyState(
     }
 }
 
-/** 피드 아이템 카드 (Figma 1134:267). 성공/실패는 색만이 아니라 텍스트로도 구분한다(접근성). */
+/** 피드 아이템 카드. */
 @Composable
 private fun ThreadItemCard(
     item: ThreadItem,
@@ -233,7 +221,7 @@ private fun ThreadItemCard(
     }
 }
 
-/** 아이템 종류별 부제. 성공은 시각과 연속 일수, 실패는 귀속일이다. */
+/** 아이템 종류별 부제. */
 private fun ThreadItem.subtitle(): String =
     when (type) {
         ThreadItemType.VERIFY_SUCCESS -> {
@@ -251,3 +239,19 @@ private fun ThreadItem.statusChip(): Pair<String, StatusChipTone> =
         ThreadItemType.VERIFY_SUCCESS -> "성공" to StatusChipTone.Success
         ThreadItemType.VERIFY_FAIL -> "실패" to StatusChipTone.Danger
     }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RoomFeedTabPreview() {
+    RuleUpTheme {
+        RoomFeedTab(
+            state =
+                com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState.initial.copy(
+                    isLoading = false,
+                ),
+            onLoadMore = {
+            },
+            onRetry = { },
+        )
+    }
+}

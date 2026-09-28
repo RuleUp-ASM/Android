@@ -8,17 +8,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-/**
- * 소셜 로그인 응답 매핑. **신규와 기존을 잘못 가르면** 기존 사용자가 가입을 다시 하거나 신규
- * 사용자가 빈 홈에 떨어진다 — 로그인 직후 갈림길이라 되돌릴 방법이 없다.
- *
- * 사용자 정보는 `id`·`nickname` 만 필수다. 나머지를 안전한 기본으로 떨어뜨려야 서버가 enum 을
- * 넓힐 때 구버전 앱이 **로그인부터** 막히지 않는다.
- */
+/** 소셜 로그인 응답 매핑. */
 class AuthResponseMappingTest {
     @Test
     fun `신규 여부를 안 주면 가입 토큰 유무로 판단한다`() {
-        // 서버 배포본에 따라 isNewUser 가 빠질 수 있다 — 그때도 갈림길은 정확해야 한다.
         val result = response(isNewUser = null, signupToken = "signup-token").toOAuthResult()
 
         assertTrue(result is OAuthResult.NewUser)
@@ -44,7 +37,7 @@ class AuthResponseMappingTest {
         // 방 입장 판정에 쓰이므로 부풀리면 못 들어갈 방에 들어가려다 튕긴다.
         val result = response(user = user(tier = "SILVER", displayTier = null)).toOAuthResult()
 
-        assertEquals(Tier.SILVER, (result as OAuthResult.ExistingUser).session.user.displayTier)
+        assertEquals(Tier.SILVER, requireNotNull((result as OAuthResult.ExistingUser).session.user.account).displayTier)
     }
 
     @Test
@@ -52,7 +45,7 @@ class AuthResponseMappingTest {
         // 서버 enum 확장이 방 입장 판정을 부풀리면 안 된다.
         val result = response(user = user(tier = "PLATINUM", displayTier = null)).toOAuthResult()
 
-        assertEquals(Tier.BRONZE, (result as OAuthResult.ExistingUser).session.user.displayTier)
+        assertEquals(Tier.BRONZE, requireNotNull((result as OAuthResult.ExistingUser).session.user.account).displayTier)
     }
 
     @Test
@@ -67,7 +60,7 @@ class AuthResponseMappingTest {
         // 안 마친 것으로 접으면 기존 사용자가 로그인마다 온보딩으로 되돌아간다.
         val result = response(user = user(onboardingCompleted = null)).toOAuthResult()
 
-        assertTrue((result as OAuthResult.ExistingUser).session.user.onboardingCompleted)
+        assertTrue(requireNotNull((result as OAuthResult.ExistingUser).session.user.account).onboardingCompleted)
     }
 
     private fun response(

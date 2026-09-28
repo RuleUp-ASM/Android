@@ -6,8 +6,9 @@ import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.UserAccount
 
-/** 테스트용 사용자. 관심 있는 필드만 덮어써서 쓴다. */
+/** 테스트용 사용자. */
 fun testUser(
     id: String = "u1",
     nickname: String = "nick",
@@ -19,14 +20,17 @@ fun testUser(
 ) = User(
     id = id,
     nickname = nickname,
-    nicknameStatus = nicknameStatus,
     profileImageUrl = profileImageUrl,
-    tier = Tier.BRONZE,
-    score = 10,
-    displayTier = Tier.BRONZE,
-    provider = provider,
-    interestCategories = emptyList(),
-    onboardingCompleted = true,
-    accountStatus = accountStatus,
-    lockInfo = lockInfo,
+    account =
+        UserAccount(
+            nicknameStatus = nicknameStatus,
+            tier = Tier.BRONZE,
+            score = 10,
+            displayTier = Tier.BRONZE,
+            provider = provider,
+            interestCategories = emptyList(),
+            onboardingCompleted = true,
+            accountStatus = accountStatus,
+            lockInfo = lockInfo,
+        ),
 )

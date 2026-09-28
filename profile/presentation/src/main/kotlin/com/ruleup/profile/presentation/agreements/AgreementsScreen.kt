@@ -21,12 +21,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,20 +42,17 @@ import com.ruleup.profile.presentation.agreements.viewmodel.AgreementsIntent
 import com.ruleup.profile.presentation.agreements.viewmodel.AgreementsState
 import com.ruleup.profile.presentation.agreements.viewmodel.AgreementsViewModel
 import com.ruleup.profile.presentation.common.dateDotLabel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 약관 · 개인정보 동의 관리 (설정 허브 → 약관).
- *
- * 필수 3종은 **토글을 두지 않는다** — 철회하려면 탈퇴해야 하므로(서버 400
- * `AGREEMENT_REVOKE_FORBIDDEN`), 눌러 놓고 거절당하는 스위치를 만들지 않는다.
- */
+/** 약관 · 개인정보 동의 관리 (설정 허브 → 약관). */
 @Composable
 fun AgreementsScreen(
     modifier: Modifier = Modifier,
     viewModel: AgreementsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(Unit) { viewModel.onIntent(AgreementsIntent.Load) }
@@ -68,7 +67,7 @@ fun AgreementsScreen(
     AgreementsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun AgreementsContent(
     state: AgreementsState,
@@ -91,12 +90,17 @@ internal fun AgreementsContent(
                 }
 
             state.status == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "동의 상태를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(AgreementsIntent.Load) }) { Text("다시 시도") }
                 }
 
             else -> AgreementsBody(state = state, onIntent = onIntent)
@@ -158,7 +162,7 @@ private fun AgreementsBody(
     }
 }
 
-/** 약관이 개정됐을 때. 어느 항목인지보다 **다시 동의해야 한다**는 사실이 먼저다. */
+/** 약관이 개정됐을 때. */
 @Composable
 private fun ReconsentBanner(
     count: Int,
@@ -273,7 +277,7 @@ private fun OptionalRow(
     }
 }
 
-/** "2026.06.01 동의" / "동의 안 함" / "받은 적 없음" — 셋은 서로 다른 사실이다. */
+/** "2026.06.01 동의" / "동의 안 함" / "받은 적 없음" */
 private val AgreementState.agreedLabel: String
     get() {
         val at = agreedAt
@@ -296,3 +300,18 @@ private val AgreementType.label: String
             AgreementType.LOCATION_INFO -> "위치정보 수집 · 이용"
             AgreementType.HEALTH_INFO -> "건강정보 수집 · 이용"
         }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun AgreementsContentPreview() {
+    RuleUpTheme {
+        AgreementsContent(
+            state =
+                com.ruleup.profile.presentation.agreements.viewmodel.AgreementsState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
+}

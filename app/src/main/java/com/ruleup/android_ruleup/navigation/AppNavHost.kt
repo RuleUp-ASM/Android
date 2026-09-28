@@ -2,6 +2,7 @@ package com.ruleup.android_ruleup.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -13,10 +14,7 @@ import com.ruleup.observability.domain.api.w
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
 
-/**
- * 내비게이션 신호를 수신해 백스택(navigation3-runtime)을 갱신하고,
- * [PlatformNavDisplay](navigation3-ui)로 현재 스택을 렌더한다.
- */
+/** 앱 백스택 관리 및 화면 표시. */
 @Composable
 fun AppNavHost(
     backStack: NavBackStack<NavKey>,
@@ -27,18 +25,17 @@ fun AppNavHost(
 
     val observability = LocalObservability.current
 
+    TrackVisibleScreen(backStack, screenTracker::onScreenEntered)
+
     LaunchedEffect(Unit) {
         navigationHelper.navigationFlow.collect { signal ->
             when (signal) {
                 is NavSignal.GoToDestPage -> {
                     handleNavRoute(signal.route, backStack, observability)
-                    screenTracker.onScreenEntered(signal.route.path)
                 }
 
                 is NavSignal.ReplaceStack -> {
-                    if (replaceStack(signal.route, backStack, observability)) {
-                        screenTracker.onScreenEntered(signal.route.path)
-                    }
+                    replaceStack(signal.route, backStack, observability)
                 }
 
                 NavSignal.Back -> {
@@ -53,6 +50,20 @@ fun AppNavHost(
 
 private const val TAG = "[Navigation]"
 
+/** 표시 중인 화면 진입 기록. */
+@Composable
+internal fun TrackVisibleScreen(
+    backStack: NavBackStack<NavKey>,
+    onEnter: (String) -> Unit,
+) {
+    val currentOnEntered = androidx.compose.runtime.rememberUpdatedState(onEnter)
+    LaunchedEffect(backStack) {
+        snapshotFlow { backStack.lastOrNull() as? GenericNavKey }.collect { key ->
+            if (key != null && key.path in appRouteByPath) currentOnEntered.value(key.path)
+        }
+    }
+}
+
 fun handleNavRoute(
     route: NavRoute,
     backStack: NavBackStack<NavKey>,
@@ -60,22 +71,21 @@ fun handleNavRoute(
 ) {
     val appRoute = appRouteByPath[route.path]
     if (appRoute == null) {
-        // 등록되지 않은 path 로 이동 요청이 왔다 — 화면이 열리지 않고 조용히 끝나는 경로다.
+        // 등록되지 않은 path 로 이동 요청이 왔다
         observability.w(TAG) { "등록되지 않은 NavRoute 무시: ${route.path}" }
         return
     }
     val navKey = GenericNavKey.of(route)
 
     if (appRoute.isRoot) {
-        // 이미 그 루트 단독이면 그대로 둔다 — 다시 세우면 화면이 재생성돼 스플래시의 자동 로그인
-        // 판정이 두 번 겹친다(자동 로그인 실패 → 세션 종료 감시가 스플래시를 다시 요청하는 경로).
+        // 이미 그 루트 단독이면 그대로 둔다
         if (backStack.size == 1 && backStack.first() == navKey) return
         backStack.clear()
         backStack.add(navKey)
         return
     }
 
-    // 탭끼리 옮겨 다닌 기록을 쌓으면 뒤로가기가 직전 탭으로 간다 — 탭은 늘 [홈, 탭] 으로 세운다.
+    // 탭끼리 옮겨 다닌 기록을 쌓으면 뒤로가기가 직전 탭으로 간다
     if (appRoute.isBottomTab) {
         backStack.clear()
         backStack.addAll(appRoute.syntheticStack(route.args))
@@ -87,12 +97,7 @@ fun handleNavRoute(
     }
 }
 
-/**
- * 백스택을 [route] 의 시작 스택으로 통째로 교체한다. 교체했으면 true.
- *
- * 딥링크 목적지는 부모 화면이 함께 깔려야 뒤로가기가 자연스럽다(공지 상세 → 방 홈 → 홈).
- * 그래서 단일 키가 아니라 [AppRoute.syntheticStack] 을 쓴다.
- */
+/** 백스택을 [route] 의 시작 스택으로 통째로 교체한다. */
 fun replaceStack(
     route: NavRoute,
     backStack: NavBackStack<NavKey>,

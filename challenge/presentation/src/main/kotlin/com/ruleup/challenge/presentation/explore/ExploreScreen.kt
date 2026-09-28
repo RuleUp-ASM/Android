@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,17 +46,19 @@ import com.ruleup.designsystem.component.RuleUpBottomTab
 import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-// 인기 1~3위 랭크 배지 그라데이션(Figma 탐색 메인).
+// 인기 1~3위 랭크 배지 그라데이션.
 private val TopRankGradient = listOf(Color(0xFFF97316), Color(0xFFEF4444))
 
-/** 탐색 메인(Figma 01 · 탐색 메인). 실시간 인기 + 카테고리 그리드. 하단 탭 "챌린지" 로 진입한다. */
+/** 탐색 메인. */
 @Composable
 fun ExploreScreen(
     modifier: Modifier = Modifier,
     viewModel: ExploreViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isTrendingLoading || state.isCategoriesLoading)
 
     LaunchedEffect(Unit) { viewModel.onIntent(ExploreIntent.Load) }
 
@@ -67,7 +70,7 @@ fun ExploreScreen(
 }
 
 @Composable
-// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다.
 internal fun ExploreContent(
     state: ExploreState,
     onIntent: (ExploreIntent) -> Unit,
@@ -89,7 +92,7 @@ internal fun ExploreContent(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // 인기와 카테고리는 독립적으로 그린다 — 한쪽이 실패해도 다른 쪽은 그대로 보여야 한다.
+            // 인기와 카테고리는 독립적으로 그린다
             TrendingSection(state = state, onIntent = onIntent)
 
             SectionHeader(title = "카테고리 탐색", onSeeAll = { onIntent(ExploreIntent.OpenCategoryAll) })
@@ -124,10 +127,7 @@ internal fun ExploreContent(
     }
 }
 
-/**
- * 실시간 인기 섹션. 카테고리 섹션과 **서로 독립**이라 한쪽이 실패해도 다른 쪽은 그대로 보인다 —
- * 그 독립성이 코드 구조에도 드러나게 각각 떼어 둔다.
- */
+/** 실시간 인기 섹션. */
 @Composable
 private fun ColumnScope.TrendingSection(
     state: ExploreState,
@@ -219,7 +219,7 @@ private fun TrendingRow(
                 color = RuleUpTheme.colors.textPrimary,
                 style = RuleUpTheme.typography.cardTitle,
             )
-            // 못 들어가는 방도 인기 목록에는 노출한다(의도된 동작) — 잠금은 색이 아니라 라벨로 알린다.
+            // 못 들어가는 방도 인기 목록에는 노출한다(의도된 동작)
             if (!item.joinable) {
                 Text(
                     text = "🔒 ${item.minTier?.value ?: "티어 제한"}",
@@ -400,7 +400,7 @@ private fun CategoryGridSkeleton() {
     }
 }
 
-/** 섹션 하나만 실패했을 때의 재시도 — 화면 전체를 에러로 만들지 않는다. */
+/** 섹션 하나만 실패했을 때의 재시도 */
 @Composable
 private fun SectionRetry(onRetry: () -> Unit) {
     Row(
@@ -429,3 +429,11 @@ private fun SectionRetry(onRetry: () -> Unit) {
 
 private const val TRENDING_SKELETON_COUNT = 5
 private const val CATEGORY_SKELETON_COUNT = 12
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ExploreContentPreview() {
+    RuleUpTheme {
+        ExploreContent(state = com.ruleup.challenge.presentation.explore.viewmodel.ExploreState.initial, onIntent = { })
+    }
+}

@@ -18,12 +18,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,27 +41,23 @@ import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsIntent
 import com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsState
 import com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 제재 통지·이력 (설정 허브 → 제재 이력). Figma 프레임이 없어 설정 허브의 카드 형식을 따른다.
- *
- * **잠금 상태에서도 열려야 하는 화면이다** — 잠금 사유와 해제일을 볼 유일한 경로다.
- * 자동 제재와 직권 제재는 섞지 않는다. 합산해 승격하는 경로가 없어서, 한 목록에 세우면
- * 사용자가 존재하지 않는 누적 규칙을 상상하게 된다.
- */
+/** 제재 통지·이력 (설정 허브 → 제재 이력). */
 @Composable
 fun SanctionsScreen(
     modifier: Modifier = Modifier,
     viewModel: SanctionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) { viewModel.onIntent(SanctionsIntent.Load) }
 
     SanctionsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun SanctionsContent(
     state: SanctionsState,
@@ -82,12 +80,17 @@ internal fun SanctionsContent(
                 }
 
             state.history == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "제재 이력을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(SanctionsIntent.Load) }) { Text("다시 시도") }
                 }
 
             state.history.isEmpty ->
@@ -115,11 +118,11 @@ private fun SanctionsBody(history: SanctionHistory) {
 
         if (history.admin.isNotEmpty()) {
             item { SectionLabel("운영자 제재") }
-            items(history.admin, key = { it.sanctionId }) { AdminCard(sanction = it) }
+            items(history.admin) { AdminCard(sanction = it) }
         }
         if (history.auto.isNotEmpty()) {
             item { SectionLabel("자동 제재") }
-            items(history.auto, key = { it.sanctionId }) { AutoCard(sanction = it) }
+            items(history.auto) { AutoCard(sanction = it) }
         }
         item {
             Text(
@@ -132,7 +135,7 @@ private fun SanctionsBody(history: SanctionHistory) {
     }
 }
 
-/** 지금 효력이 있는 제재. 해제일이 없으면 "영구"라고 분명히 말한다 — 빈칸은 "곧 풀림"으로 읽힌다. */
+/** 지금 효력이 있는 제재. */
 @Composable
 private fun ActiveCard(sanction: ActiveSanction) {
     val endsAt = sanction.endsAt
@@ -179,7 +182,7 @@ private fun ActiveCard(sanction: ActiveSanction) {
 private fun AdminCard(sanction: AdminSanction) {
     HistoryCard(
         title = sanction.type.label(sanction.featureCode),
-        subtitle = sanction.reasonCode.orEmpty(),
+        subtitle = sanctionReasonLabel(sanction.reasonCode),
         trailing = sanction.startsAt?.let(::dateDotLabel).orEmpty(),
     )
 }
@@ -235,14 +238,7 @@ private fun SectionLabel(text: String) {
     )
 }
 
-/**
- * 제재 한 줄 제목.
- *
- * 기능 정지는 **무엇이 막혔는지까지 적는다** — 대상을 `featureCode` 영문 원문으로 흘리면
- * 사용자가 무엇을 못 하게 됐는지 읽을 수 없다.
- *
- * 모르는 종류는 "제재"로만 말한다 — 잠금인지 강퇴인지 지어내면 사용자가 잘못된 대응을 한다.
- */
+/** 제재 한 줄 제목. */
 private fun SanctionType?.label(featureCode: String? = null): String =
     when (this) {
         SanctionType.FEATURE_SUSPENSION -> "${FeatureCode.label(featureCode)} 기능 정지"
@@ -250,4 +246,24 @@ private fun SanctionType?.label(featureCode: String? = null): String =
         SanctionType.BAN -> "영구 정지"
         SanctionType.CHALLENGE_KICK -> "챌린지 강퇴"
         null -> "제재"
+    }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun SanctionsContentPreview() {
+    RuleUpTheme {
+        SanctionsContent(
+            state =
+                com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
+        )
+    }
+}
+
+internal fun sanctionReasonLabel(code: String?): String =
+    when (code) {
+        "REPORT_ABUSE" -> "신고 기능 남용"
+        "REPORT_CONFIRMED" -> "신고 내용 확인에 따른 제재"
+        else -> "운영 정책 위반"
     }

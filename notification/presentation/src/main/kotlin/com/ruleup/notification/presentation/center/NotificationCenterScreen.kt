@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,29 +47,18 @@ import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterE
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterIntent
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterState
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/**
- * 알림 센터 (Figma 1134:1455).
- *
- * **모든 알림은 푸시 여부와 무관하게 여기 쌓인다** — 푸시를 못 받았거나 야간에 밀린 알림도
- * 반드시 있다. 그래서 이 화면이 비어 보이면 그건 정말 알림이 없는 것이다.
- *
- * 상단 탭은 **알림 / 공지** 둘뿐이다. 운영자 공지는 별도 API 가 아니라 같은 목록의
- * `tab=ANNOUNCEMENT` 다(2026-09-07 확정) — 읽음 지점도 탭별로 따로 보관된다.
- *
- * Figma 와 다르게 간 곳
- * - **유형 필터 칩을 두지 않는다** — 명세가 "유형 탭 필터는 없다(P2)"로 확정했다
- * - **목록 안 수락/거절 버튼을 두지 않는다** — 딥링크로 해당 화면에 들어가는 것이 계약이다
- * - **「모두 읽음」 버튼을 두지 않는다** — 진입만으로 읽음 처리되고 개별 읽음 API 는 없다
- */
+/** 알림 센터. */
 @Composable
 fun NotificationCenterScreen(
     modifier: Modifier = Modifier,
     viewModel: NotificationCenterViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
     val navigationHelper = LocalNavigationHelper.current
 
@@ -79,7 +69,7 @@ fun NotificationCenterScreen(
                 is NotificationCenterEffect.ShowMessage -> messageHelper.showToast(effect.message)
 
                 is NotificationCenterEffect.OpenDeeplink ->
-                    // 딥링크 해석은 :app 이 한다 — feature 가 앱 전체 라우트 표를 알 이유가 없다.
+                    // 딥링크 해석은 :app 이 한다
                     navigationHelper.navigateByDeeplink(effect.deeplink)
             }
         }
@@ -88,7 +78,7 @@ fun NotificationCenterScreen(
     NotificationCenterContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun NotificationCenterContent(
     state: NotificationCenterState,
@@ -332,7 +322,7 @@ private fun NotificationRow(
     }
 }
 
-/** 목록 뱃지 문구. 타입 22종을 다 쓰지 않고 그룹으로 묶는다 — 사용자가 구분해야 할 단위가 그것이다. */
+/** 목록 뱃지 문구. */
 private val NotificationGroup.label: String
     get() =
         when (this) {
@@ -342,14 +332,24 @@ private val NotificationGroup.label: String
             NotificationGroup.REMINDER -> "리마인더"
         }
 
-/**
- * "2026.09.04" — 상대 시각은 쓰지 않는다.
- *
- * `createdAt` 이 **고지가 성립한 시각**이라, "1시간 전"처럼 기준이 흐린 표기보다 날짜를 남기는 편이
- * 나중에 사용자가 언제 통지받았는지 따질 때 쓸모 있다.
- */
+/** "2026.09.04" */
 private fun relativeTime(iso: String): String {
     val date = iso.substringBefore('T').split('-')
     if (date.size != 3) return iso
     return date.joinToString(".")
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun NotificationCenterContentPreview() {
+    RuleUpTheme {
+        NotificationCenterContent(
+            state =
+                com.ruleup.notification.presentation.center.viewmodel.NotificationCenterState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
 }

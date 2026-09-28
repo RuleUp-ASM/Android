@@ -10,12 +10,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -41,19 +44,35 @@ import com.kakao.vectormap.shape.PolygonOptions
 import com.kakao.vectormap.shape.PolygonStyles
 import com.kakao.vectormap.shape.PolygonStylesSet
 import com.ruleup.designsystem.theme.RuleUpPalette
+import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.observability.domain.api.w
+import com.ruleup.tti.domain.TtiTimeline
+import com.ruleup.tti.presentation.TtiSpanEffect
 import com.ruleup.ui.helper.LocalObservability
 import com.ruleup.verification.presentation.R
 import kotlinx.coroutines.tasks.await
 
-/**
- * 카카오 지도 기반 위치 선택(명세 §5.3). [pin] 은 확인 대기 핀(null 이면 지운다), [anchors] 는 이미 담아둔
- * 앵커로 번호(1부터) 핀 + 반경 원으로 고정 표시된다.
- * Kakao [MapView] 는 GLSurfaceView 기반이라 [AndroidView] 로 감싸고 호스트 resume/pause 를 전달해야 한다
- * (카카오 가이드 — 미전달 시 렌더링 크래시).
- */
+/** 카카오 지도 기반 위치 선택. */
 @Composable
 fun GeofenceMap(
+    initialCenter: MapLatLng,
+    pin: MapLatLng?,
+    radiusM: Float,
+    onMapTap: (MapLatLng) -> Unit,
+    modifier: Modifier = Modifier,
+    anchors: List<MapAnchor> = emptyList(),
+) {
+    if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Text("지도 미리보기 · 반경 ${radiusM.toInt()}m")
+        }
+    } else {
+        LiveGeofenceMap(initialCenter, pin, radiusM, onMapTap, modifier, anchors)
+    }
+}
+
+@Composable
+private fun LiveGeofenceMap(
     initialCenter: MapLatLng,
     pin: MapLatLng?,
     radiusM: Float,
@@ -67,9 +86,10 @@ fun GeofenceMap(
     // 지도 콜백은 컴포지션 밖에서 호출되므로 항상 최신 람다를 가리키게 한다.
     val currentOnMapTap by rememberUpdatedState(onMapTap)
 
-    // 카카오 지도 네이티브 라이브러리가 없는 ABI(x86_64 에뮬레이터 등)에서는 MapView 생성/시작이 던진다.
-    // 화면 전체가 죽지 않도록 막고, 지도 자리에 안내를 보여준다(나머지 picker 는 정상 동작).
+    // 지도 SDK 초기화 실패 처리.
     val mapView = remember { runCatching { MapView(context) }.getOrNull() }
+    var loading by remember { mutableStateOf(mapView != null) }
+    TtiSpanEffect(TtiTimeline.BIG_PART_LOADING, loading)
     if (mapView == null) {
         Box(modifier, contentAlignment = Alignment.Center) {
             Text("이 기기에서는 지도를 표시할 수 없어요")
@@ -84,14 +104,15 @@ fun GeofenceMap(
                 object : MapLifeCycleCallback() {
                     override fun onMapDestroy() = Unit
 
-                    // 인증 실패(키해시·패키지명·앱키 불일치)·렌더 오류는 여기로만 온다. 삼키면 "빈 지도"로만 보이므로
-                    // 'KakaoMap' 태그로 남겨 디버그 오버레이/Logcat 에서 실제 사유를 확인한다.
+                    // 지도 인증·렌더링 오류 처리.
                     override fun onMapError(error: Exception) {
+                        loading = false
                         observability.w("KakaoMap", error) { "지도 인증/렌더 실패 — 키해시·패키지명·네이티브앱키 확인" }
                     }
                 },
                 object : KakaoMapReadyCallback() {
                     override fun onMapReady(kakaoMap: KakaoMap) {
+                        loading = false
                         objects.kakaoMap = kakaoMap
                         kakaoMap.setOnMapClickListener { _, position, _, _ ->
                             currentOnMapTap(MapLatLng(position.latitude, position.longitude))
@@ -110,7 +131,7 @@ fun GeofenceMap(
                     override fun getZoomLevel(): Int = DEFAULT_ZOOM_LEVEL
                 },
             )
-        }
+        }.onFailure { loading = false }
         onDispose { objects.kakaoMap = null }
     }
 
@@ -142,10 +163,7 @@ fun GeofenceMap(
     AndroidView(factory = { mapView }, modifier = modifier)
 }
 
-/**
- * KakaoMap·핀·원 참조를 recomposition/콜백 간 보관한다(컴포지션 밖 SDK 호출용).
- * 핀은 [Label.moveTo] 로 옮기지만 원은 반경이 바뀔 수 있어 매번 지우고 다시 그린다.
- */
+/** 지도·핀·원 참조. */
 private class GeofenceMapObjects {
     var kakaoMap: KakaoMap? = null
     private var label: Label? = null
@@ -237,7 +255,7 @@ private class GeofenceMapObjects {
     }
 
     companion object {
-        // 반경 원 채움색(반투명 브랜드색). 지도 SDK 가 Compose Color 를 모르므로 ARGB Int 로 넘긴다.
+        // 반경 원 채움색(반투명 브랜드색).
         private val CIRCLE_FILL_ARGB = RuleUpPalette.Primary600.copy(alpha = CIRCLE_FILL_ALPHA).toArgb()
         private const val CIRCLE_FILL_ALPHA = 0.14f
 
@@ -289,3 +307,21 @@ private class FusedLocationLocator(
 
 // 카카오 지도 줌 레벨(구글 zoom 15f 와 유사한 동네 단위).
 private const val DEFAULT_ZOOM_LEVEL = 15
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun GeofenceMapPreview() {
+    RuleUpTheme {
+        GeofenceMap(
+            initialCenter =
+                com.ruleup.verification.presentation.location.map.MapLatLng(
+                    lat = 0.75,
+                    lng = 0.75,
+                ),
+            pin = null,
+            radiusM = 100f,
+            onMapTap = {
+            },
+        )
+    }
+}

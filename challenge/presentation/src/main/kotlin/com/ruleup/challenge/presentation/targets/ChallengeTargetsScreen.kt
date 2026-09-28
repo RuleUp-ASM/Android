@@ -57,18 +57,13 @@ import com.ruleup.challenge.presentation.targets.viewmodel.ChallengeTargetsViewM
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.ScreenApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/**
- * 이름·카테고리로 앱 목록을 좁힌다.
- *
- * 검색어는 **부분 일치·대소문자 무시**다 — 사용자는 "카톡"처럼 일부만 치고, 영문 앱은 대문자로
- * 시작하는 경우가 많다. 카테고리를 선언하지 않은 앱([AppEntry.category] 가 null)은 특정
- * 카테고리를 골랐을 때 빠진다 — 어디에도 속하지 않는다고 아무 데나 넣으면 목록이 거짓이 된다.
- */
+/** 이름·카테고리로 앱 목록을 좁힌다. */
 internal fun filterApps(
     apps: List<AppEntry>,
     query: String,
@@ -83,15 +78,12 @@ internal data class AppEntry(
     val packageName: String,
     val label: String,
     val icon: ImageBitmap?,
-    // ApplicationInfo.category 의 현지화 제목(예: "소셜"). 미선언(UNDEFINED)이면 null → "전체"에만 노출.
+    // ApplicationInfo.category 의 현지화 제목(예: "소셜").
     val category: String?,
     val weeklyUsageMs: Long,
 )
 
-/**
- * 대상 앱 등록(피그마 "01 · 인증 셋업 UX 시안" ③). 상세의 "앱 등록하기" 로만 들어온다.
- * 진입 전에 사용정보 접근 권한이 게이팅돼 있다 — 중도 회수 등으로 빠지면 사용 시간만 숨긴다.
- */
+/** 대상 앱 등록. */
 @Composable
 fun ChallengeTargetsScreen(
     challengeId: String,
@@ -105,7 +97,7 @@ fun ChallengeTargetsScreen(
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     val selected = remember { mutableStateMapOf<String, Boolean>() }
     var query by remember { mutableStateOf("") }
-    // 카테고리 필터(현지화 제목). null = "전체".
+    // 카테고리 필터(현지화 제목).
     var selectedCategory by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
@@ -127,6 +119,9 @@ fun ChallengeTargetsScreen(
         state.restoredPackages.forEach { selected[it] = true }
     }
 
+    TtiScreenEffect(loading = state.isLoading, measureLargeContentSeparately = true)
+    com.ruleup.tti.presentation
+        .TtiSpanEffect(com.ruleup.tti.domain.TtiTimeline.BIG_PART_LOADING, apps == null)
     val loaded = apps
     val categories =
         remember(loaded) {
@@ -156,6 +151,12 @@ fun ChallengeTargetsScreen(
                 onBack = { viewModel.onIntent(ChallengeTargetsIntent.Back) },
             )
 
+            if (state.loadFailed) {
+                RuleUpPrimaryButton(
+                    text = "등록한 앱을 불러오지 못했어요 · 다시 시도",
+                    onClick = { viewModel.onIntent(ChallengeTargetsIntent.Load(challengeId)) },
+                )
+            }
             Text(
                 text = "선택한 앱의 사용 시간을 측정해 자동으로 인증해요",
                 color = RuleUpTheme.colors.textSecondary,
@@ -237,6 +238,7 @@ fun ChallengeTargetsScreen(
         ) {
             RuleUpPrimaryButton(
                 text = if (state.isSaving) "등록 중…" else "등록 완료 (${selectedApps.size})",
+                enabled = !state.isLoading && !state.loadFailed && !state.isSaving && selectedApps.isNotEmpty(),
                 onClick = {
                     viewModel.onIntent(
                         ChallengeTargetsIntent.Save(
@@ -250,10 +252,7 @@ fun ChallengeTargetsScreen(
     }
 }
 
-/**
- * queryAndAggregateUsageStats(PACKAGE_USAGE_STATS)는 상세 CTA 의 권한 게이팅 뒤에서만 도달하므로
- * lint 를 억제한다 — 중도 회수 등으로 실패하면 사용 시간이 0(캡션 숨김)이 된다.
- */
+/** 진입 전에 사용 정보 접근 권한 확인. */
 @SuppressLint("MissingPermission")
 private fun loadApps(context: Context): List<AppEntry> {
     val pm = context.packageManager
@@ -286,7 +285,7 @@ private fun loadApps(context: Context): List<AppEntry> {
         .toList()
 }
 
-/** "주 n시간 n분" 표기. 1분 미만이면 null(캡션 숨김). */
+/** "주 n시간 n분" 표기. */
 private fun weeklyUsageLabel(ms: Long): String? {
     val totalMinutes = ms / 60_000
     if (totalMinutes <= 0) return null
@@ -400,7 +399,7 @@ private fun SearchField(
     }
 }
 
-/** 카테고리 필터 칩 행. "전체" + 설치 앱에 존재하는 카테고리만. 미선언(UNDEFINED) 앱은 "전체"에만 보인다. */
+/** 카테고리 필터 칩 행. */
 @Composable
 private fun CategoryChips(
     categories: List<String>,
@@ -601,5 +600,29 @@ private fun AppIcon(
 
 private const val WEEK_MS = 7L * 24 * 60 * 60 * 1000
 
-// 앱 아이콘 비트맵 한 변(px). 리스트 42dp 슬롯 기준 고밀도 대응.
+// 앱 아이콘 비트맵 한 변(px).
 private const val ICON_PX = 96
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ChallengeTargetsComponentsPreview() {
+    RuleUpTheme {
+        Column {
+            TargetsTopBar(selectedCount = 1, onBack = {})
+            SearchField(query = "", onQueryChange = {})
+            AppRow(
+                app =
+                    AppEntry(
+                        packageName = "com.example.reading",
+                        label = "독서",
+                        icon = null,
+                        category = "도서",
+                        weeklyUsageMs = 1800000L,
+                    ),
+                checked = true,
+                onToggle = {
+                },
+            )
+        }
+    }
+}

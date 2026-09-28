@@ -16,12 +16,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,22 +33,16 @@ import com.ruleup.profile.domain.entity.StatsReport
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsState
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 통계 리포트. 정책이 정한 **지표 4종 고정** — 전체 성공률 · 총 성공 인증 수 · 연속 성공 ·
- * 완주 개수(명세: GET /me/stats).
- *
- * 구 「최근 12주 사이클」 그리드는 **폐기됐다**(2026-09-15). 서버가 값을 내려주지 않아 자리만
- * 남으면 빈 영역이 계속 노출된다(MY-07).
- *
- * 기간 탭(주간/월간/연간)은 없다 — 명세에서 폐기됐다.
- */
+/** 통계 리포트. */
 @Composable
 fun MyStatsScreen(
     modifier: Modifier = Modifier,
     viewModel: MyStatsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) {
         viewModel.onIntent(MyStatsIntent.Load)
@@ -55,7 +51,7 @@ fun MyStatsScreen(
     MyStatsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun MyStatsContent(
     state: MyStatsState,
@@ -78,12 +74,17 @@ internal fun MyStatsContent(
                 }
 
             state.report == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "통계를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(MyStatsIntent.Load) }) { Text("다시 시도") }
                 }
 
             else -> StatsBody(report = state.report)
@@ -134,7 +135,7 @@ private fun StatsBody(report: StatsReport) {
     }
 }
 
-/** 전체 성공률. 판정 이력이 없으면 0% 대신 비어 있다고 말한다 — 둘은 다른 사실이다. */
+/** 전체 성공률. */
 @Composable
 private fun SuccessRateCard(rate: Double?) {
     StatsCard {
@@ -212,4 +213,17 @@ private fun StatsCard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         content = content,
     )
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyStatsContentPreview() {
+    RuleUpTheme {
+        MyStatsContent(
+            state =
+                com.ruleup.profile.presentation.stats.viewmodel.MyStatsState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
+        )
+    }
 }

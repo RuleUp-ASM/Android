@@ -20,12 +20,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,21 +42,20 @@ import com.ruleup.support.presentation.common.shortInquiryId
 import com.ruleup.support.presentation.list.viewmodel.InquiryListIntent
 import com.ruleup.support.presentation.list.viewmodel.InquiryListState
 import com.ruleup.support.presentation.list.viewmodel.InquiryListViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 내 문의 내역 (Figma `1419:27`).
- *
- * 답변이 왔는지 확인하는 유일한 화면이다 — 답변을 알림함으로 알리지 않기로 해(2026-09-11)
- * 「새 답변」 점이 사용자가 답변을 알아채는 신호 전부다.
- */
+/** 내 문의 내역. */
 @Composable
 fun InquiryListScreen(
     modifier: Modifier = Modifier,
     viewModel: InquiryListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
-    LaunchedEffect(Unit) { viewModel.onIntent(InquiryListIntent.Load) }
+    androidx.lifecycle.compose.LifecycleEventEffect(
+        androidx.lifecycle.Lifecycle.Event.ON_RESUME,
+    ) { viewModel.onIntent(InquiryListIntent.Load) }
 
     InquiryListContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
@@ -140,7 +139,7 @@ private fun InquiryRow(
                 .padding(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // 모르는 분류는 칩만 비운다 — 본문과 접수 정보는 그대로 읽을 수 있어야 한다.
+            // 모르는 분류는 칩만 비운다
             item.category?.let { category ->
                 Box(
                     modifier =
@@ -221,5 +220,18 @@ private fun MessageBody(
                 modifier = Modifier.singleClickable(onClick = onAction).padding(8.dp),
             )
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InquiryListContentPreview() {
+    RuleUpTheme {
+        InquiryListContent(
+            state =
+                com.ruleup.support.presentation.list.viewmodel.InquiryListState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
+        )
     }
 }

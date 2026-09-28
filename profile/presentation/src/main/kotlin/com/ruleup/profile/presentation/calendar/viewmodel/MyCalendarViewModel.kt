@@ -15,10 +15,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 import javax.inject.Inject
 
-/**
- * 활동 캘린더 ViewModel. day status 는 서버 판정 값 그대로 렌더링한다.
- * 과거 월은 확정 후 변하지 않아 세션 동안 캐시하고(스펙: 과거 월 캐시), 당월만 재진입마다 다시 조회한다.
- */
+/** 활동 캘린더 ViewModel. */
 @HiltViewModel
 class MyCalendarViewModel
     @Inject
@@ -28,7 +25,7 @@ class MyCalendarViewModel
     ) : MviViewModel<MyCalendarIntent, MyCalendarState, MyCalendarReducerEvent, NoEffect>(
             MyCalendarState.initial,
         ) {
-        // month(YYYY-MM) → days. 과거 월 전용 캐시.
+        // month(YYYY-MM) → days.
         private val monthCache = mutableMapOf<String, Map<String, CalendarDay>>()
 
         override fun onIntent(intent: MyCalendarIntent) {
@@ -54,7 +51,19 @@ class MyCalendarViewModel
 
                 is MyCalendarReducerEvent.MonthLoaded ->
                     if (state.month == event.month) {
-                        state.copy(isLoading = false, days = event.days, errorMessage = null)
+                        state.copy(
+                            isLoading = false,
+                            days = event.days,
+                            errorMessage = null,
+                            selectedDay =
+                                if (state.selectedDate?.take(7) ==
+                                    event.month
+                                ) {
+                                    event.days[state.selectedDate]
+                                } else {
+                                    state.selectedDay
+                                },
+                        )
                     } else {
                         // 연타로 월이 이미 바뀌었으면 늦게 도착한 응답은 버린다.
                         state
@@ -64,7 +73,7 @@ class MyCalendarViewModel
                     state.copy(isLoading = false, errorMessage = event.message)
 
                 is MyCalendarReducerEvent.DateSelected ->
-                    state.copy(selectedDate = event.date, dayDetail = null)
+                    state.copy(selectedDate = event.date, selectedDay = state.days[event.date], dayDetail = null)
 
                 is MyCalendarReducerEvent.DetailLoading -> state.copy(isLoadingDetail = event.loading)
 
@@ -73,9 +82,7 @@ class MyCalendarViewModel
 
         private fun loadInitial(date: String?) {
             if (currentState.month.isNotBlank()) return
-            // 딥링크가 준 날짜는 서버 문자열이라 형식을 믿지 않는다 — 파싱에 실패하면 오늘로 연다.
-            // 어느 날짜가 「오늘」인지는 판정 기준(KST)을 따른다 — 기기 기준으로 고르면 자정 근처에
-            // 서버가 아직 판정하지 않은 날을 오늘이라고 펴게 된다.
+            // 딥링크가 준 날짜는 서버 문자열이라 형식을 믿지 않는다
             val target = date?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: ServiceDate.today()
             loadMonth(YearMonth.from(target).toString())
             selectDate(target.toString())
@@ -98,7 +105,7 @@ class MyCalendarViewModel
                 runCatching { myPageRepository.getCalendar(month) }
                     .onSuccess { calendar ->
                         val days = calendar.days.associateBy { it.date }
-                        // 당월은 인증 확정마다 갱신되므로 캐시하지 않는다 (스펙: 과거 월 캐시).
+                        // 당월은 인증 확정마다 갱신되므로 캐시하지 않는다.
                         if (month < YearMonth.from(ServiceDate.today()).toString()) monthCache[month] = days
                         dispatch(MyCalendarReducerEvent.MonthLoaded(month, days))
                     }.onFailure {
@@ -119,7 +126,7 @@ class MyCalendarViewModel
         private fun selectDate(date: String) {
             dispatch(MyCalendarReducerEvent.DateSelected(date))
             // 비대상일(응답 days 에 없음)은 조회 없이 빈 상태를 보여준다.
-            if (currentState.days[date] == null && currentState.month == date.take(7)) return
+            if (!currentState.isLoading && currentState.days[date] == null && currentState.month == date.take(7)) return
             viewModelScope.launch {
                 dispatch(MyCalendarReducerEvent.DetailLoading(true))
                 runCatching { myPageRepository.getCalendarDay(date) }
@@ -128,8 +135,10 @@ class MyCalendarViewModel
                         if (currentState.selectedDate == date) {
                             dispatch(MyCalendarReducerEvent.DetailLoaded(detail))
                         }
-                    }.onFailure { dispatch(MyCalendarReducerEvent.DetailLoaded(null)) }
-                dispatch(MyCalendarReducerEvent.DetailLoading(false))
+                    }.onFailure {
+                        if (currentState.selectedDate == date) dispatch(MyCalendarReducerEvent.DetailLoaded(null))
+                    }
+                if (currentState.selectedDate == date) dispatch(MyCalendarReducerEvent.DetailLoading(false))
             }
         }
     }

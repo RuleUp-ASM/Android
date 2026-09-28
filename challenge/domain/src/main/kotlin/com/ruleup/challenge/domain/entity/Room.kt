@@ -1,34 +1,16 @@
 package com.ruleup.challenge.domain.entity
 
-/**
- * 방 안에서 사람을 가리키는 공통 표현 (명세 `user` 오브젝트 — 스레드·랭킹 공용).
- *
- * 서버가 **차단·모더레이션 마스킹을 적용한 뒤** 내려주므로 앱은 [blocked] 로 가리는 게 아니라
- * "가려진 상태임"을 표시하는 데만 쓴다 — 목록에서 빼면 등수가 어긋난다.
- */
-data class RoomUser(
-    val userId: String,
-    val nickname: String,
-    val profileImageUrl: String?,
-    val blocked: Boolean,
-)
+import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.UserIdentity
 
-/**
- * 내 오늘 인증 상태 (명세 `myTodayStatus`).
- *
- * `GET /challenges/{id}/verifications/today` 의 `status` 와 같은 5종이다. 구 `CHECKING` 은 폐기됐고,
- * 그 자리의 [FAIL_EXPECTED] 가 이의 신청 창이다.
- *
- * 그래도 앱이 모르는 값은 [fromValue] 가 null 을 돌려주고 화면이 상태 표기를 생략한다 — 임의로
- * 실패·성공 어느 쪽으로도 접지 않는다.
- */
+/** 내 오늘 인증 상태. */
 enum class TodayVerificationStatus(
     val value: String,
 ) {
     // 인증 창이 아직 열려 있음
     IN_PROGRESS("IN_PROGRESS"),
 
-    // 이대로면 실패 — 확정 전이라 늦은 신호로 뒤집힐 수 있고 이의를 낼 수 있다
+    // 이대로면 실패
     FAIL_EXPECTED("FAIL_EXPECTED"),
 
     // 오늘 인증 완료
@@ -37,11 +19,11 @@ enum class TodayVerificationStatus(
     // 실패 확정
     FAILED("FAILED"),
 
-    // 오늘은 판정 대상일이 아님 — 실패가 아니다
+    // 오늘은 판정 대상일이 아님
     NOT_TARGET("NOT_TARGET"),
     ;
 
-    /** 실패로 확정됐는가. 실패 예정·진행 중은 아직 실패가 아니다. */
+    /** 실패로 확정됐는가. */
     val isFailure: Boolean
         get() = this == FAILED
 
@@ -50,12 +32,7 @@ enum class TodayVerificationStatus(
     }
 }
 
-/**
- * 방 홈 요약 (명세 `summary`).
- *
- * [roomSuccessRate] 는 판정 이력이 없으면 **null 이다 — 0 으로 접지 않는다.** 표본이 없는 것과
- * 0% 는 다른 사실이라, 0% 로 바꾸면 갓 만든 방이 실패한 방처럼 보인다.
- */
+/** 방 홈 요약. */
 data class RoomSummary(
     val title: String,
     // 방 전체 성공률 0~1 = 성공 ÷ (성공+실패)
@@ -66,29 +43,24 @@ data class RoomSummary(
     val capacity: Int?,
 )
 
-/** 방 홈 랭킹 상위 3 (명세 `topRanking[]`). 전체 랭킹([RankingEntry])보다 필드가 적은 별개 표현이다. */
+/** 방 홈 랭킹 상위 3. */
 data class RoomTopRanker(
     val rank: Int,
-    val userId: String,
-    val nickname: String,
-    val profileImageUrl: String?,
+    val user: User,
     // 성공률 0~1
     val successRate: Double,
-)
+) : UserIdentity by user {
+    val userId: String get() = user.id
+}
 
-/**
- * 챌린지 방 내부 일괄 조회 (명세: GET /challenges/{id}/room). ACTIVE 멤버 전용 — 비멤버는 403.
- *
- * **읽음 관련 필드는 없다** — 미읽음 뱃지는 "확인해야 할 일"로 읽혀 압박이 되므로 정책상 제외됐다.
- * 응답의 `pinnedNotice` 도 읽지 않는다 — 공지가 제품에서 빠졌다.
- */
+/** 챌린지 방 내부 일괄 조회. */
 data class ChallengeRoom(
     // 서버 합의: 미지 값은 MEMBER 취급 (운영 스프린트의 role 값 추가에 대비)
     val myRole: MemberRole,
     // BOT 이면 "방장 되기"(선착순 클레임) 진입점을 노출한다
     val ownerType: OwnerType,
     val summary: RoomSummary,
-    // 상위 3. 10회 미만 참여자는 등재되지 않아 3명보다 적을 수 있다
+    // 상위 3.
     val topRanking: List<RoomTopRanker>,
     val myTodayStatus: TodayVerificationStatus?,
 )

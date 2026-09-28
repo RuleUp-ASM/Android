@@ -22,8 +22,10 @@ sealed interface ChallengeTargetsIntent : MviIntent {
 }
 
 data class ChallengeTargetsState(
+    val isLoading: Boolean = true,
+    val loadFailed: Boolean = false,
     val isSaving: Boolean = false,
-    // 서버에서 복원한(이전 바인딩) 대상 앱 패키지명 — 진입 시 선택 상태 시드용.
+    // 서버에서 복원한(이전 바인딩) 대상 앱 패키지명
     val restoredPackages: Set<String> = emptySet(),
 ) : UiState {
     companion object {
@@ -32,6 +34,10 @@ data class ChallengeTargetsState(
 }
 
 sealed interface ChallengeTargetsReducerEvent : ReducerEvent {
+    data object Loading : ChallengeTargetsReducerEvent
+
+    data object LoadFailed : ChallengeTargetsReducerEvent
+
     data class Restored(
         val packages: Set<String>,
     ) : ChallengeTargetsReducerEvent

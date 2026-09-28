@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -32,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.permission.healthConnectAvailable
 import com.ruleup.ui.permission.healthReadPermissions
 import com.ruleup.ui.permission.rememberHealthPermissionLauncher
@@ -41,18 +43,17 @@ import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.presentation.permission.viewmodel.PermissionRepairIntent
 import com.ruleup.verification.presentation.permission.viewmodel.PermissionRepairViewModel
 
-/**
- * 권한 재연결(Figma `1134:997`). 권한이 끊기면 인증이 조용히 멈추고, 사용자는 실패가 쌓이는 이유를
- * 모른 채 강퇴까지 간다. 끊긴 것만이 아니라 살아 있는 신호도 함께 세워야 원인이 좁혀진다.
- */
+/** 권한 재연결. */
 @Composable
 fun PermissionRepairScreen(
     modifier: Modifier = Modifier,
+    requiredPermissions: List<String>? = null,
     viewModel: PermissionRepairViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.permissions == null)
     val context = LocalContext.current
-    // 설정에서 켜고 돌아오는 것이 이 화면의 주된 동선이다 — 돌아올 때마다 다시 읽는다.
+    // 설정 복귀 시 권한 재조회.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.onIntent(PermissionRepairIntent.Refresh)
     }
@@ -60,11 +61,14 @@ fun PermissionRepairScreen(
         rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             viewModel.onIntent(PermissionRepairIntent.Refresh)
         }
-    // 걸음·수면은 HC 자체 권한 화면으로 — 위치가 OS 다이얼로그를 직접 여는 것과 같은 방식이다.
+    // Health Connect 권한 요청.
     val healthLauncher = rememberHealthPermissionLauncher { viewModel.onIntent(PermissionRepairIntent.Refresh) }
     val healthAvailable = healthConnectAvailable()
 
-    val rows = state.permissions?.let(::repairRows).orEmpty()
+    val rows =
+        state.permissions?.let(::repairRows).orEmpty().filter { row ->
+            requiredPermissions == null || requiredPermissions.any { PermissionSnapshot.normalizeToken(it) in row.tokens }
+        }
     val broken = rows.filter { !it.granted }
 
     PermissionRepairContent(
@@ -76,10 +80,7 @@ fun PermissionRepairScreen(
     )
 }
 
-/**
- * 상태를 받아 그리기만 한다. 권한 요청은 Context·런처가 필요해 바깥이 맡고, 여기서는
- * **무엇을 고치겠다고 눌렀는지**만 [onFix] 로 올린다 — 그래야 렌더 규칙을 테스트할 수 있다.
- */
+/** 권한 재연결 화면 본문. */
 @Composable
 internal fun PermissionRepairContent(
     rows: List<RepairRow>,
@@ -106,7 +107,7 @@ internal fun PermissionRepairContent(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (broken.isNotEmpty()) {
-                // 강퇴로 이어진다는 사실을 시점과 함께 말한다 — "권한이 필요해요"로는 급한 줄 모른다.
+                // 권한 복구 기한 안내.
                 Column(
                     modifier =
                         Modifier
@@ -148,11 +149,7 @@ internal fun PermissionRepairContent(
     }
 }
 
-/**
- * 권한 종류마다 여는 곳이 다르다 — 런타임은 OS 다이얼로그, 사용기록은 설정 화면, 헬스는 HC
- * 자체 화면이다. 미지원 기기는 HC 요청 화면이 뜨지 않으므로 앱 정보로 보내 사용자가 설치·연결을
- * 확인하게 한다.
- */
+/** 권한별 설정 화면. */
 private fun requestFix(
     row: RepairRow,
     context: android.content.Context,
@@ -167,13 +164,31 @@ private fun requestFix(
                 ?.let { runtimeLauncher.launch(it.toTypedArray()) }
 
         PermissionRequestKind.USAGE_ACCESS_SETTINGS ->
-            context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            runCatching { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) }
+                .onFailure {
+                    android.widget.Toast
+                        .makeText(context, "설정 화면을 열 수 없어요", android.widget.Toast.LENGTH_SHORT)
+                        .show()
+                }.let { }
 
         PermissionRequestKind.HEALTH_CONNECT ->
             if (healthAvailable) {
-                healthLauncher.launch(healthReadPermissions())
+                runCatching {
+                    healthLauncher.launch(
+                        healthReadPermissions()
+                            .filter { permission ->
+                                row.tokens.any { permission.endsWith(it) }
+                            }.toSet(),
+                    )
+                }.onFailure {
+                    android.widget.Toast
+                        .makeText(context, "권한 화면을 열 수 없어요", android.widget.Toast.LENGTH_SHORT)
+                        .show()
+                }
             } else {
-                context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
+                android.widget.Toast
+                    .makeText(context, "이 기기에서는 헬스 커넥트를 사용할 수 없어요", android.widget.Toast.LENGTH_SHORT)
+                    .show()
             }
     }
 }
@@ -208,21 +223,23 @@ private fun PermissionStatusRow(
     }
 }
 
-/** 화면에 한 줄로 서는 신호. [kind] 가 "어느 문을 열어야 하는지"를 정한다. */
+/** 화면에 한 줄로 서는 신호. */
 internal data class RepairRow(
     val label: String,
     val purpose: String,
     val granted: Boolean,
     val kind: PermissionRequestKind,
     val runtimePermissions: List<String> = emptyList(),
+    val tokens: Set<String> = emptySet(),
 )
 
-/** 스냅샷 → 화면 줄. **끊긴 것만 거르지 않는다** — 살아 있는 신호를 함께 보여야 원인을 좁힌다. */
+/** 스냅샷 → 화면 줄. */
 internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
     buildList {
         add(
             RepairRow(
                 label = "위치",
+                tokens = setOf("LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE"),
                 purpose = "등록한 장소 도착 확인에 필요",
                 granted = snapshot.location == PermissionState.GRANTED,
                 kind = PermissionRequestKind.RUNTIME,
@@ -232,6 +249,7 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
         add(
             RepairRow(
                 label = "백그라운드 위치",
+                tokens = setOf("ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION"),
                 purpose = "앱을 열지 않아도 도착을 확인하려면 필요",
                 granted = snapshot.backgroundLocation == PermissionState.GRANTED,
                 kind = PermissionRequestKind.RUNTIME,
@@ -247,6 +265,7 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
         add(
             RepairRow(
                 label = "사용 정보 접근",
+                tokens = setOf("PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME"),
                 purpose = "앱 사용 시간·기상 확인에 필요",
                 granted = snapshot.usageStats == PermissionState.GRANTED,
                 kind = PermissionRequestKind.USAGE_ACCESS_SETTINGS,
@@ -254,7 +273,8 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
         )
         add(
             RepairRow(
-                label = "걸음·거리",
+                label = "걸음",
+                tokens = setOf("READ_STEPS", "HEALTH_STEPS", "HEALTH"),
                 purpose = "헬스 커넥트에서 읽어요",
                 granted = snapshot.healthSteps == PermissionState.GRANTED,
                 kind = PermissionRequestKind.HEALTH_CONNECT,
@@ -262,7 +282,17 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
         )
         add(
             RepairRow(
+                label = "거리",
+                purpose = "헬스 커넥트에서 읽어요",
+                granted = snapshot.healthDistance == PermissionState.GRANTED,
+                kind = PermissionRequestKind.HEALTH_CONNECT,
+                tokens = setOf("READ_DISTANCE", "HEALTH_DISTANCE"),
+            ),
+        )
+        add(
+            RepairRow(
                 label = "수면",
+                tokens = setOf("READ_SLEEP", "HEALTH_SLEEP", "SLEEP"),
                 purpose = "헬스 커넥트에서 읽어요",
                 granted = snapshot.healthSleep == PermissionState.GRANTED,
                 kind = PermissionRequestKind.HEALTH_CONNECT,
@@ -272,6 +302,7 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
             add(
                 RepairRow(
                     label = "알림",
+                    tokens = setOf("POST_NOTIFICATIONS", "NOTIFICATION"),
                     purpose = "판정 결과·권한 복구 안내에 필요",
                     granted = snapshot.postNotifications == PermissionState.GRANTED,
                     kind = PermissionRequestKind.RUNTIME,
@@ -280,3 +311,11 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
             )
         }
     }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun PermissionRepairContentPreview() {
+    RuleUpTheme {
+        PermissionRepairContent(rows = emptyList(), broken = emptyList(), onIntent = { }, onFix = { })
+    }
+}

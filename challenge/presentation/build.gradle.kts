@@ -24,7 +24,7 @@ android {
         compose = true
     }
 
-    // Compose 가 테마·리소스를 읽어야 렌더된다. 없으면 리소스 조회에서 터진다.
+    // Compose 가 테마·리소스를 읽어야 렌더된다.
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -43,19 +43,19 @@ dependencies {
     implementation(project(":core:domain"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
-    // 화면이 자기 TTI 구간을 선언한다 — 그려지는 시점은 컴포지션이 안다.
+    // 화면이 자기 TTI 구간을 선언한다
     implementation(project(":tti:presentation"))
     implementation(project(":observability:domain"))
     implementation(project(":logging:domain"))
     implementation(project(":challenge:domain"))
-    // 대상 앱 설정은 verification 소관 — 그쪽 domain 계약을 직접 쓴다(core 포트 복제 제거).
+    // 대상 앱 설정은 verification 소관
     implementation(project(":verification:domain"))
-    // 신고 계약만 쓴다 — 신고 대상·사유 제약이 그쪽 domain 타입에 들어 있다.
+    // 신고 계약만 쓴다
     implementation(project(":report:domain"))
     // 위치·건강 개별 동의 기록(AccountRepository)과 현행 약관 버전(IntroRepository)
     implementation(project(":profile:domain"))
     implementation(project(":onboarding:domain"))
-    // 카드의 미읽음 카운터 — notification 의 domain 계약만 쓴다.
+    // 카드의 미읽음 카운터
     implementation(project(":notification:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -91,12 +91,12 @@ dependencies {
     testImplementation(testFixtures(project(":notification:domain")))
     testImplementation(testFixtures(project(":onboarding:domain")))
 
-    // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
+    // Compose 화면을 JVM 에서 렌더한다
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
-    // manifest 는 반드시 debugImplementation 이다. 유닛 테스트는 debug 변형의 병합 매니페스트를 읽는데,
-    // testImplementation 으로 넣으면 클래스만 오고 createComposeRule 이 띄울 ComponentActivity 가 안 실린다.
+    // manifest 는 반드시 debugImplementation 이다.
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }

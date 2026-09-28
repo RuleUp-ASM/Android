@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.presentation.create.CalendarCell
 import com.ruleup.challenge.presentation.create.ChallengeDates
@@ -41,7 +42,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 
 private val durationPresets = listOf(7, 14, 28, 90)
 
-/** 03 · 기간 선택 모달. 프리셋(1주/2주/4주/3개월) + 캘린더에서 시작일을 고른다. */
+/** 03 · 기간 선택 모달. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun DurationPickerSheet(
@@ -496,5 +497,13 @@ private fun SheetButtons(
             Text("✓", color = Color.White, style = RuleUpTheme.typography.bodyBold)
             Text("기간 확정", color = Color.White, style = RuleUpTheme.typography.cardTitle)
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun DurationPickerSheetPreview() {
+    RuleUpTheme {
+        DurationPickerSheet(startDate = "2026-09-28", durationDays = 7, onConfirm = { _, _ -> }, onDismiss = { })
     }
 }

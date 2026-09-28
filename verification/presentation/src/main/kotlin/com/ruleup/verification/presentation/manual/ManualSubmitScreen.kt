@@ -29,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,6 +37,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.verification.domain.entity.ManualNoteLimits
 import com.ruleup.verification.presentation.manual.viewmodel.ManualSubmitIntent
 import com.ruleup.verification.presentation.manual.viewmodel.ManualSubmitState
@@ -44,15 +46,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-/**
- * 수동 인증 제출 (Figma `1443:2`).
- *
- * **솔로·그룹이 같은 화면을 쓴다.** 체크 CTA 가 방 정보 탭 안에만 있던 동안, 방 홈을 받지 않는
- * 솔로 수동 방은 오늘 인증을 할 방법이 아예 없었다.
- *
- * [challengeId] 는 라우트 인자로 받는다 — 이 내비게이션은 `SavedStateHandle` 을 채우지 않으므로
- * ViewModel 이 인자를 직접 읽을 수 없다.
- */
+/** 수동 인증 제출. */
 @Composable
 fun ManualSubmitScreen(
     challengeId: String,
@@ -60,6 +54,7 @@ fun ManualSubmitScreen(
     viewModel: ManualSubmitViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     LaunchedEffect(challengeId) { viewModel.onIntent(ManualSubmitIntent.Load(challengeId)) }
     ManualSubmitContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
@@ -102,11 +97,11 @@ internal fun ManualSubmitContent(
                 }
                 NoteCard(
                     note = state.note,
-                    // 체크가 끝난 뒤 메모를 고쳐도 서버에 갈 곳이 없다 — 고칠 수 있는 것처럼 보이지 않게 막는다.
+                    // 인증 완료 후 메모 편집 잠금.
                     enabled = !state.checked && !state.notTarget,
                     onChange = { onIntent(ManualSubmitIntent.NoteChanged(it)) },
                 )
-                // 체크 전에도 보여야 한다 — 점수가 오를 줄 알고 누르는 일을 막는 것이 이 문구의 목적이다.
+                // 인증 전 점수 미반영 안내.
                 Text(
                     text = "수동 인증은 점수에 반영되지 않아요",
                     style = RuleUpTheme.typography.caption,
@@ -122,8 +117,7 @@ internal fun ManualSubmitContent(
             }
         }
 
-        // CTA 는 스크롤 밖에 고정한다 — 메모를 길게 쓴 뒤 체크를 찾아 내려가게 만들지 않는다.
-        // 대상일이 아닌 날은 아예 두지 않는다 — 누를 수 없는 버튼은 이유를 두 번 말할 뿐이다.
+        // 하단 고정 인증 버튼.
         if (!state.isLoading && !state.loadFailed && !state.notTarget) {
             SubmitBar(state = state, onIntent = onIntent)
         }
@@ -183,7 +177,7 @@ private fun ChallengeCard(
                     .background(colors.brandSoft)
                     .padding(horizontal = 10.dp, vertical = 5.dp),
         )
-        // 제목 조회가 실패해도 화면은 선다 — 그때 빈 줄을 남기지 않는다.
+        // 제목 조회 실패 시 기본 문구.
         Text(
             text = title.ifBlank { "오늘 인증" },
             style = RuleUpTheme.typography.title,
@@ -286,8 +280,7 @@ private fun NoteCard(
         Text(text = "메모 (선택)", style = RuleUpTheme.typography.smallBold, color = colors.textPrimary)
         BasicTextField(
             value = note,
-            // 길이는 여기서 막는다 — 서버가 검증하지 않으므로 ViewModel 이 잘라 내면 사용자가
-            // 사라진 글자를 보게 된다.
+            // 메모 길이 제한.
             onValueChange = { if (it.length <= ManualNoteLimits.MAX_LENGTH) onChange(it) },
             enabled = enabled,
             textStyle = RuleUpTheme.typography.small.copy(color = colors.textPrimary),
@@ -318,7 +311,7 @@ private fun SubmitBar(
                 .padding(horizontal = 24.dp, vertical = 12.dp),
     ) {
         if (state.checked) {
-            // 체크된 날의 주 동작은 되돌리기 하나뿐이다. 강조색을 주지 않는다.
+            // 체크된 날의 주 동작은 되돌리기 하나뿐이다.
             OutlineButton(text = "체크 해제", enabled = state.canUncheck) {
                 onIntent(ManualSubmitIntent.Uncheck)
             }
@@ -358,10 +351,7 @@ private fun OutlineButton(
     }
 }
 
-/**
- * `2026-09-14` → `9월 14일 월요일`. 서버가 준 날(KST)을 그대로 옮긴다 — 기기 시계로 다시 계산하면
- * 자정 근처에서 하루가 어긋난다. 형식이 어긋난 값은 표기를 생략한다.
- */
+/** `2026-09-14` → `9월 14일 월요일`. */
 private fun koreanDate(raw: String): String? =
     runCatching { LocalDate.parse(raw) }
         .getOrNull()
@@ -369,3 +359,28 @@ private fun koreanDate(raw: String): String? =
             val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.KOREAN)
             "${date.monthValue}월 ${date.dayOfMonth}일 $dayOfWeek"
         }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ManualSubmitContentPreview() {
+    RuleUpTheme {
+        ManualSubmitContent(
+            state =
+                com.ruleup.verification.presentation.manual.viewmodel.ManualSubmitState(
+                    challengeId = "미리보기",
+                    isLoading = false,
+                    title = "매일 꾸준히 걷기",
+                    date = "2026-09-28",
+                    window = null,
+                    status = null,
+                    verificationId = null,
+                    streakAfter = null,
+                    note = "미리보기",
+                    isSubmitting = false,
+                    errorMessage = null,
+                ),
+            onIntent = {
+            },
+        )
+    }
+}

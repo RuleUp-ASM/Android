@@ -30,10 +30,7 @@ import dagger.assisted.AssistedInject
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
-/**
- * 30분 주기 sync 실행기(명세 §3.1). 결과 매핑: 성공·폐기(400)→success, 429·일시오류→retry(백오프).
- * 멱등 키 collectedAt 는 매 실행 stamp 한다.
- */
+/** 30분 주기 sync 실행기. */
 @HiltWorker
 class VerificationSyncWorker
     @AssistedInject
@@ -48,18 +45,17 @@ class VerificationSyncWorker
         private val syncGate: SyncGate,
         private val pushNotificationHelper: PushNotificationHelper,
         private val observability: Observability,
+        private val tokenRepository: com.ruleup.domain.token.TokenRepository,
     ) : CoroutineWorker(appContext, params) {
         override suspend fun doWork(): Result {
             // 주기 work 와 catch-up 은 unique name 이 달라 WorkManager 가 겹침을 막지 못한다(#355).
-            // 겹치면 뒤 실행의 tagPending 이 앞 실행의 배치를 덮어써 같은 신호가 두 번 나간다.
             if (!syncGate.tryEnter()) {
-                // 버리지 않고 재시도한다 — catch-up 의 존재 이유가 전달 지연 단축이라, 겹쳤다고
-                // 다음 주기(최대 30분)까지 미루면 목적이 사라진다.
+                // 버리지 않고 재시도한다
                 observability.i(LOG_TAG) { "sync 건너뜀 — 다른 실행이 드레인 중, 백오프 재시도" }
                 return Result.retry()
             }
             return try {
-                runSync()
+                if (tokenRepository.getAccessToken() == null) Result.success() else runSync()
             } finally {
                 syncGate.leave()
             }
@@ -67,7 +63,7 @@ class VerificationSyncWorker
 
         private suspend fun runSync(): Result {
             val scope = syncScopeProvider.currentScope()
-            // 타깃이 비면 수집기가 전부 생략된다 — 스코프를 먼저 남긴다.
+            // 타깃이 비면 수집기가 전부 생략된다
             observability.i(LOG_TAG) {
                 "sync 시작 — scope: geofence=${scope.activeRequestIds.size}, " +
                     "usage=${scope.targetPackages.size}, health=${scope.healthTargets.size}, " +
@@ -79,7 +75,7 @@ class VerificationSyncWorker
                 if (result != null) {
                     progressCacheStore.upsert(result.updatedChallenges)
                     syncScheduler.reschedule(result.flushIntervalSec)
-                    // 진단 heartbeat 앵커(전송 스펙 §0.7) — 다음 envelope 에 마지막 성공 flush 시각으로 동봉.
+                    // 진단 heartbeat 앵커
                     settingsStore.setLastSuccessfulFlushAt(System.currentTimeMillis())
                     observability.i(LOG_TAG) {
                         "sync 성공 — 갱신=${result.updatedChallenges.size}, " +
@@ -95,7 +91,7 @@ class VerificationSyncWorker
                 throw e
             } catch (e: Exception) {
                 val outcome = syncOutcomeFor(e)
-                // 처리된 실패도 기기별 원인 파악을 위해 관측한다. 진단 채널 → CrashlyticsSink 로 non-fatal 기록.
+                // 처리된 실패도 기기별 원인 파악을 위해 관측한다.
                 observability.log(Channel.DIAGNOSTIC, Severity.ERROR, LOG_TAG) {
                     DiagnosticPayload(
                         severity = Severity.ERROR,
@@ -106,18 +102,13 @@ class VerificationSyncWorker
                     )
                 }
                 when (outcome) {
-                    SyncOutcome.SUCCESS, SyncOutcome.DISCARD -> Result.success()
+                    SyncOutcome.SUCCESS, SyncOutcome.STOP_RETRY -> Result.success()
                     SyncOutcome.RETRY -> Result.retry()
                 }
             }
         }
 
-        /**
-         * 개별 동의가 빠져 신호가 저장되지 않았음을 알린다(명세 3.1 `consentRequired`).
-         *
-         * 여기서 넘기면 사용자는 인증이 왜 안 되는지 모른 채 실패만 쌓는다 — sync 는 백그라운드라
-         * 알릴 창구가 시스템 알림뿐이다. 같은 id 를 써서 주기마다 새 알림이 쌓이지 않게 한다.
-         */
+        /** 개별 동의가 빠져 신호가 저장되지 않았음을 알린다. */
         private fun notifyConsentRequired(consentRequired: List<String>) {
             if (consentRequired.isEmpty()) return
             observability.i(LOG_TAG) { "개별 동의 필요 — $consentRequired" }
@@ -129,10 +120,7 @@ class VerificationSyncWorker
             )
         }
 
-        /**
-         * expedited OneTimeWork(catch-up)가 API 31 미만에서 foreground service 로 승격될 때 쓰는 알림
-         * (전송 스펙 §0.6). 31+ 는 expedited job 쿼터로 돌아 알림이 표시되지 않는다. IMPORTANCE_MIN 으로 조용히.
-         */
+        /** API 31 미만 즉시 동기화의 포그라운드 알림. */
         override suspend fun getForegroundInfo(): ForegroundInfo {
             val nm = applicationContext.getSystemService(NotificationManager::class.java)
             nm?.createNotificationChannel(
@@ -157,8 +145,7 @@ class VerificationSyncWorker
             private const val CHANNEL_ID = "verification_sync"
             private const val NOTIFICATION_ID = 4801
 
-            // 수집·동기화 경로 공통 로그 태그(SignalRepositoryImpl 과 동일). 'VerifySync' 로 필터.
-            // 고정 id — 주기마다 새 알림을 쌓지 않고 기존 것을 갱신한다.
+            // 수집·동기화 경로 공통 로그 태그(SignalRepositoryImpl 과 동일).
             private const val CONSENT_NOTIFICATION_ID = 90_101
 
             private const val LOG_TAG = "VerifySync"

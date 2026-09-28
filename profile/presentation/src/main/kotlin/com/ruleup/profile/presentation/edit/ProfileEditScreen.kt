@@ -26,6 +26,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,14 +56,12 @@ import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditEffect
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditIntent
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
 private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 
-/**
- * 프로필 편집 (피그마 434:566). 마이 홈 프로필 영역으로 진입한다.
- * 닉네임([NickNameUtil] 규칙·30일 제한·저장 시 선검사), 관심 분야(1~[maxSelectable]), 사진(갤러리/제거 — 즉시 반영).
- */
+/** 프로필 편집. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileEditScreen(
@@ -69,6 +69,7 @@ fun ProfileEditScreen(
     viewModel: ProfileEditViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
     val imagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -94,7 +95,7 @@ fun ProfileEditScreen(
     )
 }
 
-/** 상태를 받아 그리기만 한다 — 사진 고르기는 런처가 필요해 바깥이 맡는다. */
+/** 화면 본문. */
 @Composable
 internal fun ProfileEditContent(
     state: ProfileEditState,
@@ -109,7 +110,7 @@ internal fun ProfileEditContent(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        // 저장 버튼을 숨기지 않고, 눌렀을 때 정지 사실을 말한다(Figma 1465:141).
+        // 저장 버튼을 숨기지 않고, 눌렀을 때 정지 사실을 말한다.
         state.saveBlock?.let { block ->
             RuleUpSuspendedSheet(
                 title = "지금은 작성·수정할 수 없어요",
@@ -133,12 +134,17 @@ internal fun ProfileEditContent(
                 }
 
             state.profile == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "프로필을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(ProfileEditIntent.Load) }) { Text("다시 시도") }
                 }
 
             else ->
@@ -197,7 +203,7 @@ private fun EditBody(
                 .padding(top = 4.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // ---------- 사진 ----------
+        // 사진
         RuleUpCard(
             contentPadding = PaddingValues(vertical = 22.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -227,7 +233,7 @@ private fun EditBody(
                         Text(
                             text = state.nickname.take(1).ifBlank { "?" },
                             color = RuleUpPalette.BgSurface,
-                            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+                            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
                         )
@@ -243,7 +249,7 @@ private fun EditBody(
             }
         }
 
-        // ---------- 닉네임 ----------
+        // 닉네임
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -301,7 +307,7 @@ private fun EditBody(
             }
         }
 
-        // ---------- 관심 분야 ----------
+        // 관심 분야
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -397,6 +403,22 @@ private fun CategoryChip(
             text = "${categoryEmoji(category)} ${category.label}",
             color = if (selected) RuleUpPalette.BgSurface else RuleUpTheme.colors.textPrimary,
             style = RuleUpTheme.typography.smallBold,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ProfileEditContentPreview() {
+    RuleUpTheme {
+        ProfileEditContent(
+            state =
+                com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+            onPickImage = { },
         )
     }
 }

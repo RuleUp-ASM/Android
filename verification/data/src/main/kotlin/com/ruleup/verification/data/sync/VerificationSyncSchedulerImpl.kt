@@ -14,15 +14,18 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-/**
- * WorkManager PeriodicWork 로 30분 주기 sync 를 예약한다(명세 §3.1).
- * exact 알람을 쓰지 않아 Doze/App Standby 를 견딘다. 네트워크 connected 제약만 건다(인증 적시성).
- */
+/** WorkManager PeriodicWork 로 30분 주기 sync 를 예약한다. */
 class VerificationSyncSchedulerImpl
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
     ) : SyncScheduler {
+        override fun cancel() {
+            val manager = WorkManager.getInstance(context)
+            manager.cancelUniqueWork(VerificationSyncWorker.WORK_NAME)
+            manager.cancelUniqueWork(CATCH_UP_WORK_NAME)
+        }
+
         override fun ensureScheduled() {
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 VerificationSyncWorker.WORK_NAME,
@@ -59,11 +62,7 @@ class VerificationSyncSchedulerImpl
             private const val SECONDS_PER_MINUTE = 60L
             const val CATCH_UP_WORK_NAME = "verification_sync_catchup"
 
-            /**
-             * push 트리거용 expedited catch-up(전송 스펙 §0.6). Hilt 그래프에 접근 못 하는 BroadcastReceiver 도
-             * 부를 수 있도록 static 이다. 기본 KEEP 은 연쇄 발화 폭주를 막는다 — "지금 새로"가 필요한
-             * 디버그 트리거만 REPLACE 로 대기·재시도 중인 작업을 갈아끼운다.
-             */
+            /** push 트리거용 expedited catch-up. */
             fun enqueueCatchUp(
                 context: Context,
                 policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,

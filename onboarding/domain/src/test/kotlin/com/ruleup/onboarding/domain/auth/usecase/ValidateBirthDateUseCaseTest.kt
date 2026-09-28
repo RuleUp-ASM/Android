@@ -34,9 +34,8 @@ class ValidateBirthDateUseCaseTest {
     }
 
     @Test
-    fun `미래 날짜는 연령 제한에서 걸린다`() {
-        // 따로 검사하지 않는다 — 나이 계산이 이미 걸러내고, 입력을 막는 건 화면의 몫이다.
-        assertEquals(BirthDateValidation.Underage, useCase(2027, 1, 1))
+    fun `미래 날짜는 올바르지 않은 생일로 처리한다`() {
+        assertEquals(BirthDateValidation.Invalid, useCase(2027, 1, 1))
     }
 
     private fun clockAt(date: String): Clock = Clock.fixed(LocalDate.parse(date).atStartOfDay(ZoneOffset.UTC).toInstant(), ZoneOffset.UTC)

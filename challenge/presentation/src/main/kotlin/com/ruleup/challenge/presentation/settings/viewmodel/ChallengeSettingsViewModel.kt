@@ -11,20 +11,13 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.entity.toEntries
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 챌린지 수정 ViewModel (방장 전용).
- *
- * 잠금 범위는 **서버가 계산한 `editableFields` 를 그대로 따른다** — 클라이언트가 규칙("시작 전 + 혼자")을
- * 재구현하면 서버와 어긋나는 순간 409 를 받고서야 알게 된다.
- *
- * 저장은 **바뀐 필드만** 보낸다. `version` 이 어긋나면(다른 수정이나 가입·탈퇴로 참여 인원이 변한 경우)
- * 서버가 409 로 막고, 화면은 설정을 재조회해 다시 그린다.
- */
+/** 챌린지 수정 ViewModel (방장 전용). */
 @HiltViewModel
 class ChallengeSettingsViewModel
     @Inject
@@ -94,7 +87,7 @@ class ChallengeSettingsViewModel
                 is ChallengeSettingsReducerEvent.Loading ->
                     state.copy(challengeId = event.challengeId, isLoading = true, errorMessage = null)
 
-                is ChallengeSettingsReducerEvent.Loaded -> state.applyLoaded(event.settings, event.participantCount)
+                is ChallengeSettingsReducerEvent.Loaded -> state.applyLoaded(event.settings, event.participantCount, event.preserveEdits)
 
                 is ChallengeSettingsReducerEvent.Failed ->
                     state.copy(isLoading = false, isSaving = false, errorMessage = event.message)
@@ -127,7 +120,7 @@ class ChallengeSettingsViewModel
                     state.copy(period = state.period.copy(start = event.start, end = event.end))
 
                 is ChallengeSettingsReducerEvent.WeeklyCountChanged ->
-                    // 범위 밖 값은 서버가 400 INVALID_WEEKLY_COUNT 로 막는다. 여기서 먼저 잘라 보낸다.
+                    // 범위 밖 값은 서버가 400 INVALID_WEEKLY_COUNT 로 막는다.
                     state.copy(
                         weeklyCount =
                             event.count.coerceIn(
@@ -150,54 +143,121 @@ class ChallengeSettingsViewModel
         private fun ChallengeSettingsState.applyLoaded(
             settings: ChallengeSettings,
             participantCount: Int?,
+            preserveEdits: Boolean = false,
         ): ChallengeSettingsState {
             val config = settings.config
+            val previous = loaded?.config
+
+            fun <T> retain(
+                field: com.ruleup.challenge.domain.entity.ChallengeField,
+                edited: T,
+                old: T?,
+                latest: T,
+            ): T = if (preserveEdits && field in settings.editableFields && edited != old) edited else latest
             return copy(
                 isLoading = false,
                 isSaving = false,
                 loaded = settings,
                 errorMessage = null,
-                title = config.title,
-                description = config.description,
+                title = retain(com.ruleup.challenge.domain.entity.ChallengeField.TITLE, title, previous?.title, config.title),
+                description =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.DESCRIPTION,
+                        description,
+                        previous?.description,
+                        config.description,
+                    ),
                 imageUrl = config.imageUrl,
-                coverImageUri = null,
-                removeImage = false,
-                capacity = config.capacity,
-                visibility = config.visibility,
-                rankingVisible = config.rankingVisible,
-                minTier = config.minTier,
-                period = config.period,
-                weeklyCount = config.weeklyCount,
-                params = config.params,
-                verificationType = config.verification.type,
-                watcherPenalty = config.penalties.watcher,
+                coverImageUri =
+                    if (preserveEdits &&
+                        com.ruleup.challenge.domain.entity.ChallengeField.IMAGE_URL in settings.editableFields
+                    ) {
+                        coverImageUri
+                    } else {
+                        null
+                    },
+                removeImage =
+                    preserveEdits && com.ruleup.challenge.domain.entity.ChallengeField.IMAGE_URL in settings.editableFields && removeImage,
+                capacity =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.CAPACITY,
+                        capacity,
+                        previous?.capacity,
+                        config.capacity,
+                    ),
+                visibility =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.VISIBILITY,
+                        visibility,
+                        previous?.visibility,
+                        config.visibility,
+                    ),
+                rankingVisible =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.RANKING_VISIBLE,
+                        rankingVisible,
+                        previous?.rankingVisible,
+                        config.rankingVisible,
+                    ),
+                minTier =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.MIN_TIER,
+                        minTier,
+                        previous?.minTier,
+                        config.minTier,
+                    ),
+                period = retain(com.ruleup.challenge.domain.entity.ChallengeField.PERIOD, period, previous?.period, config.period),
+                weeklyCount =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.WEEKLY_COUNT,
+                        weeklyCount,
+                        previous?.weeklyCount,
+                        config.weeklyCount,
+                    ),
+                params = retain(com.ruleup.challenge.domain.entity.ChallengeField.PARAMS, params, previous?.params, config.params),
+                verificationType =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.VERIFICATION,
+                        verificationType,
+                        previous?.verification?.type,
+                        config.verification.type,
+                    ),
+                watcherPenalty =
+                    retain(
+                        com.ruleup.challenge.domain.entity.ChallengeField.PENALTIES,
+                        watcherPenalty,
+                        previous?.penalties?.watcher,
+                        config.penalties.watcher,
+                    ),
                 participantCount = participantCount,
             )
         }
 
-        private fun load(challengeId: String) {
+        private fun load(
+            challengeId: String,
+            preserveEdits: Boolean = false,
+        ) {
             viewModelScope.launch {
                 dispatch(ChallengeSettingsReducerEvent.Loading(challengeId))
                 runCatching { challengeRepository.getSettings(challengeId) }
                     .onSuccess { settings ->
-                        // 정원 하한 계산에 현재 인원이 필요한데 settings 응답에 없다. 실패는 흡수한다 —
-                        // 하한을 못 잠글 뿐이고 서버가 CAPACITY_BELOW_CURRENT 로 최종 방어한다.
+                        // 정원 하한 계산에 현재 인원이 필요한데 settings 응답에 없다.
                         val participants =
                             runCatching { challengeRepository.getChallenge(challengeId).participantCount }.getOrNull()
-                        dispatch(ChallengeSettingsReducerEvent.Loaded(settings, participants))
+                        dispatch(ChallengeSettingsReducerEvent.Loaded(settings, participants, preserveEdits))
                     }.onFailure {
-                        dispatch(ChallengeSettingsReducerEvent.Failed(it.message ?: "설정을 불러오지 못했어요"))
+                        dispatch(ChallengeSettingsReducerEvent.Failed(it.userFacingMessage("설정을 불러오지 못했어요")))
                     }
             }
         }
 
         private fun setCapacity(capacity: Int?) {
-            // 현재 인원보다 작은 정원은 받지 않는다 — 화면도 그 단계를 보여 주지 않는다(서버 CAPACITY_BELOW_CURRENT).
+            // 현재 인원보다 작은 정원은 받지 않는다
             if (capacity != null && capacity < currentState.capacityFloor) return
             dispatch(ChallengeSettingsReducerEvent.CapacityChanged(capacity))
         }
 
-        /** AUTO → MANUAL 단방향. 되돌리려는 시도는 여기서 막고 이유를 알린다. */
+        /** AUTO → MANUAL 단방향. */
         private fun setVerificationType(type: VerificationType) {
             val state = currentState
             if (type.isAuto && state.verificationType?.isAuto == false) {
@@ -211,9 +271,7 @@ class ChallengeSettingsViewModel
             dispatch(ChallengeSettingsReducerEvent.VerificationTypeSelected(type))
         }
 
-        /**
-         * 저장. **바뀐 필드만** 담아 보낸다 — 안 바뀐 값을 같이 보내면 제목·설명이 매번 재심사에 걸린다.
-         */
+        /** 저장. */
         private fun save() {
             val state = currentState
             val origin = state.loaded ?: return
@@ -235,11 +293,11 @@ class ChallengeSettingsViewModel
 
         private fun handleSaveFailure(error: Throwable) {
             when (error) {
-                // 둘 다 "서버 기준으로 다시 그려라"로 귀결된다 — 재조회하면 잠금 범위와 version 이 최신이 된다.
+                // 둘 다 "서버 기준으로 다시 그려라"로 귀결된다
                 is ChallengeVersionConflictException, is ChallengeNotEditableException -> {
                     dispatch(ChallengeSettingsReducerEvent.Saving(false))
                     emitEffect(ChallengeSettingsEffect.ShowMessage(error.message.orEmpty()))
-                    load(currentState.challengeId)
+                    load(currentState.challengeId, preserveEdits = true)
                 }
 
                 is ModerationLockedException ->
@@ -247,12 +305,12 @@ class ChallengeSettingsViewModel
 
                 else -> {
                     dispatch(ChallengeSettingsReducerEvent.Saving(false))
-                    emitEffect(ChallengeSettingsEffect.ShowMessage(error.message ?: "저장하지 못했어요"))
+                    emitEffect(ChallengeSettingsEffect.ShowMessage(error.userFacingMessage("저장하지 못했어요")))
                 }
             }
         }
 
-        /** 원본과 다른 필드만 담는다. 명시적 null 은 `imageUrl`(기본 이미지)과 `capacity`(무제한)만 실린다. */
+        /** 원본과 다른 필드만 담는다. */
         private fun ChallengeSettingsState.toUpdate(
             origin: ChallengeSettings,
             uploadedUrl: String?,
@@ -265,7 +323,7 @@ class ChallengeSettingsViewModel
                 imageUrl = uploadedUrl,
                 removeImage = removeImage,
                 capacity = capacity.takeIf { it != config.capacity },
-                // 무제한으로 바꿀 때만 null 을 명시 전송한다 — capacity 의 null 은 "미변경"이다.
+                // 무제한으로 바꿀 때만 null 을 명시 전송한다
                 unlimitedCapacity = capacity == null && config.capacity != null,
                 visibility = visibility.takeIf { it != config.visibility },
                 rankingVisible = rankingVisible.takeIf { it != config.rankingVisible },

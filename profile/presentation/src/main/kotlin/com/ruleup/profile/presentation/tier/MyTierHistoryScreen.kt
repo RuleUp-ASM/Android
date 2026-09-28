@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,7 +36,6 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.domain.entity.user.Tier
 import com.ruleup.profile.domain.entity.ScoreChange
 import com.ruleup.profile.domain.entity.TierBest
 import com.ruleup.profile.domain.entity.TierPoint
@@ -47,20 +48,16 @@ import com.ruleup.profile.presentation.common.titleLabel
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryIntent
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryState
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 티어 히스토리. 위는 **그래프**(월말 스냅샷 · `/me/tier/history`), 아래는 **점수 변동 이력**
- * (`/me/tier/changes` · 커서 50건씩)이다.
- *
- * 그래프에 하락 사유를 표기하지 않는 것이 정책이고 서버도 스냅샷에는 사유를 싣지 않는다. 그
- * 제한은 2026-09-07 개정으로 **그래프 한정**이 됐으므로 아래 이력에는 사유를 그대로 쓴다.
- */
+/** 티어 히스토리. */
 @Composable
 fun MyTierHistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: MyTierHistoryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) {
         viewModel.onIntent(MyTierHistoryIntent.Load)
@@ -69,7 +66,7 @@ fun MyTierHistoryScreen(
     MyTierHistoryContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun MyTierHistoryContent(
     state: MyTierHistoryState,
@@ -92,12 +89,17 @@ internal fun MyTierHistoryContent(
                 }
 
             state.history == null && state.changes.isEmpty() ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "히스토리를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(MyTierHistoryIntent.Load) }) { Text("다시 시도") }
                 }
 
             else -> HistoryBody(state = state, onIntent = onIntent)
@@ -143,10 +145,10 @@ private fun HistoryBody(
                 }
             }
         } else {
-            // 같은 날 같은 방에서 두 건이 날 수 있어 date 만으로는 키가 겹친다 — 위치를 섞는다.
+            // 같은 날 같은 방에서 두 건이 날 수 있어 date 만으로는 키가 겹친다
             itemsIndexed(state.changes) { index, change ->
                 ChangeRow(change = change)
-                // 마지막 줄이 보이면 다음 페이지를 당긴다. 커서가 없으면 VM 이 무시한다.
+                // 마지막 줄이 보이면 다음 페이지를 당긴다.
                 if (index == state.changes.lastIndex && state.canLoadMore) {
                     LaunchedEffect(state.nextCursor) { loadMore() }
                 }
@@ -167,7 +169,7 @@ private fun HistoryBody(
     }
 }
 
-/** 「아침 6:30 기상 · 사이클 성공 · 9.7 · +8」. 챌린지명이 없으면 사유만 남는다. */
+/** 「아침 6:30 기상 · 사이클 성공 · 9.7 · +8」. */
 @Composable
 private fun ChangeRow(change: ScoreChange) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -226,16 +228,11 @@ private fun BestCard(best: TierBest) {
     }
 }
 
-/**
- * 점수 변동 막대. 축은 **0~2,000 고정**이다 — 최댓값에 맞춰 늘이면 같은 높이가 시점마다 다른
- * 점수를 뜻하게 되어 그래프가 거짓말을 한다.
- *
- * 원장이라 한 달에도 여러 점이 쌓인다. x축 라벨은 **달이 바뀌는 지점에만** 붙인다 — 점마다 달면
- * 같은 숫자가 연달아 찍혀 읽을 수 없다.
- */
+/** 점수 변동 막대. */
 @Composable
 private fun ScoreChart(points: List<TierPoint>) {
     if (points.isEmpty()) return
+    val maxScore = points.maxOf { it.score }.coerceAtLeast(1)
     Row(
         modifier =
             Modifier
@@ -253,23 +250,40 @@ private fun ScoreChart(points: List<TierPoint>) {
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                val ratio = (point.score.toFloat() / Tier.RUBY.maxScore).coerceIn(0.02f, 1f)
+                val ratio = (point.score.toFloat() / maxScore).coerceIn(0.02f, 1f)
                 Box(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .fillMaxHeight(ratio)
+                            .height(92.dp * ratio)
                             .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                             .background(point.tier.accentColor),
                 )
                 val newMonth = index == 0 || point.month != points[index - 1].month
                 Text(
                     text = if (newMonth) point.month.takeLast(2) else "",
+                    maxLines = 1,
+                    softWrap = false,
                     color = RuleUpTheme.colors.textMuted,
                     style = RuleUpTheme.typography.micro,
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyTierHistoryContentPreview() {
+    RuleUpTheme {
+        MyTierHistoryContent(
+            state =
+                com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
     }
 }

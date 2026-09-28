@@ -1,4 +1,5 @@
 [versions]
+installReferrer = "2.2"
 agp = "9.2.1"
 coreKtx = "1.18.0"
 coreSplashscreen = "1.0.1"
@@ -8,8 +9,8 @@ espressoCore = "3.7.0"
 robolectric = "4.16.1"
 lifecycleRuntimeKtx = "2.11.0-rc01"
 activityCompose = "1.13.0"
-kotlin = "2.3.21"
-# Hilt (Android 권장 DI). Metro 대체. 2.59.2+ 가 AGP 9 호환(#5099/#5116 수정).
+kotlin = "2.3.20"
+# Hilt DI (AGP 9 호환)
 hilt = "2.59.2"
 # androidx.hilt (hilt-navigation-compose / hilt-work / 컴파일러)
 androidxHilt = "1.2.0"
@@ -47,16 +48,16 @@ appauth = "0.11.1"
 datastore = "1.2.1"
 coroutines = "1.11.0"
 
-# verification signals (Android 전용: Geofence/FusedLocation + 로컬 버퍼 Room)
+# 자동 인증 신호 수집
 playServicesLocation = "21.3.0"
 room = "2.7.1"
 # 백그라운드 sync 오케스트레이션
 work = "2.10.0"
-# 움직임/수면(HEALTH·SLEEP) 온디바이스 읽기. recordingMethod 메타데이터는 1.1.0+ 에서 제공(명세 §8.2).
+# Health Connect 움직임·수면 읽기
 healthConnect = "1.1.0-rc03"
-# 지도(Kakao Map SDK v2). 네이티브 앱키/REST 키는 local.properties → BuildConfig 주입.
+# 카카오 지도 SDK
 kakaoMap = "2.13.5"
-# 기기 무결성 verdict(Play Integrity, 전송 스펙 §6.5) — graded 신뢰도 하향용
+# Play Integrity 기기 무결성
 playIntegrity = "1.4.0"
 
 # image
@@ -65,10 +66,10 @@ coil = "3.4.0"
 # calendar (마이 탭 활동 캘린더)
 calendarCompose = "2.7.0"
 
-# QR (친구 초대 코드 렌더링 — 클라 생성, 서버 생성 미채택)
+# 친구 초대 QR 생성
 zxing = "3.5.3"
 
-# amplitude — 문서는 1.+ 를 권하지만 동적 버전은 빌드 재현성을 깨뜨려 고정한다.
+# Amplitude
 amplitudeAnalytics = "1.30.1"
 
 # firebase
@@ -82,10 +83,11 @@ runtime = "1.11.2"
 konsist = "0.17.3"
 
 
-# 성능(프레임 jank 측정) — 디버그 오버레이 로깅용
+# 프레임 지연 측정
 jankstats = "1.0.0-beta01"
 
 [libraries]
+install-referrer = { module = "com.android.installreferrer:installreferrer", version.ref = "installReferrer" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -118,7 +120,7 @@ detekt-formatting = { module = "dev.detekt:detekt-formatting", version.ref = "de
 ktlint-compose = { module = "io.nlopez.compose.rules:ktlint", version.ref = "composeRulesKtlint" }
 
 # Hilt DI (Android 권장)
-# 순수 도메인 모듈은 @Inject 생성자만 필요하므로 hilt 런타임 대신 javax.inject 만 의존한다.
+# 도메인 생성자 주입
 javax-inject = { group = "javax.inject", name = "javax.inject", version = "1" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
@@ -162,13 +164,13 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-work-runtime = { group = "androidx.work", name = "work-runtime", version.ref = "work" }
-# 프레임 jank 측정(JankStats) — :app 의 MainActivity 에서 디버그 빌드만 트래킹
+# JankStats 프레임 지연 측정
 androidx-metrics-performance = { group = "androidx.metrics", name = "metrics-performance", version.ref = "jankstats" }
-# Health Connect(움직임·수면 읽기) — androidMain 전용
+# Health Connect 움직임·수면 읽기
 androidx-health-connect-client = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
-# 지도(Kakao Map SDK v2) — :core:map / :app(KakaoMapSdk.init)
+# 카카오 지도 SDK
 kakao-map = { module = "com.kakao.maps.open:android", version.ref = "kakaoMap" }
-# Play Integrity(기기 무결성 verdict) — verification:data
+# Play Integrity 기기 무결성
 play-integrity = { group = "com.google.android.play", name = "integrity", version.ref = "playIntegrity" }
 
 # logging

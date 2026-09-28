@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Google 공식 'G' 로고. 브랜딩 가이드라인이 색·비율 변경을 금지하므로 값을 손대지 않는다. -->
+<!-- Google 공식 'G' 로고. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="18dp"
     android:height="18dp"

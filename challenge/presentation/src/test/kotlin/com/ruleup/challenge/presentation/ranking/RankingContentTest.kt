@@ -5,19 +5,17 @@ import androidx.compose.ui.test.onNodeWithText
 import com.ruleup.challenge.domain.entity.ChallengeRanking
 import com.ruleup.challenge.domain.entity.MyRank
 import com.ruleup.challenge.domain.entity.RankingEntry
-import com.ruleup.challenge.domain.entity.RoomUser
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingIntent
 import com.ruleup.challenge.presentation.ranking.viewmodel.RankingState
 import com.ruleup.challenge.presentation.renderScreen
+import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.UserRelationship
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 그룹 랭킹. **미등재(10회 미만)를 꼴찌로 보이게 하면 안 된다** — 아직 자격이 안 된 것과
- * 못 한 것은 다르고, 사용자는 후자로 읽는다.
- */
+/** 그룹 랭킹. */
 @RunWith(RobolectricTestRunner::class)
 class RankingContentTest {
     @get:Rule
@@ -46,7 +44,7 @@ class RankingContentTest {
 
     @Test
     fun `아직 등재되지 않았으면 순위 없음이라고 말한다`() {
-        // 0등으로 접으면 꼴찌로 보인다 — 아직 자격이 안 된 것과 못 한 것은 다르다.
+        // 0등으로 접으면 꼴찌로 보인다
         render(loaded(me = unranked()))
 
         compose.onNodeWithText("아직 순위가 없어요").assertExists()
@@ -85,7 +83,13 @@ class RankingContentTest {
         rank: Int,
     ) = RankingEntry(
         rank = rank,
-        user = RoomUser(userId = userId, nickname = userId, profileImageUrl = null, blocked = false),
+        user =
+            User(
+                id = userId,
+                nickname = userId,
+                profileImageUrl = null,
+                relationship = UserRelationship(blocked = false),
+            ),
         successRate = 0.9,
         successCount = 9,
         participations = 10,

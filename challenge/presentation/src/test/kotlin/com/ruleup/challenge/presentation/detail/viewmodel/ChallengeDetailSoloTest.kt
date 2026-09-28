@@ -17,7 +17,6 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
-import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
@@ -34,6 +33,8 @@ import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.test.FakeVerificationRepository
+import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
+import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -46,12 +47,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 솔로 방 상세와 탈퇴 목적지.
- *
- * 솔로는 방 홈(`/room`)이 내려오지 않아 **그룹 분기에 얹혀 있던 조회가 통째로 빠진다** — 캘린더가
- * 그 자리였다(APL-08 · APL-09 · VER-01).
- */
+/** 솔로 방 상세와 탈퇴 목적지. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeDetailSoloTest {
     @BeforeTest
@@ -77,15 +73,13 @@ class ChallengeDetailSoloTest {
             ).onIntent(ChallengeDetailIntent.Load(CHALLENGE_ID))
 
             assertTrue("getCalendar" in rooms.calls)
-            // 방 홈은 솔로에 없다 — 부르면 403 을 흡수하느라 잡음만 는다.
+            // 방 홈은 솔로에 없다
             assertTrue("getRoom" !in rooms.calls)
         }
 
     @Test
     fun `탈퇴하면 뒤로가 아니라 내 챌린지로 스택을 바꾼다`() =
         runTest {
-            // 초대 링크로 들어온 경로는 방 상세가 스택의 밑바닥이라 뒤로 보내면 앱이 그대로
-            // 종료되고, 초대 화면이 남아 있으면 만료 토큰을 다시 조회해 410 을 본다(ROOM-10 · ROOM-12).
             val nav = RecordingNavigationHelper()
             val viewModel =
                 viewModel(
@@ -106,11 +100,11 @@ class ChallengeDetailSoloTest {
 
     private fun detail(mode: ChallengeMode) =
         ChallengeDetail(
-            challengeId = CHALLENGE_ID,
             title = "매일 걷기",
-            description = "설명",
-            imageUrl = null,
             category = Category.entries.first(),
+            imageUrl = null,
+            challengeId = CHALLENGE_ID,
+            description = "설명",
             mode = mode,
             visibility = null,
             status = ChallengeStatus.ACTIVE,
@@ -150,7 +144,8 @@ class ChallengeDetailSoloTest {
             reportRepository = FakeReportRepository(),
             notificationRepository = FakeNotificationRepository(),
             navigationHelper = nav,
-            sensitiveConsent = SensitiveConsent(account, FakeIntroRepository()),
+            checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, account),
+            agreeVerificationConsent = AgreeVerificationConsentUseCase(account, FakeIntroRepository()),
         )
     }
 

@@ -24,10 +24,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 프로필 편집. 저장은 되돌리기 어려운 동작이라 **막을 것을 서버 왕복 전에 막고**, 저장이 실패했으면
- * 화면을 떠나지 않는 것이 계약이다 — 실패했는데 뒤로 가면 사용자는 저장된 줄 안다.
- */
+/** 프로필 편집. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileEditViewModelTest {
     @BeforeTest
@@ -49,7 +46,6 @@ class ProfileEditViewModelTest {
     @Test
     fun `관심 분야 마스터 조회가 실패해도 편집을 막지 않는다`() =
         runTest {
-            // 상한만 못 받은 것이라 기본값으로 흡수한다 — 이걸로 화면 전체를 못 열면 과하다.
             val viewModel = viewModel(repo(categories = { throw IllegalStateException("마스터 오류") }))
 
             viewModel.onIntent(ProfileEditIntent.Load)
@@ -156,7 +152,7 @@ class ProfileEditViewModelTest {
 
             viewModel.onIntent(ProfileEditIntent.Save)
 
-            assertEquals(listOf(ProfileEditEffect.ShowMessage("저장 실패")), effects)
+            assertEquals(listOf(ProfileEditEffect.ShowMessage("프로필을 저장하지 못했어요")), effects)
             assertEquals(0, nav.backCount)
         }
 
@@ -195,10 +191,10 @@ class ProfileEditViewModelTest {
 
     private fun profile() =
         Profile(
-            id = "u1",
-            nickname = "지현",
+            user =
+                com.ruleup.domain.entity.user
+                    .User("u1", "지현", null),
             email = null,
-            profileImageUrl = null,
             nicknameChangedAt = null,
             nicknameChangeableAfter = null,
             mannerTemperature = 36.5,
@@ -211,7 +207,6 @@ class ProfileEditViewModelTest {
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
     ) = ProfileEditViewModel(
         profileRepository = repo,
-        // 저장 전에 제재를 확인한다 — 깨끗한 계정이 기본이고, 정지 경로는 별도 테스트가 본다.
         accountRepository = FakeAccountRepository(sanctions = { cleanSanctions }),
         navigationHelper = nav,
     )

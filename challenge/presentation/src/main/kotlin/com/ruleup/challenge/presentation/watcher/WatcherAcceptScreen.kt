@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,16 +32,9 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 감시자 초대 수락 (카카오톡 `/w/{token}` 링크 진입).
- *
- * **자동으로 수락하지 않는다** — 수락이 곧 수신 동의라, 링크를 연 것만으로 동의가 성립하면 안 된다.
- * 무엇에 동의하는지 먼저 보여 주고 사용자가 누를 때만 보낸다.
- *
- * 감시자에게는 실패자 닉네임·챌린지명·루틴명 셋만 간다 — 이 화면에도 방 상세로 가는 진입점을
- * 두지 않는다(감시자 테크 스펙 6).
- */
+/** 감시자 초대 수락 (카카오톡 `/w/{token}` 링크 진입). */
 @Composable
 fun WatcherAcceptScreen(
     token: String,
@@ -48,13 +42,14 @@ fun WatcherAcceptScreen(
     viewModel: WatcherAcceptViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = false)
 
     LaunchedEffect(token) { viewModel.onIntent(WatcherAcceptIntent.Load(token)) }
 
     WatcherAcceptContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun WatcherAcceptContent(
     state: WatcherAcceptState,
@@ -86,7 +81,7 @@ internal fun WatcherAcceptContent(
     }
 }
 
-/** 수락 전. 통지가 언제 어떤 내용으로 오는지까지 말한다 — 그게 동의의 실질이다. */
+/** 수락 전. */
 @Composable
 private fun ColumnScope.InviteBody(
     isSubmitting: Boolean,
@@ -134,7 +129,7 @@ private fun ColumnScope.AcceptedBody(onIntent: (WatcherAcceptIntent) -> Unit) {
     )
     Spacer(Modifier.height(10.dp))
     Text(
-        text = "실패가 확정된 날에만 알림이 가요. 언제든 마이 → 설정 → 내가 받는 알림에서 끌 수 있어요.",
+        text = "실패가 확정된 날에만 알림이 가요.",
         color = RuleUpTheme.colors.textSecondary,
         style = RuleUpTheme.typography.body,
         textAlign = TextAlign.Center,
@@ -143,7 +138,7 @@ private fun ColumnScope.AcceptedBody(onIntent: (WatcherAcceptIntent) -> Unit) {
     RuleUpPrimaryButton(text = "홈으로", onClick = { onIntent(WatcherAcceptIntent.GoHome) })
 }
 
-/** 실패 사유마다 다음에 할 일이 다르다 — 문구도 버튼도 그에 맞춰 갈린다. */
+/** 실패 사유마다 다음에 할 일이 다르다 */
 @Composable
 private fun ColumnScope.FailureBody(
     state: WatcherAcceptState,
@@ -195,3 +190,11 @@ private val WatcherAcceptFailure.title: String
             WatcherAcceptFailure.INVALID -> "초대를 확인할 수 없어요"
             WatcherAcceptFailure.UNKNOWN -> "수락하지 못했어요"
         }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun WatcherAcceptContentPreview() {
+    RuleUpTheme {
+        WatcherAcceptContent(state = com.ruleup.challenge.presentation.watcher.viewmodel.WatcherAcceptState.initial, onIntent = { })
+    }
+}

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,19 +47,17 @@ import com.ruleup.challenge.presentation.ranking.viewmodel.RankingViewModel
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import java.util.Locale
 
 // 포디움 순위별 색 (피그마 434:545~557 — #1 Amber, #2 Slate, #3 Orange)
 private val PodiumFirst = RuleUpPalette.StatusWarn
 private val PodiumSecond = RuleUpPalette.TextFaint
 
-// 3위 주황은 Figma 팔레트 15색에 없다. 화면 디자인에서 온 값이라 남긴다.
+// 3위 주황은 Figma 팔레트 15색에 없다.
 private val PodiumThird = Color(0xFFEA580C)
 
-/**
- * 그룹 랭킹 화면 (피그마 434:514). 방 홈의 랭킹 섹션으로 진입한다.
- * 상위 3 포디움 + 내 순위 카드 + 전체 목록. 기간 탭·챌린지 선택은 API 부재로 제외(Phase 2 시즌제).
- */
+/** 그룹 랭킹 화면. */
 @Composable
 fun RankingScreen(
     challengeId: String,
@@ -65,6 +65,7 @@ fun RankingScreen(
     viewModel: RankingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(challengeId) {
         viewModel.onIntent(RankingIntent.Load(challengeId))
@@ -73,7 +74,7 @@ fun RankingScreen(
     RankingContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun RankingContent(
     state: RankingState,
@@ -96,12 +97,17 @@ internal fun RankingContent(
                 }
 
             state.ranking == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "랭킹을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(RankingIntent.Load(state.challengeId)) }) { Text("다시 시도") }
                 }
 
             else -> RankingBody(ranking = state.ranking!!)
@@ -162,7 +168,7 @@ private fun RankingBody(ranking: ChallengeRanking) {
                     style = RuleUpTheme.typography.smallBold,
                 )
             }
-            items(ranking.items, key = { it.user.userId }) { entry ->
+            items(ranking.items, key = { it.user.id }) { entry ->
                 RankingRow(entry = entry)
             }
         } else {
@@ -185,7 +191,7 @@ private fun RankingBody(ranking: ChallengeRanking) {
     }
 }
 
-/** 상위 3 포디움 — 가운데 1위(가장 높음), 좌 2위, 우 3위 (시안 434:541). */
+/** 상위 3 포디움 */
 @Composable
 private fun Podium(top3: List<RankingEntry>) {
     val first = top3.find { it.rank == 1 }
@@ -249,12 +255,7 @@ private fun PodiumColumn(
     }
 }
 
-/**
- * 내 순위 카드 (시안 434:560).
- *
- * 참여 10회 미만이면 등재되지 않아 순위가 없다 — 이때는 "-" 를 보여주고 몇 회 남았는지로 안내한다.
- * 1위면 격차 대신 축하 문구를 쓴다.
- */
+/** 내 순위 카드. */
 @Composable
 private fun MyRankCard(me: MyRank) {
     val gap = me.gapToFirst
@@ -356,7 +357,7 @@ private fun RankingRow(entry: RankingEntry) {
     }
 }
 
-// 미등재(rank null)는 "-" 로 표시한다 — 순위에서 빼면 등수가 어긋난다.
+// 미등재(rank null)는 "-" 로 표시한다
 private fun rankMedal(rank: Int?): String =
     when (rank) {
         1 -> "🥇"
@@ -366,7 +367,7 @@ private fun rankMedal(rank: Int?): String =
         else -> "$rank"
     }
 
-// 성공률 0~1 → "98%" / "97.5%". 미등재라 값이 없으면 "-".
+// 성공률 0~1 → "98%" / "97.5%".
 private fun Double?.percentLabel(): String {
     val percent = (this ?: return "-") * 100
     val text =
@@ -376,4 +377,17 @@ private fun Double?.percentLabel(): String {
             String.format(Locale.US, "%.1f", percent)
         }
     return "$text%"
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RankingContentPreview() {
+    RuleUpTheme {
+        RankingContent(
+            state =
+                com.ruleup.challenge.presentation.ranking.viewmodel.RankingState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
+        )
+    }
 }

@@ -25,15 +25,18 @@ import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.usecase.CreateChallengeUseCase
-import com.ruleup.challenge.presentation.common.SensitiveConsent
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.logging.domain.BizLogger
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.PermissionState
+import com.ruleup.verification.domain.entity.VerificationAccess
 import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
+import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
+import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -43,15 +46,7 @@ import java.time.format.DateTimeParseException
 import java.util.UUID
 import javax.inject.Inject
 
-/**
- * 챌린지 생성 플로우 공유 ViewModel.
- *
- * 입력 화면과 확인 화면이 같은 인스턴스를 공유한다. 두 진입 경로(추천 칩 · 설명 입력)가 **같은 확인
- * 화면으로 수렴**하므로 초안 수신 처리도 하나로 묶여 있다.
- *
- * 프로세스 종료 뒤에는 입력 화면의 루틴 설명만 복원한다 — 초안은 재생성 비용이 낮지만, 사용자가 쓴
- * 문장이 사라지면 다시 쳐야 한다.
- */
+/** 챌린지 생성 플로우 공유 ViewModel. */
 @HiltViewModel
 class CreateChallengeViewModel
     @Inject
@@ -63,7 +58,11 @@ class CreateChallengeViewModel
         private val bizLogger: BizLogger,
         private val savedStateHandle: SavedStateHandle,
         private val permissionStatusProvider: PermissionStatusProvider,
-        private val sensitiveConsent: SensitiveConsent,
+        private val checkVerificationAccess: CheckVerificationAccessUseCase,
+        private val agreeVerificationConsent: AgreeVerificationConsentUseCase,
+        private val pendingDraft: com.ruleup.challenge.presentation.create.PendingChallengeDraft =
+            com.ruleup.challenge.presentation.create
+                .PendingChallengeDraft(),
     ) : MviViewModel<CreateChallengeIntent, CreateChallengeState, CreateChallengeReducerEvent, CreateChallengeEffect>(
             CreateChallengeState.initial,
         ) {
@@ -75,11 +74,16 @@ class CreateChallengeViewModel
 
         override fun onIntent(intent: CreateChallengeIntent) {
             when (intent) {
+                CreateChallengeIntent.ConfirmOpened ->
+                    pendingDraft.consume()?.let { draft ->
+                        editedFields.clear()
+                        dispatch(CreateChallengeReducerEvent.DraftReceived(draft, UUID.randomUUID().toString()))
+                    }
                 CreateChallengeIntent.Load -> {
-                    // 생성 전환율의 분모. 프로그래매틱 재진입에서 중복 전송되지 않게 1회로 잠근다.
+                    // 생성 전환율의 분모.
                     if (!createStartLogged) {
                         createStartLogged = true
-                        // TODO(entry): 진입점(홈·목록 빈 상태·탐색 빈 결과) 구분은 라우트 인자 확정 후 채운다.
+                        // TODO(entry): 라우트 인자 확정 후 생성 진입점 구분.
                         bizLogger.record(ChallengeEvents.createStart(CreateEntry.UNKNOWN))
                     }
                     loadTemplates()
@@ -151,6 +155,7 @@ class CreateChallengeViewModel
                 is CreateChallengeIntent.EditParam -> {
                     val origin =
                         currentState.original
+
                             ?.params
                             ?.firstOrNull { it.key == intent.key }
                             ?.value
@@ -161,23 +166,27 @@ class CreateChallengeViewModel
                 is CreateChallengeIntent.SetVerificationType -> setVerificationType(intent.type)
 
                 is CreateChallengeIntent.SetWatcherPenalty -> {
-                    if (intent.enabled != currentState.original?.penalties?.watcher) logDraftEdit(DraftField.PENALTIES)
+                    if (intent.enabled !=
+                        currentState.original
+
+                            ?.penalties
+                            ?.watcher
+                    ) {
+                        logDraftEdit(DraftField.PENALTIES)
+                    }
                     dispatch(CreateChallengeReducerEvent.WatcherPenaltyChanged(intent.enabled))
                 }
 
-                is CreateChallengeIntent.PermissionsResult -> {
-                    dispatch(CreateChallengeReducerEvent.PermissionsGranted(intent.granted))
-                    // 권한은 생성 이후 단계다 — 결과가 무엇이든 생성은 이미 끝났으므로 홈으로 보낸다.
-                    // 미허용은 첫 판정일 전까지 인증 설정에서 다시 받을 수 있다.
-                    lastCreated?.let { goAfterCreate(it) }
-                }
+                CreateChallengeIntent.VerificationPermissionsReturned ->
+                    if (currentState.pendingAccess != null) checkAccessThenCreate()
 
                 is CreateChallengeIntent.ConfirmTextEdit -> confirmTextEdit(intent.field)
 
                 CreateChallengeIntent.Create -> create()
-                CreateChallengeIntent.AgreeSensitiveConsent -> agreeConsentAndCreate()
-                CreateChallengeIntent.DismissSensitiveConsent ->
-                    dispatch(CreateChallengeReducerEvent.SensitiveConsentRequested(null))
+                CreateChallengeIntent.ConfirmVerificationAccess ->
+                    if (currentState.pendingAccess != null) checkAccessThenCreate(agreeAndRequest = true)
+                CreateChallengeIntent.DismissVerificationAccess ->
+                    if (!currentState.isAccessSubmitting) dispatch(CreateChallengeReducerEvent.VerificationAccessRequested(null))
             }
         }
 
@@ -186,6 +195,7 @@ class CreateChallengeViewModel
             event: CreateChallengeReducerEvent,
         ): CreateChallengeState =
             when (event) {
+                CreateChallengeReducerEvent.DraftExpired -> CreateChallengeState.initial
                 is CreateChallengeReducerEvent.RoutineDescriptionEntered ->
                     state.copy(
                         routineDescription = event.description.take(RoutineDescription.MAX_LENGTH),
@@ -213,11 +223,11 @@ class CreateChallengeViewModel
                     state.copy(isDrafting = false)
 
                 is CreateChallengeReducerEvent.DraftFellBack ->
-                    // 입력은 그대로 둔다 — 사용자가 쓴 문장을 지우면 다시 쓰게 만드는 벌이 된다.
+                    // 입력은 그대로 둔다
                     state.copy(isDrafting = false, fallbackMessage = event.message)
 
                 is CreateChallengeReducerEvent.DraftRateLimited ->
-                    state.copy(isDrafting = false, retryAfterSeconds = event.retryAfterSeconds ?: 0)
+                    state.copy(isDrafting = false, retryAfterSeconds = event.retryAfterSeconds?.takeIf { it > 0 } ?: 60)
 
                 CreateChallengeReducerEvent.RateLimitTicked ->
                     state.copy(retryAfterSeconds = (state.retryAfterSeconds ?: 0).minus(1).coerceAtLeast(0))
@@ -241,8 +251,7 @@ class CreateChallengeViewModel
                         mode = draft.mode,
                         visibility = draft.visibility,
                         rankingVisible = draft.rankingVisible,
-                        // 초안은 서버가 준 값이라 통제할 수 없다 — 경계에서 흡수한다(사용자 입력 clamp 가
-                        // 아니다). 여기서 단계에 맞추지 않으면 슬라이더에 없는 값이 생성 요청까지 내려간다.
+                        // 초안은 서버가 준 값이라 통제할 수 없다
                         capacity = ChallengeLimits.createCapacityStepAtLeast(draft.capacity),
                         minTier = draft.minTier,
                         // 상한은 초안이 준 기본값(= 생성자 표시 티어)으로 고정한다.
@@ -258,8 +267,8 @@ class CreateChallengeViewModel
                         penalties = draft.penalties,
                         coverImageUri = null,
                         idempotencyKey = event.idempotencyKey,
-                        grantedPermissions = emptySet(),
-                        permissionRequested = false,
+                        pendingAccess = null,
+                        isAccessSubmitting = false,
                         createdChallengeId = null,
                     )
                 }
@@ -300,7 +309,7 @@ class CreateChallengeViewModel
                     state.copy(capacity = event.capacity)
 
                 is CreateChallengeReducerEvent.MinTierChanged ->
-                    // 상한은 생성자 표시 티어 — 초과하면 서버가 MIN_TIER_EXCEEDS_OWNER 로 막는다.
+                    // 상한은 생성자 표시 티어
                     state.copy(
                         minTier =
                             state.ownerTierCap?.let { cap ->
@@ -323,21 +332,15 @@ class CreateChallengeViewModel
                 is CreateChallengeReducerEvent.VerificationTypeSelected ->
                     state.copy(
                         verification = state.verification?.copy(type = event.type),
-                        // 인증 방식을 바꾸면 서버가 score 패널티를 재계산한다. 표시도 맞춰 둔다.
+                        // 인증 방식을 바꾸면 서버가 score 패널티를 재계산한다.
                         penalties = state.penalties.copy(score = event.type.isAuto),
                     )
 
                 is CreateChallengeReducerEvent.WatcherPenaltyChanged ->
                     state.copy(penalties = state.penalties.copy(watcher = event.enabled))
 
-                is CreateChallengeReducerEvent.SensitiveConsentRequested ->
-                    state.copy(pendingConsent = event.type)
-
-                is CreateChallengeReducerEvent.PermissionsGranted ->
-                    state.copy(
-                        grantedPermissions = state.grantedPermissions + event.tokens,
-                        permissionRequested = true,
-                    )
+                is CreateChallengeReducerEvent.VerificationAccessRequested -> state.copy(pendingAccess = event.access)
+                is CreateChallengeReducerEvent.VerificationAccessSubmitting -> state.copy(isAccessSubmitting = event.submitting)
 
                 CreateChallengeReducerEvent.Creating ->
                     state.copy(isCreating = true)
@@ -360,7 +363,7 @@ class CreateChallengeViewModel
             }
         }
 
-        /** 경로 B — 설명 입력. 폴백은 실패가 아니라 재입력 분기다. */
+        /** 경로 B */
         private fun submitDescription() {
             val state = currentState
             if (!state.canSubmitDescription) return
@@ -385,7 +388,7 @@ class CreateChallengeViewModel
                                 else -> {
                                     dispatch(CreateChallengeReducerEvent.DraftFailed)
                                     emitEffect(
-                                        CreateChallengeEffect.ShowError(error.message ?: "초안을 만들지 못했어요. 다시 시도해 주세요"),
+                                        CreateChallengeEffect.ShowError(error.userFacingMessage("초안을 만들지 못했어요. 다시 시도해 주세요")),
                                     )
                                 }
                             }
@@ -393,17 +396,14 @@ class CreateChallengeViewModel
                 }
         }
 
-        /** 초안 생성은 최대 10초까지 걸릴 수 있어 화면을 잠근다 — 대신 뒤로가기로 빠져나갈 수 있게 둔다. */
+        /** 초안 생성은 최대 10초까지 걸릴 수 있어 화면을 잠근다 */
         private fun cancelDrafting() {
             if (!currentState.isDrafting) return
             draftJob?.cancel()
             dispatch(CreateChallengeReducerEvent.DraftFailed)
         }
 
-        /**
-         * 남은 제한 시간을 1초씩 깎는다. **끝나도 자동으로 재요청하지 않는다** — 버튼만 다시 열어준다.
-         * 자동 재시도는 남은 rate limit 을 소진시켜 사용자를 더 오래 막는다.
-         */
+        /** 남은 제한 시간을 1초씩 깎는다. */
         private fun startRateLimitCountdown() {
             countdownJob?.cancel()
             countdownJob =
@@ -420,7 +420,7 @@ class CreateChallengeViewModel
                 }
         }
 
-        /** 경로 A — 추천 칩. LLM 미경유라 폴백·rate limit 이 없다. */
+        /** 경로 A */
         private fun selectTemplate(templateId: Long) {
             if (currentState.isDrafting) return
             bizLogger.record(ChallengeEvents.createPathSelect(CreatePath.TEMPLATE))
@@ -430,15 +430,12 @@ class CreateChallengeViewModel
                     .onSuccess { applyDraft(it) }
                     .onFailure { error ->
                         dispatch(CreateChallengeReducerEvent.DraftFailed)
-                        emitEffect(CreateChallengeEffect.ShowError(error.message ?: "루틴 초안을 불러오지 못했어요"))
+                        emitEffect(CreateChallengeEffect.ShowError(error.userFacingMessage("루틴 초안을 불러오지 못했어요")))
                     }
             }
         }
 
-        /**
-         * 두 경로 공통 — 초안을 편집본에 채우고 확인 화면으로 보낸다.
-         * idempotency key 는 **여기서 1회만** 만든다. 생성 재시도는 같은 키를 다시 쓴다.
-         */
+        /** 두 경로 공통 */
         private fun applyDraft(draft: DraftResult.Ok) {
             editedFields.clear()
             dispatch(
@@ -471,23 +468,19 @@ class CreateChallengeViewModel
                 false
             }
 
-        /**
-         * 인증 방식 선택.
-         *
-         * **확인 화면에서는 되돌릴 수 있다.** 아직 방이 만들어지지 않았고 초안은 메모리에만 있어서,
-         * 초안이 AUTO 로 온 루틴이라면 다시 AUTO 를 보내도 서버가 받는다. 계약의 "역방향 불가"는
-         * *자동 인증을 지원하지 않는 루틴에 AUTO 를 요청하는 것*을 막는 규칙이고
-         * (`ROUTINE_AUTO_NOT_SUPPORTED`), 단방향 잠금은 **생성 이후 수정 화면**의 규칙이다(FE 스펙 4-7).
-         *
-         * 여기서 잠가두면 잠깐 눌러본 사용자가 초안을 처음부터 다시 만들어야 한다.
-         */
+        /** 인증 방식 선택. */
         private fun setVerificationType(type: VerificationType) {
             val state = currentState
             if (type.isAuto && !state.canUseAuto) {
                 emitEffect(CreateChallengeEffect.ShowError("이 루틴은 자동 인증을 쓸 수 없어요"))
                 return
             }
-            if (type != state.original?.verification?.type) {
+            if (type !=
+                state.original
+
+                    ?.verification
+                    ?.type
+            ) {
                 logDraftEdit(
                     DraftField.VERIFICATION,
                     autoToManual = !type.isAuto && state.canUseAuto,
@@ -496,7 +489,7 @@ class CreateChallengeViewModel
             dispatch(CreateChallengeReducerEvent.VerificationTypeSelected(type))
         }
 
-        /** 포커스가 빠진 시점에 원본과 비교한다. 되돌려 원문과 같아졌으면 보내지 않는다. */
+        /** 포커스가 빠진 시점에 원본과 비교한다. */
         private fun confirmTextEdit(field: TextEditField) {
             val state = currentState
             val origin = state.original ?: return
@@ -509,7 +502,11 @@ class CreateChallengeViewModel
 
         private fun create() {
             val state = currentState
-            if (state.isCreating) return
+            if (state.isCreating || state.isAccessSubmitting) return
+            if (state.createdChallengeId != null) {
+                checkAccessThenCreate()
+                return
+            }
 
             val draftId = state.draftId ?: return
             val category =
@@ -523,13 +520,13 @@ class CreateChallengeViewModel
                     return
                 }
             val idempotencyKey = state.idempotencyKey ?: return
-            if (!consentChecked) {
-                checkConsentThenCreate(verification.method)
+            val access = checkedAccess
+            if (access == null) {
+                checkAccessThenCreate()
                 return
             }
-            // 통과 표시는 여기서 **소비한다.** 남겨 두면 마이에서 동의를 철회한 뒤에도 같은 세션의
-            // 다음 생성이 시트 없이 통과해, 앱을 껐다 켜야 동의를 다시 묻는다(ONB-14).
-            consentChecked = false
+            // 통과 표시는 여기서 소비한다.
+            checkedAccess = null
 
             val command =
                 CreateChallengeCommand(
@@ -554,7 +551,7 @@ class CreateChallengeViewModel
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.Creating)
                 runCatching {
-                    // 이미지 업로드가 실패해도 생성은 막지 않는다 — 선택 항목이라 기본 이미지로 진행한다.
+                    // 이미지 업로드가 실패해도 생성은 막지 않는다
                     val imageUrl =
                         coverImageUri?.let { uri ->
                             runCatching { challengeRepository.uploadImage(uri) }
@@ -576,70 +573,84 @@ class CreateChallengeViewModel
                     dispatch(CreateChallengeReducerEvent.Created(created.challengeId))
                     lastCreated = created
 
-                    // 권한은 생성 이후에 받는다 — 생성 전에 받으면 만들지도 않은 방 때문에 권한을 요구하는 꼴이 된다.
-                    val missing = created.verification.requiredPermissions - state.grantedPermissions
+                    // 생성 응답에서 요구 권한이 달라지면 같은 설정 시트에서 추가 항목을 확인한다.
+                    val missing = created.verification.requiredPermissions.filter { access.permissions.isGranted(it) != true }
                     if (created.verification.type.isAuto && missing.isNotEmpty()) {
-                        emitEffect(CreateChallengeEffect.RequestPermissions(missing.toList()))
+                        checkAccessThenCreate()
                     } else {
                         goAfterCreate(created)
                     }
                 }.onFailure { error ->
                     dispatch(CreateChallengeReducerEvent.CreateFailed)
+                    if (error is DraftExpiredException) {
+                        checkedAccess = null
+                        lastCreated = null
+                        savedStateHandle.remove<String>(KEY_ROUTINE_DESCRIPTION)
+                        dispatch(CreateChallengeReducerEvent.DraftExpired)
+                        navigationHelper.navigateTo(com.ruleup.challenge.domain.navigation.ChallengeCreatePage)
+                    }
                     val message =
                         when (error) {
                             is DraftExpiredException -> "초안이 만료됐어요. 처음부터 다시 만들어 주세요"
-                            else -> error.message ?: "챌린지 생성에 실패했어요"
+                            else -> error.userFacingMessage("챌린지 생성에 실패했어요")
                         }
                     emitEffect(CreateChallengeEffect.ShowError(message))
                 }
             }
         }
 
-        /** 이번 생성 시도가 동의 확인을 통과했는지. **한 번 쓰고 끄는 값이다** — 위 주석 참고. */
-        private var consentChecked = false
+        // 매 생성 시도마다 다시 확인한다
+        private var checkedAccess: VerificationAccess? = null
         private var lastCreated: CreatedChallenge? = null
 
-        private fun checkConsentThenCreate(method: VerificationMethod) {
+        private fun checkAccessThenCreate(agreeAndRequest: Boolean = false) {
+            if (currentState.isAccessSubmitting) return
+            val created = lastCreated?.takeIf { it.challengeId == currentState.createdChallengeId }
+            val verification = created?.verification ?: currentState.verification ?: return
+            val requiredPermissions = verification.requiredPermissions.takeIf { verification.type.isAuto }.orEmpty()
+            val consents = currentState.pendingAccess?.missingConsents.orEmpty()
+            dispatch(CreateChallengeReducerEvent.VerificationAccessSubmitting(true))
             viewModelScope.launch {
-                runCatching { sensitiveConsent.missingFor(method) }
-                    .onSuccess { missing ->
-                        if (missing == null) {
-                            consentChecked = true
-                            create()
+                runCatching {
+                    if (agreeAndRequest) agreeVerificationConsent(consents)
+                    checkVerificationAccess(requiredPermissions)
+                }.onSuccess { access ->
+                    dispatch(CreateChallengeReducerEvent.VerificationAccessSubmitting(false))
+                    if (access.missingConsents.isEmpty() && access.missingPermissions.isEmpty()) {
+                        dispatch(CreateChallengeReducerEvent.VerificationAccessRequested(null))
+                        if (created != null) {
+                            goAfterCreate(created)
                         } else {
-                            dispatch(CreateChallengeReducerEvent.SensitiveConsentRequested(missing))
+                            checkedAccess = access
+                            create()
                         }
-                    }.onFailure { emitEffect(CreateChallengeEffect.ShowError("동의 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요")) }
+                    } else {
+                        dispatch(CreateChallengeReducerEvent.VerificationAccessRequested(access))
+                        if (agreeAndRequest && access.missingConsents.isEmpty()) {
+                            emitEffect(CreateChallengeEffect.RequestPermissions(access.missingPermissions))
+                        }
+                    }
+                }.onFailure {
+                    dispatch(CreateChallengeReducerEvent.VerificationAccessSubmitting(false))
+                    emitEffect(CreateChallengeEffect.ShowError("권한과 동의 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요"))
+                }
             }
         }
 
-        private fun agreeConsentAndCreate() {
-            val type = currentState.pendingConsent ?: return
-            viewModelScope.launch {
-                runCatching { sensitiveConsent.agree(type) }
-                    .onSuccess {
-                        dispatch(CreateChallengeReducerEvent.SensitiveConsentRequested(null))
-                        consentChecked = true
-                        create()
-                    }.onFailure { emitEffect(CreateChallengeEffect.ShowError(it.message ?: "동의를 기록하지 못했어요")) }
-            }
-        }
-
-        /**
-         * 만든 방으로 보내고, 인증에 필요한 설정이 남았으면 그 화면을 위에 연다.
-         *
-         * 홈으로 보내면 사용기록 접근·대상 앱·인증 장소를 받을 기회가 없어 첫 판정일에 조용히 실패한다.
-         */
+        /** 만든 방으로 보내고, 인증에 필요한 설정이 남았으면 그 화면을 위에 연다. */
         private fun goAfterCreate(created: CreatedChallenge) {
             val id = created.challengeId
             navigationHelper.replaceStackWith(ChallengeDetailPage(id).toRoute())
             viewModelScope.launch {
-                // 사용기록 접근은 OS 다이얼로그로 못 받는 특수 권한이라 권한 요청을 통과해 버린다 — 재연결 화면이 받는다.
+                // 사용기록 접근은 OS 다이얼로그로 못 받는 특수 권한이라 권한 요청을 통과해 버린다
                 val usageMissing =
                     "PACKAGE_USAGE_STATS" in created.verification.requiredPermissions &&
                         runCatching { permissionStatusProvider.capture().usageStats != PermissionState.GRANTED }.getOrDefault(true)
                 when {
-                    usageMissing -> navigationHelper.navigateByRoute(VerificationPermissionRepairPage.toRoute())
+                    usageMissing ->
+                        navigationHelper.navigateByRoute(
+                            VerificationPermissionRepairPage.forPermissions(currentState.verification?.requiredPermissions.orEmpty()),
+                        )
                     !created.personalSetupRequired -> Unit
                     created.verification.method.needsTargetApps -> navigationHelper.navigateByRoute(ChallengeTargetsPage(id).toRoute())
                     created.verification.method.needsAnchor ->
@@ -649,8 +660,7 @@ class CreateChallengeViewModel
                                 mapOf(
                                     "challengeId" to id,
                                     "defaultRadiusM" to "500.0",
-                                    // 목표 체류 시간이 곧 OS 지오펜스의 loiteringDelay 다. 고정값을
-                                    // 등록하면 30분 방이 60분을 기다려 신호가 안 올라온다(SETUP-04).
+                                    // 목표 체류 시간이 곧 OS 지오펜스의 loiteringDelay 다.
                                     "dwellMinutes" to (currentState.params.durationMinutes() ?: DEFAULT_DWELL_MINUTES).toString(),
                                     "targetPackages" to "",
                                 ),
@@ -665,10 +675,10 @@ class CreateChallengeViewModel
         private var draftJob: Job? = null
         private var createStartLogged = false
 
-        // 초안 수정률은 **필드별 1회**로 센다 — 타이핑마다 보내면 수정률이 타이핑 양에 좌우된다.
+        // 초안 수정률은 필드별 1회로 센다
         private val editedFields = mutableSetOf<DraftField>()
 
-        /** 원본과 달라진 항목을 필드당 한 번만 기록한다. 되돌려도 취소하지 않는다(이미 만진 것은 사실이다). */
+        /** 원본과 달라진 항목을 필드당 한 번만 기록한다. */
         private fun logDraftEdit(
             field: DraftField,
             autoToManual: Boolean? = null,
@@ -694,12 +704,7 @@ class CreateChallengeViewModel
 
 private const val KEY_ROUTINE_DESCRIPTION = "routineDescription"
 
-/**
- * 목표값에 체류 시간이 없을 때의 지오펜스 대기(분).
- *
- * 장소 루틴이면 서버가 `duration_min` 을 반드시 내려주므로 여기까지 오지 않는다. 그래도 0 으로
- * 두면 스쳐 지나가는 것까지 DWELL 로 잡히므로 보수적인 값을 남겨 둔다.
- */
+/** 목표값에 체류 시간이 없을 때의 지오펜스 대기(분). */
 private const val DEFAULT_DWELL_MINUTES = 60
 
 private val VerificationMethod.needsTargetApps: Boolean

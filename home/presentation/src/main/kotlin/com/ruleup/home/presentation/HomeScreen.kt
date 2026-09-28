@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -43,31 +44,32 @@ import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.domain.time.ServiceDate
 import com.ruleup.home.presentation.viewmodel.HomeFilter
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import java.time.LocalDate
 
-// 아바타·오늘 카드 그라데이션. Figma 디자인 시스템에 그라데이션 토큰이 없어 팔레트 두 색으로 만든다.
+// 아바타·오늘 카드 그라데이션.
 private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 private val TodayGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
 
-/** 홈 · 진행 중. 온보딩/로그인 완료 후 진입하는 루트 화면(Figma 01 · 홈 진행중). */
+/** 홈 · 진행 중. */
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    // 백그라운드에서 돌아와도 다시 불러온다 — 그 사이 판정·종료가 바뀐다. 첫 진입도 ON_RESUME 으로 온다.
+    TtiScreenEffect(loading = state.isLoading)
+    // 백그라운드에서 돌아와도 다시 불러온다
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onIntent(HomeIntent.Load) }
     HomeContent(modifier = modifier, state = state, onIntent = viewModel::onIntent)
 }
 
 @Composable
-// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다.
 internal fun HomeContent(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
@@ -91,7 +93,6 @@ internal fun HomeContent(
             )
 
             // 스트릭 카드·필터 탭을 남기면 "0/0" 껍데기만 보여 처음 들어온 사람이 뭘 할지 모른다.
-            // 그래서 화면 전체를 빈 상태로 바꾼다(Figma 1134:2033).
             if (state.isEmpty) {
                 HomeEmptyState(
                     modifier = Modifier.weight(1f),
@@ -140,10 +141,7 @@ internal fun HomeContent(
     }
 }
 
-/**
- * 홈 빈 상태 (Figma 1134:2051).
- * 다음 행동을 둘로만 좁힌다 — 남의 방에 들어가거나, 내가 만들거나. 둘 중 뭘 해도 홈이 채워진다.
- */
+/** 홈 빈 상태. */
 @Composable
 private fun HomeEmptyState(
     onExplore: () -> Unit,
@@ -227,18 +225,15 @@ private fun EmptyActionButton(
     }
 }
 
-/**
- * 홈 상단 (Figma 1134:2045). 오늘 날짜 + 알림. 인사말 대신 날짜를 두면 "오늘 뭘 했나"로 시선이 간다.
- *
- * 벨의 레드닷은 **숫자를 쓰지 않는다** — 알림 테크 스펙 5-1 이 마이페이지 진입점을 점으로,
- * 챌린지 카드를 숫자 카운터로 갈라 뒀다. 여기서 숫자를 쓰면 두 곳이 다른 규칙으로 보인다.
- */
+/** 홈 상단. */
 @Composable
 private fun HomeHeader(
     hasUnread: Boolean,
     onOpenNotifications: () -> Unit,
 ) {
-    val today = remember { ServiceDate.today() }
+    val today =
+        com.ruleup.ui.time
+            .rememberServiceDate()
     Row(
         modifier =
             Modifier
@@ -284,7 +279,7 @@ private fun HomeHeader(
     }
 }
 
-/** "8월 3일 월요일". 연도는 빼고 오늘만 읽히게 둔다. */
+/** "8월 3일 월요일". */
 private fun LocalDate.headerLabel(): String {
     val weekday = listOf("월", "화", "수", "목", "금", "토", "일")[dayOfWeek.ordinal]
     return "${monthValue}월 ${dayOfMonth}일 ${weekday}요일"
@@ -292,7 +287,9 @@ private fun LocalDate.headerLabel(): String {
 
 @Composable
 private fun WeekStreakCard() {
-    val today = remember { ServiceDate.today() }
+    val today =
+        com.ruleup.ui.time
+            .rememberServiceDate()
     val monday = remember(today) { today.minusDays((today.dayOfWeek.value - 1).toLong()) }
     val labels = listOf("월", "화", "수", "목", "금", "토", "일")
 
@@ -512,6 +509,19 @@ private fun EmptyChallenges() {
             text = "오른쪽 아래 + 버튼으로 첫 챌린지를 만들어 보세요",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.small,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun HomeContentPreview() {
+    RuleUpTheme {
+        HomeContent(
+            state =
+                com.ruleup.home.presentation.viewmodel.HomeState.initial
+                    .copy(isLoading = false),
+            onIntent = { },
         )
     }
 }

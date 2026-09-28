@@ -2,6 +2,7 @@ package com.ruleup.verification.presentation.location.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.entity.AnchorSet
 import com.ruleup.verification.domain.entity.InvalidAnchorException
@@ -17,10 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 지도 핀 → 앵커 바인딩 제출(명세 setup · my-location). 확인 대기 핀을 최대 3개까지 누적한 뒤 제출하고,
- * 서버가 READY 를 주면 앵커 전체를 [BindLocationUseCase] 로 OS 지오펜스에 등록하고 화면을 닫는다.
- */
+/** 지도 핀 → 앵커 바인딩 제출. */
 @HiltViewModel
 class VerificationLocationViewModel
     @Inject
@@ -31,10 +29,10 @@ class VerificationLocationViewModel
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
             VerificationLocationState.initial,
         ) {
-        // 자동완성 디바운스용: 새 키워드가 오면 진행 중 검색을 취소해 응답 역전(stale)을 막는다.
+        // 이전 자동완성 요청 취소.
         private var searchJob: Job? = null
 
-        // 탭 역지오코딩용: 새 탭이 오면 진행 중 조회를 취소해 늦은 응답이 핀을 덮어쓰지 않게 한다.
+        // 이전 역지오코딩 요청 취소.
         private var resolveJob: Job? = null
 
         override fun onIntent(intent: VerificationLocationIntent) {
@@ -86,10 +84,7 @@ class VerificationLocationViewModel
                 is VerificationLocationReducerEvent.MissingUpdated -> state.copy(missing = event.missing)
             }
 
-        /**
-         * 진입 게이트: 이미 등록돼 있으면 핀을 복원해 편집 모드로 연다 — 되돌려보내면 이사·헬스장 변경에서
-         * 사용자가 할 수 있는 게 없다. 조회가 실패하면 최초 등록처럼 진행한다(등록을 막지 않는다).
-         */
+        /** 진입 게이트: 이미 등록돼 있으면 핀을 복원해 편집 모드로 연다 */
         private fun init(intent: VerificationLocationIntent.Init) {
             viewModelScope.launch {
                 val existing = runCatching { verificationRepository.getMyLocation(intent.challengeId) }.getOrNull()
@@ -108,7 +103,7 @@ class VerificationLocationViewModel
             }
         }
 
-        // 지도 탭: 핀은 즉시 표시(주소는 뒤따라). 결과가 없으면 좌표만으로 진행한다.
+        // 지도 탭: 핀은 즉시 표시(주소는 뒤따라).
         private fun tapMap(intent: VerificationLocationIntent.TapMap) {
             resolveJob?.cancel()
             dispatch(
@@ -158,7 +153,7 @@ class VerificationLocationViewModel
             dispatch(VerificationLocationReducerEvent.PendingSet(pending = null, resolving = false))
         }
 
-        // label 은 핀 이름이다 — 반경은 서버 설정이라 앵커의 속성이 아니다.
+        // label 은 핀 이름이다
         private fun addAnchor() {
             val pending = currentState.pending ?: return
             if (currentState.anchors.size >= SetupAnchors.MAX_COUNT) {
@@ -177,7 +172,7 @@ class VerificationLocationViewModel
             )
         }
 
-        // 최초 등록이면 setup, 편집 중이면 my-location 교체 — 후자만 그 달의 변경 1회를 소진한다.
+        // 최초 등록이면 setup, 편집 중이면 my-location 교체
         private fun submit(intent: VerificationLocationIntent.Submit) {
             if (currentState.isSubmitting) return
             val anchors = currentState.anchors
@@ -199,7 +194,7 @@ class VerificationLocationViewModel
             }
         }
 
-        /** 최초 등록(명세 POST /setup). 월 변경 횟수를 소진하지 않는다. */
+        /** 최초 등록. */
         private suspend fun submitSetup(
             intent: VerificationLocationIntent.Submit,
             anchors: List<LocationPin>,
@@ -220,14 +215,11 @@ class VerificationLocationViewModel
                 }
             }.onFailure { error ->
                 dispatch(VerificationLocationReducerEvent.Finished)
-                emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "셋업 제출에 실패했어요"))
+                emitEffect(VerificationLocationEffect.ShowMessage(error.userFacingMessage("셋업 제출에 실패했어요")))
             }
         }
 
-        /**
-         * 앵커 교체(명세 PUT /my-location). 세트 전체를 갈아끼우고 그 달의 변경 1회를 소진한다.
-         * 실패는 화면이 각각 다르게 말해야 한다 — 익일 재시도인지, 다음 달인지, 입력을 고치라는 건지.
-         */
+        /** 앵커 교체. */
         private suspend fun replaceAnchors(
             intent: VerificationLocationIntent.Submit,
             anchors: List<LocationPin>,
@@ -247,16 +239,13 @@ class VerificationLocationViewModel
                         is LocationLockedInWindowException -> "인증이 진행 중인 동안에는 바꿀 수 없어요. 내일 다시 시도해 주세요"
                         is SettingChangeLimitException -> changeLockedMessage(currentState.nextChangeAvailableAt)
                         is InvalidAnchorException -> "장소가 유효하지 않아요. 위치를 다시 선택해 주세요"
-                        else -> error.message ?: "인증 장소를 바꾸지 못했어요"
+                        else -> error.userFacingMessage("인증 장소를 바꾸지 못했어요")
                     }
                 emitEffect(VerificationLocationEffect.ShowMessage(message))
             }
         }
 
-        /**
-         * 저장된 앵커를 OS 지오펜스에 등록하고 화면을 닫는다. 반경은 서버가 정한 값을 그대로 쓴다(없을 때만
-         * 폴백) — 화면이 임의 값으로 등록하면 지도에 그린 원과 실제 판정 범위가 어긋난다.
-         */
+        /** 지오펜스 등록 후 화면 종료. */
         private suspend fun bindAndFinish(
             intent: VerificationLocationIntent.Submit,
             anchors: List<LocationPin>,
@@ -276,7 +265,7 @@ class VerificationLocationViewModel
             navigationHelper.navigateToBack()
         }
 
-        /** 월 1회 소진 안내. 언제부터 가능한지 모르면 날짜를 지어내지 않는다. */
+        /** 월 1회 소진 안내. */
         private fun changeLockedMessage(nextAt: String?): String {
             val day = nextAt?.substringBefore('T')?.split('-')?.takeIf { it.size == 3 }
             return if (day == null) {
@@ -286,7 +275,7 @@ class VerificationLocationViewModel
             }
         }
 
-        // PENDING_SETUP 미충족 항목 → 안내 문구. 알 수 없으면 일반 안내.
+        // PENDING_SETUP 미충족 항목 → 안내 문구.
         private fun missingMessage(missing: List<SetupMissing>): String {
             if (missing.isEmpty()) return "셋업이 아직 완료되지 않았어요"
             return missing.joinToString("\n") { item ->
@@ -316,7 +305,7 @@ class VerificationLocationViewModel
                         dispatch(VerificationLocationReducerEvent.SearchLoaded(places))
                     }.onFailure { error ->
                         dispatch(VerificationLocationReducerEvent.SearchLoaded(emptyList()))
-                        emitEffect(VerificationLocationEffect.ShowMessage(error.message ?: "장소 검색에 실패했어요"))
+                        emitEffect(VerificationLocationEffect.ShowMessage(error.userFacingMessage("장소 검색에 실패했어요")))
                     }
                 }
         }

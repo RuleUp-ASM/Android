@@ -12,21 +12,14 @@ import com.ruleup.profile.presentation.common.SuspendedBlock
 import com.ruleup.profile.presentation.common.sanctionUntilLabel
 import com.ruleup.report.domain.navigation.ReportPage
 import com.ruleup.report.domain.repository.ReportRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 
-/**
- * 타인 프로필 (명세 GET /users/{userId}/profile · Figma `1466:2`·`1466:44`).
- *
- * 공개 범위가 좁은 게 이 화면의 전부다 — 닉네임·표시 티어·완주 개수만 보여 주고 나머지는
- * "공개되지 않아요" 한 줄로 닫는다. 없는 값을 0 으로 그리면 사용자가 그 사람의 통계를 봤다고 믿는다.
- *
- * 차단한 상대는 서버가 이미 임시 닉네임·기본 이미지로 마스킹해 내려준다. 화면은 거기에 해제
- * 경로만 더한다 — 왜 이름이 이상한지 설명하지 않으면 사용자는 상대가 개명했다고 읽는다.
- */
+/** 타인 프로필. */
 @HiltViewModel
 class MemberProfileViewModel
     @Inject
@@ -39,7 +32,7 @@ class MemberProfileViewModel
     ) : MviViewModel<MemberProfileIntent, MemberProfileState, MemberProfileReducerEvent, MemberProfileEffect>(
             MemberProfileState.initial,
         ) {
-        /** 진입 인자로 받은 대상. 재시도·신고 등 이후 동작이 같은 값을 본다. */
+        /** 진입 인자로 받은 대상. */
         private var userId: String = ""
 
         override fun onIntent(intent: MemberProfileIntent) {
@@ -80,7 +73,7 @@ class MemberProfileViewModel
             force: Boolean,
         ) {
             this.userId = userId
-            // 대상을 모르면 조회할 것이 없다. 조용히 돌아가면 스피너만 영원히 돈다(REP-01).
+            // 대상을 모르면 조회할 것이 없다.
             if (userId.isBlank()) {
                 dispatch(MemberProfileReducerEvent.Failed("누구의 프로필인지 알 수 없어요", offline = false))
                 return
@@ -93,7 +86,7 @@ class MemberProfileViewModel
                     .onFailure {
                         dispatch(
                             MemberProfileReducerEvent.Failed(
-                                message = it.message ?: "프로필을 불러오지 못했어요",
+                                message = it.userFacingMessage("프로필을 불러오지 못했어요"),
                                 offline = it is IOException,
                             ),
                         )
@@ -101,18 +94,11 @@ class MemberProfileViewModel
             }
         }
 
-        /**
-         * 신고 화면으로 보낸다. 대상 이름을 함께 넘겨 그 화면이 조회를 한 번 더 하지 않게 한다.
-         *
-         * 신고가 접수되면 상대가 내 화면에서 가려지므로, 돌아올 자리가 사라진다 — 그래서 신고 화면은
-         * 이 화면 위에 쌓고 접수 후에는 스스로 닫는다.
-         */
+        /** 신고 화면으로 보낸다. */
         private fun openReport() {
             val profile = currentState.profile ?: return
             viewModelScope.launch {
-                // 신고 기능만 정지된 계정도 여기서 막힌다 — 전체 잠금이 아니라고 통과시키면
-                // 정지된 기능이 서버 거절로만 드러난다.
-                // 조회가 실패하면 보낸다 — 정지 여부를 모른다고 신고를 막으면 멀쩡한 사용자가 갇힌다.
+                // 신고 기능만 정지된 계정도 여기서 막힌다
                 val history = runCatching { accountRepository.getSanctions() }.getOrNull()
                 if (history?.restriction?.blocks(FeatureCode.REPORT) == true) {
                     dispatch(
@@ -136,11 +122,11 @@ class MemberProfileViewModel
                 runCatching { reportRepository.unblockUser(profile.userId) }
                     .onSuccess {
                         dispatch(MemberProfileReducerEvent.Unblocking(false))
-                        // 해제하면 닉네임·사진이 원래 값으로 돌아온다 — 다시 받아야 화면이 사실과 맞는다.
+                        // 해제하면 닉네임·사진이 원래 값으로 돌아온다
                         load(userId, force = true)
                     }.onFailure {
                         dispatch(MemberProfileReducerEvent.Unblocking(false))
-                        messageHelper.showToast(it.message ?: "차단을 해제하지 못했어요")
+                        messageHelper.showToast(it.userFacingMessage("차단을 해제하지 못했어요"))
                     }
             }
         }

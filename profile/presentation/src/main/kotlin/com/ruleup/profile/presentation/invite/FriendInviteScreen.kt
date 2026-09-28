@@ -21,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,18 +48,17 @@ import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteEffect
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteIntent
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteState
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 친구 초대 (피그마 435:332). 초대 코드/링크(카카오톡·복사·QR — 사용자 본인 발신) + 초대 현황.
- * 딥링크 앱 라우팅은 초대 경로 확정 후 별도 — 서버가 준 URL 을 그대로 공유만 한다 (#111).
- */
+/** 친구 초대. */
 @Composable
 fun FriendInviteScreen(
     modifier: Modifier = Modifier,
     viewModel: FriendInviteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val context = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val messageHelper = LocalMessageHelper.current
@@ -91,7 +92,7 @@ fun FriendInviteScreen(
     FriendInviteContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — 공유·복사는 Context·클립보드가 필요해 바깥이 맡는다. */
+/** 화면 본문. */
 @Composable
 internal fun FriendInviteContent(
     state: FriendInviteState,
@@ -114,12 +115,17 @@ internal fun FriendInviteContent(
                 }
 
             state.invitation == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
                         text = state.errorMessage ?: "초대 정보를 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.labelMedium,
                     )
+                    TextButton(onClick = { onIntent(FriendInviteIntent.Load) }) { Text("다시 시도") }
                 }
 
             else ->
@@ -147,7 +153,7 @@ private fun InviteBody(
                 .padding(top = 8.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // ---------- 초대 코드 + QR ----------
+        // 초대 코드 + QR
         Column(
             modifier =
                 Modifier
@@ -197,7 +203,7 @@ private fun InviteBody(
             }
         }
 
-        // ---------- 공유 버튼 ----------
+        // 공유 버튼
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ShareButton(
                 label = "💬 카카오톡",
@@ -215,7 +221,7 @@ private fun InviteBody(
             )
         }
 
-        // ---------- 초대 현황 ----------
+        // 초대 현황
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = "초대 현황",
@@ -301,6 +307,21 @@ private fun InviteeRow(invitee: FriendInvitee) {
             text = "${dateDotLabel(invitee.occurredAt)} 가입",
             color = RuleUpTheme.colors.textMuted,
             style = RuleUpTheme.typography.caption,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun FriendInviteContentPreview() {
+    RuleUpTheme {
+        FriendInviteContent(
+            state =
+                com.ruleup.profile.presentation.invite.viewmodel.FriendInviteState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
         )
     }
 }

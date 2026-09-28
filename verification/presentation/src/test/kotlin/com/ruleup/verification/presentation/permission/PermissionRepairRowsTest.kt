@@ -19,11 +19,10 @@ class PermissionRepairRowsTest {
 
     @Test
     fun `권한마다 여는 문이 다르다`() {
-        // 걸음·수면을 사용정보 접근 설정으로 보내면 거기서 아무리 켜도 그 권한은 생기지 않는다.
         val rows = repairRows(snapshot()).associateBy { it.label }
 
         assertEquals(PermissionRequestKind.USAGE_ACCESS_SETTINGS, rows.getValue("사용 정보 접근").kind)
-        assertEquals(PermissionRequestKind.HEALTH_CONNECT, rows.getValue("걸음·거리").kind)
+        assertEquals(PermissionRequestKind.HEALTH_CONNECT, rows.getValue("걸음").kind)
         assertEquals(PermissionRequestKind.HEALTH_CONNECT, rows.getValue("수면").kind)
         assertEquals(PermissionRequestKind.RUNTIME, rows.getValue("위치").kind)
     }
@@ -34,7 +33,7 @@ class PermissionRepairRowsTest {
 
         assertTrue(rows.getValue("위치").runtimePermissions.isNotEmpty())
         assertTrue(rows.getValue("사용 정보 접근").runtimePermissions.isEmpty())
-        assertTrue(rows.getValue("걸음·거리").runtimePermissions.isEmpty())
+        assertTrue(rows.getValue("걸음").runtimePermissions.isEmpty())
     }
 
     private fun snapshot(location: PermissionState = PermissionState.GRANTED): PermissionSnapshot =

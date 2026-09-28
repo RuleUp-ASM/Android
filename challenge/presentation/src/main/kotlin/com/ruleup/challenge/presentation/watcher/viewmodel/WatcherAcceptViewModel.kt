@@ -10,18 +10,14 @@ import com.ruleup.challenge.domain.repository.WatcherRepository
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 감시자 초대 수락 ViewModel.
- *
- * **자동으로 수락하지 않는다** — 수락이 곧 개인정보 수신 동의라, 링크를 연 것만으로 동의가 성립하면
- * 안 된다. 화면이 무엇에 동의하는지 보여 주고 사용자가 누를 때만 보낸다.
- */
+/** 감시자 초대 수락 ViewModel. */
 @HiltViewModel
 class WatcherAcceptViewModel
     @Inject
@@ -36,7 +32,7 @@ class WatcherAcceptViewModel
 
         override fun onIntent(intent: WatcherAcceptIntent) {
             when (intent) {
-                // 토큰이 아예 없으면 누를 것도 없다 — 들어온 순간 사유를 보여 준다.
+                // 토큰이 아예 없으면 누를 것도 없다
                 is WatcherAcceptIntent.Load -> {
                     token = intent.token
                     if (token.isBlank()) {
@@ -79,7 +75,7 @@ class WatcherAcceptViewModel
                         dispatch(
                             WatcherAcceptReducerEvent.Failed(
                                 it.toFailure(),
-                                it.message ?: "초대를 수락하지 못했어요",
+                                it.userFacingMessage("초대를 수락하지 못했어요"),
                             ),
                         )
                     }

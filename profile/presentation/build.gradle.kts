@@ -24,7 +24,7 @@ android {
         compose = true
     }
 
-    // Compose 가 테마·리소스를 읽어야 렌더된다. 없으면 리소스 조회에서 터진다.
+    // Compose 가 테마·리소스를 읽어야 렌더된다.
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -40,20 +40,22 @@ kotlin {
 }
 
 dependencies {
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(project(":tti:presentation"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":profile:domain"))
-    // 로그아웃·탈퇴는 인증 소관 — onboarding 의 domain 계약을 직접 쓴다.
+    // 로그아웃·탈퇴는 인증 소관
     implementation(project(":onboarding:domain"))
-    // 「내가 받는 알림」은 감시자 관계 — challenge 의 domain 계약을 직접 쓴다.
+    // 「내가 받는 알림」은 감시자 관계
     implementation(project(":challenge:domain"))
-    // 알림 설정·알림함 진입점 — notification 의 domain 계약(Page)만 쓴다.
+    // 알림 설정·알림함 진입점
     implementation(project(":notification:domain"))
-    // 이의 내역은 인증 모듈 소관 개념이다 — 타입을 베끼지 않고 그쪽 domain 계약을 직접 쓴다.
+    // 이의 내역은 인증 모듈 소관 개념이다
     implementation(project(":verification:domain"))
-    // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다. 화면 자체는 :report:presentation 소관.
+    // 신고·차단 화면으로 보내는 경로(BlockListPage)만 쓴다.
     implementation(project(":report:domain"))
-    // 설정 허브가 문의 진입점과 새 답변 뱃지를 그린다 — feature 간 의존은 domain 까지만.
+    // 설정 허브가 문의 진입점과 새 답변 뱃지를 그린다
     implementation(project(":support:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
@@ -93,12 +95,11 @@ dependencies {
     testImplementation(testFixtures(project(":onboarding:domain")))
     testImplementation(testFixtures(project(":support:domain")))
 
-    // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
+    // Compose 화면을 JVM 에서 렌더한다
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
-    // manifest 는 반드시 debugImplementation 이다. 유닛 테스트는 debug 변형의 병합 매니페스트를 읽는데,
-    // testImplementation 으로 넣으면 클래스만 오고 createComposeRule 이 띄울 ComponentActivity 가 안 실린다.
+    // manifest 는 반드시 debugImplementation 이다.
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

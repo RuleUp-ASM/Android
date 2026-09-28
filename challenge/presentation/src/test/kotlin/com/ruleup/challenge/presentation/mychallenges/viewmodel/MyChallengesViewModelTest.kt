@@ -23,13 +23,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 내 챌린지 목록. 서버가 완료와 이탈을 **다른 filter 로** 내리는데 화면은 한 탭에 합쳐 보여 준다 —
- * 그래서 두 응답을 합치고 커서도 각각 들고 있어야 한다. 한쪽만 따라가면 사용자의 지난 방이 조용히
- * 사라진다.
- *
- * 달성률은 목록이 아니라 인증 진행률에서 오므로, 그 조회가 실패해도 목록이 오류 화면이 되면 안 된다.
- */
+/** 내 챌린지 목록. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyChallengesViewModelTest {
     @BeforeTest
@@ -92,7 +86,7 @@ class MyChallengesViewModelTest {
 
             viewModel.onIntent(MyChallengesIntent.Load)
 
-            assertEquals("서버 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("챌린지 목록을 불러오지 못했어요", viewModel.uiState.value.errorMessage)
             assertFalse(viewModel.uiState.value.isLoading)
         }
 
@@ -112,7 +106,6 @@ class MyChallengesViewModelTest {
     @Test
     fun `다음 장이 남은 탭만 커서를 들고 다시 묻는다`() =
         runTest {
-            // 완료만 다음 장이 있는 상황이다. 이탈까지 같이 물으면 이미 받은 항목이 두 번 들어온다.
             val repo =
                 FakeChallengeRepository(
                     myChallenges = { filter, cursor ->

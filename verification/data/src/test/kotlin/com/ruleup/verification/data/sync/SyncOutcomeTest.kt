@@ -14,12 +14,12 @@ class SyncOutcomeTest {
 
     @Test
     fun `400 INVALID_SIGNAL_PAYLOAD 은 DISCARD - 폐기 후 success`() {
-        assertEquals(SyncOutcome.DISCARD, syncOutcomeFor(InvalidSignalPayloadException()))
+        assertEquals(SyncOutcome.STOP_RETRY, syncOutcomeFor(InvalidSignalPayloadException()))
     }
 
     @Test
     fun `쪼개도 안 되는 413 은 DISCARD - 다음 주기에 보내도 결과가 같다`() {
-        assertEquals(SyncOutcome.DISCARD, syncOutcomeFor(SyncPayloadTooLargeException()))
+        assertEquals(SyncOutcome.STOP_RETRY, syncOutcomeFor(SyncPayloadTooLargeException()))
     }
 
     @Test

@@ -11,10 +11,7 @@ import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 
-/**
- * 홈 챌린지 카드 1개의 표시 모델. 서버 진행률(ChallengeProgress)과 로컬 요약(MyChallengeSummary)을
- * 한 가지 형태로 합쳐 렌더한다.
- */
+/** 홈 챌린지 카드 1개의 표시 모델. */
 data class HomeChallengeUi(
     val challengeId: String,
     val title: String,
@@ -26,10 +23,7 @@ data class HomeChallengeUi(
     val accentColor: Color,
 )
 
-/**
- * 서버 "내 챌린지 목록"이 기준이고 진행률이 진행바·오늘 대상 여부를 채운다.
- * 목록에만 없는 카드도 남기는 이유 — 목록 조회가 실패하거나 방금 만든 챌린지가 홈에서 사라지면 안 된다.
- */
+/** 서버 "내 챌린지 목록"이 기준이고 진행률이 진행바·오늘 대상 여부를 채운다. */
 fun mergeHomeChallenges(
     myChallenges: List<MyChallenge>,
     progress: ProgressSnapshot?,
@@ -45,7 +39,7 @@ fun mergeHomeChallenges(
             ?.challenges
             .orEmpty()
             .filter { it.challengeId !in serverIds }
-            // 진행률 스냅샷은 끝난 방도 싣는다 — 거르지 않으면 완주한 방이 「진행 중 · 진행중」으로 뜬다.
+            // 진행률 스냅샷은 끝난 방도 싣는다
             .filterNot { ChallengeStatus.fromValue(it.status) == ChallengeStatus.COMPLETED }
             .map { it.toHomeUi() }
 
@@ -58,21 +52,32 @@ fun mergeHomeChallenges(
 }
 
 private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi {
-    val dayPart = if (progress == null || progress.successDays <= 0) "진행중" else "${progress.successDays}일째"
+    val dayPart =
+        when {
+            leftType?.isKicked == true -> "강퇴됨"
+            isUpcoming -> "시작 전"
+            progress == null || progress.successDays <= 0 -> "진행중"
+            else -> "${progress.successDays}일째"
+        }
     val groupPart = if (mode.isGroup) "함께" else "솔로"
     return HomeChallengeUi(
         challengeId = challengeId,
         title = title,
         subtitle = listOf(dayPart, groupPart).joinToString(" · "),
         progress = progress?.let { (it.progressRate / 100.0).toFloat().coerceIn(0f, 1f) } ?: 0f,
-        todayTarget = progress?.todayTarget ?: false,
+        todayTarget = !isUpcoming && leftType == null && progress?.todayTarget == true,
         iconRes = categoryIconRes(category),
         accentColor = categoryAccentColor(category),
     )
 }
 
 private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
-    val dayPart = if (successDays <= 0) "진행중" else "${successDays}일째"
+    val dayPart =
+        when (status) {
+            "UPCOMING" -> "시작 전"
+            "KICKED" -> "강퇴됨"
+            else -> if (successDays <= 0) "진행중" else "${successDays}일째"
+        }
     // 인증 모듈의 진행률 응답은 아직 구 필드명(participationType)을 문자열로 준다.
     val groupPart =
         when (participationType) {
@@ -85,7 +90,7 @@ private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
         title = title,
         subtitle = listOfNotNull(dayPart, groupPart).joinToString(" · "),
         progress = (progressRate / 100.0).toFloat().coerceIn(0f, 1f),
-        todayTarget = todayTarget,
+        todayTarget = status == "ACTIVE" && todayTarget,
         iconRes = categoryIconRes(category),
         accentColor = categoryAccentColor(category),
     )

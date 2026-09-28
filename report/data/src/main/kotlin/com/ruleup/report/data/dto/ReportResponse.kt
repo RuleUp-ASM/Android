@@ -11,14 +11,9 @@ import com.ruleup.report.domain.entity.ReportResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 신고 접수 ----------
+// 신고 접수
 
-/**
- * 접수 결과(명세 POST /reports 201).
- *
- * 응답의 `blocked` 는 선언하지 않는다 — 유저·챌린지 신고 모두 항상 true 라 읽을 이유가 없고,
- * 파서가 모르는 키를 무시하도록 설정돼 있어 남겨 둘 필요도 없다.
- */
+/** 접수 결과. */
 @Serializable
 data class ReportCreateResponse(
     @SerialName("reportId")
@@ -34,7 +29,7 @@ internal fun ReportCreateResponse.toDomain(): ReportResult =
         hiddenEffect = HiddenEffect.fromValue(hiddenEffect),
     )
 
-// ---------- 차단 목록 ----------
+// 차단 목록
 
 @Serializable
 data class BlockListResponse(
@@ -72,14 +67,12 @@ internal fun BlockListResponse.toDomain(): BlockList =
         challenges = challenges.orEmpty().map { it.toDomain() },
     )
 
-/**
- * id 가 비면 [requireField] 로 터뜨린다 — 그 행만 조용히 빼면 사용자는 차단이 남아 있는데
- * 목록에서 사라진 상대를 영영 풀 수 없게 된다. 목록을 못 그리는 편이 눈에 띄고 고칠 수 있다.
- */
+/** id 가 비면 [requireField] 로 터뜨린다 */
 internal fun BlockedUserResponse.toDomain(): BlockedUser =
     BlockedUser(
-        userId = userId.requireField("blocks.users[].userId"),
-        maskedNickname = maskedNickname.orEmpty(),
+        user =
+            com.ruleup.domain.entity.user
+                .User(userId.requireField("blocks.users[].userId"), maskedNickname.orEmpty(), null),
         blockedAt = blockedAt,
     )
 
@@ -87,19 +80,17 @@ internal fun BlockedChallengeResponse.toDomain(): BlockedChallenge =
     BlockedChallenge(
         challengeId = challengeId.requireField("blocks.challenges[].challengeId"),
         maskedTitle = maskedTitle.orEmpty(),
-        // 모르면 미참여로 본다 — 참여 중이라고 잘못 말하면 "방에서 나가기"를 권하게 된다.
+        // 모르면 미참여로 본다
         participating = participating ?: false,
         blockedAt = blockedAt,
     )
 
-// ---------- 에러 코드 → 화면 어휘 ----------
+// 에러 코드 → 화면 어휘
 
-/**
- * 서버 에러 코드를 화면이 아는 실패로 옮긴다. 여기 없는 코드는 [ReportFailure.UNKNOWN] 이고,
- * 화면은 일반 오류 문구를 쓴다 — 서버가 코드를 추가해도 앱이 멈추지 않는다.
- */
+/** 서버 에러 코드를 화면이 아는 실패로 옮긴다. */
 internal fun ApiException.toReportFailure(): ReportFailure =
     when (code) {
+        "ALREADY_REPORTED" -> ReportFailure.ALREADY_REPORTED
         "REPORT_SUSPENDED" -> ReportFailure.SUSPENDED
         "CANNOT_REPORT_SELF" -> ReportFailure.SELF_TARGET
         "INVALID_REPORT_TARGET" -> ReportFailure.INVALID_TARGET

@@ -2,6 +2,7 @@ package com.ruleup.profile.presentation.appeals.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import com.ruleup.verification.domain.repository.VerificationRepository
@@ -9,10 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 이의 내역 ViewModel (명세 GET /users/me/appeals).
- * 접수 즉시 인용이라 계류·기각이 없고 형식 미달은 이력에 없다 — 그래서 필터도 페이지네이션도 없다.
- */
+/** 이의 내역 ViewModel. */
 @HiltViewModel
 class MyAppealsViewModel
     @Inject
@@ -48,11 +46,11 @@ class MyAppealsViewModel
             if (!force && currentState.history.isNotEmpty()) return
             dispatch(MyAppealsReducerEvent.Loading)
             viewModelScope.launch {
-                // 1회 자동 재시도(프론트엔드 테크스펙 4-6) — 일시적 실패로 빈 화면을 보여주지 않는다.
+                // 1회 자동 재시도
                 runCatching { verificationRepository.getMyAppeals() }
                     .recoverCatching { verificationRepository.getMyAppeals() }
                     .onSuccess { dispatch(MyAppealsReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(MyAppealsReducerEvent.Failed(it.message ?: "이의 내역을 불러오지 못했어요")) }
+                    .onFailure { dispatch(MyAppealsReducerEvent.Failed(it.userFacingMessage("이의 내역을 불러오지 못했어요"))) }
             }
         }
     }

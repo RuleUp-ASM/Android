@@ -2,6 +2,7 @@ package com.ruleup.android_ruleup
 
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -12,7 +13,6 @@ import androidx.metrics.performance.JankStats
 import com.ruleup.android_ruleup.deeplink.resolveNewIntentRoute
 import com.ruleup.android_ruleup.deeplink.resolveStartRoute
 import com.ruleup.android_ruleup.deeplink.startStack
-import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.observability.JankTracker
 import com.ruleup.android_ruleup.observability.ScreenTracker
 import com.ruleup.domain.helper.MessageHelper
@@ -23,7 +23,9 @@ import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.logging.domain.BizLogger
 import com.ruleup.observability.domain.api.Observability
+import com.ruleup.onboarding.domain.account.AccountRestrictionProvider
 import com.ruleup.onboarding.domain.navigation.SplashPage
+import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.tti.domain.TtiRecorder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -68,21 +70,23 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var routeAccessPolicy: RouteAccessPolicy
 
+    @Inject
+    lateinit var accountRestrictionProvider: AccountRestrictionProvider
+
+    @Inject
+    lateinit var signupInviteStore: com.ruleup.onboarding.domain.auth.repository.SignupInviteStore
+
     private var jankStats: JankStats? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // @AndroidEntryPoint 의 필드 주입은 super.onCreate() 에서 일어난다.
-        // 주입된 의존을 쓰는 코드는 반드시 그 뒤에 와야 한다.
         super.onCreate(savedInstanceState)
-        // 딥링크는 인증보다 먼저 도착한다 — 목적지는 보관만 하고 스플래시가 꺼내 간다([PendingDeepLink]).
-        // 알림 탭도 App Link 도 URI 로 온다. 해석은 한 갈래다.
-        pendingDeepLink.set(resolveStartRoute(intent?.data, observability, deeplinkResolver))
+        // 딥링크는 인증보다 먼저 도착한다
+        pendingDeepLink.set(resolveStartRoute(intent?.entryUri(), observability, deeplinkResolver))
+        if (tokenRepository.cachedAccessToken() == null) intent?.entryUri()?.toString()?.let(signupInviteStore::capture)
         observeSessionEnd()
         val startStack = startStack()
-        // 시작 화면은 네비게이션 신호 없이 백스택으로 직접 세팅되므로 ScreenTracker 를 거치지 않는다.
-        // 그대로 두면 스플래시의 ScreenView 가 누락되고, 그 구간 jank 가 'unknown' 에 귀속된다.
-        (startStack.lastOrNull() as? GenericNavKey)?.let { screenTracker.onScreenEntered(it.path) }
-        // 앱은 라이트 테마만 있다. 기본값은 시스템 다크 모드를 따라 밝은 아이콘을 그려 밝은 배경에서 안 보인다.
+        // 앱은 라이트 테마만 있다.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
@@ -98,21 +102,11 @@ class MainActivity : ComponentActivity() {
                 startStack = startStack,
             )
         }
-        // 성능 채널로 집계해 내보낸다. 릴리스에서도 켠다 — 실사용 기기의 jank 가 정작 필요한 데이터이고,
-        // 프레임마다가 아니라 창 단위로 묶여 나가므로 이벤트 양이 통제된다.
+        // 성능 채널로 집계해 내보낸다.
         jankStats = JankStats.createAndTrack(window, jankTracker::onFrame)
     }
 
-    /**
-     * 세션이 끊기면 스플래시로 돌려보내 진입 판정을 다시 시킨다.
-     *
-     * 이 경로가 필요한 건 **아무도 시작하지 않은 종료**가 있어서다 — 다른 기기 로그인이나
-     * refreshToken 만료는 `TokenAuthenticator` 가 OkHttp 스레드에서 토큰을 지우는 것으로만
-     * 드러난다. 거기엔 화면도 ViewModel 도 없고, `core:network` 가 네비게이션을 알 수도 없다.
-     *
-     * 첫 방출은 건너뛴다 — 앱 시작 시점의 로그인 여부는 전이가 아니다. 자동 로그인 실패도 토큰
-     * 정리를 거치지만, 그때는 이미 스플래시가 떠 있어 [handleNavRoute] 가 아무것도 하지 않는다.
-     */
+    /** 세션이 끊기면 스플래시로 돌려보내 진입 판정을 다시 시킨다. */
     private fun observeSessionEnd() {
         lifecycleScope.launch {
             tokenRepository.isLoggedIn
@@ -137,14 +131,25 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val route = intent.data?.let { resolveNewIntentRoute(it, observability, deeplinkResolver) } ?: return
+        if (tokenRepository.cachedAccessToken() == null) intent.entryUri()?.toString()?.let(signupInviteStore::capture)
+        val route = intent.entryUri()?.let { resolveNewIntentRoute(it, observability, deeplinkResolver) } ?: return
         lifecycleScope.launch {
-            // 로그인 화면 위에서 링크를 받으면 화면만 뜨고 API 가 401 을 받는다 — 보관했다가 로그인 후 연다.
+            // 로그인 화면 위에서 링크를 받으면 화면만 뜨고 API 가 401 을 받는다
             if (!tokenRepository.isLoggedIn.first() && routeAccessPolicy.requiresLogin(route.path)) {
                 pendingDeepLink.set(route)
             } else {
-                navigationHelper.navigateByRoute(route)
+                runCatching { accountRestrictionProvider.current() }
+                    .onSuccess { restriction ->
+                        if (restriction.isFullLock) {
+                            navigationHelper.replaceStackWith(AccountLockedPage.toRoute())
+                        } else {
+                            navigationHelper.navigateByRoute(route)
+                        }
+                    }.onFailure { messageHelper.showToast("계정 상태를 확인하지 못했어요. 다시 시도해 주세요") }
             }
         }
     }
 }
+
+/** 외부 진입 목적지. */
+internal fun Intent.entryUri(): Uri? = data ?: getStringExtra("deeplink")?.takeIf { it.isNotBlank() }?.let(Uri::parse)

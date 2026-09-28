@@ -11,6 +11,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
 import com.ruleup.notification.domain.repository.NotificationRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.verification.domain.repository.VerificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,16 +20,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 내 챌린지 목록 ViewModel (하단 「챌린지」 탭).
- *
- * 완료·이탈 탭은 서버 `filter` 가 둘로 갈려 있어 **두 번 받아 합친다.** 이탈 시각이 없는 완료 건과
- * 섞이므로 정렬 기준은 종료·이탈 시각이 아니라 **기간 종료일 역순**으로 둔다 — 두 목록에 공통으로
- * 있는 값이 그것뿐이다.
- *
- * 달성률과 남은 일수는 목록 응답에 없어 인증 모듈의 진행률(`verifications/progress`)에서 온다.
- * 그 조회가 실패해도 목록은 그대로 뜬다 — 두 값만 비운다.
- */
+/** 내 챌린지 목록 ViewModel (하단 「챌린지」 탭). */
 @HiltViewModel
 class MyChallengesViewModel
     @Inject
@@ -93,7 +85,7 @@ class MyChallengesViewModel
             }
 
         private fun load(force: Boolean) {
-            // 첫 구독 시에만 스피너 — 복귀 갱신은 보여 주던 목록을 유지한 채 조용히 바꾼다.
+            // 첫 구독 시에만 스피너
             if (!force && !currentState.isLoading) return
             if (currentState.inProgress.isEmpty() && currentState.finished.isEmpty()) {
                 dispatch(MyChallengesReducerEvent.Loading)
@@ -116,16 +108,16 @@ class MyChallengesViewModel
                     )
                 }.onFailure {
                     if (currentState.inProgress.isEmpty() && currentState.finished.isEmpty()) {
-                        dispatch(MyChallengesReducerEvent.Failed(it.message ?: "챌린지 목록을 불러오지 못했어요"))
+                        dispatch(MyChallengesReducerEvent.Failed(it.userFacingMessage("챌린지 목록을 불러오지 못했어요")))
                     }
                 }
             }
-            // 달성률만 쓰는 부수 조회라 실패를 삼킨다 — 이것 때문에 목록이 오류 화면이 되면 안 된다.
+            // 달성률만 쓰는 부수 조회라 실패를 삼킨다
             viewModelScope.launch {
                 runCatching { verificationRepository.getProgress() }
                     .onSuccess { dispatch(MyChallengesReducerEvent.ProgressLoaded(it)) }
             }
-            // 미읽음 뱃지도 부수 정보다 — 못 세면 뱃지만 안 붙고 목록은 그대로 뜬다.
+            // 미읽음 뱃지도 부수 정보다
             viewModelScope.launch {
                 runCatching { notificationRepository.getUnreadSummary() }
                     .onSuccess { dispatch(MyChallengesReducerEvent.UnreadLoaded(it)) }
@@ -172,7 +164,7 @@ class MyChallengesViewModel
                     )
                 }.onFailure {
                     dispatch(MyChallengesReducerEvent.LoadingMore(false))
-                    emitEffect(MyChallengesEffect.ShowMessage(it.message ?: "더 불러오지 못했어요"))
+                    emitEffect(MyChallengesEffect.ShowMessage(it.userFacingMessage("더 불러오지 못했어요")))
                 }
             }
         }

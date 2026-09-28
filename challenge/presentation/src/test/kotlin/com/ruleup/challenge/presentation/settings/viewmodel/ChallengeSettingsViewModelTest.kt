@@ -38,10 +38,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 챌린지 수정(방장 전용). 저장은 남의 방을 바꾸는 일이라 **실패했을 때 화면을 떠나지 않는 것**과,
- * 남이 먼저 고쳤을 때 **덮어쓰지 않고 다시 읽어 오는 것**이 계약이다.
- */
+/** 챌린지 수정(방장 전용). */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeSettingsViewModelTest {
     @BeforeTest
@@ -63,7 +60,6 @@ class ChallengeSettingsViewModelTest {
     @Test
     fun `현재 인원을 못 받아도 편집을 막지 않는다`() =
         runTest {
-            // 하한만 못 잠글 뿐이고 서버가 CAPACITY_BELOW_CURRENT 로 최종 방어한다.
             val viewModel =
                 viewModel(
                     FakeChallengeRepository(
@@ -84,7 +80,7 @@ class ChallengeSettingsViewModelTest {
 
             viewModel.onIntent(ChallengeSettingsIntent.Load("ch1"))
 
-            assertEquals("설정 오류", viewModel.uiState.value.errorMessage)
+            assertEquals("설정을 불러오지 못했어요", viewModel.uiState.value.errorMessage)
         }
 
     @Test
@@ -114,7 +110,6 @@ class ChallengeSettingsViewModelTest {
     @Test
     fun `무제한으로 바꿔 저장하면 정원을 null 로 명시해 보낸다`() =
         runTest {
-            // capacity 의 null 은 PATCH 에서 "미변경"이라, 표시를 따로 세우지 않으면 무제한으로 바뀌지 않는다.
             val repo = repo()
             val viewModel = viewModel(repo)
             viewModel.onIntent(ChallengeSettingsIntent.Load("ch1"))
@@ -169,7 +164,6 @@ class ChallengeSettingsViewModelTest {
     @Test
     fun `남이 먼저 고쳤으면 덮어쓰지 않고 서버 기준으로 다시 읽는다`() =
         runTest {
-            // 버전이 어긋난 채로 다시 누르면 남의 수정을 지운다 — 재조회로 최신 범위·버전을 받는다.
             val nav = RecordingNavigationHelper()
             val repo = repo(update = { throw ChallengeVersionConflictException() })
             val viewModel = viewModel(repo, nav)
@@ -238,14 +232,14 @@ class ChallengeSettingsViewModelTest {
                 ),
         )
 
-    /** 이 화면이 상세에서 쓰는 건 참여 인원 하나뿐이다 — 나머지는 형식만 채운다. */
+    /** 이 화면이 상세에서 쓰는 건 참여 인원 하나뿐이다 */
     private fun detail(participantCount: Int) =
         ChallengeDetail(
-            challengeId = "ch1",
             title = "아침 6시 기상",
-            description = null,
-            imageUrl = null,
             category = Category.entries.first(),
+            imageUrl = null,
+            challengeId = "ch1",
+            description = null,
             mode = ChallengeMode.GROUP,
             visibility = ChallengeVisibility.PUBLIC,
             status = ChallengeStatus.ACTIVE,

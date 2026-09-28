@@ -8,7 +8,7 @@ import com.ruleup.network.image.ImageReader
 import com.ruleup.verification.data.api.KakaoLocalApi
 import com.ruleup.verification.data.api.VerificationApi
 import com.ruleup.verification.data.dto.AcknowledgeResponse
-import com.ruleup.verification.data.dto.AnchorDto
+import com.ruleup.verification.data.dto.AnchorResponse
 import com.ruleup.verification.data.dto.AppealHistoryItemResponse
 import com.ruleup.verification.data.dto.AppealImageResponse
 import com.ruleup.verification.data.dto.AppealResponse
@@ -84,7 +84,7 @@ class VerificationRepositoryImplTest {
             // verificationId 가 없으면 방금 한 체크를 되돌릴 경로가 없다.
             assertEquals("v_11", result.verificationId)
             assertEquals("2026-07-25", result.targetDate)
-            // 제출 즉시 확정 — 잠정 상태가 없다.
+            // 제출 즉시 확정
             assertEquals(TodayResultStatus.DONE, result.status)
             assertEquals(7, result.streak?.after)
             assertEquals("MANUAL_NO_SCORE", result.scoreNote)
@@ -93,7 +93,6 @@ class VerificationRepositoryImplTest {
     @Test
     fun `자정을 넘긴 수동 제출은 도메인 예외로 변환된다`() =
         runTest {
-            // 화면을 열어 둔 채 날짜가 바뀌면 실제로 난다 — 일반 오류 문구로 뭉개면 왜 막혔는지 알 수 없다.
             val api = FakeVerificationApi(manualError = ErrorBody("INVALID_TARGET_DATE", "오늘이 아님"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
 
@@ -103,7 +102,6 @@ class VerificationRepositoryImplTest {
     @Test
     fun `자동 방 수동 제출은 도메인 어휘로 올리지 않는다`() =
         runTest {
-            // 화면이 자동 방에 체크 버튼을 두지 않는 것이 전제다 — 도달하면 프로그래밍 오류다.
             val api = FakeVerificationApi(manualError = ErrorBody("NOT_MANUAL_CHALLENGE", "자동 방"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
 
@@ -117,7 +115,7 @@ class VerificationRepositoryImplTest {
                 FakeVerificationApi(
                     myLocationSuccess =
                         MyLocationResponse(
-                            anchors = listOf(AnchorDto(lat = 37.4979, lng = 127.0276, label = "새 헬스장")),
+                            anchors = listOf(AnchorResponse(lat = 37.4979, lng = 127.0276, label = "새 헬스장")),
                             serverRadiusM = 500,
                             appliedFrom = "IMMEDIATE",
                             nextChangeAvailableAt = "2026-09-01T00:00:00+09:00",
@@ -130,14 +128,13 @@ class VerificationRepositoryImplTest {
             assertEquals(1, result.anchors.size)
             assertEquals(500f, result.serverRadiusM)
             assertEquals("2026-09-01T00:00:00+09:00", result.nextChangeAvailableAt)
-            // 저장으로 그 달 1회를 소진했으므로 응답에 changeAvailable 이 없다 — 못 바꾸는 쪽으로 접는다.
+
             assertFalse(result.changeAvailable)
         }
 
     @Test
     fun `인증 윈도우 중 앵커 교체는 도메인 예외로 변환된다`() =
         runTest {
-            // 화면이 "익일 재시도"를 안내해야 하는 실패다 — 일반 오류 문구로 뭉개면 사용자가 왜 막혔는지 모른다.
             val api = FakeVerificationApi(myLocationError = ErrorBody("LOCATION_LOCKED_IN_WINDOW", "진행 중"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
 
@@ -187,7 +184,6 @@ class VerificationRepositoryImplTest {
     @Test
     fun `자동 판정 건 취소는 도메인 어휘로 올리지 않는다`() =
         runTest {
-            // 화면이 자동 방에 취소 버튼을 두지 않는 것이 전제다 — 도달하면 프로그래밍 오류지 사용자 안내가 아니다.
             val api = FakeVerificationApi(cancelError = ErrorBody("NOT_MANUAL_VERIFICATION", "자동 건"))
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
 
@@ -197,7 +193,6 @@ class VerificationRepositoryImplTest {
     @Test
     fun `이의 형식 미달과 기한 경과와 이미 정정됨이 각각 다른 예외로 갈린다`() =
         runTest {
-            // 화면이 셋을 다르게 말해야 한다 — 특히 NOT_FAILED 는 오류가 아니라 이미 정정된 건이다.
             val cases =
                 listOf(
                     "INVALID_REASON" to InvalidAppealReasonException::class,
@@ -223,7 +218,7 @@ class VerificationRepositoryImplTest {
             val url = repository.uploadAppealImage("content://media/1")
 
             assertEquals("https://cdn.ruleup.co.kr/appeals/1.jpg", url)
-            // 서버가 받는 파트 이름은 계약이다 — 다른 이름으로 보내면 오류도 없이 그냥 무시된다.
+
             assertTrue(
                 api.uploadedPart
                     ?.headers
@@ -236,7 +231,6 @@ class VerificationRepositoryImplTest {
     @Test
     fun `URL 이 없는 업로드 응답은 실패로 흐른다`() =
         runTest {
-            // 화면이 빈 문자열을 imageUrl 로 실어 제출하면 서버가 깨진 링크를 저장한다.
             val api = FakeVerificationApi(uploadedImageUrl = null)
             val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
 

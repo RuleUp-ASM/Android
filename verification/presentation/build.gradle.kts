@@ -24,7 +24,7 @@ android {
         compose = true
     }
 
-    // Compose 가 테마·리소스를 읽어야 렌더된다. 없으면 리소스 조회에서 터진다.
+    // Compose 테스트 리소스.
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -35,12 +35,14 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
-        // core:ui 의 -Xexplicit-backing-fields pre-release 메타데이터 소비.
+        // core:ui 실험 기능 메타데이터 호환.
         freeCompilerArgs.add("-Xskip-prerelease-check")
     }
 }
 
 dependencies {
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(project(":tti:presentation"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":observability:domain"))
@@ -59,9 +61,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    // 지도(Kakao Map SDK v2). 네이티브 앱키는 :app 의 KakaoMapSdk.init 에서 1회 주입.
+    // 카카오 지도 SDK.
     implementation(libs.kakao.map)
-    // "현재 위치" 단발 측위(FusedLocation)
+    // 현재 위치 조회.
     implementation(libs.play.services.location)
     implementation(libs.kotlinx.coroutines.play.services)
 
@@ -75,12 +77,11 @@ dependencies {
     testImplementation(testFixtures(project(":observability:domain")))
     testImplementation(testFixtures(project(":verification:domain")))
 
-    // Compose 화면을 JVM 에서 렌더한다 — CI(test.yml)가 도는 ./gradlew test 안에 들어온다.
+    // Compose JVM 테스트.
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
 
-    // manifest 는 반드시 debugImplementation 이다. 유닛 테스트는 debug 변형의 병합 매니페스트를 읽는데,
-    // testImplementation 으로 넣으면 클래스만 오고 createComposeRule 이 띄울 ComponentActivity 가 안 실린다.
+    // Compose 테스트 호스트 Activity.
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

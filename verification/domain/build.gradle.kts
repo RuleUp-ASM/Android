@@ -17,7 +17,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // VerificationRepository 대역을 challenge·profile·home presentation 이 함께 쓴다.
+    // 공유 인증 저장소 테스트 대역.
     testFixtures {
         enable = true
     }
@@ -30,17 +30,22 @@ kotlin {
 }
 
 dependencies {
-    // Page/NavRoute, InterestCategory(공유 커널)가 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
+    // 공개 시그니처의 core:domain 타입.
     api(project(":core:domain"))
-    // 비즈니스 이벤트 로깅(AnalyticsLogger). 내부 구현 세부라 implementation 으로 둔다.
+    api(project(":challenge:domain"))
+    api(project(":profile:domain"))
+    api(project(":onboarding:domain"))
+    // 비즈니스 이벤트 로깅(AnalyticsLogger).
     implementation(project(":observability:domain"))
     // 진행률 캐시 관찰(ProgressCacheStore.observe(): Flow).
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
 
     testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":challenge:domain")))
+    testImplementation(testFixtures(project(":core:domain")))
     testImplementation(libs.kotlinx.coroutines.test)
 
-    // core:domain 은 api 라 fixture 컴파일 경로에 오지만, coroutines 는 implementation 이다.
+    // 테스트 대역의 코루틴 의존성.
     testFixturesImplementation(libs.kotlinx.coroutines.core)
 }

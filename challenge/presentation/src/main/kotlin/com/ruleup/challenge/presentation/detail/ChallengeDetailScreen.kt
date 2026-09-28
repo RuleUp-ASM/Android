@@ -1,7 +1,5 @@
 package com.ruleup.challenge.presentation.detail
 
-import android.content.Intent
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,23 +18,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,10 +52,9 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
+import com.ruleup.challenge.presentation.common.VerificationAccessSheet
 import com.ruleup.challenge.presentation.common.capacityLabel
-import com.ruleup.challenge.presentation.create.component.SensitiveConsentSheet
-import com.ruleup.challenge.presentation.create.component.challengePermissionsGranted
-import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
+import com.ruleup.challenge.presentation.common.rememberVerificationPermissionRequester
 import com.ruleup.challenge.presentation.detail.component.AppealSheet
 import com.ruleup.challenge.presentation.detail.component.AppealTarget
 import com.ruleup.challenge.presentation.detail.component.MySetupCard
@@ -97,27 +91,14 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.report.domain.entity.HiddenEffect
 import com.ruleup.report.domain.entity.ReportReason
-import com.ruleup.tti.domain.TtiTimeline
-import com.ruleup.tti.presentation.TtiEmptySpanEffect
-import com.ruleup.tti.presentation.TtiPage
-import com.ruleup.tti.presentation.TtiSpanEffect
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
-import com.ruleup.ui.permission.healthConnectAvailable
-import com.ruleup.ui.permission.healthReadPermissions
-import com.ruleup.ui.permission.rememberHealthPermissionLauncher
-import com.ruleup.verification.domain.entity.PermissionRequestKind
-import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * 챌린지 상세/참여 화면. 홈 카드 탭으로 진입한다.
- *
- * "참여하기" 를 누르면 자동 인증에 필요한 런타임 권한을 확인하고, 하나라도 미허용이면
- * 권한 허용 모달(바텀시트)을 띄운다. 모두 허용되면 좌표 바인딩 화면으로 이어진다.
- */
+/** 챌린지 상세/참여 화면. */
 @Composable
 fun ChallengeDetailScreen(
     challengeId: String,
@@ -125,171 +106,122 @@ fun ChallengeDetailScreen(
     viewModel: ChallengeDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
-    // 이 화면의 TTI 구간. BACKEND 는 상세 조회 왕복, VIEW_BINDING 은 그 응답이 화면 상태로
-    // 들어오기까지다 — 둘을 나눠야 네트워크가 느린 건지 렌더가 느린 건지 갈린다.
-    //
-    // BIG_PART_LOADING 은 0ms 로 닫는다. 상세에는 뒤늦게 채워지는 큰 덩어리가 없는데, 비워 두면
-    // 네 구간이 다 차지 않아 이 화면의 기록이 한 건도 나가지 않는다.
-    TtiPage(pageName = TTI_PAGE_NAME) {
-        TtiSpanEffect(TtiTimeline.BACKEND, running = state.isLoading)
-        TtiSpanEffect(TtiTimeline.VIEW_BINDING, running = state.isLoading || state.detail == null)
-        TtiEmptySpanEffect(TtiTimeline.BIG_PART_LOADING)
-
-        val context = LocalContext.current
-        val messageHelper = LocalMessageHelper.current
-        val permissionRequester = rememberPermissionRequester()
-        val scope = rememberCoroutineScope()
-        var showPermissionSheet by remember { mutableStateOf(false) }
-        val healthLauncher = rememberHealthPermissionLauncher { viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions) }
-
-        androidx.compose.runtime.LaunchedEffect(challengeId) {
-            viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
+    val context = LocalContext.current
+    val messageHelper = LocalMessageHelper.current
+    val requestPermissions =
+        rememberVerificationPermissionRequester {
+            viewModel.onIntent(ChallengeDetailIntent.VerificationPermissionsReturned)
         }
 
-        // 단발성 효과: 감시자 초대 카카오톡 공유(사용자 본인 발신) + 안내 토스트.
-        androidx.compose.runtime.LaunchedEffect(Unit) {
-            viewModel.effect.collect { effect ->
-                when (effect) {
-                    is ChallengeDetailEffect.ShareWatcherInvite -> {
-                        val shared =
-                            WatcherInviteSharer.share(
-                                context = context,
-                                card = effect.card,
-                                inviteUrl = effect.inviteUrl,
-                            )
-                        if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
-                    }
+    androidx.compose.runtime.LaunchedEffect(challengeId) {
+        viewModel.onIntent(ChallengeDetailIntent.Load(challengeId))
+    }
 
-                    is ChallengeDetailEffect.ShareMemberInvite -> {
-                        val shared =
-                            MemberInviteSharer.share(
-                                context = context,
-                                challengeTitle = effect.challengeTitle,
-                                inviteUrl = effect.inviteUrl,
-                            )
-                        if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
-                    }
-
-                    is ChallengeDetailEffect.ShowMessage -> messageHelper.showToast(effect.message)
+    // 단발성 효과: 감시자 초대 카카오톡 공유(사용자 본인 발신) + 안내 토스트.
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is ChallengeDetailEffect.ShareWatcherInvite -> {
+                    val shared =
+                        WatcherInviteSharer.share(
+                            context = context,
+                            card = effect.card,
+                            inviteUrl = effect.inviteUrl,
+                        )
+                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
                 }
-            }
-        }
 
-        // 앱 등록 화면 등에서 돌아오면 등록 상태를 재확인해 버튼 모드를 갱신한다.
-        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-            viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
-        }
-
-        val setup = state.setup
-        // 권한 토큰은 GET setup 의 requiredPermissions 를 우선 사용(없으면 상세 verification 값).
-        val tokens =
-            setup?.requiredPermissions ?: state.detail
-                ?.verification
-                ?.requiredPermissions
-                .orEmpty()
-        // 권한 현황은 저장하지 않고 매번 OS 에 다시 묻는다 — 설정에서 끄고 돌아오는 경로가 있다.
-        LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-            viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
-        }
-        // 아직 못 물었으면(null) 막지 않는다 — 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
-        val missingTokens = state.missingPermissionTokens()
-        val permissionGranted = missingTokens.isEmpty()
-
-        // GET setup 요구사항으로 "필요한 등록만" 유도: 권한 → (requiresTargetPackages) 앱 → (requiresAnchors) 지도 → 참여.
-        // 수동 인증(manual)이거나 셋업 정보가 없으면 바로 참여.
-        val action =
-            when {
-                state.detail == null || setup == null || setup.manual -> DetailSetupAction.JOIN
-                !permissionGranted -> DetailSetupAction.GRANT_PERMISSION
-                setup.requiresTargetPackages && !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
-                setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
-                else -> DetailSetupAction.JOIN
-            }
-        // 심사 중에도 모집·입장에 제한이 없다 — 구 명세의 이미지 검수 모집 차단은 폐기됐다.
-        val recruitBlocked = false
-        val ctaLabel =
-            if (recruitBlocked) {
-                ""
-            } else {
-                when (action) {
-                    DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
-                    DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
-                    DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
-                    DetailSetupAction.JOIN -> "참여하기"
+                is ChallengeDetailEffect.ShareMemberInvite -> {
+                    val shared =
+                        MemberInviteSharer.share(
+                            context = context,
+                            challengeTitle = effect.challengeTitle,
+                            inviteUrl = effect.inviteUrl,
+                        )
+                    if (!shared) messageHelper.showToast("카카오톡 공유를 열지 못했어요")
                 }
+
+                is ChallengeDetailEffect.ShowMessage -> messageHelper.showToast(effect.message)
+                is ChallengeDetailEffect.RequestPermissions -> requestPermissions(effect.tokens)
             }
-
-        ChallengeDetailContent(
-            modifier = modifier,
-            state = state,
-            ctaLabel = ctaLabel,
-            onIntent = viewModel::onIntent,
-            onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
-            onCta = {
-                if (recruitBlocked) {
-                    messageHelper.showToast("이미지 검수가 끝나면 모집이 시작돼요")
-                } else {
-                    when (action) {
-                        DetailSetupAction.GRANT_PERMISSION -> showPermissionSheet = true
-                        DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
-                        DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
-                        DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
-                    }
-                }
-            },
-        )
-
-        if (showPermissionSheet) {
-            // OS 다이얼로그로 물을 수 있는 것과 설정에서만 켤 수 있는 것을 갈라 안내한다 —
-            // 사용정보 접근·Health Connect 는 "허용하기" 버튼으로 해결되지 않는다.
-            val byKind = missingTokens.groupBy { PermissionSnapshot.requestKindOf(it) }
-            val runtimeTokens = byKind[PermissionRequestKind.RUNTIME].orEmpty()
-            val usageTokens = byKind[PermissionRequestKind.USAGE_ACCESS_SETTINGS].orEmpty()
-            val healthTokens = byKind[PermissionRequestKind.HEALTH_CONNECT].orEmpty()
-            PermissionBottomSheet(
-                runtimeTokens = runtimeTokens,
-                usageTokens = usageTokens,
-                healthTokens = healthTokens,
-                onDismiss = { showPermissionSheet = false },
-                onOpenUsageSettings = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
-                onRequestHealth = {
-                    // 걸음·수면은 HC 자체 권한 화면으로 — 사용정보 접근 설정으로 보내면 거기서
-                    // 아무리 켜도 이 권한은 생기지 않는다.
-                    if (healthConnectAvailable(context)) {
-                        healthLauncher.launch(healthReadPermissions())
-                    } else {
-                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS))
-                    }
-                },
-                onAllow = {
-                    scope.launch {
-                        permissionRequester.request(runtimeTokens)
-                        viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
-                        if (challengePermissionsGranted(context, runtimeTokens)) {
-                            showPermissionSheet = false
-                        } else {
-                            messageHelper.showToast("계속하려면 권한을 모두 허용해주세요")
-                        }
-                    }
-                },
-            )
         }
     }
+
+    // 앱 등록 화면 등에서 돌아오면 등록 상태를 재확인해 버튼 모드를 갱신한다.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onIntent(ChallengeDetailIntent.RefreshSetup)
+    }
+
+    val setup = state.setup
+    // 권한 현황은 저장하지 않고 매번 OS 에 다시 묻는다
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onIntent(ChallengeDetailIntent.RefreshPermissions)
+    }
+    // 아직 못 물었으면(null) 막지 않는다
+    val missingTokens = state.missingPermissionTokens()
+    val permissionGranted = missingTokens.isEmpty()
+
+    // 설정 순서: 권한 → 대상 앱 → 위치 → 참여.
+    val action =
+        when {
+            state.detail == null || setup?.manual == true -> DetailSetupAction.JOIN
+            !permissionGranted -> DetailSetupAction.GRANT_PERMISSION
+            setup == null -> DetailSetupAction.JOIN
+            setup.requiresTargetPackages && !state.targetAppsRegistered -> DetailSetupAction.REGISTER_APPS
+            setup.requiresAnchors && !setup.anchorsConfigured -> DetailSetupAction.REGISTER_ANCHOR
+            else -> DetailSetupAction.JOIN
+        }
+    // 심사 중에도 모집·입장에 제한이 없다
+    val recruitBlocked = false
+    val ctaLabel =
+        if (recruitBlocked) {
+            ""
+        } else {
+            when (action) {
+                DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
+                DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
+                DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
+                DetailSetupAction.JOIN -> "참여하기"
+            }
+        }
+
+    ChallengeDetailContent(
+        modifier = modifier,
+        state = state,
+        ctaLabel = ctaLabel,
+        onIntent = viewModel::onIntent,
+        onBack = { viewModel.onIntent(ChallengeDetailIntent.Back) },
+        onCta = {
+            if (recruitBlocked) {
+                messageHelper.showToast("이미지 검수가 끝나면 모집이 시작돼요")
+            } else {
+                when (action) {
+                    DetailSetupAction.GRANT_PERMISSION -> viewModel.onIntent(ChallengeDetailIntent.OpenVerificationAccess)
+                    DetailSetupAction.REGISTER_APPS -> viewModel.onIntent(ChallengeDetailIntent.RegisterApps)
+                    DetailSetupAction.REGISTER_ANCHOR -> viewModel.onIntent(ChallengeDetailIntent.RegisterAnchor)
+                    DetailSetupAction.JOIN -> viewModel.onIntent(ChallengeDetailIntent.Proceed)
+                }
+            }
+        },
+    )
 }
 
-/**
- * 서버가 요구한 권한 중 **실제로 꺼져 있는 것**. 아직 못 물었으면(null) 빈 목록이다 —
- * 모른다고 참여를 잠그면 조회 실패가 곧 차단이 된다.
- */
+/** 서버가 요구한 권한 중 실제로 꺼져 있는 것. */
 internal fun ChallengeDetailState.missingPermissionTokens(): List<String> {
     val snapshot = permissions ?: return emptyList()
-    val tokens = setup?.requiredPermissions ?: detail?.verification?.requiredPermissions.orEmpty()
+    val tokens =
+        setup?.requiredPermissions ?: detail
+
+            ?.verification
+            ?.requiredPermissions
+            .orEmpty()
     return tokens.filter { snapshot.isGranted(it) == false }
 }
 
 @Composable
-// 테스트에서 상태를 직접 넣어 렌더하려고 연다. 동작은 그대로이고 모듈 밖으로 새지 않는다.
+// 테스트에서 상태를 직접 넣어 렌더하려고 연다.
 internal fun ChallengeDetailContent(
     state: ChallengeDetailState,
     ctaLabel: String,
@@ -308,7 +240,7 @@ internal fun ChallengeDetailContent(
     ) {
         val detail = state.detail
         val room = state.room
-        // 솔로 상세의 이의 시트. 방 홈이 없는 갈래라 RoomDetailTabs 의 시트를 쓸 수 없다.
+        // 솔로 상세의 이의 시트.
         var soloAppeal by remember { mutableStateOf<SoloAppeal?>(null) }
         val soloAppealImagePicker =
             rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -321,7 +253,6 @@ internal fun ChallengeDetailContent(
                     .statusBarsPadding(),
         ) {
             // 참여 중인 그룹 방이면 방 이름이 제목이고 관리 동작은 ⋯ 로 모은다.
-            // 비멤버가 보는 공개 상세는 기존 상단바 그대로다.
             if (detail != null && room != null) {
                 RoomAppBar(
                     title = detail.title,
@@ -329,7 +260,7 @@ internal fun ChallengeDetailContent(
                     onBack = onBack,
                 )
             } else if (detail != null && detail.myRole.isMember) {
-                // 솔로 방·시작 전 방은 room 이 오지 않는다. 멤버인데 비멤버 메뉴를 주면 수정·나가기 길이 없다.
+                // 솔로 방·시작 전 방은 room 이 오지 않는다.
                 RoomAppBar(
                     title = detail.title,
                     menuItems =
@@ -338,8 +269,7 @@ internal fun ChallengeDetailContent(
                     onBack = onBack,
                 )
             } else {
-                // 비멤버도 ⋯ 를 갖는다 — 부적절한 챌린지를 만나는 건 탐색으로 들어온 쪽이고,
-                // 여기 메뉴가 없으면 신고할 방법 자체가 없다.
+                // 비멤버도 ⋯ 를 갖는다
                 RoomAppBar(
                     title = detail?.title ?: "챌린지",
                     menuItems = listOf(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) }),
@@ -347,8 +277,7 @@ internal fun ChallengeDetailContent(
                 )
             }
 
-            // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다. 인증은 조용히 멈추므로 사용자가
-            // 스스로 알아챌 방법이 없다 — 매일 실패가 쌓이다 강퇴로 간다.
+            // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다.
             if (!state.isLoading && detail?.myRole?.isMember == true && state.missingPermissionTokens().isNotEmpty()) {
                 Text(
                     text = "인증에 필요한 권한이 꺼져 있어요 · 다시 연결하기",
@@ -363,8 +292,7 @@ internal fun ChallengeDetailContent(
                 )
             }
 
-            // 미확인 판정은 로딩이 끝난 뒤에 올린다 — 스켈레톤 위에 띄우면 뒤에 뭐가 있는지 모른 채
-            // 결과부터 마주친다(프론트엔드 테크스펙 4-1 「모달 순서」).
+            // 미확인 판정은 로딩이 끝난 뒤에 올린다
             val unacknowledged = state.todayResult?.takeIf { !state.isLoading && !state.resultAcknowledged && it.unacknowledged != null }
             if (unacknowledged != null) {
                 VerificationResultModal(
@@ -388,7 +316,7 @@ internal fun ChallengeDetailContent(
                         )
                     }
 
-                // 방 상세(3탭). room 은 그룹 챌린지의 ACTIVE 멤버에게만 내려온다.
+                // 방 상세(3탭).
                 room != null ->
                     RoomDetailTabs(
                         state = state,
@@ -409,10 +337,7 @@ internal fun ChallengeDetailContent(
             }
         }
 
-        // 하단 고정 CTA. **참여 여부는 myRole 하나로만 판단한다** — 이미 멤버면 숨긴다.
-        // room(방 홈) 조회 성공 여부로 판단하면 안 된다. 방 홈은 GROUP·ACTIVE 일 때만 내려오므로
-        // 솔로 방이나 시작 전 그룹 방에서는 내가 멤버인데도 room 이 null 이라 "참여하기" 가 다시 떴다.
-        // joinable/eligible 은 자물쇠 표시용이지 버튼 노출 조건이 아니다.
+        // 하단 고정 CTA.
         if (state.detail != null && !state.detail.myRole.isMember) {
             Column(
                 modifier =
@@ -424,7 +349,7 @@ internal fun ChallengeDetailContent(
                         .padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // 복제는 공개 그룹만 가능하다 — 불가능하면 눌러보게 두지 않고 사전 비활성한다.
+                // 복제는 공개 그룹만 가능하다
                 if (state.detail.cloneable) {
                     CloneButton(
                         isCloning = state.isCloning,
@@ -453,7 +378,7 @@ internal fun ChallengeDetailContent(
 
         soloAppeal?.let { pending ->
             val target = pending.target(state.todayResult)
-            // 낼 대상(verificationId)이 없으면 시트를 열지 않는다 — 열어도 보낼 곳이 없다.
+            // 낼 대상(verificationId)이 없으면 시트를 열지 않는다
             if (target == null) {
                 soloAppeal = null
             } else {
@@ -480,7 +405,7 @@ internal fun ChallengeDetailContent(
             }
         }
 
-        // 연결 실패는 화면에 남겨 둔다 — 토스트로 스쳐 지나가면 무엇이 실패했는지 모른 채 버튼만 다시 찾는다.
+        // 연결 실패는 화면에 남겨 둔다
         if (state.joinRetryable) {
             JoinRetrySnackbar(
                 onRetry = { onIntent(ChallengeDetailIntent.RetryJoin) },
@@ -506,7 +431,7 @@ internal fun ChallengeDetailContent(
                     } else {
                         "신고하면 탐색 목록에서 바로 빠져요. 참여 중이면 이름과 이미지만 가려져요."
                     },
-                // 부정 인증 의심은 사람의 행위라 사용자 신고에만 있다. 목록을 화면에서 추리지 않고 domain 이 준다.
+                // 부정 인증 의심은 사람의 행위라 사용자 신고에만 있다.
                 reasons = if (userReport) ReportReason.forUser else ReportReason.forChallenge,
                 selected = state.selectedReportReason,
                 submitting = state.isSubmittingReport,
@@ -522,12 +447,12 @@ internal fun ChallengeDetailContent(
         }
     }
 
-    state.pendingConsent?.let { type ->
-        SensitiveConsentSheet(
-            type = type,
-            agreeLabel = "동의하고 참여하기",
-            onAgree = { onIntent(ChallengeDetailIntent.AgreeSensitiveConsent) },
-            onDismiss = { onIntent(ChallengeDetailIntent.DismissSensitiveConsent) },
+    state.pendingAccess?.let { access ->
+        VerificationAccessSheet(
+            access = access,
+            isSubmitting = state.isAccessSubmitting,
+            onContinue = { onIntent(ChallengeDetailIntent.ConfirmVerificationAccess) },
+            onDismiss = { onIntent(ChallengeDetailIntent.DismissVerificationAccess) },
         )
     }
 
@@ -536,11 +461,13 @@ internal fun ChallengeDetailContent(
             block = block,
             myTier =
                 state.detail
+
                     ?.gate
                     ?.myDisplayTier
                     ?.value,
             requiredTier =
                 state.detail
+
                     ?.gate
                     ?.minTier
                     ?.value,
@@ -567,12 +494,7 @@ internal fun ChallengeDetailContent(
     }
 }
 
-/**
- * 방 상세 3탭 (Figma 1134:143 · 1134:231 · 1134:326).
- *
- * 헤더(카테고리·D-day·내 달성률)는 정보 탭에서만 편다 — 피드·랭킹은 목록이 화면을 꽉 채워야 해서
- * Figma 도 상단바와 탭만 남긴다.
- */
+/** 방 상세 3탭. */
 @Composable
 private fun RoomDetailTabs(
     state: ChallengeDetailState,
@@ -581,12 +503,12 @@ private fun RoomDetailTabs(
     onIntent: (ChallengeDetailIntent) -> Unit,
     onConfirmLeave: () -> Unit,
 ) {
-    // 이의 증빙 사진 선택. 고른 즉시 올려 두고 제출 때는 URL 만 실어 보낸다.
+    // 이의 증빙 사진 선택.
     val appealImagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
         }
-    // 캘린더에서 고른 지난 건. 방 정보 카드의 오늘 건과 같은 시트를 쓴다.
+    // 캘린더에서 고른 지난 건.
     var calendarAppeal by remember { mutableStateOf<ChallengeCalendarDay?>(null) }
     Column(modifier = Modifier.fillMaxSize()) {
         if (state.selectedTab == RoomTab.INFO) {
@@ -607,7 +529,7 @@ private fun RoomDetailTabs(
                     detail = detail,
                     room = room,
                     today = state.todayResult,
-                    // 등록할 게 있는 인증 방식일 때만 진입점을 만든다 — 없으면 줄 자체가 생기지 않는다.
+                    // 등록할 게 있는 인증 방식일 때만 진입점을 만든다
                     onRegisterApps =
                         { onIntent(ChallengeDetailIntent.RegisterApps) }
                             .takeIf { state.setup?.requiresTargetPackages == true },
@@ -626,13 +548,12 @@ private fun RoomDetailTabs(
                         )
                     },
                     onDismissAppeal = { onIntent(ChallengeDetailIntent.DismissAppeal) },
-                    // 수동 방에서만 체크 CTA 를 넘긴다 — 자동 방의 실패 구제는 이의 제기가 담당한다.
+                    // 수동 방에서만 체크 CTA 를 넘긴다
                     onOpenManualCheck =
                         { onIntent(ChallengeDetailIntent.OpenManualCheck) }
                             .takeIf { detail.manualCheckable },
                     extraSections = {
-                        // 상태를 모르면 그리지 않는다 — 「켜짐」으로 보이면 껐다고 믿은 방에서
-                        // 푸시가 계속 온다.
+                        // 상태를 모르면 그리지 않는다
                         state.isMuted?.let { muted ->
                             RoomMuteSection(
                                 muted = muted,
@@ -640,20 +561,20 @@ private fun RoomDetailTabs(
                                 onToggle = { onIntent(ChallengeDetailIntent.ToggleMute(it)) },
                             )
                         }
-                        // 솔로 방에만 월 캘린더를 편다 — 그룹은 같은 자리를 랭킹·피드가 쓴다.
+                        // 솔로 방에만 월 캘린더를 편다
                         if (!detail.mode.isGroup) {
                             SoloMonthCalendar(
                                 month = state.calendarMonth.orEmpty(),
                                 calendar = state.calendar,
                                 isLoading = state.isCalendarLoading,
-                                // 지난 건은 여기가 유일한 이의 진입점이다 — 오늘 카드로는 어제를 낼 수 없다.
+                                // 지난 건은 여기가 유일한 이의 진입점이다
                                 onAppealDay = { day -> calendarAppeal = day },
                                 onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
                                 onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
                             )
                         }
                         val myWatchers = state.watchers
-                        if (myWatchers != null) {
+                        if (myWatchers != null && detail.penalties?.watcher == true) {
                             WatcherSection(
                                 watchers = myWatchers.watchers,
                                 limit = myWatchers.limit,
@@ -672,7 +593,10 @@ private fun RoomDetailTabs(
                                 // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
                                 canInviteMember =
                                     room.myRole.isOwner &&
-                                        state.detail?.visibility?.isPrivate == true &&
+                                        state.detail
+
+                                            ?.visibility
+                                            ?.isPrivate == true &&
                                         state.detail.mode.isGroup,
                                 onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
                                 onLeave = onConfirmLeave,
@@ -709,7 +633,7 @@ private fun RoomDetailTabs(
                     AppealTarget(
                         verificationId = verificationId,
                         date = day.date,
-                        // 캘린더는 사유·기한을 주지 않는다. 없는 값을 지어내지 않고 그 줄을 뺀다.
+                        // 캘린더는 사유·기한을 주지 않는다.
                         failureReason = null,
                         eligibleUntil = null,
                     ),
@@ -735,12 +659,7 @@ private fun RoomDetailTabs(
     }
 }
 
-/**
- * 솔로 상세에서 연 이의 시트의 대상.
- *
- * 오늘 건은 사유·기한이 실려 오지만 캘린더의 지난 건은 날짜와 인증 건 ID 뿐이다. 없는 값을
- * 지어내지 않고 그 줄을 빼는 것이 계약이라 두 갈래를 타입으로 나눈다.
- */
+/** 솔로 상세에서 연 이의 시트의 대상. */
 private sealed interface SoloAppeal {
     data object Today : SoloAppeal
 
@@ -758,19 +677,17 @@ private sealed interface SoloAppeal {
         }
 }
 
-/** 공지는 제품에서 빠져 진입점을 두지 않는다 — 화면도 라우트도 남아 있지 않다. */
+/** 공지는 제품에서 빠져 진입점을 두지 않는다 */
 private fun roomMenuItems(
     myRole: MemberRole,
     onIntent: (ChallengeDetailIntent) -> Unit,
 ): List<RoomMenuItem> =
     buildList {
-        // 확인 대기함은 없앴다 — 이의에 판정 단계가 없어 방장이 처리할 항목이 없다(챌린지 정책 §7.1).
-        // 설정 변경은 방장 전용이다 — 공동 관리자는 규칙을 바꿀 수 없다.
+        // 확인 대기함은 없앴다
         if (myRole.isOwner) {
             add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
         }
-        // 방장에게도 남겨 둔다. 신고하면 내 화면에서 가려질 뿐이고, 막을 이유는 서버에도 없다.
-        add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
+        if (!myRole.isOwner) add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
     }
 
 private enum class MemberConfirm { LEAVE }
@@ -801,10 +718,7 @@ private fun MemberConfirmDialog(
     )
 }
 
-/**
- * 비참여자가 보는 공개 상세 본문. 방 홈(참여자)과 갈래가 다르고 길어서 떼어 둔다 —
- * 바깥 [ChallengeDetailContent] 는 로딩·실패·방 홈·공개 상세 네 갈래를 고르는 일만 남는다.
- */
+/** 비참여자가 보는 공개 상세 본문. */
 @Composable
 private fun PublicDetailBody(
     state: ChallengeDetailState,
@@ -824,9 +738,7 @@ private fun PublicDetailBody(
     ) {
         DetailHero(detail)
         DetailInfoCard(detail)
-        // 솔로 방은 방 홈(`/room`)이 내려오지 않아 방 정보 탭 전체가 없다. 멤버에게 필요한 것은
-        // 여기서 직접 편다 — 없으면 오늘 결과도, 실패 사유도, 이의 진입점도 화면에 아예 없다
-        // (APL-08 · APL-09 · VER-01).
+        // 솔로 방은 방 홈(`/room`)이 내려오지 않아 방 정보 탭 전체가 없다.
         if (detail.myRole.isMember) {
             TodayVerificationCard(
                 // 솔로는 room 이 없어 오늘 상태의 원천이 인증 모듈 응답 하나뿐이다.
@@ -847,15 +759,14 @@ private fun PublicDetailBody(
                 onRegisterAnchor = { onIntent(ChallengeDetailIntent.RegisterAnchor) }.takeIf { state.setup?.requiresAnchors == true },
             )
         }
-        // 솔로 수동 방의 유일한 인증 동선. 그룹은 방 정보 탭이 같은 화면으로 보낸다 —
-        // 솔로는 방 홈을 받지 못해 여기 없으면 오늘 인증을 할 방법이 아예 없다.
+        // 솔로 수동 방의 유일한 인증 동선.
         if (detail.manualCheckable) {
             ManualCheckCard(
                 checked = state.todayResult?.status == TodayResultStatus.DONE,
                 onClick = { onIntent(ChallengeDetailIntent.OpenManualCheck) },
             )
         }
-        // 지난 건은 캘린더가 유일한 이의 진입점이다 — 오늘 카드로는 어제를 낼 수 없다.
+        // 지난 건은 캘린더가 유일한 이의 진입점이다
         if (detail.myRole.isMember) {
             SoloMonthCalendar(
                 month = state.calendarMonth.orEmpty(),
@@ -866,9 +777,9 @@ private fun PublicDetailBody(
                 onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
             )
         }
-        // 감시자는 챌린지 × 참여자 단위 — 내 감시자 조회가 성공한(=참여자) 경우에만 노출.
+        // 감시자는 챌린지 × 참여자 단위
         val myWatchers = state.watchers
-        if (myWatchers != null) {
+        if (myWatchers != null && detail.penalties?.watcher == true) {
             WatcherSection(
                 watchers = myWatchers.watchers,
                 limit = myWatchers.limit,
@@ -879,7 +790,7 @@ private fun PublicDetailBody(
     }
 }
 
-/** 솔로 수동 방의 오늘 인증 진입 카드. 체크 여부만 말하고, 실제 체크는 수동 인증 화면이 한다. */
+/** 솔로 수동 방의 오늘 인증 진입 카드. */
 @Composable
 private fun ManualCheckCard(
     checked: Boolean,
@@ -927,7 +838,7 @@ private fun DetailHero(detail: ChallengeDetail) {
                     .background(accent),
             contentAlignment = Alignment.Center,
         ) {
-            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다. 그리는 크기로 잡는다.
+            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
             Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
         }
         Text(
@@ -936,8 +847,7 @@ private fun DetailHero(detail: ChallengeDetail) {
             style = RuleUpTheme.typography.title,
         )
         Text(
-            // 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다). "방장 없음"으로 적으면 버려진 방처럼
-            // 보이지만 실제로는 그대로 운영되는 방이다.
+            // 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다).
             text = "${detail.ownerLabel()} · ${detail.participantCount}명 참여 중",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.small,
@@ -985,143 +895,7 @@ private fun InfoRow(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PermissionBottomSheet(
-    runtimeTokens: List<String>,
-    usageTokens: List<String>,
-    healthTokens: List<String>,
-    onDismiss: () -> Unit,
-    onOpenUsageSettings: () -> Unit,
-    onRequestHealth: () -> Unit,
-    onAllow: () -> Unit,
-) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = RuleUpTheme.colors.surface,
-        dragHandle = { BottomSheetDefaults.DragHandle() },
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp),
-        ) {
-            Text(
-                text = "권한 허용이 필요해요",
-                color = RuleUpTheme.colors.textPrimary,
-                style = RuleUpTheme.typography.section,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "이 챌린지는 자동 인증을 위해 아래 권한이 필요해요.\n허용하면 참여를 이어갈 수 있어요.",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.body,
-            )
-            Spacer(Modifier.height(16.dp))
-            (runtimeTokens + usageTokens + healthTokens).distinct().forEach { token ->
-                PermissionRow(label = permissionLabel(token))
-                permissionPurpose(token)?.let {
-                    Text(
-                        text = it,
-                        color = RuleUpTheme.colors.textMuted,
-                        style = RuleUpTheme.typography.caption,
-                        modifier = Modifier.padding(start = 30.dp, bottom = 4.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(20.dp))
-            if (runtimeTokens.isNotEmpty()) {
-                RuleUpPrimaryButton(
-                    text = "허용하기",
-                    onClick = onAllow,
-                )
-            }
-            // 셋은 서로 다른 문을 쓴다. 한 버튼으로 묶으면 걸음 권한이 필요한 사용자가
-            // 사용정보 접근 화면으로 떨어져 거기서 아무리 켜도 해결되지 않는다.
-            if (usageTokens.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                RuleUpPrimaryButton(
-                    text = "사용 정보 접근 설정 열기",
-                    onClick = onOpenUsageSettings,
-                )
-            }
-            if (healthTokens.isNotEmpty()) {
-                Spacer(Modifier.height(8.dp))
-                RuleUpPrimaryButton(
-                    text = "헬스 커넥트 권한 허용",
-                    onClick = onRequestHealth,
-                )
-            }
-            Spacer(Modifier.height(4.dp))
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(44.dp)
-                        .singleClickable(onClick = onDismiss),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "다음에",
-                    color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.labelMedium,
-                )
-            }
-        }
-    }
-}
-
-/**
- * 권한별 이유 고지(프론트엔드 테크스펙 4-1). **수집 범위를 요청 전에 좁혀서 알린다** —
- * "위치 권한"만 보면 사용자는 상시 추적을 상상한다.
- */
-private fun permissionPurpose(token: String): String? =
-    when (token.uppercase()) {
-        "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> "등록한 장소 도착만 확인해요 · 이동 경로는 저장하지 않아요"
-        "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> "앱을 열지 않아도 도착을 확인하려면 필요해요"
-        "PACKAGE_USAGE_STATS", "USAGE_STATS", "SCREEN_TIME" -> "고른 앱의 사용 시간만 읽어요 · 화면 내용은 보지 않아요"
-        "READ_STEPS", "HEALTH_STEPS", "HEALTH", "READ_DISTANCE", "HEALTH_DISTANCE" -> "걸음·거리 기록만 읽어요"
-        "READ_SLEEP", "HEALTH_SLEEP", "SLEEP" -> "수면 기록만 읽어요"
-        "POST_NOTIFICATIONS", "NOTIFICATION" -> "판정 결과와 권한 복구 안내를 보내요"
-        else -> null
-    }
-
-@Composable
-private fun PermissionRow(label: String) {
-    Row(
-        modifier = Modifier.padding(vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(RuleUpTheme.colors.brand),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            text = label,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.labelMedium,
-        )
-    }
-}
-
-private fun permissionLabel(token: String): String =
-    when (token.uppercase()) {
-        "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> "위치 (자동 위치 인증)"
-        "CAMERA", "PHOTO" -> "카메라"
-        "HEALTH", "HEALTH_CONNECT" -> "건강 데이터"
-        "USAGE", "USAGE_STATS", "PACKAGE_USAGE_STATS" -> "사용 기록 접근"
-        else -> token
-    }
-
-/** "이 템플릿으로 만들기" — 복제 초안을 만들어 생성 확인 화면으로 보낸다. */
+/** "이 템플릿으로 만들기" */
 @Composable
 private fun CloneButton(
     isCloning: Boolean,
@@ -1146,19 +920,14 @@ private fun CloneButton(
     }
 }
 
-/**
- * 참여가 연결 문제로 실패했을 때의 스낵바(Figma 1464:149).
- *
- * 화면 안에 두는 이유는 [com.ruleup.domain.helper.MessageHelper] 에 동작 버튼이 달린 스낵바가 없어서다 —
- * 한 화면 때문에 전역 계약을 넓히는 대신 여기서 그린다.
- */
+/** 참여가 연결 문제로 실패했을 때의 스낵바. */
 @Composable
 private fun JoinRetrySnackbar(
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // 5초 뒤 스스로 걷힌다. 남겨 두면 다음 화면 조작을 계속 가린다.
+    // 5초 뒤 스스로 걷힌다.
     val dismiss by rememberUpdatedState(onDismiss)
     LaunchedEffect(Unit) {
         delay(SNACKBAR_DURATION_MS)
@@ -1191,15 +960,10 @@ private fun JoinRetrySnackbar(
 
 private const val SNACKBAR_DURATION_MS = 5_000L
 
-/** 방장 표기. 봇 방장은 이름이 없으므로 종류를 그대로 말한다. */
+/** 방장 표기. */
 private fun ChallengeDetail.ownerLabel(): String = owner?.nickname ?: if (ownerType == OwnerType.BOT) "봇 방장" else "방장 없음"
 
-/**
- * 가입 차단 안내 (명세 409 `JOIN_BLOCKED` reason 8종 · Figma `1464:3`·`1464:76`).
- *
- * 사유마다 문구와 다음 행동이 다르다. **탈퇴·강퇴를 구분하는 문구는 쓰지 않고**(REJOIN_COOLDOWN),
- * 차단 사유도 설명하지 않는다(BANNED) — 둘 다 알려서 얻는 것보다 잃는 게 크다.
- */
+/** 가입 차단 안내. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun JoinBlockedSheet(
@@ -1228,7 +992,7 @@ private fun JoinBlockedSheet(
                     )
 
             JoinBlockReason.TIER_GATE ->
-                // 조건을 나열하는 대신 "무엇부터 되는지"를 말한다 — 사용자가 다음에 할 일을 안다.
+                // 조건을 나열하는 대신 "무엇부터 되는지"를 말한다
                 (requiredTier?.let { "$it 티어부터 참여할 수 있어요" } ?: "티어 조건을 만족하지 않아요") to
                     (myTier?.let { "지금은 $it 예요. 내 티어에서 남은 점수를 볼 수 있어요." } ?: "내 티어를 확인해 주세요.")
 
@@ -1238,7 +1002,7 @@ private fun JoinBlockedSheet(
             JoinBlockReason.CHALLENGE_COMPLETED ->
                 "이미 끝난 챌린지예요" to "비슷한 챌린지를 찾아볼까요?"
 
-            // 모르는 사유다. 재시도를 권하지 않는다 — 시간이 지나도 풀리지 않는 사유가 섞여 있다.
+            // 모르는 사유다.
             else ->
                 "지금은 참여할 수 없어요" to "다른 챌린지를 둘러보세요"
         }
@@ -1284,12 +1048,7 @@ private fun JoinBlockedSheet(
     }
 }
 
-/**
- * 서버가 내려준 가림 효과를 완료 문구로 옮긴다.
- *
- * 모르는 값이면 효과를 말하지 않고 접수 사실만 알린다 — 접수는 이미 끝났으므로 문구를 몰라
- * 실패처럼 보이게 하면 사용자가 같은 대상을 다시 신고한다.
- */
+/** 서버가 내려준 가림 효과를 완료 문구로 옮긴다. */
 private fun HiddenEffect?.doneMessage(): String =
     when (this) {
         HiddenEffect.USER_CONTENT_MASKED -> "이 사람의 글과 프로필이 임시 이름으로 가려졌어요."
@@ -1298,5 +1057,21 @@ private fun HiddenEffect?.doneMessage(): String =
         null -> "접수됐어요. 검토에 참고할게요."
     }
 
-/** TTI 집계 키. 대시보드가 이 문자열로 화면을 가른다. */
-private const val TTI_PAGE_NAME = "challenge_detail"
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ChallengeDetailContentPreview() {
+    RuleUpTheme {
+        ChallengeDetailContent(
+            state =
+                com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState.initial.copy(
+                    isLoading = false,
+                    detail = com.ruleup.challenge.presentation.common.previewChallenge,
+                ),
+            ctaLabel = "미리보기",
+            onIntent = {
+            },
+            onBack = { },
+            onCta = { },
+        )
+    }
+}

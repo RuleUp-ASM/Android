@@ -13,6 +13,7 @@ import com.ruleup.profile.domain.repository.AccountRepository
 import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.profile.presentation.common.SuspendedBlock
 import com.ruleup.profile.presentation.common.sanctionUntilLabel
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
@@ -22,10 +23,7 @@ import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
-/**
- * 프로필 편집 ViewModel. 닉네임 30일 제한·LLM 검수·이미지 모더레이션은 서버 파이프라인이 판정한다 —
- * 화면은 선검사(4.6) 후 변경 필드만 PATCH 하고, 이미지는 선택 즉시 업로드/제거로 반영한다.
- */
+/** 프로필 편집 ViewModel. */
 @HiltViewModel
 class ProfileEditViewModel
     @Inject
@@ -88,7 +86,7 @@ class ProfileEditViewModel
                 is ProfileEditReducerEvent.ImageBusy -> state.copy(isImageBusy = event.busy)
 
                 is ProfileEditReducerEvent.ImageChanged ->
-                    state.copy(profile = state.profile?.copy(profileImageUrl = event.profileImageUrl))
+                    state.copy(profile = state.profile?.let { it.copy(user = it.user.copy(profileImageUrl = event.profileImageUrl)) })
 
                 is ProfileEditReducerEvent.Saving -> state.copy(isSaving = event.saving)
 
@@ -118,7 +116,7 @@ class ProfileEditViewModel
                         ),
                     )
                 }.onFailure {
-                    dispatch(ProfileEditReducerEvent.Failed(it.message ?: "프로필을 불러오지 못했어요"))
+                    dispatch(ProfileEditReducerEvent.Failed(it.userFacingMessage("프로필을 불러오지 못했어요")))
                 }
             }
         }
@@ -149,7 +147,7 @@ class ProfileEditViewModel
                         dispatch(ProfileEditReducerEvent.ImageChanged(url))
                         emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 변경했어요"))
                     }.onFailure {
-                        emitEffect(ProfileEditEffect.ShowMessage(it.message ?: "사진을 올리지 못했어요"))
+                        emitEffect(ProfileEditEffect.ShowMessage(it.userFacingMessage("사진을 올리지 못했어요")))
                     }
                 dispatch(ProfileEditReducerEvent.ImageBusy(false))
             }
@@ -165,7 +163,7 @@ class ProfileEditViewModel
                         dispatch(ProfileEditReducerEvent.ImageChanged(null))
                         emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 제거했어요"))
                     }.onFailure {
-                        emitEffect(ProfileEditEffect.ShowMessage(it.message ?: "사진을 제거하지 못했어요"))
+                        emitEffect(ProfileEditEffect.ShowMessage(it.userFacingMessage("사진을 제거하지 못했어요")))
                     }
                 dispatch(ProfileEditReducerEvent.ImageBusy(false))
             }
@@ -184,7 +182,7 @@ class ProfileEditViewModel
                 emitEffect(ProfileEditEffect.ShowMessage("변경된 내용이 없어요"))
                 return
             }
-            // 온보딩과 같은 규칙으로 막는다 — 길이뿐 아니라 문자 종류까지. 서버 왕복 전에 알려준다.
+            // 온보딩과 같은 규칙으로 막는다
             val validation = NickNameUtil.validate(trimmed)
             if (nicknameChanged && !validation.isValid) {
                 emitEffect(ProfileEditEffect.ShowMessage(NickNameUtil.message(validation)))
@@ -197,9 +195,7 @@ class ProfileEditViewModel
 
             viewModelScope
                 .launch {
-                    // 쓰기가 막힌 상태면 PATCH 를 보내지 않는다 — 서버 거절 문구로는 왜 막혔는지
-                    // 못 읽는다. 조회가 실패하면 보낸다(restriction = None). 정지 여부를 모른다고
-                    // 저장을 막으면 멀쩡한 사용자가 갇힌다.
+                    // 쓰기가 막힌 상태면 PATCH 를 보내지 않는다
                     val history = runCatching { accountRepository.getSanctions() }.getOrNull()
                     if (history?.restriction?.isFullLock == true) {
                         dispatch(
@@ -218,7 +214,7 @@ class ProfileEditViewModel
                                     when (check.reason) {
                                         NicknameCheckReason.DUPLICATED -> "이미 사용 중인 닉네임이에요"
                                         NicknameCheckReason.FORMAT -> NickNameUtil.message(NicknameValidation.INVALID_CHAR)
-                                        // 최근에 해제된 닉네임은 1주간 잠긴다. 언제부터 쓸 수 있는지 함께 알려 준다.
+                                        // 최근에 해제된 닉네임은 1주간 잠긴다.
                                         NicknameCheckReason.RECENTLY_RELEASED ->
                                             check.availableAt
                                                 ?.let { "최근에 해제된 닉네임이에요. $it 부터 쓸 수 있어요" }
@@ -238,7 +234,7 @@ class ProfileEditViewModel
                         emitEffect(ProfileEditEffect.ShowMessage("프로필을 저장했어요"))
                         navigationHelper.navigateToBack()
                     }.onFailure {
-                        emitEffect(ProfileEditEffect.ShowMessage(it.message ?: "프로필을 저장하지 못했어요"))
+                        emitEffect(ProfileEditEffect.ShowMessage(it.userFacingMessage("프로필을 저장하지 못했어요")))
                     }
                 }.invokeOnCompletion { dispatch(ProfileEditReducerEvent.Saving(false)) }
         }

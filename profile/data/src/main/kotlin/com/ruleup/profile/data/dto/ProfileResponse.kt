@@ -10,7 +10,7 @@ import com.ruleup.profile.domain.entity.Profile
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 4.6 닉네임 검사 ----------
+// 4.6 닉네임 검사
 @Serializable
 data class NicknameCheckResponse(
     @SerialName("valid")
@@ -32,7 +32,7 @@ internal fun NicknameCheckResponse.toDomain(): NicknameCheck =
         availableAt = availableAt,
     )
 
-// ---------- 4.7 관심 카테고리 마스터 ----------
+// 4.7 관심 카테고리 마스터
 @Serializable
 data class CategoriesResponse(
     @SerialName("maxSelectable")
@@ -57,7 +57,7 @@ internal fun CategoriesResponse.toDomain(): CategoryCatalog =
         categories = categories?.mapNotNull { it.code }.toCategories(),
     )
 
-// ---------- 4.8 / 4.9 프로필 ----------
+// 4.8 / 4.9 프로필
 @Serializable
 data class ProfileResponse(
     @SerialName("id")
@@ -82,10 +82,10 @@ data class ProfileResponse(
 
 internal fun ProfileResponse.toDomain(): Profile =
     Profile(
-        id = id.requireField("id"),
-        nickname = nickname.requireField("nickname"),
+        user =
+            com.ruleup.domain.entity.user
+                .User(id.requireField("id"), nickname.requireField("nickname"), profileImageUrl),
         email = email,
-        profileImageUrl = profileImageUrl,
         nicknameChangedAt = nicknameChangedAt,
         nicknameChangeableAfter = nicknameChangeableAfter,
         mannerTemperature = mannerTemperature ?: 36.5,
@@ -93,7 +93,7 @@ internal fun ProfileResponse.toDomain(): Profile =
         createdAt = createdAt.requireField("createdAt"),
     )
 
-// 명세 PATCH /users/me/profile 응답. id·createdAt 이 없어 Profile 로 옮기지 않고, 저장 뒤 다시 조회한다.
+// 명세 PATCH /users/me/profile 응답.
 @Serializable
 data class UpdateProfileResponse(
     @SerialName("nickname")
@@ -104,12 +104,12 @@ data class UpdateProfileResponse(
     val profileLockedUntil: String? = null,
 )
 
-// ---------- 프로필 이미지 등록 ----------
+// 프로필 이미지 등록
 @Serializable
 data class ProfileImageResponse(
     @SerialName("imageUrl")
     val imageUrl: String? = null,
-    // PENDING 고정 — 등록 즉시 자동 모더레이션이 돌지만 기능 제한은 없다.
+    // PENDING 고정
     @SerialName("status")
     val status: String? = null,
 )

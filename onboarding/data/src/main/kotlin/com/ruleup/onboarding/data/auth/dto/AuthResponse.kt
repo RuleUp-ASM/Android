@@ -8,6 +8,7 @@ import com.ruleup.domain.entity.user.SocialProvider
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.entity.user.User
+import com.ruleup.domain.entity.user.UserAccount
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.requireField
@@ -23,7 +24,7 @@ import kotlinx.serialization.Serializable
 data class SocialLoginAuthResponse(
     @SerialName("isNewUser")
     val isNewUser: Boolean? = null,
-    // ---- 기존 회원 (isNewUser = false) ----
+    // 기존 회원 (isNewUser = false)
     @SerialName("restored")
     val restored: Boolean? = null,
     @SerialName("accessToken")
@@ -36,7 +37,7 @@ data class SocialLoginAuthResponse(
     val expiresIn: Int? = null,
     @SerialName("user")
     val user: UserResponse? = null,
-    // ---- 신규 회원 (isNewUser = true) ----
+    // 신규 회원 (isNewUser = true)
     @SerialName("signupToken")
     val signupToken: String? = null,
     @SerialName("signupTokenExpiresIn")
@@ -115,7 +116,7 @@ data class TokenRefreshResponse(
     val tokenType: String? = null,
     @SerialName("expiresIn")
     val expiresIn: Int? = null,
-    // 갱신 응답도 사용자 식별자를 함께 준다. 없으면 호출부가 기존 값을 유지한다.
+    // 갱신 응답도 사용자 식별자를 함께 준다.
     @SerialName("userId")
     val userId: String? = null,
 )
@@ -155,25 +156,25 @@ internal fun OAuthProfileResponse?.toDomain(): OAuthProfile =
         profileImageUrlHint = this?.profileImageUrlHint,
     )
 
-/**
- * 필수는 `id`·`nickname` 뿐이다. 나머지를 안전한 기본으로 떨어뜨려야, 서버가 enum 을 넓힐 때
- * 구버전 앱이 로그인부터 막히지 않는다.
- */
+/** 필수는 `id`·`nickname` 뿐이다. */
 internal fun UserResponse.toDomain(): User =
     User(
         id = id.requireField("user.id"),
         nickname = nickname.requireField("user.nickname"),
-        nicknameStatus = NicknameStatus.fromValue(nicknameStatus),
         profileImageUrl = profileImageUrl,
-        tier = Tier.fromValue(tier),
-        score = score ?: 0,
-        // 표시 티어가 없으면 실제 티어로 떨어뜨린다. 방 입장 판정에 쓰이므로 부풀리면 안 된다.
-        displayTier = displayTier?.let(Tier::fromValue) ?: Tier.fromValue(tier),
-        provider = SocialProvider.fromValue(provider),
-        interestCategories = interestCategories.toCategories(),
-        onboardingCompleted = onboardingCompleted ?: true,
-        accountStatus = AccountStatus.fromValue(accountStatus),
-        lockInfo = lockInfo?.toDomain(),
+        account =
+            UserAccount(
+                nicknameStatus = NicknameStatus.fromValue(nicknameStatus),
+                tier = Tier.fromValue(tier),
+                score = score ?: 0,
+// 표시 티어가 없으면 실제 티어로 떨어뜨린다.
+                displayTier = displayTier?.let(Tier::fromValue) ?: Tier.fromValue(tier),
+                provider = SocialProvider.fromValue(provider),
+                interestCategories = interestCategories.toCategories(),
+                onboardingCompleted = onboardingCompleted ?: true,
+                accountStatus = AccountStatus.fromValue(accountStatus),
+                lockInfo = lockInfo?.toDomain(),
+            ),
     )
 
 internal fun LockInfoResponse.toDomain(): LockInfo? =
@@ -204,10 +205,7 @@ internal fun TokenRefreshResponse.toRefreshedSession(): RefreshedSession =
         userId = userId?.takeIf { it.isNotBlank() },
     )
 
-/**
- * 실패 응답의 `error.code` 를 [AuthFailure] 로 옮긴다. 모르는 코드는 [AuthFailure.UNKNOWN] 이라,
- * 서버가 코드를 추가해도 앱이 터지지 않고 일반 안내로 떨어진다.
- */
+/** 실패 응답의 `error.code` 를 [AuthFailure] 로 옮긴다. */
 internal fun ApiException.toAuthFailure(): AuthFailure = AUTH_FAILURE_CODES[code] ?: AuthFailure.UNKNOWN
 
 private val AUTH_FAILURE_CODES: Map<String, AuthFailure> =
@@ -236,7 +234,7 @@ private val AUTH_FAILURE_CODES: Map<String, AuthFailure> =
 
 private const val DEFAULT_TOKEN_TYPE = "Bearer"
 
-// ---------- 회원 탈퇴 (DELETE /users/me) ----------
+// 회원 탈퇴 (DELETE /users/me)
 @Serializable
 data class WithdrawResponse(
     @SerialName("withdrawn")
@@ -251,7 +249,7 @@ data class WithdrawResponse(
 
 internal fun WithdrawResponse.toDomain(): Withdrawal =
     Withdrawal(
-        // 응답이 왔는데 플래그만 비면 처리된 것으로 본다 — 서버가 200 을 준 시점에 이미 끝났다.
+        // 응답이 왔는데 플래그만 비면 처리된 것으로 본다
         withdrawn = withdrawn ?: true,
         archiveExpiresAt = archiveExpiresAt,
         restoreNote = restoreNote,

@@ -3,15 +3,13 @@ package com.ruleup.profile.presentation.invite.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.profile.domain.repository.MyPageRepository
+import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 친구 초대 ViewModel. 초대 전달은 사용자 본인 채널(카카오톡·복사·QR)로만 — 룰업 직접 발송 금지.
- * 딥링크 앱 라우팅은 초대 경로 확정 후 별도 작업 — 여기서는 서버가 준 URL 을 그대로 표시·공유한다.
- */
+/** 친구 초대 ViewModel. */
 @HiltViewModel
 class FriendInviteViewModel
     @Inject
@@ -58,7 +56,7 @@ class FriendInviteViewModel
             viewModelScope.launch {
                 runCatching { myPageRepository.getInvitation() }
                     .onSuccess { dispatch(FriendInviteReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(FriendInviteReducerEvent.Failed(it.message ?: "초대 정보를 불러오지 못했어요")) }
+                    .onFailure { dispatch(FriendInviteReducerEvent.Failed(it.userFacingMessage("초대 정보를 불러오지 못했어요"))) }
             }
         }
     }

@@ -24,13 +24,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 마이 홈. 화면 복귀(ON_RESUME)마다 조용히 갱신하는 화면이라, **이미 보여 주고 있는 내용을
- * 망가뜨리지 않는 것**이 핵심이다 — 갱신에 실패했다고 멀쩡히 보이던 프로필을 오류 화면으로
- * 바꾸면 사용자는 없던 사고를 본다.
- *
- * 랭킹 진입은 참여 중인 그룹 수에 따라 갈린다(0 = 안내 · 1 = 바로 · 2+ = 선택).
- */
+/** 마이 홈. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyHomeViewModelTest {
     @BeforeTest
@@ -80,7 +74,6 @@ class MyHomeViewModelTest {
     @Test
     fun `갱신에 실패해도 보여 주던 프로필을 오류 화면으로 바꾸지 않는다`() =
         runTest {
-            // 복귀마다 도는 조용한 갱신이다. 여기서 오류를 띄우면 없던 사고를 보여 주는 셈이다.
             var fail = false
             val viewModel =
                 viewModel(
@@ -175,7 +168,7 @@ class MyHomeViewModelTest {
 
             viewModel.onIntent(MyHomeIntent.OpenRanking)
 
-            assertEquals(listOf(MyHomeEffect.ShowMessage("그룹 조회 실패")), effects)
+            assertEquals(listOf(MyHomeEffect.ShowMessage("그룹 정보를 불러오지 못했어요")), effects)
             assertTrue(nav.didNotMove)
         }
 

@@ -21,12 +21,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 멤버 초대 링크 진입. 조회는 토큰을 소모하지 않고 수락에서만 소모되므로, **들어온 것만으로
- * 가입시키면 안 된다** — 링크를 눌러 본 사람이 자기도 모르게 방에 들어가 있게 된다.
- *
- * 막힌 이유는 서버가 미리 판정해 준다(`joinable`) — 그걸 무시하고 눌러 보게 하면 409 를 받는다.
- */
+/** 멤버 초대 링크 진입. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChallengeInviteViewModelTest {
     @BeforeTest
@@ -143,10 +138,10 @@ class ChallengeInviteViewModelTest {
         invitationId = "inv1",
         challenge =
             InvitedChallenge(
-                challengeId = "ch1",
                 title = "새벽 러닝 크루",
-                imageUrl = null,
                 category = null,
+                imageUrl = null,
+                challengeId = "ch1",
                 participantCount = 4,
                 capacity = 10,
                 minTier = null,

@@ -39,19 +39,16 @@ import com.ruleup.profile.presentation.common.label
 import com.ruleup.profile.presentation.member.viewmodel.MemberProfileIntent
 import com.ruleup.profile.presentation.member.viewmodel.MemberProfileState
 import com.ruleup.profile.presentation.member.viewmodel.MemberProfileViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 
-/**
- * 타인 프로필 (Figma `1466:2` · 차단 변형 `1466:44`).
- *
- * 화면이 짧은 것이 계약이다 — 공개되는 값이 넷뿐이라 더 그릴 게 없다. 하단 한 줄이 그 사실을
- * 말해 주지 않으면 사용자는 로딩이 덜 됐다고 읽는다.
- */
+/** 타인 프로필. */
 @Composable
 fun MemberProfileScreen(
     userId: String,
     viewModel: MemberProfileViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     LaunchedEffect(userId) { viewModel.onIntent(MemberProfileIntent.Load(userId)) }
     MemberProfileContent(state = state, onIntent = viewModel::onIntent)
 }
@@ -69,7 +66,7 @@ internal fun MemberProfileContent(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        // 정책이 진입점을 숨기지 말라고 정했다 — 눌렀을 때 왜 막혔는지 말한다(Figma 1465:141).
+        // 정책이 진입점을 숨기지 말라고 정했다
         state.reportBlock?.let { block ->
             RuleUpSuspendedSheet(
                 title = "지금은 신고할 수 없어요",
@@ -81,7 +78,7 @@ internal fun MemberProfileContent(
             )
         }
         MemberProfileAppBar(
-            // 신고는 대상을 받아야 열 수 있다 — 아직 못 받았거나 차단해 둔 상대는 진입점을 숨긴다.
+            // 신고는 대상을 받아야 열 수 있다
             onReport = { onIntent(MemberProfileIntent.Report) }.takeIf { state.profile?.blocked == false },
             onBack = { onIntent(MemberProfileIntent.Back) },
         )
@@ -212,7 +209,7 @@ private fun ProfileCard(profile: MemberProfile) {
                     modifier = Modifier.fillMaxSize().clip(RuleUpTheme.shapes.pill),
                 )
             } else {
-                // 사진이 없으면 닉네임 첫 글자. 탈퇴·차단으로 이름이 대체돼도 규칙은 같다.
+                // 사진이 없으면 닉네임 첫 글자.
                 Text(
                     text = profile.nickname.take(1),
                     color = RuleUpTheme.colors.brand,
@@ -225,7 +222,7 @@ private fun ProfileCard(profile: MemberProfile) {
             color = RuleUpTheme.colors.textPrimary,
             style = RuleUpTheme.typography.title,
         )
-        // 탈퇴한 사용자의 티어는 남은 값일 뿐 지금을 말하지 않는다 — 그리지 않는다.
+        // 탈퇴한 사용자의 티어는 남은 값일 뿐 지금을 말하지 않는다
         if (!profile.withdrawn) TierChip(profile.tier)
     }
 }
@@ -281,7 +278,7 @@ private fun CompletedCard(count: Int) {
     }
 }
 
-/** 차단해 둔 상대. 이름·사진이 왜 다른지 말해 주고 해제 경로를 준다(Figma `1466:44`). */
+/** 차단해 둔 상대. */
 @Composable
 private fun BlockedCard(
     isUnblocking: Boolean,
@@ -316,7 +313,7 @@ private fun BlockedCard(
     }
 }
 
-/** 화면이 짧은 이유. 이 줄이 없으면 나머지가 로딩 중이라고 읽힌다. */
+/** 화면이 짧은 이유. */
 @Composable
 private fun PrivacyNote() {
     Row(
@@ -339,7 +336,7 @@ private fun PrivacyNote() {
     }
 }
 
-/** 티어 칩 배경. Figma 는 티어마다 옅은 배경을 쓰는데 팔레트에 그 단계가 없어 강조색을 낮춰 쓴다. */
+/** 티어 칩 배경. */
 private const val TIER_CHIP_BACKGROUND_ALPHA = 0.12f
 
 @Preview
@@ -352,9 +349,9 @@ private fun MemberProfilePreview() {
                     isLoading = false,
                     profile =
                         MemberProfile(
-                            userId = "u1",
-                            nickname = "지현",
-                            profileImageUrl = null,
+                            user =
+                                com.ruleup.domain.entity.user
+                                    .User("u1", "지현", null),
                             tier = Tier.GOLD,
                             completedChallengeCount = 12,
                             withdrawn = false,

@@ -29,10 +29,7 @@ import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.SetupNotifier
 import com.ruleup.domain.entity.category.Category
 
-/**
- * 테스트용 [ChallengeRepository]. 검증 대상 메서드만 값을 돌려주고 나머지는 호출되면 실패한다 —
- * 유스케이스가 의도치 않은 호출을 하면 조용히 지나가지 않고 드러나게 하려는 것이다.
- */
+/** 테스트용 [ChallengeRepository]. */
 class FakeChallengeRepository(
     private val draftResult: DraftResult? = null,
     private val created: CreatedChallenge? = null,
@@ -44,7 +41,6 @@ class FakeChallengeRepository(
     private val invitation: ((String) -> ChallengeInvitation)? = null,
     private val invitationPreview: ((String) -> ChallengeInvitationPreview)? = null,
     private val acceptInvitation: ((String) -> JoinResult)? = null,
-    // 초안 생성 실패를 재현한다 — 폴백(정상 응답)과 예외는 화면에서 다르게 다뤄진다.
     private val draftError: Throwable? = null,
     private val join: ((String) -> JoinResult)? = null,
     private val setupInfo: ((String) -> ChallengeSetupInfo)? = null,
@@ -55,17 +51,17 @@ class FakeChallengeRepository(
     var lastIdempotencyKey: String? = null
         private set
 
-    /** 어떤 메서드가 몇 번 불렸는지. "안 보냈다"도 계약이라 호출 자체를 남긴다. */
+    /** 어떤 메서드가 몇 번 불렸는지. */
     val calls = mutableListOf<String>()
 
-    /** 어느 탭을 어떤 커서로 물었는지. 탭 전환·페이징이 계약대로 도는지 여기서 본다. */
+    /** 어느 탭을 어떤 커서로 물었는지. */
     val myChallengeFilters = mutableListOf<MyChallengeFilter>()
     val myChallengeCursors = mutableListOf<String?>()
 
     /** 초대 링크에서 잘라낸 토큰이 그대로 갔는지. */
     val invitationTokens = mutableListOf<String>()
 
-    /** 마지막으로 보낸 수정 내용. 바뀐 것만 실어 보내는지 볼 때 쓴다. */
+    /** 마지막으로 보낸 수정 내용. */
     var lastUpdate: ChallengeUpdate? = null
         private set
 
@@ -192,8 +188,9 @@ fun draft(
     verification: VerificationConfig = verification(),
 ) = ChallengeDraft(
     title = title,
-    description = description,
     category = Category.WAKE_SLEEP,
+    imageUrl = null,
+    description = description,
     mode = ChallengeMode.SOLO,
     visibility = null,
     rankingVisible = true,

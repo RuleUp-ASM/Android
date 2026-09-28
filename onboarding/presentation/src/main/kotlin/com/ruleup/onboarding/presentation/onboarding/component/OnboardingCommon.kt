@@ -11,26 +11,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.ui.helper.LocalNavigationHelper
-import com.ruleup.ui.helper.NoOpNavigationHelper
 
-/**
- * 프로필 설정 Content 프리뷰용 래퍼. Content 가 직접 읽는 [LocalNavigationHelper] 를 더미로 제공한다.
- */
+/** [LocalNavigationHelper]를 제공하는 프로필 설정 미리보기. */
 @Composable
 internal fun OnboardingFlowPreview(content: @Composable () -> Unit) {
     RuleUpTheme {
-        CompositionLocalProvider(
-            LocalNavigationHelper provides NoOpNavigationHelper,
-        ) {
+        com.ruleup.ui.helper.PreviewEnvironment {
             content()
         }
     }
@@ -115,4 +110,41 @@ fun RowDivider(modifier: Modifier = Modifier) {
             .height(1.dp)
             .background(RuleUpTheme.colors.border),
     )
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun SectionHeaderPreview() {
+    RuleUpTheme {
+        SectionHeader(title = "매일 꾸준히 걷기", subtitle = "미리보기")
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun InfoBoxPreview() {
+    RuleUpTheme {
+        InfoBox(
+            background = com.ruleup.designsystem.theme.RuleUpTheme.colors.brand,
+            emoji = "✨",
+            text = "꾸준히 함께해요",
+            textColor = com.ruleup.designsystem.theme.RuleUpTheme.colors.brand,
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RequirementBadgePreview() {
+    RuleUpTheme {
+        RequirementBadge(required = true)
+    }
+}
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun RowDividerPreview() {
+    RuleUpTheme {
+        RowDivider()
+    }
 }

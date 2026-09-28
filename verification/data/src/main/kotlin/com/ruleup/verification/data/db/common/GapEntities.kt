@@ -8,11 +8,7 @@ import androidx.room.Query
 import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.SignalGap
 
-/**
- * 신호 공백 버퍼 (전송 스펙 §0.5 `gaps[]`). 수집기가 공백 사유 발생 즉시 적재하고,
- * sync 가 신호 배치와 같은 멱등 키로 드레인해 envelope 로 보낸다. 신호 버퍼와 동일한
- * tagPending → byBatch → markSynced 흐름을 따른다.
- */
+/** 신호 공백 버퍼. */
 @Entity(tableName = "signal_gap")
 data class SignalGapEntity(
     @PrimaryKey(autoGenerate = true)
@@ -41,7 +37,9 @@ interface SignalGapDao {
     @Query("UPDATE signal_gap SET synced = 1 WHERE collectedAt = :key")
     suspend fun markSynced(key: String)
 
-    @Query("DELETE FROM signal_gap WHERE synced = 1 AND occurredAt < :threshold")
+    @Query(
+        "DELETE FROM signal_gap WHERE occurredAt < :threshold OR id NOT IN (SELECT id FROM signal_gap ORDER BY occurredAt DESC, id DESC LIMIT 1000)",
+    )
     suspend fun purge(threshold: Long)
 }
 

@@ -11,16 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 신고하기 (명세 POST /reports · Figma `1466:96`).
- *
- * **자유 텍스트를 받지 않는다.** 명세가 2026-08-26 개편에서 `detail` 을 폐기하고 "클라이언트에서
- * 입력란 자체를 제거한다"고 정했다. 디자인에는 입력칸이 남아 있으나, 서버가 받지 않는 값을 받으면
- * 사용자는 쓴 글이 전달됐다고 믿는다.
- *
- * 사유 목록은 대상이 정한다 — 챌린지에는 부정 인증 의심이 없고, 그 제약은 `ReportReason` 이 이미
- * 갖고 있다. 화면이 다시 추리지 않는다.
- */
+/** 신고하기. */
 @HiltViewModel
 class ReportViewModel
     @Inject
@@ -53,7 +44,7 @@ class ReportViewModel
                 is ReportReducerEvent.Done -> state.copy(isSubmitting = false, done = event.effect)
             }
 
-        /** 신고 대상 확정. 사유 목록은 대상 종류로 갈린다 — 챌린지에는 없는 사유가 사용자에게 있다. */
+        /** 신고 대상 확정. */
         private fun init(intent: ReportIntent.Init) {
             userId = intent.userId?.takeIf { it.isNotBlank() }
             challengeId = intent.challengeId?.takeIf { it.isNotBlank() }
@@ -75,15 +66,24 @@ class ReportViewModel
                     .onSuccess { dispatch(ReportReducerEvent.Done(it.hiddenEffect)) }
                     .onFailure {
                         dispatch(ReportReducerEvent.Submitting(false))
-                        emitEffect(ReportEffect.ShowMessage(it.message ?: "신고를 접수하지 못했어요"))
+                        val failure = (it as? com.ruleup.report.domain.entity.ReportException)?.failure
+                        emitEffect(
+                            ReportEffect.ShowMessage(
+                                if (failure ==
+                                    com.ruleup.report.domain.entity.ReportFailure.ALREADY_REPORTED
+                                ) {
+                                    "이미 신고한 대상이에요."
+                                } else {
+                                    "신고를 접수하지 못했어요. 다시 시도해 주세요."
+                                },
+                            ),
+                        )
+                        if (failure == com.ruleup.report.domain.entity.ReportFailure.ALREADY_REPORTED) navigationHelper.navigateToBack()
                     }
             }
         }
 
-        /**
-         * 진입점이 프로필이면 발생한 챌린지가 없어도 된다 — 그 외에는 명세가 챌린지를 요구한다.
-         * 규칙 자체는 [ReportTarget] 이 `init` 에서 막으므로 여기서 다시 검사하지 않는다.
-         */
+        /** 진입점이 프로필이면 발생한 챌린지가 없어도 된다 */
         private fun target(reason: ReportReason): ReportTarget? {
             val user = userId
             val challenge = challengeId
@@ -107,7 +107,7 @@ class ReportViewModel
             }
         }
 
-        /** 접수가 끝나면 이 화면은 할 일이 없다 — 대상이 이미 가려져 돌아갈 자리도 사라진다. */
+        /** 접수가 끝나면 이 화면은 할 일이 없다 */
         fun onDoneDismissed() {
             navigationHelper.navigateToBack()
         }

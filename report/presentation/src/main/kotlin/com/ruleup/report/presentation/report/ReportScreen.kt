@@ -37,15 +37,10 @@ import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.report.presentation.report.viewmodel.ReportIntent
 import com.ruleup.report.presentation.report.viewmodel.ReportState
 import com.ruleup.report.presentation.report.viewmodel.ReportViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 신고하기 (Figma `1466:96`).
- *
- * **자유 텍스트 입력칸을 두지 않는다.** 디자인에는 "자세한 내용 (선택)" 칸이 있지만 신고 접수
- * 명세가 2026-08-26 개편에서 `detail` 을 폐기하고 클라이언트에서 입력란을 제거하라고 정했다.
- * 서버가 받지 않는 칸을 두면 사용자는 쓴 글이 검토에 쓰인다고 믿는다.
- */
+/** 신고하기. */
 @Composable
 fun ReportScreen(
     targetName: String,
@@ -54,6 +49,7 @@ fun ReportScreen(
     viewModel: ReportViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = false)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(userId, challengeId) {
@@ -68,7 +64,7 @@ fun ReportScreen(
             }
         }
     }
-    // 접수되면 대상이 내 화면에서 가려진다 — 결과를 알리고 곧바로 돌아간다.
+    // 접수되면 대상이 내 화면에서 가려진다
     LaunchedEffect(state.done) {
         val effect = state.done ?: return@LaunchedEffect
         messageHelper.showToast(effect.doneMessage())
@@ -156,7 +152,7 @@ private fun ReportAppBar(onBack: () -> Unit) {
     }
 }
 
-/** 무엇을 신고하는지 다시 보여 준다 — 목록에서 눌러 들어오면 대상을 착각하기 쉽다. */
+/** 무엇을 신고하는지 다시 보여 준다 */
 @Composable
 private fun TargetCard(targetName: String) {
     Row(
@@ -229,7 +225,7 @@ private fun ReasonRow(
     }
 }
 
-/** 색만으로 구분하지 않는다 — 고른 항목은 글자 굵기도 함께 바뀐다. */
+/** 색만으로 구분하지 않는다 */
 @Composable
 private fun RadioDot(selected: Boolean) {
     Box(
@@ -258,7 +254,7 @@ private fun RadioDot(selected: Boolean) {
     }
 }
 
-/** 접수 뒤에 무슨 일이 일어나는지 미리 말한다 — 모르면 "무시당했다"고 읽는다. */
+/** 접수 뒤에 무슨 일이 일어나는지 미리 말한다 */
 @Composable
 private fun InfoCard() {
     Column(
@@ -280,7 +276,7 @@ private fun InfoCard() {
     }
 }
 
-/** 서버가 알려 준 즉시 효과를 그대로 말한다 — 무엇이 가려졌는지 모르면 먹혔는지 알 수 없다. */
+/** 서버가 알려 준 즉시 효과를 그대로 말한다 */
 private fun HiddenEffect.doneMessage(): String =
     when (this) {
         HiddenEffect.USER_CONTENT_MASKED -> "신고했어요. 이 사람의 글과 프로필이 내 화면에서 가려져요."

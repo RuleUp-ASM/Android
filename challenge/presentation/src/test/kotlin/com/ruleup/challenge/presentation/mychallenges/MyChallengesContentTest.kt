@@ -16,12 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 내 챌린지 목록 (Figma 1134:1205 · 1162:2 · 1134:2085).
- *
- * 이 화면의 함정은 **아직 다 받지 않은 목록의 개수를 말하는 것**이다 — 받은 만큼만 세어 붙이면
- * 다음 장을 부를 때마다 숫자가 늘어 방이 새로 생긴 것처럼 보인다.
- */
+/** 내 챌린지 목록. */
 @RunWith(RobolectricTestRunner::class)
 class MyChallengesContentTest {
     @get:Rule
@@ -129,8 +124,18 @@ class MyChallengesContentTest {
         render(
             MyChallengesState.initial.copy(
                 isLoading = false,
-                inProgress = listOf(myChallenge(id = "ch1")),
-                progress = snapshot("ch1", rate = 86.0, remainingDays = 12),
+                inProgress =
+                    listOf(
+                        myChallenge(
+                            id = "ch1",
+                            end =
+                                com.ruleup.domain.time.ServiceDate
+                                    .today()
+                                    .plusDays(12)
+                                    .toString(),
+                        ),
+                    ),
+                progress = snapshot("ch1", rate = 86.0, remainingDays = 3),
             ),
         )
 

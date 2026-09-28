@@ -18,10 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 친구 초대. 공유·복사는 **초대 코드를 받은 뒤에만** 성립한다 — 아직 못 받았는데 공유를 열면
- * 사용자가 빈 링크를 지인에게 보내게 된다. 그래서 "아무 일도 일어나지 않는다"가 계약이다.
- */
+/** 친구 초대. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class FriendInviteViewModelTest {
     @BeforeTest
@@ -104,7 +101,7 @@ class FriendInviteViewModelTest {
 
             viewModel.onIntent(FriendInviteIntent.Load)
 
-            assertEquals("코드 발급 실패", viewModel.uiState.value.errorMessage)
+            assertEquals("초대 정보를 불러오지 못했어요", viewModel.uiState.value.errorMessage)
         }
 
     @Test
@@ -117,10 +114,7 @@ class FriendInviteViewModelTest {
         assertTrue(nav.routes.isEmpty())
     }
 
-    /**
-     * effect 는 Channel 이라 소비자가 없으면 아무것도 안 오고 **영원히 기다린다.**
-     * 수집을 미리 걸어 두면 "왔다"와 "안 왔다"를 같은 방식으로 볼 수 있다.
-     */
+    /** effect 는 Channel 이라 소비자가 없으면 아무것도 안 오고 영원히 기다린다. */
     private fun TestScope.collectEffects(viewModel: FriendInviteViewModel): List<FriendInviteEffect> {
         val effects = mutableListOf<FriendInviteEffect>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effect.toList(effects) }

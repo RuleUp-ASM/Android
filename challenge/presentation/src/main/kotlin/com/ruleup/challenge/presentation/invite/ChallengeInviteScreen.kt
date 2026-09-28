@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,16 +37,10 @@ import com.ruleup.challenge.presentation.invite.viewmodel.ChallengeInviteViewMod
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.ui.helper.LocalMessageHelper
 
-/**
- * 멤버 초대 링크 진입 (카카오톡 `/c/{token}`). Figma 1134:1646 의 초대 카드가 이 화면으로 온다.
- *
- * **들어온 것만으로 가입시키지 않는다** — 어떤 방인지 보여 주고 누를 때만 수락한다. 조회는 토큰을
- * 소모하지 않으므로 되돌아와 다시 볼 수 있다.
- *
- * 막힌 이유는 **수락 버튼을 누르기 전에** 보여 준다 — 서버가 `joinable` 로 미리 판정해 준다.
- */
+/** 멤버 초대 링크 진입 (카카오톡 `/c/{token}`). */
 @Composable
 fun ChallengeInviteScreen(
     token: String,
@@ -53,6 +48,7 @@ fun ChallengeInviteScreen(
     viewModel: ChallengeInviteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
     LaunchedEffect(token) { viewModel.onIntent(ChallengeInviteIntent.Load(token)) }
@@ -67,7 +63,7 @@ fun ChallengeInviteScreen(
     ChallengeInviteContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
 }
 
-/** 상태를 받아 그리기만 한다 — ViewModel 을 직접 꺼내지 않아 상태별 렌더를 그대로 검증할 수 있다. */
+/** 화면 본문. */
 @Composable
 internal fun ChallengeInviteContent(
     state: ChallengeInviteState,
@@ -186,21 +182,18 @@ private fun ColumnScope.InviteBody(
     }
 }
 
-/** "그룹 4/10명 · 8.17 시작" — 가입 전에 알아야 할 것만. */
+/** "그룹 4/10명 · 8.17 시작" */
 private val ChallengeInvitationPreview.summaryLine: String
     get() {
-        // 무제한 방은 분모가 없다 — "4/0명"으로 그리면 들어갈 수 없는 방처럼 보인다
-        val people = challenge.capacity?.let { "${challenge.participantCount}/${it}명" } ?: "${challenge.participantCount}명 · 정원 무제한"
+        // 무제한 방은 분모가 없다
+        val people =
+            challenge.capacity?.let { "${challenge.participantCount}/${it}명" } ?: "${challenge.participantCount}명 · 정원 무제한"
         val start = challenge.startDate?.let { "${it.replace('-', '.')} 시작" }
         val tier = challenge.minTier?.let { "${it.value} 이상" }
         return listOfNotNull(people, start, tier).joinToString(" · ")
     }
 
-/**
- * 막힌 이유. 사유를 말해 주지 않으면 사용자는 초대가 잘못된 줄 안다.
- *
- * 영구 차단([JoinBlockReason.BANNED])은 사유를 설명하지 않는다 — 정책상 회피를 막기 위해서다.
- */
+/** 막힌 이유. */
 private val JoinBlockReason?.message: String
     get() =
         when (this) {
@@ -214,3 +207,18 @@ private val JoinBlockReason?.message: String
             JoinBlockReason.BANNED -> "이 챌린지에는 참여할 수 없어요."
             null -> "지금은 참여할 수 없어요."
         }
+
+@Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun ChallengeInviteContentPreview() {
+    RuleUpTheme {
+        ChallengeInviteContent(
+            state =
+                com.ruleup.challenge.presentation.invite.viewmodel.ChallengeInviteState.initial.copy(
+                    isLoading = false,
+                ),
+            onIntent = {
+            },
+        )
+    }
+}

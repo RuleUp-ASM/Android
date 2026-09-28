@@ -34,23 +34,31 @@ import com.ruleup.designsystem.component.StatusChipTone
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsIntent
 import com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsViewModel
+import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.verification.domain.entity.AppealHistoryItem
 
-/**
- * 이의 내역 (Figma `1134:2291`). Figma 의 "이번 달 N회 남음"·"한 달 3회까지"는 만들지 않는다 —
- * 이의 횟수 한도가 폐기돼(챌린지 정책 §7.2) 남은 한도를 세면 없는 제약을 만들어 주게 된다.
- */
+/** 이의 내역. */
 @Composable
 fun MyAppealsScreen(
     modifier: Modifier = Modifier,
     viewModel: MyAppealsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    TtiScreenEffect(loading = state.isLoading)
 
     LaunchedEffect(Unit) {
         viewModel.onIntent(MyAppealsIntent.Load)
     }
 
+    MyAppealsContent(state = state, onIntent = viewModel::onIntent, modifier = modifier)
+}
+
+@Composable
+internal fun MyAppealsContent(
+    state: com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsState,
+    onIntent: (MyAppealsIntent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier =
             modifier
@@ -58,7 +66,7 @@ fun MyAppealsScreen(
                 .background(RuleUpTheme.colors.background)
                 .statusBarsPadding(),
     ) {
-        RuleUpTopBar(title = "이의 내역", onBack = { viewModel.onIntent(MyAppealsIntent.Back) })
+        RuleUpTopBar(title = "이의 내역", onBack = { onIntent(MyAppealsIntent.Back) })
 
         when {
             state.isLoading ->
@@ -81,7 +89,7 @@ fun MyAppealsScreen(
                     Spacer(Modifier.padding(6.dp))
                     RuleUpPrimaryButton(
                         text = "다시 시도",
-                        onClick = { viewModel.onIntent(MyAppealsIntent.Retry) },
+                        onClick = { onIntent(MyAppealsIntent.Retry) },
                     )
                 }
 
@@ -136,12 +144,12 @@ private fun AppealRow(item: AppealHistoryItem) {
             }
         }
         Spacer(Modifier.width(11.dp))
-        // 접수된 이의는 전부 인용이다 — 다른 배지가 존재할 수 없다.
+        // 접수된 이의는 전부 인용이다
         StatusChip(text = "인용", tone = StatusChipTone.Success)
     }
 }
 
-/** 하단 안내. Figma 의 "챌린지마다 한 달 3회까지"는 폐기된 한도라 앞 문장만 남긴다. */
+/** 하단 안내. */
 @Composable
 private fun AutoAcceptNotice() {
     Text(
@@ -152,17 +160,30 @@ private fun AutoAcceptNotice() {
     )
 }
 
-/** "아침 6:30 기상 · 8.2" — 루틴명과 신청일. 둘 중 없는 것은 붙이지 않는다. */
+/** "아침 6:30 기상 · 8.2" */
 internal fun AppealHistoryItem.rowTitle(): String =
     listOf(routineTitle, appealDateLabel(date))
         .filter { it.isNotBlank() }
         .joinToString(" · ")
 
-/** 신청일 "8.2". 연도는 떼고 월·일만 남긴다 — 목록 안에서 연도가 반복될 이유가 없다. */
+/** 신청일 "8.2". */
 internal fun appealDateLabel(iso: String): String {
     val parts = iso.substringBefore('T').split('-')
     if (parts.size != 3) return iso
     val month = parts[1].toIntOrNull() ?: return iso
     val day = parts[2].toIntOrNull() ?: return iso
     return "$month.$day"
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, widthDp = 390)
+@Composable
+private fun MyAppealsContentPreview() {
+    RuleUpTheme {
+        MyAppealsContent(
+            state =
+                com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsState.initial
+                    .copy(isLoading = false),
+            onIntent = {},
+        )
+    }
 }
