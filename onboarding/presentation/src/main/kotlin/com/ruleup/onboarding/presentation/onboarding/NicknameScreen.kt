@@ -40,7 +40,7 @@ import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/** 01 · 닉네임. "다음" 은 ViewModel 의 닉네임 검사를 거쳐 통과 시 ViewModel 이 이동시킨다. */
+/** 01 · 닉네임. */
 @Composable
 fun NicknameContent(
     onIntent: (OnboardingIntent) -> Unit,
@@ -56,10 +56,10 @@ fun NicknameContent(
         step = OnboardingStep.NICKNAME,
         buttonText = "다음",
         modifier = modifier,
-        // 서버 확인까지 통과해야 넘어간다. 통과 전에 전진시키면 마지막 제출에서 1단계로 되돌아온다.
+        // 서버 확인까지 통과해야 넘어간다.
         nextEnabled = nicknameAvailable == true,
         onNext = { nav.navigateTo(OnboardingInterestPage) },
-        // 1단계 뒤로가기는 곧 이탈이다. signupToken 은 5분이라 되돌아올 수 없다.
+        // 1단계 뒤로가기는 곧 이탈이다.
         onBack = { onIntent(OnboardingIntent.BackFromFirstStep) },
     ) {
         SectionHeader(
@@ -77,7 +77,7 @@ fun NicknameContent(
     }
 }
 
-/** 그라데이션 카드 위에 현재 닉네임을 미리 보여준다. 앞 단계에서 사진을 골랐다면 그 사진을 아바타로 쓴다. */
+/** 그라데이션 카드 위에 현재 닉네임을 미리 보여준다. */
 @Composable
 private fun NicknamePreviewCard(
     nickname: String,
@@ -127,16 +127,13 @@ private fun NicknamePreviewCard(
     }
 }
 
-/** 입력칸 아래 한 줄 안내. [positive] 면 통과 색, 아니면 경고 색으로 그린다. */
+/** 입력칸 아래 한 줄 안내. */
 internal data class NicknameFeedback(
     val message: String,
     val positive: Boolean,
 )
 
-/**
- * 형식 검사와 서버 확인 결과를 **한 줄로** 합친다. 둘을 따로 그리면 "사용 가능한 닉네임이에요"가 두 번 뜬다.
- * 형식이 틀리면 서버에 묻기 전이라 형식 안내가 우선이고, 형식이 맞으면 서버 확인 결과를 보여 준다.
- */
+/** 형식 검사와 서버 확인 결과를 한 줄로 합친다. */
 internal fun nicknameFeedback(
     nickname: String,
     serverMessage: String?,
@@ -177,8 +174,7 @@ private fun NicknameField(
         ) {
             BasicTextField(
                 value = nickname,
-                // 상한을 넘겨 계속 쳐지면 카운터가 "13 / 12" 를 띄운 채 사용자가 어디를 지워야
-                // 하는지 알기 어렵다. 범위 상수는 domain 이 갖고 차단만 여기서 한다.
+                // 상한을 넘겨 계속 쳐지면 카운터가 "13 / 12" 를 띄운 채 사용자가 어디를 지워야 하는지 알기 어렵다.
                 onValueChange = { onNickNameChange(it.take(maxLength)) },
                 singleLine = true,
                 textStyle = RuleUpTheme.typography.labelMedium.copy(color = RuleUpTheme.colors.textPrimary),

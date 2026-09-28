@@ -11,14 +11,7 @@ import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 06 · 약관. 마지막 단계라 여기서 막히면 **앞의 다섯 단계가 통째로 헛수고**가 된다.
- *
- * 필수 동의를 다 채우기 전에 제출하면 서버가 `REQUIRED_AGREEMENT_MISSING` 으로 튕기는데,
- * signupToken 은 5분이라 그 왕복이 곧 가입 이탈이다 — 화면이 먼저 막아야 한다.
- *
- * 기대 문구 출처: Figma `1134:1867`「온보딩 6 · 약관」.
- */
+/** 06 · 약관. */
 @RunWith(RobolectricTestRunner::class)
 class TermsContentTest {
     @get:Rule
@@ -35,7 +28,6 @@ class TermsContentTest {
 
     @Test
     fun `필수 동의를 다 채우기 전에는 제출하지 않는다`() {
-        // 서버 왕복 전에 막는다 — 튕겨 돌아오면 signupToken 이 만료돼 처음부터 다시다.
         val intents = mutableListOf<OnboardingIntent>()
         compose.renderOnboarding { TermsContent(onIntent = { intents += it }, checked = emptySet()) }
 

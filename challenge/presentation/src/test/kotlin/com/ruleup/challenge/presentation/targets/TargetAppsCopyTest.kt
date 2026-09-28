@@ -10,7 +10,6 @@ import kotlin.test.assertFailsWith
 class TargetAppsCopyTest {
     @Test
     fun `대상 앱은 1에서 10개만 허용된다`() {
-        // 11개 이상은 서버가 400 INVALID_APP 으로 막는다 — 왕복 전에 값 타입이 먼저 잠근다.
         assertFailsWith<InvalidScreenAppException> { ScreenAppSet.of(apps(11)) }
         assertEquals(10, ScreenAppSet.of(apps(10)).apps.size)
     }

@@ -3,10 +3,7 @@ package com.ruleup.challenge.presentation.create.component
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * Android 11+ 는 백그라운드 위치를 다른 권한과 한 번에 요청하면 다이얼로그 없이 거부한다
- * ("background permissions must be requested alone"). 그러면 위치 방을 만들고도 권한이 하나도 안 잡힌다.
- */
+/** Android 11 이상 백그라운드 위치 권한의 별도 요청. */
 class PermissionRequestBatchesTest {
     private val fine = "android.permission.ACCESS_FINE_LOCATION"
     private val background = "android.permission.ACCESS_BACKGROUND_LOCATION"

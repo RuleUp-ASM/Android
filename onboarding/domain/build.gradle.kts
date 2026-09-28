@@ -17,8 +17,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // 인증 포트 대역을 onboarding:presentation 이 함께 쓴다 — UseCase 가 final 이라
-    // 화면 테스트도 실제 UseCase 를 대역 위에 세워야 한다.
+    // 인증 포트 대역을 onboarding:presentation 이 함께 쓴다
     testFixtures {
         enable = true
     }
@@ -31,16 +30,16 @@ kotlin {
 }
 
 dependencies {
-    // Page/NavRoute·TokenRepository, User 등 공유 커널이 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
+    // 공개 시그니처의 core:domain 타입.
     api(project(":core:domain"))
-    // 계정 정보는 profile 소유 — 온보딩은 최초 설정 때 그 계약을 빌려 쓴다(#175).
+    // 계정 정보는 profile 소유
     api(project(":profile:domain"))
     // 진단 로깅(사용자에게 노출하지 않는 실패 원인).
     implementation(project(":observability:domain"))
     // 이벤트 카탈로그가 BizEvent 를 돌려주므로 공개 시그니처에 나온다.
     api(project(":logging:domain"))
     implementation(libs.kotlinx.coroutines.core)
-    // UseCase 의 @Inject 생성자(런타임 Hilt 컴포넌트에서 제공). 도메인은 hilt 런타임 없이 annotation 만.
+    // UseCase 의 @Inject 생성자(런타임 Hilt 컴포넌트에서 제공).
     implementation(libs.javax.inject)
 
     testImplementation(kotlin("test-junit"))

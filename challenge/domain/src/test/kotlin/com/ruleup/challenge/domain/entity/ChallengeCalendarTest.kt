@@ -6,14 +6,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 챌린지 월 캘린더. 이 화면은 **없는 실패를 지어내기 가장 쉬운 자리**다 — 판정 대상이 아닌 날과
- * 아직 확정되지 않은 날이 실패와 같아 보이면, 사용자는 쉬는 날에 실패했다고 읽는다.
- */
+/** 챌린지 월 캘린더. */
 class ChallengeDayStatusTest {
     @Test
     fun `명세의 4종만 정의돼 있고 서버 값과 이름이 같다`() {
-        // /me/calendar 의 ALL_DONE·PARTIAL 이 섞여 들어오면 한 방으로 좁힌 뜻이 무너진다.
         assertEquals(
             listOf("DONE", "FAILED", "FAIL_EXPECTED", "IN_PROGRESS"),
             ChallengeDayStatus.entries.map { it.value },
@@ -29,7 +25,6 @@ class ChallengeDayStatusTest {
 
     @Test
     fun `유예 창은 확정된 실패가 아니다`() {
-        // 아직 뒤집힐 수 있다(인증 정책 2-1). 확정 실패와 같아 보이면 이의를 포기하게 된다.
         assertFalse(ChallengeDayStatus.FAIL_EXPECTED.isSettledFailure)
         assertTrue(ChallengeDayStatus.FAILED.isSettledFailure)
     }
@@ -38,7 +33,6 @@ class ChallengeDayStatusTest {
 class ChallengeCalendarTest {
     @Test
     fun `판정 대상이 아닌 날은 기록이 없다`() {
-        // 주 3회 방이면 한 달에 12~13칸만 온다 — 빈 날짜를 실패로 채우면 안 된다.
         assertNull(calendar().dayOf("2026-09-02"))
     }
 

@@ -44,11 +44,11 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ChallengeApi {
-    // 생성 화면 추천 루틴 — 파라미터 없음, 서버가 항상 3개를 보장한다(구 limit 폐기).
+    // 생성 화면 추천 루틴
     @GET("v1/challenges/recommendations")
     suspend fun getRoutineTemplates(): BaseResponse<RoutineTemplatesResponse>
 
-    // 경로 B: 설명 입력 → LLM 5-Step 초안. result=FALLBACK 도 200 이다.
+    // 경로 B: 설명 입력 → LLM 5-Step 초안.
     @POST("v1/challenges/draft")
     suspend fun createDraft(
         @Body request: DraftRequest,
@@ -60,7 +60,7 @@ interface ChallengeApi {
         @Body request: RecommendByTemplateRequest,
     ): BaseResponse<TemplateDraftResponse>
 
-    // 챌린지 최종 생성. Idempotency-Key 는 필수 — 재시도가 두 번째 방을 만들지 않게 한다.
+    // 챌린지 최종 생성.
     @POST("v1/challenges")
     suspend fun create(
         @Header("Idempotency-Key") idempotencyKey: String,
@@ -68,7 +68,7 @@ interface ChallengeApi {
         @Body request: JsonObject,
     ): BaseResponse<CreateChallengeResponse>
 
-    // 공개 상세 (멤버 전용 내부는 /room). 비공개·솔로·없음은 전부 404 로 존재를 숨긴다.
+    // 공개 상세 (멤버 전용 내부는 /room).
     @GET("v1/challenges/{challengeId}")
     suspend fun getChallenge(
         @Path("challengeId") challengeId: String,
@@ -80,13 +80,13 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<ChallengeSetupInfoResponse>
 
-    // 방장 전용 설정 조회 — 수정 폼이 쓸 현재 설정 전체 + editableFields + version
+    // 방장 전용 설정 조회
     @GET("v1/challenges/{challengeId}/settings")
     suspend fun getSettings(
         @Path("challengeId") challengeId: String,
     ): BaseResponse<ChallengeSettingsResponse>
 
-    // 챌린지 수정 (방장). 본문은 "넣은 키만 변경"이라 JsonObject 로 직접 조립한다.
+    // 챌린지 수정 (방장).
     @PATCH("v1/challenges/{challengeId}")
     suspend fun update(
         @Path("challengeId") challengeId: String,
@@ -105,7 +105,7 @@ interface ChallengeApi {
         @Path("challengeId") challengeId: String,
     ): BaseResponse<ChallengeMembersResponse>
 
-    // 챌린지 탈퇴 (본인) — 응답 penaltyApplied
+    // 챌린지 탈퇴 (본인)
     @DELETE("v1/challenges/{challengeId}/members/me")
     suspend fun leaveChallenge(
         @Path("challengeId") challengeId: String,
@@ -126,7 +126,7 @@ interface ChallengeApi {
         @Query("size") size: Int? = null,
     ): BaseResponse<MyChallengesResponse>
 
-    // 탐색: 실시간 인기 (서버가 Top 20 반환 · 홈은 상위 5개 사용). category 를 주면 카테고리별 인기.
+    // 탐색: 실시간 인기 (서버가 Top 20 반환 · 홈은 상위 5개 사용).
     @GET("v1/challenges/trending")
     suspend fun getTrending(
         @Query("category") category: String? = null,
@@ -137,7 +137,6 @@ interface ChallengeApi {
     suspend fun getCategories(): BaseResponse<ChallengeCategoriesResponse>
 
     // 탐색: 둘러보기 (① 노출 제외 → ② 필터 AND → ③ 정렬 → 커서 페이지네이션).
-    // 티어 컷은 값 대신 eligibleOnly 로 — 서버가 토큰 사용자의 표시 티어 기준으로 계산한다.
     @GET("v1/challenges/explore")
     suspend fun explore(
         @Query("categories") categories: String? = null,

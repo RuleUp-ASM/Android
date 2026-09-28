@@ -5,10 +5,7 @@ import com.ruleup.observability.domain.event.ObsEvent
 import com.ruleup.observability.domain.port.Sink
 import javax.inject.Inject
 
-/**
- * 온디바이스 인스펙터 출구. [InspectorLog] 링버퍼에 적재한다. 이 모듈은 `:app` 이
- * `debugImplementation` 으로만 물어 **릴리스 APK 에 포함되지 않는다.**
- */
+/** 온디바이스 인스펙터 출구. */
 class InspectorSink
     @Inject
     constructor() : Sink {

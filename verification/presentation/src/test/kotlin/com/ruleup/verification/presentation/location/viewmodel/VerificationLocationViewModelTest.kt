@@ -22,12 +22,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 지오펜스 좌표 바인딩. 이 화면이 저장하는 값이 **매일 인증의 기준점**이 되므로, 잘못 저장되면
- * 사용자는 매일 실패하고 그 원인을 알 수 없다.
- *
- * 그래서 앵커가 하나도 없으면 서버에 보내지 않고, 변경 잠금에 걸렸으면 왕복 전에 알린다.
- */
+/** 지오펜스 좌표 바인딩. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class VerificationLocationViewModelTest {
     @BeforeTest
@@ -126,13 +121,12 @@ class VerificationLocationViewModelTest {
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
     ) = VerificationLocationViewModel(
         verificationRepository = repo,
-        // 이 테스트는 저장까지 가지 않는다 — 앵커가 없거나 검색 단계에서 끝나는 규칙만 본다.
         bindLocationUseCase = BindLocationUseCase(NoGeofenceRegister, FakeTokenRepository(storedUserId = "u1")),
         navigationHelper = nav,
     )
 }
 
-/** 지오펜스 등록은 이 테스트의 관심사가 아니다 — 불리면 그 자체가 의도치 않은 호출이다. */
+/** 지오펜스 등록은 이 테스트의 관심사가 아니다 */
 private object NoGeofenceRegister : GeofenceRegister {
     override suspend fun reconcile(targets: List<GeofenceTarget>) = throw NotImplementedError()
 

@@ -11,12 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 신고한 사용자·챌린지 ViewModel (명세 GET/DELETE /users/me/blocks).
- *
- * 해제에 성공하면 목록을 **다시 불러온다.** 로컬에서 그 행만 지우면 다른 기기에서 생긴 변화가
- * 반영되지 않고, 이 화면은 그 목록이 전부라 어긋난 걸 알아챌 방법이 없다.
- */
+/** 신고한 사용자·챌린지 ViewModel. */
 @HiltViewModel
 class BlockListViewModel
     @Inject
@@ -49,7 +44,7 @@ class BlockListViewModel
                         isLoading = false,
                         blocks = event.blocks,
                         errorMessage = null,
-                        // 목록을 새로 받으면 확인 시트는 닫는다 — 방금 푼 대상이 남아 있으면 안 된다.
+                        // 목록을 새로 받으면 확인 시트는 닫는다
                         confirming = null,
                         unblocking = false,
                     )
@@ -98,12 +93,7 @@ class BlockListViewModel
         }
     }
 
-/**
- * 실패를 사용자 문구로 옮긴다.
- *
- * 이미 풀린 차단은 실패가 아니라 **경합**이다 — 다른 기기에서 먼저 풀었을 뿐이고, 사용자가 원한
- * 결과는 이미 이뤄져 있다. 그래서 오류처럼 말하지 않고 목록이 옛것이었다고만 알린다.
- */
+/** 실패를 사용자 문구로 옮긴다. */
 private fun Throwable.userMessage(fallback: String): String =
     when ((this as? ReportException)?.failure) {
         ReportFailure.BLOCK_ENTRY_NOT_FOUND -> "이미 풀린 차단이에요. 목록을 새로 불러올게요."

@@ -39,5 +39,5 @@ sealed interface SanctionsReducerEvent : ReducerEvent {
     ) : SanctionsReducerEvent
 }
 
-/** 열람 전용 화면 — 이의 제기 버튼이 없어 단발성 이펙트도 없다. */
+/** 열람 전용 화면 */
 typealias SanctionsEffect = NoEffect

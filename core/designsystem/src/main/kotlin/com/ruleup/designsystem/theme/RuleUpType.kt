@@ -6,16 +6,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-/**
- * 디자인 기준은 Pretendard 지만 `res/font` 에 아직 번들되지 않아 시스템 Sans-serif 로 폴백한다.
- * 그동안 `Number*` 의 `Black`(w900)은 한글 시스템 폰트에 없어 Bold 로 떨어진다 — 숫자 강조가 얇게 나온다.
- */
+/** 기본 글꼴: 시스템 Sans-serif. */
 val RuleUpFontFamily: FontFamily = FontFamily.SansSerif
 
-/**
- * Figma `🎨 00 · 디자인 시스템 · 타이포 스케일`(node `1177:71`)의 21종. 이름은 `RuleUp/…` 스타일명 그대로다.
- * `number*` 는 점수·일수 전용 — 본문에 쓰면 Black 이 문장을 짓눌러 읽기 어려워진다.
- */
+/** 타이포그래피 토큰. */
 @Immutable
 data class RuleUpTypography(
     val numberXl: TextStyle,
@@ -66,10 +60,7 @@ val defaultRuleUpTypography =
         micro = ruleUpTextStyle(FontWeight.Bold, size = 9),
     )
 
-/**
- * Figma 가 21종 전부 `lineHeight 100%` · `letterSpacing 0` 이라 그대로 옮긴다.
- * 다만 한글 여러 줄에서 1.0배는 좁다 — 디자이너 의도가 아니라 Figma 기본값일 수 있어 실기기 확인이 필요하다.
- */
+/** 행간 100%, 자간 0. */
 private fun ruleUpTextStyle(
     fontWeight: FontWeight,
     size: Int,

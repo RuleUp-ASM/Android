@@ -21,33 +21,28 @@ sealed interface ManualSubmitIntent : MviIntent {
 
     data object Submit : ManualSubmitIntent
 
-    /** 체크 해제. 당일 안에서만 되고, 기한이 지나면 서버가 막는다. */
+    /** 체크 해제. */
     data object Uncheck : ManualSubmitIntent
 }
 
-/**
- * 수동 인증 화면 상태 (Figma `1443:2`).
- *
- * [title] 은 진행률 조회에서 온다 — 실패해도 비운 채로 화면을 세운다. 제목을 못 받았다고 체크를
- * 막으면 **사용자가 오늘 인증을 못 하게 된다.** 체크에 필요한 것은 challengeId 하나뿐이다.
- */
+/** 수동 인증 화면 상태. */
 data class ManualSubmitState(
     val challengeId: String,
     val isLoading: Boolean,
     val title: String,
-    // 오늘 (KST, `2026-09-14`). 기기 시계가 아니라 서버가 정한 날을 쓴다.
+    // 오늘 (KST, `2026-09-14`).
     val date: String,
-    // "자정 마감" 같은 인증 창 문구. 서버가 주지 않으면 표기를 생략한다.
+    // "자정 마감" 같은 인증 창 문구.
     val window: String?,
     val status: TodayResultStatus?,
-    // 체크 해제의 키. 없으면 되돌릴 경로가 없어 해제 버튼을 두지 않는다.
+    // 체크 해제의 키.
     val verificationId: String?,
     val streakAfter: Int?,
     val note: String,
     val isSubmitting: Boolean,
     val errorMessage: String?,
 ) : UiState {
-    /** 오늘 체크가 끝났는가. 확정 상태만 본다 — 실패 예정·진행중은 아직 체크 전이다. */
+    /** 오늘 체크가 끝났는가. */
     val checked: Boolean
         get() = status == TodayResultStatus.DONE
 
@@ -61,7 +56,7 @@ data class ManualSubmitState(
     val canUncheck: Boolean
         get() = !isSubmitting && checked && verificationId != null
 
-    /** 오늘 상태를 받지 못했다 — 카드 대신 재시도를 보여 준다. */
+    /** 오늘 상태를 받지 못했다 */
     val loadFailed: Boolean
         get() = !isLoading && status == null && errorMessage != null
 
@@ -84,12 +79,7 @@ data class ManualSubmitState(
 }
 
 sealed interface ManualSubmitReducerEvent : ReducerEvent {
-    /**
-     * challengeId 를 함께 싣는다 — 재시도가 같은 챌린지를 다시 부르려면 상태가 기억해야 한다.
-     *
-     * [silent] 는 제출·해제가 실패해 **서버 상태만 다시 맞추는** 새로고침이다. 스피너를 띄우지 않고
-     * 직전 오류 문구를 지우지 않는다 — 지우면 "이미 체크했어요"를 읽기도 전에 사라진다.
-     */
+    /** 챌린지 식별자를 포함한 오늘 인증 결과. */
     data class Loading(
         val challengeId: String,
         val silent: Boolean,
@@ -126,5 +116,5 @@ sealed interface ManualSubmitReducerEvent : ReducerEvent {
     data object Unchecked : ManualSubmitReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias ManualSubmitEffect = NoEffect

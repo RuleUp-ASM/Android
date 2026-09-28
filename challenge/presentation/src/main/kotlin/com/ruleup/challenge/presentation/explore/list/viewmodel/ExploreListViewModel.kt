@@ -21,12 +21,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 
-/**
- * 챌린지 둘러보기 ViewModel.
- *
- * 필터(AND)·정렬(6종)·커서 페이지네이션은 서버가 수행하고, 화면은 (필터, 정렬) 이 바뀌면 첫 페이지부터
- * 다시, 스크롤 하단 근접 시 `nextCursor` 로 이어 붙인다. 진행 중인 요청이 있으면 중복 호출을 막는다.
- */
+/** 챌린지 둘러보기 ViewModel. */
 @HiltViewModel
 class ExploreListViewModel
     @Inject
@@ -39,10 +34,10 @@ class ExploreListViewModel
         ) {
         private var loaded = false
 
-        // 스크롤 깊이 집계용. 첫 페이지가 0이고 이어붙일 때마다 1씩 오른다.
+        // 스크롤 깊이 집계용.
         private var pageIndex = 0
 
-        // 세션 내 노출 중복 제거. 필터·정렬이 바뀌면 목록 자체가 달라지므로 비운다.
+        // 세션 내 노출 중복 제거.
         private val impressed = mutableSetOf<String>()
 
         override fun onIntent(intent: ExploreListIntent) {
@@ -101,7 +96,7 @@ class ExploreListViewModel
                         nextCursor = event.nextCursor,
                     )
 
-                // 다음 페이지 실패는 기존 목록을 지우지 않는다 — 하단에서만 재시도한다.
+                // 다음 페이지 실패는 기존 목록을 지우지 않는다
                 ExploreListReducerEvent.LoadMoreFailed ->
                     state.copy(isLoadingMore = false, loadMoreFailed = true)
 
@@ -129,10 +124,7 @@ class ExploreListViewModel
             fetchFirstPage(filter = initialFilter, sort = initialSort)
         }
 
-        /**
-         * 카드 노출. **세션 내 중복은 여기서 막는다** — 스크롤로 같은 카드가 여러 번 들어오면
-         * 노출 수가 부풀어 상세 진입률(클릭/노출)이 실제보다 낮게 나온다.
-         */
+        /** 카드 노출. */
         private fun logImpression(challengeId: String) {
             if (!impressed.add(challengeId)) return
             val index = currentState.items.indexOfFirst { it.challengeId == challengeId }
@@ -149,7 +141,7 @@ class ExploreListViewModel
             )
         }
 
-        /** 목록 카드 클릭. 노출→클릭→상세를 잇는 challenge_id 는 여기서 상세로 넘어간다. */
+        /** 목록 카드 클릭. */
         private fun openChallenge(challengeId: String) {
             val position = currentState.items.indexOfFirst { it.challengeId == challengeId }
             bizLogger.record(
@@ -163,10 +155,7 @@ class ExploreListViewModel
             navigationHelper.navigateByRoute(ChallengeDetailPage(challengeId).toRoute())
         }
 
-        /**
-         * 첫 페이지 결과가 나온 뒤에야 보낼 수 있는 이벤트. `result_count` 를 실어야 해서
-         * 인텐트 시점이 아니라 응답 시점에 발행한다.
-         */
+        /** 첫 페이지 결과가 나온 뒤에야 보낼 수 있는 이벤트. */
         private sealed interface LogAfterLoad {
             data class FilterApplied(
                 val filter: ExploreFilter,
@@ -196,7 +185,7 @@ class ExploreListViewModel
                         )
                         pageIndex = 0
                         logAfterLoad?.let { logResult(it, result.items.size) }
-                        // 빈 결과는 filter_apply 와 **중복으로** 보낸다 — 분모가 달라 하나로 합칠 수 없다.
+                        // 빈 결과는 filter_apply 와 중복으로 보낸다
                         if (result.items.isEmpty()) {
                             bizLogger.record(ChallengeEvents.exploreEmptyResult(filter, sort))
                         }
@@ -217,10 +206,7 @@ class ExploreListViewModel
             }
         }
 
-        /**
-         * 서버가 조건을 거절하면 **사용자에게 되묻지 않고 스스로 고쳐 다시 조회한다**.
-         * 정렬 오류는 기본 정렬로, 필터 오류는 필터 초기화로, 커서 오류는 첫 페이지부터.
-         */
+        /** 서버가 조건을 거절하면 사용자에게 되묻지 않고 스스로 고쳐 다시 조회한다. */
         private fun recoverOrFail(
             error: Throwable,
             filter: ExploreFilter,
@@ -266,7 +252,7 @@ class ExploreListViewModel
                     pageIndex += 1
                     bizLogger.record(ChallengeEvents.exploreListLoadMore(pageIndex, currentState.sort))
                 }.onFailure { error ->
-                    // 커서가 상해 있으면 조용히 첫 페이지부터 다시 받는다 — 사용자가 인지할 필요가 없다.
+                    // 커서가 상해 있으면 조용히 첫 페이지부터 다시 받는다
                     if (error is CursorInvalidException) {
                         fetchFirstPage(currentState.filter, currentState.sort)
                     } else {

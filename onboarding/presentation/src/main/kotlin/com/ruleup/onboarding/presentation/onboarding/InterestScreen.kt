@@ -36,7 +36,7 @@ import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/** 02 · 관심 분야. 0~6개이며 아무것도 안 고르고 넘어가는 것이 곧 건너뛰기다. */
+/** 02 · 관심 분야. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InterestContent(
@@ -78,7 +78,7 @@ fun InterestContent(
     }
 }
 
-/** 상한 안내 + 선택 카운트 바. 하한은 없다 — 아무것도 안 고르고 넘어갈 수 있다. */
+/** 상한 안내 + 선택 카운트 바. */
 @Composable
 private fun SelectionCounter(count: Int) {
     Row(

@@ -8,8 +8,6 @@ import kotlin.test.assertTrue
 class ReportTargetTest {
     @Test
     fun `챌린지 신고는 부정 인증 의심 사유를 거부한다`() {
-        // 서버가 400 INVALID_REPORT_REASON 으로 막는 조합이다. 여기서 안 막으면 사용자가
-        // 사유를 고르고 전송까지 누른 뒤에야 실패를 본다.
         assertFailsWith<IllegalArgumentException> {
             ReportTarget.Challenge(
                 challengeId = "c-1",
@@ -28,7 +26,6 @@ class ReportTargetTest {
 
     @Test
     fun `프로필 밖에서 하는 사용자 신고는 발생한 챌린지가 없으면 만들어지지 않는다`() {
-        // 스냅샷에 방 정보가 없으면 운영자가 무슨 행위였는지 판단할 수 없어 서버가 거절한다.
         listOf(ReportContext.CHALLENGE_DETAIL, ReportContext.ROOM).forEach { context ->
             assertFailsWith<IllegalArgumentException>("$context 에서 챌린지 없이 통과했다") {
                 ReportTarget.User("u-1", ReportReason.SPAM_AD, context)

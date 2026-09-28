@@ -60,14 +60,13 @@ class SignupUseCaseTest {
 
             assertEquals("file://p", profile.uploadCalledWith)
             assertEquals("https://cdn/p.png", result.profileImageUrl)
-            // 업로드 API 가 accessToken 을 요구하므로 저장이 먼저 끝나 있어야 한다.
+
             assertEquals(token, tokens.savedToken)
         }
 
     @Test
     fun `사진 업로드가 실패해도 가입은 성공으로 끝난다`() =
         runBlocking {
-            // 가입은 이미 끝난 상태라 여기서 던지면 계정이 만들어졌는데도 화면은 실패로 보인다.
             val session = AuthSession(token, testUser())
             val auth = FakeAuthRepository().apply { signupResult = session }
             val profile = FakeProfileRepository().apply { uploadError = RuntimeException("413") }
@@ -104,7 +103,7 @@ class SignupUseCaseTest {
                     ?.agreements
                     ?.consents
                     .orEmpty()
-            // 위치·건강 개별 동의는 그 인증 수단을 처음 쓸 때 받는다 — 가입에 실으면 서버가 400 을 준다.
+
             assertEquals(AgreementType.SIGNUP.toSet(), sent.keys)
             assertEquals(false, sent[AgreementType.MARKETING]?.agreed)
         }

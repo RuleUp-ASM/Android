@@ -33,12 +33,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 온보딩 6단계 공유 ViewModel.
- *
- * 페이지들이 같은 인스턴스를 공유해 입력값을 누적한다. 단순 전진/후진은 화면이 [NavigationHelper]
- * 로 직접 처리하고, 비동기 분기(닉네임 확인·가입 제출)와 실패 안내만 여기서 담당한다.
- */
+/** 온보딩 6단계 공유 ViewModel. */
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class OnboardingViewModel
@@ -54,10 +49,7 @@ class OnboardingViewModel
         private val navigationHelper: NavigationHelper,
         private val pendingDeepLink: PendingDeepLink,
     ) : MviViewModel<OnboardingIntent, OnboardingState, OnboardingReducerEvent, OnboardingEffect>(OnboardingState.initial) {
-        /**
-         * 닉네임 입력 스트림. 타이핑마다 확인 API 를 부르면 무인증 엔드포인트에 부하가 걸리고 응답이
-         * 뒤바뀐 순서로 도착해, 500ms 로 묶고 같은 값은 걸러 마지막 입력만 확인한다.
-         */
+        /** 닉네임 입력 스트림. */
         private val nicknameInput = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
         init {
@@ -67,8 +59,7 @@ class OnboardingViewModel
                     .distinctUntilChanged()
                     .collect { checkNickname(it) }
             }
-            // IdP 닉네임을 채워 준다. 자동 제출은 하지 않는다 — 남이 이미 쓰는 이름일 수 있어
-            // check API 를 통과해야 다음 단계로 간다. 통과하면 사용자는 그냥 "다음"만 누르면 된다.
+            // IdP 닉네임을 채워 준다.
             signupSession
                 .oauthProfile()
                 ?.nicknameHint
@@ -95,7 +86,7 @@ class OnboardingViewModel
             event: OnboardingReducerEvent,
         ): OnboardingState =
             when (event) {
-                // 입력이 바뀌면 직전 확인 결과는 무효다. 남겨 두면 이전 닉네임의 "사용 가능"으로 통과한다.
+                // 입력이 바뀌면 직전 확인 결과는 무효다.
                 is OnboardingReducerEvent.NicknameEntered ->
                     state.copy(nickname = event.nickname, nicknameAvailable = null, nicknameMessage = null)
 
@@ -109,7 +100,7 @@ class OnboardingViewModel
                         event.interest in state.interests -> state.copy(interests = state.interests - event.interest)
                         state.interests.size < InterestLimits.MAX ->
                             state.copy(interests = state.interests + event.interest)
-                        // 6개를 넘기면 서버가 INTEREST_LIMIT_EXCEEDED 로 튕긴다. 아예 담지 않는다.
+                        // 6개를 넘기면 서버가 INTEREST_LIMIT_EXCEEDED 로 튕긴다.
                         else -> state
                     }
 
@@ -120,7 +111,7 @@ class OnboardingViewModel
                         birthDateError = event.error,
                     )
 
-                // 필수 입력이라 해제는 없다 — 재탭은 같은 선택을 유지한다.
+                // 필수 입력이라 해제는 없다
                 is OnboardingReducerEvent.GenderSelected -> state.copy(gender = event.gender)
 
                 is OnboardingReducerEvent.AgreementToggled ->
@@ -167,9 +158,7 @@ class OnboardingViewModel
         private suspend fun checkNickname(name: String) {
             runCatching { profileRepository.checkNickname(name) }
                 .onSuccess { check ->
-                    // 확인을 보낸 뒤 입력이 바뀌었으면 버린다. 디바운스가 걸린 사이에 특수문자를
-                    // 덧붙이면, 앞 글자에 대한 "사용 가능" 응답이 뒤늦게 도착해 **오류가 떠 있는데도
-                    // 다음 버튼이 열린다**(ONB-03).
+                    // 확인을 보낸 뒤 입력이 바뀌었으면 버린다.
                     if (currentState.nickname != name) return@onSuccess
                     bizLogger.record(
                         OnboardingEvents.nicknameCheck(
@@ -186,7 +175,7 @@ class OnboardingViewModel
                     )
                 }.onFailure {
                     if (currentState.nickname != name) return@onFailure
-                    // 확인 실패는 "쓸 수 없음"이 아니다. 통과로 두면 제출에서 튕기므로 미확인으로 남긴다.
+                    // 확인 실패는 "쓸 수 없음"이 아니다.
                     dispatch(
                         OnboardingReducerEvent.NicknameChecked(
                             available = null,
@@ -196,7 +185,7 @@ class OnboardingViewModel
                 }
         }
 
-        /** 8자리가 차기 전에는 검증하지 않는다 — 입력 도중 "잘못된 날짜"를 띄우면 계속 깜빡인다. */
+        /** 8자리가 차기 전에는 검증하지 않는다 */
         private fun enterBirthDate(digits: String) {
             val trimmed = digits.filter { it.isDigit() }.take(OnboardingState.BIRTH_DATE_LENGTH)
             if (trimmed.length < OnboardingState.BIRTH_DATE_LENGTH) {
@@ -241,7 +230,7 @@ class OnboardingViewModel
                 emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Toast("생년월일을 입력해주세요")))
                 return
             }
-            // 성별은 필수(회원 정책 §2). 화면이 이미 막지만, 상태 복원 등 화면을 안 거치는 경로도 받친다.
+            // 성별은 필수.
             val gender = state.gender
             if (gender == null) {
                 emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Toast("성별을 선택해주세요")))
@@ -270,12 +259,12 @@ class OnboardingViewModel
                         ),
                     )
                 }.onSuccess { user ->
-                    // 가입이 끝났다. 남겨 두면 다음 시도가 만료된 토큰을 물고 시작한다.
+                    // 가입이 끝났다.
                     signupSession.clear()
                     bizLogger.record(
                         OnboardingEvents.signupComplete(
                             interestCount = state.interests.size,
-                            // 성별이 필수가 되면서 항상 true 다. 이벤트 스키마 정리는 분석 쪽과 합의 후.
+                            // 성별이 필수가 되면서 항상 true 다.
                             hasGender = true,
                             optionalAgreements = state.agreements.count { !it.required },
                             durationMs = signupTimer.consumeElapsedMillis(),
@@ -290,7 +279,7 @@ class OnboardingViewModel
                 }.onFailure { error ->
                     dispatch(OnboardingReducerEvent.SubmitFailed)
                     bizLogger.record(OnboardingEvents.signupFailed((error as? AuthException)?.failure?.name ?: "UNKNOWN"))
-                    // 토큰이 만료됐으면 되돌아갈 단계가 없다. 로그인부터 다시 시작한다.
+                    // 토큰이 만료됐으면 되돌아갈 단계가 없다.
                     if ((error as? AuthException)?.failure == AuthFailure.INVALID_SIGNUP_TOKEN) {
                         restartFromLogin("시간이 초과됐어요. 처음부터 다시 해주세요")
                     } else {
@@ -300,7 +289,7 @@ class OnboardingViewModel
             }
         }
 
-        // 로그인 화면 이동은 대화상자를 닫을 때 한다. 여기서 바로 옮기면 대화상자를 그릴 화면이 사라져 안내가 묻힌다.
+        // 로그인 화면 이동은 대화상자를 닫을 때 한다.
         private fun restartFromLogin(message: String) {
             signupSession.clear()
             emitEffect(OnboardingEffect.ShowFailure(AuthFailureUi.Dialog(message, restartFromLogin = true)))
@@ -315,7 +304,7 @@ private fun NicknameCheck.message(): String =
     when (reason) {
         NicknameCheckReason.DUPLICATED -> "이미 사용 중인 닉네임이에요"
         NicknameCheckReason.FORMAT -> "사용할 수 없는 닉네임이에요"
-        // 사칭 방지로 해제 후 1주간 잠긴다. 언제 풀리는지 모르면 계속 다른 닉네임만 시도하게 된다.
+        // 사칭 방지로 해제 후 1주간 잠긴다.
         NicknameCheckReason.RECENTLY_RELEASED ->
             availableAt?.let { "최근에 해제된 닉네임이에요. $it 부터 쓸 수 있어요" }
                 ?: "최근에 해제된 닉네임이라 잠시 쓸 수 없어요"

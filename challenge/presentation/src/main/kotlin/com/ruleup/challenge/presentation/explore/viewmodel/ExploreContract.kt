@@ -8,7 +8,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface ExploreIntent : MviIntent {
-    /** 화면 진입 — 인기와 카테고리를 병렬로 조회한다. */
+    /** 화면 진입 */
     data object Load : ExploreIntent
 
     /** 인기 섹션만 재시도. */
@@ -46,27 +46,19 @@ sealed interface ExploreIntent : MviIntent {
     data object CreateChallenge : ExploreIntent
 }
 
-/**
- * 탐색 메인 상태.
- *
- * 인기와 카테고리는 **서로 독립적으로** 로딩·실패한다 — 한쪽이 실패해도 다른 쪽을 막지 않기 위해
- * 공통 `isLoading`/`errorMessage` 를 두지 않는다(프론트 스펙 4-4).
- */
+/** 탐색 메인 상태. */
 data class ExploreState(
     val isTrendingLoading: Boolean,
     // 서버 산정 순서 그대로의 상위 N
     val trending: List<TrendingChallenge>,
-    // 순위 계산 기준 시각 — 최대 1시간 지연된 스냅샷이다
+    // 순위 계산 기준 시각
     val calculatedAt: String?,
     val trendingFailed: Boolean,
     val isCategoriesLoading: Boolean,
     val categories: List<ChallengeCategoryCount>,
     val categoriesFailed: Boolean,
 ) : UiState {
-    /**
-     * 인기 섹션을 아예 숨길지. 초기 상태(`[]`)이거나 실패했으면 숨긴다 —
-     * 빈 카드를 남겨두면 "인기 챌린지가 없는 서비스"처럼 보인다.
-     */
+    /** 인기 섹션을 아예 숨길지. */
     val hideTrendingSection: Boolean
         get() = !isTrendingLoading && (trending.isEmpty() || trendingFailed)
 

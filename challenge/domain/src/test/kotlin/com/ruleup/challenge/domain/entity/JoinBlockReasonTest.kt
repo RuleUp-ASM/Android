@@ -7,8 +7,6 @@ import kotlin.test.assertNull
 class JoinBlockReasonTest {
     @Test
     fun `명세의 8종을 모두 매핑한다`() {
-        // 공개 상세의 joinBlockReason 과 가입 409 의 reason 이 같은 enum 이라, 하나라도 빠지면
-        // 화면이 "왜 못 들어가는지"를 설명하지 못하고 일반 안내로 떨어진다.
         val expected =
             mapOf(
                 "PRIVATE_INVITE_ONLY" to JoinBlockReason.PRIVATE_INVITE_ONLY,
@@ -16,8 +14,6 @@ class JoinBlockReasonTest {
                 "FREE_LIMIT" to JoinBlockReason.FREE_LIMIT,
                 "FULL" to JoinBlockReason.FULL,
                 "TIER_GATE" to JoinBlockReason.TIER_GATE,
-                // 서버 값은 PERMANENT_BAN 이다. 앱 상수 이름(BANNED)과 달라 값을 직접 고정해 둔다 —
-                // 어긋나면 영구 차단이 일반 안내로 떨어져 "잠시 후 다시" 로 보인다.
                 "PERMANENT_BAN" to JoinBlockReason.BANNED,
                 "ALREADY_JOINED" to JoinBlockReason.ALREADY_JOINED,
                 "CHALLENGE_COMPLETED" to JoinBlockReason.CHALLENGE_COMPLETED,

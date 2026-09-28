@@ -8,24 +8,17 @@ import com.ruleup.observability.domain.event.PerformancePayload
 import com.ruleup.observability.domain.model.AttrValue
 import java.util.concurrent.atomic.AtomicLong
 
-/**
- * [ObsEvent] → Firebase Analytics 매핑. Firebase 제약을 **여기서 흡수한다** — 이름 40자·키 40자·
- * 값 100자·이벤트당 파라미터 25개, 값 타입은 `String`·`Long`·`Double` 뿐이라 `Boolean` 은 0/1 `Long` 이다.
- *
- * **절단은 조용히 일어난다.** 잘린 값은 분석에서 다른 값과 뭉치므로 [truncated] 로 세어
- * `ObservabilityDiagnostics` 가 인스펙터에 노출한다.
- */
+/** [ObsEvent] → Firebase Analytics 매핑. */
 internal object FirebaseEventMapper {
     private const val MAX_NAME = 40
     private const val MAX_KEY = 40
     private const val MAX_VALUE = 100
     private const val MAX_PARAMS = 25
 
-    // 임의 스레드에서 동시에 증가한다. @Volatile 은 read-modify-write 를 보호하지 못해
-    // 안전해 보이면서 카운트가 유실된다.
+    // 임의 스레드에서 동시에 증가한다.
     private val truncations = AtomicLong()
 
-    /** 절단이 발생한 누적 횟수. 개발 중 매핑 손실을 눈치채기 위한 진단값이다. */
+    /** 절단이 발생한 누적 횟수. */
     val truncated: Long get() = truncations.get()
 
     fun eventName(payload: ObsPayload): String =

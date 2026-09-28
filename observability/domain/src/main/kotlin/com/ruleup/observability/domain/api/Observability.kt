@@ -12,13 +12,7 @@ import com.ruleup.observability.domain.port.ContextProvider
 import com.ruleup.observability.domain.port.Policy
 import com.ruleup.observability.domain.port.Sink
 
-/**
- * 관측 파이프라인의 진입점. [Policy.isEnabled] 게이트가 **페이로드 생성 전**에 돌아, 버려질 이벤트는
- * 할당 자체가 일어나지 않는다. 완성된 페이로드를 넣는 경로를 두지 않는 이유이기도 하다.
- *
- * 예외를 잡지 않는다 — 모든 포트가 "던지지 않는다"를 계약으로 갖고, 팬아웃·라우팅·실패 격리는
- * [Sink] 구현 안에 있다. 파이프라인 설계 근거는 #159.
- */
+/** 관측 파이프라인의 진입점. */
 class Observability(
     private val clock: Clock,
     private val contextProvider: ContextProvider,
@@ -26,10 +20,7 @@ class Observability(
     @PublishedApi internal val policy: Policy,
     private val sink: Sink,
 ) {
-    /**
-     * 진단 텍스트 이벤트. [message] 와 [cause] 변환은 게이트를 통과한 뒤에만 일어난다 —
-     * floor 에 걸리는 로그는 문자열 연결조차 하지 않는다.
-     */
+    /** 진단 텍스트 이벤트. */
     inline fun log(
         severity: Severity,
         tag: String,
@@ -40,10 +31,7 @@ class Observability(
         logInternal(DiagnosticPayload(severity, tag, message(), cause?.let(ErrorInfo::from)))
     }
 
-    /**
-     * 구조화 페이로드 이벤트. 게이트 인자는 [payload] 가 만들어지기 전에 필요해 따로 받으므로,
-     * **페이로드의 channel·severity·tag 와 일치해야 한다** — 어긋나면 DEV/QA 에서 즉시 실패한다.
-     */
+    /** 구조화 페이로드 이벤트. */
     inline fun log(
         channel: Channel,
         severity: Severity = Severity.INFO,
@@ -56,13 +44,10 @@ class Observability(
         logInternal(built)
     }
 
-    /** 출구 버퍼를 즉시 내보낸다. 프로세스 종료 직전에 호출한다. */
+    /** 출구 버퍼를 즉시 내보낸다. */
     fun flush() = sink.flush()
 
-    /**
-     * 어긋난 채로 두면 싱크 라우팅까지 엇나가 *"floor 를 올렸는데 이 로그는 왜 계속 찍히지"* 가 된다.
-     * 프로덕션에서는 검사하지 않는다.
-     */
+    /** 이벤트 채널과 페이로드 일치 검사. */
     @PublishedApi
     internal fun checkGateConsistency(
         channel: Channel,

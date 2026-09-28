@@ -14,10 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * [SetupNotifier] 구현. "무슨 알림을 띄울지"만 결정하고 실제 발송은 [PushNotificationHelper] 에 위임한다.
- * 탭 시 상세 화면으로 진입해 남은 셋업을 이어가게 한다.
- */
+/** [SetupNotifier] 구현. */
 @Singleton
 class SetupNotifierImpl
     @Inject
@@ -41,7 +38,7 @@ class SetupNotifierImpl
             verification: VerificationConfig,
             personalSetupRequired: Boolean,
         ) {
-            // 수동 인증은 셋업이 없다. 서버가 설정 불필요라고 했으면 그 판단을 따른다.
+            // 수동 인증은 셋업이 없다.
             if (!verification.type.isAuto || !personalSetupRequired) return
 
             val kind = kindFor(challengeId, verification) ?: return
@@ -53,12 +50,7 @@ class SetupNotifierImpl
             )
         }
 
-        /**
-         * 권한이 우선이다 — 권한 없이 등록 화면에 들어가면 아무것도 못 한다.
-         *
-         * 그 다음은 **인증 방식이 결정한다.** 예전에는 방식을 모른 채 "대상 앱 미등록"만 봐서, 앱을
-         * 쓰지 않는 장소형(GPS_PRESENCE) 챌린지에도 앱 등록 알림이 나갔다.
-         */
+        /** 권한이 우선이다 */
         private fun kindFor(
             challengeId: String,
             verification: VerificationConfig,
@@ -66,8 +58,6 @@ class SetupNotifierImpl
             if (!hasPermissions(verification.requiredPermissions)) return Kind.PERMISSION
             return when (verification.method) {
                 // 앵커 바인딩 여부는 서버만 알아서(anchorsConfigured) 여기서는 확인하지 않는다.
-                // 이미 등록했다면 상세 화면이 곧바로 다음 단계를 보여주므로 잘못된 안내는 아니다.
-                // 장소를 피하는 방식(GPS_AVOID)도 어디를 피할지 먼저 찍어야 한다.
                 VerificationMethod.GPS_PRESENCE, VerificationMethod.GPS_AVOID -> Kind.REGISTER_ANCHOR
                 // 사용 시간은 상한·하한 어느 쪽이든 어떤 앱을 볼지 골라야 한다.
                 VerificationMethod.SCREEN_TIME_MAX, VerificationMethod.SCREEN_TIME_MIN ->
@@ -81,7 +71,7 @@ class SetupNotifierImpl
             }
         }
 
-        // 토큰 → OS 런타임 권한 확인. 매핑 안 되는 특수권한(usage/health 등)은 런타임 권한이 아니라 허용으로 간주.
+        // 토큰 → OS 런타임 권한 확인.
         private fun hasPermissions(tokens: List<String>): Boolean =
             tokens.all { token ->
                 val permission = androidPermission(token) ?: return@all true

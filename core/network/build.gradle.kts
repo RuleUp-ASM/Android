@@ -32,7 +32,7 @@ dependencies {
     implementation(project(":observability:domain"))
     // TokenAuthenticator 가 갱신 토큰(Token)을 직접 다룬다.
 
-    // Retrofit/OkHttp/Json 은 NetworkModule 의 @Provides 시그니처와 data 모듈의 API 생성에 노출되므로 api.
+    // 공개 시그니처의 네트워크 타입.
     api(libs.retrofit)
     api(libs.retrofit.converter.kotlinx.serialization)
     api(libs.kotlinx.serialization.json)

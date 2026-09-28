@@ -7,12 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 알림 목록 매핑.
- *
- * **적재된 고지를 화면에서 지우지 않는 것**이 이 매퍼의 유일한 규칙이다 — 모르는 타입이라고
- * 행을 빼면 사용자가 통지받은 사실을 확인할 길이 없어진다.
- */
+/** 알림 목록 매핑. */
 class NotificationResponseTest {
     @Test
     fun `모르는 타입도 목록에 남기고 분류만 비운다`() {
@@ -42,7 +37,6 @@ class NotificationResponseTest {
 
     @Test
     fun `기준선을 안 주는 서버에서는 서버 미읽음 수를 폴백으로 들고 온다`() {
-        // 배포된 서버는 아직 unreadCount 만 준다 — 둘 다 "몇 개가 안 읽혔나"라는 같은 사실이다.
         val page = NotificationPageResponse(items = emptyList(), unreadCount = 3).toDomain()
 
         assertNull(page.lastReadNotificationId)
@@ -61,12 +55,7 @@ class NotificationResponseTest {
     }
 }
 
-/**
- * 설정 매핑.
- *
- * **없는 값은 켜짐으로 본다** — 서버가 "설정 행이 없으면 전부 true" 로 응답하는 것과 같은 방향이다.
- * 꺼진 것처럼 그렸다가 알림이 오면 설정 화면이 거짓말한 게 된다.
- */
+/** 설정 매핑. */
 class NotificationSettingsResponseTest {
     @Test
     fun `설정을 통째로 안 주면 전부 켜진 것으로 본다`() {
@@ -79,7 +68,6 @@ class NotificationSettingsResponseTest {
 
     @Test
     fun `groups 가 없으면 구 계약의 평평한 마케팅 값을 쓴다`() {
-        // 배포된 서버가 아직 {types, marketing} 을 준다 — 마케팅만이라도 실제 값으로 그린다.
         val settings = NotificationSettingsResponse(legacyMarketing = false).toDomain()
 
         assertEquals(false, settings.groups.marketing)
@@ -87,7 +75,7 @@ class NotificationSettingsResponseTest {
 
     @Test
     fun `마스터가 꺼져 있으면 그룹이 켜져 있어도 안 나가는 것으로 본다`() {
-        // 가장 제한적인 것이 이긴다(테크 스펙 4).
+        // 가장 제한적인 것이 이긴다.
         val settings =
             NotificationSettingsResponse(
                 pushEnabled = false,
@@ -99,7 +87,6 @@ class NotificationSettingsResponseTest {
 
     @Test
     fun `그룹을 하나도 안 바꾸면 groups 키 자체를 보내지 않는다`() {
-        // 서버가 허용되지 않은 키를 400 으로 막는다 — 빈 객체를 실어 보내면 안 된다.
         val request = NotificationSettingsUpdate(pushEnabled = false).toRequest()
 
         assertNull(request.groups)

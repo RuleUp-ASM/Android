@@ -13,7 +13,7 @@ sealed interface BlockListIntent : MviIntent {
 
     data object Back : BlockListIntent
 
-    /** 해제 확인 시트를 연다. 바로 풀지 않는 이유는 [BlockTarget] 의 KDoc 참고. */
+    /** 해제 확인 시트를 연다. */
     data class ConfirmUnblock(
         val target: BlockTarget,
     ) : BlockListIntent
@@ -23,12 +23,7 @@ sealed interface BlockListIntent : MviIntent {
     data object Unblock : BlockListIntent
 }
 
-/**
- * 해제 확인 중인 대상.
- *
- * 확인 없이 바로 풀지 않는다 — 해제는 되돌리려면 그 사람을 **다시 신고**해야 하고, 그러면
- * 신고 건이 하나 더 쌓인다. 실수로 눌러 원치 않는 신고를 만들게 두지 않는다.
- */
+/** 해제 확인 중인 대상. */
 sealed interface BlockTarget {
     val id: String
     val label: String
@@ -52,7 +47,7 @@ data class BlockListState(
     val confirming: BlockTarget?,
     val unblocking: Boolean,
 ) : UiState {
-    /** 두 갈래가 모두 비었는지 — 빈 상태 문구를 가르는 기준(Figma `1287:2`). */
+    /** 두 갈래가 모두 비었는지 */
     val isEmpty: Boolean
         get() = blocks.isEmpty
 
@@ -92,5 +87,5 @@ sealed interface BlockListReducerEvent : ReducerEvent {
     ) : BlockListReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias BlockListEffect = NoEffect

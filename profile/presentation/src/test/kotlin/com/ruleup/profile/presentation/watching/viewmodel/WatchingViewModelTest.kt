@@ -15,9 +15,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * 「내가 받는 알림」은 조회 전용이다. 여기서 지키는 건 **더는 알림이 오지 않는 관계를 세우지 않는 것**이다.
- */
+/** 「내가 받는 알림」은 조회 전용이다. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WatchingViewModelTest {
     @BeforeTest

@@ -7,7 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/** TTI 가 어디로 나갈지 정하는 곳. `:tti:data` 가 이 바인딩을 일부러 비워 뒀다. */
+/** TTI 가 어디로 나갈지 정하는 곳. */
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class TtiAppModule {

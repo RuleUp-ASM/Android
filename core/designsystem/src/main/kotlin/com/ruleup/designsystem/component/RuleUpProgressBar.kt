@@ -14,10 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 진행 바. Figma `ProgressBar`(node `1177:181`).
- * @param progress 0f~1f. 벗어난 값은 잘라 낸다 — 채움이 트랙을 넘어 그려지면 레이아웃이 밀린다.
- */
+/** 진행 바. */
 @Composable
 fun RuleUpProgressBar(
     progress: Float,

@@ -11,20 +11,20 @@ import com.ruleup.ui.mvi.UiState
 sealed interface MyHomeIntent : MviIntent {
     data object Load : MyHomeIntent
 
-    /** 재진입(ON_RESUME) 시 재조회 — 프로필 편집·챌린지 완주 등으로 값이 바뀐다. */
+    /** 재진입(ON_RESUME) 시 재조회 */
     data object Refresh : MyHomeIntent
 
     data object OpenProfileEdit : MyHomeIntent
 
-    /** 티어 카드의 「자세히」 — 점수·구간표·최근 변동. */
+    /** 티어 카드의 「자세히」 */
     data object OpenTier : MyHomeIntent
 
-    /** 메뉴: 인증 기록 — 월 캘린더와 일자별 판정 결과. */
+    /** 메뉴: 인증 기록 */
     data object OpenCalendar : MyHomeIntent
 
     data object OpenAppeals : MyHomeIntent
 
-    /** 메뉴: 그룹 랭킹 — 참여 중 그룹 챌린지를 골라 랭킹 화면으로 (1개면 바로 이동). */
+    /** 메뉴: 그룹 랭킹 */
     data object OpenRanking : MyHomeIntent
 
     data class SelectPickedChallenge(
@@ -37,29 +37,19 @@ sealed interface MyHomeIntent : MviIntent {
 
     data object OpenInvite : MyHomeIntent
 
-    /**
-     * 메뉴: 신고한 사용자·챌린지.
-     *
-     * Figma 는 설정 허브 안에 두지만 앱에 설정 화면이 아직 없어 마이 홈에 직접 단다 —
-     * 진입점이 없으면 차단을 풀 방법이 사라진다.
-     */
+    /** 메뉴: 신고한 사용자·챌린지. */
     data object OpenBlocks : MyHomeIntent
 
-    /**
-     * 메뉴: 감시자 — 감시자는 챌린지별로 붙으므로 방을 먼저 고른다(1개면 바로 이동).
-     *
-     * 지정·상태 확인은 방 상세의 감시자 섹션이 담당한다 — Figma 1134:1603 의 전용 화면과 내용이
-     * 같아 화면을 하나 더 만들지 않았다.
-     */
+    /** 메뉴: 감시자 */
     data object OpenWatchers : MyHomeIntent
 
     /** 메뉴: 알림 설정. */
     data object OpenNotificationSettings : MyHomeIntent
 
-    /** 알림함 — 상단 벨 아이콘. 미읽음이 있으면 레드닷이 붙는다. */
+    /** 알림함 */
     data object OpenNotificationCenter : MyHomeIntent
 
-    /** 메뉴: 계정 · 약관 — 설정 허브. */
+    /** 메뉴: 계정 · 약관 */
     data object OpenSettings : MyHomeIntent
 
     data object OpenHomeTab : MyHomeIntent
@@ -71,7 +61,7 @@ sealed interface MyHomeIntent : MviIntent {
     data object OpenMyChallengesTab : MyHomeIntent
 }
 
-/** 선택 시트가 무엇을 고르는 중인지. 고른 뒤 갈 곳이 달라진다. */
+/** 선택 시트가 무엇을 고르는 중인지. */
 enum class ChallengePickerTarget {
     RANKING,
     WATCHERS,
@@ -91,10 +81,10 @@ sealed interface MyHomeEffect : MviEffect {
 data class MyHomeState(
     val isLoading: Boolean,
     val home: MyHome?,
-    // 전체 성공률 카드용. 마이 홈은 /me/home 과 /me/stats 두 응답을 합쳐 그린다
+    // 전체 성공률 카드용.
     val stats: StatsReport?,
     val errorMessage: String?,
-    // 챌린지 선택 시트 (null = 닫힘). 랭킹·감시자 둘 다 방 단위라 같은 시트를 쓴다
+    // 챌린지 선택 시트 (null = 닫힘).
     val picker: ChallengePicker? = null,
     val isLoadingPicker: Boolean = false,
 ) : UiState {
@@ -116,10 +106,7 @@ sealed interface MyHomeReducerEvent : ReducerEvent {
         val home: MyHome,
     ) : MyHomeReducerEvent
 
-    /**
-     * 통계는 마이 홈의 필수 데이터가 아니다 — 실패해도 화면은 그대로 뜨고 성공률 칸만 비운다.
-     * 그래서 [Failed] 와 따로 둔다.
-     */
+    /** 통계는 마이 홈의 필수 데이터가 아니다 */
     data class StatsLoaded(
         val stats: StatsReport,
     ) : MyHomeReducerEvent
@@ -132,7 +119,7 @@ sealed interface MyHomeReducerEvent : ReducerEvent {
         val loading: Boolean,
     ) : MyHomeReducerEvent
 
-    /** 참여 중 챌린지 2개 이상 — 선택 시트 노출. */
+    /** 참여 중 챌린지 2개 이상 */
     data class PickerShown(
         val picker: ChallengePicker,
     ) : MyHomeReducerEvent

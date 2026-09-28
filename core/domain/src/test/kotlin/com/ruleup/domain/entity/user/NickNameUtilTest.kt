@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 class NickNameUtilTest {
     @Test
     fun `자음만 나열한 닉네임은 쓸 수 있다`() {
-        // 회원 정책 §3 — 자음만 나열(ㄱㄱㄱㄱ)은 명시적으로 허용이다.
+        // 회원 정책 §3
         assertEquals(NicknameValidation.VALID, NickNameUtil.validate("ㄱㄱㄱㄱ"))
     }
 

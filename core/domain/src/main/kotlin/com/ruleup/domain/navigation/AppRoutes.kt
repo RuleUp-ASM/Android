@@ -1,26 +1,15 @@
 package com.ruleup.domain.navigation
 
-/**
- * 앱의 모든 화면 path 단일 소스(single source of truth).
- *
- * feature 의 Page 객체는 path 문자열을 직접 갖지 않고 여기 상수를 참조한다.
- * (Page 객체와 인자 헬퍼는 각 feature domain 에 유지된다.)
- *
- * 주석의 "진입점" 표시는 다른 feature 가 직접 이동해 들어오는 cross-feature 공개 경로다
- * (예: 챌린지 생성 완료 → [HOME], 홈의 챌린지 생성 버튼 → [CHALLENGE_CREATE]).
- *
- * 감시자 초대 수락(`/w/{token}`)은 [CHALLENGE_WATCHER_ACCEPT] 가 받는다 — 웹 동의가 폐지되고
- * **인앱 수락만 동의로 인정**되도록 바뀌었다(감시자 테크 스펙 5-2·2026-08-31).
- */
+/** 앱의 모든 화면 path 단일 소스(single source of truth). */
 object AppRoutes {
     // onboarding
     const val SPLASH = "splash"
 
-    /** 첫 실행 워크쓰루 3장. 로그인 전에 한 번만 보여 준다. */
+    /** 첫 실행 워크쓰루 3장. */
     const val WALKTHROUGH = "walkthrough"
     const val LOGIN = "login"
 
-    // 가입 온보딩 6단계. 순서가 계약이다 — 서버가 생일·성별을 필수로 받고 약관이 마지막이다.
+    // 가입 온보딩 6단계.
     const val ONBOARDING_NICKNAME = "onboarding/nickname"
     const val ONBOARDING_INTEREST = "onboarding/interest"
     const val ONBOARDING_BIRTH = "onboarding/birth"
@@ -28,8 +17,7 @@ object AppRoutes {
     const val ONBOARDING_PHOTO = "onboarding/photo"
     const val ONBOARDING_TERMS = "onboarding/terms"
 
-    // 약관 원문 열람. 동의 화면의 「보기」와 마이 > 약관에서 연다. 원문은 앱에 번들돼 있어
-    // 로그인 전에도 열린다 — 동의를 받기 전에 읽을 수 있어야 동의가 성립한다.
+    // 약관 원문 열람.
     const val TERMS_DOCUMENT = "terms/document"
     const val HOME = "home" // 진입점
 
@@ -61,15 +49,10 @@ object AppRoutes {
     const val MY_AGREEMENTS = "my/agreements" // 약관·개인정보 동의 관리
     const val MY_SANCTIONS = "my/sanctions" // 제재 통지·이력 (잠금 상태에서도 열려야 한다)
 
-    /**
-     * 타인 프로필 (방 멤버·랭킹 행 → 프로필). 공개 범위가 좁아 내 마이 홈과 다른 화면이다.
-     */
+    /** 타인 프로필 (방 멤버·랭킹 행 → 프로필). */
     const val MEMBER_PROFILE = "profile/member"
 
-    /**
-     * 잠금 화면. 로그인 정지·영구 정지가 걸리면 여기로 고정 진입한다(제재 정책 §5.3).
-     * 여기서 열 수 있는 건 제재 이력과 CS 문의뿐이다.
-     */
+    /** 잠금 화면. */
     const val ACCOUNT_LOCKED = "account/locked"
 
     // report
@@ -79,7 +62,7 @@ object AppRoutes {
     const val NOTIFICATIONS = "notifications" // 진입점 (홈 벨·마이 → 알림 센터)
     const val NOTIFICATION_SETTINGS = "notifications/settings" // 설정 허브 → 알림 설정
 
-    // support — 앱 내 문의가 유일한 CS 창구다(외부 채널 없음)
+    // support
     const val MY_INQUIRIES = "my/inquiries" // 설정 허브 → 내 문의 내역
     const val MY_INQUIRY_NEW = "my/inquiries/new" // 설정 허브 → 문의하기 (분류 선택)
     const val MY_INQUIRY_COMPOSE = "my/inquiries/compose" // 분류 선택 → 본문 작성

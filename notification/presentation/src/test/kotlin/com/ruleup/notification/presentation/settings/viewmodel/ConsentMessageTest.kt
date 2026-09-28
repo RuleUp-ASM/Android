@@ -4,12 +4,7 @@ import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * 광고성 수신 동의·철회는 **처리된 날**을 알려야 한다.
- *
- * 기준 시간대는 서버(KST)다 — 기기 시간대로 옮기면 해외에서 하루 어긋난 날짜가 보이고, 그 날짜로는
- * 사용자가 수신 이력을 대조할 수 없다. 분 단위는 대조할 방법이 없어 적지 않는다.
- */
+/** 광고성 수신 동의·철회는 처리된 날을 알려야 한다. */
 class ConsentMessageTest {
     private val seoul = ZoneId.of("Asia/Seoul")
 

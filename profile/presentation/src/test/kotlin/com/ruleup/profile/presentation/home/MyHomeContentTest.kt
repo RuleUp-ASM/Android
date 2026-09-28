@@ -18,12 +18,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 마이 홈. MY 탭의 루트라 **화면 복귀마다 조용히 갱신**되는데, 갱신 실패로 보여 주던 프로필이
- * 오류 화면으로 바뀌면 사용자는 없던 사고를 본다.
- *
- * 그룹이 여럿일 때 뜨는 선택 시트도 여기 산다 — 하나뿐이면 묻지 않고 바로 가야 한다.
- */
+/** 마이 홈. */
 @RunWith(RobolectricTestRunner::class)
 class MyHomeContentTest {
     @get:Rule
@@ -54,7 +49,7 @@ class MyHomeContentTest {
 
     @Test
     fun `프로필이 있으면 갱신에 실패해도 오류 화면으로 바꾸지 않는다`() {
-        // 복귀마다 도는 조용한 갱신이다 — 여기서 오류를 띄우면 없던 사고를 보여 준다.
+        // 복귀마다 도는 조용한 갱신이다
         render(MyHomeState.initial.copy(isLoading = false, home = home(), errorMessage = null))
 
         compose.onNodeWithText("마이 정보를 불러오지 못했어요").assertDoesNotExist()

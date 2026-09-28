@@ -60,7 +60,7 @@ class ChallengeRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 429 는 화면이 카운트다운으로 버튼을 잠그도록 도메인 예외로 옮긴다. 자동 재시도는 금지.
+                // 429 는 화면이 카운트다운으로 버튼을 잠그도록 도메인 예외로 옮긴다.
                 if (e.code == CODE_RATE_LIMITED) {
                     throw RecommendationRateLimitedException(retryAfterSeconds = e.retryAfterSeconds)
                 }
@@ -83,7 +83,7 @@ class ChallengeRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 초안은 24시간만 산다 — 화면이 "다시 만들어 주세요"로 안내하도록 구분해 올린다.
+                // 초안은 24시간만 산다
                 if (e.code == CODE_DRAFT_NOT_FOUND || e.code == CODE_DRAFT_EXPIRED) {
                     throw DraftExpiredException()
                 }
@@ -113,7 +113,7 @@ class ChallengeRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 없음·비공개·솔로를 구분하지 않는다(존재 은닉) — 화면 문구도 하나다.
+                // 없음·비공개·솔로를 구분하지 않는다(존재 은닉)
                 if (e.code == CODE_CHALLENGE_NOT_FOUND) throw ChallengeNotFoundException()
                 throw e
             }
@@ -187,7 +187,7 @@ class ChallengeRepositoryImpl
                     .getOrThrow()
                     .toDomain()
             } catch (e: ApiException) {
-                // 가입과 같은 게이트를 통과하므로 실패 형식도 같다 — 화면이 문구를 재사용한다.
+                // 가입과 같은 게이트를 통과하므로 실패 형식도 같다
                 if (e.code == CODE_JOIN_BLOCKED) {
                     throw JoinBlockedException(
                         reason = JoinBlockReason.fromValue(e.reason),

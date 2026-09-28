@@ -21,10 +21,7 @@ import com.ruleup.designsystem.R
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 뒤로가기 + 제목 상단바. 뒤로가기 아이콘(22dp)을 40dp 박스에 넣는 건 터치 영역 때문이다.
- * @param trailing 오른쪽 끝에 붙일 것(더보기 메뉴 등). 제목과 사이는 이 함수가 벌린다.
- */
+/** 뒤로가기 + 제목 상단바. */
 @Composable
 fun RuleUpTopBar(
     title: String,

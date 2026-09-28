@@ -49,8 +49,6 @@ class LogoutUseCaseTest {
     @Test
     fun `토큰뿐 아니라 단말에 남은 수집 데이터도 지운다`() =
         runBlocking {
-            // 토큰만 지우면 OS 지오펜스와 수집 버퍼가 남아 다음 사용자가 앞 사용자의 신호를
-            // 자기 것으로 올린다(AUTH-10).
             val cleaner = RecordingCleaner()
 
             LogoutUseCase(FakeAuthRepository(), FakeTokenRepository(refreshToken = "r1"), cleaner, noopRevoker)()
@@ -61,7 +59,6 @@ class LogoutUseCaseTest {
     @Test
     fun `푸시 토큰은 세션 revoke 와 로컬 정리보다 먼저 해제한다`() =
         runBlocking {
-            // 순서가 뒤집히면 서버가 요청자를 못 찾아 토큰이 이전 계정에 남고, 로그아웃한 기기에 푸시가 온다.
             val auth = FakeAuthRepository()
             val tokens = FakeTokenRepository(refreshToken = "r1")
             var revokedWhileSessionAlive = false

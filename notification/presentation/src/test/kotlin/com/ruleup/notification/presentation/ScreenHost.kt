@@ -6,7 +6,7 @@ import com.ruleup.domain.test.ClickClock
 import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
 
-/** 전역 클릭 가드를 넘겨 누른다 — 자세한 이유는 [ClickClock]. */
+/** 테스트 클릭 간격 확보. */
 fun SemanticsNodeInteraction.clickPastGuard() {
     ShadowSystemClock.advanceBy(Duration.ofMillis(ClickClock.nextOffsetMillis()))
     performClick()

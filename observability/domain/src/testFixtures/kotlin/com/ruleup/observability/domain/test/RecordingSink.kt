@@ -10,7 +10,7 @@ class RecordingSink(
 ) : Sink {
     private val recorded = mutableListOf<ObsEvent>()
 
-    /** 채우면 [emit] 이 이 예외를 던진다. `Sink.emit` 의 "던지지 않는다" 계약을 어겼을 때를 재현하는 용도. */
+    /** 채우면 [emit] 이 이 예외를 던진다. */
     var failWith: Throwable? = null
 
     var flushCount: Int = 0

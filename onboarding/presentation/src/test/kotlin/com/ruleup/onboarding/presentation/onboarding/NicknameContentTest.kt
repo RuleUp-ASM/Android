@@ -15,13 +15,7 @@ import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 닉네임 단계. **서버 확인을 통과해야만** 다음으로 넘어간다 — 통과 전에 전진시키면 마지막 제출에서
- * 1단계로 되돌아오고, signupToken 은 5분이라 그 왕복이 곧 가입 이탈이 된다.
- *
- * 잠금이 `enabled=false` 가 아니라 **클릭 조기 반환**이라 `assertIsNotEnabled` 로는 잡히지 않는다.
- * 눌러 보고 이동이 없었는지를 봐야 실제 계약을 검증한다.
- */
+/** 닉네임 단계. */
 @RunWith(RobolectricTestRunner::class)
 class NicknameContentTest {
     @get:Rule
@@ -56,7 +50,6 @@ class NicknameContentTest {
 
     @Test
     fun `1단계에서 뒤로 가면 이탈로 다룬다`() {
-        // signupToken 만료로 되돌아올 수 없어, 일반 뒤로가기와 다르게 처리해야 한다.
         val intents = mutableListOf<OnboardingIntent>()
         render(nicknameAvailable = true, onIntent = { intents += it })
 

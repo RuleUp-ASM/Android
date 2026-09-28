@@ -100,10 +100,10 @@ fun RootComposable(
                 )
             }
 
-            // 디버그 빌드 전용: 우측 상단 반투명 로그 오버레이. 포인터 입력이 없어 터치를 통과시킨다.
+            // 디버그 빌드 전용: 우측 상단 반투명 로그 오버레이.
             if (BuildConfig.DEBUG) {
                 DebugLogOverlay()
-                // 좌하단 "수집·동기화" 트리거. 결과는 위 오버레이에 'VerifySync' 로 뜬다.
+                // 좌하단 "수집·동기화" 트리거.
                 DebugSyncButton(
                     modifier =
                         Modifier

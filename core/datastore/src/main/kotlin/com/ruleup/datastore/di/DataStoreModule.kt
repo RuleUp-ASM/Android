@@ -21,10 +21,7 @@ import javax.inject.Singleton
 
 private const val TAG = "TokenStore"
 
-/**
- * Android 전용 `DataStore<Preferences>` 바인딩.
- * `Context.filesDir` 하위에 `token.preferences_pb` 파일을 두고 [TokenRepositoryImpl] 이 소비한다.
- */
+/** Android 전용 `DataStore<Preferences>` 바인딩. */
 @Module
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {

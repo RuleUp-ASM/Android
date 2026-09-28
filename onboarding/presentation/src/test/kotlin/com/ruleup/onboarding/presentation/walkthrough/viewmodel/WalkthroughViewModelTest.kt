@@ -14,10 +14,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * 워크쓰루를 끝내는 길이 둘(마지막 장 CTA·건너뛰기)인데 **둘 다 열람 기록을 남겨야 한다** —
- * 한쪽이 빠지면 앱을 열 때마다 소개가 다시 뜬다.
- */
+/** 워크쓰루를 끝내는 길이 둘(마지막 장 CTA·건너뛰기)인데 둘 다 열람 기록을 남겨야 한다 */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WalkthroughViewModelTest {
     @BeforeTest
@@ -41,7 +38,6 @@ class WalkthroughViewModelTest {
     @Test
     fun `마지막 장이 아니면 끝내지 않는다`() =
         runTest {
-            // 중간에 이동해 버리면 남은 장을 영영 못 본다 — 열람 기록도 그때 남으면 안 된다.
             val walkthrough = FakeWalkthroughRepository()
             val nav = RecordingNavigationHelper()
             val viewModel = viewModel(walkthrough, nav)
@@ -74,7 +70,6 @@ class WalkthroughViewModelTest {
     @Test
     fun `건너뛰기도 본 것으로 기록한다`() =
         runTest {
-            // 기록을 빠뜨리면 다음 실행에서 소개가 다시 뜬다 — 건너뛴 사용자에게는 더 성가시다.
             val walkthrough = FakeWalkthroughRepository()
             val nav = RecordingNavigationHelper()
             val viewModel = viewModel(walkthrough, nav)

@@ -6,12 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 미읽음 판정. **서버가 세어 주지 않으므로 이 규칙이 곧 레드닷과 카운터의 정의**다.
- *
- * 목록은 최신순이라 기준선보다 **위에 있는 것이 미읽음**이다 — id 크기를 비교하지 않는다.
- * 크기로 비교하면 id 형식이 바뀌는 순간(UUIDv7 → 다른 체계) 판정이 통째로 뒤집힌다.
- */
+/** 미읽음 판정. */
 class NotificationPageTest {
     @Test
     fun `기준선보다 위에 있는 항목만 읽지 않은 것으로 본다`() {
@@ -30,7 +25,7 @@ class NotificationPageTest {
 
     @Test
     fun `기준선이 이 페이지에 없으면 전부 미읽음이고 다음 장을 더 읽어야 한다`() {
-        // 기준선이 뒤 페이지에 있다는 뜻이다 — 여기서 멈추면 미읽음을 덜 센다.
+        // 기준선이 뒤 페이지에 있다는 뜻이다
         val page = page(listOf("n9", "n8"), lastRead = "n1")
 
         assertEquals(2, page.unread.size)
@@ -46,7 +41,6 @@ class NotificationPageTest {
 
     @Test
     fun `읽음 처리에는 응답에 담겼던 최신 id 를 쓴다`() {
-        // 현재 시각으로 갱신하면 조회와 갱신 사이에 적재된 알림이 화면에 뜬 적 없이 읽음 처리된다.
         val page = page(listOf("n3", "n2", "n1"), lastRead = null)
 
         assertEquals("n3", page.readMarker)
@@ -82,12 +76,7 @@ class NotificationPageTest {
     )
 }
 
-/**
- * 미읽음 집계의 표시 규칙.
- *
- * 상한이 `99+` 라 **정확한 수를 말하지 않는 구간**이 있다. 100건을 "100"으로 쓰면 클라가 100건을
- * 다 세야 한다는 뜻이 되고, 그러면 페이지를 무한정 읽게 된다.
- */
+/** 미읽음 집계의 표시 규칙. */
 class UnreadSummaryTest {
     @Test
     fun `미읽음이 없는 챌린지에는 뱃지를 붙이지 않는다`() {
@@ -106,19 +95,13 @@ class UnreadSummaryTest {
 
     @Test
     fun `상한을 넘으면 정확한 수를 말하지 않는다`() {
-        // 100 을 그대로 쓰면 클라가 100건을 다 세야 한다 — 그래서 상한이 있는 것이다.
         val summary = UnreadSummary(total = 100, byChallenge = mapOf("c1" to 100))
 
         assertEquals("99+", summary.badgeOf("c1"))
     }
 }
 
-/**
- * 알림 타입 레지스트리.
- *
- * **모르는 타입도 목록에 세워야 한다** — 서버가 타입을 늘리는 것은 정상이고, 그때 적재된 고지가
- * 화면에서 사라지면 법적 고지가 성립한 항목을 사용자가 못 보게 된다.
- */
+/** 알림 타입 레지스트리. */
 class NotificationTypeTest {
     @Test
     fun `모르는 타입은 목록에서 지우지 않고 분류만 비운다`() {
@@ -127,7 +110,6 @@ class NotificationTypeTest {
 
     @Test
     fun `제재 고지는 계정 그룹이라 계정 토글로 꺼진다`() {
-        // "끌 수 없는 푸시는 없다" — 고지 의무는 알림 센터 적재로 충족된다(테크 스펙 4).
         assertEquals(NotificationGroup.ACCOUNT, NotificationType.CHALLENGE_KICKED.group)
         assertEquals(NotificationGroup.ACCOUNT, NotificationType.ACCOUNT_SANCTION.group)
     }

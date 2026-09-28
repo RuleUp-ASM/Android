@@ -11,7 +11,7 @@ import com.ruleup.profile.domain.entity.DayItemStatus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 활동 캘린더 월 조회 (GET /me/calendar?month=YYYY-MM) ----------
+// 활동 캘린더 월 조회 (GET /me/calendar?month=YYYY-MM)
 @Serializable
 data class CalendarDayResponse(
     @SerialName("date")
@@ -29,7 +29,7 @@ data class CalendarDayResponse(
 data class ActivityCalendarResponse(
     @SerialName("month")
     val month: String? = null,
-    // 판정 대상일만 포함 — 없는 날짜는 비대상일로 렌더링
+    // 판정 대상일만 포함
     @SerialName("days")
     val days: List<CalendarDayResponse>? = null,
 )
@@ -49,7 +49,7 @@ internal fun ActivityCalendarResponse.toDomain(): ActivityCalendar =
             },
     )
 
-// ---------- 캘린더 일자 상세 (GET /me/calendar/{date}) ----------
+// 캘린더 일자 상세 (GET /me/calendar/{date})
 @Serializable
 data class CalendarDayItemResponse(
     @SerialName("challengeId")
@@ -77,10 +77,7 @@ data class CalendarDayItemResponse(
     val appeal: DayItemAppealResponse? = null,
 )
 
-/**
- * 명세에는 `remainingThisMonth`·`ineligibleReason` 도 있지만 읽지 않는다 — 이의 횟수 한도가
- * 폐기돼(챌린지 정책 §7.2) 잔여 횟수 개념이 없고, 사유는 `eligible`·`eligibleUntil` 로 이미 드러난다.
- */
+/** 명세에는 `remainingThisMonth`·`ineligibleReason` 도 있지만 읽지 않는다 */
 @Serializable
 data class DayItemAppealResponse(
     @SerialName("eligible")
@@ -115,7 +112,7 @@ internal fun CalendarDayDetailResponse.toDomain(): CalendarDayDetail =
                     appeal =
                         item.appeal?.let {
                             DayItemAppeal(
-                                // 모르면 못 내는 쪽으로 접는다 — 열어 두면 눌렀다 409 를 본다.
+                                // 모르면 못 내는 쪽으로 접는다
                                 eligible = it.eligible ?: false,
                                 eligibleUntil = it.eligibleUntil,
                             )

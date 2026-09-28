@@ -41,11 +41,7 @@ class ReportRepositoryImpl
                 api.unblockChallenge(challengeId).throwOnError()
             }
 
-        /**
-         * 모든 실패를 [ReportException] 하나로 모은다. 화면이 `ApiException` 코드 문자열을 읽지
-         * 않게 하려는 것이고, [IOException] 을 따로 잡는 이유는 "다시 시도"를 권할 수 있는
-         * 실패인지가 거기서 갈리기 때문이다 — 서버가 거절한 것과 아예 닿지 못한 것은 다르다.
-         */
+        /** 모든 실패를 [ReportException] 하나로 모은다. */
         private inline fun <T> translating(block: () -> T): T =
             try {
                 block()

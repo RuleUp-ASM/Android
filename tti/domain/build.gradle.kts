@@ -13,7 +13,7 @@ kotlin {
 }
 
 dependencies {
-    // 기록기가 IO 스코프를 직접 만든다 — 측정 지점을 기다리게 하지 않으려면 여기서 코루틴이 필요하다.
+    // 기록기가 IO 스코프를 직접 만든다
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(kotlin("test-junit"))

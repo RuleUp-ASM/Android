@@ -26,7 +26,7 @@ class OAuthActivity : ComponentActivity() {
     private var googleRequest: AuthorizationRequest? = null
     private var googleResult: CompletableDeferred<AuthorizationResponse>? = null
 
-    // AppAuth 인가 화면(Custom Tab) 결과 수신. 리다이렉트는 RedirectUriReceiverActivity 가 받아 여기로 돌아온다.
+    // AppAuth 인가 화면(Custom Tab) 결과 수신.
     private val googleAuthLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val data = result.data
@@ -105,10 +105,7 @@ class OAuthActivity : ComponentActivity() {
         )
     }
 
-    /**
-     * 구글 OAuth 2.0 인가 코드 + PKCE. AppAuth 로 Custom Tab 을 띄워 인가 코드를 받고,
-     * code + code_verifier + redirect_uri 를 백엔드가 교환한다(카카오와 동일 계약).
-     */
+    /** 구글 OAuth 2.0 인가 코드 + PKCE. */
     private suspend fun authorizeGoogle(): OAuthResult {
         val config =
             AuthorizationServiceConfiguration(

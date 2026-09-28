@@ -10,10 +10,7 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import android.graphics.Color as AndroidColor
 
-/**
- * 초대 링크 QR 비트맵 생성 (스펙: QR 은 클라 렌더링 — 서버 생성 미채택).
- * 픽셀 그대로 그려도 이미지 뷰가 확대하므로 모듈당 1px 매트릭스로 만든다.
- */
+/** 초대 링크 QR 비트맵 생성. */
 @Composable
 internal fun rememberQrBitmap(
     content: String,

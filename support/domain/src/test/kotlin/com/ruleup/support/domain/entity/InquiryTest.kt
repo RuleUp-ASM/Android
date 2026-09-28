@@ -26,7 +26,6 @@ class InquiryCategoryTest {
 
     @Test
     fun `모르는 분류는 null 이라 목록에서 그 문의가 사라지지 않는다`() {
-        // 운영자가 6종 밖으로 옮겼을 때 항목을 통째로 숨기면 사용자가 자기 문의를 잃는다.
         assertNull(InquiryCategory.fromValue("BILLING"))
         assertNull(InquiryCategory.fromValue(null))
     }
@@ -50,7 +49,6 @@ class InquiryStatusTest {
 class InquiryBodyTest {
     @Test
     fun `열 자 미만은 만들 수 없다`() {
-        // 서버의 400 INQUIRY_BODY_LENGTH 가 사용자에게 가기 전에 여기서 막힌다.
         assertFailsWith<IllegalArgumentException> { InquiryBody.of("짧아요") }
     }
 
@@ -61,7 +59,6 @@ class InquiryBodyTest {
 
     @Test
     fun `앞뒤 공백은 길이 판정에 들어가지 않는다`() {
-        // 공백만 채워 열 자를 넘기는 입력이 통과하면 운영자가 읽을 내용이 없는 문의가 쌓인다.
         assertFailsWith<IllegalArgumentException> { InquiryBody.of("  짧아요   ") }
         assertEquals("인증이 실패로 떴어요", InquiryBody.of("  인증이 실패로 떴어요  ").value)
     }

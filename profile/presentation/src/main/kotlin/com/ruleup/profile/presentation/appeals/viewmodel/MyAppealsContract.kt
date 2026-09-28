@@ -14,7 +14,7 @@ sealed interface MyAppealsIntent : MviIntent {
     data object Back : MyAppealsIntent
 }
 
-/** 잔여 횟수를 담지 않는다 — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2). */
+/** 잔여 횟수를 담지 않는다 */
 data class MyAppealsState(
     val isLoading: Boolean,
     val history: List<AppealHistoryItem>,
@@ -42,5 +42,5 @@ sealed interface MyAppealsReducerEvent : ReducerEvent {
     ) : MyAppealsReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias MyAppealsEffect = NoEffect

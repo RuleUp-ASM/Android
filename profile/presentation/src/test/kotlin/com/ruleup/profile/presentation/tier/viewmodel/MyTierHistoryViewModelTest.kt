@@ -23,12 +23,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-/**
- * 티어 히스토리. 원천이 둘이다 — 그래프(월말 스냅샷)와 점수 변동 이력.
- *
- * 보관이 1년이라 **기본 조회 범위가 곧 전량**이다 — 범위를 좁게 물으면 남아 있는 기록을 화면이
- * 스스로 잘라 버린다. 이력은 서버 고정 50건이라 커서로 이어 붙는다.
- */
+/** 티어 히스토리. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyTierHistoryViewModelTest {
     @BeforeTest
@@ -95,7 +90,6 @@ class MyTierHistoryViewModelTest {
     @Test
     fun `그래프만 실패해도 이력은 화면에 올린다`() =
         runTest {
-            // 두 API 가 나뉘어 있으므로 한쪽이 죽었다고 다른 쪽을 감추면 볼 수 있는 것까지 잃는다.
             val viewModel =
                 viewModel(
                     FakeMyPageRepository(
@@ -130,7 +124,6 @@ class MyTierHistoryViewModelTest {
     @Test
     fun `더 읽기는 이전 응답의 커서로만 묻는다`() =
         runTest {
-            // 커서를 클라가 만들어 보내면 서버가 400 으로 막는다 — 불투명 문자열이라 해석하지 않는다.
             val repo =
                 FakeMyPageRepository(
                     tierHistory = { history() },

@@ -21,11 +21,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 문의 작성. **접수는 되돌릴 수 없다** — 수정·삭제 경로가 없고 재시도는 같은 내용을 한 건 더
- * 쌓으면서 하루 상한까지 깎는다. 그래서 이 화면이 막아야 할 것은 "덜 쓴 접수"가 아니라
- * "의도치 않은 두 번째 접수"다.
- */
+/** 문의 작성. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class InquiryComposeViewModelTest {
     @BeforeTest
@@ -59,8 +55,6 @@ class InquiryComposeViewModelTest {
 
     @Test
     fun `업로드가 끝나지 않은 사진이 있으면 접수하지 않는다`() {
-        // 주소 없이 보내면 그 장은 서버에 닿지 않고, 사용자는 첨부한 줄 안다.
-        // 업로드 중 상태는 코루틴이 끝나기 전 한순간이라, 그 순간의 상태를 직접 세워 본다.
         val state =
             InquiryComposeState
                 .initial(InquiryCategory.VERIFICATION)
@@ -75,7 +69,6 @@ class InquiryComposeViewModelTest {
 
     @Test
     fun `접수번호를 받은 뒤에는 같은 화면에서 다시 보내지 않는다`() {
-        // 접수는 되돌릴 수 없다 — 시트 뒤에서 버튼이 다시 눌리면 같은 문의가 한 건 더 쌓인다.
         val state =
             InquiryComposeState
                 .initial(InquiryCategory.VERIFICATION)
@@ -143,7 +136,6 @@ class InquiryComposeViewModelTest {
     @Test
     fun `하루 상한 초과는 서버 문구를 그대로 보여 준다`() =
         runTest {
-            // 남은 건수와 초기화 시각은 서버만 아는 값이라 앱이 다시 쓰면 그 숫자가 사라진다.
             val message = "오늘 접수 가능한 3건을 모두 사용했어요. 내일 다시 시도해 주세요."
             val repo =
                 FakeInquiryRepository(
@@ -222,10 +214,7 @@ class InquiryComposeViewModelTest {
             assertTrue(nav.backCount > 0)
         }
 
-    /**
-     * 화면이 쓰는 것과 같은 경로로만 분류를 준다 — 예전에는 `SavedStateHandle` 을 테스트가 직접
-     * 채워 줬고, 실제 내비게이션은 채우지 않아 버그가 통과한 테스트 뒤에 살아 있었다(#449).
-     */
+    /** 화면이 쓰는 것과 같은 경로로만 분류를 준다 */
     private fun viewModel(
         repo: FakeInquiryRepository = FakeInquiryRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),

@@ -9,11 +9,11 @@ import com.ruleup.challenge.domain.entity.RankingEntry
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 방 안 랭킹 (GET /challenges/{id}/ranking) ----------
+// 방 안 랭킹 (GET /challenges/{id}/ranking)
 
 @Serializable
 data class RankingEntryResponse(
-    // 10회 미만 참여자는 미등재 — null 로 내려온다
+    // 10회 미만 참여자는 미등재
     @SerialName("rank")
     val rank: Int? = null,
     @SerialName("user")
@@ -54,7 +54,7 @@ data class MyRankResponse(
 internal fun MyRankResponse.toDomain(): MyRank =
     MyRank(
         rank = rank,
-        // ranked 가 없으면 rank 유무로 판정한다 — 둘은 같은 사실의 다른 표현이다
+        // ranked 가 없으면 rank 유무로 판정한다
         ranked = ranked ?: (rank != null),
         successRate = successRate,
         participations = participations ?: 0,
@@ -75,7 +75,7 @@ internal fun RankingResponse.toDomain(): ChallengeRanking =
         items = items.orEmpty().map { it.toDomain() },
     )
 
-// ---------- 방 밖 랭킹 (GET /rankings/challenges) ----------
+// 방 밖 랭킹 (GET /rankings/challenges)
 
 @Serializable
 data class ChallengeRankEntryResponse(
@@ -93,11 +93,7 @@ data class ChallengeRankEntryResponse(
     val successRate: Double? = null,
 )
 
-/**
- * 목록에는 **등재된 방만** 내려온다(그룹 50회·솔로 10회 이상) — 그래서 [rank]·[successRate] 는
- * 항상 있다. 없으면 미등재가 아니라 깨진 행이므로 0 등·0% 로 채우지 않고 통째로 버린다.
- * 랭킹 화면에 "0위 · 0%" 가 섞이면 사용자는 그 방이 꼴찌라고 읽는다.
- */
+/** 목록에는 등재된 방만 내려온다(그룹 50회·솔로 10회 이상) */
 internal fun ChallengeRankEntryResponse.toDomain(): ChallengeRankEntry? {
     val rank = rank ?: return null
     val successRate = successRate ?: return null

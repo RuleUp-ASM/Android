@@ -13,12 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 약관 · 개인정보. **필수 약관은 철회할 수 없다** — 토글을 그리면 눌러 놓고 서버에 거절당하는
- * 스위치가 되므로, 아예 두지 않고 왜 없는지를 말한다.
- *
- * "동의 안 함"과 "받은 적 없음"은 다른 사실이라 문구도 갈라야 한다.
- */
+/** 약관 · 개인정보. */
 @RunWith(RobolectricTestRunner::class)
 class AgreementsContentTest {
     @get:Rule

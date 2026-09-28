@@ -17,14 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 알림 센터.
- *
- * 읽음 처리가 이 화면의 함정이다. **보내는 값은 응답에 실제로 담겼던 최신 id** 여야 하고,
- * **첫 페이지에서만** 보내야 한다 — 현재 시각으로 갱신하면 조회와 갱신 사이에 적재된 알림이
- * 화면에 뜬 적 없이 읽음 처리되어 레드닷이 영영 안 뜨고, 뒤 페이지에서 보내면 더 작은 id 로
- * 읽음 지점이 과거로 밀린다.
- */
+/** 알림 센터. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NotificationCenterViewModelTest {
     @BeforeTest
@@ -51,7 +44,6 @@ class NotificationCenterViewModelTest {
     @Test
     fun `목록이 비면 읽음 처리를 보내지 않는다`() =
         runTest {
-            // 보낼 id 가 없다 — 서버가 NOTIFICATION_NOT_FOUND 로 막는 요청을 굳이 만들지 않는다.
             val repo = FakeNotificationRepository(page = { page() })
             val viewModel = viewModel(repo)
 
@@ -63,7 +55,7 @@ class NotificationCenterViewModelTest {
     @Test
     fun `기준선 위 항목만 미읽음으로 표시한다`() =
         runTest {
-            // id 크기가 아니라 목록에서의 위치로 판단한다 — 최신순이라 위가 새것이다.
+            // id 크기가 아니라 목록에서의 위치로 판단한다
             val repo =
                 FakeNotificationRepository(
                     page = {
@@ -157,7 +149,6 @@ class NotificationCenterViewModelTest {
     @Test
     fun `공지 탭으로 옮기면 공지만 묻는다`() =
         runTest {
-            // 공지는 별도 API 가 아니라 같은 목록의 tab 필터다(2026-09-07 확정).
             val repo = FakeNotificationRepository(page = { page(notification("n1")) })
             val viewModel = viewModel(repo)
 
@@ -174,7 +165,6 @@ class NotificationCenterViewModelTest {
     @Test
     fun `읽음 처리는 탭마다 한 번씩만 보낸다`() =
         runTest {
-            // 읽음 지점이 탭별로 따로 보관되므로 탭마다 필요하고, 오갈 때마다 다시 보낼 이유는 없다.
             val repo = FakeNotificationRepository(page = { page(notification("n1")) })
             val viewModel = viewModel(repo)
 

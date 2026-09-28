@@ -12,12 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 생성 · 입력. 초안을 만드는 동안은 **다시 누를 수 없어야** 한다 — 두 번 누르면 초안이 두 개
- * 생기고, 사용자는 어느 쪽으로 이어졌는지 모른 채 확인 화면을 본다.
- *
- * 기대 문구 출처: Figma `1134:544`「생성 · 입력」.
- */
+/** 생성 · 입력. */
 @RunWith(RobolectricTestRunner::class)
 class ChallengeInputContentTest {
     @get:Rule
@@ -33,7 +28,6 @@ class ChallengeInputContentTest {
 
     @Test
     fun `템플릿 조회에 실패하면 다시 시도할 길을 준다`() {
-        // 추천이 안 떠도 직접 입력은 되지만, 재시도가 없으면 추천을 원하는 사용자가 막힌다.
         render(CreateChallengeState.initial.copy(templatesFailed = true))
 
         compose.onNodeWithText("추천을 불러오지 못했어요").assertExists()

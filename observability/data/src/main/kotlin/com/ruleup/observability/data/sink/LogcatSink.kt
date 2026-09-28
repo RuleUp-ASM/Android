@@ -6,10 +6,7 @@ import com.ruleup.observability.domain.event.ObsEvent
 import com.ruleup.observability.domain.model.Severity
 import com.ruleup.observability.domain.port.Sink
 
-/**
- * Logcat 출구. **프로덕션에는 배선하지 않는다** — 배선은 `ObservabilityModule` 이 담당하고,
- * 화면 오버레이는 `:observability:debug` 의 인스펙터가 별도 싱크로 맡는다.
- */
+/** Logcat 출구. */
 internal class LogcatSink : Sink {
     override fun emit(event: ObsEvent) {
         val payload = event.payload

@@ -20,13 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 수동 인증 제출 화면의 전이.
- *
- * 이 화면의 계약은 셋이다 — **메모가 실제 요청에 실린다**, 제목을 못 받아도 체크는 된다,
- * 제출이 실패하면 서버 사실로 되돌리되 **이유는 지우지 않는다**. 셋 다 깨지면 사용자는 인증한 줄
- * 알고 하루를 넘긴다.
- */
+/** 수동 인증 제출 화면의 전이. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManualSubmitViewModelTest {
     @BeforeTest
@@ -38,7 +32,6 @@ class ManualSubmitViewModelTest {
     @Test
     fun `제목 조회가 실패해도 오늘 상태로 화면을 세운다`() =
         runTest {
-            // 제목 때문에 체크를 막으면 오늘 인증 자체를 못 한다. 체크에 필요한 건 challengeId 뿐이다.
             val repository =
                 FakeVerificationRepository(
                     progress = { throw IllegalStateException("진행률 조회 실패") },
@@ -56,7 +49,6 @@ class ManualSubmitViewModelTest {
     @Test
     fun `메모를 적어 체크하면 그 메모가 요청에 실린다`() =
         runTest {
-            // 이 화면이 따로 있는 이유가 메모다. 안 실리면 상세에서 바로 누르는 것과 다를 바 없다.
             var sentNote: String? = null
             val repository =
                 FakeVerificationRepository(
@@ -80,7 +72,7 @@ class ManualSubmitViewModelTest {
     @Test
     fun `메모가 비어 있으면 note 를 보내지 않는다`() =
         runTest {
-            // 빈 문자열을 보내면 서버 기록에 빈 메모가 남는다. 안 쓴 것과 빈 것은 다르다.
+            // 빈 문자열을 보내면 서버 기록에 빈 메모가 남는다.
             var sent = "not-called"
             val repository =
                 FakeVerificationRepository(
@@ -130,8 +122,6 @@ class ManualSubmitViewModelTest {
     @Test
     fun `체크 해제는 오늘 인증 건 ID 로 부르고 서버 상태를 다시 받는다`() =
         runTest {
-            // 해제하면 연속 일수의 기준이 바뀐다. 지우기만 하고 두면 화면 재진입 전까지
-            // '아직 인증 전' 옆에 지난 연속 일수가 남는다(MAN-10 · VER-15).
             var cancelled: String? = null
             val repository =
                 FakeVerificationRepository(
@@ -153,7 +143,7 @@ class ManualSubmitViewModelTest {
 
             assertEquals(VERIFICATION_ID, cancelled)
             assertFalse(viewModel.uiState.value.checked)
-            // 해제 전 값(9)이 남아 있으면 '아직 인증 전' 화면에 연속 일수가 같이 떠 있는다.
+
             assertEquals(0, viewModel.uiState.value.streakAfter)
         }
 

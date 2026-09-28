@@ -18,12 +18,12 @@ sealed interface OnboardingIntent : MviIntent {
         val interestCategory: Category,
     ) : OnboardingIntent
 
-    /** 생일 입력. 숫자만 8자리(YYYYMMDD)로 누적되며 검증은 8자리가 찼을 때 돈다. */
+    /** 생일 입력. */
     data class SetBirthDate(
         val digits: String,
     ) : OnboardingIntent
 
-    /** 성별 선택. 필수 입력이라 해제는 없다 — 같은 값을 다시 골라도 선택이 유지된다. */
+    /** 성별 선택. */
     data class SetGender(
         val gender: Gender,
     ) : OnboardingIntent
@@ -32,12 +32,12 @@ sealed interface OnboardingIntent : MviIntent {
         val type: AgreementType,
     ) : OnboardingIntent
 
-    /** 전체 동의 토글. 하나라도 빠져 있으면 모두 체크하고, 다 차 있으면 모두 해제한다. */
+    /** 전체 동의 토글. */
     data object ToggleAllAgreements : OnboardingIntent
 
-    /** 1단계 뒤로가기. 지금 나가면 처음부터 다시 해야 해서 확인을 받는다. */
+    /** 1단계 뒤로가기. */
     data object BackFromFirstStep : OnboardingIntent
 
-    /** 약관 페이지 "시작하기" — 가입을 제출하고 성공 시 홈으로 이동한다. */
+    /** 약관 페이지 "시작하기" */
     data object Submit : OnboardingIntent
 }

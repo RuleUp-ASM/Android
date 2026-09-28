@@ -1,9 +1,6 @@
 package com.ruleup.onboarding.domain.auth.entity
 
-/**
- * 로그인 시 함께 보내는 초기 권한 스냅샷. **선택 필드이고 참고용이다** — OS 설정에서 언제든 바뀌므로
- * 서버도 앱도 저장하지 않고, 앱은 필요할 때마다 OS 에 다시 묻는다.
- */
+/** 로그인 시 함께 보내는 초기 권한 스냅샷. */
 data class PermissionSnapshot(
     val postNotifications: PermissionState,
     val location: PermissionState,

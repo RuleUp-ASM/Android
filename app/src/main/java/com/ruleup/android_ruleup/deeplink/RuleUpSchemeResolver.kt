@@ -14,15 +14,7 @@ import javax.inject.Singleton
 
 private const val SCHEME = "ruleup"
 
-/**
- * 알림 딥링크(`ruleup://…`) → 앱 라우트.
- *
- * 매핑 표의 원본은 알림 테크 스펙 8이다. 여기서는 **화면이 실재하는 것만** 옮기고 나머지는 null 로
- * 떨어뜨린다 — 없는 화면으로 보내느니 제자리에 두는 편이 낫다.
- *
- * 서버가 타입을 늘리는 것은 정상이므로 **모르는 링크가 오는 것도 정상**이다. 그래서 미지 경로를
- * 오류로 다루지 않는다.
- */
+/** 알림 딥링크(`ruleup://…`) → 앱 라우트. */
 @Singleton
 class RuleUpSchemeResolver
     @Inject
@@ -35,7 +27,7 @@ class RuleUpSchemeResolver
             val head = uri.host ?: return null
             val rest = uri.pathSegments.orEmpty()
             val route = route(head, rest) ?: return null
-            // 등록되지 않은 경로로 보내면 빈 화면이 뜬다 — 레지스트리에 있는 것만 통과시킨다.
+            // 등록되지 않은 경로로 보내면 빈 화면이 뜬다
             return route.takeIf { appRouteByPath[it.path] != null }
         }
 
@@ -48,27 +40,22 @@ class RuleUpSchemeResolver
 
                 "notifications" -> NavRoute(AppRoutes.NOTIFICATIONS)
 
-                // 권한 재허용 알림은 복수형 challenges/{id}/setup 으로 온다 — 설정·권한 배너가 있는 방 상세로 보낸다.
+                // 권한 재허용 알림은 복수형 challenges/{id}/setup 으로 온다
                 "challenge", "challenges" -> challengeRoute(rest)
 
                 "verification" ->
-                    // 폐기된 링크다. `VERIFICATION_RESULT` 는 2026-09-07 개정으로
-                    // `ruleup://challenge/{id}` 를 쓴다 — 인증 상세 화면이 없어 빈 화면으로 갔다.
-                    // 이미 적재된 옛 알림이 6개월 보관 동안 남아 있으므로 받아만 두고 버린다.
+                    // 폐기된 링크다.
                     null
 
-                // FAIL_EXPECTED 알림은 `ruleup://appeal/{verificationId}` 로 온다. 그 건의 이의 시트는
-                // 방 상세 안에 있고 알림은 challengeId 를 주지 않아, 바로 열려면 없는 조회 API 가 필요하다.
-                // 확실히 닿는 이의 내역으로 보낸다 — 세그먼트가 있든 없든 목적지는 같다.
+                // FAIL_EXPECTED 알림은 `ruleup://appeal/{verificationId}` 로 온다.
                 "appeal" -> NavRoute(AppRoutes.MY_APPEALS)
 
                 "terms" -> NavRoute(AppRoutes.MY_AGREEMENTS)
 
-                // 서버는 두 표기를 섞어 보낸다 — 이의 결과(APPEAL_RESULT)는 `ruleup://me/appeals` 다.
+                // 서버는 두 표기를 섞어 보낸다
                 "mypage", "me" -> myPageRoute(rest)
 
-                // 감시 실패 통지(`ruleup://watching/notices/{id}`). 통지 1건짜리 화면이 없어
-                // 감시 관계 목록으로 보낸다 — 어느 관계에서 온 통지인지는 목록에서 읽힌다.
+                // 감시 실패 통지(`ruleup://watching/notices/{id}`).
                 "watching" -> NavRoute(AppRoutes.MY_WATCHING)
 
                 // 모더레이션 거부(MODERATION_REJECTED) 알림이 쓰는 경로다.
@@ -80,7 +67,7 @@ class RuleUpSchemeResolver
         private fun challengeRoute(rest: List<String>): NavRoute? {
             val challengeId = rest.firstOrNull()?.takeIf { it.isNotBlank() } ?: return null
             return when (rest.getOrNull(1)) {
-                // 방장의 수정 화면. 권한이 없으면 화면이 스스로 막는다
+                // 방장의 수정 화면.
                 "edit" -> ChallengeSettingsPage(challengeId).toRoute()
                 // 감시자·피드는 방 상세 안의 섹션이라 같은 곳으로 보낸다
                 else -> ChallengeDetailPage(challengeId).toRoute()
@@ -97,11 +84,10 @@ class RuleUpSchemeResolver
                 // 자동 제재 통지(CHALLENGE_KICKED)가 여는 제재 이력이다.
                 "sanctions" -> NavRoute(AppRoutes.MY_SANCTIONS)
 
-                // 실패 예정 알림은 날짜를 달고 온다 — 그 일자를 펴야 이의 진입점이 보인다.
-                // 날짜가 없으면 캘린더가 오늘을 연다.
+                // 실패 예정 알림은 날짜를 달고 온다
                 "calendar" -> MyCalendarPage(rest.getOrNull(1)).toRoute()
 
-                // 문의 답변 통지. id 가 없으면 상세를 못 여니 내역 목록으로 보낸다.
+                // 문의 답변 통지.
                 "inquiries" ->
                     rest
                         .getOrNull(1)
@@ -109,9 +95,7 @@ class RuleUpSchemeResolver
                         ?.let { InquiryDetailPage(it).toRoute() }
                         ?: NavRoute(AppRoutes.MY_INQUIRIES)
 
-                // 부정행위 검출 이력 전용 화면이 아직 없다. 검출은 자동 제재(CHALLENGE_KICK)로
-                // 제재 이력에 남으므로 그리로 보낸다 — 탭이 아무 일도 안 하는 것보다 낫다.
-                // 정책 §2-10 이 요구하는 「이의 진입」과 기한 경과 안내는 이 화면에 없다(미구현).
+                // 부정행위 검출 이력 전용 화면이 아직 없다.
                 "cheat-history" -> NavRoute(AppRoutes.MY_SANCTIONS)
 
                 null -> NavRoute(AppRoutes.MY_HOME)

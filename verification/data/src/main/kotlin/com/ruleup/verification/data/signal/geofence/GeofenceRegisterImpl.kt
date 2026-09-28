@@ -17,13 +17,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-/**
- * GeofencingClient 로 활성 좌표를 OS 에 사전 등록(zero-touch presence, 명세 §2.1).
- * reconcile 은 차집합만 제거하고 새 목표 전체를 멱등 등록한다(재부팅 후 전부 재등록).
- *
- * 등록만 [Context.hasFineLocation] 가드 뒤에 있다. 해제는 권한이 필요 없고 전부 runCatching 안이라
- * 가드를 두지 않는다 — 그래서 권한 lint(MissingPermission)를 클래스 단위로 억제한다.
- */
+/** GeofencingClient 로 활성 좌표를 OS 에 사전 등록. */
 @SuppressLint("MissingPermission")
 class GeofenceRegisterImpl
     @Inject
@@ -62,7 +56,7 @@ class GeofenceRegisterImpl
             requestIdPrefix: String,
             targets: List<GeofenceTarget>,
         ) {
-            // 이 멤버(prefix) 소속 기존 펜스 중 새 목록에 없는 것만 해제 — 다른 멤버 목표는 유지(명세 §5.4.3).
+            // 이 멤버(prefix) 소속 기존 펜스 중 새 목록에 없는 것만 해제
             val newIds = targets.mapTo(HashSet()) { it.requestId }
             val stale =
                 geofenceTargetDao
@@ -95,8 +89,7 @@ class GeofenceRegisterImpl
             geofenceTargetDao.clear()
         }
 
-        // OS 등록 성공 시 재등록 시각을 남기고(§0.7 heartbeat), 실패(SecurityException: BACKGROUND 미허용 등)는
-        // 삼키되 GEOFENCE_NOT_REGISTERED gap 으로 보고한다(전송 스펙 §0.5) — 다음 reconcile 이 재시도.
+        // 등록 성공 시 시각 저장, 실패 시 GEOFENCE_NOT_REGISTERED 기록.
         private suspend fun registerAll(targets: List<GeofenceTarget>) {
             runCatching { client.addGeofences(buildRequest(targets), geofencePendingIntent(context)).await() }
                 .onSuccess { settingsStore.setLastGeofenceReregisterAt(System.currentTimeMillis()) }
@@ -128,7 +121,7 @@ class GeofenceRegisterImpl
                         .setRequestId(target.requestId)
                         .setCircularRegion(target.lat, target.lng, target.radiusM)
                         .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                        // DWELL 이 OS 에서 직접 "체류 임계 도달"을 쏜다(명세 §2.1).
+                        // DWELL 이 OS 에서 직접 "체류 임계 도달"을 쏜다.
                         .setLoiteringDelay(loiteringDelay)
                         .setNotificationResponsiveness(geofenceResponsivenessFor(loiteringDelay))
                         .setTransitionTypes(
@@ -151,10 +144,10 @@ class GeofenceRegisterImpl
         }
     }
 
-// 배칭 허용 기본치 5분(Google 권고 수준). 30분 주기 전송보다 한참 짧아 전달 지연에 묻힌다.
+// 배칭 허용 기본치 5분(Google 권고 수준).
 internal const val DEFAULT_GEOFENCE_RESPONSIVENESS_MS = 5 * 60_000
 
-/** 통지 지연 허용치. 체류 목표가 기본값보다 짧으면 거기 맞춘다 — 근거는 #357. */
+/** 통지 지연 허용치. */
 internal fun geofenceResponsivenessFor(loiteringDelayMillis: Int): Int =
     if (loiteringDelayMillis > 0) {
         minOf(DEFAULT_GEOFENCE_RESPONSIVENESS_MS, loiteringDelayMillis)

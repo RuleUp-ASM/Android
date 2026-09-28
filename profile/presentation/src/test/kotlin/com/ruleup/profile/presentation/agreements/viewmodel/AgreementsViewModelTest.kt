@@ -19,13 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 약관 동의 관리. 동의 시각이 **법적 증거**라 화면이 먼저 바뀌고 서버가 따라오는 낙관적 반영을
- * 하지 않는다 — 서버가 받아들인 것만 화면에 남아야 한다.
- *
- * 제출에 실을 버전은 **서버의 현행 값**이다. 응답의 `version` 은 사용자가 동의했던 버전이라
- * 그걸 되보내면 400 을 받는다 — 재동의가 영영 성공하지 못한다(ONB-16).
- */
+/** 약관 동의 관리. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgreementsViewModelTest {
     @BeforeTest
@@ -37,8 +31,6 @@ class AgreementsViewModelTest {
     @Test
     fun `한 번도 동의한 적 없는 항목도 현행 버전으로 보낼 수 있다`() =
         runTest {
-            // 응답의 version 은 "동의했던 버전"이라 처음 동의하는 항목은 비어 있다. 그걸 보낼 값으로
-            // 쓰면 선택 약관에 처음 동의하는 길이 통째로 막힌다.
             val repo = FakeAccountRepository(agreements = { status(version = null) }, submit = { status() })
             val viewModel = viewModel(repo)
             viewModel.onIntent(AgreementsIntent.Load)
@@ -72,7 +64,7 @@ class AgreementsViewModelTest {
     @Test
     fun `제출에 성공하면 부분 응답으로 덮지 않고 전체를 다시 받는다`() =
         runTest {
-            // 응답은 갱신된 항목만 온다 — 그걸로 화면을 덮으면 안 건드린 항목이 사라진다.
+            // 응답은 갱신된 항목만 온다
             val repo = FakeAccountRepository(agreements = { status() }, submit = { status() })
             val viewModel = viewModel(repo)
             viewModel.onIntent(AgreementsIntent.Load)
@@ -124,8 +116,6 @@ class AgreementsViewModelTest {
     @Test
     fun `재동의는 사용자가 동의했던 버전이 아니라 현행 버전을 보낸다`() =
         runTest {
-            // 응답의 version 은 "동의했던 버전"이다. 그걸 되보내면 서버가 400
-            // AGREEMENT_VERSION_MISMATCH 로 막아 「다시 동의하기」가 영영 실패한다(ONB-16).
             val repo =
                 FakeAccountRepository(
                     agreements = { status(version = "1.0", reconsent = listOf(AgreementType.TERMS_OF_SERVICE)) },
@@ -173,7 +163,7 @@ class AgreementsViewModelTest {
     )
 
     private companion object {
-        /** GET /intro 가 내려주는 현행 약관 버전. 사용자가 동의했던 값과 달라야 테스트가 성립한다. */
+        /** GET /intro 가 내려주는 현행 약관 버전. */
         const val CURRENT_VERSION = "2.0"
     }
 }

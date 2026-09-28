@@ -9,13 +9,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 탐색 응답 매핑. 서버가 값을 **안 주는 것**과 **0·false 로 주는 것**은 다른데, 매퍼가 조용히
- * 기본값을 채우면 그 차이가 예외 없이 사라진다. 그래서 "안 줬을 때 무엇이 되는가"가 계약이다.
- *
- * 특히 안전한 쪽으로 접는 결정들이 있다 — 못 들어갈 방을 열려 있는 것처럼 보이면 사용자가
- * 눌렀다가 튕기고, 커서가 남아 있는데 끝난 척하면 목록이 잘린다.
- */
+/** 탐색 응답 매핑. */
 class ExploreResponseMappingTest {
     @Test
     fun `순위를 안 주면 서버가 내려준 순서로 매긴다`() {
@@ -38,7 +32,6 @@ class ExploreResponseMappingTest {
 
     @Test
     fun `입장 가능 여부를 모르면 잠긴 것으로 본다`() {
-        // 못 들어갈 방을 열려 있는 것처럼 보이면 눌렀다가 튕긴다 — 안전한 쪽으로 접는다.
         val snapshot = TrendingChallengesResponse(items = listOf(trending(joinable = null))).toDomain()
 
         assertFalse(snapshot.items.single().joinable)
@@ -55,7 +48,6 @@ class ExploreResponseMappingTest {
 
     @Test
     fun `식별자가 없으면 조용히 넘기지 않고 실패로 알린다`() {
-        // id 없는 카드는 눌러도 아무 데도 못 간다 — 빈 문자열로 채우면 그 사실이 화면까지 숨는다.
         assertFailsWith<ApiException> {
             TrendingChallengesResponse(items = listOf(trending(challengeId = null))).toDomain()
         }

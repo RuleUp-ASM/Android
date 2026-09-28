@@ -10,7 +10,7 @@ data class NicknameCheckRequest(
     val nickname: String? = null,
 )
 
-// 명세 PATCH /users/me/profile — 변경할 필드만 싣는다. 사진 등록은 profile-image API 소관이다.
+// 명세 PATCH /users/me/profile
 @Serializable
 data class UpdateProfileRequest(
     @SerialName("nickname")

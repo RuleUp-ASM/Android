@@ -11,11 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 문의 상세. 기대값의 출처는 Figma `1419:87` 이되 **두 곳은 일부러 다르게 간다** — 재문의 안내와
- * 알림함 문구는 계약이 사라졌거나(재문의 폐지) 쓰지 않기로 한(알림) 것이라, 그대로 두면 화면이
- * 없는 경로를 약속하게 된다.
- */
+/** 문의 상세. */
 @RunWith(RobolectricTestRunner::class)
 class InquiryDetailContentTest {
     @get:Rule
@@ -39,7 +35,6 @@ class InquiryDetailContentTest {
 
     @Test
     fun `재문의 기한을 안내하지 않는다`() {
-        // 명세에서 재문의가 폐지됐다. 「7일 안에 한 번 더」를 남기면 입력창을 찾다 시간을 버린다.
         render(inquiryDetail(answerText = "확인했습니다."))
 
         compose.onNodeWithText("답변 후 7일 안에 한 번 더 질문할 수 있어요").assertDoesNotExist()
@@ -47,7 +42,6 @@ class InquiryDetailContentTest {
 
     @Test
     fun `답변을 알림함으로 알린다고 말하지 않는다`() {
-        // 알림을 쓰지 않기로 했다. 알린다고 해 두면 사용자가 알림함만 보다 답변을 놓친다.
         render(inquiryDetail(answerText = "확인했습니다."))
 
         compose.onNodeWithText("답변이 오면 알림함으로 알려드려요").assertDoesNotExist()

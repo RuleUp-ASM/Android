@@ -8,10 +8,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 
-/**
- * 목록 세그먼트. 서버 `filter` 는 세 값이지만 화면은 **완료와 이탈을 한 탭에 합쳐** 보여준다
- * (Figma 1162:2) — 둘 다 "끝난 방"이고 사용자가 나눠 볼 이유가 없다.
- */
+/** 목록 세그먼트. */
 enum class MyChallengeSegment {
     IN_PROGRESS,
     FINISHED,
@@ -20,14 +17,14 @@ enum class MyChallengeSegment {
 sealed interface MyChallengesIntent : MviIntent {
     data object Load : MyChallengesIntent
 
-    /** 화면 복귀 — 진행 중 달성률이 그새 움직였을 수 있다. */
+    /** 화면 복귀 */
     data object Refresh : MyChallengesIntent
 
     data class SelectSegment(
         val segment: MyChallengeSegment,
     ) : MyChallengesIntent
 
-    /** 목록 끝에 닿음 — 완료·이탈만 다음 장이 있다. */
+    /** 목록 끝에 닿음 */
     data object LoadMore : MyChallengesIntent
 
     data class OpenChallenge(
@@ -50,10 +47,7 @@ sealed interface MyChallengesEffect : MviEffect {
     ) : MyChallengesEffect
 }
 
-/**
- * 완료와 이탈은 **서버에서 두 번 받아 합친다** — `filter` 가 둘을 나누기 때문이다.
- * 그래서 커서도 각각 따로 들고 있어야 한다.
- */
+/** 완료와 이탈은 서버에서 두 번 받아 합친다 */
 data class FinishedPaging(
     val completedCursor: String?,
     val completedHasNext: Boolean,
@@ -74,9 +68,9 @@ data class MyChallengesState(
     val isLoadingMore: Boolean,
     val inProgress: List<MyChallenge>,
     val finished: List<MyChallenge>,
-    // 진행 중 카드의 달성률·D-day 원천. 없으면 두 값을 그리지 않는다
+    // 진행 중 카드의 달성률·D-day 원천.
     val progress: ProgressSnapshot?,
-    // 카드의 미읽음 뱃지(Figma 1314:2). 조회에 실패하면 빈 집계라 뱃지가 붙지 않는다
+    // 카드의 미읽음 뱃지.
     val unread: UnreadSummary,
     val finishedPaging: FinishedPaging,
     val errorMessage: String?,
@@ -114,7 +108,7 @@ sealed interface MyChallengesReducerEvent : ReducerEvent {
         val progress: ProgressSnapshot,
     ) : MyChallengesReducerEvent
 
-    /** 미읽음도 부수 정보다 — 못 세면 뱃지만 안 붙는다. */
+    /** 미읽음도 부수 정보다 */
     data class UnreadLoaded(
         val unread: UnreadSummary,
     ) : MyChallengesReducerEvent

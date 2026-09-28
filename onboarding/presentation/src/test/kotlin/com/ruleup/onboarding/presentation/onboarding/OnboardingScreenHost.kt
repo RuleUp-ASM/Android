@@ -16,10 +16,7 @@ import com.ruleup.ui.helper.LocalObservability
 import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
 
-/**
- * 온보딩 화면 렌더 준비. 화면이 소비하는 CompositionLocal 을 테스트가 직접 채운다 — 값이 없으면
- * 렌더 전에 `error()` 로 죽어, 원인이 화면 코드처럼 보인다.
- */
+/** 온보딩 화면 렌더 준비. */
 fun ComposeContentTestRule.renderOnboarding(
     nav: RecordingNavigationHelper = RecordingNavigationHelper(),
     content: @Composable () -> Unit,
@@ -38,9 +35,7 @@ fun ComposeContentTestRule.renderOnboarding(
     return nav
 }
 
-/**
- * 전역 클릭 가드를 넘겨 누른다. 맨 [performClick] 은 삼켜진다 — 자세한 이유는 [ClickClock].
- */
+/** 테스트 클릭 간격 확보. */
 fun SemanticsNodeInteraction.clickPastGuard() {
     ShadowSystemClock.advanceBy(Duration.ofMillis(ClickClock.nextOffsetMillis()))
     performClick()

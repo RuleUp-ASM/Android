@@ -39,10 +39,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 소셜 로그인. 인증에 성공해도 **가는 곳이 네 갈래**다 — 기존 사용자, 잠금 계정, 닉네임을 선점당한
- * 복원, 신규 가입. 잘못 보내면 사용자가 가입을 마치지 못하거나 잠금 사유를 모른 채 막힌다.
- */
+/** 소셜 로그인. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
     private val authorization =
@@ -87,7 +84,7 @@ class LoginViewModelTest {
     @Test
     fun `기능만 정지된 계정은 홈을 열되 무엇이 막혔는지 알려 준다`() =
         runTest {
-            // 열람은 되므로 막지 않는다. 다만 왜 신고가 안 되는지 모르면 고장으로 읽힌다.
+            // 열람은 되므로 막지 않는다.
             val nav = RecordingNavigationHelper()
             val messages = RecordingMessageHelper()
             val viewModel =
@@ -113,7 +110,6 @@ class LoginViewModelTest {
     @Test
     fun `잠긴 계정은 재로그인해도 잠금 화면으로 간다`() =
         runTest {
-            // 자동 로그인만 막고 여기를 열어 두면 로그아웃 후 재로그인이 잠금을 통째로 우회한다(AUTH-13).
             val nav = RecordingNavigationHelper()
             val viewModel =
                 viewModel(

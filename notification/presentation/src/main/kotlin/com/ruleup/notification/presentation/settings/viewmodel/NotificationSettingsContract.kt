@@ -19,7 +19,7 @@ sealed interface NotificationSettingsIntent : MviIntent {
         val enabled: Boolean,
     ) : NotificationSettingsIntent
 
-    /** OS 권한 배너 → 앱 설정 화면. 서버 설정값과 무관하다. */
+    /** OS 권한 배너 → 앱 설정 화면. */
     data object OpenSystemSettings : NotificationSettingsIntent
 
     data object Back : NotificationSettingsIntent
@@ -30,21 +30,16 @@ sealed interface NotificationSettingsEffect : MviEffect {
         val message: String,
     ) : NotificationSettingsEffect
 
-    /** OS 앱 설정으로 보낸다 — 화면이 Context 를 들고 처리한다. */
+    /** OS 앱 설정으로 보낸다 */
     data object OpenSystemSettings : NotificationSettingsEffect
 }
 
 data class NotificationSettingsState(
     val isLoading: Boolean,
     val settings: NotificationSettings?,
-    // 전송 중인 토글. 응답이 올 때까지 그 행만 잠근다
+    // 전송 중인 토글.
     val submitting: Boolean,
-    /**
-     * OS 푸시 권한이 꺼져 있는가.
-     *
-     * **서버 설정값과 별개다** — 권한을 거부해도 서버 값은 바뀌지 않으므로(정책 §3.1) 토글은
-     * 그대로 두고 배너만 얹는다. 배너 없이 토글만 켜져 있으면 사용자는 오는 줄 안다.
-     */
+    /** OS 푸시 권한이 꺼져 있는가. */
     val systemPermissionDenied: Boolean,
     val errorMessage: String?,
 ) : UiState {

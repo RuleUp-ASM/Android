@@ -31,7 +31,7 @@ kotlin {
 }
 
 dependencies {
-    // 계약과 기록기 본체. 주입받는 쪽이 BizLogger 를 참조하므로 밖으로 내보낸다.
+    // 계약과 기록기 본체.
     api(project(":logging:domain"))
 
     implementation(libs.amplitude.analytics)

@@ -12,14 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.Test
 
-/**
- * 알림 설정.
- *
- * 두 가지를 말하지 않으면 화면이 거짓말한다 — **마스터가 꺼지면 그룹이 켜져 있어도 안 온다**는 것,
- * 그리고 **OS 권한이 꺼져 있으면 앱 설정과 무관하게 안 온다**는 것.
- *
- * 야간 토글은 없다 — 9/5 개정에서 `nightPush` 가 삭제됐고 야간 보류는 서버 고정 규칙이다.
- */
+/** 알림 설정. */
 @RunWith(RobolectricTestRunner::class)
 class NotificationSettingsContentTest {
     @get:Rule val compose = createComposeRule()
@@ -37,13 +30,13 @@ class NotificationSettingsContentTest {
     fun `마스터가 꺼져 있으면 그룹이 켜져 있어도 안 온다고 말한다`() {
         show(NotificationSettingsState.initial.copy(isLoading = false, settings = settings(pushEnabled = false)))
 
-        // 그룹 세 행 모두에 붙어야 한다 — 하나만 말하면 나머지는 오는 줄 안다.
+        // 그룹 세 행 모두에 붙어야 한다
         compose.onAllNodesWithText("푸시 알림이 꺼져 있어 지금은 오지 않아요", substring = true).assertCountEquals(3)
     }
 
     @Test
     fun `휴대폰 권한이 꺼져 있으면 배너로 알린다`() {
-        // 서버 설정값은 그대로다 — 배너 없이 토글만 켜져 있으면 사용자는 오는 줄 안다.
+        // 서버 설정값은 그대로다
         show(
             NotificationSettingsState.initial.copy(
                 isLoading = false,
@@ -57,7 +50,7 @@ class NotificationSettingsContentTest {
 
     @Test
     fun `야간 토글을 두지 않는다`() {
-        // 9/5 개정에서 삭제됐다. 사용자 토글이 아니라 서버 고정 규칙이다.
+        // 9/5 개정에서 삭제됐다.
         show(NotificationSettingsState.initial.copy(isLoading = false, settings = settings()))
 
         compose.onNodeWithText("야간에는 받지 않기").assertDoesNotExist()

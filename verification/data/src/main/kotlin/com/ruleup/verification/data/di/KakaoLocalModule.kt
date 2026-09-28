@@ -15,12 +15,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.create
 import javax.inject.Singleton
 
-/**
- * 카카오 로컬(키워드 장소검색) 전용 Retrofit/OkHttp.
- *
- * 앱 백엔드와 base URL·인증이 달라(KakaoAK 헤더, dapi.kakao.com) 공용 OkHttpClient 를 재사용하지 않는다.
- * 공용 클라이언트는 모든 요청에 `Authorization: Bearer ...` 를 덮어써서, 그대로 쓰면 KakaoAK 헤더가 지워진다.
- */
+/** 카카오 로컬(키워드 장소검색) 전용 Retrofit/OkHttp. */
 @Module
 @InstallIn(SingletonComponent::class)
 object KakaoLocalModule {

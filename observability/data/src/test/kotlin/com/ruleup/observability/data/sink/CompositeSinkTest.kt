@@ -39,7 +39,7 @@ class CompositeSinkTest {
         val boom = RecordingSink().apply { failWith = IllegalStateException("sink down") }
         val composite = CompositeSink(listOf(boom), BuildProfile.PRODUCTION)
 
-        composite.emit(event) // 던지지 않아야 한다 — 로깅이 앱을 죽이면 안 된다.
+        composite.emit(event) // 던지지 않아야 한다
     }
 
     @Test
@@ -49,7 +49,7 @@ class CompositeSinkTest {
         val composite = CompositeSink(listOf(boom, after), BuildProfile.DEV)
 
         assertFailsWith<IllegalStateException> { composite.emit(event) }
-        // 재던지기가 루프를 끊으면 뒤 자식이 굶는다. 모아뒀다가 루프 종료 후 던져야 한다.
+
         assertEquals(1, after.events.size)
     }
 

@@ -28,10 +28,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * 홈. 서버 목록·진행률·로컬 스토어 **세 출처를 병합**해 카드를 그리는데 각 조회는 따로 실패할 수
- * 있다. 하나가 죽어도 나머지로 홈이 그려져야 한다 — 빈 홈은 "챌린지가 사라졌다"로 읽힌다.
- */
+/** 홈. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
     @BeforeTest
@@ -91,7 +88,6 @@ class HomeViewModelTest {
     @Test
     fun `이미 불러오는 중이면 다시 요청하지 않는다`() =
         runTest {
-            // 홈 재진입마다 LaunchedEffect 가 다시 발화한다 — 막지 않으면 중복 요청이 쌓인다.
             val repo = FakeChallengeRepository(myChallenges = { _, _ -> page(myChallenge("ch1")) })
             val viewModel = viewModel(repo = repo)
 
@@ -186,7 +182,7 @@ class HomeViewModelTest {
             successRate = null,
         )
 
-    /** 홈은 첫 페이지만 본다 — 커서를 따라가지 않으므로 마지막 장으로 만든다. */
+    /** 홈은 첫 페이지만 본다 */
     private fun page(vararg challenges: MyChallenge) = MyChallengePage(challenges = challenges.toList(), nextCursor = null, hasNext = false)
 
     private fun local(id: String) =
@@ -199,7 +195,7 @@ class HomeViewModelTest {
         )
 }
 
-/** 세션 동안만 사는 인메모리 스토어. 홈이 서버보다 먼저 아는 챌린지를 여기서 읽는다. */
+/** 세션 동안만 사는 인메모리 스토어. */
 private class FakeMyChallengeStore(
     private val items: List<MyChallengeSummary>,
 ) : MyChallengeStore {

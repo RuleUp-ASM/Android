@@ -48,8 +48,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
 
-    // 걸음·수면 권한 요청 런처(두 feature 화면이 공유). 위치가 OS 다이얼로그를 직접 쓰는 것과 같다.
-    // 런처 타입이 공개 시그니처에 나오므로 activity-compose 는 api 로 전파한다.
+    // 걸음·수면 권한 요청 런처(두 feature 화면이 공유).
     api(libs.androidx.activity.compose)
     implementation(libs.androidx.health.connect.client)
 

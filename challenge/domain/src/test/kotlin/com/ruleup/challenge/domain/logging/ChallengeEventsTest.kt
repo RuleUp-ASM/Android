@@ -8,10 +8,7 @@ import com.ruleup.logging.domain.bizAttributes
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/**
- * 팩토리 출력을 그대로 고정한다. 이벤트 이름·키·값 타입이 곧 분석 백엔드와의 계약이라, 이름 하나가
- * 바뀌면 대시보드가 조용히 비는데 컴파일은 그대로 통과한다.
- */
+/** 기본값 팩토리 검사. */
 class ChallengeEventsTest {
     @Test
     fun `기능 스펙 9번의 탐색 이벤트 이름을 전부 고정한다`() {
@@ -73,7 +70,6 @@ class ChallengeEventsTest {
 
     @Test
     fun `방 진입은 역할과 방장 유형을 함께 싣는다`() {
-        // 봇방장 방과 유저 방장 방은 화면 구성이 다르다 — 둘을 섞으면 방문율 해석이 안 된다.
         val event = ChallengeEvents.roomView("c1", "OWNER", "BOT")
 
         assertEquals(
@@ -88,7 +84,6 @@ class ChallengeEventsTest {
 
     @Test
     fun `랭킹 조회는 방 안과 방 밖을 다른 scope 로 남긴다`() {
-        // 등재 기준(10회 대 50회)이 달라 my_rank_null 을 한 지표로 묶으면 해석이 안 된다.
         assertEquals(
             bizAttributes {
                 put("scope", "IN_ROOM")
@@ -107,7 +102,6 @@ class ChallengeEventsTest {
 
     @Test
     fun `Android 담당 생성 이벤트 3종만 여기 있다`() {
-        // 나머지(draft_request·challenge_create_result·moderation_result 등)는 BE 담당이라 클라가 보내지 않는다.
         assertEquals("create_start", ChallengeEvents.createStart(CreateEntry.HOME).name)
         assertEquals("create_path_select", ChallengeEvents.createPathSelect(CreatePath.TEMPLATE).name)
         assertEquals("draft_edit", ChallengeEvents.draftEdit(DraftField.TITLE).name)
@@ -115,7 +109,6 @@ class ChallengeEventsTest {
 
     @Test
     fun `카드 노출은 표본 부족 여부를 함께 싣는다`() {
-        // has_metrics 가 없으면 표본 부족 처리가 클릭률을 얼마나 깎는지 분석할 수 없다.
         val event =
             ChallengeEvents.challengeCardImpression(
                 challengeId = "c1",
@@ -141,7 +134,6 @@ class ChallengeEventsTest {
 
     @Test
     fun `인기 섹션 클릭에는 sort 키를 아예 넣지 않는다`() {
-        // 인기 섹션은 정렬 개념이 없다 — 빈 문자열을 넣으면 집계에 가짜 분류가 하나 생긴다.
         val event = ChallengeEvents.challengeCardClick("c1", 0, ChallengeCardSource.TRENDING, sort = null)
 
         assertEquals(

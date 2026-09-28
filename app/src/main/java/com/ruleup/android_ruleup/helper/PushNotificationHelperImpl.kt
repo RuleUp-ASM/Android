@@ -20,12 +20,7 @@ import com.ruleup.domain.navigation.NavRoute
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * [PushNotificationHelper] 안드로이드 구현. 탭하면 **[MainActivity] 를 명시한 인텐트**로 진입한다.
- *
- * 암시적 `ACTION_VIEW` 로 두면 매니페스트에 `pathPrefix="/app"` 필터가 필요하고, 그 순간
- * 아무 웹페이지나 같은 URL 로 앱 화면을 열 수 있게 된다(#179).
- */
+/** [PushNotificationHelper] 안드로이드 구현. */
 class PushNotificationHelperImpl
     @Inject
     constructor(
@@ -57,8 +52,7 @@ class PushNotificationHelperImpl
             id: Int,
             route: NavRoute,
         ): PendingIntent {
-            // 목적지는 data URI 로 싣되 인텐트는 MainActivity 를 명시한다 — 매니페스트에 /app 필터가
-            // 없으므로(#179) 이 URI 는 웹에서 열 수 없고, 진입 해석은 URI 한 갈래로 모인다.
+            // 목적지는 data URI 로 싣되 인텐트는 MainActivity 를 명시한다
             val intent =
                 Intent(context, MainActivity::class.java).apply {
                     data = route.toAppLinkUri()

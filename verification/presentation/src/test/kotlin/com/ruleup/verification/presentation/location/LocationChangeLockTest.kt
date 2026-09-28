@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 class LocationChangeLockTest {
     @Test
     fun `최초 등록 중에는 잠금 안내가 붙지 않는다`() {
-        // 첫 설정은 월 변경 횟수를 소진하지 않는다 — 잠길 이유가 없다.
+        // 첫 설정은 월 변경 횟수를 소진하지 않는다
         assertNull(state(isEditing = false, changeAvailable = true).changeLockNotice())
         assertNull(state(isEditing = false, changeAvailable = false).changeLockNotice())
     }

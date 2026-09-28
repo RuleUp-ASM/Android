@@ -4,7 +4,7 @@ import com.ruleup.verification.domain.entity.Place
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 카카오 로컬 키워드 검색 응답(필요 필드만) ----------
+// 카카오 로컬 키워드 검색 응답(필요 필드만)
 @Serializable
 data class KakaoKeywordResponse(
     @SerialName("documents")
@@ -45,7 +45,7 @@ internal fun KakaoKeywordResponse.toDomain(): List<Place> =
         )
     }
 
-// ---------- 카카오 로컬 좌표→주소(coord2address) 응답(필요 필드만) ----------
+// 카카오 로컬 좌표→주소(coord2address) 응답(필요 필드만)
 @Serializable
 data class KakaoCoord2AddressResponse(
     @SerialName("documents")
@@ -74,10 +74,7 @@ data class KakaoLotAddressResponse(
     val addressName: String? = null,
 )
 
-/**
- * 역지오코딩 1건 → 앵커 [Place]. 좌표는 coord2address 가 돌려주지 않으므로 호출 시점의 탭 좌표를 그대로 유지한다.
- * 건물명이 있으면 이름으로, 없으면 주소를 이름으로 쓴다(이름=주소일 땐 [Place.address] 를 비워 중복 표기 방지).
- */
+/** 역지오코딩 1건 → 앵커 [Place]. */
 internal fun KakaoCoord2AddressResponse.toPlaceOrNull(
     lat: Double,
     lng: Double,
