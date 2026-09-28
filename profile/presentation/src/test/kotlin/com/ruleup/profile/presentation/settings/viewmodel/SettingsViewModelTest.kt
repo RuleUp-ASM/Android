@@ -162,7 +162,7 @@ class SettingsViewModelTest {
             accountRepository = repo,
             profileRepository = profile,
             inquiryRepository = inquiries,
-            logoutUseCase = LogoutUseCase(auth, tokens, noopCleaner),
+            logoutUseCase = LogoutUseCase(auth, tokens, noopCleaner) {},
             withdrawUseCase = WithdrawUseCase(auth, tokens, noopCleaner),
             navigationHelper = nav,
         )

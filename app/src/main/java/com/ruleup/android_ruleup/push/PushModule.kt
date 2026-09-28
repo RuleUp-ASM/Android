@@ -1,5 +1,6 @@
 package com.ruleup.android_ruleup.push
 
+import com.ruleup.domain.helper.PushTokenRevoker
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,4 +15,7 @@ object PushModule {
     @Provides
     @Singleton
     fun providePushApi(retrofit: Retrofit): PushApi = retrofit.create()
+
+    @Provides
+    fun providePushTokenRevoker(register: PushTokenRegister): PushTokenRevoker = PushTokenRevoker { register.unregisterCurrentToken() }
 }
