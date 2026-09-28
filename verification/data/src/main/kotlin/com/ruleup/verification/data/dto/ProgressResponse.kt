@@ -8,7 +8,7 @@ import com.ruleup.verification.domain.entity.TodayStatus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 3.2 진행률 일괄 조회 ----------
+// 3.2 진행률 일괄 조회
 @Serializable
 data class ChallengeProgressResponse(
     @SerialName("challengeId")

@@ -41,5 +41,5 @@ sealed interface MyTierReducerEvent : ReducerEvent {
     ) : MyTierReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias MyTierEffect = NoEffect

@@ -24,19 +24,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-/**
- * 계정 계약(티어·통계·동의·제재·감시) — **실서버**에 대고 돈다.
- *
- * 이 계약들은 2026-09-07 에 한꺼번에 붙었고, **필드 이름이 어긋나면 화면이 오류 없이 빈칸이 된다.**
- * 매퍼 단위 테스트는 "우리가 가정한 JSON"을 검증할 뿐이라 그 어긋남을 못 잡는다 — 실제 응답을
- * 앱 Repository 로 읽어 보는 이 층만 잡는다.
- *
- * 돌리는 법:
- * ```
- * RULEUP_ACCEPTANCE=1 DEV_TOKEN_SECRET=... \
- *   ./gradlew :app:testDebugUnitTest --tests "*AcceptanceTest*"
- * ```
- */
+/** 계정 계약(티어·통계·동의·제재·감시) */
 class AccountContractAcceptanceTest {
     private lateinit var myPage: MyPageRepositoryImpl
     private lateinit var account: AccountRepositoryImpl
@@ -70,7 +58,6 @@ class AccountContractAcceptanceTest {
     @Test
     fun `티어 히스토리는 표본이 없어도 보관 안내를 준다`() =
         runBlocking<Unit> {
-            // 갓 만든 계정이라 best·points 는 비어 있는 게 정상이다 — 없는 값을 지어내지 않는지 본다.
             val history = myPage.getTierHistory()
 
             assertTrue(history.points.isEmpty(), "새 계정인데 점수 변동 기록이 있다")
@@ -112,7 +99,6 @@ class AccountContractAcceptanceTest {
     @Test
     fun `동의 현황은 약관 5종과 개별 동의 2종을 모두 준다`() =
         runBlocking<Unit> {
-            // 앱이 모르는 type 이 오면 그 행이 조용히 사라진다 — 7종이 다 읽히는지가 계약이다.
             val status = account.getAgreements()
 
             assertEquals(7, status.agreements.size, "동의 항목이 7종이 아니다: ${status.agreements.map { it.type }}")
@@ -132,7 +118,6 @@ class AccountContractAcceptanceTest {
                 )
             assertEquals(false, after.of(AgreementType.MARKETING)?.agreed, "선택 동의 철회가 반영되지 않았다")
 
-            // 필수 3종 철회는 탈퇴 안내로 갈려야 한다 — 일반 오류로 접히면 사용자가 할 일을 모른다.
             assertFailsWith<AgreementRevokeForbiddenException> {
                 account.submitAgreements(
                     listOf(AgreementSubmission(AgreementType.TERMS_OF_SERVICE, agreed = false, version = version)),
@@ -154,7 +139,6 @@ class AccountContractAcceptanceTest {
     @Test
     fun `제재 이력은 깨끗한 계정에서 빈 이력으로 온다`() =
         runBlocking<Unit> {
-            // 잠금 계정도 열려야 하는 화면이라, 여기서 터지면 사용자가 잠금 사유를 볼 길이 없다.
             val history = account.getSanctions()
 
             assertTrue(history.isEmpty, "새 계정인데 제재가 있다")
@@ -163,7 +147,6 @@ class AccountContractAcceptanceTest {
     @Test
     fun `알림 센터 목록을 앱 모델로 읽는다`() =
         runBlocking<Unit> {
-            // 여기서 터지면 알림함이 통째로 오류 화면이 된다. 새 계정이라 목록은 비어 있는 게 정상이다.
             val page = notifications.getNotifications()
 
             assertTrue(page.items.isEmpty(), "새 계정인데 알림이 있다")
@@ -173,8 +156,6 @@ class AccountContractAcceptanceTest {
     @Test
     fun `알림 설정을 앱 모델로 읽는다`() =
         runBlocking<Unit> {
-            // 배포된 서버가 아직 구 모델(types + marketing)을 주더라도 읽혀야 한다 —
-            // 못 읽으면 설정 화면이 열리지 않는다.
             val settings = notifications.getSettings()
 
             assertNotNull(settings.groups, "그룹 설정을 읽지 못했다")
@@ -188,7 +169,7 @@ class AccountContractAcceptanceTest {
             assertTrue(watching.isEmpty(), "새 계정인데 감시 항목이 있다")
         }
 
-    /** 이 스토리는 이미지 업로드를 하지 않는다 — 불리면 그 자체가 의도치 않은 호출이다. */
+    /** 이미지 업로드 미사용. */
     private object NoImageReader : ImageReader {
         override suspend fun read(uri: String): ImageBytes = throw NotImplementedError()
     }

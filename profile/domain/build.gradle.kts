@@ -25,7 +25,7 @@ kotlin {
 }
 
 dependencies {
-    // Page/NavRoute, InterestCategory(공유 커널)가 본 모듈의 공개 시그니처에 노출되므로 api 로 전파한다.
+    // 공개 시그니처의 core:domain 타입.
     api(project(":core:domain"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)

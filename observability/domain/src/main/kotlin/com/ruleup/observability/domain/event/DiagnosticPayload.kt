@@ -8,7 +8,7 @@ data class DiagnosticPayload(
     override val severity: Severity,
     override val tag: String,
     val message: String,
-    /** 예외의 값 표현. `Throwable` 을 직접 담지 않는 이유는 [ErrorInfo] 문서 참고. */
+    /** 예외의 값 표현. */
     val cause: ErrorInfo? = null,
     override val attrs: Attributes = Attributes.EMPTY,
 ) : ObsPayload {

@@ -12,10 +12,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 통계 리포트. 지표가 **표본 없음**일 때가 이 화면의 함정이다 — 0% 로 그리면 아무것도 안 한 사람과
- * 전부 실패한 사람이 같은 화면을 본다.
- */
+/** 통계 리포트. */
 @RunWith(RobolectricTestRunner::class)
 class MyStatsContentTest {
     @get:Rule

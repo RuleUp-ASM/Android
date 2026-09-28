@@ -34,13 +34,13 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface VerificationApi {
-    // Phase 0 인트로 (전송 스펙 §0.3): 정적 프로필 + 최초 권한 스냅샷 → 서버 정책
+    // Phase 0 인트로 : 정적 프로필 + 최초 권한 스냅샷 → 서버 정책
     @POST("v1/verifications/intro")
     suspend fun intro(
         @Body request: IntroRequest,
     ): BaseResponse<IntroResponse>
 
-    // 3.1 30분마다 신호 받고 평가 (전송 스펙 §0.1 envelope)
+    // 3.1 30분마다 신호 받고 평가
     @POST("v1/verifications/sync")
     suspend fun sync(
         @Body request: SyncEnvelopeRequest,
@@ -52,7 +52,7 @@ interface VerificationApi {
         @Query("status") status: String? = null,
     ): BaseResponse<ProgressResponse>
 
-    // 오늘 인증 결과 + 판정 결과 모달 데이터. 구 GET /{id}/verification 을 대체하는 계약이다.
+    // 오늘 인증 결과 + 판정 결과 모달 데이터.
     @GET("v1/challenges/{challengeId}/verifications/today")
     suspend fun getTodayResult(
         @Path("challengeId") challengeId: String,
@@ -65,7 +65,7 @@ interface VerificationApi {
         @Body request: ManualSubmitRequest,
     ): BaseResponse<ManualSubmitResponse>
 
-    // setup 앵커·대상앱 바인딩 제출 (명세 setup)
+    // setup 앵커·대상앱 바인딩 제출
     @POST("v1/challenges/{challengeId}/setup")
     suspend fun setup(
         @Path("challengeId") challengeId: String,
@@ -98,13 +98,13 @@ interface VerificationApi {
         @Body request: UpdateScreenAppsRequest,
     ): BaseResponse<UpdateScreenAppsResponse>
 
-    // 판정 결과 확인 (POST ack): 결과 모달을 봤다는 표시. 멱등이라 중복 호출이 안전하다
+    // 판정 결과 확인 (POST ack): 결과 모달을 봤다는 표시.
     @POST("v1/verifications/{verificationId}/ack")
     suspend fun acknowledgeResult(
         @Path("verificationId") verificationId: String,
     ): BaseResponse<AcknowledgeResponse>
 
-    // 수동 인증 취소 (DELETE): 당일(KST) 안에서만. 자동 판정 건은 취소 불가
+    // 수동 인증 취소 (DELETE): 당일(KST) 안에서만.
     @DELETE("v1/verifications/{verificationId}")
     suspend fun cancelManual(
         @Path("verificationId") verificationId: String,

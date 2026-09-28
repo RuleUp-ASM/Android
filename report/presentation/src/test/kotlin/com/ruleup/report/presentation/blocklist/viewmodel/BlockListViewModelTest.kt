@@ -139,7 +139,7 @@ class BlockListViewModelTest {
     @Test
     fun `이미 풀린 차단은 오류가 아니라 목록이 옛것이라고 알린다`() =
         runTest(dispatcher) {
-            // 다른 기기에서 먼저 푼 경우다 — 사용자가 원한 결과는 이미 이뤄져 있다.
+            // 다른 기기에서 먼저 푼 경우다
             val repo =
                 FakeReportRepository(
                     pages = listOf(filled()),

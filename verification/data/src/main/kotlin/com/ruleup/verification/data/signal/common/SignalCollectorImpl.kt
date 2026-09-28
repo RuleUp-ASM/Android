@@ -17,12 +17,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-/**
- * sync 시점 OS 신호 수집(명세 §2.3). 보조 측위 단발(isMock 포함) + UsageStats 델타 + 움직임/수면(HEALTH·SLEEP).
- * 지오펜스 전이는 리시버가 이미 적재한다. 연속 측위(requestLocationUpdates)는 쓰지 않는다(배터리, 명세 §2.3).
- *
- * 측위/UsageStats 호출은 모두 런타임 권한 가드 뒤에서 일어나므로 MissingPermission lint 를 클래스 단위로 억제한다.
- */
+/** sync 시점 OS 신호 수집. */
 @SuppressLint("MissingPermission")
 class SignalCollectorImpl
     @Inject
@@ -40,7 +35,7 @@ class SignalCollectorImpl
             captureLocation()
             // 대상 앱은 스코프에서 거르고 WAKE(화면·잠금해제)는 패키지 무관하게 전부 담는다.
             usageEventCollector.collect(scope.targetPackages)
-            // 움직임·수면(명세 §8). HC 가용 시에만 수집(미설치/미지원이면 collector 내부에서 생략).
+            // 움직임·수면.
             if (scope.healthTargets.isNotEmpty() || scope.sleepRequested) {
                 healthConnectCollector.capture(scope.healthTargets, scope.sleepRequested)
             }

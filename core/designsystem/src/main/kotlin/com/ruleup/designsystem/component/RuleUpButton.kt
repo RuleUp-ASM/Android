@@ -16,10 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * 기본 CTA 버튼. Figma `Button/Primary`(node `1177:179`) — 그라데이션 토큰은 Figma 에 없다.
- * 높이를 고정하지 않는다 — 패딩으로 잡아야 글자 크기를 키운 기기에서 라벨이 잘리지 않는다.
- */
+/** 기본 CTA 버튼. */
 @Composable
 fun RuleUpPrimaryButton(
     text: String,

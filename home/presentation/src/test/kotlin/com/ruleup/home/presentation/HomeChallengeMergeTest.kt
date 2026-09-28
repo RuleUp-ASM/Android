@@ -15,15 +15,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 홈 카드 병합. 이 화면은 **세 출처(서버 목록·서버 진행률·로컬 스토어)를 합쳐** 그리는데, 각 조회는
- * 따로 실패할 수 있다. 여기서 지키는 건 하나다 — 어느 출처가 죽어도 **내가 아는 챌린지가 홈에서
- * 사라지지 않는다.** 사라지면 사용자는 챌린지가 없어진 줄 안다.
- */
+/** 홈 카드 병합. */
 class HomeChallengeMergeTest {
     @Test
     fun `서버 목록이 비어도 진행률에 있는 챌린지는 남는다`() {
-        // 목록 조회만 실패한 경우다. 진행률이 아는 챌린지까지 지우면 홈이 통째로 빈다.
+        // 목록 조회만 실패한 경우다.
         val merged = mergeHomeChallenges(emptyList(), snapshot(progress("ch1")), emptyList())
 
         assertEquals(listOf("ch1"), merged.map { it.challengeId })
@@ -38,7 +34,6 @@ class HomeChallengeMergeTest {
 
     @Test
     fun `방금 만든 챌린지는 서버가 아직 몰라도 홈에 보인다`() {
-        // 생성 직후 진행률 API 에 반영되기 전 구간. 여기서 빠지면 "만들었는데 없어졌다"가 된다.
         val merged = mergeHomeChallenges(emptyList(), progress = null, locals = listOf(local("ch1")))
 
         assertEquals(listOf("ch1"), merged.map { it.challengeId })
@@ -71,7 +66,6 @@ class HomeChallengeMergeTest {
 
     @Test
     fun `진행률에만 있는 끝난 챌린지는 진행 중 카드로 붙이지 않는다`() {
-        // 스냅샷은 완주한 방도 싣는다. 붙이면 끝난 방이 진행 중 목록에 진행 중 문구로 보인다.
         val done = progress("done").copy(status = ChallengeStatus.COMPLETED.value)
 
         val merged = mergeHomeChallenges(emptyList(), snapshot(done, progress("ongoing")), emptyList())
@@ -96,7 +90,6 @@ class HomeChallengeMergeTest {
 
     @Test
     fun `진행률이 모르는 참여 형태를 보내면 지어내지 않는다`() {
-        // 인증 모듈은 아직 구 필드명을 문자열로 준다 — 못 읽는 값이 "솔로"로 둔갑하면 안 된다.
         val merged = mergeHomeChallenges(emptyList(), snapshot(progress("ch1", participationType = "COUPLE")), emptyList())
 
         val subtitle = merged.single().subtitle

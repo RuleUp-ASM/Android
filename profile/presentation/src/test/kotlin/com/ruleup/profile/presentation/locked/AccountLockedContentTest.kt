@@ -16,13 +16,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 잠금 화면(Figma `1465:2`·`1465:37`·`1465:89`). 정지된 사용자가 앱에서 볼 수 있는 유일한 화면이라,
- * 여기서 길이 막히면 사용자는 문의할 방법도 잃는다.
- *
- * 영구 정지와 기간 정지는 **해제일의 유무**로 갈린다 — 영구인데 해제일을 그리면 기다리면 풀린다고
- * 읽고, 기간인데 안 그리면 영영 못 쓴다고 읽는다. 둘 다 같은 화면이 내는 반대 방향의 거짓말이다.
- */
+/** 잠금 화면. */
 @RunWith(RobolectricTestRunner::class)
 class AccountLockedContentTest {
     @get:Rule

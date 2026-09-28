@@ -8,15 +8,15 @@ import androidx.room.Transaction
 
 @Dao
 internal interface TtiDao {
-    /** 같은 화면 인스턴스의 두 번째 진입은 무시한다 — 첫 구간이 기준 시각이다. */
+    /** 같은 화면 인스턴스의 두 번째 진입은 무시한다 */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRecord(record: TtiRecordEntity)
 
-    /** 구간을 연다. 이미 열려 있으면 무시한다 — 컴포지션이 다시 돌아도 처음 시각을 지킨다. */
+    /** 구간을 연다. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSpan(span: TtiSpanEntity)
 
-    /** 아직 안 닫힌 구간만 닫는다. 늦게 도착한 end 가 앞의 측정을 덮어쓰지 못한다. */
+    /** 아직 안 닫힌 구간만 닫는다. */
     @Query(
         "UPDATE tti_span SET endedAt = :endedAt " +
             "WHERE recordId = :recordId AND timeline = :timeline AND endedAt IS NULL",

@@ -10,12 +10,7 @@ import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 03 · 생일. 가입 조건(연령) 확인에 쓰는 값이라 **형식이 맞기 전에는 넘어가지 않는다** — 넘어가면
- * 마지막 제출에서 되돌아오고, signupToken 은 5분이라 그 왕복이 곧 이탈이 된다.
- *
- * 기대 문구 출처: Figma `1134:1765`「온보딩 3 · 생일」.
- */
+/** 03 · 생일. */
 @RunWith(RobolectricTestRunner::class)
 class BirthDateContentTest {
     @get:Rule

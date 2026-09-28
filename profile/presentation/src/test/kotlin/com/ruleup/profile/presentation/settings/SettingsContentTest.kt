@@ -14,11 +14,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 설정 허브 (Figma 1134:2164).
- *
- * 탈퇴는 되돌리기 어려운 동작이라 확인 시트를 반드시 거친다.
- */
+/** 설정 허브. */
 @RunWith(RobolectricTestRunner::class)
 class SettingsContentTest {
     @get:Rule

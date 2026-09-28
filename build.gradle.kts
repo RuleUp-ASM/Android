@@ -1,4 +1,4 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.compose) apply false
@@ -12,11 +12,11 @@ plugins {
     alias(libs.plugins.firebase.appdistribution) apply false
 }
 
-// 모든 모듈에 ktlint 적용. CI 는 ./gradlew ktlintCheck 로 검사, 로컬은 ./gradlew ktlintFormat 로 자동 포맷.
+// 전 모듈 ktlint 설정.
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-    // Compose 전용 룰셋(io.nlopez.compose.rules). @Composable 코드에만 규칙이 적용된다.
+    // Compose 전용 룰셋(io.nlopez.compose.rules).
     val catalog = rootProject.extensions.getByType<org.gradle.api.artifacts.VersionCatalogsExtension>().named("libs")
     dependencies {
         add("ktlintRuleset", catalog.findLibrary("ktlint-compose").get())

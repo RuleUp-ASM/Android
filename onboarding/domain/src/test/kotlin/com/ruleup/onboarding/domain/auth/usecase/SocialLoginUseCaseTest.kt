@@ -61,7 +61,7 @@ class SocialLoginUseCaseTest {
 
             val result = useCase(auth, tokens)(authorization)
 
-            // 세션은 저장돼야 한다 — 닉네임 재설정 화면이 인증된 API 를 호출한다.
+            // 세션은 저장돼야 한다
             assertEquals(token, tokens.savedToken)
             assertEquals(LoginOutcome.ResetNickname("도전왕"), result)
         }
@@ -82,8 +82,6 @@ class SocialLoginUseCaseTest {
     @Test
     fun `정지 계정도 제한 갈래로 보낸다`() =
         runBlocking {
-            // 서버가 실제로 내리는 값은 SUSPENDED 다. LOCKED 만 보면 재로그인이 게이트를 지나쳐
-            // 잠긴 계정이 홈에 들어간다(AUTH-13).
             val auth = existingUser(testUser(accountStatus = AccountStatus.SUSPENDED))
 
             val result = useCase(auth, FakeTokenRepository())(authorization)
@@ -94,8 +92,6 @@ class SocialLoginUseCaseTest {
     @Test
     fun `닉네임 충돌은 잠금보다 먼저 판정한다`() =
         runBlocking {
-            // 복원 계정은 제재 이력도 함께 복원되므로 둘이 동시에 올 수 있다.
-            // 닉네임을 못 바꾸면 방 참여자 목록에 남의 이름이 뜨므로 이쪽이 먼저다.
             val auth =
                 existingUser(
                     testUser(
@@ -113,7 +109,6 @@ class SocialLoginUseCaseTest {
     @Test
     fun `복원된 계정이면 그 사실을 결과에 싣는다`() =
         runBlocking {
-            // 기능 스펙의 복원 건수 지표가 이 값을 센다. 비면 복원 유입이 집계에서 사라진다.
             val auth = existingUser(testUser(), restored = true)
 
             val result = useCase(auth, FakeTokenRepository())(authorization)

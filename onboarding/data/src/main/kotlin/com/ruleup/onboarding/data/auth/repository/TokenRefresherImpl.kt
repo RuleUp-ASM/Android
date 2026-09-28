@@ -17,10 +17,7 @@ import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 import javax.inject.Inject
 
-/**
- * [TokenRefresher] 구현. HTTP 401·`SESSION_EXPIRED` 만 세션 만료로 보고 `null`(호출자가 토큰 정리),
- * 그 밖(네트워크·5xx·응답 파손)은 전파해 세션을 유지한 채 재시도만 포기한다.
- */
+/** [TokenRefresher] 구현. */
 class TokenRefresherImpl
     @Inject
     constructor(
@@ -30,8 +27,7 @@ class TokenRefresherImpl
 
         private val lock = Mutex()
 
-        // 마지막으로 보낸 갱신. 콜드스타트의 자동로그인과 401 Authenticator 가 같은 토큰으로 동시에 오면
-        // 서버가 첫 요청에서 토큰을 회전해 두 번째를 401 로 막고, 그쪽이 세션을 지운다.
+        // 마지막으로 보낸 갱신.
         private var latest: Pair<String, Deferred<RefreshedSession?>>? = null
 
         override suspend fun refresh(refreshToken: String): RefreshedSession? {

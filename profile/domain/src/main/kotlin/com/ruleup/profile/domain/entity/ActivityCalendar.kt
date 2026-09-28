@@ -2,10 +2,7 @@ package com.ruleup.profile.domain.entity
 
 import com.ruleup.domain.entity.category.Category
 
-/**
- * 일자 종합 상태 (명세 days[].status — 서버 판정, 클라 재계산 없음).
- * "대상 아님" 값이 없는 건 판정 대상일만 내려오기 때문이다 — 응답에 없는 날짜가 곧 비대상일이다.
- */
+/** 일자 종합 상태. */
 enum class CalendarDayStatus(
     val value: String,
 ) {
@@ -13,7 +10,7 @@ enum class CalendarDayStatus(
     PARTIAL("PARTIAL"),
     FAILED("FAILED"),
 
-    // 실패 예정 — 확정 전이라 아직 실패가 아니다. 구 CHECKING 은 폐기됐다
+    // 실패 예정
     FAIL_EXPECTED("FAIL_EXPECTED"),
 
     // 오늘, 아직 판정 전
@@ -21,7 +18,7 @@ enum class CalendarDayStatus(
     ;
 
     companion object {
-        /** 미인식 값은 null — 캘린더 셀을 특정 색으로 칠하면 그 날짜에 대해 거짓말을 하게 된다. */
+        /** 미인식 값은 null */
         fun fromValue(value: String?): CalendarDayStatus? = entries.find { it.value == value }
     }
 }
@@ -35,23 +32,20 @@ data class CalendarDay(
     val targetCount: Int,
 )
 
-/** 활동 캘린더 월 응답 (명세: GET /me/calendar?month=YYYY-MM). */
+/** 활동 캘린더 월 응답. */
 data class ActivityCalendar(
     // YYYY-MM
     val month: String,
     val days: List<CalendarDay>,
 )
 
-/**
- * 챌린지별 일자 결과 상태 (명세 items[].status). 오늘 인증 카드와 같은 어휘를 쓴다 —
- * 이의가 인용되면 [FAILED] 가 [DONE] 으로 소급된다.
- */
+/** 챌린지별 일자 결과 상태. */
 enum class DayItemStatus(
     val value: String,
 ) {
     IN_PROGRESS("IN_PROGRESS"),
 
-    // 실패 예정 — 확정 전이고 이의를 낼 수 있다
+    // 실패 예정
     FAIL_EXPECTED("FAIL_EXPECTED"),
 
     DONE("DONE"),
@@ -59,29 +53,26 @@ enum class DayItemStatus(
     ;
 
     companion object {
-        /** 미인식 값은 null — 모르는 상태를 완료나 실패 어느 쪽으로도 접지 않는다. */
+        /** 미인식 값은 null */
         fun fromValue(value: String?): DayItemStatus? = entries.find { it.value == value }
     }
 }
 
-/**
- * 일자 상세의 이의 가능 여부 (명세 items[].appeal — FAILED·FAIL_EXPECTED 에서).
- * `remainingThisMonth`·`LIMIT_EXCEEDED` 는 읽지 않는다 — 이의 횟수 한도가 폐기됐다(챌린지 정책 §7.2).
- */
+/** 일자 상세의 이의 가능 여부. */
 data class DayItemAppeal(
     val eligible: Boolean,
-    // 신청 마감 경계(ISO-8601). 실패 확정과 같은 시각이라 귀속일 이틀 뒤 00:00 KST 가 내려온다
+    // 신청 마감 경계(ISO-8601).
     val eligibleUntil: String?,
 )
 
-/** 일자 상세의 챌린지별 결과 (명세: GET /me/calendar/{date} items[]). */
+/** 일자 상세의 챌린지별 결과. */
 data class CalendarDayItem(
     val challengeId: String,
     val title: String,
     // RoutineOutcome 카테고리 스냅샷 (인식 불가 값은 null)
     val category: Category?,
     val status: DayItemStatus?,
-    // 이의 신청 대상 인증 건 ID. 없으면 실패 항목이라도 이의로 들어갈 경로가 없다
+    // 이의 신청 대상 인증 건 ID.
     val verificationId: String?,
     // AUTO / MANUAL (확정 전 null)
     val verifiedVia: String?,
@@ -93,7 +84,7 @@ data class CalendarDayItem(
     val appeal: DayItemAppeal?,
 )
 
-/** 일자 상세 (명세: GET /me/calendar/{date}). */
+/** 일자 상세. */
 data class CalendarDayDetail(
     val date: String,
     val items: List<CalendarDayItem>,

@@ -13,10 +13,7 @@ import okhttp3.Response
 import okhttp3.Route
 import javax.inject.Inject
 
-/**
- * 401 을 받은 요청을 저장된 refreshToken 으로 갱신해 자동 재시도하는 OkHttp Authenticator.
- * DI 순환(OkHttpClient → Authenticator → TokenRefresher → AuthApi → Retrofit → OkHttpClient)은 [Lazy] 로 끊는다.
- */
+/** 401 을 받은 요청을 저장된 refreshToken 으로 갱신해 자동 재시도하는 OkHttp Authenticator. */
 class TokenAuthenticator
     @Inject
     constructor(
@@ -36,7 +33,7 @@ class TokenAuthenticator
             synchronized(this) {
                 val failedToken = response.request.header(HEADER_AUTHORIZATION)?.removePrefix(BEARER_PREFIX)
                 val current = tokenRepository.cachedAccessToken()
-                // 실패한 토큰과 캐시가 다르면 다른 스레드가 이미 갱신을 마친 것이다 — 다시 갱신하지 않는다.
+                // 실패한 토큰과 캐시가 다르면 다른 스레드가 이미 갱신을 마친 것이다
                 if (!current.isNullOrBlank() && current != failedToken) {
                     return response.retryWith(current)
                 }
@@ -47,14 +44,13 @@ class TokenAuthenticator
                     try {
                         runBlocking { tokenRefresher.get().refresh(refreshToken) }
                     } catch (e: Exception) {
-                        // 네트워크·5xx 는 세션 만료가 아니다 — 토큰을 지우면 멀쩡한 사용자가 로그아웃된다.
+                        // 네트워크·5xx 는 세션 만료가 아니다
                         observability.w(TAG, e) { "토큰 갱신 일시 실패 — 재시도 포기" }
                         return null
                     }
 
                 if (newToken == null) {
-                    // 저장된 refreshToken 이 바뀌었으면 다른 경로(콜드스타트 AutoLogin 등)가 이미 회전시킨 것이다 —
-                    // 이 요청이 쓴 토큰만 낡았을 뿐 세션은 살아 있으므로 정리하지 않는다.
+                    // 저장된 refreshToken 이 바뀌었으면 다른 경로(콜드스타트 AutoLogin 등)가 이미 회전시킨 것이다
                     val latestAccess = tokenRepository.cachedAccessToken()
                     val latestRefresh = runBlocking { tokenRepository.getRefreshToken() }
                     if (!latestAccess.isNullOrBlank() && latestRefresh != null && latestRefresh != refreshToken) {

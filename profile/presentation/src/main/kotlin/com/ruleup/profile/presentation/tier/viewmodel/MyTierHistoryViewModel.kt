@@ -11,15 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 티어 히스토리 ViewModel. 그래프(월말 스냅샷)와 점수 변동 이력을 **각각** 읽는다.
- *
- * 둘을 한 요청으로 묶지 않는 이유는 명세가 API 를 나눠 뒀기 때문이고, 나눈 이유는 페이징 단위가
- * 다르기 때문이다 — 그래프는 1년치가 한 번에 오고 이력은 50건씩 이어 붙는다.
- *
- * 그래프 조회가 실패해도 이력은 그린다. 하락 사유는 그래프에 표기하지 않는 것이 정책이고
- * (마이페이지 §2-5), 그 제한은 **그래프 한정**으로 축소됐다(2026-09-07) — 이력에는 사유가 있다.
- */
+/** 티어 히스토리 ViewModel. */
 @HiltViewModel
 class MyTierHistoryViewModel
     @Inject
@@ -63,7 +55,7 @@ class MyTierHistoryViewModel
                         nextCursor = event.nextCursor,
                     )
 
-                // 더 읽기 실패는 이미 그려진 목록을 지우지 않는다 — 끝에 닿으면 다시 시도된다.
+                // 더 읽기 실패는 이미 그려진 목록을 지우지 않는다
                 MyTierHistoryReducerEvent.MoreFailed -> state.copy(isLoadingMore = false)
 
                 is MyTierHistoryReducerEvent.Failed ->

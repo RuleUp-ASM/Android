@@ -7,10 +7,7 @@ import com.ruleup.profile.domain.entity.NicknameCheck
 import com.ruleup.profile.domain.entity.Profile
 import com.ruleup.profile.domain.repository.ProfileRepository
 
-/**
- * 테스트용 [ProfileRepository]. 준비하지 않은 메서드는 호출되면 실패한다 —
- * 저장 화면이 의도치 않은 요청을 보내도 조용히 지나가지 않게 하려는 것이다.
- */
+/** 테스트용 [ProfileRepository]. */
 class FakeProfileRepository(
     private val profile: (() -> Profile)? = null,
     private val categories: (() -> CategoryCatalog)? = null,
@@ -19,10 +16,10 @@ class FakeProfileRepository(
     private val uploadImage: ((String) -> String)? = null,
     private val myProfile: (() -> MyProfile)? = null,
 ) : ProfileRepository {
-    /** 어떤 메서드가 불렸는지. "안 보냈다"도 계약이라 호출 자체를 남긴다. */
+    /** 어떤 메서드가 불렸는지. */
     val calls = mutableListOf<String>()
 
-    /** 마지막으로 저장 요청한 값. 바뀐 것만 보내는지 확인할 때 쓴다. */
+    /** 마지막으로 저장 요청한 값. */
     var lastUpdatedNickname: String? = null
         private set
     var lastUpdatedCategories: List<Category>? = null

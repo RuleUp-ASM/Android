@@ -19,7 +19,7 @@ import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 감시자: 초대 생성 (POST /challenges/{id}/watchers/invitations) ----------
+// 감시자: 초대 생성 (POST /challenges/{id}/watchers/invitations)
 @Serializable
 data class KakaoShareCardResponse(
     @SerialName("title")
@@ -66,7 +66,7 @@ internal fun WatcherInvitationResponse.toDomain(): WatcherInvitation =
         kakaoShare = kakaoShare?.toDomainOrNull(),
     )
 
-// ---------- 감시자: 목록 조회 (GET /challenges/{id}/watchers) ----------
+// 감시자: 목록 조회 (GET /challenges/{id}/watchers)
 @Serializable
 data class WatcherResponse(
     @SerialName("watcherId")
@@ -90,15 +90,14 @@ data class WatcherResponse(
     // INVITED 일 때 토큰 만료
     @SerialName("expiresAt")
     val expiresAt: String? = null,
-    // REVOKED +30일 — 그 전에는 같은 사람을 다시 지정할 수 없다
+    // REVOKED +30일
     @SerialName("reinviteAvailableAt")
     val reinviteAvailableAt: String? = null,
 )
 
 internal fun WatcherResponse.toDomain(): Watcher =
     Watcher(
-        // 미수락 초대는 관계가 아직 없어 id 가 비어 온다. 필수로 읽으면 그 한 건 때문에
-        // 목록 전체가 예외로 날아간다(WAT-08).
+        // 미수락 초대는 관계가 아직 없어 id 가 비어 온다.
         watcherId = watcherId,
         type = WatcherType.fromValue(type) ?: WatcherType.USER,
         channel = WatcherChannel.fromValue(channel),
@@ -120,23 +119,14 @@ data class WatcherSlotsResponse(
     val subscribed: Boolean? = null,
 )
 
-/**
- * 감시자 목록 응답.
- *
- * **서버는 목록을 `items` 로 내린다** — 명세(2026-07-25)의 `watchers` 와 다르다(2026-09-07 실서버
- * 확인). 계약이 어느 쪽으로 정리될지 몰라 둘 다 받는다. 한쪽만 읽으면 목록이 통째로 비고,
- * 화면은 "감시자가 없다"고 조용히 거짓말한다.
- *
- * `slots` 도 실제 응답에 없다 — 한도를 모르면 [ChallengeWatchers.limit] 이 null 이 되어 무제한으로
- * 표시된다. 테크 스펙(인원 무제한)과 같은 결과라 그대로 둔다.
- */
+/** 감시자 목록 응답. */
 @Serializable
 data class WatchersResponse(
     @SerialName("challengeId")
     val challengeId: String? = null,
     @SerialName("slots")
     val slots: WatcherSlotsResponse? = null,
-    // 구 계약의 평평한 한도. 서버가 slots 로 옮겼지만 둘 다 받아 둔다
+    // 구 계약의 평평한 한도.
     @SerialName("limit")
     val limit: Int? = null,
     @SerialName("watchers")
@@ -147,23 +137,22 @@ data class WatchersResponse(
 
 internal fun WatchersResponse.toDomain(): ChallengeWatchers =
     ChallengeWatchers(
-        // 구독 중이면 한도가 없다 — freeLimit 이 와도 무제한으로 본다.
+        // 구독 중이면 한도가 없다
         limit = if (slots?.subscribed == true) null else slots?.freeLimit ?: limit,
-        // 한 행이 망가져도 나머지는 세운다 — 목록 전체를 잃는 것보다 한 줄이 비는 편이 낫다.
+        // 한 행이 망가져도 나머지는 세운다
         watchers = (watchers ?: items).orEmpty().mapNotNull { runCatching { it.toDomain() }.getOrNull() },
     )
 
-// 초대 링크 진입(GET /watchers/invitations/{token})과 수락은 웹 동의 페이지가 담당한다 — 앱 DTO 없음.
+// 초대 링크 진입(GET /watchers/invitations/{token})과 수락은 웹 동의 페이지가 담당한다
 
-// ---------- 내가 감시자로 등록된 관계 (GET /users/me/watching — 조회 전용) ----------
+// 내가 감시자로 등록된 관계 (GET /users/me/watching — 조회 전용)
 @Serializable
 data class WatchingItemResponse(
     @SerialName("watcherId")
     val watcherId: String? = null,
     @SerialName("challengeTitle")
     val challengeTitle: String? = null,
-    // 서버가 내리는 현행 이름. 구 `ownerNickname` 은 전환기 대비로 함께 받는다 — 한쪽만 읽어
-    // 이름이 통째로 비어 있었다(WAT-12).
+    // 서버가 내리는 현행 이름.
     @SerialName("targetNickname")
     val targetNickname: String? = null,
     @SerialName("ownerNickname")
@@ -195,13 +184,13 @@ internal fun WatchingItemResponse.toDomain(): Watching? {
         challengeTitle = challengeTitle.orEmpty(),
         ownerNickname = (targetNickname ?: ownerNickname).orEmpty(),
         status = WatcherStatus.fromValue(status),
-        // 모르면 켜져 있다고 본다 — 꺼진 것처럼 그렸다가 알림이 오면 설정이 거짓말한 게 된다.
+        // 모르면 켜져 있다고 본다
         pushEnabled = pushEnabled ?: true,
         consentAt = acceptedAt ?: consentAt,
     )
 }
 
-// ---------- 초대 수락 (POST /watchers/invitations/{token}/accept) ----------
+// 초대 수락 (POST /watchers/invitations/{token}/accept)
 @Serializable
 data class WatcherAcceptResponse(
     @SerialName("watcherId")
@@ -221,12 +210,7 @@ internal fun WatcherAcceptResponse.toDomain(): WatcherAcceptance =
         channel = WatcherChannel.fromValue(channel),
     )
 
-/**
- * 수락 실패를 화면이 분기할 수 있는 타입으로 옮긴다.
- *
- * 만료는 "다시 초대해 달라고 하기", 중복은 "이미 됐다", 본인 수락은 "안 되는 일"로 다음 행동이
- * 전부 다르다 — 한 토스트로 접으면 사용자가 무엇을 해야 할지 알 수 없다.
- */
+/** 수락 실패를 화면이 분기할 수 있는 타입으로 옮긴다. */
 internal fun ApiException.toAcceptFailure(): Throwable =
     when (code) {
         "INVITATION_EXPIRED" -> InvitationExpiredException()

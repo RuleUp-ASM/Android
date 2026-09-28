@@ -5,14 +5,14 @@ import com.ruleup.domain.message.MessageEffect
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/** 사용자에게 알린 내용을 모아두는 [MessageHelper]. 무엇을 알렸는지·안 알렸는지를 둘 다 본다. */
+/** 사용자에게 알린 내용을 모아두는 [MessageHelper]. */
 class RecordingMessageHelper : MessageHelper {
     val toasts = mutableListOf<String>()
     val snackBarTexts = mutableListOf<String>()
     val snackBarResIds = mutableListOf<Int>()
     val dialogDescriptions = mutableListOf<String>()
 
-    /** 경로에 상관없이 사용자가 본 문구 전부. "무엇으로 알렸는지"가 계약이 아닐 때 쓴다. */
+    /** 경로에 상관없이 사용자가 본 문구 전부. */
     val allMessages: List<String>
         get() = toasts + snackBarTexts + dialogDescriptions
 

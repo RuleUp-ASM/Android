@@ -28,12 +28,7 @@ import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
 import com.ruleup.ui.helper.LocalNavigationHelper
 
-/**
- * 04 · 성별.
- *
- * **필수 입력이다** (회원 정책 §2). 고르기 전까지 다음 버튼을 잠근다 — 건너뛰기를 열어 두면
- * "안 고름"을 저장할 값이 없어 결국 없는 성별을 지어내게 된다.
- */
+/** 04 · 성별. */
 @Composable
 fun GenderContent(
     onIntent: (OnboardingIntent) -> Unit,

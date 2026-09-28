@@ -10,15 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 기록기 회귀 테스트.
- *
- * 기록기는 아무것도 돌려주지 않으므로 "언제 나갔는가" 를 밖에서 알 방법이 없다. 그래서 테스트
- * 스케줄러를 물리고 [advanceUntilIdle] 로 큐를 비운 다음에 본다 — 실제 시간을 두고 기다리면 느린
- * 기계에서 아직 처리되지 않은 상태를 결과로 읽는다.
- *
- * 가짜 전송기는 매번 [yield] 해, 전송이 왕복하는 사이에 다음 건이 끼어들 틈을 일부러 만든다.
- */
+/** 기록기 회귀 테스트. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BizLoggerImplTest {
     @Test
@@ -37,7 +29,7 @@ class BizLoggerImplTest {
             assertEquals("u1", log.userId)
         }
 
-    /** 전송이 중간에 멈추므로, 순서를 묶어 두지 않으면 나중 건이 앞질러 나간다. */
+    /** 이벤트 전송 순서 보장. */
     @Test
     fun `여러 건을 기록하면 일어난 순서대로 나간다`() =
         runTest {
@@ -100,7 +92,7 @@ class BizLoggerImplTest {
             logger.init()
 
             listOf("a", "b", "c").forEach { logger.record(event(it)) }
-            // 셋 다 아직 전송 중이다. 여기서 스코프를 먼저 접으면 남은 것이 취소된다.
+            // 셋 다 아직 전송 중이다.
             logger.destroy()
             advanceUntilIdle()
 
@@ -157,7 +149,7 @@ class BizLoggerImplTest {
             )
         }
 
-    /** 화면·사용자 출처가 던져도 기록은 계속돼야 한다 — 로그가 앱을 멈추게 하는 일은 없어야 한다. */
+    /** 컨텍스트 조회 실패 격리. */
     @Test
     fun `화면 출처가 던져도 화면 없이 기록한다`() =
         runTest {
@@ -206,18 +198,18 @@ class BizLoggerImplTest {
     private fun event(name: String) = BizEvent(name, bizAttributes { put("k", "v") })
 }
 
-/** 손으로 감는 시계. 흐르게 하지 않으면 멈춰 있다. */
+/** 손으로 감는 시계. */
 private class ManualClock(
     var now: Long = 0L,
 ) : BizLogClock {
     override fun nowMillis(): Long = now
 }
 
-/** 매번 한 번 양보해, 전송이 왕복하는 사이에 다음 건이 끼어들 틈을 만든다. */
+/** 전송 도중 양보하는 테스트 대역. */
 private class RecordingShooter : BizLogShooter {
     private val _received = mutableListOf<BizLog>()
 
-    /** [advanceUntilIdle] 로 큐를 비운 뒤에 본다 — 그 시점에는 더 들어올 것이 없다. */
+    /** 전송 큐를 비운 뒤 조회. */
     val received: List<BizLog> get() = _received
     var failing = false
 

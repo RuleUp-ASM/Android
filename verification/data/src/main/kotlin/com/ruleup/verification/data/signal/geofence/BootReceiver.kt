@@ -10,10 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 재부팅 후 지오펜스 재등록(명세 §2.3 휘발 대응). OS 등록은 부팅 시 소멸하므로 로컬에 보존한
- * 목표(geofence_target)를 읽어 전부 재등록한다.
- */
+/** 재부팅 후 지오펜스 재등록. */
 @AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
     @Inject
@@ -23,7 +20,7 @@ class BootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent,
     ) {
-        // LOCKED_BOOT_COMPLETED 는 받지 않는다 — DB 가 자격증명 암호화 저장소라 잠금해제 전엔 못 연다.
+        // LOCKED_BOOT_COMPLETED 는 받지 않는다
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
 
         val pending = goAsync()

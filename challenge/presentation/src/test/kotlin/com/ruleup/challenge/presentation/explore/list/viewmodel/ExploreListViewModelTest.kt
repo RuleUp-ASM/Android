@@ -25,11 +25,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 둘러보기 목록. 이 화면은 서버가 조건을 거절하면 **사용자에게 묻지 않고 스스로 조건을 되돌려**
- * 다시 조회한다 — 되돌릴 곳이 남았는지가 재시도와 실패를 가른다. 그래서 "몇 번, 어떤 조건으로
- * 나갔는가"가 상태만큼이나 계약이다.
- */
+/** 둘러보기 목록. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExploreListViewModelTest {
     @BeforeTest
@@ -57,7 +53,7 @@ class ExploreListViewModelTest {
     @Test
     fun `서버가 정렬을 거절하면 기본 정렬로 되돌려 다시 묻는다`() =
         runTest {
-            // 사용자에게 되묻지 않고 스스로 고친다 — 화면이 빈 채로 멈추는 게 더 나쁘다.
+            // 사용자에게 되묻지 않고 스스로 고친다
             var first = true
             val repo =
                 FakeExploreRepository(

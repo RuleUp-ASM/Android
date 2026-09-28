@@ -30,7 +30,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** DTO 직렬화·매핑 라운드트립. 서버 응답의 미인식·누락 필드가 안전한 값으로 떨어지는지까지 본다. */
+/** DTO 직렬화·매핑 라운드트립. */
 class VerificationDtoSerializationTest {
     private val json =
         Json {
@@ -38,7 +38,7 @@ class VerificationDtoSerializationTest {
             explicitNulls = false
         }
 
-    /** 테스트용 envelope 메타데이터(§0.1). 신호 배치와 합쳐 envelope 와이어로 직렬화한다. */
+    /** 테스트용 envelope 메타데이터. */
     private fun metadata(gaps: List<SignalGap> = emptyList()): EnvelopeMetadata =
         EnvelopeMetadata(
             deviceId = "d-1",
@@ -80,14 +80,14 @@ class VerificationDtoSerializationTest {
         assertEquals("boot-1", decoded.bootSessionId)
         assertEquals("Asia/Seoul", decoded.timeZone)
         assertEquals(listOf("c-1"), decoded.activeChallengeIds)
-        // 빠지면 서버가 모든 sync 를 400 INVALID_SIGNAL_PAYLOAD 로 반려한다.
+
         assertEquals(1_719_598_200_000L, decoded.coveredFrom)
         assertEquals(1_719_600_000_000L, decoded.coveredUntil)
         assertEquals("GRANTED", decoded.permissions.location)
         assertEquals("DENIED", decoded.permissions.backgroundLocation)
         assertEquals("DENIED", decoded.permissions.healthConnect.steps)
         assertEquals(false, decoded.network.vpnActive)
-        // token 없으면 integrity 객체 통째로 생략(explicitNulls=false).
+
         assertTrue(!encoded.contains("\"integrity\""))
         val g = decoded.gaps.single()
         assertEquals("HEALTH", g.signalType)
@@ -127,11 +127,11 @@ class VerificationDtoSerializationTest {
         val event = assertNotNull(signal.events).single()
         assertEquals("member-1", event.anchorId)
         assertEquals("DWELL", event.transition)
-        // 시각은 전부 epoch millis 다(전송 스펙 설계 원칙 ①).
+        // 시각은 전부 epoch millis 다.
         assertEquals(1_719_600_000_000L, event.observedAt)
         assertEquals(987_654_321L, event.observedElapsedMillis)
         assertEquals(false, event.isMock)
-        // 좌표는 계약에 없다 — 전이 이벤트로 위치가 새어 나가면 안 된다.
+        // 좌표는 계약에 없다
         assertTrue(!encoded.contains("\"lat\""))
         assertTrue(!encoded.contains("\"lng\""))
     }
@@ -158,7 +158,7 @@ class VerificationDtoSerializationTest {
         assertEquals(1_719_600_000_000L, signal.firstUnlock)
         assertEquals(1_719_599_000_000L, signal.firstScreenOn)
         assertEquals(true, signal.deviceSecure)
-        // 기상 판정은 "첫 잠금해제가 목표 시각 안이었나" 하나만 묻는다 — raw 시퀀스를 실어 보내지 않는다.
+
         assertTrue(!encoded.contains("screenEvents"))
     }
 
@@ -180,7 +180,6 @@ class VerificationDtoSerializationTest {
         val encoded = json.encodeToString(metadata().toRequest(batch))
         val signal = json.decodeFromString<SyncEnvelopeRequest>(encoded).signals.single()
 
-        // deviceSecure=false 는 잠금을 안 건 기기라는 뜻 — 서버가 폴백을 쓸지 가르는 입력이라 함께 간다.
         assertEquals(null, signal.firstUnlock)
         assertEquals(false, signal.deviceSecure)
     }
@@ -220,7 +219,7 @@ class VerificationDtoSerializationTest {
         assertEquals("hc-1", reading.recordId)
         assertEquals(5.2, reading.value)
         assertEquals(1_699_999_000_000L, reading.startTime)
-        // 신뢰 게이트 입력은 필수 동봉 — 값만 보내면 서버가 거부한다.
+        // 신뢰 게이트 입력은 필수 동봉
         assertEquals("AUTO", reading.recordingMethod)
         assertEquals("com.sec.android.app.shealth", reading.originPackage)
         // 보내지 않기로 한 값들이 새어 나가지 않는다.
@@ -289,7 +288,7 @@ class VerificationDtoSerializationTest {
             )
 
         val encoded = json.encodeToString(metadata().toRequest(batch))
-        // 0 으로 접으면 "한숨도 안 잤다"가 된다 — 필드를 통째로 빼서 서버가 durationMillis 로 대체하게 둔다.
+
         assertTrue(!encoded.contains("sleepMillis"))
     }
 
@@ -315,7 +314,7 @@ class VerificationDtoSerializationTest {
         val result = json.decodeFromString<SyncResponse>(payload).toDomain()
 
         assertEquals(1800, result.flushIntervalSec)
-        // 상한에 임의의 기본값을 박으면 서버가 낮춰도 클라가 그 사실을 모른 채 계속 초과 전송한다.
+
         assertNull(result.maxPayloadBytes)
         assertTrue(result.updatedChallenges.isEmpty())
         assertTrue(result.ignoredSignalTypes.isEmpty())
@@ -346,7 +345,6 @@ class VerificationDtoSerializationTest {
 
     @Test
     fun `실패 예정인 오늘 결과는 사유·근거·이의 창을 함께 읽는다`() {
-        // 이의 창이 실패 예정이라, 여기서 사유와 근거를 버리면 사용자가 신청할지 판단할 수 없다.
         val payload =
             """
             {"date":"2026-07-25","status":"FAIL_EXPECTED","pendingReason":null,
@@ -408,7 +406,7 @@ class VerificationDtoSerializationTest {
 
         val places = json.decodeFromString<KakaoKeywordResponse>(payload).toDomain()
 
-        // 좌표(x=경도, y=위도) 없는 항목은 앵커로 못 쓰므로 제외(명세 §5.2).
+        // 좌표(x=경도, y=위도) 없는 항목은 앵커로 못 쓰므로 제외.
         assertEquals(1, places.size)
         assertEquals("스포애니 강남", places.single().name)
         assertEquals(37.5, places.single().lat)

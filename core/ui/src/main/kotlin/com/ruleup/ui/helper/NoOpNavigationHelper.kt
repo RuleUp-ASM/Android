@@ -7,10 +7,7 @@ import com.ruleup.domain.navigation.Page
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/**
- * `@Preview` 전용 [NavigationHelper] — 실제 구현체는 `:app` 에 있어 feature 에서 참조할 수 없다.
- * 프리뷰에서 버튼을 눌러도 아무 일이 없는 건 의도된 동작이다.
- */
+/** `@Preview` 전용 [NavigationHelper] */
 object NoOpNavigationHelper : NavigationHelper {
     override val navigationFlow: Flow<NavSignal> = emptyFlow()
 

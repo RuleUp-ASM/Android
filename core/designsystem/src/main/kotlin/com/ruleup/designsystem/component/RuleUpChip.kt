@@ -16,10 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/**
- * [StatusChip] 의 색조. Figma 가 정의한 네 가지가 전부다.
- * 배경·글자색 조합을 여기서 닫아 둔다 — 화면이 각자 고르면 성공 배경에 위험 글자색이 나온다.
- */
+/** [StatusChip] 의 색조. */
 enum class StatusChipTone {
     Success,
     Danger,
@@ -27,7 +24,7 @@ enum class StatusChipTone {
     Info,
 }
 
-/** 상태 뱃지. Figma `StatusChip/…`(node `1177:165`). */
+/** 상태 뱃지. */
 @Composable
 fun StatusChip(
     text: String,
@@ -62,10 +59,7 @@ fun StatusChip(
     )
 }
 
-/**
- * 필터 칩. Figma `FilterChip/Selected`·`FilterChip/Default`(node `1177:174`).
- * 선택 상태에 테두리·굵기까지 바꾸는 이유 — 색만으로 구분하면 색각 이상 사용자가 못 읽는다.
- */
+/** 필터 칩. */
 @Composable
 fun RuleUpFilterChip(
     text: String,

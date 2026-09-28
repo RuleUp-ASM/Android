@@ -4,10 +4,7 @@ import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
-/**
- * 워크쓰루 3장. 순서·개수와 **문구까지** 여기가 단일 소스다 — 화면이 장마다 문구를 들고 있으면
- * 장을 옮길 때 점 표시와 내용이 어긋난다(Figma `1460:2`·`1461:2`·`1462:2`).
- */
+/** 워크쓰루 3장. */
 enum class WalkthroughPageIndex(
     val eyebrow: String,
     val title: String,
@@ -36,10 +33,10 @@ enum class WalkthroughPageIndex(
 }
 
 sealed interface WalkthroughIntent : MviIntent {
-    /** CTA. 마지막 장이면 끝내고 로그인으로 간다. */
+    /** CTA. */
     data object Next : WalkthroughIntent
 
-    /** 상단 건너뛰기. 마지막 장에는 없다 — 거기서는 CTA 가 곧 끝내기다. */
+    /** 상단 건너뛰기. */
     data object Skip : WalkthroughIntent
 }
 

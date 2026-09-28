@@ -6,7 +6,7 @@ import com.ruleup.report.domain.entity.ReportResult
 import com.ruleup.report.domain.entity.ReportTarget
 import com.ruleup.report.domain.repository.ReportRepository
 
-/** 검증 대상만 답한다. 나머지는 NotImplementedError — 의도치 않은 호출이 조용히 지나가지 않는다. */
+/** 테스트 대상 API 대역. */
 class FakeReportRepository(
     private val result: ReportResult = ReportResult("r-1", HiddenEffect.CHALLENGE_HIDDEN),
     private val error: Throwable? = null,

@@ -19,8 +19,7 @@ interface MyPageApi {
     @GET("v1/me/home")
     suspend fun getHome(): BaseResponse<MyHomeResponse>
 
-    // 내 챌린지 목록 — 그룹 랭킹 진입용 최소 필드만 역직렬화한다.
-    // 랭킹은 진행 중인 방만 대상이라 IN_PROGRESS 로 고정한다(구 scope=ACTIVE 폐기).
+    // 내 챌린지 목록
     @GET("v1/challenges")
     suspend fun getMyChallenges(
         @Query("filter") filter: String = "IN_PROGRESS",
@@ -30,13 +29,13 @@ interface MyPageApi {
     @GET("v1/me/tier")
     suspend fun getTier(): BaseResponse<MyTierResponse>
 
-    // 티어 히스토리 그래프 원천 — months 는 1~12, 생략 시 서버 기본 12(보관 자체가 1년)
+    // 티어 히스토리 그래프 원천
     @GET("v1/me/tier/history")
     suspend fun getTierHistory(
         @Query("months") months: Int? = null,
     ): BaseResponse<TierHistoryResponse>
 
-    // 점수 변동 이력 — size 는 서버 고정 50이라 보내지 않는다. cursor 는 불투명 문자열
+    // 점수 변동 이력
     @GET("v1/me/tier/changes")
     suspend fun getScoreChanges(
         @Query("cursor") cursor: String? = null,
@@ -54,7 +53,7 @@ interface MyPageApi {
         @Path("date") date: String,
     ): BaseResponse<CalendarDayDetailResponse>
 
-    // 통계 리포트 — 정책이 지표 5종을 고정해 기간 파라미터가 없다(구 period 폐기)
+    // 통계 리포트
     @GET("v1/me/stats")
     suspend fun getStats(): BaseResponse<StatsResponse>
 

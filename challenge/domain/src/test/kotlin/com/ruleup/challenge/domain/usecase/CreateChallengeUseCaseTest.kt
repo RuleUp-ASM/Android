@@ -28,7 +28,6 @@ class CreateChallengeUseCaseTest {
     @Test
     fun `호출자가 준 idempotency key 를 그대로 전달한다`() =
         runBlocking {
-            // 키를 유스케이스가 새로 만들면 재시도마다 값이 바뀌어 중복 생성 방지가 무의미해진다.
             val repo = FakeChallengeRepository(created = createdChallenge())
 
             CreateChallengeUseCase(repo, RecordingSetupNotifier())(command(), "key-fixed")
@@ -39,7 +38,6 @@ class CreateChallengeUseCaseTest {
     @Test
     fun `셋업 알림에 인증 스냅샷을 그대로 넘긴다`() =
         runBlocking {
-            // 무엇을 등록해야 하는지는 method 가 결정한다 — 알림이 장소·앱을 가르려면 이 값이 필요하다.
             val snapshot =
                 verification(
                     type = VerificationType.AUTO,

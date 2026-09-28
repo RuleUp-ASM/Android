@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/** 닉네임 안내 한 줄. 형식 검사와 서버 확인을 따로 그리면 같은 안내가 두 번 뜬다. */
+/** 닉네임 안내 한 줄. */
 class NicknameFeedbackTest {
     @Test
     fun `입력이 없으면 안내를 띄우지 않는다`() {

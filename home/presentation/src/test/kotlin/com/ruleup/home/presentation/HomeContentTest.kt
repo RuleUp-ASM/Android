@@ -20,12 +20,7 @@ import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
 import kotlin.test.assertTrue
 
-/**
- * 홈. 첫 화면이라 **빈 상태를 어떻게 다루느냐가 가장 비싸다** — 아직 불러오는 중인데 "없어요"를
- * 띄우면 사용자는 챌린지가 사라진 줄 알고, 진짜 빈 상태에서 안내가 없으면 뭘 해야 할지 모른다.
- *
- * 기대 문구 출처: Figma `1134:2033`「홈 · 빈 상태」.
- */
+/** 홈. */
 @RunWith(RobolectricTestRunner::class)
 class HomeContentTest {
     @get:Rule
@@ -33,7 +28,6 @@ class HomeContentTest {
 
     @Test
     fun `챌린지가 없으면 무엇을 할 수 있는지 두 갈래로 안내한다`() {
-        // 둘러보기와 직접 만들기 둘 다 줘야 한다 — 하나만 있으면 다른 쪽을 원하는 사용자가 막힌다.
         render(HomeState(isLoading = false, challenges = emptyList(), filter = HomeFilter.ACTIVE))
 
         compose.onNodeWithText("첫 습관을 시작해 볼까요?").assertExists()

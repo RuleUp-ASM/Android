@@ -4,10 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/**
- * 통계 응답 매핑. 여기서 없는 값을 0 으로 접으면 **아무것도 안 한 사람과 전부 실패한 사람이
- * 같은 화면**이 된다.
- */
+/** 통계 응답 매핑. */
 class StatsResponseMappingTest {
     @Test
     fun `성공률을 안 주면 0퍼센트로 접지 않는다`() {
@@ -27,7 +24,6 @@ class StatsResponseMappingTest {
 
     @Test
     fun `받은 지표 4종은 그대로 전한다`() {
-        // 구 cycles12w · weeklyScoreDelta 는 응답 계약에서 빠졌다(2026-09-15).
         val stats =
             StatsResponse(
                 successRate = 0.87,

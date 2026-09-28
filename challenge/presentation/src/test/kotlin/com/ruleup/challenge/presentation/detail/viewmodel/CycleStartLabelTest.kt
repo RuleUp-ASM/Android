@@ -3,7 +3,7 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** 주 중간 참여 안내 토스트. 문자열 템플릿이 깨지면 "$it부터 인증이 집계돼요"가 그대로 노출된 적이 있다. */
+/** 주 중간 참여 안내 토스트. */
 class CycleStartLabelTest {
     @Test
     fun `판정 시작일은 월과 일로 읽히게 바꾼다`() {

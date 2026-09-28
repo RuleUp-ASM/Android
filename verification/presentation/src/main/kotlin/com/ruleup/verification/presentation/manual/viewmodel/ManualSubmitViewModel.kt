@@ -14,15 +14,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * 수동 인증 제출 ViewModel (명세 POST/DELETE `/challenges/{id}/verifications`).
- *
- * **수동 방에서만 열린다.** 자동 방에 대고 제출하면 서버가 `NOT_MANUAL_CHALLENGE`(409)로 막으므로,
- * 진입점을 두지 않는 것이 전제다.
- *
- * 제목은 진행률에서, 오늘 상태는 today 조회에서 온다. 둘을 함께 던지되 **제목이 실패해도 화면은
- * 세운다** — 체크에 필요한 것은 challengeId 하나뿐인데 제목 때문에 오늘 인증을 막을 이유가 없다.
- */
+/** 수동 인증 제출 ViewModel. */
 @HiltViewModel
 class ManualSubmitViewModel
     @Inject
@@ -89,8 +81,7 @@ class ManualSubmitViewModel
                         isSubmitting = false,
                         verificationId = null,
                         status = null,
-                        // 연속 일수는 "오늘 인증을 포함한" 값이다. 해제하면 근거가 사라지는데
-                        // 남겨 두면 '아직 인증 전'인 화면에 "연속 1일" 이 같이 떠 있는다(MAN-10 · VER-15).
+                        // 오늘 인증을 포함한 연속 일수.
                         streakAfter = null,
                         errorMessage = null,
                     )
@@ -101,7 +92,7 @@ class ManualSubmitViewModel
             silent: Boolean = false,
         ) {
             if (challengeId.isBlank()) {
-                // 인자 없이 열린 화면이다. 서버를 불러 봐야 어느 챌린지인지 말할 수 없다.
+                // 챌린지 식별자 누락.
                 dispatch(ManualSubmitReducerEvent.Failed("어떤 챌린지인지 알 수 없어요"))
                 return
             }
@@ -110,7 +101,7 @@ class ManualSubmitViewModel
                 val (today, title) =
                     coroutineScope {
                         val t = async { runCatching { verificationRepository.getTodayResult(challengeId) } }
-                        // 제목만 쓰려고 진행률을 부른다. 실패는 흡수한다 — 제목이 없어도 체크는 된다.
+                        // 챌린지 제목 조회.
                         val p =
                             async {
                                 runCatching { verificationRepository.getProgress() }
@@ -149,7 +140,7 @@ class ManualSubmitViewModel
                 runCatching {
                     verificationRepository.submitManual(
                         challengeId = state.challengeId,
-                        // 오늘로 서버가 잡게 둔다 — 기기 시계를 믿고 날짜를 보내면 자정 근처에서 어긋난다.
+                        // 인증일은 서버 기준.
                         note = state.note.trim().takeIf { it.isNotEmpty() },
                     )
                 }.onSuccess { result ->
@@ -177,8 +168,7 @@ class ManualSubmitViewModel
                 runCatching { verificationRepository.cancelManual(verificationId) }
                     .onSuccess {
                         dispatch(ManualSubmitReducerEvent.Unchecked)
-                        // 해제로 연속 일수의 기준이 바뀐다. 얼마로 되돌아가는지는 서버가 정하므로
-                        // 지우기만 하지 않고 오늘 상태를 다시 받는다.
+                        // 인증 취소 후 연속 일수 갱신.
                         load(state.challengeId, silent = true)
                     }.onFailure {
                         dispatch(ManualSubmitReducerEvent.Failed(it.userMessage("체크를 해제하지 못했어요")))
@@ -188,12 +178,7 @@ class ManualSubmitViewModel
         }
     }
 
-/**
- * 실패를 사용자 문구로 옮긴다.
- *
- * 이미 인증한 날은 **오류가 아니라 안내**다 — 화면은 그 뒤 서버 상태를 다시 받아 체크된 모습으로
- * 바뀐다. 오류처럼 말하면 사용자가 인증이 안 된 줄 알고 다시 누른다.
- */
+/** 인증 실패 안내. */
 private fun Throwable.userMessage(fallback: String): String =
     when (this) {
         is AlreadyVerifiedException -> "오늘은 이미 체크했어요"

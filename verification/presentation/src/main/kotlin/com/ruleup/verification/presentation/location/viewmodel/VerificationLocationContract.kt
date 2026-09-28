@@ -9,15 +9,12 @@ import com.ruleup.verification.domain.entity.Place
 import com.ruleup.verification.domain.entity.SetupMissing
 
 sealed interface VerificationLocationIntent : MviIntent {
-    /**
-     * 화면 진입 → 앵커 조회(명세: GET /my-location)로 등록 여부 확인. 이미 등록돼 있으면 재등록하지 않고
-     * 종료하고, 미등록일 때만 지도 등록 UI 를 노출한다.
-     */
+    /** 화면 진입 → 앵커 조회로 등록 여부 확인. */
     data class Init(
         val challengeId: String,
     ) : VerificationLocationIntent
 
-    /** 지도 탭 → 역지오코딩 후 확인 대기 핀(명세 §5.3). 핀은 즉시 뜨고 주소는 뒤따라 채워진다. */
+    /** 지도 탭 → 역지오코딩 후 확인 대기 핀. */
     data class TapMap(
         val lat: Double,
         val lng: Double,
@@ -28,17 +25,14 @@ sealed interface VerificationLocationIntent : MviIntent {
         val place: Place,
     ) : VerificationLocationIntent
 
-    /** 하단 카드 [이 위치 추가] → 확인 대기 핀을 앵커 목록에 담는다(최대 3, 인증 정책 §1.1). */
+    /** 하단 카드 [이 위치 추가] → 확인 대기 핀을 앵커 목록에 담는다. */
     data object AddAnchor : VerificationLocationIntent
 
     data class RemoveAnchor(
         val index: Int,
     ) : VerificationLocationIntent
 
-    /**
-     * [제출] → 누적 앵커를 저장한다. **최초 등록이면 `POST /setup`, 이미 등록됐으면 `PUT /my-location`**
-     * — 같은 화면이지만 다른 계약이다. 최초 설정은 월 변경 횟수를 소진하지 않고, 교체는 소진한다.
-     */
+    /** [제출] → 누적 앵커를 저장한다. */
     data class Submit(
         val challengeId: String,
         val dwellMinutes: Int,
@@ -48,7 +42,7 @@ sealed interface VerificationLocationIntent : MviIntent {
     /** 하단 카드 [취소] → 핀/카드 제거. */
     data object CancelSelection : VerificationLocationIntent
 
-    /** 장소 검색(명세 §5.2·§11.7). 키워드(+중심·반경)로 앵커 후보를 받아온다. */
+    /** 장소 검색. */
     data class Search(
         val query: String,
         val lat: Double? = null,
@@ -63,13 +57,13 @@ sealed interface VerificationLocationIntent : MviIntent {
     data object Back : VerificationLocationIntent
 }
 
-/** 확정 대기 중인 선택 지점(탭/검색으로 찍은 핀). 하단 확인 시트에 표시된다. */
+/** 확정 대기 중인 선택 지점(탭/검색으로 찍은 핀). */
 data class PendingSelection(
     val lat: Double,
     val lng: Double,
     val name: String,
     val address: String?,
-    // 카카오 로컬 카테고리(검색 결과만, 예: "스포츠,레저 > 헬스장"). 시트의 카테고리 칩에 마지막 단계만 표시.
+    // 카카오 로컬 카테고리(검색 결과만, 예: "스포츠,레저 > 헬스장").
     val category: String? = null,
 )
 
@@ -83,16 +77,15 @@ data class VerificationLocationState(
     val isResolving: Boolean = false,
     val places: List<Place> = emptyList(),
     val pending: PendingSelection? = null,
-    // 제출 전까지 누적한 앵커(최대 3, 인증 정책 §1.1). label = 핀 이름.
+    // 제출 전까지 누적한 앵커.
     val anchors: List<LocationPin> = emptyList(),
-    // 이미 등록된 앵커를 편집 중인가. true 면 저장이 PUT(교체)이고 월 1회를 소진한다.
+    // 이미 등록된 앵커를 편집 중인가.
     val isEditing: Boolean = false,
-    // 서버가 정한 인증 반경(m). 지도 원·목록 문구가 이 값을 쓴다 — 화면이 임의 값을 그리면
-    // 실제 판정 범위와 어긋난다. 아직 못 받았으면 null.
+    // 인증 반경(m).
     val serverRadiusM: Float? = null,
-    // 이번 달 앵커 변경이 가능한지(월 1회). 편집 진입일 때만 의미가 있다.
+    // 이번 달 앵커 변경이 가능한지(월 1회).
     val changeAvailable: Boolean = true,
-    // 다음 변경 가능 시각(ISO). 소진했을 때만 채워진다.
+    // 다음 변경 가능 시각(ISO).
     val nextChangeAvailableAt: String? = null,
     // 직전 제출이 PENDING_SETUP 으로 떨어졌을 때의 미충족 항목(안내용).
     val missing: List<SetupMissing> = emptyList(),
@@ -124,7 +117,7 @@ sealed interface VerificationLocationReducerEvent : ReducerEvent {
         val places: List<Place>,
     ) : VerificationLocationReducerEvent
 
-    /** 확인 대기 핀 설정/해제. [resolving]=true 면 주소를 채우는 중(탭 직후). */
+    /** 확인 대기 핀 설정/해제. */
     data class PendingSet(
         val pending: PendingSelection?,
         val resolving: Boolean,

@@ -6,7 +6,7 @@ import com.ruleup.notification.domain.entity.NotificationPage
 import com.ruleup.notification.domain.entity.NotificationSettings
 import com.ruleup.notification.domain.entity.NotificationType
 
-/** 알림 한 줄. 테스트 본문에는 그 테스트가 신경 쓰는 값만 넘긴다. */
+/** 알림 한 줄. */
 internal fun notification(
     id: String = "n1",
     type: NotificationType? = NotificationType.VERIFICATION_RESULT,

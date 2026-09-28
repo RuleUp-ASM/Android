@@ -6,15 +6,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 랭킹 응답 매핑. **미등재(10회 미만)와 꼴찌는 다르다** — 서버가 `rank`·`successRate` 를
- * null 로 내려주는 것이 "아직 자격이 안 됐다"는 뜻인데, 0 으로 접으면 사용자는 자기가
- * 못한 것으로 읽는다.
- */
+/** 랭킹 응답 매핑. */
 class RankingMappingTest {
     @Test
     fun `미등재 순위를 0 으로 접지 않는다`() {
-        // 0 등은 존재하지 않는 순위다 — 화면이 "-" 로 그릴 수 있게 null 을 지킨다.
         val ranking = RankingResponse(me = MyRankResponse(rank = null, successRate = null)).toDomain()
 
         assertNull(ranking.me.rank)
@@ -23,7 +18,6 @@ class RankingMappingTest {
 
     @Test
     fun `등재 여부를 안 주면 순위 유무로 판정한다`() {
-        // 둘은 같은 사실의 다른 표현이다 — 서버가 하나만 줘도 화면은 흔들리지 않아야 한다.
         assertTrue(RankingResponse(me = MyRankResponse(rank = 3, ranked = null)).toDomain().me.ranked)
         assertFalse(RankingResponse(me = MyRankResponse(rank = null, ranked = null)).toDomain().me.ranked)
     }
@@ -37,7 +31,7 @@ class RankingMappingTest {
 
     @Test
     fun `내 순위 정보가 통째로 없어도 화면을 못 그리게 하지 않는다`() {
-        // 남의 순위는 보여 줄 수 있다 — 내 정보가 없다고 랭킹 전체를 막으면 과하다.
+        // 남의 순위는 보여 줄 수 있다
         val ranking = RankingResponse(me = null, items = emptyList()).toDomain()
 
         assertNull(ranking.me.rank)

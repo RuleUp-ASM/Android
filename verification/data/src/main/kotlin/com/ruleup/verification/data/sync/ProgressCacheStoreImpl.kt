@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-/**
- * sync 응답 진행률 캐시(Room). 홈 관찰자가 [observe] 로 즉시 반영(명세 §3.3·§6.1).
- */
+/** sync 응답 진행률 캐시(Room). */
 class ProgressCacheStoreImpl
     @Inject
     constructor(

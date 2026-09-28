@@ -22,13 +22,11 @@ class AnchorSetTest {
 
     @Test
     fun `기준 장소는 최대 3개다`() {
-        // 인증 정책 §1.1 — 명세도 4개째부터 ANCHOR_LIMIT_EXCEEDED 로 막는다.
         assertEquals(3, SetupAnchors.MAX_COUNT)
     }
 
     @Test
     fun `앵커 없이도 만들 수 있다`() {
-        // 앱 전용 셋업은 앵커 없이 제출하고 서버가 location 을 생략한다(명세 setup).
         assertTrue(AnchorSet.of(emptyList()).isEmpty)
         assertTrue(AnchorSet.EMPTY.isEmpty)
     }

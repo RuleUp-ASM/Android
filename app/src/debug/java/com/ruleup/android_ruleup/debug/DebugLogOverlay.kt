@@ -52,22 +52,7 @@ internal interface DiagnosticsEntryPoint {
     fun diagnostics(): ObservabilityDiagnostics
 }
 
-/**
- * 디버그 빌드 전용 로그 오버레이.
- *
- * ## 칩은 표시 필터다
- * 채널 칩을 누르면 **그 채널만 보인다.** 게이트를 건드리지 않으므로 이벤트는 계속 수집되고
- * 다른 싱크로도 그대로 나간다 — 잠깐 시야를 좁히는 용도다. 상태가 로컬이라 **탭 즉시** 반영된다.
- * (게이트 설정을 바꾸면 저장·비동기 반영이라 새 로그가 올 때까지 화면이 안 바뀐다.)
- *
- * 칩 라벨에는 그 채널의 현재 floor 도 같이 띄운다 — *"이 로그가 왜 안 찍히지"* 의 1순위 답이라,
- * 아무것도 안 보일 때 오히려 더 필요하다.
- *
- * ## 접힘이 기본이다
- * 펼치면 스크롤이 가능해지지만 **그 영역의 터치가 앱에 닿지 않는다.** 오버레이는 우측 상단 —
- * 툴바 버튼이 있는 자리 — 를 덮으므로 상시 펼쳐두면 앱을 쓸 수 없다. 접힌 상태는 포인터 입력
- * 모디파이어를 로그 줄에 두지 않아 터치가 그대로 통과한다(click-through).
- */
+/** 디버그 빌드 전용 로그 오버레이. */
 @Composable
 fun DebugLogOverlay(modifier: Modifier = Modifier) {
     val version by InspectorLog.version.collectAsState()
@@ -165,12 +150,7 @@ fun DebugLogOverlay(modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * 칩 탭 규칙.
- *
- * 전체가 켜진 상태에서 하나를 누르면 **그것만 남긴다** — "퍼포먼스만 보고 싶다"가 가장 흔한 의도라
- * 나머지를 하나씩 끄게 하지 않는다. 이후로는 켜고 끄기를 반복하고, 마지막 하나를 끄면 전체로 돌아온다.
- */
+/** 칩 탭 규칙. */
 private fun toggle(
     current: Set<Channel>,
     channel: Channel,

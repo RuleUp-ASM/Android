@@ -4,38 +4,27 @@ import com.ruleup.domain.entity.category.InterestLimits
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 
-/**
- * 실패를 어떤 무게로 보여줄지.
- *
- * 사용자가 고칠 수 있으면 토스트로 가볍게, 흐름을 되돌려야 하면 다이얼로그로, 진행 자체가 막히면
- * 전체 화면으로 나눈다.
- */
+/** 실패를 어떤 무게로 보여줄지. */
 sealed interface AuthFailureUi {
-    /** 짧은 안내. 같은 자리에서 다시 시도하면 된다. */
+    /** 짧은 안내. */
     data class Toast(
         val message: String,
     ) : AuthFailureUi
 
-    /** 확인이 필요한 안내. [restartFromLogin] 이면 확인 후 로그인부터 다시 시작한다. */
+    /** 확인이 필요한 안내. */
     data class Dialog(
         val message: String,
         val restartFromLogin: Boolean = false,
     ) : AuthFailureUi
 
-    /** 진행 불가. 전체 화면으로 막는다. */
+    /** 진행 불가. */
     data class Blocking(
         val message: String,
         val contactSupport: Boolean = false,
     ) : AuthFailureUi
 }
 
-/**
- * 에러 전수를 UI 로 옮긴다. 기획 스펙의 "모든 에러 코드에 UI 가 있어야 한다"를 한곳에서 지킨다.
- *
- * [AuthFailure.INVALID_REDIRECT_URI]·[AuthFailure.INVALID_DEVICE_INFO] 는 콘솔 등록값·빌드 설정
- * 문제라 사용자가 할 수 있는 게 없다. 원인을 노출하지 않고 로그인 실패와 같은 문구로 묶되, 진단은
- * 호출부가 로그로 남긴다.
- */
+/** 에러 전수를 UI 로 옮긴다. */
 fun Throwable.toAuthFailureUi(): AuthFailureUi {
     val failure = (this as? AuthException)?.failure ?: AuthFailure.UNKNOWN
     return when (failure) {
@@ -63,7 +52,7 @@ fun Throwable.toAuthFailureUi(): AuthFailureUi {
 
         AuthFailure.BIRTHDATE_INVALID -> AuthFailureUi.Toast("생년월일을 다시 확인해주세요")
 
-        // 법적으로 가입이 불가하다. 되돌아갈 곳이 없어 전체 화면으로 막는다.
+        // 법적으로 가입이 불가하다.
         AuthFailure.BIRTHDATE_UNDERAGE -> AuthFailureUi.Blocking("만 14세 미만은 가입할 수 없어요")
 
         AuthFailure.GENDER_REQUIRED -> AuthFailureUi.Toast("성별을 다시 선택해주세요")

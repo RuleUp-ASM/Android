@@ -54,7 +54,6 @@ class BlockListContentTest {
 
     @Test
     fun `참여 중인 챌린지는 참여 중임을 함께 적는다`() {
-        // 참여 중이면 탐색에서 사라지는 게 아니라 이름·이미지만 가려진다 — 결과가 다르다.
         show(loaded(BlockList(users = emptyList(), challenges = listOf(blockedChallenge(participating = true)))))
 
         compose.onNodeWithText("참여 중 · 8.30 차단").assertIsDisplayed()

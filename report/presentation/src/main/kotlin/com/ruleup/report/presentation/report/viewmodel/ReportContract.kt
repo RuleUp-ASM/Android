@@ -8,11 +8,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface ReportIntent : MviIntent {
-    /**
-     * 화면 진입. **신고 대상을 화면이 넘긴다** — 호스트는 라우트 인자를 컴포저블 파라미터로 주지
-     * `SavedStateHandle` 에 넣지 않아, ViewModel 이 거기서 읽으면 대상 이름이 비고 사유 목록도
-     * 사용자/챌린지 구분 없이 챌린지용으로 굳는다.
-     */
+    /** 화면 진입. */
     data class Init(
         val userId: String?,
         val challengeId: String?,
@@ -38,7 +34,7 @@ data class ReportState(
     val canSubmit: Boolean get() = selected != null && !isSubmitting
 
     companion object {
-        /** 대상이 정해지기 전 상태. [ReportIntent.Init] 이 곧바로 채운다. */
+        /** 대상이 정해지기 전 상태. */
         val initial =
             ReportState(
                 targetName = "",

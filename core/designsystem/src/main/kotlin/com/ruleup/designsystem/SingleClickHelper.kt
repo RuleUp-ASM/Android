@@ -10,16 +10,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * 위젯별 throttle 을 넘어서는 전역 가드 — 서로 다른 내비 버튼을 연타해도 이중 네비게이션이 나지 않는다.
- * main-thread 전용.
- */
+/** 위젯별 throttle 을 넘어서는 전역 가드 */
 object SingleClickGuard {
     const val DEFAULT_THROTTLE_MILLIS = 300L
 
     private var lastGlobalClickTime = 0L
 
-    /** 판정과 동시에 전역 시각을 갱신한다 — 결과를 버려도 다음 클릭이 막힌다. */
+    /** 판정과 동시에 전역 시각을 갱신한다 */
     fun tryPass(
         now: Long,
         throttleMillis: Long,
@@ -76,10 +73,7 @@ fun rememberSingleClickHelper(
     globalThrottleMillis: Long = SingleClickGuard.DEFAULT_THROTTLE_MILLIS,
 ) = remember(throttleMillis, globalThrottleMillis) { SingleClickHelper(throttleMillis, globalThrottleMillis) }
 
-/**
- * 중복 클릭을 막는 [Modifier.clickable].
- * 빠른 연속 탭이 정상인 UI(키패드·스텝퍼·그리드 선택)에선 [globalGuard] 를 꺼야 두 번째 탭이 먹는다.
- */
+/** 중복 클릭을 막는 [Modifier.clickable]. */
 @Composable
 fun Modifier.singleClickable(
     enabled: Boolean = true,
@@ -95,10 +89,7 @@ fun Modifier.singleClickable(
     return clickable(enabled = enabled) { helper.run(onClick) }
 }
 
-/**
- * `onClick` 파라미터를 받는 컴포넌트(Material `Button` 등)용 [singleClickable].
- * [globalGuard] 의 뜻은 [singleClickable] 과 같다.
- */
+/** `onClick` 파라미터를 받는 컴포넌트(Material `Button` 등)용 [singleClickable]. */
 @Composable
 fun rememberSingleClick(
     throttleMillis: Long = 500L,

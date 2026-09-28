@@ -10,12 +10,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 수동 인증 화면의 렌더 규칙.
- *
- * 이 화면에서 잘못 그려지면 사용자가 **인증하지 않은 하루를 인증한 줄 안다.** 그래서 오늘 상태와
- * CTA 가 서로 어긋나지 않는 것이 곧 기능이다.
- */
+/** 수동 인증 화면의 렌더 규칙. */
 @RunWith(RobolectricTestRunner::class)
 class ManualSubmitContentTest {
     @get:Rule

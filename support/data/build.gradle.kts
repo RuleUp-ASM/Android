@@ -34,7 +34,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
 
-    // 첨부 사진 multipart 전송. core:network 의 ImageReader 가 읽어 준 바이트를 여기서 감싼다.
+    // 첨부 사진 multipart 전송.
     implementation(libs.okhttp)
     implementation(libs.retrofit)
 

@@ -11,10 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 친구 초대. 초대 코드를 받기 전에는 **공유할 것이 없다** — 빈 코드를 보여 주면 사용자가 그걸
- * 지인에게 보낸다. 초대 현황이 비었을 때도 "아직 없다"고 말해야 조회 실패와 구분된다.
- */
+/** 친구 초대. */
 @RunWith(RobolectricTestRunner::class)
 class FriendInviteContentTest {
     @get:Rule

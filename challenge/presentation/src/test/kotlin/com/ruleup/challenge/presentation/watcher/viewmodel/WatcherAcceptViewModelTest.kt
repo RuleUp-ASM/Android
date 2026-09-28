@@ -21,12 +21,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 감시자 초대 수락. **수락이 곧 개인정보 수신 동의**라, 링크를 연 것만으로 동의가 성립하면 안 된다 —
- * 화면 진입과 수락 요청이 분리돼 있는지가 이 화면의 계약이다.
- *
- * 실패 사유마다 다음에 할 일이 다르므로(재초대 요청 · 이미 됨 · 안 되는 일) 하나로 접지 않는다.
- */
+/** 감시자 초대 수락. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WatcherAcceptViewModelTest {
     @BeforeTest

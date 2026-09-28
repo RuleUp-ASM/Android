@@ -10,12 +10,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/**
- * 챌린지 수정(방장 전용). 저장은 **남의 방을 바꾸는 일**이라, 바꾼 게 없거나 저장 중일 때
- * 눌리면 안 된다 — 연타는 수정 요청을 두 번 보내고 그 사이 버전이 어긋난다.
- *
- * 못 바꾸는 항목이 왜 잠겨 있는지도 말해야 한다. 이유 없이 회색이면 고장으로 읽힌다.
- */
+/** 챌린지 수정(방장 전용). */
 @RunWith(RobolectricTestRunner::class)
 class ChallengeSettingsContentTest {
     @get:Rule

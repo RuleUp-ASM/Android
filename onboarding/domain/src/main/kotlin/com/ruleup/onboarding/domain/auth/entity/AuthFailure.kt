@@ -1,29 +1,26 @@
 package com.ruleup.onboarding.domain.auth.entity
 
-/**
- * 인증·가입에서 화면이 구분해야 하는 실패. data 가 서버 에러 코드를 여기로 옮기고 화면은 이 enum 만
- * 본다 — 화면이 `core:network` 의 `ApiException` 과 코드 문자열에 묶이지 않는다.
- */
+/** 인증·가입에서 화면이 구분해야 하는 실패. */
 enum class AuthFailure {
     /** 인가 코드·id_token 검증 실패. */
     LOGIN_FAILED,
 
-    /** redirectUri 불일치(구글). 사용자가 할 수 있는 게 없어 로그인 실패와 같이 안내한다. */
+    /** redirectUri 불일치(구글). */
     INVALID_REDIRECT_URI,
 
-    /** deviceId·deviceInfo 누락/형식 오류. 마찬가지로 사용자 조치 불가. */
+    /** deviceId·deviceInfo 누락/형식 오류. */
     INVALID_DEVICE_INFO,
 
-    /** IdP 장애(502). 다른 제공자를 권한다. */
+    /** IdP 장애(502). */
     PROVIDER_UNAVAILABLE,
 
-    /** 영구 정지 계정. 로그인 자체가 막힌다. */
+    /** 영구 정지 계정. */
     ACCOUNT_BANNED,
 
-    /** 이 설치에 이미 활성 계정이 있다. 신규 가입만 막히고 기존 계정 로그인은 된다. */
+    /** 이 설치에 이미 활성 계정이 있다. */
     INSTALLATION_ALREADY_REGISTERED,
 
-    /** signup_token 이 만료·위조·사용됨. 로그인부터 다시 한다. */
+    /** signup_token 이 만료·위조·사용됨. */
     INVALID_SIGNUP_TOKEN,
 
     NICKNAME_FORMAT_INVALID,
@@ -32,7 +29,7 @@ enum class AuthFailure {
 
     BIRTHDATE_INVALID,
 
-    /** 만 14세 미만. 가입이 불가하다. */
+    /** 만 14세 미만. */
     BIRTHDATE_UNDERAGE,
 
     GENDER_REQUIRED,
@@ -49,13 +46,13 @@ enum class AuthFailure {
     /** 계정 잠금 중 차단된 기능(프로필 편집 등). */
     ACCOUNT_LOCKED,
 
-    /** 네트워크·오프라인. 재시도로 풀릴 수 있다. */
+    /** 네트워크·오프라인. */
     NETWORK,
 
     UNKNOWN,
 }
 
-/** [AuthFailure] 를 실은 예외. 화면은 [failure] 로 분기하고 [message] 는 진단용으로만 쓴다. */
+/** [AuthFailure] 를 실은 예외. */
 class AuthException(
     val failure: AuthFailure,
     message: String? = null,

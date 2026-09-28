@@ -5,17 +5,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * 카카오 장소 검색 응답 매핑. 여기서 나온 좌표가 **지오펜스 앵커**가 되므로, 틀리면 사용자는
- * 엉뚱한 곳에 가야 인증이 된다 — 그리고 왜 안 되는지 알 방법이 없다.
- *
- * 특히 카카오는 `x` 가 경도, `y` 가 위도다. 뒤바꿔도 숫자가 들어가 컴파일·파싱은 통과하고,
- * 지도에 찍히는 위치만 조용히 어긋난다.
- */
+/** 카카오 장소 검색 응답 매핑. */
 class KakaoPlaceMappingTest {
     @Test
     fun `x 는 경도이고 y 는 위도다`() {
-        // 뒤바꿔도 타입은 맞아 통과한다 — 이 테스트만이 축을 지킨다.
+        // 뒤바꿔도 타입은 맞아 통과한다
         val places = KakaoKeywordResponse(documents = listOf(doc(x = "127.0276", y = "37.4979"))).toDomain()
 
         assertEquals(127.0276, places.single().lng)

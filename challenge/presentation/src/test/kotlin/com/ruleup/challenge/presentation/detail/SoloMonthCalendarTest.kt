@@ -19,12 +19,7 @@ import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * 솔로 상세의 월 캘린더 (Figma 1134:1930).
- *
- * 색은 검증하지 않는다(디자인 토큰이 코드로 이미 말한다). 여기서 지키는 건 **달의 모양**이다 —
- * 물어본 달이 그대로 보이고, 그 달의 날짜가 빠짐없이 서고, 유예 창이 별도 범례를 갖는 것.
- */
+/** 솔로 상세의 월 캘린더. */
 @RunWith(RobolectricTestRunner::class)
 class SoloMonthCalendarTest {
     @get:Rule
@@ -39,7 +34,7 @@ class SoloMonthCalendarTest {
 
     @Test
     fun `그 달의 날짜를 빠짐없이 세운다`() {
-        // 9월은 30일이다. 한 칸이라도 빠지면 사용자가 자기 기록을 못 찾는다.
+        // 9월은 30일이다.
         render(month = "2026-09")
 
         compose.onAllNodesWithText("30").assertCountEquals(1)
@@ -48,7 +43,6 @@ class SoloMonthCalendarTest {
 
     @Test
     fun `유예 창은 실패와 다른 범례를 갖는다`() {
-        // 아직 뒤집힐 수 있는 날이 확정 실패와 같아 보이면 이의를 낼 수 있는데도 포기하게 된다.
         render(month = "2026-09")
 
         compose.onNodeWithText("실패 예정").assertExists()

@@ -8,14 +8,7 @@ import com.ruleup.logging.domain.BizLog
 import com.ruleup.logging.domain.BizLogConfig
 import com.ruleup.logging.domain.BizLogShooter
 
-/**
- * Amplitude 출구. Firebase 와 **병행**한다 — 같은 이벤트가 두 곳에 쌓이므로 집계할 때 출처를 섞지 않는다.
- *
- * **autocapture 는 SDK 기본값(세션만) 그대로 둔다.** 화면 조회를 자동 수집하면 우리가 남기는
- * `screen_view` 와 대시보드에서 구분이 안 된다.
- *
- * 업로드는 SDK 자체 큐가 비동기로 하므로 전송 실패는 [shoot] 으로 관측되지 않는다.
- */
+/** Amplitude 출구. */
 internal class AmplitudeBizShooter(
     private val context: Context,
     private val config: BizLogConfig,

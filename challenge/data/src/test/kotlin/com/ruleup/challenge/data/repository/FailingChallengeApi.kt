@@ -36,10 +36,7 @@ import kotlinx.serialization.json.JsonObject
 import okhttp3.MultipartBody
 import retrofit2.http.Part
 
-/**
- * 모든 호출이 같은 서버 에러로 실패하는 [ChallengeApi].
- * 에러 번역만 보는 테스트라 성공 경로는 필요 없다 — 어느 메서드로 들어와도 같은 답을 준다.
- */
+/** 모든 호출이 같은 서버 에러로 실패하는 [ChallengeApi]. */
 class FailingChallengeApi(
     private val error: ErrorBody,
 ) : ChallengeApi {

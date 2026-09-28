@@ -15,10 +15,7 @@ private val LocalRuleUpTypography = staticCompositionLocalOf { defaultRuleUpTypo
 private val LocalRuleUpShapes = staticCompositionLocalOf { defaultRuleUpShapes }
 private val LocalRuleUpSpacing = staticCompositionLocalOf { defaultRuleUpSpacing }
 
-/**
- * 테마 진입점. 하위 컴포저블은 [RuleUpTheme] 접근자로 토큰을 읽는다.
- * 라이트 고정이다 — Figma 에 다크 토큰이 없어, 시스템 설정을 따라가면 근거 없는 색이 다크 기기에만 나간다.
- */
+/** 테마 진입점. */
 @Composable
 fun RuleUpTheme(
     typography: RuleUpTypography = defaultRuleUpTypography,
@@ -35,7 +32,7 @@ fun RuleUpTheme(
     )
 }
 
-/** MaterialTheme 스타일의 토큰 접근자. 예: `RuleUpTheme.colors.brand`. */
+/** MaterialTheme 스타일의 토큰 접근자. */
 object RuleUpTheme {
     val colors: RuleUpColorScheme
         @Composable @ReadOnlyComposable

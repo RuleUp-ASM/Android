@@ -16,7 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/** 화면을 구획하는 카드 표면. 반경·테두리·여백 조합의 단일 소스 — 화면에서 따로 조립하지 않는다. */
+/** 화면을 구획하는 카드 표면. */
 @Composable
 fun RuleUpCard(
     modifier: Modifier = Modifier,
@@ -33,10 +33,7 @@ fun RuleUpCard(
     )
 }
 
-/**
- * 카드 표면만 입힌다. 세로가 아닌 배치(가로 나열, 눌리는 행)에서 쓴다.
- * 안쪽 여백까지 포함하므로 클릭은 이 함수보다 **먼저** 붙여야 눌림 효과가 여백을 덮는다.
- */
+/** 카드 표면만 입힌다. */
 @Composable
 fun Modifier.ruleUpCardSurface(contentPadding: PaddingValues = CardPadding): Modifier =
     this

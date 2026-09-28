@@ -4,7 +4,7 @@ import com.ruleup.challenge.domain.repository.TargetAppStore
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** challengeId → 등록한 대상 앱 패키지명. 세션 동안만 들고 있어 프로세스가 죽으면 사라진다. */
+/** challengeId → 등록한 대상 앱 패키지명. */
 @Singleton
 class TargetAppStoreImpl
     @Inject

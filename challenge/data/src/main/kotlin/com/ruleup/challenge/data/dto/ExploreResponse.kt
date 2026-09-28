@@ -12,7 +12,7 @@ import com.ruleup.network.dto.requireField
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 탐색: 실시간 인기 (GET /challenges/trending) ----------
+// 탐색: 실시간 인기 (GET /challenges/trending)
 @Serializable
 data class TrendingChallengeResponse(
     @SerialName("rank")
@@ -41,7 +41,7 @@ data class TrendingChallengeResponse(
 
 internal fun TrendingChallengeResponse.toDomain(index: Int): TrendingChallenge =
     TrendingChallenge(
-        // rank 가 비면 배열 순서로 보정한다(1부터) — 서버가 이미 정렬해 내려준다.
+        // rank 가 비면 배열 순서로 보정한다(1부터)
         rank = rank ?: (index + 1),
         challengeId = challengeId.requireField("challengeId"),
         title = title.orEmpty(),
@@ -51,7 +51,7 @@ internal fun TrendingChallengeResponse.toDomain(index: Int): TrendingChallenge =
         recentJoins24h = recentJoins24h ?: 0,
         verificationType = VerificationType.fromValue(verificationType) ?: VerificationType.MANUAL,
         minTier = minTier?.let(Tier::fromValue),
-        // 모르면 잠긴 것으로 본다 — 못 들어갈 방을 열려 있는 것처럼 보이게 하면 안 된다.
+        // 모르면 잠긴 것으로 본다
         joinable = joinable ?: false,
         endDate = endDate,
     )
@@ -71,7 +71,7 @@ internal fun TrendingChallengesResponse.toDomain(): TrendingSnapshot =
         items = items.orEmpty().mapIndexed { index, item -> item.toDomain(index) },
     )
 
-// ---------- 탐색: 카테고리별 챌린지 수 (GET /challenge-categories) ----------
+// 탐색: 카테고리별 챌린지 수 (GET /challenge-categories)
 @Serializable
 data class ChallengeCategoryCountResponse(
     // 12종 enum code
@@ -89,7 +89,7 @@ internal fun ChallengeCategoryCountResponse.toDomain(): ChallengeCategoryCount {
     return ChallengeCategoryCount(
         name = displayName,
         activeGroupCount = activeGroupCount ?: 0,
-        // code 로 매칭한다. 서버 코드와 앱 enum 이 어긋나던 시기의 표시명 폴백을 남겨 둔다.
+        // code 로 매칭한다.
         category = code?.let(Category::fromValue) ?: Category.entries.find { it.label == displayName },
     )
 }
@@ -102,7 +102,7 @@ data class ChallengeCategoriesResponse(
 
 internal fun ChallengeCategoriesResponse.toDomain(): List<ChallengeCategoryCount> = items.orEmpty().map { it.toDomain() }
 
-// ---------- 탐색: 둘러보기 (GET /challenges/explore) ----------
+// 탐색: 둘러보기 (GET /challenges/explore)
 @Serializable
 data class ExploreChallengeResponse(
     @SerialName("challengeId")
@@ -141,10 +141,7 @@ data class ExploreChallengeResponse(
     val createdAt: String? = null,
 )
 
-/**
- * **완주율·유지율의 null 은 기본값으로 접지 않는다** — 표본 미달을 뜻하는 값이라 0으로 바꾸면
- * "0%인 방"이라는 거짓 정보가 된다. 화면은 null 일 때 해당 영역을 숨긴다.
- */
+/** 완주율·유지율의 null 은 기본값으로 접지 않는다 */
 internal fun ExploreChallengeResponse.toDomain(): ExploreChallenge =
     ExploreChallenge(
         challengeId = challengeId.requireField("challengeId"),
@@ -157,7 +154,7 @@ internal fun ExploreChallengeResponse.toDomain(): ExploreChallenge =
         capacity = capacity,
         isFull = isFull ?: false,
         minTier = minTier?.let(Tier::fromValue),
-        // 모르면 막는 쪽으로 — 못 들어갈 방에 참여 동선을 열어주지 않는다.
+        // 미확인 상태는 접근 차단.
         eligible = eligible ?: false,
         completionRate = completionRate,
         retentionRate = retentionRate,

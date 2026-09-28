@@ -46,7 +46,7 @@ class TokenRefresherImplTest {
             assertEquals("new-access", refreshed?.token?.accessToken)
             assertEquals("new-refresh", refreshed?.token?.refreshToken)
             assertEquals(1800, refreshed?.token?.expiresInSeconds)
-            // 갱신만으로 세션이 완성되는지가 핵심이다 — 이 값이 비면 별도 조회가 되살아난다.
+            // 갱신만으로 세션이 완성되는지가 핵심이다
             assertEquals("u-1", refreshed?.userId)
         }
 
@@ -87,7 +87,6 @@ class TokenRefresherImplTest {
     @Test
     fun `같은 refreshToken 으로 동시에 갱신하면 요청은 한 번만 나가고 결과를 나눠 갖는다`() =
         runBlocking {
-            // 두 번 나가면 서버가 첫 요청에서 토큰을 회전해 두 번째가 401 을 받고, 그쪽이 세션을 지운다(AUTH-09).
             val api =
                 FakeAuthApi {
                     delay(100)

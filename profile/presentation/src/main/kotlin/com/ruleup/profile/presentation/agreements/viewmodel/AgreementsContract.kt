@@ -10,13 +10,13 @@ import com.ruleup.ui.mvi.UiState
 sealed interface AgreementsIntent : MviIntent {
     data object Load : AgreementsIntent
 
-    /** 선택 항목 토글. 필수 3종은 화면이 아예 누를 수 없게 둔다. */
+    /** 선택 항목 토글. */
     data class Toggle(
         val type: AgreementType,
         val agreed: Boolean,
     ) : AgreementsIntent
 
-    /** 재동의 — `reconsentRequired` 전부를 현행 버전으로 다시 보낸다. */
+    /** 재동의 */
     data object Reconsent : AgreementsIntent
 
     data object Back : AgreementsIntent
@@ -31,7 +31,7 @@ sealed interface AgreementsEffect : MviEffect {
 data class AgreementsState(
     val isLoading: Boolean,
     val status: AgreementStatus?,
-    // 전송 중인 항목. 응답이 올 때까지 그 행만 잠근다
+    // 전송 중인 항목.
     val submitting: AgreementType?,
     val isReconsenting: Boolean,
     val errorMessage: String?,

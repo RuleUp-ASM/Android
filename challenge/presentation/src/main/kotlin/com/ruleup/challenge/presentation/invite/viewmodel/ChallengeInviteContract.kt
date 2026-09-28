@@ -29,11 +29,11 @@ data class ChallengeInviteState(
     val isLoading: Boolean,
     val preview: ChallengeInvitationPreview?,
     val isAccepting: Boolean,
-    // 수락을 눌러 막힌 사유. 미리보기의 blockReason 과 같은 체계다
+    // 수락을 눌러 막힌 사유.
     val blockedBy: JoinBlockReason?,
     val errorMessage: String?,
 ) : UiState {
-    /** 지금 수락 버튼을 눌러도 되는가. 서버가 미리 판정해 준 값을 그대로 믿는다. */
+    /** 지금 수락 버튼을 눌러도 되는가. */
     val canAccept: Boolean
         get() = preview?.joinable == true && !isAccepting
 

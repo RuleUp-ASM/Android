@@ -7,7 +7,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface WatcherAcceptIntent : MviIntent {
-    /** 화면 진입 — 아직 수락하지 않는다. 무엇에 동의하는지 먼저 보여 준다. */
+    /** 화면 진입 */
     data class Load(
         val token: String,
     ) : WatcherAcceptIntent
@@ -19,10 +19,7 @@ sealed interface WatcherAcceptIntent : MviIntent {
     data object Back : WatcherAcceptIntent
 }
 
-/**
- * 수락 실패 사유. 다음에 할 일이 서로 달라 하나의 오류 문구로 접지 않는다 —
- * 만료는 "다시 초대해 달라고 하기", 중복은 "이미 됐다", 본인 수락은 "안 되는 일"이다.
- */
+/** 수락 실패 사유. */
 enum class WatcherAcceptFailure {
     EXPIRED,
     ALREADY_ACCEPTED,
@@ -64,5 +61,5 @@ sealed interface WatcherAcceptReducerEvent : ReducerEvent {
     ) : WatcherAcceptReducerEvent
 }
 
-/** 결과를 화면 안에서 보여 주고 이동은 버튼으로만 한다 — 단발성 이펙트가 없다. */
+/** 결과를 화면 안에서 보여 주고 이동은 버튼으로만 한다 */
 typealias WatcherAcceptEffect = NoEffect

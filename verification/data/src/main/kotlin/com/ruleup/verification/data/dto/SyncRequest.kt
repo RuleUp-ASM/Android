@@ -8,13 +8,9 @@ import com.ruleup.verification.domain.entity.VerificationSignal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-// ---------- 3.1 sync 요청 (전송 스펙 §0.1 공통 envelope) ----------
-// 모든 시각은 Long epoch millis 다(전송 스펙 설계 원칙 ①) — 문자열 변환을 거치지 않는다.
+// 3.1 sync 요청 ---------- 모든 시각은 Long epoch millis 다
 
-/**
- * 지오펜스 전이 1건(전송 스펙 §1). 좌표가 나가는 유일한 통로는 [LocationPointRequest] 다.
- * 정확도·mock 은 OS 가 위치를 안 준 전이에서 null 이고, `explicitNulls=false` 라 필드째 빠져 나간다.
- */
+/** 지오펜스 전이 1건. */
 @Serializable
 data class GeofenceEventRequest(
     // 등록 시 부여한 지오펜스 requestId
@@ -32,7 +28,7 @@ data class GeofenceEventRequest(
     val isMock: Boolean? = null,
 )
 
-/** 대상 앱 전후면 전이 1건(전송 스펙 §3). 페어링·합산은 서버가 한다. */
+/** 대상 앱 전후면 전이 1건. */
 @Serializable
 data class AppEventRequest(
     @SerialName("packageName")
@@ -43,7 +39,7 @@ data class AppEventRequest(
     val at: Long,
 )
 
-/** 보조 측위 샘플 1건(전송 스펙 §1). 3순위 좌표 가중 체류 챌린지에만 붙는다. */
+/** 보조 측위 샘플 1건. */
 @Serializable
 data class LocationPointRequest(
     @SerialName("lat")
@@ -58,11 +54,7 @@ data class LocationPointRequest(
     val at: Long,
 )
 
-/**
- * Health Connect 읽은 값 1건(전송 스펙 §2). 집계·화이트리스트·MANUAL 거부는 서버가 한다.
- * 신뢰 메타데이터([recordingMethod]·[originPackage])와 멱등 키([recordId])는 필수 동봉이다 —
- * 값만 보내면 서버가 거부한다. `metric` 은 신호 레벨이라 여기서 반복하지 않는다.
- */
+/** Health Connect 읽은 값 1건. */
 @Serializable
 data class HealthReadingRequest(
     @SerialName("recordId")
@@ -79,7 +71,7 @@ data class HealthReadingRequest(
     val originPackage: String,
 )
 
-/** 수면 세션 1건(전송 스펙 §5). stage 를 쪼개지 않고 세션 단위로 보낸다. */
+/** 수면 세션 1건. */
 @Serializable
 data class SleepSessionRequest(
     @SerialName("recordId")
@@ -90,7 +82,7 @@ data class SleepSessionRequest(
     val end: Long,
     @SerialName("durationMillis")
     val durationMillis: Long,
-    // stage 를 못 받으면 생략된다 — 서버가 durationMillis 로 대체한다
+    // stage 를 못 받으면 생략된다
     @SerialName("sleepMillis")
     val sleepMillis: Long? = null,
     @SerialName("observedElapsedMillis")
@@ -101,11 +93,7 @@ data class SleepSessionRequest(
     val originPackage: String,
 )
 
-/**
- * 신호 1건 (전송 스펙 §1~§5). [type] 디스크리미네이터 + 타입별 옵셔널 필드.
- * GEOFENCE → [events], SCREEN_TIME → [appEvents], WAKE → [firstUnlock]/[firstScreenOn]/[deviceSecure],
- * LOCATION → [points], HEALTH → [date]/[metric]/[readings], SLEEP → [sessions].
- */
+/** 신호 1건. */
 @Serializable
 data class SignalRequest(
     @SerialName("type")
@@ -132,9 +120,9 @@ data class SignalRequest(
     val sessions: List<SleepSessionRequest>? = null,
 )
 
-// ---------- §0.1 공통 envelope 필드 ----------
+// §0.1 공통 envelope 필드
 
-/** Health Connect 신호별 권한 현황(전송 스펙 §0.1 permissions.healthConnect). */
+/** Health Connect 신호별 권한 현황. */
 @Serializable
 data class HealthConnectPermissionsRequest(
     @SerialName("distance")
@@ -147,7 +135,7 @@ data class HealthConnectPermissionsRequest(
     val background: String,
 )
 
-/** 신호별 권한 현황 스냅샷(전송 스펙 §0.1 permissions). 값은 GRANTED/DENIED. */
+/** 신호별 권한 현황 스냅샷. */
 @Serializable
 data class PermissionsRequest(
     @SerialName("location")
@@ -162,21 +150,21 @@ data class PermissionsRequest(
     val healthConnect: HealthConnectPermissionsRequest,
 )
 
-/** VPN 게이트(전송 스펙 §6.1). */
+/** VPN 게이트. */
 @Serializable
 data class NetworkRequest(
     @SerialName("vpnActive")
     val vpnActive: Boolean,
 )
 
-/** Play Integrity verdict 토큰(전송 스펙 §6.5). token 없으면 envelope 에서 통째로 생략. */
+/** Play Integrity verdict 토큰. */
 @Serializable
 data class IntegrityRequest(
     @SerialName("token")
     val token: String,
 )
 
-/** worker heartbeat 진단(전송 스펙 §0.7). null 필드는 explicitNulls=false 로 생략. */
+/** worker heartbeat 진단. */
 @Serializable
 data class DiagnosticsRequest(
     @SerialName("lastSuccessfulFlushAt")
@@ -195,7 +183,7 @@ data class DiagnosticsRequest(
     val hcSdkStatus: String? = null,
 )
 
-/** 신호 공백 1건(전송 스펙 §0.5 gaps[]). 시각은 epoch millis. */
+/** 신호 공백 1건. */
 @Serializable
 data class GapRequest(
     @SerialName("signalType")
@@ -210,13 +198,10 @@ data class GapRequest(
     val recoverable: Boolean,
 )
 
-/**
- * sync 1회 전송 단위 envelope(전송 스펙 §0.1). 신호 배치 + 디바이스 시계·권한·VPN·integrity·진단·gap.
- * 정적 프로필(sdkInt/model/lowRam/appVersion)은 Phase 0(로그인)에서만 보내고 여기엔 싣지 않는다.
- */
+/** sync 1회 전송 단위 envelope. */
 @Serializable
 data class SyncEnvelopeRequest(
-    // 로그인에 쓴 기기와 같은 값이어야 한다 — 서버 strict device gate 의 판정 키다(SIG-23).
+    // 로그인에 쓴 기기와 같은 값이어야 한다
     @SerialName("deviceId")
     val deviceId: String,
     @SerialName("deviceTimeMillis")
@@ -229,7 +214,7 @@ data class SyncEnvelopeRequest(
     val timeZone: String,
     @SerialName("activeChallengeIds")
     val activeChallengeIds: List<String>,
-    // 이 구간의 신호를 빠짐없이 담았다는 선언(epoch millis). 필수 — 없으면 400 INVALID_SIGNAL_PAYLOAD
+    // 이 구간의 신호를 빠짐없이 담았다는 선언(epoch millis).
     @SerialName("coveredFrom")
     val coveredFrom: Long,
     @SerialName("coveredUntil")
@@ -363,9 +348,7 @@ private fun SignalGap.toDto(): GapRequest =
         recoverable = recoverable,
     )
 
-/**
- * 도메인 envelope 메타데이터 + 신호 배치 → §0.1 envelope 와이어. 정적 프로필은 제외(Phase 0 전용).
- */
+/** 도메인 envelope 메타데이터 + 신호 배치 → §0.1 envelope 와이어. */
 internal fun EnvelopeMetadata.toRequest(batch: SignalBatch): SyncEnvelopeRequest =
     SyncEnvelopeRequest(
         deviceId = deviceId,

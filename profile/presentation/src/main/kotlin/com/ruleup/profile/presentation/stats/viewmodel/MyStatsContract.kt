@@ -7,7 +7,7 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
 sealed interface MyStatsIntent : MviIntent {
-    /** 화면 진입 — 지표 5종 일괄 조회. 기간 탭은 없다(명세가 지표를 고정했다). */
+    /** 화면 진입 */
     data object Load : MyStatsIntent
 
     data object Back : MyStatsIntent
@@ -40,5 +40,5 @@ sealed interface MyStatsReducerEvent : ReducerEvent {
     ) : MyStatsReducerEvent
 }
 
-/** 네비게이션은 NavigationHelper, 오류는 상태로 노출 — 단발성 이펙트 없음. */
+/** 일회성 이펙트 없음. */
 typealias MyStatsEffect = NoEffect

@@ -7,7 +7,6 @@ import kotlin.test.assertNull
 class CategoryTest {
     @Test
     fun `12종이 관심 분야 정책 순서대로 정의돼 있다`() {
-        // 온보딩 관심사 화면과 탐색 카테고리 그리드가 entries 를 그대로 그리므로 순서가 곧 계약이다.
         assertEquals(
             listOf(
                 "EXERCISE",
@@ -35,15 +34,12 @@ class CategoryTest {
 
     @Test
     fun `12종 확정 전 표기는 더 이상 흡수하지 않는다`() {
-        // 탐색 기능 스펙이 2026-08-11 에 TIDYING·CAREER 를 폐기하고 관심 분야 정책 표기로 확정했다.
-        // 별칭을 남겨두면 서버가 정리된 뒤에도 구 표기가 통과해 실수가 드러나지 않는다.
         assertNull(Category.fromValue("TIDYING"))
         assertNull(Category.fromValue("CAREER"))
     }
 
     @Test
     fun `15종 시절 code 도 별칭으로 흡수한다`() {
-        // 서버가 아직 이 값들을 내려준다. 별칭이 없으면 탐색·홈 카드의 아이콘과 필터가 사라진다.
         assertEquals(Category.WAKE_SLEEP, Category.fromValue("WAKE_UP"))
         assertEquals(Category.DIET_HEALTH, Category.fromValue("HEALTH"))
         assertEquals(Category.MIND, Category.fromValue("MEDITATION"))
@@ -53,7 +49,7 @@ class CategoryTest {
 
     @Test
     fun `사라진 분류는 여전히 null 이다`() {
-        // 대응되는 12종이 없다. 서버가 마이그레이션할 값이라 억지로 끼워 맞추지 않는다.
+        // 대응되는 12종이 없다.
         assertNull(Category.fromValue("ENVIRONMENT"))
         assertNull(Category.fromValue("MUSIC"))
         assertNull(Category.fromValue("CODING"))

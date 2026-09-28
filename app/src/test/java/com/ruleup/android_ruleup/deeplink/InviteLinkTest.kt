@@ -15,14 +15,8 @@ import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-/**
- * 외부에서 들어오는 초대 링크 세 갈래 — `/inv`(친구) · `/c`(챌린지 멤버) · `/w`(감시자).
- *
- * 셋이 같은 도메인이라 **접두사 하나로 갈린다.** 잘못 갈라지면 감시자가 방에 가입되거나 그 반대가
- * 되고, 토큰을 잘못 잘라내면 수락이 통째로 막힌 채 "초대가 잘못됐다"로만 보인다.
- */
+/** 외부 초대 링크 파싱. */
 @RunWith(RobolectricTestRunner::class)
-// 실제 App 은 카카오 SDK 초기화까지 한다 — URI 파싱만 보는 테스트가 그것 때문에 죽으면 안 된다.
 @Config(application = Application::class)
 class InviteLinkTest {
     @Test
@@ -57,7 +51,7 @@ class InviteLinkTest {
 
     @Test
     fun `챌린지 초대와 감시자 초대는 서로 다른 화면으로 간다`() {
-        // 접두사 하나로 갈린다 — 섞이면 감시자가 방에 가입되거나 그 반대가 된다.
+        // 접두사 하나로 갈린다
         val challenge = resolveStartRoute(uri("https://android.ruleup.co.kr/c/t1"), testObservability())
         val watcher = resolveStartRoute(uri("https://android.ruleup.co.kr/w/t1"), testObservability())
 
@@ -74,14 +68,7 @@ class InviteLinkTest {
     private fun uri(value: String): Uri = Uri.parse(value)
 }
 
-/**
- * 알림 딥링크(`ruleup://`) → 앱 라우트.
- *
- * 서버가 알림 타입을 늘리는 것은 정상이라 **모르는 링크가 오는 것도 정상**이다 — 그때 엉뚱한
- * 화면으로 보내는 것보다 아무 데도 안 가는 편이 낫다.
- *
- * 반대로 실재하는 화면인데 못 가면 알림을 눌러도 아무 일이 없는 것처럼 보인다.
- */
+/** 알림 딥링크 변환. */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class RuleUpSchemeResolverTest {
@@ -120,26 +107,21 @@ class RuleUpSchemeResolverTest {
 
     @Test
     fun `이의 결과 알림은 이의 내역으로 간다`() {
-        // 서버는 이 알림에 `ruleup://me/appeals` 를 싣는다. host 를 mypage 로만 받으면 탭해도 제자리다.
         assertEquals(AppRoutes.MY_APPEALS, resolver.resolve("ruleup://me/appeals")?.path)
     }
 
     @Test
     fun `부정행위 검출 알림은 제재 이력으로 간다`() {
-        // 검출은 자동 제재(CHALLENGE_KICK)로 제재 이력에 남는다. 전용 화면은 아직 없다.
         assertEquals(AppRoutes.MY_SANCTIONS, resolver.resolve("ruleup://mypage/cheat-history")?.path)
     }
 
     @Test
     fun `폐기된 인증 상세 링크는 제자리에 둔다`() {
-        // 2026-09-07 개정으로 VERIFICATION_RESULT 는 방 상세로 간다. 이 링크를 실은 옛 알림이
-        // 보관 6개월 동안 남아 있으므로 받아만 두고 버린다 — 없는 화면으로 보내면 빈 화면이다.
         assertNull(resolver.resolve("ruleup://verification/v_88"))
     }
 
     @Test
     fun `다른 스킴은 이 해석기가 다루지 않는다`() {
-        // https 앱링크는 별도 경로가 처리한다 — 여기서 가로채면 초대 링크가 엉뚱하게 풀린다.
         assertNull(resolver.resolve("https://android.ruleup.co.kr/c/tok"))
     }
 
@@ -186,7 +168,7 @@ class RuleUpSchemeResolverTest {
 
     @Test
     fun `감시 실패 알림은 감시 관계 목록으로 간다`() {
-        // 통지 1건짜리 화면이 없다 — 목록이 닿을 수 있는 가장 가까운 곳이다.
+        // 통지 1건짜리 화면이 없다
         assertEquals(AppRoutes.MY_WATCHING, resolver.resolve("ruleup://watching/notices/n_1")?.path)
     }
 }

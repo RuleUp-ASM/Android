@@ -8,7 +8,7 @@ import com.ruleup.challenge.domain.entity.CrossChallengeRanking
 import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.repository.RoomRepository
 
-/** 테스트용 [RoomRepository]. 준비하지 않은 메서드는 호출되면 실패한다. */
+/** 테스트용 [RoomRepository]. */
 class FakeRoomRepository(
     private val room: ((String) -> ChallengeRoom)? = null,
     private val threads: ((String, String?) -> ChallengeThreads)? = null,
@@ -18,7 +18,7 @@ class FakeRoomRepository(
 ) : RoomRepository {
     val calls = mutableListOf<String>()
 
-    /** 마지막으로 요청한 페이지 커서. 첫 페이지인지 이어받기인지 구분할 때 쓴다. */
+    /** 마지막으로 요청한 페이지 커서. */
     val threadCursors = mutableListOf<String?>()
 
     override suspend fun getRoom(challengeId: String): ChallengeRoom {
@@ -41,7 +41,7 @@ class FakeRoomRepository(
         return requireNotNull(ranking) { "getRanking 을 준비하지 않았다" }(challengeId)
     }
 
-    /** 어느 달을 물었는지. 월 이동이 실제로 다른 달을 조회하는지 보는 자리다. */
+    /** 어느 달을 물었는지. */
     val calendarMonths = mutableListOf<String>()
 
     override suspend fun getCalendar(

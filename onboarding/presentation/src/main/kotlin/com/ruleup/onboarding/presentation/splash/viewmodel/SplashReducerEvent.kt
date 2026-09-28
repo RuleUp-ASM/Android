@@ -5,12 +5,12 @@ import com.ruleup.ui.mvi.ReducerEvent
 sealed interface SplashReducerEvent : ReducerEvent {
     data object CheckFinished : SplashReducerEvent
 
-    /** 강제 업데이트 필요 — 자동 로그인/이동을 멈추고 업데이트 화면을 노출한다. */
+    /** 강제 업데이트 필요 */
     data class ForceUpdateRequired(
         val minAppVersion: String?,
     ) : SplashReducerEvent
 
-    /** 진입 절차를 다시 시작한다 — 이전 판정의 잔상을 지운다. */
+    /** 진입 절차를 다시 시작한다 */
     data object CheckStarted : SplashReducerEvent
 
     /** 연결 실패로 세션을 확인하지 못했다. */

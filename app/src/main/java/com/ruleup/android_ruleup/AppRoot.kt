@@ -18,10 +18,7 @@ import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.helper.LocalObservability
 
-/**
- * 앱 루트 컴포저블. 헬퍼는 `@AndroidEntryPoint` MainActivity 가 주입받아 여기로 넘긴다.
- * ViewModel 은 이 경로를 타지 않는다 — `hiltViewModel()` 이 직접 해결한다.
- */
+/** 앱 루트 컴포저블. */
 @Composable
 fun AppRoot(
     navigationHelper: NavigationHelper,

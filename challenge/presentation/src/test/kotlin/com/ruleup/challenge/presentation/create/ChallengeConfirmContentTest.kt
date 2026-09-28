@@ -12,14 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertTrue
 
-/**
- * 생성 · 확인. 만들기는 **되돌리기 어려운 동작**이다 — 만든 뒤에는 이름·설명·정원만 바꿀 수
- * 있으므로, 그 사실을 만들기 전에 알려야 한다.
- *
- * 만드는 중 연타하면 챌린지가 두 개 생긴다. 잠금이 곧 계약이다.
- *
- * 기대 문구 출처: Figma `1134:604`「생성 · 확인」.
- */
+/** 생성 · 확인. */
 @RunWith(RobolectricTestRunner::class)
 class ChallengeConfirmContentTest {
     @get:Rule

@@ -15,7 +15,6 @@ class PolicyConfigTest {
 
         source[Channel.PERFORMANCE] = Severity.ERROR
 
-        // 방어적 복사가 없으면 AtomicReference 스왑의 전제(참조 교체 없이는 내용이 안 바뀜)가 무너진다.
         assertEquals(1, config.channelFloors.size)
     }
 

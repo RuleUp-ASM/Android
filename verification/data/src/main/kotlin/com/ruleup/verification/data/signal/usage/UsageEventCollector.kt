@@ -14,11 +14,7 @@ import com.ruleup.verification.domain.entity.GapReason
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-/**
- * UsageStats 증분 수집(명세 §2.2). 시스템이 며칠 내 정리하므로 마감에 몰아 조회하지 않고 매 sync 마다
- * 커서~now 를 누적한다. 누적 foregroundSec 단일값 대신 RESUMED/PAUSED 시퀀스를 그대로 보존한다.
- * queryEvents 는 UsageStats 접근 권한 가드 뒤에서만 호출되므로 MissingPermission lint 를 억제한다.
- */
+/** UsageStats 증분 수집. */
 @SuppressLint("MissingPermission")
 class UsageEventCollector
     @Inject
@@ -40,8 +36,7 @@ class UsageEventCollector
                 return
             }
 
-            // OS UsageStats purge 대응(전송 스펙 §3.1·§4.1): 커서가 OS 보존 한계를 넘었으면
-            // 그 구간 일부는 소실됐을 수 있어 USAGE_PURGED(복구 불가)로 진단한다.
+            // UsageStats 보존 기간 초과 시 USAGE_PURGED 기록.
             if (cursor != null && now - begin > PURGE_THRESHOLD_MS) {
                 val lostTo = now - PURGE_THRESHOLD_MS
                 gapRecorder.record("SCREEN_TIME", GapReason.USAGE_PURGED, begin, lostTo, recoverable = false)
@@ -73,7 +68,7 @@ class UsageEventCollector
             // 첫 수집 시 당일 첫 잠금해제까지 포착하도록 24시간 윈도우로 시작.
             private const val INITIAL_WINDOW_MS = 24L * 60 * 60 * 1000
 
-            // UsageStats 이벤트 보존 한계 보수 추정. 커서가 이보다 오래되면 일부 purge 가정.
+            // UsageStats 이벤트 보존 한계 보수 추정.
             private const val PURGE_THRESHOLD_MS = 5L * 24 * 60 * 60 * 1000
         }
     }

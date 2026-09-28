@@ -9,17 +9,9 @@ import com.kakao.sdk.share.WebSharerClient
 import com.kakao.sdk.template.model.Link
 import com.kakao.sdk.template.model.TextTemplate
 
-/**
- * 멤버 초대 링크 카카오톡 공유 (Figma 1134:1646 위쪽 카드).
- *
- * 감시자 초대와 달리 **서버가 카드 문구를 주지 않는다**(발급 응답에 `kakaoShare` 가 없다) —
- * 그래서 문구를 여기서 만든다. 서버가 나중에 페이로드를 주면 그 값을 쓰도록 바꾼다.
- */
+/** 멤버 초대 링크 카카오톡 공유. */
 object MemberInviteSharer {
-    /**
-     * 초대 카드를 카카오톡으로 공유한다. 카카오톡 미설치면 웹 공유(브라우저)로 폴백한다.
-     * @return 공유 UI 를 띄우지 못했으면 false (호출부가 안내 토스트 처리)
-     */
+    /** 초대 카드를 카카오톡으로 공유한다. */
     fun share(
         context: Context,
         challengeTitle: String,
