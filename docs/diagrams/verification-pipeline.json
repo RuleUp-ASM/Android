@@ -1,0 +1,293 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "자동 인증 · 신호 수집 파이프라인",
+    "output": "../verification-pipeline.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1080,
+      608
+    ],
+    "views": [
+      {
+        "id": "event-driven",
+        "label": "이벤트로 들어오는 신호",
+        "focus": [
+          "geofence",
+          "receiver",
+          "buffer",
+          "worker"
+        ],
+        "note": "지오펜스 전이는 OS 가 깨워 준다. 받는 즉시 Room 에 쌓고 catch-up sync 를 따로 건다."
+      },
+      {
+        "id": "pull-at-sync",
+        "label": "sync 때 당겨 오는 신호",
+        "focus": [
+          "location",
+          "usage",
+          "health",
+          "collector",
+          "buffer"
+        ],
+        "note": "위치 · 사용기록 · Health Connect 는 sync 가 돌 때 한 번씩 읽는다. 사용기록은 커서로 이어 읽는다."
+      },
+      {
+        "id": "send-and-judge",
+        "label": "전송과 판정",
+        "focus": [
+          "buffer",
+          "worker",
+          "server",
+          "today"
+        ],
+        "note": "쌓인 신호를 한 봉투로 올리고, 판정은 서버가 한다. 앱은 결과를 다시 읽어 보여 줄 뿐이다."
+      }
+    ]
+  },
+  "stages": [
+    {
+      "label": "기기 신호"
+    },
+    {
+      "label": "포착"
+    },
+    {
+      "label": "버퍼"
+    },
+    {
+      "label": "전송"
+    },
+    {
+      "label": "판정"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "geofence",
+      "type": "external",
+      "label": "지오펜스 전이",
+      "sublabel": "GeofencingClient",
+      "tag": "OS 가 깨움",
+      "stage": 0,
+      "row": 0,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "location",
+      "type": "external",
+      "label": "현재 위치",
+      "sublabel": "FusedLocation",
+      "stage": 0,
+      "row": 1,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "usage",
+      "type": "external",
+      "label": "UsageStats",
+      "sublabel": "앱 사용 · 잠금 해제",
+      "stage": 0,
+      "row": 2,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "health",
+      "type": "external",
+      "label": "Health Connect",
+      "sublabel": "걸음 · 거리 · 수면",
+      "stage": 0,
+      "row": 3,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "receiver",
+      "type": "backend",
+      "label": "GeofenceReceiver",
+      "sublabel": "내 fence 만 남김",
+      "stage": 1,
+      "row": 0,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "collector",
+      "type": "backend",
+      "label": "SignalCollector",
+      "sublabel": "sync 마다 당겨 옴",
+      "stage": 1,
+      "row": 2,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "buffer",
+      "type": "database",
+      "label": "Room 신호 버퍼",
+      "sublabel": "ruleup_verification.db",
+      "tag": "15일 보관",
+      "stage": 2,
+      "row": 1,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "worker",
+      "type": "backend",
+      "label": "VerificationSyncWorker",
+      "sublabel": "30분 주기 · catch-up",
+      "tag": "SyncGate",
+      "stage": 3,
+      "row": 1,
+      "width": 176,
+      "height": 60
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "RuleUp 서버",
+      "sublabel": "v1/verifications/sync",
+      "tag": "판정 주체",
+      "stage": 4,
+      "row": 1,
+      "width": 150,
+      "height": 60
+    },
+    {
+      "id": "today",
+      "type": "frontend",
+      "label": "오늘 인증 결과",
+      "sublabel": "verifications/today",
+      "stage": 4,
+      "row": 3,
+      "width": 150,
+      "height": 60
+    }
+  ],
+  "flows": [
+    {
+      "id": "transition",
+      "from": "geofence",
+      "to": "receiver",
+      "label": "ENTER·EXIT·DWELL",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "bufferTransition",
+      "from": "receiver",
+      "to": "buffer",
+      "label": "전이 적재",
+      "variant": "emphasis"
+    },
+    {
+      "id": "catchUp",
+      "from": "receiver",
+      "to": "worker",
+      "label": "즉시 catch-up",
+      "variant": "dashed",
+      "route": "top-channel",
+      "fromSide": "top",
+      "toSide": "top"
+    },
+    {
+      "id": "locationFix",
+      "from": "location",
+      "to": "collector",
+      "label": "위치 표본",
+      "fromSide": "right",
+      "toSide": "top",
+      "via": [
+        [
+          315,
+          272
+        ]
+      ]
+    },
+    {
+      "id": "usageEvents",
+      "from": "usage",
+      "to": "collector",
+      "label": "커서 이후 이벤트",
+      "labelDy": -26
+    },
+    {
+      "id": "healthRecords",
+      "from": "health",
+      "to": "collector",
+      "label": "오늘 기록",
+      "fromSide": "right",
+      "toSide": "bottom",
+      "via": [
+        [
+          315,
+          500
+        ]
+      ]
+    },
+    {
+      "id": "bufferPulled",
+      "from": "collector",
+      "to": "buffer",
+      "label": "신호 적재"
+    },
+    {
+      "id": "drain",
+      "from": "buffer",
+      "to": "worker",
+      "label": "미전송 배치",
+      "variant": "emphasis",
+      "labelDy": -26
+    },
+    {
+      "id": "envelope",
+      "from": "worker",
+      "to": "server",
+      "label": "SyncEnvelope",
+      "variant": "security",
+      "labelDy": -26
+    },
+    {
+      "id": "verdict",
+      "from": "server",
+      "to": "today",
+      "label": "todayStatus",
+      "variant": "default",
+      "labelDy": 24
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "먼저 쌓고 나중에 보낸다",
+      "items": [
+        "신호는 받는 즉시 Room 에 들어간다 — 네트워크가 없어도 잃지 않는다",
+        "전송이 성공한 배치만 markSynced, 실패하면 다음 회차에 다시 실린다",
+        "15일이 지난 행은 지우고 그 구간을 BUFFER_EVICTED 공백으로 알린다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "앱은 판정하지 않는다",
+      "items": [
+        "성공 · 실패는 서버가 정한다. 앱은 신호와 권한 상태, 공백을 보낸다",
+        "권한이 없으면 수집을 건너뛰고 PERMISSION_MISSING 공백을 싣는다",
+        "413 이면 배치를 반으로 쪼개 최대 16 조각까지 다시 보낸다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "무엇을 모을지는 서버가 준다",
+      "items": [
+        "sync 마다 진행 중 챌린지에서 대상 위치 · 앱 · Health 항목을 복원한다",
+        "그 결과로 지오펜스를 reconcile 한다 — 챌린지당 앵커 최대 3개",
+        "주기는 서버의 flushIntervalSec 을 따른다(하한 15분)"
+      ]
+    }
+  ]
+}

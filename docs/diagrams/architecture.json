@@ -1,0 +1,573 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "RuleUp Android 모듈 아키텍처",
+    "output": "../architecture.html",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1380,
+      700
+    ],
+    "repository": {
+      "url": "https://github.com/RuleUp-ASM/Android",
+      "revision": "39b10e8d855905b3ae5ae0150e7192ec4d78fb9b"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "주요 요청 경로",
+        "focus": [
+          "app",
+          "featurePresentation",
+          "featureDomain",
+          "featureData",
+          "network",
+          "server"
+        ],
+        "note": "화면 진입에서 RuleUp 서버까지, 한 요청이 지나는 길."
+      },
+      {
+        "id": "shared-layer",
+        "label": "공통 레이어",
+        "focus": [
+          "coreUi",
+          "coreDomain",
+          "featurePresentation",
+          "featureDomain",
+          "auth",
+          "network",
+          "datastore"
+        ],
+        "note": "모든 feature 가 함께 쓰는 MVI 베이스 · 경로와 헬퍼 계약 · 통신 스택 · 토큰 저장."
+      },
+      {
+        "id": "verification",
+        "label": "자동 인증 파이프라인",
+        "focus": [
+          "osSignals",
+          "signalBuffer",
+          "syncWorker",
+          "network",
+          "server"
+        ],
+        "note": "사용자가 아무것도 누르지 않아도 기기 신호를 모아 30분마다 서버로 올리고, 판정은 서버가 한다."
+      },
+      {
+        "id": "observability",
+        "label": "관측",
+        "focus": [
+          "app",
+          "featurePresentation",
+          "observability",
+          "logging",
+          "sinks"
+        ],
+        "note": "행동은 :logging, 진단 · 성능은 :observability. 파이프라인이 둘이라 행동 이벤트에는 게이트가 없다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "fcm",
+      "type": "external",
+      "label": "FCM",
+      "sublabel": "알림 · 딥링크 URI",
+      "pos": [
+        30,
+        90
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "app/src/main/java/com/ruleup/android_ruleup/push/RuleUpMessagingService.kt"
+        }
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": ":app",
+      "sublabel": "Navigation 3 호스트",
+      "tag": "컴포지션 루트",
+      "pos": [
+        30,
+        250
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "app/src/main/java/com/ruleup/android_ruleup/navigation/AppRouteRegistry.kt",
+          "label": "라우팅 레지스트리"
+        }
+      ]
+    },
+    {
+      "id": "coreUi",
+      "type": "frontend",
+      "label": ":core:ui",
+      "sublabel": "MVI 베이스 · Local 헬퍼",
+      "pos": [
+        250,
+        90
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "core/ui/src/main/kotlin/com/ruleup/ui/mvi/MviViewmodel.kt",
+          "label": "MviViewModel"
+        }
+      ]
+    },
+    {
+      "id": "featurePresentation",
+      "type": "frontend",
+      "label": "feature:presentation",
+      "sublabel": "challenge·profile·home 외",
+      "tag": "Compose + ViewModel",
+      "pos": [
+        250,
+        250
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "coreDomain",
+      "type": "backend",
+      "label": ":core:domain",
+      "sublabel": "AppRoutes · 헬퍼 계약",
+      "tag": "순수 코틀린",
+      "pos": [
+        470,
+        90
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "core/domain/src/main/kotlin/com/ruleup/domain/navigation/AppRoutes.kt",
+          "label": "경로 단일 소스"
+        }
+      ]
+    },
+    {
+      "id": "featureDomain",
+      "type": "backend",
+      "label": "feature:domain",
+      "sublabel": "entity · Repository 계약",
+      "tag": "순수 코틀린",
+      "pos": [
+        470,
+        250
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "featureData",
+      "type": "backend",
+      "label": "feature:data",
+      "sublabel": "Retrofit api · DTO 매핑",
+      "pos": [
+        690,
+        250
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "토큰 인터셉터",
+      "sublabel": "401 → TokenAuthenticator",
+      "tag": "NO_AUTH_PATHS 제외",
+      "pos": [
+        910,
+        90
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "core/network/src/main/kotlin/com/ruleup/network/di/NetworkModule.kt",
+          "label": "토큰 주입"
+        },
+        {
+          "path": "core/network/src/main/kotlin/com/ruleup/network/auth/TokenAuthenticator.kt",
+          "label": "401 갱신"
+        }
+      ]
+    },
+    {
+      "id": "network",
+      "type": "backend",
+      "label": ":core:network",
+      "sublabel": "OkHttp · Retrofit · Json",
+      "pos": [
+        910,
+        250
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "server",
+      "type": "external",
+      "label": "RuleUp 서버",
+      "sublabel": "BASE_URL · v1 API",
+      "tag": "판정 주체",
+      "pos": [
+        1170,
+        250
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "datastore",
+      "type": "database",
+      "label": ":core:datastore",
+      "sublabel": "토큰 · 기기 ID",
+      "pos": [
+        1170,
+        430
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "core/datastore/src/main/kotlin/com/ruleup/datastore/token/TokenRepositoryImpl.kt"
+        }
+      ]
+    },
+    {
+      "id": "observability",
+      "type": "messagebus",
+      "label": ":observability",
+      "sublabel": "진단 · TTI · jank",
+      "pos": [
+        30,
+        430
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "observability/domain/src/main/kotlin/com/ruleup/observability/domain/api/Observability.kt"
+        }
+      ]
+    },
+    {
+      "id": "logging",
+      "type": "messagebus",
+      "label": ":logging",
+      "sublabel": "BizLogger · 이벤트 카탈로그",
+      "pos": [
+        250,
+        430
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "logging/domain/src/main/kotlin/com/ruleup/logging/domain/BizLoggerImpl.kt"
+        }
+      ]
+    },
+    {
+      "id": "sinks",
+      "type": "cloud",
+      "label": "분석 도구",
+      "sublabel": "Amplitude · Firebase",
+      "tag": "Crashlytics",
+      "pos": [
+        30,
+        600
+      ],
+      "size": [
+        380,
+        68
+      ]
+    },
+    {
+      "id": "osSignals",
+      "type": "external",
+      "label": "기기 신호",
+      "sublabel": "지오펜스 · 사용기록 · Health",
+      "pos": [
+        470,
+        600
+      ],
+      "size": [
+        160,
+        68
+      ]
+    },
+    {
+      "id": "signalBuffer",
+      "type": "database",
+      "label": "Room 신호 버퍼",
+      "sublabel": "ruleup_verification.db",
+      "tag": "15일 보관",
+      "pos": [
+        690,
+        600
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "verification/data/src/main/kotlin/com/ruleup/verification/data/db/common/VerificationDatabase.kt"
+        }
+      ]
+    },
+    {
+      "id": "syncWorker",
+      "type": "backend",
+      "label": "VerificationSyncWorker",
+      "sublabel": "WorkManager 30분 주기",
+      "pos": [
+        910,
+        600
+      ],
+      "size": [
+        160,
+        68
+      ],
+      "sources": [
+        {
+          "path": "verification/data/src/main/kotlin/com/ruleup/verification/data/sync/VerificationSyncWorker.kt"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": ":verification:data — 자동 인증 파이프라인",
+      "wraps": [
+        "signalBuffer",
+        "syncWorker"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "관측 — 파이프라인 둘",
+      "wraps": [
+        "observability",
+        "logging"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "route",
+      "from": "app",
+      "to": "featurePresentation",
+      "label": "라우팅 · 화면 진입",
+      "variant": "emphasis",
+      "labelDy": -28
+    },
+    {
+      "id": "repoCall",
+      "from": "featurePresentation",
+      "to": "featureDomain",
+      "label": "Repository 계약",
+      "variant": "emphasis",
+      "labelDy": -28
+    },
+    {
+      "id": "binds",
+      "from": "featureDomain",
+      "to": "featureData",
+      "label": "구현 @Binds",
+      "variant": "emphasis",
+      "labelDy": -28
+    },
+    {
+      "id": "apiCall",
+      "from": "featureData",
+      "to": "network",
+      "label": "Retrofit 요청",
+      "variant": "emphasis",
+      "labelDy": -28
+    },
+    {
+      "id": "https",
+      "from": "network",
+      "to": "server",
+      "label": "HTTPS",
+      "variant": "emphasis",
+      "labelDy": -28
+    },
+    {
+      "id": "push",
+      "from": "fcm",
+      "to": "app",
+      "label": "알림 탭 · 딥링크",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "mviBase",
+      "from": "coreUi",
+      "to": "featurePresentation",
+      "label": "MviViewModel",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "contracts",
+      "from": "coreDomain",
+      "to": "featureDomain",
+      "label": "경로 · 헬퍼 계약",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tokenInject",
+      "from": "auth",
+      "to": "network",
+      "label": "토큰 주입 · 갱신",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "tokenStore",
+      "from": "network",
+      "to": "datastore",
+      "label": "토큰 읽기 · 저장",
+      "variant": "dashed",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "screenTrack",
+      "from": "app",
+      "to": "observability",
+      "label": "화면 추적 · 진단",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "bizRecord",
+      "from": "featurePresentation",
+      "to": "logging",
+      "label": "행동 이벤트",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelDy": 24
+    },
+    {
+      "id": "obsOut",
+      "from": "observability",
+      "to": "sinks",
+      "label": "성능 · 크래시",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "bizOut",
+      "from": "logging",
+      "to": "sinks",
+      "label": "행동 전송",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "collect",
+      "from": "osSignals",
+      "to": "signalBuffer",
+      "label": "수집 · 적재",
+      "variant": "default",
+      "labelDy": 50
+    },
+    {
+      "id": "drain",
+      "from": "signalBuffer",
+      "to": "syncWorker",
+      "label": "배치 drain",
+      "variant": "default",
+      "labelDy": 50
+    },
+    {
+      "id": "syncPost",
+      "from": "syncWorker",
+      "to": "network",
+      "label": "POST sync",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "레이어 규칙",
+      "items": [
+        "presentation → domain ← data, feature 간 의존은 domain 까지만",
+        "domain 은 android.* 를 import 하지 않는다 — ArchitectureTest 가 막는다",
+        "화면은 NavigationHelper 로만 이동한다. 경로 문자열은 AppRoutes 한 곳"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "자동 인증",
+      "items": [
+        "지오펜스 · UsageStats · Health Connect 신호를 Room 에 먼저 쌓는다",
+        "WorkManager 가 30분마다 한 봉투로 올린다 — 판정은 서버 몫",
+        "지오펜스 전이는 즉시 catch-up 을 따로 건다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "관측",
+      "items": [
+        "행동 이벤트는 :logging → Amplitude · Firebase",
+        "진단은 Crashlytics, 성능(TTI · jank · 메모리)은 분석 도구로",
+        "모든 이벤트에 화면 경로가 붙는다 — ScreenTracker 가 채운다"
+      ]
+    }
+  ]
+}
