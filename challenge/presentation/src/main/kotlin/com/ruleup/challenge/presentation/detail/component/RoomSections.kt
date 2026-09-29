@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,9 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ChallengeMember
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.presentation.common.capacityLabel
@@ -131,6 +134,14 @@ private fun MemberRow(
                 color = RuleUpTheme.colors.brand,
                 style = RuleUpTheme.typography.bodyBold,
             )
+            member.profileImageUrl?.takeIf { it.isNotBlank() }?.let { imageUrl ->
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
         Spacer(Modifier.width(10.dp))
         Text(
@@ -246,11 +257,6 @@ internal fun RoomMuteSection(
                 text = "이 챌린지 알림 끄기",
                 color = RuleUpTheme.colors.textPrimary,
                 style = RuleUpTheme.typography.bodyMedium,
-            )
-            Text(
-                text = "푸시만 멈춰요 · 알림함에는 그대로 쌓여요",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.caption,
             )
         }
         Switch(

@@ -193,7 +193,7 @@ private fun EditBody(
     onIntent: (ProfileEditIntent) -> Unit,
     onPickImage: () -> Unit,
 ) {
-    val profile = state.profile ?: return
+    if (state.profile == null) return
     Column(
         modifier =
             Modifier
@@ -221,9 +221,9 @@ private fun EditBody(
                     state.isImageBusy ->
                         CircularProgressIndicator(color = RuleUpPalette.BgSurface, modifier = Modifier.size(26.dp))
 
-                    profile.profileImageUrl != null ->
+                    state.imagePreviewUrl != null ->
                         AsyncImage(
-                            model = profile.profileImageUrl,
+                            model = state.imagePreviewUrl,
                             contentDescription = "프로필 이미지",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize(),
@@ -243,7 +243,7 @@ private fun EditBody(
                 ImageActionChip(label = "🖼 갤러리", enabled = !state.isImageBusy, onClick = onPickImage)
                 ImageActionChip(
                     label = "🗑 제거",
-                    enabled = !state.isImageBusy && profile.profileImageUrl != null,
+                    enabled = !state.isImageBusy && state.imagePreviewUrl != null,
                     onClick = { onIntent(ProfileEditIntent.RemoveImage) },
                 )
             }

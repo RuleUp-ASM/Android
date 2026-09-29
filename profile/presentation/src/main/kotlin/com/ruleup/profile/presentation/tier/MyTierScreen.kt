@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -316,6 +317,8 @@ private fun RecentChangesCard(
                     text = change.deltaLabel,
                     color = if (change.delta < 0) RuleUpTheme.colors.danger else RuleUpTheme.colors.success,
                     style = RuleUpTheme.typography.smallBold,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                    modifier = Modifier.width(64.dp),
                 )
             }
         }

@@ -166,6 +166,183 @@ class ProfileEditViewModelTest {
         assertEquals(emptyList(), nav.routes)
     }
 
+    @Test
+    fun `사진을 골랐다가 나가면 서버 사진은 바뀌지 않는다`() =
+        runTest {
+            val repo = repo(imageUrl = "https://example.com/old.jpg")
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ProfileEditIntent.Load)
+
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/1"))
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/2"))
+
+            assertEquals("content://photos/2", viewModel.uiState.value.imagePreviewUrl)
+            assertEquals(
+                "https://example.com/old.jpg",
+                viewModel.uiState.value.profile
+                    ?.profileImageUrl,
+            )
+            viewModel.onIntent(ProfileEditIntent.Back)
+            assertEquals(listOf("getProfile", "getCategories"), repo.calls)
+        }
+
+    @Test
+    fun `사진만 바꾸고 저장하면 마지막 선택 사진만 반영한다`() =
+        runTest {
+            val uploaded = mutableListOf<String>()
+            val repo =
+                repo(uploadImage = {
+                    uploaded += it
+                    "https://example.com/new.jpg"
+                })
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(repo, nav)
+            viewModel.onIntent(ProfileEditIntent.Load)
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/1"))
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/2"))
+
+            viewModel.onIntent(ProfileEditIntent.Save)
+
+            assertEquals(listOf("content://photos/2"), uploaded)
+            assertTrue("updateProfile" !in repo.calls)
+            assertEquals("https://example.com/new.jpg", viewModel.uiState.value.imagePreviewUrl)
+            assertEquals(false, viewModel.uiState.value.imageChanged)
+            assertEquals(1, nav.backCount)
+        }
+
+    @Test
+    fun `기존 사진을 제거해도 저장하기 전에는 서버에서 삭제하지 않는다`() =
+        runTest {
+            val repo = repo(imageUrl = "https://example.com/old.jpg")
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ProfileEditIntent.Load)
+
+            viewModel.onIntent(ProfileEditIntent.RemoveImage)
+
+            assertEquals(null, viewModel.uiState.value.imagePreviewUrl)
+            assertTrue("deleteProfileImage" !in repo.calls)
+            viewModel.onIntent(ProfileEditIntent.Save)
+            assertEquals(1, repo.calls.count { it == "deleteProfileImage" })
+            assertEquals(
+                null,
+                viewModel.uiState.value.profile
+                    ?.profileImageUrl,
+            )
+        }
+
+    @Test
+    fun `사진이 없던 사람이 선택을 취소하면 저장할 사진 변경이 없다`() =
+        runTest {
+            val repo = repo()
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ProfileEditIntent.Load)
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/1"))
+            viewModel.onIntent(ProfileEditIntent.RemoveImage)
+
+            viewModel.onIntent(ProfileEditIntent.Save)
+
+            assertEquals(false, viewModel.uiState.value.imageChanged)
+            assertEquals(listOf("getProfile", "getCategories"), repo.calls)
+        }
+
+    @Test
+    fun `사진 업로드가 실패하면 선택을 보존하고 다시 저장할 수 있다`() =
+        runTest {
+            var attempts = 0
+            val repo =
+                repo(uploadImage = {
+                    attempts++
+                    if (attempts == 1) error("통신 실패")
+                    "https://example.com/new.jpg"
+                })
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(repo, nav)
+            viewModel.onIntent(ProfileEditIntent.Load)
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/1"))
+
+            viewModel.onIntent(ProfileEditIntent.Save)
+
+            assertEquals(0, nav.backCount)
+            assertEquals(false, viewModel.uiState.value.isSaving)
+            assertEquals("content://photos/1", viewModel.uiState.value.imagePreviewUrl)
+            viewModel.onIntent(ProfileEditIntent.Save)
+            assertEquals(2, attempts)
+            assertEquals(1, nav.backCount)
+        }
+
+    @Test
+    fun `사진 삭제가 실패하면 제거 선택을 보존하고 다시 저장할 수 있다`() =
+        runTest {
+            var attempts = 0
+            val repo =
+                repo(
+                    imageUrl = "https://example.com/old.jpg",
+                    deleteImage = {
+                        attempts++
+                        if (attempts == 1) error("통신 실패")
+                    },
+                )
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(repo, nav)
+            viewModel.onIntent(ProfileEditIntent.Load)
+            viewModel.onIntent(ProfileEditIntent.RemoveImage)
+
+            viewModel.onIntent(ProfileEditIntent.Save)
+
+            assertEquals(0, nav.backCount)
+            assertTrue(viewModel.uiState.value.removeImage)
+            assertEquals(
+                "https://example.com/old.jpg",
+                viewModel.uiState.value.profile
+                    ?.profileImageUrl,
+            )
+            viewModel.onIntent(ProfileEditIntent.Save)
+            assertEquals(2, attempts)
+            assertEquals(1, nav.backCount)
+        }
+
+    @Test
+    fun `닉네임 검증이 실패하면 선택한 사진도 전송하지 않는다`() =
+        runTest {
+            val repo = repo(checkNickname = { NicknameCheck(true, false, NicknameCheckReason.DUPLICATED) })
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ProfileEditIntent.Load)
+            viewModel.onIntent(ProfileEditIntent.ChangeNickname("새이름"))
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/1"))
+
+            viewModel.onIntent(ProfileEditIntent.Save)
+
+            assertTrue("uploadProfileImage" !in repo.calls)
+            assertEquals(false, viewModel.uiState.value.isSaving)
+            assertEquals("content://photos/1", viewModel.uiState.value.imagePreviewUrl)
+        }
+
+    @Test
+    fun `닉네임 저장 후 사진만 실패하면 재시도 때 닉네임을 다시 변경하지 않는다`() =
+        runTest {
+            var attempts = 0
+            val repo =
+                repo(
+                    updateProfile = { profile().let { it.copy(user = it.user.copy(nickname = "새이름")) } },
+                    uploadImage = {
+                        attempts++
+                        if (attempts == 1) error("통신 실패")
+                        "https://example.com/new.jpg"
+                    },
+                )
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ProfileEditIntent.Load)
+            viewModel.onIntent(ProfileEditIntent.ChangeNickname("새이름"))
+            viewModel.onIntent(ProfileEditIntent.PickImage("content://photos/1"))
+
+            viewModel.onIntent(ProfileEditIntent.Save)
+            viewModel.onIntent(ProfileEditIntent.Save)
+
+            assertEquals(1, repo.calls.count { it == "updateProfile" })
+            assertEquals(2, attempts)
+            assertEquals(false, viewModel.uiState.value.imageChanged)
+        }
+
     private fun TestScope.collectEffects(viewModel: ProfileEditViewModel): List<ProfileEditEffect> {
         val effects = mutableListOf<ProfileEditEffect>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effect.toList(effects) }
@@ -176,11 +353,16 @@ class ProfileEditViewModelTest {
         categories: (() -> com.ruleup.profile.domain.entity.CategoryCatalog)? = { catalog() },
         checkNickname: ((String) -> NicknameCheck)? = { NicknameCheck(valid = true, available = true, reason = null) },
         updateProfile: (() -> Profile)? = { profile() },
+        imageUrl: String? = null,
+        uploadImage: ((String) -> String)? = { "https://example.com/new.jpg" },
+        deleteImage: () -> Unit = {},
     ) = FakeProfileRepository(
-        profile = { profile() },
+        profile = { profile().let { it.copy(user = it.user.copy(profileImageUrl = imageUrl)) } },
         categories = categories,
         checkNickname = checkNickname,
         updateProfile = updateProfile,
+        uploadImage = uploadImage,
+        deleteImage = deleteImage,
     )
 
     private fun catalog() =
