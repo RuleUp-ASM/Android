@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,9 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.VerificationMethod
@@ -41,11 +44,13 @@ import com.ruleup.challenge.presentation.create.component.ConfirmEditSheet
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.designsystem.R
+import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.ui.helper.LocalNavigationHelper
+import com.ruleup.ui.image.rememberImagePicker
 
 /** 확인 화면 */
 @Composable
@@ -72,6 +77,7 @@ fun ChallengeConfirmContent(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             item { HeaderCard(state = state) }
+            item { CoverImageCard(state = state, onIntent = onIntent) }
             item { SummaryCard(state = state, onEdit = { editing = it }) }
             item {
                 Text(
@@ -114,6 +120,38 @@ fun ChallengeConfirmContent(
             onIntent = onIntent,
             onDismiss = { editing = null },
         )
+    }
+}
+
+@Composable
+private fun CoverImageCard(
+    state: CreateChallengeState,
+    onIntent: (CreateChallengeIntent) -> Unit,
+) {
+    val picker = rememberImagePicker { onIntent(CreateChallengeIntent.SetCoverImage(it)) }
+    RuleUpCard {
+        Text("챌린지 사진", style = RuleUpTheme.typography.cardTitle)
+        state.coverImageUri?.let { uri ->
+            AsyncImage(
+                model = uri,
+                contentDescription = "선택한 챌린지 사진",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RuleUpTheme.shapes.small),
+            )
+        }
+        Row {
+            TextButton(onClick = { picker.launchGallery() }, enabled = !state.isCreating) {
+                Text(if (state.coverImageUri == null) "사진 선택" else "사진 변경")
+            }
+            if (state.coverImageUri != null) {
+                TextButton(
+                    onClick = { onIntent(CreateChallengeIntent.SetCoverImage(null)) },
+                    enabled = !state.isCreating,
+                ) {
+                    Text("사진 제거")
+                }
+            }
+        }
     }
 }
 
