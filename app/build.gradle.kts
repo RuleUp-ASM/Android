@@ -205,6 +205,7 @@ dependencies {
     // FCM 수신(공지 fan-out 등) + 토큰 등록.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.perf)
 
     // 프레임 jank 측정(JankStats).
     implementation(libs.androidx.metrics.performance)
