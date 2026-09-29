@@ -15,7 +15,6 @@
 
     <!-- API 31 미만 즉시 동기화의 포그라운드 서비스 권한. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- 스크린타임/WAKE 특수권한. -->
     <uses-permission
@@ -34,12 +33,6 @@
     </queries>
 
     <application>
-        <!-- WorkManager 포그라운드 서비스의 dataSync 타입. -->
-        <service
-            android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="dataSync"
-            tools:node="merge" />
-
         <!-- 지오펜스 전이 수신. -->
         <receiver
             android:name="com.ruleup.verification.data.signal.geofence.GeofenceBroadcastReceiver"
