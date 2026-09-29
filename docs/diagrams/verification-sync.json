@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "자동 인증 sync 한 회차",
+    "output": "../verification-sync.html",
+    "quality_profile": "showcase",
+    "viewBox": [1240, 700],
+    "column_fit": "spread",
+    "views": [
+      {
+        "id": "restore",
+        "label": "대상 복원",
+        "focus": ["worker", "restore", "server", "geofence"],
+        "note": "무엇을 모을지는 매 회차 서버에서 다시 받는다. 지오펜스도 이때 맞춘다."
+      },
+      {
+        "id": "collect",
+        "label": "수집 · 배치",
+        "focus": ["worker", "collector", "room"],
+        "note": "당겨 오는 신호를 Room 에 먼저 넣고, 미전송 행을 한 배치로 묶는다."
+      },
+      {
+        "id": "send",
+        "label": "전송 · 다음 회차",
+        "focus": ["worker", "server", "room", "workManager"],
+        "note": "성공한 배치만 전송 완료로 표시하고, 다음 주기는 서버가 준 값으로 다시 잡는다."
+      }
+    ]
+  },
+  "participants": [
+    { "id": "workManager", "type": "cloud", "label": "WorkManager" },
+    { "id": "worker", "type": "backend", "label": "SyncWorker" },
+    { "id": "restore", "type": "backend", "label": "대상 복원" },
+    { "id": "geofence", "type": "security", "label": "GeofenceRegister" },
+    { "id": "collector", "type": "backend", "label": "SignalCollector" },
+    { "id": "room", "type": "database", "label": "Room 버퍼" },
+    { "id": "server", "type": "external", "label": "RuleUp 서버" }
+  ],
+  "segments": [
+    { "from": 200, "to": 336, "label": "대상 복원" },
+    { "from": 344, "to": 448, "label": "수집 · 배치" },
+    { "from": 456, "to": 564, "label": "전송" }
+  ],
+  "messages": [
+    { "id": "run", "from": "workManager", "to": "worker", "y": 186, "label": "30분 주기 · catch-up", "variant": "emphasis", "note": "SyncGate 가 잠겨 있으면 retry — 로그아웃 정리와 겹치지 않는다" },
+    { "id": "scope", "from": "worker", "to": "restore", "y": 214, "label": "currentScope()", "variant": "emphasis" },
+    { "id": "fetchTargets", "from": "restore", "to": "server", "y": 242, "label": "진행 중 챌린지 · 위치 · 앱", "variant": "security", "note": "자동 인증 챌린지만 골라 방법별로 대상 위치 · 앱 · Health 항목을 받는다" },
+    { "id": "targets", "from": "server", "to": "restore", "y": 270, "label": "대상 목록", "variant": "return" },
+    { "id": "reconcile", "from": "restore", "to": "geofence", "y": 298, "label": "reconcile(targets)", "variant": "dashed", "note": "빠진 fence 는 지우고 나머지는 다시 등록한다. 위치 권한이 없으면 공백만 남긴다" },
+    { "id": "signalScope", "from": "restore", "to": "worker", "y": 326, "label": "SignalScope", "variant": "return", "note": "복원이 실패하면 Room 에 남은 지난 대상으로 돈다" },
+    { "id": "capture", "from": "worker", "to": "collector", "y": 354, "label": "capture(scope)", "variant": "emphasis" },
+    { "id": "store", "from": "collector", "to": "room", "y": 382, "label": "위치 · 사용기록 · Health", "variant": "dashed", "note": "권한이 없는 신호는 건너뛴다 — 수집기가 예외를 내지 않는다" },
+    { "id": "drain", "from": "worker", "to": "room", "y": 410, "label": "drainPending()", "variant": "emphasis", "note": "15일 지난 행을 먼저 지우고, 미전송 행에 배치 키를 붙인다" },
+    { "id": "batch", "from": "room", "to": "worker", "y": 438, "label": "SignalBatch · 공백", "variant": "return" },
+    { "id": "post", "from": "worker", "to": "server", "y": 466, "label": "POST verifications/sync", "variant": "security", "note": "신호 · 권한 상태 · 기기 시계 · Play Integrity 토큰 · 공백을 한 봉투에 싣는다" },
+    { "id": "response", "from": "server", "to": "worker", "y": 494, "label": "flushIntervalSec · 진행률", "variant": "return", "note": "413 이면 배치를 반으로 쪼개 최대 16 조각까지 다시 보낸다" },
+    { "id": "markSynced", "from": "worker", "to": "room", "y": 522, "label": "markSynced · 진행률 캐시", "variant": "dashed" },
+    { "id": "reschedule", "from": "worker", "to": "workManager", "y": 550, "label": "reschedule(interval)", "variant": "return", "note": "서버가 준 주기로 다시 잡는다. 하한은 15분" }
+  ],
+  "activations": [
+    { "participant": "worker", "from": 181, "to": 556, "type": "backend" },
+    { "participant": "restore", "from": 209, "to": 332, "type": "backend" },
+    { "participant": "server", "from": 237, "to": 276, "type": "external" },
+    { "participant": "collector", "from": 349, "to": 388, "type": "backend" },
+    { "participant": "room", "from": 377, "to": 444, "type": "database" },
+    { "participant": "server", "from": 461, "to": 500, "type": "external" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "한 회차",
+      "items": [
+        "대상 복원 → 수집 → 배치 → 전송 순서는 매번 같다",
+        "보낼 챌린지도 신호도 공백도 없으면 전송을 건너뛴다",
+        "로그인 토큰이 없으면 아무것도 하지 않고 성공으로 끝낸다"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "실패",
+      "items": [
+        "SYNC_TOO_FREQUENT 와 그 밖의 오류는 retry — 행은 미전송 그대로",
+        "INVALID_SIGNAL_PAYLOAD 는 retry 하지 않는다. 행은 다음 회차에 다시 실린다",
+        "실패는 DIAGNOSTIC 채널로 sync_outcome 과 함께 남는다"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "언제 도는가",
+      "items": [
+        "앱 시작 · 로그인 때 30분 주기를 건다 (이미 있으면 유지)",
+        "지오펜스 전이 · 대상 앱 저장 직후 catch-up 한 번",
+        "로그아웃하면 주기 · catch-up · 지오펜스 · 버퍼를 모두 지운다"
+      ]
+    }
+  ]
+}
