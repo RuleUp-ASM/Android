@@ -35,6 +35,7 @@ class ProfileEditViewModel
             ProfileEditState.initial,
         ) {
         override fun onIntent(intent: ProfileEditIntent) {
+            if (currentState.isSaving) return
             when (intent) {
                 ProfileEditIntent.Load -> load()
                 is ProfileEditIntent.ChangeNickname ->
@@ -45,8 +46,8 @@ class ProfileEditViewModel
                     )
 
                 is ProfileEditIntent.ToggleCategory -> toggleCategory(intent.category)
-                is ProfileEditIntent.PickImage -> uploadImage(intent.uri)
-                ProfileEditIntent.RemoveImage -> removeImage()
+                is ProfileEditIntent.PickImage -> dispatch(ProfileEditReducerEvent.ImageSelected(intent.uri))
+                ProfileEditIntent.RemoveImage -> dispatch(ProfileEditReducerEvent.ImageSelected(null))
                 ProfileEditIntent.Save -> save()
                 ProfileEditIntent.Back -> navigationHelper.navigateToBack()
                 ProfileEditIntent.DismissSaveBlock -> dispatch(ProfileEditReducerEvent.SaveBlocked(null))
@@ -83,18 +84,27 @@ class ProfileEditViewModel
 
                 is ProfileEditReducerEvent.CategoriesChanged -> state.copy(selectedCategories = event.categories)
 
-                is ProfileEditReducerEvent.ImageBusy -> state.copy(isImageBusy = event.busy)
-
                 is ProfileEditReducerEvent.ImageChanged ->
-                    state.copy(profile = state.profile?.let { it.copy(user = it.user.copy(profileImageUrl = event.profileImageUrl)) })
+                    state.copy(
+                        profile = state.profile?.let { it.copy(user = it.user.copy(profileImageUrl = event.profileImageUrl)) },
+                        pendingImageUri = null,
+                        removeImage = false,
+                    )
 
-                is ProfileEditReducerEvent.Saving -> state.copy(isSaving = event.saving)
+                is ProfileEditReducerEvent.ImageSelected ->
+                    state.copy(
+                        pendingImageUri = event.uri,
+                        removeImage = event.uri == null && state.profile?.profileImageUrl != null,
+                    )
+
+                is ProfileEditReducerEvent.Saving -> state.copy(isSaving = event.saving, isImageBusy = event.saving)
 
                 is ProfileEditReducerEvent.Saved ->
                     state.copy(
                         profile = event.profile,
                         nickname = event.profile.nickname,
                         selectedCategories = event.profile.interestCategories,
+                        nicknameLockedDays = event.profile.nicknameChangeableAfter.remainingDays(),
                     )
             }
 
@@ -138,37 +148,6 @@ class ProfileEditViewModel
             dispatch(ProfileEditReducerEvent.CategoriesChanged(next))
         }
 
-        private fun uploadImage(uri: String) {
-            if (currentState.isImageBusy) return
-            viewModelScope.launch {
-                dispatch(ProfileEditReducerEvent.ImageBusy(true))
-                runCatching { profileRepository.uploadProfileImage(uri) }
-                    .onSuccess { url ->
-                        dispatch(ProfileEditReducerEvent.ImageChanged(url))
-                        emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 변경했어요"))
-                    }.onFailure {
-                        emitEffect(ProfileEditEffect.ShowMessage(it.userFacingMessage("사진을 올리지 못했어요")))
-                    }
-                dispatch(ProfileEditReducerEvent.ImageBusy(false))
-            }
-        }
-
-        private fun removeImage() {
-            if (currentState.isImageBusy) return
-            if (currentState.profile?.profileImageUrl == null) return
-            viewModelScope.launch {
-                dispatch(ProfileEditReducerEvent.ImageBusy(true))
-                runCatching { profileRepository.deleteProfileImage() }
-                    .onSuccess {
-                        dispatch(ProfileEditReducerEvent.ImageChanged(null))
-                        emitEffect(ProfileEditEffect.ShowMessage("프로필 사진을 제거했어요"))
-                    }.onFailure {
-                        emitEffect(ProfileEditEffect.ShowMessage(it.userFacingMessage("사진을 제거하지 못했어요")))
-                    }
-                dispatch(ProfileEditReducerEvent.ImageBusy(false))
-            }
-        }
-
         private fun save() {
             val state = currentState
             val profile = state.profile ?: return
@@ -178,7 +157,7 @@ class ProfileEditViewModel
             val nicknameChanged = !state.nicknameLocked && trimmed != profile.nickname
             val categoriesChanged = state.selectedCategories.toSet() != profile.interestCategories.toSet()
 
-            if (!nicknameChanged && !categoriesChanged) {
+            if (!nicknameChanged && !categoriesChanged && !state.imageChanged) {
                 emitEffect(ProfileEditEffect.ShowMessage("변경된 내용이 없어요"))
                 return
             }
@@ -193,6 +172,7 @@ class ProfileEditViewModel
                 return
             }
 
+            dispatch(ProfileEditReducerEvent.Saving(true))
             viewModelScope
                 .launch {
                     // 쓰기가 막힌 상태면 PATCH 를 보내지 않는다
@@ -205,7 +185,6 @@ class ProfileEditViewModel
                         )
                         return@launch
                     }
-                    dispatch(ProfileEditReducerEvent.Saving(true))
                     runCatching {
                         if (nicknameChanged) {
                             val check = profileRepository.checkNickname(trimmed)
@@ -225,12 +204,22 @@ class ProfileEditViewModel
                                 return@launch
                             }
                         }
-                        profileRepository.updateProfile(
-                            nickname = trimmed.takeIf { nicknameChanged },
-                            interestCategories = state.selectedCategories.takeIf { categoriesChanged },
-                        )
-                    }.onSuccess { updated ->
-                        dispatch(ProfileEditReducerEvent.Saved(updated))
+                        if (nicknameChanged || categoriesChanged) {
+                            val updated =
+                                profileRepository.updateProfile(
+                                    nickname = trimmed.takeIf { nicknameChanged },
+                                    interestCategories = state.selectedCategories.takeIf { categoriesChanged },
+                                )
+                            dispatch(ProfileEditReducerEvent.Saved(updated))
+                        }
+                        if (state.pendingImageUri != null) {
+                            val url = profileRepository.uploadProfileImage(state.pendingImageUri)
+                            dispatch(ProfileEditReducerEvent.ImageChanged(url))
+                        } else if (state.removeImage) {
+                            profileRepository.deleteProfileImage()
+                            dispatch(ProfileEditReducerEvent.ImageChanged(null))
+                        }
+                    }.onSuccess {
                         emitEffect(ProfileEditEffect.ShowMessage("프로필을 저장했어요"))
                         navigationHelper.navigateToBack()
                     }.onFailure {

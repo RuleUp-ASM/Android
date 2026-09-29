@@ -15,6 +15,7 @@ class FakeProfileRepository(
     private val updateProfile: (() -> Profile)? = null,
     private val uploadImage: ((String) -> String)? = null,
     private val myProfile: (() -> MyProfile)? = null,
+    private val deleteImage: () -> Unit = {},
 ) : ProfileRepository {
     /** 어떤 메서드가 불렸는지. */
     val calls = mutableListOf<String>()
@@ -59,6 +60,7 @@ class FakeProfileRepository(
 
     override suspend fun deleteProfileImage() {
         calls += "deleteProfileImage"
+        deleteImage()
     }
 
     override suspend fun getMyProfile(): MyProfile {

@@ -21,7 +21,7 @@ sealed interface ProfileEditIntent : MviIntent {
         val category: Category,
     ) : ProfileEditIntent
 
-    /** 갤러리에서 고른 이미지 업로드 (업로드 즉시 반영). */
+    /** 저장 전에는 선택한 사진을 화면에서만 미리 본다. */
     data class PickImage(
         val uri: String,
     ) : ProfileEditIntent
@@ -61,8 +61,13 @@ data class ProfileEditState(
     val errorMessage: String?,
     // 저장 진입점은 숨기지 않는다
     val saveBlock: SuspendedBlock?,
+    val pendingImageUri: String? = null,
+    val removeImage: Boolean = false,
 ) : UiState {
     val nicknameLocked: Boolean get() = nicknameLockedDays > 0
+    val imageChanged: Boolean get() = pendingImageUri != null || removeImage
+    val imagePreviewUrl: String?
+        get() = if (removeImage) null else pendingImageUri ?: profile?.profileImageUrl
 
     companion object {
         val initial =
@@ -106,8 +111,8 @@ sealed interface ProfileEditReducerEvent : ReducerEvent {
         val categories: List<Category>,
     ) : ProfileEditReducerEvent
 
-    data class ImageBusy(
-        val busy: Boolean,
+    data class ImageSelected(
+        val uri: String?,
     ) : ProfileEditReducerEvent
 
     /** 업로드/제거 후 서버 반영 결과 URL (제거면 null). */
