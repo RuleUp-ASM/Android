@@ -1,5 +1,6 @@
 package com.ruleup.android_ruleup.tti
 
+import com.google.firebase.perf.FirebasePerformance
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.event.Channel
 import com.ruleup.observability.domain.event.PerformancePayload
@@ -17,11 +18,24 @@ class ObservabilityTtiShooter
         override suspend fun shoot(records: List<TtiRecord>) {
             records.forEach { record ->
                 val total = record.totalTimeMillis ?: return@forEach
+                val spans = record.spanMillis()
+                // 저장된 TTI 는 total_millis 로 본다. Duration 은 이 전송 구간의 시간이다(#518).
+                val trace = FirebasePerformance.getInstance().newTrace("tti_shot")
+                trace.start()
+                try {
+                    trace.putAttribute("page_name", record.pageName.take(100))
+                    trace.putMetric("total_millis", total)
+                    spans.forEach { (name, millis) ->
+                        trace.putMetric("${name.lowercase()}_millis", millis)
+                    }
+                } finally {
+                    trace.stop()
+                }
                 observability.log(Channel.PERFORMANCE) {
                     PerformancePayload.Tti(
                         pageName = record.pageName,
                         totalMillis = total,
-                        spans = record.spanMillis(),
+                        spans = spans,
                     )
                 }
             }

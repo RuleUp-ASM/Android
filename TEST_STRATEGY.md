@@ -61,6 +61,20 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 
 ## 3. 미검증 — 알면서 안 하고 있는 것
 
+### 2026-09-30 TTI Firebase Performance 연동 (#518)
+
+- `ObservabilityTtiShooterTest` 5건: 저장된 전체·구간 시간(0ms 포함), 미완성 기록 제외,
+  빈 목록, Firebase 실패 전파, 화면 이름 제한과 기존 관측 이벤트 보존을 검사한다.
+- 관련 테스트 26건, `:app:assembleDebug`, `:app:ktlintCheck`, `:app:lintDebug`를 로컬에서 통과했다.
+- 실제 전송 확인: Medium_Phone 에뮬레이터에서 앱을 실행하고 Firebase Performance 콘솔의
+  `tti_shot` 샘플 2개, `total_millis` 및 구간별 지표 4개, `page_name`을 확인했다.
+  콘솔의 화면별 최신 값은 splash 94ms, walkthrough 121ms였다(2026-09-30 02:22 KST 확인).
+- 콘솔: Performance → Custom traces → `tti_shot` → `total_millis`, 속성 `page_name`.
+  모든 `*_millis` 지표의 단위는 ms이며 기본 Duration은 shot 전송 코드 실행 시간이다.
+- 디버그 APK는 `firebase_performance_logcat_enabled`로 trace 기록을 logcat에서 확인할 수 있다.
+  수동 Trace API만 사용하므로 HTTP 자동 계측·`@AddTrace`용 Performance Gradle 플러그인은 추가하지 않는다.
+- 미검증: SDK 수집 비활성화·샘플링과 장시간 오프라인 후의 서버 수신은 이번 확인 범위에 포함하지 않았다.
+
 ### 2026-09-28 권한·동의 및 안내 모달 통합 검증 (#504 · #505)
 
 현황 표는 2026-09-28 다시 집계했다. 이번 변경에서는 presentation의 `SensitiveConsentTest`를
