@@ -71,6 +71,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
   콘솔의 화면별 최신 값은 splash 94ms, walkthrough 121ms였다(2026-09-30 02:22 KST 확인).
 - 콘솔: Performance → Custom traces → `tti_shot` → `total_millis`, 속성 `page_name`.
   모든 `*_millis` 지표의 단위는 ms이며 기본 Duration은 shot 전송 코드 실행 시간이다.
+  콘솔은 custom metric의 단위를 생략한다. `+0%`는 소요 시간이 아니라 비교 기간 대비 변화율이다.
+- CI에서 발견된 기존 `MyCalendarViewModelTest`의 UTC·서울 날짜 불일치는 기대값을 서비스 시간대로 맞췄고,
+  `JAVA_TOOL_OPTIONS=-Duser.timezone=UTC` 환경에서 해당 테스트를 재검증했다.
 - 디버그 APK는 `firebase_performance_logcat_enabled`로 trace 기록을 logcat에서 확인할 수 있다.
   수동 Trace API만 사용하므로 HTTP 자동 계측·`@AddTrace`용 Performance Gradle 플러그인은 추가하지 않는다.
 - 미검증: SDK 수집 비활성화·샘플링과 장시간 오프라인 후의 서버 수신은 이번 확인 범위에 포함하지 않았다.

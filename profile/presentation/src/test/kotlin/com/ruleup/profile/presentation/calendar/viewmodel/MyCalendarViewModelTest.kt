@@ -1,6 +1,7 @@
 package com.ruleup.profile.presentation.calendar.viewmodel
 
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.domain.time.ServiceDate
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayDetail
@@ -24,8 +25,8 @@ import kotlin.test.assertTrue
 /** 활동 캘린더. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MyCalendarViewModelTest {
-    private val thisMonth = YearMonth.from(LocalDate.now()).toString()
-    private val lastMonth = YearMonth.from(LocalDate.now()).minusMonths(1).toString()
+    private val thisMonth = YearMonth.from(LocalDate.now(ServiceDate.ZONE)).toString()
+    private val lastMonth = YearMonth.from(LocalDate.now(ServiceDate.ZONE)).minusMonths(1).toString()
 
     @BeforeTest
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -41,7 +42,7 @@ class MyCalendarViewModelTest {
             viewModel.onIntent(MyCalendarIntent.Load())
 
             assertEquals(thisMonth, viewModel.uiState.value.month)
-            assertEquals(LocalDate.now().toString(), viewModel.uiState.value.selectedDate)
+            assertEquals(LocalDate.now(ServiceDate.ZONE).toString(), viewModel.uiState.value.selectedDate)
         }
 
     @Test
