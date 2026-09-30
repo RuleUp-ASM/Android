@@ -25,7 +25,7 @@ class TtiScreenTest {
     @get:Rule val compose = createComposeRule()
 
     @Test
-    fun `초기 로딩 완료 후 프레임을 기다리고 한번만 전송한다`() {
+    fun `초기 로딩이 끝난 리컴포지션에서 BACKEND 를 닫고 콘텐츠가 그려지기 전에는 전송하지 않는다`() {
         val loading = mutableStateOf(true)
         val recorder = RecordingTti()
         compose.setContent {
@@ -33,16 +33,18 @@ class TtiScreenTest {
                 TtiPage("test") { TtiScreenEffect(loading.value) }
             }
         }
-        compose.runOnIdle { assertTrue(recorder.ended.isEmpty() || TtiTimeline.BACKEND !in recorder.ended) }
+        compose.runOnIdle { assertTrue(TtiTimeline.BACKEND !in recorder.ended) }
         compose.runOnIdle { loading.value = false }
-        compose.runOnIdle { assertEquals(1, recorder.shots) }
-        compose.runOnIdle { loading.value = true }
-        compose.runOnIdle { loading.value = false }
-        compose.runOnIdle { assertEquals(1, recorder.shots) }
+        compose.runOnIdle {
+            assertTrue(TtiTimeline.BACKEND in recorder.ended)
+            // VIEW_BINDING 은 ttiContentDrawn 의 첫 draw 가 닫는다(TtiPageScopeTest)
+            assertTrue(TtiTimeline.VIEW_BINDING !in recorder.ended)
+            assertEquals(0, recorder.shots)
+        }
     }
 
     @Test
-    fun `지도 준비 또는 실패 신호까지 전송을 기다린다`() {
+    fun `지도 준비 또는 실패 신호가 오면 큰 덩어리 구간을 닫는다`() {
         val mapLoading = mutableStateOf(true)
         val recorder = RecordingTti()
         compose.setContent {
@@ -53,9 +55,9 @@ class TtiScreenTest {
                 }
             }
         }
-        compose.runOnIdle { assertEquals(0, recorder.shots) }
+        compose.runOnIdle { assertTrue(TtiTimeline.BIG_PART_LOADING !in recorder.ended) }
         compose.runOnIdle { mapLoading.value = false }
-        compose.runOnIdle { assertEquals(1, recorder.shots) }
+        compose.runOnIdle { assertTrue(TtiTimeline.BIG_PART_LOADING in recorder.ended) }
     }
 
     private class RecordingTti : TtiRecorder {
