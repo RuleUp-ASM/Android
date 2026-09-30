@@ -39,6 +39,7 @@ import com.ruleup.report.presentation.blocklist.viewmodel.BlockListState
 import com.ruleup.report.presentation.blocklist.viewmodel.BlockListViewModel
 import com.ruleup.report.presentation.blocklist.viewmodel.BlockTarget
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 신고한 사용자·챌린지. */
 @Composable
@@ -106,7 +107,7 @@ private fun ErrorBody(
     onRetry: () -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier.fillMaxSize().padding(20.dp).ttiContentDrawn(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -125,7 +126,7 @@ private fun ErrorBody(
 @Composable
 private fun EmptyBody() {
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier.fillMaxSize().padding(20.dp).ttiContentDrawn(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -150,7 +151,7 @@ private fun BlockBody(
     onIntent: (BlockListIntent) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

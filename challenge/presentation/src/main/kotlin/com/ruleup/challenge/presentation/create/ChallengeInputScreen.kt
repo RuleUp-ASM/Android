@@ -43,6 +43,7 @@ import com.ruleup.designsystem.R
 import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalNavigationHelper
 import kotlinx.coroutines.delay
 
@@ -59,7 +60,7 @@ fun ChallengeInputContent(
     BackHandler(enabled = state.isDrafting) { onIntent(CreateChallengeIntent.CancelDrafting) }
 
     Box(modifier = modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
-        Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
+        Column(modifier = Modifier.fillMaxSize().statusBarsPadding().ttiContentDrawn()) {
             InputAppBar(onClose = { nav.navigateToBack() })
 
             Column(

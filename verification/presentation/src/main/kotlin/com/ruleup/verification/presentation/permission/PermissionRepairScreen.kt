@@ -34,6 +34,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.permission.healthConnectAvailable
 import com.ruleup.ui.permission.healthReadPermissions
 import com.ruleup.ui.permission.rememberHealthPermissionLauncher
@@ -110,7 +111,8 @@ internal fun PermissionRepairContent(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 8.dp),
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .ttiContentDrawn(),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (broken.isNotEmpty()) {

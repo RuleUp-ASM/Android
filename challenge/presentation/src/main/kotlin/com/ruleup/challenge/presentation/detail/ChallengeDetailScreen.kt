@@ -96,6 +96,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.report.domain.entity.HiddenEffect
 import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
@@ -335,7 +336,7 @@ internal fun ChallengeDetailContent(
                     }
 
                 detail == null ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                         Text(
                             text = state.errorMessage ?: "챌린지를 불러오지 못했어요",
                             color = RuleUpTheme.colors.textSecondary,
@@ -531,7 +532,7 @@ private fun RoomDetailTabs(
         }
     // 캘린더에서 고른 지난 건.
     var calendarAppeal by remember { mutableStateOf<ChallengeCalendarDay?>(null) }
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().ttiContentDrawn()) {
         if (state.selectedTab == RoomTab.INFO) {
             RoomInfoHeader(
                 categoryLabel = detail.category?.label,
@@ -758,7 +759,8 @@ private fun PublicDetailBody(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 120.dp),
+                .padding(top = 8.dp, bottom = 120.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         DetailHero(detail)

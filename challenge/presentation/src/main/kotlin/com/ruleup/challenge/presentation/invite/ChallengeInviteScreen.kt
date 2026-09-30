@@ -38,6 +38,8 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 멤버 초대 링크 진입 (카카오톡 `/c/{token}`). */
@@ -87,7 +89,7 @@ internal fun ChallengeInviteContent(
 
             state.preview == null ->
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp),
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp).ttiContentDrawn(),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
@@ -106,7 +108,8 @@ internal fun ChallengeInviteContent(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 24.dp),
+                            .padding(horizontal = 24.dp)
+                            .ttiContentDrawn(),
                     verticalArrangement = Arrangement.Center,
                 ) {
                     InviteBody(state = state, preview = state.preview, onIntent = onIntent)
@@ -122,10 +125,13 @@ private fun ColumnScope.InviteBody(
     onIntent: (ChallengeInviteIntent) -> Unit,
 ) {
     preview.challenge.imageUrl?.let { url ->
+        val onImageSettled = rememberTtiLargeContent()
         AsyncImage(
             model = url,
             contentDescription = null,
             contentScale = ContentScale.Crop,
+            onSuccess = { onImageSettled() },
+            onError = { onImageSettled() },
             modifier =
                 Modifier
                     .fillMaxWidth()

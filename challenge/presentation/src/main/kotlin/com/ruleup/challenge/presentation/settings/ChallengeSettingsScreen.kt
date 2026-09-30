@@ -58,6 +58,7 @@ import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.image.rememberImagePicker
 import kotlin.math.roundToInt
@@ -130,7 +131,7 @@ internal fun ChallengeSettingsContent(
 
             state.loaded == null ->
                 CenterBox {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(modifier = Modifier.ttiContentDrawn(), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = state.errorMessage ?: "설정을 불러오지 못했어요",
                             color = RuleUpTheme.colors.textSecondary,
@@ -154,7 +155,7 @@ private fun ColumnScope.ChallengeSettingsForm(
     onIntent: (ChallengeSettingsIntent) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier.weight(1f).fillMaxWidth(),
+        modifier = Modifier.weight(1f).fillMaxWidth().ttiContentDrawn(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {

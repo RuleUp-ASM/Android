@@ -39,6 +39,7 @@ import com.ruleup.profile.presentation.watching.viewmodel.WatchingIntent
 import com.ruleup.profile.presentation.watching.viewmodel.WatchingState
 import com.ruleup.profile.presentation.watching.viewmodel.WatchingViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 패널티 수신 관리 */
@@ -87,7 +88,7 @@ internal fun WatchingContent(
 
             state.errorMessage != null && state.items.isEmpty() ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -100,7 +101,7 @@ internal fun WatchingContent(
                 }
 
             state.items.isEmpty() ->
-                Box(Modifier.fillMaxSize().padding(horizontal = 40.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().padding(horizontal = 40.dp).ttiContentDrawn(), contentAlignment = Alignment.Center) {
                     Text(
                         text = "아직 감시자로 지정된 곳이 없어요",
                         color = RuleUpTheme.colors.textMuted,
@@ -119,7 +120,7 @@ private fun WatchingList(
     onIntent: (WatchingIntent) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

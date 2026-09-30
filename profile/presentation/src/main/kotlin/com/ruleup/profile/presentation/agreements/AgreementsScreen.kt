@@ -43,6 +43,7 @@ import com.ruleup.profile.presentation.agreements.viewmodel.AgreementsState
 import com.ruleup.profile.presentation.agreements.viewmodel.AgreementsViewModel
 import com.ruleup.profile.presentation.common.dateDotLabel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 약관 · 개인정보 동의 관리 (설정 허브 → 약관). */
@@ -91,7 +92,7 @@ internal fun AgreementsContent(
 
             state.status == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -120,7 +121,8 @@ private fun AgreementsBody(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 40.dp),
+                .padding(bottom = 40.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (state.reconsentRequired.isNotEmpty()) {

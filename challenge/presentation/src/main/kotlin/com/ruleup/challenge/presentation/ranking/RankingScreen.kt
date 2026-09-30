@@ -48,6 +48,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import java.util.Locale
 
 // 포디움 순위별 색 (피그마 434:545~557 — #1 Amber, #2 Slate, #3 Orange)
@@ -98,7 +99,7 @@ internal fun RankingContent(
 
             state.ranking == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -151,7 +152,7 @@ private fun RankingTopBar(onBack: () -> Unit) {
 @Composable
 private fun RankingBody(ranking: ChallengeRanking) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {

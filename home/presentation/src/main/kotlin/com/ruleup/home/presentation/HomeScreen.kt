@@ -50,6 +50,7 @@ import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
 import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import java.time.LocalDate
 
 // 아바타·오늘 카드 그라데이션.
@@ -96,7 +97,7 @@ internal fun HomeContent(
             // 스트릭 카드·필터 탭을 남기면 "0/0" 껍데기만 보여 처음 들어온 사람이 뭘 할지 모른다.
             if (state.isEmpty) {
                 HomeEmptyState(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).ttiContentDrawn(),
                     onExplore = { onIntent(HomeIntent.OpenExplore) },
                     onCreate = { onIntent(HomeIntent.CreateChallenge) },
                 )
@@ -105,7 +106,8 @@ internal fun HomeContent(
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .weight(1f),
+                            .weight(1f)
+                            .ttiContentDrawn(),
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {

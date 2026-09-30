@@ -35,6 +35,7 @@ import com.ruleup.onboarding.presentation.component.OnboardingScaffold
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.SectionHeader
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingIntent
+import com.ruleup.tti.presentation.rememberTtiLargeContent
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.image.rememberImagePicker
 
@@ -80,10 +81,13 @@ fun PhotoContent(
                         modifier = Modifier.size(61.dp),
                     )
                 } else {
+                    val onImageSettled = rememberTtiLargeContent()
                     AsyncImage(
                         model = imageUri,
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
+                        onSuccess = { onImageSettled() },
+                        onError = { onImageSettled() },
                         modifier = Modifier.matchParentSize().clip(RoundedCornerShape(70.dp)),
                     )
                 }

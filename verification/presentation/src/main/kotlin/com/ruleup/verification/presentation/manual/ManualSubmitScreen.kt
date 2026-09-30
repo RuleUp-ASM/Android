@@ -38,6 +38,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.verification.domain.entity.ManualNoteLimits
 import com.ruleup.verification.presentation.manual.viewmodel.ManualSubmitIntent
 import com.ruleup.verification.presentation.manual.viewmodel.ManualSubmitState
@@ -137,7 +138,7 @@ private fun ErrorBlock(
     onIntent: (ManualSubmitIntent) -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 64.dp).ttiContentDrawn(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
@@ -164,7 +165,8 @@ private fun ChallengeCard(
                 .fillMaxWidth()
                 .clip(RuleUpTheme.shapes.card)
                 .background(colors.surface)
-                .padding(horizontal = 18.dp, vertical = 18.dp),
+                .padding(horizontal = 18.dp, vertical = 18.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(

@@ -40,6 +40,8 @@ import com.ruleup.profile.presentation.member.viewmodel.MemberProfileIntent
 import com.ruleup.profile.presentation.member.viewmodel.MemberProfileState
 import com.ruleup.profile.presentation.member.viewmodel.MemberProfileViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 타인 프로필. */
 @Composable
@@ -83,7 +85,11 @@ internal fun MemberProfileContent(
             onBack = { onIntent(MemberProfileIntent.Back) },
         )
         when {
-            state.isOffline -> RuleUpNetworkError(onRetry = { onIntent(MemberProfileIntent.Retry) })
+            state.isOffline ->
+                RuleUpNetworkError(
+                    onRetry = { onIntent(MemberProfileIntent.Retry) },
+                    modifier = Modifier.ttiContentDrawn(),
+                )
 
             state.isLoading ->
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -91,7 +97,7 @@ internal fun MemberProfileContent(
                 }
 
             state.profile == null ->
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                     Text(
                         text = state.errorMessage ?: "프로필을 불러오지 못했어요",
                         color = RuleUpTheme.colors.textSecondary,
@@ -169,7 +175,8 @@ private fun MemberProfileBody(
             Modifier
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
-                .padding(top = RuleUpTheme.spacing.sm),
+                .padding(top = RuleUpTheme.spacing.sm)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.md),
     ) {
         ProfileCard(profile)
@@ -203,10 +210,13 @@ private fun ProfileCard(profile: MemberProfile) {
             contentAlignment = Alignment.Center,
         ) {
             if (profile.profileImageUrl != null) {
+                val onImageSettled = rememberTtiLargeContent()
                 AsyncImage(
                     model = profile.profileImageUrl,
                     contentDescription = null,
                     modifier = Modifier.fillMaxSize().clip(RuleUpTheme.shapes.pill),
+                    onSuccess = { onImageSettled() },
+                    onError = { onImageSettled() },
                 )
             } else {
                 // 사진이 없으면 닉네임 첫 글자.

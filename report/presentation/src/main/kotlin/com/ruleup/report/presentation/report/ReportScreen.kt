@@ -38,6 +38,7 @@ import com.ruleup.report.presentation.report.viewmodel.ReportIntent
 import com.ruleup.report.presentation.report.viewmodel.ReportState
 import com.ruleup.report.presentation.report.viewmodel.ReportViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 신고하기. */
@@ -84,7 +85,8 @@ internal fun ReportContent(
             modifier
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.background)
-                .statusBarsPadding(),
+                .statusBarsPadding()
+                .ttiContentDrawn(),
     ) {
         ReportAppBar(onBack = { onIntent(ReportIntent.Back) })
         Column(

@@ -42,6 +42,7 @@ import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughPageI
 import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughState
 import com.ruleup.onboarding.presentation.walkthrough.viewmodel.WalkthroughViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 첫 실행 워크쓰루. */
 @Composable
@@ -83,6 +84,7 @@ private fun WalkthroughFrame(
     Column(
         modifier =
             modifier
+                .ttiContentDrawn()
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.surface),
     ) {

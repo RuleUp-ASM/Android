@@ -38,6 +38,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashIntent
 import com.ruleup.onboarding.presentation.splash.viewmodel.SplashViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 @Composable
 fun SplashScreen(viewModel: SplashViewModel = hiltViewModel()) {
@@ -70,6 +71,7 @@ private fun SplashContent(
     Box(
         modifier =
             modifier
+                .ttiContentDrawn()
                 .fillMaxSize()
                 .background(RuleUpGradients.Splash),
         contentAlignment = Alignment.Center,

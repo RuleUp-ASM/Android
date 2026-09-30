@@ -49,6 +49,7 @@ import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteIntent
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteState
 import com.ruleup.profile.presentation.invite.viewmodel.FriendInviteViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 친구 초대. */
@@ -116,7 +117,7 @@ internal fun FriendInviteContent(
 
             state.invitation == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -150,7 +151,8 @@ private fun InviteBody(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 40.dp),
+                .padding(top = 8.dp, bottom = 40.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         // 초대 코드 + QR

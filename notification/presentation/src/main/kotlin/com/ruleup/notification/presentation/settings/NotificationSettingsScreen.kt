@@ -50,6 +50,7 @@ import com.ruleup.notification.presentation.settings.viewmodel.NotificationSetti
 import com.ruleup.notification.presentation.settings.viewmodel.NotificationSettingsState
 import com.ruleup.notification.presentation.settings.viewmodel.NotificationSettingsViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 알림 설정. */
@@ -118,7 +119,7 @@ internal fun NotificationSettingsContent(
 
             state.settings == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -147,7 +148,8 @@ private fun SettingsBody(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 40.dp),
+                .padding(bottom = 40.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (state.systemPermissionDenied) {

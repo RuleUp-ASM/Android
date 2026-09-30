@@ -46,6 +46,7 @@ import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginViewModel
 import com.ruleup.onboarding.presentation.oauth.rememberOAuthLauncher
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 @Composable
@@ -90,6 +91,7 @@ fun LoginContent(
     Column(
         modifier =
             modifier
+                .ttiContentDrawn()
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.surface),
     ) {

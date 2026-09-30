@@ -61,6 +61,8 @@ import com.ruleup.profile.presentation.home.viewmodel.MyHomeIntent
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeState
 import com.ruleup.profile.presentation.home.viewmodel.MyHomeViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
@@ -116,7 +118,7 @@ internal fun MyHomeContent(
                 }
 
             state.home == null ->
-                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).fillMaxWidth().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -143,7 +145,8 @@ internal fun MyHomeContent(
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
                             .statusBarsPadding()
-                            .padding(bottom = 24.dp),
+                            .padding(bottom = 24.dp)
+                            .ttiContentDrawn(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     MyHomeHeader()
@@ -269,11 +272,14 @@ private fun ProfileRow(
             contentAlignment = Alignment.Center,
         ) {
             if (home.profileImageUrl != null) {
+                val onImageSettled = rememberTtiLargeContent()
                 AsyncImage(
                     model = home.profileImageUrl,
                     contentDescription = "프로필 이미지",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize(),
+                    onSuccess = { onImageSettled() },
+                    onError = { onImageSettled() },
                 )
             } else {
                 Text(

@@ -40,6 +40,7 @@ import com.ruleup.profile.presentation.locked.viewmodel.AccountLockedIntent
 import com.ruleup.profile.presentation.locked.viewmodel.AccountLockedState
 import com.ruleup.profile.presentation.locked.viewmodel.AccountLockedViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 잠금 화면. */
 @Composable
@@ -57,7 +58,7 @@ internal fun AccountLockedContent(
     modifier: Modifier = Modifier,
 ) {
     if (state.isOffline) {
-        RuleUpNetworkError(onRetry = { onIntent(AccountLockedIntent.Retry) }, modifier = modifier)
+        RuleUpNetworkError(onRetry = { onIntent(AccountLockedIntent.Retry) }, modifier = modifier.ttiContentDrawn())
         return
     }
     val permanent = state.sanction?.type == SanctionType.BAN
@@ -74,7 +75,8 @@ internal fun AccountLockedContent(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
-                    .padding(top = 36.dp),
+                    .padding(top = 36.dp)
+                    .ttiContentDrawn(),
             verticalArrangement = Arrangement.spacedBy(RuleUpTheme.spacing.lg),
         ) {
             LockedHero(permanent = permanent)

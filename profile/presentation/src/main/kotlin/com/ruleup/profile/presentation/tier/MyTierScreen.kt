@@ -51,6 +51,7 @@ import com.ruleup.profile.presentation.tier.viewmodel.MyTierIntent
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierState
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 내 티어. */
 @Composable
@@ -92,7 +93,7 @@ internal fun MyTierContent(
 
             state.tier == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -124,7 +125,8 @@ private fun TierBody(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 40.dp),
+                .padding(top = 8.dp, bottom = 40.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         TierHero(tier = tier)
