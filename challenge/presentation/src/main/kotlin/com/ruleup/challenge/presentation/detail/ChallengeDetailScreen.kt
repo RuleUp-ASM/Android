@@ -60,6 +60,7 @@ import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.common.rememberVerificationPermissionRequester
 import com.ruleup.challenge.presentation.detail.component.AppealSheet
 import com.ruleup.challenge.presentation.detail.component.AppealTarget
+import com.ruleup.challenge.presentation.detail.component.ChallengeCoverBackground
 import com.ruleup.challenge.presentation.detail.component.MySetupCard
 import com.ruleup.challenge.presentation.detail.component.ReportDoneSheet
 import com.ruleup.challenge.presentation.detail.component.ReportReasonSheet
@@ -534,6 +535,7 @@ private fun RoomDetailTabs(
         if (state.selectedTab == RoomTab.INFO) {
             RoomInfoHeader(
                 categoryLabel = detail.category?.label,
+                imageUrl = detail.imageUrl,
                 remainingDays = room.summary.remainingDays,
                 myProgressRate = state.myProgressRate,
             )
@@ -844,43 +846,52 @@ private fun ManualCheckCard(
 @Composable
 private fun DetailHero(detail: ChallengeDetail) {
     val accent = categoryAccentColor(detail.category)
-    Column(
+    // 대표 사진이 있으면 카드 배경으로 깐다.
+    ChallengeCoverBackground(
+        imageUrl = detail.imageUrl,
+        scrim = RuleUpTheme.colors.surface,
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+                .background(RuleUpTheme.colors.surface),
     ) {
-        Box(
+        Column(
             modifier =
                 Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(accent),
-            contentAlignment = Alignment.Center,
+                    .fillMaxWidth()
+                    .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
-            Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
-        }
-        Text(
-            text = detail.title,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.title,
-        )
-        Text(
-            // 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다).
-            text = "${detail.ownerLabel()} · ${detail.participantCount}명 참여 중",
-            color = RuleUpTheme.colors.textSecondary,
-            style = RuleUpTheme.typography.small,
-        )
-        detail.description?.takeIf { it.isNotBlank() }?.let {
+            Box(
+                modifier =
+                    Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(accent),
+                contentAlignment = Alignment.Center,
+            ) {
+                // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
+                Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
+            }
             Text(
-                text = it,
-                color = RuleUpTheme.colors.textSlate,
-                style = RuleUpTheme.typography.body,
+                text = detail.title,
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.title,
             )
+            Text(
+                // 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다).
+                text = "${detail.ownerLabel()} · ${detail.participantCount}명 참여 중",
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.small,
+            )
+            detail.description?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    color = RuleUpTheme.colors.textSlate,
+                    style = RuleUpTheme.typography.body,
+                )
+            }
         }
     }
 }
