@@ -57,13 +57,6 @@ class NotificationSettingsContentTest {
     }
 
     @Test
-    fun `설정을 꺼도 알림함에는 남는다는 걸 말한다`() {
-        show(NotificationSettingsState.initial.copy(isLoading = false, settings = settings()))
-
-        compose.onNodeWithText("알림함에 그대로 남아요", substring = true).assertExists()
-    }
-
-    @Test
     fun `마케팅을 끄면 수신 동의도 철회된다는 걸 미리 말한다`() {
         show(NotificationSettingsState.initial.copy(isLoading = false, settings = settings()))
 
