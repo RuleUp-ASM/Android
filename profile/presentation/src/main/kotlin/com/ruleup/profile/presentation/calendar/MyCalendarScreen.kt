@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -275,16 +275,18 @@ private fun DayCell(
 ) {
     // 판정 경계가 KST 하루 단위다.
     val isToday = date == ServiceDate.today()
+    // 칸 폭을 채워 요일 라벨과 중심을 맞추고, 정사각형이라야 선택 표시가 원이 된다.
     Column(
         modifier =
             Modifier
+                .fillMaxWidth()
                 .padding(2.dp)
-                .clip(RoundedCornerShape(10.dp))
+                .aspectRatio(1f)
+                .clip(CircleShape)
                 .background(if (isSelected) RuleUpTheme.colors.brand else Color.Transparent)
-                .singleClickable(onClick = onClick)
-                .padding(vertical = 5.dp),
+                .singleClickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically),
     ) {
         Text(
             text = "${date.dayOfMonth}",
