@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
+import com.ruleup.challenge.presentation.explore.list.DDAY_URGENT_THRESHOLD
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -171,7 +172,12 @@ internal fun RoomInfoHeader(
                 Text(
                     // 종료일 당일·경과는 음수가 되므로 D-day 표기를 나눈다.
                     text = if (remainingDays > 0) "D-$remainingDays" else "D-day",
-                    color = RuleUpTheme.colors.textPrimary,
+                    color =
+                        if (remainingDays <= DDAY_URGENT_THRESHOLD) {
+                            RuleUpTheme.colors.danger
+                        } else {
+                            RuleUpTheme.colors.warning
+                        },
                     style = RuleUpTheme.typography.numberXl,
                 )
             }

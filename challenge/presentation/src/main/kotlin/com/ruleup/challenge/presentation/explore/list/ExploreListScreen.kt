@@ -65,7 +65,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 // 마감 여유가 이 값 이하면 D-day 배지를 위험색으로 강조한다.
-private const val DDAY_URGENT_THRESHOLD = 7L
+internal const val DDAY_URGENT_THRESHOLD = 7L
 
 // 다음 페이지 프리페치를 시작할 하단 잔여 아이템 수.
 private const val LOAD_MORE_PREFETCH = 3
