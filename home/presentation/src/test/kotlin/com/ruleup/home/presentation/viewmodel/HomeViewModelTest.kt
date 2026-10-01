@@ -12,7 +12,11 @@ import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.domain.time.ServiceDate
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
+import com.ruleup.profile.domain.entity.ActivityCalendar
+import com.ruleup.profile.domain.entity.CalendarDay
+import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import kotlinx.coroutines.Dispatchers
@@ -142,6 +146,41 @@ class HomeViewModelTest {
         )
     }
 
+    @Test
+    fun `이번 주 판정만 골라 담는다`() =
+        runTest {
+            val today = ServiceDate.today()
+            val lastMonth = today.minusMonths(1).toString()
+            val myPage =
+                FakeMyPageRepository { month ->
+                    ActivityCalendar(
+                        month = month,
+                        days =
+                            listOf(
+                                CalendarDay(today.toString(), CalendarDayStatus.ALL_DONE, successCount = 1, targetCount = 1),
+                                CalendarDay(lastMonth, CalendarDayStatus.FAILED, successCount = 0, targetCount = 1),
+                                CalendarDay(today.minusDays(today.dayOfWeek.value.toLong()).toString(), null, 0, 0),
+                            ),
+                    )
+                }
+            val vm = viewModel(myPage = myPage)
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(mapOf(today.toString() to CalendarDayStatus.ALL_DONE), vm.uiState.value.weekStatuses)
+        }
+
+    @Test
+    fun `캘린더 조회가 실패해도 홈은 뜨고 이번 주는 비어 있다`() =
+        runTest {
+            val vm = viewModel(myPage = FakeMyPageRepository { error("캘린더 실패") })
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertFalse(vm.uiState.value.isLoading)
+            assertEquals(emptyMap(), vm.uiState.value.weekStatuses)
+        }
+
     private fun viewModel(
         challenges: List<MyChallenge>? = emptyList(),
         progress: ProgressSnapshot? = ProgressSnapshot(asOf = "2026-09-01T00:00:00Z", challenges = emptyList()),
@@ -151,12 +190,14 @@ class HomeViewModelTest {
                 myChallenges = { _, _ -> page(*(challenges ?: throw IllegalStateException("목록 조회 실패")).toTypedArray()) },
             ),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
+        myPage: FakeMyPageRepository = FakeMyPageRepository(),
     ) = HomeViewModel(
         challengeRepository = repo,
         verificationRepository =
             FakeVerificationRepository(progress = { progress ?: throw IllegalStateException("진행률 조회 실패") }),
         myChallengeStore = FakeMyChallengeStore(locals),
         notificationRepository = FakeNotificationRepository(),
+        myPageRepository = myPage,
         navigationHelper = nav,
     )
 

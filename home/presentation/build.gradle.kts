@@ -50,6 +50,7 @@ dependencies {
     implementation(project(":challenge:domain"))
     // 상단 벨의 레드닷
     implementation(project(":notification:domain"))
+    implementation(project(":profile:domain"))
     implementation(project(":verification:domain"))
 
     implementation(platform(libs.androidx.compose.bom))
