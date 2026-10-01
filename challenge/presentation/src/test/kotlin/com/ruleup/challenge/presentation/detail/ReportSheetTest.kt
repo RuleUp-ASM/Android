@@ -33,7 +33,6 @@ class ReportReasonSheetTest {
             RuleUpTheme {
                 ReportReasonSheet(
                     title = "이 챌린지를 신고할까요?",
-                    description = "신고하면 탐색 목록에서 바로 빠져요.",
                     reasons = reasons,
                     selected = chosen,
                     submitting = submitting,
@@ -87,13 +86,6 @@ class ReportReasonSheetTest {
         show(chosen = ReportReason.SPAM_AD, submitting = true)
 
         compose.onNodeWithText("접수 중").assertIsNotEnabled()
-    }
-
-    @Test
-    fun `처리 결과를 알려주지 않는다는 것을 미리 알린다`() {
-        show()
-
-        compose.onNodeWithText("처리 결과는 따로 알려드리지 않아요 · 사유는 검토 참고용이에요").assertIsDisplayed()
     }
 
     @Test

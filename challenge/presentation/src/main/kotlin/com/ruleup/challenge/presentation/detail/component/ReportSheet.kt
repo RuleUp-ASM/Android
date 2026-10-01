@@ -28,7 +28,6 @@ import com.ruleup.report.domain.entity.ReportReason
 @Composable
 internal fun ReportReasonSheet(
     title: String,
-    description: String,
     reasons: List<ReportReason>,
     selected: ReportReason?,
     submitting: Boolean,
@@ -39,7 +38,6 @@ internal fun ReportReasonSheet(
     SheetScaffold(onDismiss = onDismiss) {
         val colors = RuleUpTheme.colors
         Text(text = title, color = colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
-        Text(text = description, color = colors.textSecondary, style = RuleUpTheme.typography.body)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             reasons.forEach { reason ->
@@ -50,13 +48,6 @@ internal fun ReportReasonSheet(
                 )
             }
         }
-
-        // 접수 후 아무 소식이 없는 게 정상이라는 걸 미리 알린다
-        Text(
-            text = "처리 결과는 따로 알려드리지 않아요 · 사유는 검토 참고용이에요",
-            color = colors.textMuted,
-            style = RuleUpTheme.typography.caption,
-        )
 
         RuleUpPrimaryButton(
             text = if (submitting) "접수 중" else "신고하기",
@@ -179,7 +170,6 @@ private fun ReportReasonSheetPreview() {
     RuleUpTheme {
         ReportReasonSheet(
             title = "신고하기",
-            description = "신고 사유를 선택해 주세요",
             reasons = ReportReason.entries.toList(),
             selected = null,
             submitting = false,

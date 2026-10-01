@@ -425,12 +425,6 @@ internal fun ChallengeDetailContent(
             val userReport = state.reportUserId != null
             ReportReasonSheet(
                 title = if (userReport) "이 사용자를 신고할까요?" else "이 챌린지를 신고할까요?",
-                description =
-                    if (userReport) {
-                        "신고하면 이 사용자의 이름과 글이 내 화면에서 가려져요."
-                    } else {
-                        "신고하면 탐색 목록에서 바로 빠져요. 참여 중이면 이름과 이미지만 가려져요."
-                    },
                 // 부정 인증 의심은 사람의 행위라 사용자 신고에만 있다.
                 reasons = if (userReport) ReportReason.forUser else ReportReason.forChallenge,
                 selected = state.selectedReportReason,
