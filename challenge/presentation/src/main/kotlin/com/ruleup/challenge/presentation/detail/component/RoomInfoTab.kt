@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
@@ -419,6 +420,12 @@ private fun ProgressInfoCard(
             label = "기간",
             value = periodLabel(detail.period.start, detail.period.end),
         )
+        detail.weeklyCount?.let { count ->
+            InfoLine(
+                label = "빈도",
+                value = if (count >= ChallengeLimits.WEEKLY_COUNT_MAX) "매일" else "주 ${count}회",
+            )
+        }
         InfoLine(
             label = "인원",
             value =

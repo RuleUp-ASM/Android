@@ -333,6 +333,8 @@ data class ChallengeDetailResponse(
     val penalties: PenaltiesResponse? = null,
     @SerialName("moderation")
     val moderation: ModerationResponse? = null,
+    @SerialName("weeklyCount")
+    val weeklyCount: Int? = null,
 )
 
 /** 필수는 식별자뿐이다. */
@@ -376,6 +378,8 @@ internal fun ChallengeDetailResponse.toDomain(): ChallengeDetail =
         myRole = MemberRole.fromValue(myRole) ?: MemberRole.NONE,
         moderation = moderation?.toDomain(),
         penalties = penalties?.toDomain(),
+        // 범위 밖 값은 표시하지 않는다
+        weeklyCount = weeklyCount?.takeIf { it in 1..7 },
     )
 
 // 탈퇴 (DELETE members/me)
