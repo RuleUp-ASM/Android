@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
@@ -214,6 +215,14 @@ internal fun TodayVerificationCard(
             }
         }
 
+        todayEvidence(status, today)?.let {
+            Text(
+                text = it,
+                color = colors.textPrimary,
+                style = RuleUpTheme.typography.smallMedium,
+            )
+        }
+
         todayNote(status, today)?.let {
             Text(
                 text = it,
@@ -320,6 +329,21 @@ internal fun todayNote(
         TodayResultStatus.IN_PROGRESS -> today?.pendingReason?.pendingText()
     }
 
+/** 오늘 내가 한 값 ("걸음 3,120 / 목표 6,000"). 서버가 요약에 붙여 보내는 사유 코드는 떼어 낸다. */
+internal fun todayEvidence(
+    status: TodayResultStatus,
+    today: TodayResult?,
+): String? {
+    if (status == TodayResultStatus.NOT_TARGET) return null
+    return today
+        ?.evidenceSummary
+        ?.replace(SERVER_CODE_SUFFIX, "")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+}
+
+private val SERVER_CODE_SUFFIX = Regex("\\s*\\([A-Z][A-Z0-9_]*\\)\\s*$")
+
 /** 상태 옆에 붙는 보조 문구. */
 private fun TodayResult.todayDetail(): String? =
     when (status) {
@@ -419,6 +443,12 @@ private fun ProgressInfoCard(
             label = "기간",
             value = periodLabel(detail.period.start, detail.period.end),
         )
+        detail.weeklyCount?.let { count ->
+            InfoLine(
+                label = "빈도",
+                value = if (count >= ChallengeLimits.WEEKLY_COUNT_MAX) "매일" else "주 ${count}회",
+            )
+        }
         InfoLine(
             label = "인원",
             value =

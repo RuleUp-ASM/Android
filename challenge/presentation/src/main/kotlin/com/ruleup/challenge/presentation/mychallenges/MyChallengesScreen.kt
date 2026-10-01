@@ -136,6 +136,7 @@ internal fun MyChallengesContent(
 
         RuleUpBottomTabBar(
             selected = RuleUpBottomTab.CHALLENGE,
+            onCreateClick = { onIntent(MyChallengesIntent.CreateChallenge) },
             onTabClick = { tab ->
                 when (tab) {
                     RuleUpBottomTab.HOME -> onIntent(MyChallengesIntent.OpenHomeTab)

@@ -164,6 +164,7 @@ internal fun MyHomeContent(
 
         RuleUpBottomTabBar(
             selected = RuleUpBottomTab.MY,
+            onCreateClick = { onIntent(MyHomeIntent.CreateChallenge) },
             onTabClick = { tab ->
                 when (tab) {
                     RuleUpBottomTab.HOME -> onIntent(MyHomeIntent.OpenHomeTab)
@@ -508,8 +509,6 @@ private fun ExtraMenuCard(onIntent: (MyHomeIntent) -> Unit) {
         MenuRow(label = "통계") { onIntent(MyHomeIntent.OpenStats) }
         MenuDivider()
         MenuRow(label = "그룹 랭킹") { onIntent(MyHomeIntent.OpenRanking) }
-        MenuDivider()
-        MenuRow(label = "친구 초대") { onIntent(MyHomeIntent.OpenInvite) }
         MenuDivider()
         MenuRow(label = "신고한 사용자 · 챌린지") { onIntent(MyHomeIntent.OpenBlocks) }
     }

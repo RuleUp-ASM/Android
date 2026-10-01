@@ -1,5 +1,8 @@
 package com.ruleup.challenge.presentation.detail
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -211,13 +214,20 @@ fun ChallengeDetailScreen(
 /** 서버가 요구한 권한 중 실제로 꺼져 있는 것. */
 internal fun ChallengeDetailState.missingPermissionTokens(): List<String> {
     val snapshot = permissions ?: return emptyList()
-    val tokens =
-        setup?.requiredPermissions ?: detail
+    return requiredPermissionTokens().filter { snapshot.isGranted(it) == false }
+}
 
-            ?.verification
-            ?.requiredPermissions
-            .orEmpty()
-    return tokens.filter { snapshot.isGranted(it) == false }
+private fun ChallengeDetailState.requiredPermissionTokens(): List<String> =
+    setup?.requiredPermissions ?: detail
+        ?.verification
+        ?.requiredPermissions
+        .orEmpty()
+
+/** 위치 인증 챌린지인데 기기 위치(GPS)가 꺼져 있는가. */
+internal fun ChallengeDetailState.locationServiceOff(): Boolean = permissions?.locationServiceOff(requiredPermissionTokens()) == true
+
+private fun Context.openLocationSettings() {
+    runCatching { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
 }
 
 @Composable
@@ -256,7 +266,7 @@ internal fun ChallengeDetailContent(
             if (detail != null && room != null) {
                 RoomAppBar(
                     title = detail.title,
-                    menuItems = roomMenuItems(room.myRole, onIntent),
+                    menuItems = roomMenuItems(room.myRole, detail.penalties?.watcher == true, onIntent),
                     onBack = onBack,
                 )
             } else if (detail != null && detail.myRole.isMember) {
@@ -264,7 +274,7 @@ internal fun ChallengeDetailContent(
                 RoomAppBar(
                     title = detail.title,
                     menuItems =
-                        roomMenuItems(detail.myRole, onIntent) +
+                        roomMenuItems(detail.myRole, detail.penalties?.watcher == true, onIntent) +
                             RoomMenuItem("챌린지 나가기") { confirmAction = MemberConfirm.LEAVE },
                     onBack = onBack,
                 )
@@ -288,6 +298,22 @@ internal fun ChallengeDetailContent(
                             .fillMaxWidth()
                             .background(RuleUpTheme.colors.dangerContainer)
                             .singleClickable { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                )
+            }
+
+            // 권한은 있어도 기기 위치가 꺼져 있으면 장소 신호가 모이지 않아 실패로 판정될 수 있다.
+            if (!state.isLoading && detail?.myRole?.isMember == true && state.locationServiceOff()) {
+                val context = LocalContext.current
+                Text(
+                    text = "휴대폰 위치(GPS)가 꺼져 있어 장소 인증이 되지 않아요 · 위치 켜기",
+                    color = RuleUpTheme.colors.danger,
+                    style = RuleUpTheme.typography.caption,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(RuleUpTheme.colors.dangerContainer)
+                            .singleClickable { context.openLocationSettings() }
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                 )
             }
@@ -425,12 +451,6 @@ internal fun ChallengeDetailContent(
             val userReport = state.reportUserId != null
             ReportReasonSheet(
                 title = if (userReport) "이 사용자를 신고할까요?" else "이 챌린지를 신고할까요?",
-                description =
-                    if (userReport) {
-                        "신고하면 이 사용자의 이름과 글이 내 화면에서 가려져요."
-                    } else {
-                        "신고하면 탐색 목록에서 바로 빠져요. 참여 중이면 이름과 이미지만 가려져요."
-                    },
                 // 부정 인증 의심은 사람의 행위라 사용자 신고에만 있다.
                 reasons = if (userReport) ReportReason.forUser else ReportReason.forChallenge,
                 selected = state.selectedReportReason,
@@ -680,6 +700,8 @@ private sealed interface SoloAppeal {
 /** 공지는 제품에서 빠져 진입점을 두지 않는다 */
 private fun roomMenuItems(
     myRole: MemberRole,
+    // 감시자 벌칙이 켜진 챌린지만 감시자를 둘 수 있다
+    watcherEnabled: Boolean,
     onIntent: (ChallengeDetailIntent) -> Unit,
 ): List<RoomMenuItem> =
     buildList {
@@ -687,6 +709,7 @@ private fun roomMenuItems(
         if (myRole.isOwner) {
             add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
         }
+        if (watcherEnabled) add(RoomMenuItem("감시자 등록") { onIntent(ChallengeDetailIntent.InviteWatcher) })
         if (!myRole.isOwner) add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
     }
 

@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,7 +46,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.ruleup.designsystem.category.categoryEmoji
-import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpSuspendedSheet
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
@@ -203,49 +204,50 @@ private fun EditBody(
                 .padding(top = 4.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        // 사진
-        RuleUpCard(
-            contentPadding = PaddingValues(vertical = 22.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        // 사진 — 누르면 갤러리, 1시 방향 X 로 제거
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(88.dp)
-                        .clip(CircleShape)
-                        .background(Brush.linearGradient(AvatarGradient)),
-                contentAlignment = Alignment.Center,
-            ) {
-                when {
-                    state.isImageBusy ->
-                        CircularProgressIndicator(color = RuleUpPalette.BgSurface, modifier = Modifier.size(26.dp))
+            Box(modifier = Modifier.size(88.dp)) {
+                Box(
+                    modifier =
+                        Modifier
+                            .matchParentSize()
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(AvatarGradient))
+                            .singleClickable(onClick = { if (!state.isImageBusy) onPickImage() }),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when {
+                        state.isImageBusy ->
+                            CircularProgressIndicator(color = RuleUpPalette.BgSurface, modifier = Modifier.size(26.dp))
 
-                    state.imagePreviewUrl != null ->
-                        AsyncImage(
-                            model = state.imagePreviewUrl,
-                            contentDescription = "프로필 이미지",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
+                        state.imagePreviewUrl != null ->
+                            AsyncImage(
+                                model = state.imagePreviewUrl,
+                                contentDescription = "프로필 이미지",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                            )
 
-                    else ->
-                        Text(
-                            text = state.nickname.take(1).ifBlank { "?" },
-                            color = RuleUpPalette.BgSurface,
-                            // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        else ->
+                            Text(
+                                text = state.nickname.take(1).ifBlank { "?" },
+                                color = RuleUpPalette.BgSurface,
+                                // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
+                                fontSize = 36.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                    }
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ImageActionChip(label = "🖼 갤러리", enabled = !state.isImageBusy, onClick = onPickImage)
-                ImageActionChip(
-                    label = "🗑 제거",
-                    enabled = !state.isImageBusy && state.imagePreviewUrl != null,
-                    onClick = { onIntent(ProfileEditIntent.RemoveImage) },
-                )
+                if (!state.isImageBusy && state.imagePreviewUrl != null) {
+                    RemoveImageButton(
+                        onClick = { onIntent(ProfileEditIntent.RemoveImage) },
+                        // 지름 88 원의 1시 방향(중심 66, 6)에 26 버튼의 중심을 둔다.
+                        modifier = Modifier.offset(x = 53.dp, y = (-7).dp),
+                    )
+                }
             }
         }
 
@@ -357,23 +359,25 @@ private fun EditBody(
 }
 
 @Composable
-private fun ImageActionChip(
-    label: String,
-    enabled: Boolean,
+private fun RemoveImageButton(
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Box(
         modifier =
-            Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (enabled) RuleUpTheme.colors.brandSoft else RuleUpTheme.colors.surfaceVariant)
-                .singleClickable(onClick = { if (enabled) onClick() })
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier
+                .size(26.dp)
+                .clip(CircleShape)
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, CircleShape)
+                .singleClickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = label,
-            color = if (enabled) RuleUpTheme.colors.brand else RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.smallBold,
+        Icon(
+            painter = painterResource(com.ruleup.designsystem.R.drawable.ic_close),
+            contentDescription = "사진 제거",
+            tint = RuleUpTheme.colors.textSecondary,
+            modifier = Modifier.size(14.dp),
         )
     }
 }

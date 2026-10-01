@@ -80,6 +80,8 @@ data class ChallengeDetail(
     // 방장 본인 조회에서만
     val moderation: ChallengeModeration?,
     val penalties: ChallengePenalties? = null,
+    /** 주간 수행 횟수 1~7. 서버가 주지 않으면 null 이고, 설명에서 짐작하지 않는다. */
+    val weeklyCount: Int? = null,
 ) : Challenge {
     /** 참여 버튼을 활성할 수 있는지. */
     val joinable: Boolean

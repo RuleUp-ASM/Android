@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +30,7 @@ import com.ruleup.challenge.domain.entity.rangeLabel
 import com.ruleup.challenge.presentation.common.unitLabel
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import kotlin.math.roundToLong
 
 /** 목표값 편집기. */
 @Composable
@@ -76,6 +79,7 @@ private fun ParamRow(
                 ParamKind.TIME -> TimeField(spec = spec, onEdit = onEdit)
             }
         }
+        if (spec.kind == ParamKind.NUMBER) ParamSlider(spec = spec, onEdit = onEdit)
         // 범위를 벗어난 값은 만들기 버튼이 잠기므로, 왜 잠겼는지 여기서 말한다.
         if (!spec.isInRange) {
             spec.rangeLabel()?.let { range ->
@@ -125,6 +129,28 @@ private fun NumberStepper(
             current?.let { onEdit(spec.clamp(it + 1).format()) }
         }
     }
+}
+
+/** 숫자 목표값 슬라이더. 양 끝이 정해진 스펙에만 그리고, 1 단위로 끊는다. 정확한 값은 옆 입력칸으로 넣는다. */
+@Composable
+private fun ParamSlider(
+    spec: ParamSpec,
+    onEdit: (String) -> Unit,
+) {
+    val min = spec.min ?: return
+    val max = spec.max ?: return
+    if (max <= min) return
+    Slider(
+        value = (spec.value.toDoubleOrNull() ?: min).coerceIn(min, max).toFloat(),
+        onValueChange = { onEdit(spec.clamp(it.roundToLong().toDouble()).format()) },
+        valueRange = min.toFloat()..max.toFloat(),
+        colors =
+            SliderDefaults.colors(
+                thumbColor = RuleUpTheme.colors.brand,
+                activeTrackColor = RuleUpTheme.colors.brand,
+                inactiveTrackColor = RuleUpTheme.colors.border,
+            ),
+    )
 }
 
 /** 시각 목표값(`HH:mm`). */

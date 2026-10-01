@@ -32,6 +32,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -273,16 +274,17 @@ private fun NotificationRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             notification.type?.let { type ->
+                val (content, container) = type.group.badgeColors()
                 Box(
                     modifier =
                         Modifier
                             .clip(RoundedCornerShape(6.dp))
-                            .background(RuleUpTheme.colors.surfaceVariant)
+                            .background(container)
                             .padding(horizontal = 7.dp, vertical = 3.dp),
                 ) {
                     Text(
                         text = type.group.label,
-                        color = RuleUpTheme.colors.textSecondary,
+                        color = content,
                         style = RuleUpTheme.typography.micro,
                     )
                 }
@@ -294,14 +296,14 @@ private fun NotificationRow(
                 style = RuleUpTheme.typography.bodyMedium,
             )
             notification.body?.let {
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = it,
                     color = RuleUpTheme.colors.textSecondary,
                     style = RuleUpTheme.typography.small,
                 )
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = relativeTime(notification.createdAt),
                 color = RuleUpTheme.colors.textMuted,
@@ -331,6 +333,18 @@ private val NotificationGroup.label: String
             NotificationGroup.MARKETING -> "소식"
             NotificationGroup.REMINDER -> "리마인더"
         }
+
+/** 목록 뱃지 (글자색, 배경색). 제재·강퇴가 섞인 계정은 위험색, 리마인더는 경고색이다. */
+@Composable
+private fun NotificationGroup.badgeColors(): Pair<Color, Color> {
+    val colors = RuleUpTheme.colors
+    return when (this) {
+        NotificationGroup.ACCOUNT -> colors.danger to colors.dangerContainer
+        NotificationGroup.CHALLENGE -> colors.brand to colors.brandSoft
+        NotificationGroup.MARKETING -> colors.success to colors.successContainer
+        NotificationGroup.REMINDER -> colors.warning to colors.warningContainer
+    }
+}
 
 /** "2026.09.04" */
 private fun relativeTime(iso: String): String {

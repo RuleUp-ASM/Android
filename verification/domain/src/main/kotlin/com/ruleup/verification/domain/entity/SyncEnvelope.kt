@@ -39,7 +39,13 @@ data class PermissionSnapshot(
     val healthSteps: PermissionState,
     val healthSleep: PermissionState,
     val healthBackground: PermissionState,
+    // 기기 위치(GPS) 스위치. 권한과 따로 꺼질 수 있고 서버로는 보내지 않는다.
+    val locationServiceEnabled: Boolean = true,
 ) {
+    /** 위치를 쓰는 권한이 필요한데 기기 위치가 꺼져 있는가 — 권한을 허용해도 위치 신호가 모이지 않는다. */
+    fun locationServiceOff(requiredTokens: List<String>): Boolean =
+        !locationServiceEnabled && requiredTokens.any { normalizeToken(it) in LOCATION_TOKENS }
+
     /** 서버가 내려준 권한 토큰(`setup.requiredPermissions`)이 실제로 허용됐는가. */
     fun isGranted(token: String): Boolean? =
         when (normalizeToken(token)) {
@@ -55,6 +61,9 @@ data class PermissionSnapshot(
         }?.let { !it.isDenied }
 
     companion object {
+        private val LOCATION_TOKENS =
+            setOf("LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE", "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION")
+
         fun normalizeToken(token: String): String =
             token.uppercase().removePrefix("ANDROID.PERMISSION.HEALTH.").removePrefix("ANDROID.PERMISSION.")
 

@@ -39,6 +39,8 @@ sealed interface MyChallengesIntent : MviIntent {
     data object OpenExploreTab : MyChallengesIntent
 
     data object OpenMyTab : MyChallengesIntent
+
+    data object CreateChallenge : MyChallengesIntent
 }
 
 sealed interface MyChallengesEffect : MviEffect {

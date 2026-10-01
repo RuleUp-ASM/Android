@@ -3,7 +3,9 @@ package com.ruleup.verification.data.signal.common
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
+import androidx.core.location.LocationManagerCompat
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.SleepSessionRecord
@@ -34,6 +36,8 @@ class PermissionSnapshotProvider
                 healthSteps = hc.state(HealthPermission.getReadPermission(StepsRecord::class)),
                 healthSleep = hc.state(HealthPermission.getReadPermission(SleepSessionRecord::class)),
                 healthBackground = hc.state(PERMISSION_HEALTH_BACKGROUND),
+                locationServiceEnabled =
+                    context.getSystemService(LocationManager::class.java)?.let(LocationManagerCompat::isLocationEnabled) ?: true,
             )
         }
 

@@ -21,6 +21,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -216,6 +217,50 @@ class ExploreListViewModelTest {
                     .isEmpty(),
             )
             assertNull(viewModel.uiState.value.errorMessage)
+        }
+
+    @Test
+    fun `새로고침은 목록을 둔 채 지금 조건으로 첫 페이지를 다시 받는다`() =
+        runTest {
+            var calls = 0
+            val repo =
+                FakeExploreRepository(
+                    explore = { _, _, cursor ->
+                        calls++
+                        if (cursor == null && calls == 1) page("ch1", nextCursor = "c1") else page("ch9")
+                    },
+                )
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ExploreListIntent.Load(category = null, sort = null))
+            viewModel.onIntent(ExploreListIntent.SelectSort(ExploreSort.entries.last()))
+
+            viewModel.onIntent(ExploreListIntent.Refresh)
+
+            val state = viewModel.uiState.value
+            assertEquals(null, repo.exploreQueries.last().third)
+            assertEquals(ExploreSort.entries.last(), repo.exploreQueries.last().second)
+            assertEquals(listOf("ch9"), state.items.map { it.challengeId })
+            assertFalse(state.isRefreshing)
+            assertFalse(state.isLoading)
+        }
+
+    @Test
+    fun `새로고침이 실패해도 이미 받은 목록은 남긴다`() =
+        runTest {
+            var fail = false
+            val repo =
+                FakeExploreRepository(
+                    explore = { _, _, _ -> if (fail) throw IllegalStateException("x") else page("ch1") },
+                )
+            val viewModel = viewModel(repo)
+            viewModel.onIntent(ExploreListIntent.Load(category = null, sort = null))
+            fail = true
+
+            viewModel.onIntent(ExploreListIntent.Refresh)
+
+            val state = viewModel.uiState.value
+            assertEquals(listOf("ch1"), state.items.map { it.challengeId })
+            assertFalse(state.isRefreshing)
         }
 
     private fun repo(result: ExploreResult) = FakeExploreRepository(explore = { _, _, _ -> result })

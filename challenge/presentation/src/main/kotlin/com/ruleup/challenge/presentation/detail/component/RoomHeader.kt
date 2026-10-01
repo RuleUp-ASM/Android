@@ -15,8 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,12 +26,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
+import com.ruleup.challenge.presentation.explore.list.DDAY_URGENT_THRESHOLD
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
@@ -76,26 +81,57 @@ internal fun RoomAppBar(
                     onClick = { menuOpen = true },
                 )
             }
-            DropdownMenu(
-                expanded = menuOpen,
-                onDismissRequest = { menuOpen = false },
-                containerColor = RuleUpTheme.colors.surface,
-            ) {
-                menuItems.forEach { item ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = item.label,
-                                color = RuleUpTheme.colors.textPrimary,
-                                style = RuleUpTheme.typography.bodyMedium,
-                            )
-                        },
-                        onClick = {
-                            menuOpen = false
-                            item.onClick()
-                        },
-                    )
-                }
+            if (menuOpen) {
+                RoomMenuPopup(
+                    items = menuItems,
+                    onDismiss = { menuOpen = false },
+                )
+            }
+        }
+    }
+}
+
+/** ⋯ 메뉴 박스. 화면 끝에 붙지 않게 우측 15dp, 상단바 아래 10dp 에 띄운다. */
+@Composable
+private fun RoomMenuPopup(
+    items: List<RoomMenuItem>,
+    onDismiss: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val offset =
+        with(density) {
+            IntOffset(x = (-15).dp.roundToPx(), y = (48 + 10).dp.roundToPx())
+        }
+    val shape = RoundedCornerShape(14.dp)
+    Popup(
+        alignment = Alignment.TopEnd,
+        offset = offset,
+        onDismissRequest = onDismiss,
+        properties = PopupProperties(focusable = true),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .width(151.dp)
+                    .shadow(6.dp, shape, clip = false)
+                    .clip(shape)
+                    .background(RuleUpTheme.colors.surface),
+        ) {
+            items.forEachIndexed { index, item ->
+                if (index > 0) HorizontalDivider(color = RuleUpTheme.colors.border)
+                Text(
+                    text = item.label,
+                    color = RuleUpTheme.colors.textPrimary,
+                    style = RuleUpTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .singleClickable {
+                                onDismiss()
+                                item.onClick()
+                            }.padding(horizontal = 15.dp, vertical = 15.dp),
+                )
             }
         }
     }
@@ -171,7 +207,12 @@ internal fun RoomInfoHeader(
                 Text(
                     // 종료일 당일·경과는 음수가 되므로 D-day 표기를 나눈다.
                     text = if (remainingDays > 0) "D-$remainingDays" else "D-day",
-                    color = RuleUpTheme.colors.textPrimary,
+                    color =
+                        if (remainingDays <= DDAY_URGENT_THRESHOLD) {
+                            RuleUpTheme.colors.danger
+                        } else {
+                            RuleUpTheme.colors.warning
+                        },
                     style = RuleUpTheme.typography.numberXl,
                 )
             }

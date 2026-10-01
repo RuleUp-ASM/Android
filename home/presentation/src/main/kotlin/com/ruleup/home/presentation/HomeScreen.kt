@@ -48,6 +48,7 @@ import com.ruleup.home.presentation.viewmodel.HomeFilter
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
+import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.tti.presentation.TtiScreenEffect
 import java.time.LocalDate
 
@@ -108,7 +109,7 @@ internal fun HomeContent(
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 120.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    item { WeekStreakCard() }
+                    item { WeekStreakCard(statuses = state.weekStatuses) }
                     item {
                         FilterTabs(
                             filter = state.filter,
@@ -286,7 +287,7 @@ private fun LocalDate.headerLabel(): String {
 }
 
 @Composable
-private fun WeekStreakCard() {
+private fun WeekStreakCard(statuses: Map<String, CalendarDayStatus>) {
     val today =
         com.ruleup.ui.time
             .rememberServiceDate()
@@ -303,11 +304,6 @@ private fun WeekStreakCard() {
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = "이번 주",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.bodyBold,
-        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -347,16 +343,30 @@ private fun WeekStreakCard() {
                         modifier =
                             Modifier
                                 .size(14.dp)
-                                .clip(RoundedCornerShape(7.dp))
-                                .background(
-                                    if (isToday) Color.White.copy(alpha = 0.35f) else RuleUpTheme.colors.surfaceVariant,
-                                ),
+                                .clip(CircleShape)
+                                .background(dayDotColor(date, today, statuses[date.toString()]))
+                                // 오늘 칸은 보라 배경이라 흰 테두리로 원을 띄운다.
+                                .then(if (isToday) Modifier.border(1.5.dp, Color.White, CircleShape) else Modifier),
                     )
                 }
             }
         }
     }
 }
+
+/** 오늘은 보라, 아직 안 온 날·판정 대상이 아닌 날은 회색, 지난 날은 전부 성공만 초록이고 나머지는 빨강. */
+@Composable
+private fun dayDotColor(
+    date: LocalDate,
+    today: LocalDate,
+    status: CalendarDayStatus?,
+): Color =
+    when {
+        date == today -> RuleUpTheme.colors.brand
+        date.isAfter(today) || status == null -> RuleUpTheme.colors.surfaceVariant
+        status == CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
+        else -> RuleUpTheme.colors.danger
+    }
 
 @Composable
 private fun FilterTabs(

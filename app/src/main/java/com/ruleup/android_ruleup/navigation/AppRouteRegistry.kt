@@ -277,6 +277,8 @@ val appRoutes: List<AppRoute> =
         ),
         AppRoute(
             path = ChallengeDetailPage.PATH,
+            // 생성 직후·초대 수락·콜드 스타트 딥링크는 스택을 이 화면으로 갈아끼운다. 홈을 깔아 두지 않으면 뒤로가기에 스택이 비어 앱이 닫힌다.
+            syntheticStack = { args -> listOf(GenericNavKey(HomePage.PATH), GenericNavKey(ChallengeDetailPage.PATH, args)) },
             render = { args ->
                 ChallengeDetailScreen(challengeId = args[ChallengeDetailPage.ARG_CHALLENGE_ID].orEmpty())
             },

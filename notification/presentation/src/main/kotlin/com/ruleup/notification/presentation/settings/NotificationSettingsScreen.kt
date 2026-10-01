@@ -194,15 +194,6 @@ private fun SettingsBody(
             )
         }
 
-        Text(
-            text =
-                "루틴 리마인더는 항상 켜져 있어요(푸시 알림을 끄면 함께 멈춰요) · " +
-                    "밤 9시부터 아침 8시까지는 푸시가 나가지 않고 아침에 모아서 와요",
-            color = RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.caption,
-            modifier = Modifier.padding(start = 4.dp, top = 4.dp),
-        )
-
         if (settings.mutedChallengeIds.isNotEmpty()) {
             SectionLabel("음소거 중인 챌린지")
             SettingsCard {
@@ -214,13 +205,6 @@ private fun SettingsBody(
                 )
             }
         }
-
-        Text(
-            text = "알림을 꺼도 기록은 알림함에 그대로 남아요",
-            color = RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.caption,
-            modifier = Modifier.padding(start = 4.dp, top = 6.dp),
-        )
     }
 }
 

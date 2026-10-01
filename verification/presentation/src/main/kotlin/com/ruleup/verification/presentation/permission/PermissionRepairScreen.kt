@@ -70,10 +70,15 @@ fun PermissionRepairScreen(
             requiredPermissions == null || requiredPermissions.any { PermissionSnapshot.normalizeToken(it) in row.tokens }
         }
     val broken = rows.filter { !it.granted }
+    val locationOff = state.permissions?.locationServiceOff(requiredPermissions ?: rows.flatMap { it.tokens }) == true
 
     PermissionRepairContent(
         rows = rows,
         broken = broken,
+        locationOff = locationOff,
+        onOpenLocationSettings = {
+            runCatching { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
+        },
         onIntent = viewModel::onIntent,
         onFix = { row -> requestFix(row, context, runtimeLauncher, healthLauncher, healthAvailable) },
         modifier = modifier,
@@ -88,6 +93,8 @@ internal fun PermissionRepairContent(
     onIntent: (PermissionRepairIntent) -> Unit,
     onFix: (RepairRow) -> Unit,
     modifier: Modifier = Modifier,
+    locationOff: Boolean = false,
+    onOpenLocationSettings: () -> Unit = {},
 ) {
     Column(
         modifier =
@@ -124,6 +131,31 @@ internal fun PermissionRepairContent(
                     )
                     Text(
                         text = "그동안 인증이 되지 않아 실패로 기록될 수 있어요",
+                        color = RuleUpTheme.colors.textSecondary,
+                        style = RuleUpTheme.typography.caption,
+                    )
+                }
+            }
+
+            if (locationOff) {
+                // 권한과 달리 기기 설정에서 켜야 해서 권한 목록과 따로 둔다.
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RuleUpTheme.shapes.medium)
+                            .background(RuleUpTheme.colors.dangerContainer)
+                            .singleClickable(onClick = onOpenLocationSettings)
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "휴대폰 위치(GPS)가 꺼져 있어요",
+                        color = RuleUpTheme.colors.danger,
+                        style = RuleUpTheme.typography.cardTitle,
+                    )
+                    Text(
+                        text = "권한을 허용해도 위치가 꺼져 있으면 장소 인증이 되지 않아요 · 눌러서 위치 켜기",
                         color = RuleUpTheme.colors.textSecondary,
                         style = RuleUpTheme.typography.caption,
                     )

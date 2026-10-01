@@ -21,8 +21,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -36,10 +38,16 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,7 +73,10 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 // 마감 여유가 이 값 이하면 D-day 배지를 위험색으로 강조한다.
-private const val DDAY_URGENT_THRESHOLD = 7L
+internal const val DDAY_URGENT_THRESHOLD = 7L
+
+// 맨 아래에서 이만큼 더 끌어올리면 새로고침한다.
+private val BOTTOM_PULL_REFRESH_THRESHOLD = 80.dp
 
 // 다음 페이지 프리페치를 시작할 하단 잔여 아이템 수.
 private const val LOAD_MORE_PREFETCH = 3
@@ -302,6 +313,7 @@ private fun FilterSortRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChallengeList(
     state: ExploreListState,
@@ -321,6 +333,21 @@ private fun ChallengeList(
     LaunchedEffect(shouldLoadMore) {
         if (shouldLoadMore) currentOnIntent(ExploreListIntent.LoadMore)
     }
+    // 새로 받은 첫 페이지는 맨 위부터 보여 준다(아래 끝에서 당겼을 때도).
+    var wasRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(state.isRefreshing) {
+        if (wasRefreshing && !state.isRefreshing) listState.scrollToItem(0)
+        wasRefreshing = state.isRefreshing
+    }
+    val bottomPullThreshold = with(LocalDensity.current) { BOTTOM_PULL_REFRESH_THRESHOLD.toPx() }
+    val bottomPullRefresh =
+        remember(listState, bottomPullThreshold) {
+            BottomPullRefreshConnection(
+                atBottom = { !listState.canScrollForward },
+                threshold = bottomPullThreshold,
+                onRefresh = { currentOnIntent(ExploreListIntent.Refresh) },
+            )
+        }
 
     // 노출 기준은 뷰포트 50% 이상 · 1초 이상이다.
     LaunchedEffect(listState) {
@@ -368,54 +395,88 @@ private fun ChallengeList(
         state.items.isEmpty() -> EmptyResult(reason = state.emptyReason, onIntent = onIntent)
 
         else ->
-            LazyColumn(
-                state = listState,
+            PullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { onIntent(ExploreListIntent.Refresh) },
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                itemsIndexed(state.items, key = { _, item -> item.challengeId }) { _, item ->
-                    ExploreChallengeCard(
-                        item = item,
-                        sort = state.sort,
-                        onClick = { onIntent(ExploreListIntent.OpenChallenge(item.challengeId)) },
-                    )
-                }
-                if (state.isLoadingMore) {
-                    item {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator(
-                                color = RuleUpTheme.colors.brand,
-                                modifier = Modifier.size(24.dp),
-                            )
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().nestedScroll(bottomPullRefresh),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    itemsIndexed(state.items, key = { _, item -> item.challengeId }) { _, item ->
+                        ExploreChallengeCard(
+                            item = item,
+                            sort = state.sort,
+                            onClick = { onIntent(ExploreListIntent.OpenChallenge(item.challengeId)) },
+                        )
+                    }
+                    if (state.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    color = RuleUpTheme.colors.brand,
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
                         }
                     }
-                }
-                if (state.loadMoreFailed) {
-                    item {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "다시 불러오기",
-                                color = RuleUpTheme.colors.brand,
-                                style = RuleUpTheme.typography.bodyBold,
-                                modifier = Modifier.singleClickable { onIntent(ExploreListIntent.LoadMore) },
-                            )
+                    if (state.loadMoreFailed) {
+                        item {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 12.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "다시 불러오기",
+                                    color = RuleUpTheme.colors.brand,
+                                    style = RuleUpTheme.typography.bodyBold,
+                                    modifier = Modifier.singleClickable { onIntent(ExploreListIntent.LoadMore) },
+                                )
+                            }
                         }
                     }
                 }
             }
+    }
+}
+
+/** 목록이 더 내려가지 않을 때 위로 끌어올린 거리를 모아, 손을 뗐을 때 기준을 넘었으면 새로고침한다. */
+private class BottomPullRefreshConnection(
+    private val atBottom: () -> Boolean,
+    private val threshold: Float,
+    private val onRefresh: () -> Unit,
+) : NestedScrollConnection {
+    private var pulled = 0f
+
+    override fun onPostScroll(
+        consumed: Offset,
+        available: Offset,
+        source: NestedScrollSource,
+    ): Offset {
+        if (source == NestedScrollSource.UserInput && available.y < 0f && atBottom()) {
+            pulled -= available.y
+        } else if (consumed.y != 0f || available.y > 0f) {
+            pulled = 0f
+        }
+        return Offset.Zero
+    }
+
+    override suspend fun onPreFling(available: Velocity): Velocity {
+        if (pulled >= threshold) onRefresh()
+        pulled = 0f
+        return Velocity.Zero
     }
 }
 
