@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,9 +52,11 @@ internal fun ExploreFilterSheet(
         draft = next
     }
 
+    // 반만 펼친 상태에서는 적용 버튼이 가려져 처음부터 끝까지 펼친다.
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = RuleUpTheme.colors.surface,
         dragHandle = { SheetDragHandle() },
     ) {
@@ -59,6 +64,7 @@ internal fun ExploreFilterSheet(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
         ) {
             FilterSheetHeader(
@@ -98,13 +104,15 @@ internal fun ExploreFilterSheet(
     }
 }
 
+private const val CATEGORY_COLUMNS = 3
+
 // 같은 값을 다시 누르면 해제(전체)되는 nullable 토글.
 private fun <T> T?.toggle(value: T): T? = if (this == value) null else value
 
 /** 카테고리는 복수 선택이라 집합에서 넣고 뺀다. */
 private fun Set<Category>.toggleMember(value: Category): Set<Category> = if (value in this) this - value else this + value
 
-/** 카테고리 12종 복수 선택. */
+/** 카테고리 12종 복수 선택. 가장 긴 이름(커리어·생산성)이 들어가는 3열 등폭 격자다. */
 @Composable
 private fun CategorySection(
     selected: Set<Category>,
@@ -113,12 +121,17 @@ private fun CategorySection(
     Column {
         FilterSectionLabel("카테고리")
         Spacer(Modifier.height(8.dp))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            maxItemsInEachRow = CATEGORY_COLUMNS,
+        ) {
             Category.entries.forEach { category ->
                 FilterToggleButton(
                     text = category.label,
                     selected = category in selected,
                     onClick = { onToggle(category) },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -209,6 +222,7 @@ private fun FilterToggleButton(
             text = text,
             color = if (selected) Color.White else RuleUpTheme.colors.textSlate,
             style = if (selected) RuleUpTheme.typography.cardTitle else RuleUpTheme.typography.labelMedium,
+            maxLines = 1,
         )
     }
 }
