@@ -53,6 +53,32 @@ class TodayVerificationCopyTest {
     }
 
     @Test
+    fun `내가 한 값을 서버 코드 없이 보여 준다`() {
+        val evidence =
+            todayEvidence(
+                status = TodayResultStatus.FAIL_EXPECTED,
+                today =
+                    failedToday(
+                        failureReason = FailureReason.INSUFFICIENT_STEPS,
+                        evidenceSummary = "걸음 3,120 / 목표 6,000 (INSUFFICIENT_STEPS)",
+                    ),
+            )
+
+        assertEquals("걸음 3,120 / 목표 6,000", evidence)
+    }
+
+    @Test
+    fun `인증하는 날이 아니면 내가 한 값을 보이지 않는다`() {
+        val evidence =
+            todayEvidence(
+                status = TodayResultStatus.NOT_TARGET,
+                today = failedToday(failureReason = FailureReason.INSUFFICIENT_STEPS, evidenceSummary = "걸음 10"),
+            )
+
+        assertEquals(null, evidence)
+    }
+
+    @Test
     fun `판정 근거에 섞인 서버 코드가 카드에 새지 않는다`() {
         val note =
             todayNote(
