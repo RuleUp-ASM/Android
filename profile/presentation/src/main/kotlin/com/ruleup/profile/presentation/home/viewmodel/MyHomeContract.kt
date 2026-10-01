@@ -59,6 +59,8 @@ sealed interface MyHomeIntent : MviIntent {
 
     /** 하단 탭: 내 챌린지(진행 중 / 완료·이탈). */
     data object OpenMyChallengesTab : MyHomeIntent
+
+    data object CreateChallenge : MyHomeIntent
 }
 
 /** 선택 시트가 무엇을 고르는 중인지. */

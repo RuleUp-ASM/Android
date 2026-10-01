@@ -47,6 +47,7 @@ class MyChallengesViewModel
 
                 MyChallengesIntent.OpenHomeTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.HOME))
                 MyChallengesIntent.OpenMyTab -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.MY_HOME))
+                MyChallengesIntent.CreateChallenge -> navigationHelper.navigateByRoute(NavRoute(AppRoutes.CHALLENGE_CREATE))
             }
         }
 
