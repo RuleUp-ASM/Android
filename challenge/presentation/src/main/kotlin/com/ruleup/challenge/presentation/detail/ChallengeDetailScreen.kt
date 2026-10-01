@@ -256,7 +256,7 @@ internal fun ChallengeDetailContent(
             if (detail != null && room != null) {
                 RoomAppBar(
                     title = detail.title,
-                    menuItems = roomMenuItems(room.myRole, onIntent),
+                    menuItems = roomMenuItems(room.myRole, detail.penalties?.watcher == true, onIntent),
                     onBack = onBack,
                 )
             } else if (detail != null && detail.myRole.isMember) {
@@ -264,7 +264,7 @@ internal fun ChallengeDetailContent(
                 RoomAppBar(
                     title = detail.title,
                     menuItems =
-                        roomMenuItems(detail.myRole, onIntent) +
+                        roomMenuItems(detail.myRole, detail.penalties?.watcher == true, onIntent) +
                             RoomMenuItem("챌린지 나가기") { confirmAction = MemberConfirm.LEAVE },
                     onBack = onBack,
                 )
@@ -674,6 +674,8 @@ private sealed interface SoloAppeal {
 /** 공지는 제품에서 빠져 진입점을 두지 않는다 */
 private fun roomMenuItems(
     myRole: MemberRole,
+    // 감시자 벌칙이 켜진 챌린지만 감시자를 둘 수 있다
+    watcherEnabled: Boolean,
     onIntent: (ChallengeDetailIntent) -> Unit,
 ): List<RoomMenuItem> =
     buildList {
@@ -681,6 +683,7 @@ private fun roomMenuItems(
         if (myRole.isOwner) {
             add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
         }
+        if (watcherEnabled) add(RoomMenuItem("감시자 등록") { onIntent(ChallengeDetailIntent.InviteWatcher) })
         if (!myRole.isOwner) add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
     }
 

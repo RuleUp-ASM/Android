@@ -3,6 +3,7 @@ package com.ruleup.challenge.presentation.detail.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ChallengeNotCloneableException
 import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
+import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
 import com.ruleup.challenge.domain.entity.RankingMode
@@ -484,6 +485,13 @@ class ChallengeDetailViewModel
                     .onSuccess { detail ->
                         // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
                         val setup = runCatching { challengeRepository.getSetupInfo(challengeId) }.getOrNull()
+                        // 그룹 멤버는 방을 먼저 받아 둔다 — 상세만 먼저 그리면 참여 전 화면이 잠깐 떴다가 방 화면으로 바뀐다.
+                        val prefetchedRoom =
+                            if (detail.mode.isGroup && detail.myRole.isMember) {
+                                runCatching { roomRepository.getRoom(challengeId) }.getOrNull()
+                            } else {
+                                null
+                            }
                         dispatch(
                             ChallengeDetailReducerEvent.Loaded(
                                 detail = detail,
@@ -509,7 +517,7 @@ class ChallengeDetailViewModel
                         // 오늘 인증은 솔로도 필요하다
                         loadTodayResult(challengeId)
                         // 방 홈은 그룹 챌린지의 ACTIVE 멤버만
-                        if (detail.mode.isGroup) loadRoom(challengeId) else loadCalendar(challengeId)
+                        if (detail.mode.isGroup) loadRoom(challengeId, prefetchedRoom) else loadCalendar(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.userFacingMessage("챌린지를 불러오지 못했어요"))) }
             }
         }
@@ -538,23 +546,18 @@ class ChallengeDetailViewModel
         }
 
         // 비멤버/솔로의 403 등 실패는 흡수
-        private fun loadRoom(challengeId: String) {
-            viewModelScope.launch {
-                runCatching { roomRepository.getRoom(challengeId) }
-                    .onSuccess { room ->
-                        dispatch(ChallengeDetailReducerEvent.RoomLoaded(room))
-                        // 방 주간 방문율의 분자.
-                        if (!roomViewLogged) {
-                            roomViewLogged = true
-                            bizLogger.record(
-                                ChallengeEvents.roomView(
-                                    challengeId = challengeId,
-                                    myRole = room.myRole.value,
-                                    ownerType = room.ownerType.value,
-                                ),
-                            )
-                        }
-                    }
+        private fun loadRoom(
+            challengeId: String,
+            prefetched: ChallengeRoom? = null,
+        ) {
+            if (prefetched != null) {
+                // Loaded 와 같은 프레임 안에서 이어 반영해 상세와 방이 함께 그려진다.
+                onRoomLoaded(challengeId, prefetched)
+            } else {
+                viewModelScope.launch {
+                    runCatching { roomRepository.getRoom(challengeId) }
+                        .onSuccess { room -> onRoomLoaded(challengeId, room) }
+                }
             }
             loadMembers(challengeId)
             // room·threads 는 병렬로 받는다
@@ -563,6 +566,24 @@ class ChallengeDetailViewModel
             loadRanking(challengeId)
             loadCalendar(challengeId)
             loadMuteState(challengeId)
+        }
+
+        private fun onRoomLoaded(
+            challengeId: String,
+            room: ChallengeRoom,
+        ) {
+            dispatch(ChallengeDetailReducerEvent.RoomLoaded(room))
+            // 방 주간 방문율의 분자.
+            if (!roomViewLogged) {
+                roomViewLogged = true
+                bizLogger.record(
+                    ChallengeEvents.roomView(
+                        challengeId = challengeId,
+                        myRole = room.myRole.value,
+                        ownerType = room.ownerType.value,
+                    ),
+                )
+            }
         }
 
         /** 이 방이 음소거인지. */
