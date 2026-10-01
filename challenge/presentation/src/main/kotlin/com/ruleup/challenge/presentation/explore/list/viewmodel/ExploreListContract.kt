@@ -17,6 +17,9 @@ sealed interface ExploreListIntent : MviIntent {
     /** 목록 하단 근접 시 다음 커서 페이지 로드. */
     data object LoadMore : ExploreListIntent
 
+    /** 목록 맨 위·맨 아래에서 더 당기면 지금 조건으로 첫 페이지부터 다시 받는다. */
+    data object Refresh : ExploreListIntent
+
     /** 필터 시트 "적용" 확정 → 필터 적용 + 첫 페이지 재조회. */
     data class ApplyFilter(
         val filter: ExploreFilter,
@@ -55,9 +58,11 @@ data class ExploreListState(
     val errorMessage: String?,
     // 다음 페이지만 실패한 상태.
     val loadMoreFailed: Boolean,
+    // 목록을 둔 채 첫 페이지를 다시 받는 중.
+    val isRefreshing: Boolean = false,
 ) : UiState {
     val canLoadMore: Boolean
-        get() = nextCursor != null && !isLoading && !isLoadingMore
+        get() = nextCursor != null && !isLoading && !isLoadingMore && !isRefreshing
 
     /** 결과가 0건일 때 어떤 문구를 보일지 */
     val emptyReason: EmptyReason?
@@ -114,6 +119,9 @@ sealed interface ExploreListReducerEvent : ReducerEvent {
     ) : ExploreListReducerEvent
 
     data object LoadingMore : ExploreListReducerEvent
+
+    /** 새로고침 시작 — 목록을 지우지 않는다. */
+    data object Refreshing : ExploreListReducerEvent
 
     data class MorePageLoaded(
         val items: List<ExploreChallenge>,

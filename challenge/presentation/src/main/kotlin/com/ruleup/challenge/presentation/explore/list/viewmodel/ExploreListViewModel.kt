@@ -44,6 +44,10 @@ class ExploreListViewModel
             when (intent) {
                 is ExploreListIntent.Load -> load(intent.category, intent.sort)
                 ExploreListIntent.LoadMore -> loadMore()
+                ExploreListIntent.Refresh ->
+                    if (!currentState.isLoading && !currentState.isRefreshing) {
+                        fetchFirstPage(currentState.filter, currentState.sort, refreshing = true)
+                    }
                 is ExploreListIntent.ApplyFilter ->
                     fetchFirstPage(intent.filter, currentState.sort, LogAfterLoad.FilterApplied(intent.filter))
 
@@ -82,12 +86,16 @@ class ExploreListViewModel
                 is ExploreListReducerEvent.FirstPageLoaded ->
                     state.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         items = event.items,
                         nextCursor = event.nextCursor,
                         errorMessage = null,
                     )
 
                 ExploreListReducerEvent.LoadingMore -> state.copy(isLoadingMore = true, loadMoreFailed = false)
+
+                ExploreListReducerEvent.Refreshing ->
+                    state.copy(isRefreshing = true, isLoadingMore = false, loadMoreFailed = false, errorMessage = null)
 
                 is ExploreListReducerEvent.MorePageLoaded ->
                     state.copy(
@@ -101,7 +109,7 @@ class ExploreListViewModel
                     state.copy(isLoadingMore = false, loadMoreFailed = true)
 
                 is ExploreListReducerEvent.Failed ->
-                    state.copy(isLoading = false, isLoadingMore = false, errorMessage = event.message)
+                    state.copy(isLoading = false, isLoadingMore = false, isRefreshing = false, errorMessage = event.message)
             }
 
         private fun load(
@@ -171,9 +179,12 @@ class ExploreListViewModel
             filter: ExploreFilter,
             sort: ExploreSort,
             logAfterLoad: LogAfterLoad? = null,
+            refreshing: Boolean = false,
         ) {
             viewModelScope.launch {
-                dispatch(ExploreListReducerEvent.Loading(filter = filter, sort = sort))
+                dispatch(
+                    if (refreshing) ExploreListReducerEvent.Refreshing else ExploreListReducerEvent.Loading(filter = filter, sort = sort),
+                )
                 impressed.clear()
                 runCatching { exploreRepository.explore(filter = filter, sort = sort) }
                     .onSuccess { result ->
