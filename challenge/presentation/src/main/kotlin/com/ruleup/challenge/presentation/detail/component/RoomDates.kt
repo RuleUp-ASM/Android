@@ -2,6 +2,7 @@ package com.ruleup.challenge.presentation.detail.component
 
 import com.ruleup.domain.time.ServiceDate
 import java.time.LocalDate
+import java.time.Period
 import java.time.format.DateTimeParseException
 
 /** 방 피드·랭킹의 날짜 표시. */
@@ -66,13 +67,24 @@ internal fun periodLabel(
     val to = parseDateOrNull(isoDatePart(end))
     if (from == null || to == null) return "$start ~ $end"
     val range = "${from.monthValue}.${from.dayOfMonth} – ${to.monthValue}.${to.dayOfMonth}"
-    val days =
-        java.time.temporal.ChronoUnit.DAYS
-            .between(from, to)
-            .toInt() + 1
-    if (days <= 0) return range
-    val weeks = (days + 6) / 7
-    return "$range · ${weeks}주"
+    if (to.isBefore(from)) return range
+    return "$range · ${durationLabel(from, to)}"
+}
+
+/** 시작·종료일을 포함한 기간. 개월은 달력 기준이고, 0인 앞·중간 단위는 숨기되 일은 항상 붙인다. */
+private fun durationLabel(
+    from: LocalDate,
+    to: LocalDate,
+): String {
+    val period = Period.between(from, to.plusDays(1))
+    val units =
+        listOf(
+            period.years to "년",
+            period.months to "개월",
+            period.days / 7 to "주",
+        ).filter { (value, _) -> value > 0 }
+            .map { (value, unit) -> "$value$unit" }
+    return (units + "${period.days % 7}일").joinToString(" ")
 }
 
 /** 이의 신청 마감일 문구 */
