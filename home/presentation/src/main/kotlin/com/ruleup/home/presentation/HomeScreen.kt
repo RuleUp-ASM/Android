@@ -303,11 +303,6 @@ private fun WeekStreakCard() {
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Text(
-            text = "이번 주",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.bodyBold,
-        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
