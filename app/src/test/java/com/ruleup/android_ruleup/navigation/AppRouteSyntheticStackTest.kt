@@ -19,6 +19,18 @@ class AppRouteSyntheticStackTest {
     }
 
     @Test
+    fun `챌린지 상세로 스택을 갈아끼워도 뒤로 갈 홈이 남는다`() {
+        val route = appRoutes.first { it.path == com.ruleup.challenge.domain.navigation.ChallengeDetailPage.PATH }
+
+        val stack = route.syntheticStack(mapOf("challengeId" to "c1"))
+
+        assertEquals(
+            listOf(com.ruleup.onboarding.domain.navigation.HomePage.PATH, route.path),
+            stack.map { it.path },
+        )
+    }
+
+    @Test
     fun `목적지 키에는 링크 인자가 그대로 실린다`() {
         val route = appRoutes.first { it.path == com.ruleup.challenge.domain.navigation.ChallengeInvitePage.PATH }
 

@@ -39,7 +39,8 @@ fun AppNavHost(
                 }
 
                 NavSignal.Back -> {
-                    backStack.removeLastOrNull()
+                    // 마지막 화면까지 빼면 NavDisplay 가 빈 스택을 받아 죽는다.
+                    if (backStack.size > 1) backStack.removeLastOrNull()
                 }
             }
         }
