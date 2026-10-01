@@ -296,14 +296,14 @@ private fun NotificationRow(
                 style = RuleUpTheme.typography.bodyMedium,
             )
             notification.body?.let {
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = it,
                     color = RuleUpTheme.colors.textSecondary,
                     style = RuleUpTheme.typography.small,
                 )
             }
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
                 text = relativeTime(notification.createdAt),
                 color = RuleUpTheme.colors.textMuted,
