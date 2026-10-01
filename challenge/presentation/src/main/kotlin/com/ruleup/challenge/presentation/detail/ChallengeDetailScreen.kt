@@ -1,5 +1,8 @@
 package com.ruleup.challenge.presentation.detail
 
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -211,13 +214,20 @@ fun ChallengeDetailScreen(
 /** 서버가 요구한 권한 중 실제로 꺼져 있는 것. */
 internal fun ChallengeDetailState.missingPermissionTokens(): List<String> {
     val snapshot = permissions ?: return emptyList()
-    val tokens =
-        setup?.requiredPermissions ?: detail
+    return requiredPermissionTokens().filter { snapshot.isGranted(it) == false }
+}
 
-            ?.verification
-            ?.requiredPermissions
-            .orEmpty()
-    return tokens.filter { snapshot.isGranted(it) == false }
+private fun ChallengeDetailState.requiredPermissionTokens(): List<String> =
+    setup?.requiredPermissions ?: detail
+        ?.verification
+        ?.requiredPermissions
+        .orEmpty()
+
+/** 위치 인증 챌린지인데 기기 위치(GPS)가 꺼져 있는가. */
+internal fun ChallengeDetailState.locationServiceOff(): Boolean = permissions?.locationServiceOff(requiredPermissionTokens()) == true
+
+private fun Context.openLocationSettings() {
+    runCatching { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
 }
 
 @Composable
@@ -288,6 +298,22 @@ internal fun ChallengeDetailContent(
                             .fillMaxWidth()
                             .background(RuleUpTheme.colors.dangerContainer)
                             .singleClickable { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                )
+            }
+
+            // 권한은 있어도 기기 위치가 꺼져 있으면 장소 신호가 모이지 않아 실패로 판정될 수 있다.
+            if (!state.isLoading && detail?.myRole?.isMember == true && state.locationServiceOff()) {
+                val context = LocalContext.current
+                Text(
+                    text = "휴대폰 위치(GPS)가 꺼져 있어 장소 인증이 되지 않아요 · 위치 켜기",
+                    color = RuleUpTheme.colors.danger,
+                    style = RuleUpTheme.typography.caption,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(RuleUpTheme.colors.dangerContainer)
+                            .singleClickable { context.openLocationSettings() }
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                 )
             }

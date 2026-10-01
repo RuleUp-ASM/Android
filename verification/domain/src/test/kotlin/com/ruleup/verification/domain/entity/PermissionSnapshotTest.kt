@@ -99,6 +99,26 @@ class PermissionSnapshotTest {
         }
     }
 
+    @Test
+    fun `위치 인증인데 기기 위치가 꺼져 있으면 알린다`() {
+        val off = snapshot().copy(locationServiceEnabled = false)
+
+        assertEquals(true, off.locationServiceOff(listOf("android.permission.ACCESS_FINE_LOCATION")))
+        assertEquals(true, off.locationServiceOff(listOf("GEOFENCE")))
+    }
+
+    @Test
+    fun `위치를 쓰지 않는 챌린지는 기기 위치가 꺼져도 알리지 않는다`() {
+        val off = snapshot().copy(locationServiceEnabled = false)
+
+        assertEquals(false, off.locationServiceOff(listOf("READ_STEPS")))
+    }
+
+    @Test
+    fun `기기 위치가 켜져 있으면 알리지 않는다`() {
+        assertEquals(false, snapshot().locationServiceOff(listOf("LOCATION")))
+    }
+
     private fun snapshot(
         usageStats: PermissionState = PermissionState.GRANTED,
         healthSteps: PermissionState = PermissionState.GRANTED,
