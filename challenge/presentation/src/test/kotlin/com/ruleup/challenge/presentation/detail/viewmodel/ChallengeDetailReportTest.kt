@@ -170,6 +170,49 @@ class ChallengeDetailReportTest {
         }
 
     @Test
+    fun `챌린지 신고를 마치고 시트를 닫으면 이전 화면으로 돌아간다`() =
+        runTest {
+            val nav = RecordingNavigationHelper()
+            val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), nav = nav)
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.OpenReport)
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+
+            model.onIntent(ChallengeDetailIntent.DismissReport)
+
+            assertEquals(1, nav.backCount)
+        }
+
+    @Test
+    fun `사용자 신고를 마치고 닫으면 방에 남는다`() =
+        runTest {
+            val nav = RecordingNavigationHelper()
+            val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), nav = nav)
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.OpenUserReport("u2"))
+            model.onIntent(ChallengeDetailIntent.SelectReportReason(ReportReason.SPAM_AD))
+            model.onIntent(ChallengeDetailIntent.SubmitReport)
+
+            model.onIntent(ChallengeDetailIntent.DismissReport)
+
+            assertEquals(0, nav.backCount)
+        }
+
+    @Test
+    fun `신고하지 않고 시트를 닫으면 이전 화면으로 가지 않는다`() =
+        runTest {
+            val nav = RecordingNavigationHelper()
+            val model = viewModel(repo = FakeChallengeRepository(detail = { detail() }), nav = nav)
+            model.onIntent(ChallengeDetailIntent.Load("ch1"))
+            model.onIntent(ChallengeDetailIntent.OpenReport)
+
+            model.onIntent(ChallengeDetailIntent.DismissReport)
+
+            assertEquals(0, nav.backCount)
+        }
+
+    @Test
     fun `멤버 행에서 신고하면 그 사용자를 방 맥락으로 신고한다`() =
         runTest {
             val reports = FakeReportRepository()
@@ -255,6 +298,7 @@ class ChallengeDetailReportTest {
     private fun viewModel(
         repo: FakeChallengeRepository = FakeChallengeRepository(),
         reports: FakeReportRepository = FakeReportRepository(),
+        nav: RecordingNavigationHelper = RecordingNavigationHelper(),
     ): ChallengeDetailViewModel {
         val bizLogger = RecordingBizLogger()
         return ChallengeDetailViewModel(
@@ -269,7 +313,7 @@ class ChallengeDetailReportTest {
             targetAppStore = FakeTargetAppStore(),
             reportRepository = reports,
             notificationRepository = FakeNotificationRepository(),
-            navigationHelper = RecordingNavigationHelper(),
+            navigationHelper = nav,
             checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, FakeAccountRepository()),
             agreeVerificationConsent = AgreeVerificationConsentUseCase(FakeAccountRepository(), FakeIntroRepository()),
         )

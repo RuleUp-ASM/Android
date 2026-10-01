@@ -111,7 +111,12 @@ class ChallengeDetailViewModel
                 is ChallengeDetailIntent.SelectReportReason ->
                     dispatch(ChallengeDetailReducerEvent.ReportReasonSelected(intent.reason))
                 ChallengeDetailIntent.SubmitReport -> submitReport()
-                ChallengeDetailIntent.DismissReport -> dispatch(ChallengeDetailReducerEvent.ReportSheetDismissed)
+                ChallengeDetailIntent.DismissReport -> {
+                    // 챌린지를 신고했으면 그 화면에 머물 이유가 없어 이전 화면으로 돌아간다. 사용자 신고는 방에 남는다.
+                    val leave = currentState.reportResult != null && currentState.reportUserId == null
+                    dispatch(ChallengeDetailReducerEvent.ReportSheetDismissed)
+                    if (leave) navigationHelper.navigateToBack()
+                }
 
                 ChallengeDetailIntent.OpenSettings ->
                     currentState.detail?.challengeId?.let {
