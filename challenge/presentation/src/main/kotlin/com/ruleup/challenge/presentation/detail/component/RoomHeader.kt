@@ -172,66 +172,74 @@ internal fun RoomInfoHeader(
     categoryLabel: String?,
     remainingDays: Int,
     myProgressRate: Double?,
+    imageUrl: String? = null,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(top = 6.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    // 카테고리부터 탭 위까지를 대표 사진 배경으로 채운다.
+    ChallengeCoverBackground(
+        imageUrl = imageUrl,
+        scrim = RuleUpTheme.colors.background,
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        categoryLabel?.let {
-            Text(
-                text = it,
-                color = RuleUpTheme.colors.brand,
-                style = RuleUpTheme.typography.captionMedium,
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(RuleUpTheme.colors.brandSoft)
-                        .padding(horizontal = 9.dp, vertical = 5.dp),
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Bottom,
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 6.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column {
+            categoryLabel?.let {
                 Text(
-                    text = "종료까지",
-                    color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.caption,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    // 종료일 당일·경과는 음수가 되므로 D-day 표기를 나눈다.
-                    text = if (remainingDays > 0) "D-$remainingDays" else "D-day",
-                    color =
-                        if (remainingDays <= DDAY_URGENT_THRESHOLD) {
-                            RuleUpTheme.colors.danger
-                        } else {
-                            RuleUpTheme.colors.warning
-                        },
-                    style = RuleUpTheme.typography.numberXl,
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "내 달성률",
-                    color = RuleUpTheme.colors.textSecondary,
-                    style = RuleUpTheme.typography.caption,
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = myProgressRate?.let { "${it.toPercentText()}%" } ?: "-",
+                    text = it,
                     color = RuleUpTheme.colors.brand,
-                    style = RuleUpTheme.typography.numberXl,
+                    style = RuleUpTheme.typography.captionMedium,
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(RuleUpTheme.colors.brandSoft)
+                            .padding(horizontal = 9.dp, vertical = 5.dp),
                 )
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                Column {
+                    Text(
+                        text = "종료까지",
+                        color = RuleUpTheme.colors.textSecondary,
+                        style = RuleUpTheme.typography.caption,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        // 종료일 당일·경과는 음수가 되므로 D-day 표기를 나눈다.
+                        text = if (remainingDays > 0) "D-$remainingDays" else "D-day",
+                        color =
+                            if (remainingDays <= DDAY_URGENT_THRESHOLD) {
+                                RuleUpTheme.colors.danger
+                            } else {
+                                RuleUpTheme.colors.warning
+                            },
+                        style = RuleUpTheme.typography.numberXl,
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = "내 달성률",
+                        color = RuleUpTheme.colors.textSecondary,
+                        style = RuleUpTheme.typography.caption,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = myProgressRate?.let { "${it.toPercentText()}%" } ?: "-",
+                        color = RuleUpTheme.colors.brand,
+                        style = RuleUpTheme.typography.numberXl,
+                    )
+                }
+            }
+            RoomProgressBar(rate = myProgressRate)
         }
-        RoomProgressBar(rate = myProgressRate)
     }
 }
 
