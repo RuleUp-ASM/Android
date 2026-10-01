@@ -510,8 +510,6 @@ private fun ExtraMenuCard(onIntent: (MyHomeIntent) -> Unit) {
         MenuDivider()
         MenuRow(label = "그룹 랭킹") { onIntent(MyHomeIntent.OpenRanking) }
         MenuDivider()
-        MenuRow(label = "친구 초대") { onIntent(MyHomeIntent.OpenInvite) }
-        MenuDivider()
         MenuRow(label = "신고한 사용자 · 챌린지") { onIntent(MyHomeIntent.OpenBlocks) }
     }
 }
