@@ -14,6 +14,18 @@ data class NotificationSettings(
     }
 
     fun isMuted(challengeId: String): Boolean = challengeId in mutedChallengeIds
+
+    /** [update] 가 성공했다고 치고 미리 반영한 값. 화면이 응답을 기다리지 않고 바로 바꿀 때 쓴다. */
+    fun applying(update: NotificationSettingsUpdate): NotificationSettings =
+        copy(
+            pushEnabled = update.pushEnabled ?: pushEnabled,
+            groups =
+                groups.copy(
+                    account = update.account ?: groups.account,
+                    challenge = update.challenge ?: groups.challenge,
+                    marketing = update.marketing ?: groups.marketing,
+                ),
+        )
 }
 
 /** 그룹 토글 3종. */

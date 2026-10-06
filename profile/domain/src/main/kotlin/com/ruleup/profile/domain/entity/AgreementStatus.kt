@@ -22,6 +22,12 @@ data class AgreementStatus(
     val reconsentRequired: List<AgreementType>,
 ) {
     fun of(type: AgreementType): AgreementState? = agreements.find { it.type == type }
+
+    /** [type] 의 동의 여부만 바꿔 미리 반영한 값. 화면이 응답을 기다리지 않고 바로 바꿀 때 쓴다. */
+    fun withAgreed(
+        type: AgreementType,
+        agreed: Boolean,
+    ): AgreementStatus = copy(agreements = agreements.map { if (it.type == type) it.copy(agreed = agreed) else it })
 }
 
 /** 동의 제출·철회 한 건. */

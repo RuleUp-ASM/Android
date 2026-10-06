@@ -61,6 +61,8 @@ fun AgreementsScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is AgreementsEffect.ShowMessage -> messageHelper.showToast(effect.message)
+                is AgreementsEffect.ShowErrorDialog ->
+                    messageHelper.showOneButtonDialog(titleText = effect.title, descText = effect.message, buttonText = "확인")
             }
         }
     }
@@ -149,7 +151,8 @@ private fun AgreementsBody(
                 if (index > 0) HorizontalDivider(color = RuleUpTheme.colors.border)
                 OptionalRow(
                     item = item,
-                    enabled = state.submitting == null,
+                    // 화면이 먼저 바뀌므로 요청 중에 잠그지 않는다(겹친 탭은 ViewModel 이 무시한다)
+                    enabled = true,
                     onToggle = { onIntent(AgreementsIntent.Toggle(item.type, it)) },
                 )
             }

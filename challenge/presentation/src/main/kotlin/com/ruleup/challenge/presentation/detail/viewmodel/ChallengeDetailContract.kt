@@ -183,6 +183,12 @@ sealed interface ChallengeDetailEffect : MviEffect {
     data class ShowMessage(
         val message: String,
     ) : ChallengeDetailEffect
+
+    /** 바로 반영했던 변경이 서버에서 실패해 되돌렸음을 모달로 알린다. */
+    data class ShowErrorDialog(
+        val title: String,
+        val message: String,
+    ) : ChallengeDetailEffect
 }
 
 /** 방 상세 상단 탭. */

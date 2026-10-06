@@ -9,6 +9,8 @@ import com.ruleup.profile.domain.entity.AgreementVersionMismatchException
 import com.ruleup.profile.presentation.fake.FakeAccountRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -88,6 +90,52 @@ class AgreementsViewModelTest {
             viewModel.onIntent(AgreementsIntent.Toggle(AgreementType.MARKETING, true))
 
             assertEquals(2, repo.calls.count { it == "getAgreements" })
+        }
+
+    @Test
+    fun `선택 동의를 토글하면 응답을 기다리지 않고 화면부터 바꾼다`() =
+        runTest {
+            // 응답이 올 때까지 스위치가 제자리면 눌리지 않은 줄 알고 다시 누른다(#564).
+            lateinit var viewModel: AgreementsViewModel
+            var shownWhileSending: Boolean? = null
+            val repo =
+                FakeAccountRepository(
+                    agreements = { status() },
+                    submit = {
+                        shownWhileSending =
+                            viewModel.uiState.value.status
+                                ?.of(AgreementType.MARKETING)
+                                ?.agreed
+                        status()
+                    },
+                )
+            viewModel = viewModel(repo)
+            viewModel.onIntent(AgreementsIntent.Load)
+
+            viewModel.onIntent(AgreementsIntent.Toggle(AgreementType.MARKETING, true))
+
+            assertEquals(true, shownWhileSending)
+        }
+
+    @Test
+    fun `선택 동의 변경이 실패하면 요청 전 값으로 되돌리고 모달로 알린다`() =
+        runTest {
+            // 되돌리지 않으면 서버는 그대로인데 화면만 동의한 것처럼 남는다.
+            val repo = FakeAccountRepository(agreements = { status() }, submit = { throw IllegalStateException("서버 오류") })
+            val viewModel = viewModel(repo)
+            val effects = mutableListOf<AgreementsEffect>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effect.toList(effects) }
+            viewModel.onIntent(AgreementsIntent.Load)
+
+            viewModel.onIntent(AgreementsIntent.Toggle(AgreementType.MARKETING, true))
+
+            assertEquals(
+                false,
+                viewModel.uiState.value.status
+                    ?.of(AgreementType.MARKETING)
+                    ?.agreed,
+            )
+            assertEquals(1, effects.filterIsInstance<AgreementsEffect.ShowErrorDialog>().size)
         }
 
     @Test

@@ -603,20 +603,31 @@ class ChallengeDetailViewModel
         /** 사용자가 음소거를 바꾼 횟수. */
         private var muteEpoch = 0
 
-        /** 음소거 전환. */
+        /**
+         * 음소거 전환. 화면을 먼저 바꾸고 요청하며, 실패하면 되돌리고 모달로 알린다.
+         * 앞 요청이 끝나기 전의 탭은 받지 않는다 — 되돌릴 기준값이 둘로 갈라진다.
+         */
         private fun toggleMute(muted: Boolean) {
             val challengeId = currentState.detail?.challengeId ?: return
             if (currentState.isMuteSubmitting) return
+            val before = currentState.isMuted
+            // 늦게 도착한 설정 조회가 방금 바꾼 값을 덮지 않게 한다
+            muteEpoch++
+            dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted))
+            dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
             viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.MuteSubmitting(true))
                 runCatching { notificationRepository.setMuted(challengeId, muted) }
                     .onSuccess {
                         // 204 라 응답에 상태가 없다.
-                        muteEpoch++
-                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(muted))
-                    }.onFailure {
                         dispatch(ChallengeDetailReducerEvent.MuteSubmitting(false))
-                        emitEffect(ChallengeDetailEffect.ShowMessage(it.userFacingMessage("알림 설정을 바꾸지 못했어요")))
+                    }.onFailure {
+                        dispatch(ChallengeDetailReducerEvent.MuteLoaded(before ?: !muted))
+                        emitEffect(
+                            ChallengeDetailEffect.ShowErrorDialog(
+                                title = "알림 설정을 바꾸지 못했어요",
+                                message = it.userFacingMessage("잠시 후 다시 시도해 주세요"),
+                            ),
+                        )
                     }
             }
         }

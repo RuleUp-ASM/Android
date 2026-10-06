@@ -1,6 +1,7 @@
 package com.ruleup.notification.presentation.settings.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.ruleup.domain.helper.MessageHelper
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.notification.domain.entity.NotificationGroup
 import com.ruleup.notification.domain.entity.NotificationSettingsUpdate
@@ -21,6 +22,7 @@ class NotificationSettingsViewModel
     constructor(
         private val notificationRepository: NotificationRepository,
         private val navigationHelper: NavigationHelper,
+        private val messageHelper: MessageHelper,
     ) : MviViewModel<
             NotificationSettingsIntent,
             NotificationSettingsState,
@@ -78,8 +80,14 @@ class NotificationSettingsViewModel
             }
         }
 
+        /**
+         * 화면을 먼저 바꾸고 요청한다. 실패하면 요청 전 값으로 되돌리고 모달로 알린다.
+         * 앞 요청이 끝나기 전의 탭은 받지 않는다 — 되돌릴 기준값이 둘로 갈라진다.
+         */
         private fun submit(update: NotificationSettingsUpdate) {
             if (currentState.submitting) return
+            val before = currentState.settings ?: return
+            dispatch(NotificationSettingsReducerEvent.Loaded(before.applying(update)))
             dispatch(NotificationSettingsReducerEvent.Submitting(true))
             viewModelScope.launch {
                 runCatching { notificationRepository.updateSettings(update) }
@@ -94,7 +102,12 @@ class NotificationSettingsViewModel
                             )
                         }
                     }.onFailure {
-                        emitEffect(NotificationSettingsEffect.ShowMessage(it.userFacingMessage("설정을 바꾸지 못했어요")))
+                        dispatch(NotificationSettingsReducerEvent.Loaded(before))
+                        messageHelper.showOneButtonDialog(
+                            titleText = "설정을 바꾸지 못했어요",
+                            descText = it.userFacingMessage("잠시 후 다시 시도해 주세요"),
+                            buttonText = "확인",
+                        )
                     }
                 dispatch(NotificationSettingsReducerEvent.Submitting(false))
             }

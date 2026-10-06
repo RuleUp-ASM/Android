@@ -1,5 +1,6 @@
 package com.ruleup.notification.presentation.settings.viewmodel
 
+import com.ruleup.domain.test.RecordingMessageHelper
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.notification.domain.entity.NotificationGroup
 import com.ruleup.notification.domain.entity.NotificationSettingsResult
@@ -93,37 +94,41 @@ class NotificationSettingsViewModelTest {
         }
 
     @Test
-    fun `서버가 받아들인 값으로만 화면을 갱신한다`() =
+    fun `토글하면 응답을 기다리지 않고 화면부터 바꾼다`() =
         runTest {
-            // 낙관적 반영을 하면 실패했을 때 화면이 거짓말한다.
+            // 응답이 올 때까지 스위치가 제자리면 눌리지 않은 줄 알고 다시 누른다(#564).
+            lateinit var viewModel: NotificationSettingsViewModel
+            var shownWhileSending: Boolean? = null
             val repo =
                 FakeNotificationRepository(
                     settings = { settings() },
-                    update = { NotificationSettingsResult(settings(challenge = false), marketingConsentSyncedAt = null) },
+                    update = {
+                        shownWhileSending =
+                            viewModel.uiState.value.settings
+                                ?.groups
+                                ?.challenge
+                        NotificationSettingsResult(settings(challenge = false), marketingConsentSyncedAt = null)
+                    },
                 )
-            val viewModel = viewModel(repo)
+            viewModel = viewModel(repo)
             viewModel.onIntent(NotificationSettingsIntent.Load)
 
             viewModel.onIntent(NotificationSettingsIntent.ToggleGroup(NotificationGroup.CHALLENGE, false))
 
-            assertEquals(
-                false,
-                viewModel.uiState.value.settings
-                    ?.groups
-                    ?.challenge,
-            )
+            assertEquals(false, shownWhileSending)
         }
 
     @Test
-    fun `변경에 실패하면 사유를 알리고 값을 바꾸지 않는다`() =
+    fun `변경에 실패하면 요청 전 값으로 되돌리고 모달로 알린다`() =
         runTest {
+            // 되돌리지 않으면 서버는 그대로인데 화면만 바뀐 채 남는다.
             val repo =
                 FakeNotificationRepository(
                     settings = { settings() },
                     update = { throw IllegalStateException("설정 저장 실패") },
                 )
-            val viewModel = viewModel(repo)
-            val effects = collectEffects(viewModel)
+            val messages = RecordingMessageHelper()
+            val viewModel = viewModel(repo, messages = messages)
             viewModel.onIntent(NotificationSettingsIntent.Load)
 
             viewModel.onIntent(NotificationSettingsIntent.ToggleGroup(NotificationGroup.CHALLENGE, false))
@@ -134,7 +139,7 @@ class NotificationSettingsViewModelTest {
                     ?.groups
                     ?.challenge,
             )
-            assertTrue(effects.filterIsInstance<NotificationSettingsEffect.ShowMessage>().isNotEmpty())
+            assertEquals(1, messages.dialogDescriptions.size)
         }
 
     @Test
@@ -169,5 +174,6 @@ class NotificationSettingsViewModelTest {
     private fun viewModel(
         repo: FakeNotificationRepository,
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-    ) = NotificationSettingsViewModel(notificationRepository = repo, navigationHelper = nav)
+        messages: RecordingMessageHelper = RecordingMessageHelper(),
+    ) = NotificationSettingsViewModel(notificationRepository = repo, navigationHelper = nav, messageHelper = messages)
 }
