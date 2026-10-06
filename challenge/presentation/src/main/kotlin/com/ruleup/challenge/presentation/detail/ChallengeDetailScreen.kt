@@ -87,6 +87,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.invite.MemberInviteSharer
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
+import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.report.domain.entity.HiddenEffect
@@ -353,6 +354,7 @@ internal fun ChallengeDetailContent(
                     onOpenMenu = { menuOpen = true },
                     onOpenTodayAppeal = { appeal = SoloAppeal.Today },
                     onOpenDayAppeal = { day -> appeal = SoloAppeal.Day(day) },
+                    onOpenMembers = { membersOpen = true },
                 )
         }
 
@@ -527,6 +529,7 @@ private fun RoomView(
     onOpenMenu: () -> Unit,
     onOpenTodayAppeal: () -> Unit,
     onOpenDayAppeal: (ChallengeCalendarDay) -> Unit,
+    onOpenMembers: () -> Unit,
 ) {
     val subtitle =
         if (room != null) {
@@ -572,6 +575,10 @@ private fun RoomView(
                 watcherLabel = watcherCount?.let { "감시자 ${it}명" },
                 onOpenWatchers = { onIntent(ChallengeDetailIntent.OpenWatchers) },
             )
+            // 멤버 목록은 이 줄에서 연다(메뉴에서 뺐다). 솔로는 나 혼자라 두지 않는다
+            state.members?.takeIf { detail.mode.isGroup }?.let { members ->
+                MembersRow(participantCount = members.participantCount, onClick = onOpenMembers)
+            }
             VerificationRuleCard(detail = detail)
             room?.let { ProgressInfoCard(detail = detail, room = it, today = state.todayResult) }
             SoloMonthCalendar(
@@ -628,6 +635,26 @@ private fun RoomView(
         } else {
             infoBody()
         }
+    }
+}
+
+/** 정보 탭의 「멤버 N명 · 멤버 보기 ›」 줄. */
+@Composable
+private fun MembersRow(
+    participantCount: Int,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.ruleUpCardSurface().singleClickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "멤버 ${participantCount}명",
+            color = RuleUpTheme.colors.textPrimary,
+            style = RuleUpTheme.typography.bodyBold,
+            modifier = Modifier.weight(1f),
+        )
+        Text(text = "멤버 보기 ›", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.smallBold)
     }
 }
 

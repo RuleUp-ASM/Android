@@ -233,6 +233,36 @@ class ChallengeDetailContentTest {
         compose.onNodeWithText("감시자 관리").assertDoesNotExist()
     }
 
+    @Test
+    fun `그룹 방 정보 탭의 멤버 보기 줄을 누르면 멤버 목록을 띄운다`() {
+        // 메뉴·표지에서 멤버 진입점이 빠져 이 줄이 유일한 길이다(#585).
+        val member =
+            loaded().copy(
+                detail = detail("평일 아침 헬스장 출석").copy(myRole = MemberRole.MEMBER),
+                members =
+                    ChallengeMembers(
+                        challengeId = "ch1",
+                        participantCount = 3,
+                        capacity = 4,
+                        members =
+                            listOf(
+                                ChallengeMember(
+                                    user = User(id = "u2", nickname = "서연", profileImageUrl = null),
+                                    role = MemberRole.MEMBER,
+                                    tier = null,
+                                    joinedAt = "2026-09-02T00:00:00+09:00",
+                                ),
+                            ),
+                    ),
+            )
+        render(member)
+
+        compose.onNodeWithText("멤버 보기 ›").clickPastGuard()
+
+        compose.onAllNodesWithText("서연").onFirst().assertExists()
+        compose.onNodeWithText("챌린지 나가기").assertExists()
+    }
+
     private fun loaded(title: String = "평일 아침 헬스장 출석") = ChallengeDetailState.initial.copy(isLoading = false, detail = detail(title))
 
     private fun detail(title: String) =
