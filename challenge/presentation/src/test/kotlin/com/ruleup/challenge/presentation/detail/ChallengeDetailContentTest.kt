@@ -32,6 +32,8 @@ import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.renderScreen
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.User
+import com.ruleup.verification.domain.entity.PermissionSnapshot
+import com.ruleup.verification.domain.entity.PermissionState
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -261,6 +263,35 @@ class ChallengeDetailContentTest {
 
         compose.onAllNodesWithText("서연").onFirst().assertExists()
         compose.onNodeWithText("챌린지 나가기").assertExists()
+    }
+
+    @Test
+    fun `상세 내용 보기에 이 챌린지가 쓰는 권한과 지금 허용 여부를 보여 준다`() {
+        // 가입하고 나서야 권한 요청을 만나면 왜 필요한지 모른 채 거절한다(#587).
+        val base = detail("평일 아침 헬스장 출석")
+        val state =
+            loaded().copy(
+                detail = base.copy(verification = base.verification.copy(requiredPermissions = listOf("ACCESS_FINE_LOCATION", "LOCATION"))),
+                permissions =
+                    PermissionSnapshot(
+                        location = PermissionState.DENIED,
+                        backgroundLocation = PermissionState.DENIED,
+                        usageStats = PermissionState.GRANTED,
+                        postNotifications = PermissionState.GRANTED,
+                        healthDistance = PermissionState.GRANTED,
+                        healthSteps = PermissionState.GRANTED,
+                        healthSleep = PermissionState.GRANTED,
+                        healthBackground = PermissionState.GRANTED,
+                    ),
+            )
+        render(state)
+
+        compose.onNodeWithText("상세 내용 보기").clickPastGuard()
+
+        compose.onNodeWithText("필요한 권한").assertExists()
+        // 같은 권한의 다른 이름은 한 줄로 합친다
+        compose.onAllNodesWithText("위치 접근", substring = true).assertCountEquals(1)
+        compose.onNodeWithText("꺼짐").assertExists()
     }
 
     private fun loaded(title: String = "평일 아침 헬스장 출석") = ChallengeDetailState.initial.copy(isLoading = false, detail = detail(title))

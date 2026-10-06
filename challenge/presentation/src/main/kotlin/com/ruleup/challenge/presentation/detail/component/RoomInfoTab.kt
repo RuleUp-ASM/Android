@@ -32,6 +32,7 @@ import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
+import com.ruleup.challenge.presentation.common.RequiredPermissionList
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.StatusChip
@@ -40,6 +41,7 @@ import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.FailureReason
+import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.TodayResult
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import com.ruleup.verification.domain.entity.failureText
@@ -407,7 +409,11 @@ private fun SetupRow(
 
 /** 인증 규칙. */
 @Composable
-internal fun VerificationRuleCard(detail: ChallengeDetail) {
+internal fun VerificationRuleCard(
+    detail: ChallengeDetail,
+    requiredPermissions: List<String> = emptyList(),
+    permissions: PermissionSnapshot? = null,
+) {
     RuleUpCard {
         RoomSectionHeader(title = "인증 규칙")
         Text(
@@ -417,6 +423,7 @@ internal fun VerificationRuleCard(detail: ChallengeDetail) {
             color = RuleUpTheme.colors.textSlate,
             style = RuleUpTheme.typography.body,
         )
+        RequiredPermissionList(tokens = requiredPermissions, snapshot = permissions)
     }
 }
 

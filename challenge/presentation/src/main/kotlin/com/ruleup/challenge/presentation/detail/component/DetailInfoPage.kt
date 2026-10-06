@@ -27,11 +27,13 @@ import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.JoinNote
+import com.ruleup.challenge.presentation.common.RequiredPermissionList
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.label
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.verification.domain.entity.PermissionSnapshot
 
 /**
  * 「상세 내용 보기」. 표지에서 다 못 보여 준 챌린지 정보를 모은다.
@@ -47,6 +49,8 @@ internal fun DetailInfoPage(
     onPrimary: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    requiredPermissions: List<String> = emptyList(),
+    permissions: PermissionSnapshot? = null,
     extraBottom: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
@@ -104,6 +108,8 @@ internal fun DetailInfoPage(
                 detail.verification.detail?.let {
                     Text(text = it, color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.body)
                 }
+                // 가입 전에 어떤 권한을 내줘야 하는지 알게 한다
+                RequiredPermissionList(tokens = requiredPermissions, snapshot = permissions)
             }
             RuleUpCard {
                 RoomSectionHeader(title = "기간·일정")

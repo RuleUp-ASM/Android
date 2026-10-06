@@ -217,7 +217,7 @@ internal fun ChallengeDetailState.missingPermissionTokens(): List<String> {
     return requiredPermissionTokens().filter { snapshot.isGranted(it) == false }
 }
 
-private fun ChallengeDetailState.requiredPermissionTokens(): List<String> =
+internal fun ChallengeDetailState.requiredPermissionTokens(): List<String> =
     setup?.requiredPermissions ?: detail
         ?.verification
         ?.requiredPermissions
@@ -324,6 +324,8 @@ internal fun ChallengeDetailContent(
             shown == DetailView.INFO ->
                 DetailInfoPage(
                     detail = detail,
+                    requiredPermissions = state.requiredPermissionTokens(),
+                    permissions = state.permissions,
                     primaryLabel = primaryLabel,
                     primaryEnabled = !state.isJoining,
                     onPrimary = onPrimary,
@@ -579,7 +581,7 @@ private fun RoomView(
             state.members?.takeIf { detail.mode.isGroup }?.let { members ->
                 MembersRow(participantCount = members.participantCount, onClick = onOpenMembers)
             }
-            VerificationRuleCard(detail = detail)
+            VerificationRuleCard(detail = detail, requiredPermissions = state.requiredPermissionTokens(), permissions = state.permissions)
             room?.let { ProgressInfoCard(detail = detail, room = it, today = state.todayResult) }
             SoloMonthCalendar(
                 month = state.calendarMonth.orEmpty(),
