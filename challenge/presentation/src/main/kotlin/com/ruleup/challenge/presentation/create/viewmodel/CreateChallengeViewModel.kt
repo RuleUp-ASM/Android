@@ -89,6 +89,8 @@ class CreateChallengeViewModel
                     loadTemplates()
                 }
 
+                CreateChallengeIntent.Exit -> exit()
+
                 CreateChallengeIntent.RetryTemplates -> loadTemplates()
 
                 is CreateChallengeIntent.SetRoutineDescription -> {
@@ -196,6 +198,8 @@ class CreateChallengeViewModel
         ): CreateChallengeState =
             when (event) {
                 CreateChallengeReducerEvent.DraftExpired -> CreateChallengeState.initial
+
+                CreateChallengeReducerEvent.Reset -> CreateChallengeState.initial
                 is CreateChallengeReducerEvent.RoutineDescriptionEntered ->
                     state.copy(
                         routineDescription = event.description.take(RoutineDescription.MAX_LENGTH),
@@ -635,6 +639,22 @@ class CreateChallengeViewModel
                     emitEffect(CreateChallengeEffect.ShowError("권한과 동의 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요"))
                 }
             }
+        }
+
+        /**
+         * 만들지 않고 나간다. 이 ViewModel 은 생성 화면들이 함께 쓰려고 액티비티 범위라,
+         * 지우지 않으면 다음에 들어왔을 때 지난 설명과 초안이 그대로 남는다(#589).
+         */
+        private fun exit() {
+            savedStateHandle.remove<String>(KEY_ROUTINE_DESCRIPTION)
+            pendingDraft.consume()
+            editedFields.clear()
+            checkedAccess = null
+            lastCreated = null
+            // 다시 들어오면 새 생성 시도로 센다
+            createStartLogged = false
+            dispatch(CreateChallengeReducerEvent.Reset)
+            navigationHelper.navigateToBack()
         }
 
         /** 만든 방으로 보내고, 인증에 필요한 설정이 남았으면 그 화면을 위에 연다. */

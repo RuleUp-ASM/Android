@@ -10,6 +10,9 @@ import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.verification.domain.entity.VerificationAccess
 
 sealed interface CreateChallengeReducerEvent : ReducerEvent {
+    /** 플로우를 나가 처음 상태로 되돌린다. */
+    data object Reset : CreateChallengeReducerEvent
+
     // 입력 화면
     data class RoutineDescriptionEntered(
         val description: String,
