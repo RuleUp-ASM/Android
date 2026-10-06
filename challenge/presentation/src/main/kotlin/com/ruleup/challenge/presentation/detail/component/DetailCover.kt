@@ -185,6 +185,7 @@ internal fun DetailCover(
     primaryEnabled: Boolean,
     blockedNotice: String?,
     onOpenMenu: () -> Unit,
+    onOpenMembers: () -> Unit,
     onPrimary: () -> Unit,
     onOpenInfo: () -> Unit,
     onBack: () -> Unit,
@@ -232,7 +233,7 @@ internal fun DetailCover(
                 }
             }
             Spacer(Modifier.height(16.dp))
-            MemberPanel(detail = detail, members = members)
+            MemberPanel(detail = detail, members = members, onClick = onOpenMembers)
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CoverButton(
@@ -269,6 +270,7 @@ internal fun DetailCover(
 private fun MemberPanel(
     detail: ChallengeDetail,
     members: ChallengeMembers?,
+    onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(18.dp)
     Column(
@@ -278,6 +280,8 @@ private fun MemberPanel(
                 .clip(shape)
                 .background(Color.White.copy(alpha = 0.14f))
                 .border(1.dp, Color.White.copy(alpha = 0.28f), shape)
+                // 누르면 멤버 목록. 목록을 못 받았으면 열 것이 없다
+                .singleClickable(enabled = members != null, onClick = onClick)
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {

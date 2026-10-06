@@ -49,6 +49,7 @@ internal fun RoomFeedTab(
     modifier: Modifier = Modifier,
     // 피드 위에 고정할 카드(오늘 내 인증 등). 로딩·빈 상태에서도 보인다.
     header: (@Composable () -> Unit)? = null,
+    onOpenProfile: (userId: String) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
 
@@ -118,7 +119,13 @@ internal fun RoomFeedTab(
                         }
                     }
                     item(key = "${item.type.value}-${item.id}") {
-                        ThreadItemCard(item = item, isMe = item.user.id == state.myUserId)
+                        val isMe = item.user.id == state.myUserId
+                        ThreadItemCard(
+                            item = item,
+                            isMe = isMe,
+                            // 내 프로필은 마이페이지가 원본이라 여기서 열지 않는다(멤버 목록과 같은 규칙)
+                            onClick = { onOpenProfile(item.user.id) }.takeIf { !isMe },
+                        )
                     }
                 }
 
@@ -200,8 +207,14 @@ private fun FeedEmptyState(
 private fun ThreadItemCard(
     item: ThreadItem,
     isMe: Boolean,
+    onClick: (() -> Unit)? = null,
 ) {
-    Column(modifier = Modifier.ruleUpCardSurface()) {
+    Column(
+        modifier =
+            Modifier
+                .ruleUpCardSurface()
+                .let { base -> onClick?.let { base.singleClickable(onClick = it) } ?: base },
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             RoomAvatar(nickname = item.user.nickname, highlighted = isMe)
             Spacer(Modifier.width(10.dp))

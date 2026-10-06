@@ -66,6 +66,8 @@ internal fun RoomMemberSection(
     onLeave: () -> Unit,
     onReportMember: (String) -> Unit = {},
     onOpenProfile: (String) -> Unit = {},
+    // 들어가기 전 표지에서 연 목록에는 나가기가 없다
+    showLeave: Boolean = true,
 ) {
     RuleUpCard {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -101,11 +103,13 @@ internal fun RoomMemberSection(
             )
         }
 
-        DangerActionButton(
-            text = "챌린지 나가기",
-            enabled = actionEnabled,
-            onClick = onLeave,
-        )
+        if (showLeave) {
+            DangerActionButton(
+                text = "챌린지 나가기",
+                enabled = actionEnabled,
+                onClick = onLeave,
+            )
+        }
     }
 }
 
