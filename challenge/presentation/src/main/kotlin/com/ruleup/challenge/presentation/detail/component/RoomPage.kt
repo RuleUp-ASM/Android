@@ -142,20 +142,19 @@ internal fun RoomPillTabs(
 }
 
 /**
- * 오늘 인증 카드 아래 바로가기 한 줄(Figma 2-a). 세 버튼은 늘 같은 자리에 둔다.
+ * 오늘 인증 카드 아래 바로가기 한 줄(Figma 2-a). 두 버튼은 늘 같은 자리에 둔다.
  * 「오늘 체크하기」는 직접 체크하는 방에서만 눌린다 — 자동 인증 방에서는 흐리게 남긴다.
+ * 캘린더는 정보 탭 아래에 펼쳐져 있어 버튼을 두지 않는다.
  */
 @Composable
 internal fun TodayQuickActions(
     onManualCheck: (() -> Unit)?,
     onPermissionRepair: () -> Unit,
-    onCalendar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         QuickActionButton(label = "오늘 체크하기", onClick = onManualCheck, modifier = Modifier.weight(1f))
         QuickActionButton(label = "권한 다시 연결", onClick = onPermissionRepair, modifier = Modifier.weight(1f))
-        QuickActionButton(label = "캘린더", onClick = onCalendar, modifier = Modifier.weight(1f))
     }
 }
 

@@ -579,7 +579,6 @@ private fun RoomView(
             TodayQuickActions(
                 onManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
                 onPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
-                onCalendar = onOpenCalendar,
             )
         }
     }
