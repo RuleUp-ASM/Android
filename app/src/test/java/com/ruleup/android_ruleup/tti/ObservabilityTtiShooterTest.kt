@@ -131,7 +131,12 @@ class ObservabilityTtiShooterTest {
                     .second.attributes["page_name"],
             )
             assertEquals(pageName, (sink.single.payload as PerformancePayload.Tti).pageName)
-            assertEquals(100, TtiFirebasePerformanceShadow.traces.single().first.length)
+            assertEquals(
+                100,
+                TtiFirebasePerformanceShadow.traces
+                    .single()
+                    .first.length,
+            )
         }
 
     @Test
