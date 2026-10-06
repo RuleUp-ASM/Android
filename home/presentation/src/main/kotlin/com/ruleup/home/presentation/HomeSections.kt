@@ -1,6 +1,8 @@
 package com.ruleup.home.presentation
 
 import com.ruleup.challenge.domain.entity.ChallengeLimits
+import com.ruleup.challenge.domain.entity.TrendingChallenge
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.verification.domain.entity.TodayStatus
 
 /** 매일 해야 하는 루틴인가(주 7회). 횟수를 모르면 매일로 본다 — 주 N회로 접으면 「오늘」 목록에서 빠져 놓친다. */
@@ -50,5 +52,17 @@ fun greeting(hour: Int): String =
         in 17..21 -> "좋은 저녁이에요"
         else -> "편안한 밤이에요"
     }
+
+/** 신규 이용자에게 보여 줄 첫 챌린지. 실시간 인기 순서는 지키되 관심 분야 것을 앞에 세운다. */
+fun pickStarters(
+    trending: List<TrendingChallenge>,
+    interests: List<Category>,
+    limit: Int = STARTER_LIMIT,
+): List<TrendingChallenge> {
+    val (interested, others) = trending.partition { it.category != null && it.category in interests }
+    return (interested + others).take(limit)
+}
+
+private const val STARTER_LIMIT = 6
 
 private val CLOSED_TODAY = setOf(TodayStatus.DONE, TodayStatus.FAILED)

@@ -1,5 +1,8 @@
 package com.ruleup.home.presentation
 
+import com.ruleup.challenge.domain.entity.TrendingChallenge
+import com.ruleup.challenge.domain.entity.VerificationType
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.verification.domain.entity.TodayStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -96,6 +99,39 @@ class HomeSectionsTest {
         assertEquals("편안한 밤이에요", greeting(22))
         assertEquals("편안한 밤이에요", greeting(4))
     }
+
+    @Test
+    fun `첫 챌린지는 관심 분야 것을 인기 순서대로 앞에 세운다`() {
+        val trending = listOf(trend("a", Category.EXERCISE), trend("b", Category.READING), trend("c", null), trend("d", Category.READING))
+
+        val picked = pickStarters(trending, interests = listOf(Category.READING))
+
+        assertEquals(listOf("b", "d", "a", "c"), picked.map { it.challengeId })
+    }
+
+    @Test
+    fun `첫 챌린지는 정해진 수까지만 고른다`() {
+        val trending = (1..10).map { trend("t$it", Category.EXERCISE) }
+
+        assertEquals(6, pickStarters(trending, interests = emptyList()).size)
+    }
+
+    private fun trend(
+        id: String,
+        category: Category?,
+    ) = TrendingChallenge(
+        rank = 1,
+        challengeId = id,
+        title = "챌린지 $id",
+        imageUrl = null,
+        category = category,
+        participantCount = 10,
+        recentJoins24h = 3,
+        verificationType = VerificationType.MANUAL,
+        minTier = null,
+        joinable = true,
+        endDate = null,
+    )
 
     private fun card(
         id: String,

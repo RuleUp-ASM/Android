@@ -4,7 +4,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.ruleup.challenge.domain.entity.TrendingChallenge
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.ClickClock
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
@@ -111,6 +114,52 @@ class HomeContentTest {
 
         compose.onNodeWithText("지수님", substring = true).assertExists()
     }
+
+    @Test
+    fun `첫 챌린지 후보가 있으면 빈 안내 대신 추천 카드를 보여 준다`() {
+        val intents = mutableListOf<HomeIntent>()
+        render(HomeState(isLoading = false, challenges = emptyList(), starters = listOf(starter("s1", "아침 러닝 30분")))) { intents += it }
+
+        compose.onNodeWithText("이런 챌린지로 시작해 보세요").assertExists()
+        compose.onNodeWithText("첫 습관을 시작해 볼까요?").assertDoesNotExist()
+        compose.onNodeWithText("아침 러닝 30분").clickPastGuard()
+
+        assertTrue(intents.contains(HomeIntent.OpenChallenge("s1")))
+    }
+
+    @Test
+    fun `관심 분야 칩을 누르면 그 분야 둘러보기 의도가 올라간다`() {
+        val intents = mutableListOf<HomeIntent>()
+        render(
+            HomeState(
+                isLoading = false,
+                challenges = emptyList(),
+                starters = listOf(starter("s1", "아침 러닝 30분")),
+                interests = listOf(Category.READING),
+            ),
+        ) { intents += it }
+
+        compose.onNodeWithText(Category.READING.label).clickPastGuard()
+
+        assertTrue(intents.contains(HomeIntent.OpenCategory(Category.READING)))
+    }
+
+    private fun starter(
+        id: String,
+        title: String,
+    ) = TrendingChallenge(
+        rank = 1,
+        challengeId = id,
+        title = title,
+        imageUrl = null,
+        category = Category.EXERCISE,
+        participantCount = 128,
+        recentJoins24h = 3,
+        verificationType = VerificationType.AUTO,
+        minTier = null,
+        joinable = true,
+        endDate = null,
+    )
 
     private fun state(vararg cards: HomeChallengeUi) = HomeState(isLoading = false, challenges = cards.toList())
 

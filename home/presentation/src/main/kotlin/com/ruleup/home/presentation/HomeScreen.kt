@@ -2,6 +2,7 @@ package com.ruleup.home.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -39,6 +43,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.designsystem.R
 import com.ruleup.designsystem.category.CategoryCover
 import com.ruleup.designsystem.category.CategoryIconTile
@@ -46,6 +51,7 @@ import com.ruleup.designsystem.component.RuleUpBottomTab
 import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.time.ServiceDate
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
@@ -95,13 +101,27 @@ internal fun HomeContent(
         val header: @Composable () -> Unit = {
             HomeHeader(
                 nickname = state.nickname,
-                summary = homeSummary(state.challenges),
+                subtitle = if (state.isEmpty) "첫 챌린지를 시작해 보세요" else homeSummary(state.challenges).label(),
                 hasUnread = state.hasUnreadNotifications,
                 onOpenNotifications = { onIntent(HomeIntent.OpenNotifications) },
             )
         }
         // 이번 주 · 히어로를 남기면 "0/0" 껍데기만 보여 처음 들어온 사람이 뭘 할지 모른다.
-        if (state.isEmpty) {
+        if (state.isEmpty && state.starters.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().statusBarsPadding().ttiContentDrawn(),
+                contentPadding = PaddingValues(bottom = 140.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
+                item { header() }
+                item { StarterSection(state = state, onIntent = onIntent) }
+                if (state.interests.isNotEmpty()) {
+                    item { InterestChips(interests = state.interests, onOpen = { onIntent(HomeIntent.OpenCategory(it)) }) }
+                }
+                item { StarterExploreButton(onClick = { onIntent(HomeIntent.OpenExplore) }) }
+            }
+        } else if (state.isEmpty) {
+            // 첫 챌린지 후보를 못 받았을 때의 기본 안내.
             Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
                 header()
                 HomeEmptyState(
@@ -244,7 +264,7 @@ private fun EmptyActionButton(
 @Composable
 private fun HomeHeader(
     nickname: String?,
-    summary: HomeSummary,
+    subtitle: String,
     hasUnread: Boolean,
     onOpenNotifications: () -> Unit,
 ) {
@@ -262,7 +282,7 @@ private fun HomeHeader(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = summary.label(),
+                text = subtitle,
                 color = RuleUpTheme.colors.textSecondary,
                 style = RuleUpTheme.typography.small,
             )
@@ -294,6 +314,144 @@ private fun HomeHeader(
                 )
             }
         }
+    }
+}
+
+/** 신규 이용자: 바로 들어갈 수 있는 첫 챌린지 카드(Figma 1563:2). */
+@Composable
+private fun StarterSection(
+    state: HomeState,
+    onIntent: (HomeIntent) -> Unit,
+) {
+    val matched = state.starters.any { it.category != null && it.category in state.interests }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(text = "이런 챌린지로 시작해 보세요", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
+            Text(
+                text =
+                    if (matched) {
+                        "관심 분야(${state.interests.joinToString(" · ") { it.label }})에서 지금 많이 모이는 방이에요"
+                    } else {
+                        "지금 많이 모이는 방이에요"
+                    },
+                color = RuleUpTheme.colors.textMuted,
+                style = RuleUpTheme.typography.caption,
+            )
+        }
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(state.starters, key = { it.challengeId }) { item ->
+                StarterCard(item = item, onClick = { onIntent(HomeIntent.OpenChallenge(item.challengeId)) })
+            }
+        }
+    }
+}
+
+@Composable
+private fun StarterCard(
+    item: TrendingChallenge,
+    onClick: () -> Unit,
+) {
+    val shape = RoundedCornerShape(22.dp)
+    Box(
+        modifier =
+            Modifier
+                .size(width = 200.dp, height = 250.dp)
+                .shadow(6.dp, shape, clip = false)
+                .clip(shape)
+                .singleClickable(onClick = onClick),
+    ) {
+        CategoryCover(category = item.category, modifier = Modifier.matchParentSize())
+        item.imageUrl?.takeIf { it.isNotBlank() }?.let { url ->
+            AsyncImage(model = url, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
+        }
+        Box(Modifier.matchParentSize().background(Brush.verticalGradient(0.4f to Color.Transparent, 1f to HeroScrim)))
+        Column(
+            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            item.category?.let {
+                Text(
+                    text = it.label,
+                    color = Color.White,
+                    style = RuleUpTheme.typography.captionBold,
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(Color.White.copy(alpha = 0.24f))
+                            .padding(horizontal = 10.dp, vertical = 3.dp),
+                )
+            }
+            Text(
+                text = item.title,
+                color = Color.White,
+                style = RuleUpTheme.typography.cardTitle,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "${item.participantCount}명 참여 중 · " + if (item.verificationType.isAuto) "자동 인증" else "직접 체크",
+                color = Color.White.copy(alpha = 0.88f),
+                style = RuleUpTheme.typography.captionMedium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun InterestChips(
+    interests: List<Category>,
+    onOpen: (Category) -> Unit,
+) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(text = "관심 분야에서 찾아보기", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            interests.forEach { category ->
+                Row(
+                    modifier =
+                        Modifier
+                            .clip(RoundedCornerShape(99.dp))
+                            .background(RuleUpTheme.colors.surface)
+                            .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(99.dp))
+                            .singleClickable { onOpen(category) }
+                            .padding(start = 8.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CategoryIconTile(category = category, size = 24.dp)
+                    Text(text = category.label, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.smallBold)
+                    Icon(
+                        painter = painterResource(R.drawable.ic_chevron_right),
+                        contentDescription = null,
+                        tint = RuleUpTheme.colors.textMuted,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StarterExploreButton(onClick: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        EmptyActionButton(
+            text = "챌린지 더 둘러보기",
+            background = RuleUpTheme.colors.brand,
+            textColor = Color.White,
+            onClick = onClick,
+        )
+        // 만들기는 탭 바 + 와 겹치므로 버튼 대신 안내만 둔다.
+        Text(text = "직접 만들려면 오른쪽 아래 + 를 눌러요", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.caption)
     }
 }
 

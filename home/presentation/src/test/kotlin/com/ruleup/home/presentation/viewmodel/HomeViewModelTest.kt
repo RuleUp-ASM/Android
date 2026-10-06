@@ -12,6 +12,7 @@ import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.OwnerType
+import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -40,6 +41,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /** 홈. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -230,6 +232,72 @@ class HomeViewModelTest {
             assertNull(vm.uiState.value.hero)
         }
 
+    @Test
+    fun `챌린지가 하나도 없으면 관심 분야 인기 챌린지를 첫 챌린지로 앞에 세운다`() =
+        runTest {
+            val explore = FakeExploreRepository { listOf(trending("run", Category.EXERCISE), trending("book", Category.READING)) }
+            val vm = viewModel(explore = explore, profile = FakeProfileRepository { listOf(Category.READING) })
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(
+                listOf("book", "run"),
+                vm.uiState.value.starters
+                    .map { it.challengeId },
+            )
+            assertEquals(listOf(Category.READING), vm.uiState.value.interests)
+        }
+
+    @Test
+    fun `챌린지가 있으면 첫 챌린지를 부르지 않는다`() =
+        runTest {
+            val explore = FakeExploreRepository { listOf(trending("run", Category.EXERCISE)) }
+            val vm = viewModel(challenges = listOf(myChallenge("ch1")), explore = explore)
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(0, explore.trendingCalls)
+        }
+
+    @Test
+    fun `관심 분야를 못 받아도 인기 순서 그대로 첫 챌린지를 보여 준다`() =
+        runTest {
+            val explore = FakeExploreRepository { listOf(trending("run", Category.EXERCISE)) }
+            val vm = viewModel(explore = explore, profile = FakeProfileRepository { error("프로필 실패") })
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(
+                listOf("run"),
+                vm.uiState.value.starters
+                    .map { it.challengeId },
+            )
+        }
+
+    @Test
+    fun `인기 조회가 실패하면 첫 챌린지는 비어 있다`() =
+        runTest {
+            val vm = viewModel(explore = FakeExploreRepository { error("인기 실패") })
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertTrue(
+                vm.uiState.value.starters
+                    .isEmpty(),
+            )
+            assertFalse(vm.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `관심 분야를 누르면 그 분야 둘러보기로 간다`() {
+        val nav = RecordingNavigationHelper()
+        val vm = viewModel(nav = nav)
+
+        vm.onIntent(HomeIntent.OpenCategory(Category.READING))
+
+        assertEquals(Category.READING.value, nav.routes.single().args["category"])
+    }
+
     private fun viewModel(
         challenges: List<MyChallenge>? = emptyList(),
         progress: ProgressSnapshot? = ProgressSnapshot(asOf = "2026-09-01T00:00:00Z", challenges = emptyList()),
@@ -240,6 +308,8 @@ class HomeViewModelTest {
             ),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         myPage: FakeMyPageRepository = FakeMyPageRepository(),
+        explore: FakeExploreRepository = FakeExploreRepository(),
+        profile: FakeProfileRepository = FakeProfileRepository(),
     ) = HomeViewModel(
         challengeRepository = repo,
         verificationRepository =
@@ -247,6 +317,8 @@ class HomeViewModelTest {
         myChallengeStore = FakeMyChallengeStore(locals),
         notificationRepository = FakeNotificationRepository(),
         myPageRepository = myPage,
+        exploreRepository = explore,
+        profileRepository = profile,
         navigationHelper = nav,
     )
 
@@ -318,6 +390,23 @@ class HomeViewModelTest {
         cloneable = false,
         myRole = MemberRole.OWNER,
         moderation = null,
+    )
+
+    private fun trending(
+        id: String,
+        category: Category?,
+    ) = TrendingChallenge(
+        rank = 1,
+        challengeId = id,
+        title = "챌린지 $id",
+        imageUrl = null,
+        category = category,
+        participantCount = 10,
+        recentJoins24h = 3,
+        verificationType = VerificationType.MANUAL,
+        minTier = null,
+        joinable = true,
+        endDate = null,
     )
 
     /** 홈은 첫 페이지만 본다 */
