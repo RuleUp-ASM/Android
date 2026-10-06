@@ -140,13 +140,21 @@ private fun TitleDescriptionEditor(
             emphasized = true,
             placeholder = "챌린지 이름",
         )
-        OutlinedField(
-            value = state.description,
-            onValueChange = { onIntent(CreateChallengeIntent.SetDescription(it)) },
-            onFocusLeave = { onIntent(CreateChallengeIntent.ConfirmTextEdit(TextEditField.DESCRIPTION)) },
-            minHeight = 72.dp,
-            placeholder = "어떤 루틴인지 설명해주세요",
-        )
+        // 설명은 입력한 루틴에서 만든 초안 그대로 둔다 — 생성 단계에서는 이름만 고친다(#580)
+        if (state.description.isNotBlank()) {
+            Text(
+                text = state.description,
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.bodyMedium,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 72.dp)
+                        .clip(RuleUpTheme.shapes.medium)
+                        .background(RuleUpTheme.colors.surfaceVariant)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+            )
+        }
     }
 }
 
