@@ -17,10 +17,10 @@ import com.ruleup.profile.domain.navigation.MyWatchingPage
 import com.ruleup.profile.domain.repository.AccountRepository
 import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.report.domain.navigation.BlockListPage
-import com.ruleup.support.domain.entity.InquiryStatus
 import com.ruleup.support.domain.entity.InquirySummary
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
 import com.ruleup.support.domain.navigation.InquiryListPage
+import com.ruleup.support.domain.repository.InquiryReadStore
 import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
@@ -38,6 +38,7 @@ class SettingsViewModel
         private val accountRepository: AccountRepository,
         private val profileRepository: ProfileRepository,
         private val inquiryRepository: InquiryRepository,
+        private val inquiryReadStore: InquiryReadStore,
         private val logoutUseCase: LogoutUseCase,
         private val withdrawUseCase: WithdrawUseCase,
         private val navigationHelper: NavigationHelper,
@@ -78,7 +79,7 @@ class SettingsViewModel
                         provider = event.provider,
                         reconsentCount = event.reconsentCount,
                         hasActiveSanction = event.hasActiveSanction,
-                        answeredInquiryCount = event.answeredInquiryCount,
+                        newAnswerCount = event.newAnswerCount,
                     )
 
                 SettingsReducerEvent.LoadFinished -> state.copy(isLoading = false)
@@ -105,6 +106,7 @@ class SettingsViewModel
                     dispatch(SettingsReducerEvent.LoadFinished)
                     return@launch
                 }
+                val seenAnswers = runCatching { inquiryReadStore.seenAnswers() }.getOrDefault(emptyMap())
                 dispatch(
                     SettingsReducerEvent.Loaded(
                         provider =
@@ -114,8 +116,8 @@ class SettingsViewModel
                                 ?.provider,
                         reconsentCount = loaded.agreements?.reconsentRequired?.size ?: 0,
                         hasActiveSanction = loaded.sanctions?.activeSanction != null,
-                        answeredInquiryCount =
-                            loaded.inquiries.orEmpty().count { it.status == InquiryStatus.ANSWERED },
+                        newAnswerCount =
+                            loaded.inquiries.orEmpty().count { it.hasNewAnswer(seenAnswers[it.inquiryId]) },
                     ),
                 )
             }

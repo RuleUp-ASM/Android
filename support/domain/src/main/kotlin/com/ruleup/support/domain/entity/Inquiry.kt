@@ -128,8 +128,11 @@ data class InquirySummary(
     // ISO-8601.
     val answeredAt: String?,
 ) {
-    val hasNewAnswer: Boolean
-        get() = answeredAt != null
+    /**
+     * [seenAnsweredAt] 은 이 기기에서 이 문의를 열었을 때의 답변 시각이다(`InquiryReadStore`).
+     * 시각으로 비교하므로 답변이 고쳐지면 다시 새 답변이 된다.
+     */
+    fun hasNewAnswer(seenAnsweredAt: String?): Boolean = answeredAt != null && answeredAt != seenAnsweredAt
 }
 
 /** 문의 상세. */

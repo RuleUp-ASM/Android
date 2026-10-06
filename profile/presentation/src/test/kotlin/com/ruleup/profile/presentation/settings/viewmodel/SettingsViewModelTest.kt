@@ -13,6 +13,7 @@ import com.ruleup.profile.domain.entity.SanctionHistory
 import com.ruleup.profile.presentation.fake.FakeAccountRepository
 import com.ruleup.profile.presentation.fake.FakeProfileRepository
 import com.ruleup.support.domain.entity.InquiryStatus
+import com.ruleup.support.domain.fake.FakeInquiryReadStore
 import com.ruleup.support.domain.fake.FakeInquiryRepository
 import com.ruleup.support.domain.fake.inquirySummary
 import kotlinx.coroutines.Dispatchers
@@ -109,24 +110,29 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `답변이 달린 문의 수를 뱃지로 센다`() =
+    fun `이 기기에서 아직 열어 보지 않은 답변만 새 답변으로 센다`() =
         runTest {
-            // 답변은 푸시도 알림함도 쓰지 않는다
+            // 답변은 푸시도 알림함도 쓰지 않아 이 뱃지가 유일한 신호다. 열어 본 것까지 세면 영영 줄지 않는다(#559).
             val inquiries =
                 FakeInquiryRepository(
                     inquiries = {
                         listOf(
-                            inquirySummary(inquiryId = "a", status = InquiryStatus.ANSWERED),
-                            inquirySummary(inquiryId = "b", status = InquiryStatus.ANSWERED),
+                            inquirySummary(inquiryId = "a", status = InquiryStatus.ANSWERED, answeredAt = ANSWERED_AT),
+                            inquirySummary(inquiryId = "b", status = InquiryStatus.ANSWERED, answeredAt = ANSWERED_AT),
                             inquirySummary(inquiryId = "c", status = InquiryStatus.RECEIVED),
                         )
                     },
                 )
-            val viewModel = viewModel(FakeAccountRepository(), inquiries = inquiries)
+            val viewModel =
+                viewModel(
+                    FakeAccountRepository(),
+                    inquiries = inquiries,
+                    readStore = FakeInquiryReadStore(mapOf("a" to ANSWERED_AT)),
+                )
 
             viewModel.onIntent(SettingsIntent.Load)
 
-            assertEquals(2, viewModel.uiState.value.answeredInquiryCount)
+            assertEquals(1, viewModel.uiState.value.newAnswerCount)
         }
 
     @Test
@@ -138,7 +144,7 @@ class SettingsViewModelTest {
             viewModel.onIntent(SettingsIntent.Load)
 
             assertFalse(viewModel.uiState.value.isLoading)
-            assertEquals(0, viewModel.uiState.value.answeredInquiryCount)
+            assertEquals(0, viewModel.uiState.value.newAnswerCount)
         }
 
     private fun viewModel(
@@ -148,12 +154,14 @@ class SettingsViewModelTest {
         // 프로필은 「연결된 계정」 표기 전용이라 실패해도 나머지 행은 그대로 그린다.
         profile: FakeProfileRepository = FakeProfileRepository(),
         inquiries: FakeInquiryRepository = FakeInquiryRepository(),
+        readStore: FakeInquiryReadStore = FakeInquiryReadStore(),
     ): SettingsViewModel {
         val tokens = FakeTokenRepository()
         return SettingsViewModel(
             accountRepository = repo,
             profileRepository = profile,
             inquiryRepository = inquiries,
+            inquiryReadStore = readStore,
             logoutUseCase = LogoutUseCase(auth, tokens, noopCleaner) {},
             withdrawUseCase = WithdrawUseCase(auth, tokens, noopCleaner),
             navigationHelper = nav,
@@ -185,4 +193,8 @@ class SettingsViewModelTest {
             admin = emptyList(),
             auto = emptyList(),
         )
+
+    private companion object {
+        const val ANSWERED_AT = "2026-09-06T11:08:00Z"
+    }
 }

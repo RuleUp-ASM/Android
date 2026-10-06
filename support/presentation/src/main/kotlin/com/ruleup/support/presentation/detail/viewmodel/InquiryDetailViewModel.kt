@@ -5,6 +5,7 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
+import com.ruleup.support.domain.repository.InquiryReadStore
 import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -18,6 +19,7 @@ class InquiryDetailViewModel
     @Inject
     constructor(
         private val inquiryRepository: InquiryRepository,
+        private val inquiryReadStore: InquiryReadStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<InquiryDetailIntent, InquiryDetailState, InquiryDetailReducerEvent, NoEffect>(
             InquiryDetailState.initial,
@@ -55,8 +57,11 @@ class InquiryDetailViewModel
             dispatch(InquiryDetailReducerEvent.Loading(inquiryId))
             viewModelScope.launch {
                 runCatching { inquiryRepository.getInquiry(inquiryId) }
-                    .onSuccess { dispatch(InquiryDetailReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(InquiryDetailReducerEvent.Failed(it.userMessage())) }
+                    .onSuccess { detail ->
+                        dispatch(InquiryDetailReducerEvent.Loaded(detail))
+                        // 기록이 실패해도 상세는 보여 준다. 다음에 다시 새 답변으로 보일 뿐이다
+                        detail.answeredAt?.let { runCatching { inquiryReadStore.markSeen(detail.inquiryId, it) } }
+                    }.onFailure { dispatch(InquiryDetailReducerEvent.Failed(it.userMessage())) }
             }
         }
     }

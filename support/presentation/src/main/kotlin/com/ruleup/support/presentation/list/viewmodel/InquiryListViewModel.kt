@@ -6,6 +6,7 @@ import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
 import com.ruleup.support.domain.navigation.InquiryDetailPage
+import com.ruleup.support.domain.repository.InquiryReadStore
 import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
@@ -19,6 +20,7 @@ class InquiryListViewModel
     @Inject
     constructor(
         private val inquiryRepository: InquiryRepository,
+        private val inquiryReadStore: InquiryReadStore,
         private val navigationHelper: NavigationHelper,
     ) : MviViewModel<InquiryListIntent, InquiryListState, InquiryListReducerEvent, NoEffect>(
             InquiryListState.initial,
@@ -40,7 +42,7 @@ class InquiryListViewModel
                 InquiryListReducerEvent.Loading -> state.copy(isLoading = true, errorMessage = null)
 
                 is InquiryListReducerEvent.Loaded ->
-                    state.copy(isLoading = false, items = event.items, errorMessage = null)
+                    state.copy(isLoading = false, items = event.items, seenAnswers = event.seenAnswers, errorMessage = null)
 
                 is InquiryListReducerEvent.Failed ->
                     state.copy(isLoading = false, errorMessage = event.message)
@@ -50,8 +52,11 @@ class InquiryListViewModel
             dispatch(InquiryListReducerEvent.Loading)
             viewModelScope.launch {
                 runCatching { inquiryRepository.getInquiries() }
-                    .onSuccess { dispatch(InquiryListReducerEvent.Loaded(it)) }
-                    .onFailure { dispatch(InquiryListReducerEvent.Failed(it.userMessage())) }
+                    .onSuccess { items ->
+                        // 기록을 못 읽으면 전부 새 답변으로 보인다. 목록을 막을 일은 아니다
+                        val seen = runCatching { inquiryReadStore.seenAnswers() }.getOrDefault(emptyMap())
+                        dispatch(InquiryListReducerEvent.Loaded(items, seen))
+                    }.onFailure { dispatch(InquiryListReducerEvent.Failed(it.userMessage())) }
             }
         }
     }

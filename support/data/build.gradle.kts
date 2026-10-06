@@ -33,6 +33,7 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.datastore.preferences)
 
     // 첨부 사진 multipart 전송.
     implementation(libs.okhttp)

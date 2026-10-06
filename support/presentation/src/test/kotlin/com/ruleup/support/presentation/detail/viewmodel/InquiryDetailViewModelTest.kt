@@ -3,6 +3,7 @@ package com.ruleup.support.presentation.detail.viewmodel
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
+import com.ruleup.support.domain.fake.FakeInquiryReadStore
 import com.ruleup.support.domain.fake.FakeInquiryRepository
 import com.ruleup.support.domain.fake.inquiryDetail
 import com.ruleup.support.domain.navigation.InquiryCategoryPage
@@ -106,11 +107,37 @@ class InquiryDetailViewModelTest {
             )
         }
 
+    @Test
+    fun `답변이 달린 문의를 열면 그 답변을 확인한 것으로 남긴다`() =
+        runTest {
+            val readStore = FakeInquiryReadStore()
+            val repo = FakeInquiryRepository(detail = { inquiryDetail(inquiryId = it, answerText = "확인해 볼게요") })
+            val viewModel = viewModel(repo, readStore = readStore)
+
+            viewModel.onIntent(InquiryDetailIntent.Load("abc-123"))
+
+            // 이게 빠지면 열어 본 문의가 내역에 계속 새 답변으로 남는다(#559).
+            assertEquals(mapOf("abc-123" to "2026-09-06T11:08:00Z"), readStore.seen)
+        }
+
+    @Test
+    fun `답변이 없는 문의를 열면 확인 기록을 남기지 않는다`() =
+        runTest {
+            val readStore = FakeInquiryReadStore()
+            val viewModel = viewModel(FakeInquiryRepository(detail = { inquiryDetail(inquiryId = it) }), readStore = readStore)
+
+            viewModel.onIntent(InquiryDetailIntent.Load("abc-123"))
+
+            assertTrue(readStore.seen.isEmpty())
+        }
+
     private fun viewModel(
         repo: FakeInquiryRepository = FakeInquiryRepository(detail = { inquiryDetail() }),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
+        readStore: FakeInquiryReadStore = FakeInquiryReadStore(),
     ) = InquiryDetailViewModel(
         inquiryRepository = repo,
+        inquiryReadStore = readStore,
         navigationHelper = nav,
     )
 
