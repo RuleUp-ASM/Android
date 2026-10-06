@@ -1,11 +1,13 @@
 package com.ruleup.home.presentation
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.ruleup.challenge.domain.entity.TrendingChallenge
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.ClickClock
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
@@ -71,13 +73,93 @@ class HomeContentTest {
     }
 
     @Test
-    fun `홈에는 오늘 할 일 필터 없이 진행 중인 챌린지를 모두 보여 준다`() {
+    fun `오늘 대상이 아닌 챌린지도 홈에서 사라지지 않는다`() {
         // 오늘 대상이 아닌 챌린지도 홈에서 사라지면 안 된다(#570).
         render(state(card("ch1", todayTarget = true), card("ch2", todayTarget = false)))
 
-        compose.onNodeWithText("오늘 할 일", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("챌린지 ch1").assertExists()
         compose.onNodeWithText("챌린지 ch2").assertExists()
     }
+
+    @Test
+    fun `매일 루틴과 주 N회 루틴을 다른 칸에 나눠 보여 준다`() {
+        render(state(card("daily", weeklyCount = 7), card("weekly", weeklyCount = 3)))
+
+        compose.onNodeWithText("오늘 · 매일 루틴").assertExists()
+        compose.onNodeWithText("이번 주 · 주 N회").assertExists()
+        compose.onNodeWithText("주 3회", substring = true).assertExists()
+    }
+
+    @Test
+    fun `직접 체크할 챌린지가 있으면 오늘 해 볼 것으로 크게 띄운다`() {
+        val intents = mutableListOf<HomeIntent>()
+        render(state(card("ch1", title = "영단어 30개")).copy(manualCheckable = mapOf("ch1" to true))) { intents += it }
+
+        compose.onNodeWithText("오늘 해 볼까요?").assertExists()
+        compose.onNodeWithText("체크하기").clickPastGuard()
+
+        assertTrue(intents.contains(HomeIntent.OpenChallenge("ch1")))
+    }
+
+    @Test
+    fun `자동 인증만 있으면 오늘 해 볼 것을 띄우지 않는다`() {
+        render(state(card("ch1")).copy(manualCheckable = mapOf("ch1" to false)))
+
+        compose.onNodeWithText("오늘 해 볼까요?").assertDoesNotExist()
+    }
+
+    @Test
+    fun `닉네임을 받았으면 인사에 붙인다`() {
+        render(state(card("ch1")).copy(nickname = "지수"))
+
+        compose.onNodeWithText("지수님", substring = true).assertExists()
+    }
+
+    @Test
+    fun `첫 챌린지 후보가 있으면 빈 안내 대신 추천 카드를 보여 준다`() {
+        val intents = mutableListOf<HomeIntent>()
+        render(HomeState(isLoading = false, challenges = emptyList(), starters = listOf(starter("s1", "아침 러닝 30분")))) { intents += it }
+
+        compose.onNodeWithText("이런 챌린지로 시작해 보세요").assertExists()
+        compose.onNodeWithText("첫 습관을 시작해 볼까요?").assertDoesNotExist()
+        compose.onNodeWithText("아침 러닝 30분").clickPastGuard()
+
+        assertTrue(intents.contains(HomeIntent.OpenChallenge("s1")))
+    }
+
+    @Test
+    fun `관심 분야 칩을 누르면 그 분야 둘러보기 의도가 올라간다`() {
+        val intents = mutableListOf<HomeIntent>()
+        render(
+            HomeState(
+                isLoading = false,
+                challenges = emptyList(),
+                starters = listOf(starter("s1", "아침 러닝 30분")),
+                interests = listOf(Category.READING),
+            ),
+        ) { intents += it }
+
+        compose.onNodeWithText(Category.READING.label).clickPastGuard()
+
+        assertTrue(intents.contains(HomeIntent.OpenCategory(Category.READING)))
+    }
+
+    private fun starter(
+        id: String,
+        title: String,
+    ) = TrendingChallenge(
+        rank = 1,
+        challengeId = id,
+        title = title,
+        imageUrl = null,
+        category = Category.EXERCISE,
+        participantCount = 128,
+        recentJoins24h = 3,
+        verificationType = VerificationType.AUTO,
+        minTier = null,
+        joinable = true,
+        endDate = null,
+    )
 
     private fun state(vararg cards: HomeChallengeUi) = HomeState(isLoading = false, challenges = cards.toList())
 
@@ -85,14 +167,18 @@ class HomeContentTest {
         id: String,
         title: String = "챌린지 $id",
         todayTarget: Boolean = true,
+        weeklyCount: Int? = 7,
     ) = HomeChallengeUi(
         challengeId = id,
         title = title,
         subtitle = "진행중 · 솔로",
         progress = 0f,
         todayTarget = todayTarget,
-        iconRes = android.R.drawable.ic_menu_help,
-        accentColor = Color.Gray,
+        category = null,
+        weeklyCount = weeklyCount,
+        todayStatus = null,
+        imageUrl = null,
+        active = true,
     )
 
     private fun render(

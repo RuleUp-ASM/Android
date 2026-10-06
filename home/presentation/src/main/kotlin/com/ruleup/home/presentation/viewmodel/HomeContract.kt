@@ -1,6 +1,9 @@
 package com.ruleup.home.presentation.viewmodel
 
+import com.ruleup.challenge.domain.entity.TrendingChallenge
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.home.presentation.HomeChallengeUi
+import com.ruleup.home.presentation.pickHero
 import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -25,6 +28,11 @@ sealed interface HomeIntent : MviIntent {
     data class OpenChallenge(
         val challengeId: String,
     ) : HomeIntent
+
+    /** 신규 이용자: 관심 분야 칩 → 그 분야 둘러보기. */
+    data class OpenCategory(
+        val category: Category,
+    ) : HomeIntent
 }
 
 data class HomeState(
@@ -34,7 +42,18 @@ data class HomeState(
     val hasUnreadNotifications: Boolean = false,
     /** 이번 주 날짜(YYYY-MM-DD)별 판정. 판정 대상이 아닌 날은 없다. */
     val weekStatuses: Map<String, CalendarDayStatus> = emptyMap(),
+    // 못 받으면 null — 인사만 띄운다
+    val nickname: String? = null,
+    /** 챌린지별 「오늘 직접 체크할 수 있는가」. 조회하지 않았거나 실패한 챌린지는 없다. */
+    val manualCheckable: Map<String, Boolean> = emptyMap(),
+    /** 챌린지가 없는 사람에게 보여 줄 첫 챌린지. 못 받으면 비어 있고 기본 안내를 띄운다. */
+    val starters: List<TrendingChallenge> = emptyList(),
+    val interests: List<Category> = emptyList(),
 ) : UiState {
+    /** 「오늘 해 볼까요?」에 올릴 챌린지. */
+    val hero: HomeChallengeUi?
+        get() = pickHero(challenges, manualCheckable)
+
     /** 챌린지가 하나도 없는 상태. */
     val isEmpty: Boolean
         get() = !isLoading && challenges.isEmpty()
@@ -58,5 +77,18 @@ sealed interface HomeReducerEvent : ReducerEvent {
 
     data class WeekLoaded(
         val statuses: Map<String, CalendarDayStatus>,
+    ) : HomeReducerEvent
+
+    data class NicknameLoaded(
+        val nickname: String,
+    ) : HomeReducerEvent
+
+    data class CheckableLoaded(
+        val manualCheckable: Map<String, Boolean>,
+    ) : HomeReducerEvent
+
+    data class StartersLoaded(
+        val starters: List<TrendingChallenge>,
+        val interests: List<Category>,
     ) : HomeReducerEvent
 }
