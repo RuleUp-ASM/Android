@@ -53,9 +53,12 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.time.ServiceDate
+import com.ruleup.home.presentation.viewmodel.DayResult
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
+import com.ruleup.home.presentation.viewmodel.SelectedDay
+import com.ruleup.profile.domain.entity.CalendarDayItem
 import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.tti.presentation.rememberTtiLargeContent
@@ -143,7 +146,18 @@ internal fun HomeContent(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
                 item { header() }
-                item { WeekPills(statuses = state.weekStatuses) }
+                item {
+                    WeekStamps(
+                        statuses = state.weekStatuses,
+                        selectedDate = state.selectedDay?.date,
+                        onSelect = { onIntent(HomeIntent.SelectDay(it)) },
+                    )
+                }
+                val selected = state.selectedDay
+                if (selected != null) {
+                    item { DayResultSection(selected = selected, onIntent = onIntent) }
+                    return@LazyColumn
+                }
                 if (hero != null) {
                     item { SectionTitle(title = "오늘 해 볼까요?", trailing = "직접 체크") }
                     item { HeroCard(card = hero, onOpen = { open(hero) }) }
@@ -484,9 +498,13 @@ private fun SectionTitle(
     }
 }
 
-/** 이번 주 요일 알약. 점은 그날 판정. */
+/** 이번 주 도장. ✓ 그날 다 지킴 · ✕ 하나라도 못 지킴 · 테두리 오늘. 지난 날을 누르면 그날 결과를 본다. */
 @Composable
-private fun WeekPills(statuses: Map<String, CalendarDayStatus>) {
+private fun WeekStamps(
+    statuses: Map<String, CalendarDayStatus>,
+    selectedDate: String?,
+    onSelect: (String) -> Unit,
+) {
     val today =
         com.ruleup.ui.time
             .rememberServiceDate()
@@ -494,55 +512,234 @@ private fun WeekPills(statuses: Map<String, CalendarDayStatus>) {
     val labels = listOf("월", "화", "수", "목", "금", "토", "일")
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         for (i in 0..6) {
             val date = monday.plusDays(i.toLong())
-            val isToday = date == today
+            val stamp = dayStamp(date, today, statuses[date.toString()])
+            // 아무것도 고르지 않았으면 오늘이 선택된 칸이다.
+            val selected = (selectedDate ?: today.toString()) == date.toString()
             Column(
                 modifier =
                     Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isToday) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.surface.copy(alpha = 0.75f))
-                        .padding(vertical = 8.dp),
+                        .clip(RoundedCornerShape(14.dp))
+                        .then(if (stamp == DayStamp.FUTURE) Modifier else Modifier.singleClickable { onSelect(date.toString()) })
+                        .padding(horizontal = 2.dp, vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = labels[i],
-                    color = if (isToday) Color.White.copy(alpha = 0.7f) else RuleUpTheme.colors.textMuted,
-                    style = RuleUpTheme.typography.micro,
+                    color = if (selected) RuleUpTheme.colors.brand else RuleUpTheme.colors.textMuted,
+                    style = if (selected) RuleUpTheme.typography.captionBold else RuleUpTheme.typography.caption,
                 )
-                Text(
-                    text = date.dayOfMonth.toString(),
-                    color = if (isToday) Color.White else RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.bodyBold,
-                )
-                Box(
-                    modifier =
-                        Modifier
-                            .size(5.dp)
-                            .clip(CircleShape)
-                            .background(dayDotColor(date, today, statuses[date.toString()])),
-                )
+                DayStampMark(stamp = stamp, dayOfMonth = date.dayOfMonth, selected = selected)
             }
         }
     }
 }
 
-/** 지난 날만 점을 찍는다 — 전부 성공은 초록, 나머지는 빨강. 오늘·아직 안 온 날·판정 대상이 아닌 날은 비운다. */
 @Composable
-private fun dayDotColor(
-    date: LocalDate,
-    today: LocalDate,
-    status: CalendarDayStatus?,
-): Color =
-    when {
-        !date.isBefore(today) || status == null -> Color.Transparent
-        status == CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
-        else -> RuleUpTheme.colors.danger
+private fun DayStampMark(
+    stamp: DayStamp,
+    dayOfMonth: Int,
+    selected: Boolean,
+) {
+    val colors = RuleUpTheme.colors
+    // 고른 칸은 바깥 고리로 띄운다.
+    Box(
+        modifier =
+            Modifier
+                .size(42.dp)
+                .border(2.dp, if (selected) colors.brand else Color.Transparent, CircleShape)
+                .padding(4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (stamp) {
+            DayStamp.DONE, DayStamp.FAILED ->
+                Box(
+                    modifier =
+                        Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(if (stamp == DayStamp.DONE) colors.success else colors.danger),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(if (stamp == DayStamp.DONE) R.drawable.ic_check else R.drawable.ic_close),
+                        contentDescription = if (stamp == DayStamp.DONE) "${dayOfMonth}일 다 지켰어요" else "${dayOfMonth}일 못 지킨 루틴이 있어요",
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            DayStamp.TODAY, DayStamp.EMPTY, DayStamp.FUTURE ->
+                Box(
+                    modifier =
+                        Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(if (stamp == DayStamp.TODAY) colors.surface else colors.surfaceVariant)
+                            .border(if (stamp == DayStamp.TODAY) 2.dp else 0.dp, colors.brand, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = dayOfMonth.toString(),
+                        color =
+                            when (stamp) {
+                                DayStamp.TODAY -> colors.brand
+                                DayStamp.FUTURE -> colors.textMuted
+                                else -> colors.textSecondary
+                            },
+                        style = RuleUpTheme.typography.smallBold,
+                    )
+                }
+        }
     }
+}
+
+/** 고른 날의 결과. 홈의 히어로 · 매일 루틴 · 주 N회 자리를 대신한다. */
+@Composable
+private fun DayResultSection(
+    selected: SelectedDay,
+    onIntent: (HomeIntent) -> Unit,
+) {
+    val date = remember(selected.date) { LocalDate.parse(selected.date) }
+    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = date.headerLabel(),
+                color = RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.cardTitle,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "오늘로",
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.smallBold,
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(99.dp))
+                        .singleClickable { onIntent(HomeIntent.SelectDay(selected.date)) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+        when (val result = selected.result) {
+            DayResult.Loading ->
+                Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                    androidx.compose.material3.CircularProgressIndicator(color = RuleUpTheme.colors.brand)
+                }
+            DayResult.Failed ->
+                DayMessage(text = "이날 기록을 불러오지 못했어요", action = "다시 시도", onAction = { onIntent(HomeIntent.RetryDay) })
+            is DayResult.Loaded -> {
+                val groups = result.items.groupByResult()
+                if (result.items.isEmpty()) {
+                    DayMessage(text = "이날은 판정할 루틴이 없었어요")
+                } else {
+                    val open: (String) -> Unit = { onIntent(HomeIntent.OpenChallenge(it)) }
+                    DayGroup(title = "수행한 루틴", items = groups.done, done = true, onOpen = open)
+                    DayGroup(title = "실패한 루틴", items = groups.failed, done = false, onOpen = open)
+                    DayGroup(title = "판정 중", items = groups.pending, done = null, onOpen = open)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DayMessage(
+    text: String,
+    action: String? = null,
+    onAction: () -> Unit = {},
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(text = text, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.body)
+        action?.let {
+            Text(
+                text = it,
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.bodyBold,
+                modifier = Modifier.singleClickable(onClick = onAction),
+            )
+        }
+    }
+}
+
+/** done: true 수행 · false 실패 · null 판정 중. 비어 있으면 그리지 않는다. */
+@Composable
+private fun DayGroup(
+    title: String,
+    items: List<CalendarDayItem>,
+    done: Boolean?,
+    onOpen: (String) -> Unit,
+) {
+    if (items.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionTitle(title = "$title ${items.size}")
+        val shape = RoundedCornerShape(20.dp)
+        Column(
+            modifier =
+                Modifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(RuleUpTheme.colors.surface)
+                    .border(1.dp, RuleUpTheme.colors.border, shape)
+                    .padding(vertical = 4.dp),
+        ) {
+            items.forEach { item ->
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .singleClickable { onOpen(item.challengeId) }
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CategoryIconTile(category = item.category, size = 36.dp)
+                    Text(
+                        text = item.title,
+                        color = RuleUpTheme.colors.textPrimary,
+                        style = RuleUpTheme.typography.bodyBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (done != null) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                                    .background(if (done) RuleUpTheme.colors.success else RuleUpTheme.colors.danger),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(if (done) R.drawable.ic_check else R.drawable.ic_close),
+                                contentDescription = if (done) "수행" else "실패",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** 「10월 5일 월요일」. */
+private fun LocalDate.headerLabel(): String {
+    val weekday = listOf("월", "화", "수", "목", "금", "토", "일")[dayOfWeek.ordinal]
+    return "${monthValue}월 ${dayOfMonth}일 ${weekday}요일"
+}
 
 /** 오늘 직접 체크해 볼 만한 챌린지 하나. 대표 사진이 없으면 카테고리 기본 커버. */
 @Composable

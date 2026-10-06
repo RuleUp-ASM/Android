@@ -3,7 +3,11 @@ package com.ruleup.home.presentation
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.profile.domain.entity.CalendarDayItem
+import com.ruleup.profile.domain.entity.CalendarDayStatus
+import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.verification.domain.entity.TodayStatus
+import java.time.LocalDate
 
 /** 매일 해야 하는 루틴인가(주 7회). 횟수를 모르면 매일로 본다 — 주 N회로 접으면 「오늘」 목록에서 빠져 놓친다. */
 val HomeChallengeUi.isDaily: Boolean
@@ -66,3 +70,52 @@ fun pickStarters(
 private const val STARTER_LIMIT = 6
 
 private val CLOSED_TODAY = setOf(TodayStatus.DONE, TodayStatus.FAILED)
+
+/** 주간 도장 한 칸. */
+enum class DayStamp {
+    // 그날 판정 대상을 전부 지켰다
+    DONE,
+
+    // 하나라도 못 지켰다(일부 성공 포함)
+    FAILED,
+
+    // 오늘, 아직 판정 전
+    TODAY,
+
+    // 지난 날인데 판정할 루틴이 없었다
+    EMPTY,
+
+    // 아직 오지 않은 날
+    FUTURE,
+}
+
+/** 일부만 지킨 날(PARTIAL)도 ✕ 로 본다 — ✓ 는 그날을 다 지켰을 때만. */
+fun dayStamp(
+    date: LocalDate,
+    today: LocalDate,
+    status: CalendarDayStatus?,
+): DayStamp =
+    when {
+        date.isAfter(today) -> DayStamp.FUTURE
+        status == CalendarDayStatus.ALL_DONE -> DayStamp.DONE
+        status in FAILED_DAY -> DayStamp.FAILED
+        date == today -> DayStamp.TODAY
+        else -> DayStamp.EMPTY
+    }
+
+/** 그날 결과를 수행 · 실패 · 판정 중으로 가른다. */
+data class DayResultGroups(
+    val done: List<CalendarDayItem>,
+    val failed: List<CalendarDayItem>,
+    // 아직 판정 전이거나 모르는 상태 — 수행 · 실패 어느 쪽으로도 접지 않는다
+    val pending: List<CalendarDayItem>,
+)
+
+fun List<CalendarDayItem>.groupByResult(): DayResultGroups =
+    DayResultGroups(
+        done = filter { it.status == DayItemStatus.DONE },
+        failed = filter { it.status == DayItemStatus.FAILED || it.status == DayItemStatus.FAIL_EXPECTED },
+        pending = filter { it.status == DayItemStatus.IN_PROGRESS || it.status == null },
+    )
+
+private val FAILED_DAY = setOf(CalendarDayStatus.FAILED, CalendarDayStatus.PARTIAL, CalendarDayStatus.FAIL_EXPECTED)

@@ -13,6 +13,7 @@ import com.ruleup.profile.domain.repository.MyPageRepository
 
 /** 홈은 이번 주 캘린더만 읽는다. */
 internal class FakeMyPageRepository(
+    private val day: (date: String) -> CalendarDayDetail = { CalendarDayDetail(date = it, items = emptyList()) },
     private val calendar: (month: String) -> ActivityCalendar = { ActivityCalendar(month = it, days = emptyList()) },
 ) : MyPageRepository {
     val requestedMonths = mutableListOf<String>()
@@ -32,7 +33,7 @@ internal class FakeMyPageRepository(
 
     override suspend fun getScoreChanges(cursor: String?): ScoreChangePage = error("홈에서 쓰지 않는다")
 
-    override suspend fun getCalendarDay(date: String): CalendarDayDetail = error("홈에서 쓰지 않는다")
+    override suspend fun getCalendarDay(date: String): CalendarDayDetail = day(date)
 
     override suspend fun getStats(): StatsReport = error("홈에서 쓰지 않는다")
 
