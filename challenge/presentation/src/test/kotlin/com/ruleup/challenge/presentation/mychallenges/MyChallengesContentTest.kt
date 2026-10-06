@@ -1,6 +1,8 @@
 package com.ruleup.challenge.presentation.mychallenges
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import com.ruleup.challenge.domain.entity.LeftType
 import com.ruleup.challenge.presentation.mychallenges.viewmodel.FinishedPaging
@@ -48,8 +50,9 @@ class MyChallengesContentTest {
             ),
         )
 
-        compose.onNodeWithText("완료 · 이탈").assertExists()
-        compose.onNodeWithText("완료 · 이탈 1").assertDoesNotExist()
+        // 진행 중 카드의 남은 기간도 「종료」로 그려질 수 있어 탭은 첫 노드로 본다
+        compose.onAllNodesWithText("종료").onFirst().assertExists()
+        compose.onNodeWithText("종료 1").assertDoesNotExist()
     }
 
     @Test
@@ -63,7 +66,7 @@ class MyChallengesContentTest {
             ),
         )
 
-        compose.onNodeWithText("완료 · 이탈 1").assertExists()
+        compose.onNodeWithText("종료 1").assertExists()
     }
 
     @Test
@@ -79,7 +82,24 @@ class MyChallengesContentTest {
         )
 
         compose.onNodeWithText("이탈").assertExists()
-        compose.onNodeWithText("5.1 – 5.20 중단", substring = true).assertExists()
+        compose.onNodeWithText("5.1 – 5.20 · 연속 실패로 강퇴", substring = true).assertExists()
+    }
+
+    @Test
+    fun `관리자가 폐쇄한 방은 이탈이 아니라 중단으로 보인다`() {
+        // 이탈로 보이면 사용자가 스스로 나간 것처럼 읽힌다(#572).
+        render(
+            MyChallengesState.initial.copy(
+                isLoading = false,
+                segment = MyChallengeSegment.FINISHED,
+                finished = listOf(myChallenge(id = "closed", leftType = LeftType.AUTO_CLOSED, start = "2026-05-01", end = "2026-05-20")),
+                finishedPaging = FinishedPaging(null, false, null, false),
+            ),
+        )
+
+        compose.onNodeWithText("중단").assertExists()
+        compose.onNodeWithText("이탈").assertDoesNotExist()
+        compose.onNodeWithText("운영 정책으로 중단된 챌린지", substring = true).assertExists()
     }
 
     @Test

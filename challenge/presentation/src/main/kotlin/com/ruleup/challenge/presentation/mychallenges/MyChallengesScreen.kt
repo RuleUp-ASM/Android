@@ -175,7 +175,7 @@ private fun SegmentBar(
             modifier = Modifier.weight(1f),
         )
         SegmentTab(
-            label = if (state.finishedPaging.hasNext) "완료 · 이탈" else "완료 · 이탈 ${state.finished.size}",
+            label = if (state.finishedPaging.hasNext) "종료" else "종료 ${state.finished.size}",
             selected = state.segment == MyChallengeSegment.FINISHED,
             onClick = { onIntent(MyChallengesIntent.SelectSegment(MyChallengeSegment.FINISHED)) },
             modifier = Modifier.weight(1f),
@@ -362,7 +362,7 @@ private fun UnreadBadge(text: String) {
     }
 }
 
-/** 완료·이탈 카드. */
+/** 종료 탭 카드(완료 · 이탈 · 중단). */
 @Composable
 private fun FinishedCard(
     challenge: MyChallenge,
@@ -407,12 +407,21 @@ private fun FinishedBadge(challenge: MyChallenge) {
                 .padding(horizontal = 10.dp, vertical = 5.dp),
     ) {
         Text(
-            text = if (left) "이탈" else "완료",
+            text = challenge.finishedBadge,
             color = if (left) RuleUpTheme.colors.textMuted else RuleUpTheme.colors.success,
             style = RuleUpTheme.typography.captionBold,
         )
     }
 }
+
+/** 종료 카드 배지. 관리자가 폐쇄한 방은 내가 나간 것이 아니라 「중단」이다. */
+internal val MyChallenge.finishedBadge: String
+    get() =
+        when (leftType) {
+            null -> "완료"
+            LeftType.AUTO_CLOSED -> "중단"
+            else -> "이탈"
+        }
 
 @Composable
 private fun CategoryIcon(challenge: MyChallenge) {
@@ -501,7 +510,8 @@ private val MyChallenge.finalSuccessLabel: String?
 private val MyChallenge.finishedSubtitle: String
     get() {
         val range = "${monthDay(period.start)} – ${monthDay(period.end)}"
-        return if (leftType != null) "$range 중단" else range
+        // 어떻게 끝났는지를 붙인다(예: 「운영 정책으로 중단된 챌린지」)
+        return leftType?.let { "$range · ${it.label}" } ?: range
     }
 
 /** "2026-06-02" → "6.2". */
