@@ -41,7 +41,7 @@ import com.ruleup.challenge.presentation.explore.viewmodel.ExploreIntent
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreState
 import com.ruleup.challenge.presentation.explore.viewmodel.ExploreViewModel
 import com.ruleup.designsystem.R
-import com.ruleup.designsystem.category.categoryIconRes
+import com.ruleup.designsystem.category.CategoryIconTile
 import com.ruleup.designsystem.component.RuleUpBottomTab
 import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
@@ -321,21 +321,8 @@ private fun CategoryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(RuleUpTheme.colors.brandSoft),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(categoryIconRes(item.category)),
-                contentDescription = null,
-                tint = RuleUpTheme.colors.brand,
-                modifier = Modifier.size(20.dp),
-            )
-        }
+        // 카테고리마다 다른 강조색으로 그려 색만 보고도 분야를 가른다(#575 디자인)
+        CategoryIconTile(category = item.category, size = 40.dp)
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = item.name,

@@ -40,7 +40,7 @@ import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeIntent
 import com.ruleup.challenge.presentation.create.viewmodel.CreateChallengeState
 import com.ruleup.designsystem.R
-import com.ruleup.designsystem.category.categoryIconRes
+import com.ruleup.designsystem.category.CategoryIconTile
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.ttiContentDrawn
@@ -286,21 +286,7 @@ private fun TemplateCard(
         horizontalArrangement = Arrangement.spacedBy(11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(34.dp)
-                    .clip(RuleUpTheme.shapes.small)
-                    .background(RuleUpTheme.colors.brandSoft),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(categoryIconRes(template.category)),
-                contentDescription = null,
-                tint = RuleUpTheme.colors.brand,
-                modifier = Modifier.size(16.dp),
-            )
-        }
+        CategoryIconTile(category = template.category, size = 34.dp)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(template.title, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.cardTitle)
             // 추천 사유가 곧 부제다
