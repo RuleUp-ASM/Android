@@ -3,6 +3,7 @@ package com.ruleup.verification.data.signal.health
 import android.content.Context
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.DistanceRecord
@@ -28,6 +29,13 @@ object HealthPermissions {
         } else {
             null
         }
+
+    /** 앱이 꺼진 동안의 읽기를 지원하는 기기인가. */
+    fun backgroundReadAvailable(context: Context): Boolean =
+        clientOrNull(context)
+            ?.features
+            ?.getFeatureStatus(HealthConnectFeatures.FEATURE_READ_HEALTH_DATA_IN_BACKGROUND) ==
+            HealthConnectFeatures.FEATURE_STATUS_AVAILABLE
 
     /** Health Connect 사용 가능 여부(설치·지원). */
     fun isAvailable(context: Context): Boolean = clientOrNull(context) != null

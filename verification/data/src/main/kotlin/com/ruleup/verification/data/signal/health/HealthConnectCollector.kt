@@ -81,6 +81,12 @@ class HealthConnectCollector
             if (sleepRequested) gapRecorder.record("SLEEP", reason, from, now, recoverable)
         }
 
+        /** 권한이 없어 읽지 못한 최근 구간. 다시 허용하면 복구된다. */
+        private suspend fun recordPermissionGap(signalType: String) {
+            val now = System.currentTimeMillis()
+            gapRecorder.record(signalType, GapReason.PERMISSION_MISSING, now - GAP_WINDOW_MS, now, recoverable = true)
+        }
+
         private suspend fun captureHealth(
             client: HealthConnectClient,
             granted: Set<String>,
@@ -93,6 +99,7 @@ class HealthConnectCollector
             val range = TimeRangeFilter.between(todayStart, now)
 
             val rows = ArrayList<HealthReadingEntity>()
+            var denied = false
             for (target in targets) {
                 try {
                     when (target.metric) {
@@ -101,11 +108,14 @@ class HealthConnectCollector
                         HealthMetric.EXERCISE_DURATION -> rows += readExercise(client, granted, range, date, target.exerciseType)
                     }
                 } catch (e: SecurityException) {
-                    // 권한 회수 등
+                    // 권한 회수, 또는 백그라운드 읽기 권한 없이 앱이 꺼진 동안 읽으려 한 경우
+                    denied = true
                 } catch (e: IllegalStateException) {
                     // HC 클라이언트 일시 오류
                 }
             }
+            // 조용히 빠지면 서버는 신호 없음(NO_SIGNAL)으로 본다 → 공백 사유를 남겨 판정을 유예시킨다(명세 §0.4)
+            if (denied) recordPermissionGap("HEALTH")
             // 미전송 스냅샷을 최신값으로 교체.
             healthReadingDao.deleteUntagged()
             if (rows.isNotEmpty()) healthReadingDao.insertAll(rows)
@@ -212,6 +222,7 @@ class HealthConnectCollector
                             )
                     }
             } catch (e: SecurityException) {
+                recordPermissionGap("SLEEP")
                 return
             } catch (e: IllegalStateException) {
                 return
