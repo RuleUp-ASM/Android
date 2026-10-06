@@ -50,7 +50,8 @@ class ObservabilityTtiShooterTest {
             assertEquals(2, TtiFirebasePerformanceShadow.traces.size)
             records.zip(TtiFirebasePerformanceShadow.traces).forEach { (record, entry) ->
                 val (name, trace) = entry
-                assertEquals("tti_shot", name)
+                // 하나의 trace 에 섞이면 콘솔에서 화면별 TTI 를 가를 수 없다(#564).
+                assertEquals("tti_${record.pageName}", name)
                 assertEquals(mapOf("page_name" to record.pageName), trace.attributes)
                 assertEquals(
                     mapOf(
@@ -130,7 +131,16 @@ class ObservabilityTtiShooterTest {
                     .second.attributes["page_name"],
             )
             assertEquals(pageName, (sink.single.payload as PerformancePayload.Tti).pageName)
+            assertEquals(100, TtiFirebasePerformanceShadow.traces.single().first.length)
         }
+
+    @Test
+    fun `trace 이름에 Firebase 가 막는 문자가 있으면 밑줄로 바꾼다`() {
+        // 선행 밑줄이나 공백이 남으면 Firebase 가 trace 를 버려 그 화면만 조용히 빠진다.
+        assertEquals("tti_challenge_detail", ttiTraceName("challenge/detail"))
+        assertEquals("tti_me", ttiTraceName("_me "))
+        assertEquals("tti_unknown", ttiTraceName(""))
+    }
 
     private fun record(pageName: String) =
         TtiRecord(

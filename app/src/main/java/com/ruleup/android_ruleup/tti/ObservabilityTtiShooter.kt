@@ -20,7 +20,8 @@ class ObservabilityTtiShooter
                 val total = record.totalTimeMillis ?: return@forEach
                 val spans = record.spanMillis()
                 // 저장된 TTI 는 total_millis 로 본다. Duration 은 이 전송 구간의 시간이다(#518).
-                val trace = FirebasePerformance.getInstance().newTrace("tti_shot")
+                // 화면마다 trace 를 나눠야 콘솔 목록에서 화면별 분포가 바로 보인다(#564).
+                val trace = FirebasePerformance.getInstance().newTrace(ttiTraceName(record.pageName))
                 trace.start()
                 try {
                     trace.putAttribute("page_name", record.pageName.take(100))
@@ -48,3 +49,15 @@ class ObservabilityTtiShooter
                     spans[timeline]?.durationMillis?.let { timeline.name to it }
                 }.toMap()
     }
+
+/**
+ * 화면별 trace 이름. Firebase 는 trace 이름에 앞뒤 공백·선행 `_` 를 막고 100자로 자른다.
+ * page_name 속성은 원래 이름 그대로 함께 싣는다.
+ */
+internal fun ttiTraceName(pageName: String): String {
+    val safe = pageName.replace(Regex("[^A-Za-z0-9_]"), "_").trim('_')
+    return "$TTI_TRACE_PREFIX${safe.ifEmpty { "unknown" }}".take(TRACE_NAME_MAX)
+}
+
+private const val TTI_TRACE_PREFIX = "tti_"
+private const val TRACE_NAME_MAX = 100
