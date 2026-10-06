@@ -10,6 +10,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.ChallengeWatchersPage
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.challenge.presentation.create.ChallengeConfirmScreen
@@ -23,6 +24,7 @@ import com.ruleup.challenge.presentation.ranking.RankingScreen
 import com.ruleup.challenge.presentation.settings.ChallengeSettingsScreen
 import com.ruleup.challenge.presentation.targets.ChallengeTargetsScreen
 import com.ruleup.challenge.presentation.watcher.WatcherAcceptScreen
+import com.ruleup.challenge.presentation.watchers.ChallengeWatchersScreen
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.domain.navigation.RouteAccessPolicy
 import com.ruleup.home.presentation.HomeScreen
@@ -293,6 +295,12 @@ val appRoutes: List<AppRoute> =
             path = ChallengeRankingPage.PATH,
             render = { args ->
                 RankingScreen(challengeId = args[ChallengeRankingPage.ARG_CHALLENGE_ID].orEmpty())
+            },
+        ),
+        AppRoute(
+            path = ChallengeWatchersPage.PATH,
+            render = { args ->
+                ChallengeWatchersScreen(challengeId = args[ChallengeWatchersPage.ARG_CHALLENGE_ID].orEmpty())
             },
         ),
         AppRoute(

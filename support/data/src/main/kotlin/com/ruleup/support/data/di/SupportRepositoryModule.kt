@@ -1,8 +1,10 @@
 package com.ruleup.support.data.di
 
 import com.ruleup.support.data.repository.DeviceContextProviderImpl
+import com.ruleup.support.data.repository.InquiryReadStoreImpl
 import com.ruleup.support.data.repository.InquiryRepositoryImpl
 import com.ruleup.support.domain.repository.DeviceContextProvider
+import com.ruleup.support.domain.repository.InquiryReadStore
 import com.ruleup.support.domain.repository.InquiryRepository
 import dagger.Binds
 import dagger.Module
@@ -20,4 +22,8 @@ abstract class SupportRepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDeviceContextProvider(impl: DeviceContextProviderImpl): DeviceContextProvider
+
+    @Binds
+    @Singleton
+    abstract fun bindInquiryReadStore(impl: InquiryReadStoreImpl): InquiryReadStore
 }

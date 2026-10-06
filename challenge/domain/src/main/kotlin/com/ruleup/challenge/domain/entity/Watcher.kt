@@ -81,9 +81,14 @@ data class Watcher(
 
 /** 감시자 목록. */
 data class ChallengeWatchers(
+    // null 이면 무제한(구독)
     val limit: Int?,
     val watchers: List<Watcher>,
-)
+) {
+    /** 더 초대할 수 있는 수. 해제·만료된 감시자는 한도를 차지하지 않는다. 무제한이면 null. */
+    val remaining: Int?
+        get() = limit?.let { (it - watchers.count { watcher -> watcher.status.isActive }).coerceAtLeast(0) }
+}
 
 /** 카카오톡 공유 카드 페이로드. */
 data class WatcherInviteCard(

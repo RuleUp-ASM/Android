@@ -62,7 +62,7 @@ data class SettingsState(
     // 효력 중인 제재가 있으면 「제재 이력」 행에 표시한다
     val hasActiveSanction: Boolean,
     /** 답변이 달린 문의 수. */
-    val answeredInquiryCount: Int,
+    val newAnswerCount: Int,
     val dialog: SettingsDialog?,
     val isSubmitting: Boolean,
 ) : UiState {
@@ -73,7 +73,7 @@ data class SettingsState(
                 provider = null,
                 reconsentCount = 0,
                 hasActiveSanction = false,
-                answeredInquiryCount = 0,
+                newAnswerCount = 0,
                 dialog = null,
                 isSubmitting = false,
             )
@@ -85,7 +85,7 @@ sealed interface SettingsReducerEvent : ReducerEvent {
         val provider: SocialProvider?,
         val reconsentCount: Int,
         val hasActiveSanction: Boolean,
-        val answeredInquiryCount: Int,
+        val newAnswerCount: Int,
     ) : SettingsReducerEvent
 
     data object LoadFinished : SettingsReducerEvent

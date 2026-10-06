@@ -24,9 +24,13 @@ data class InquiryListState(
     val isLoading: Boolean,
     val items: List<InquirySummary>,
     val errorMessage: String?,
+    // 문의 id → 이 기기에서 확인한 답변 시각
+    val seenAnswers: Map<String, String> = emptyMap(),
 ) : UiState {
     val isEmpty: Boolean
         get() = items.isEmpty()
+
+    fun hasNewAnswer(item: InquirySummary): Boolean = item.hasNewAnswer(seenAnswers[item.inquiryId])
 
     companion object {
         val initial = InquiryListState(isLoading = true, items = emptyList(), errorMessage = null)
@@ -38,6 +42,7 @@ sealed interface InquiryListReducerEvent : ReducerEvent {
 
     data class Loaded(
         val items: List<InquirySummary>,
+        val seenAnswers: Map<String, String>,
     ) : InquiryListReducerEvent
 
     data class Failed(

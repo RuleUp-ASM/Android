@@ -93,7 +93,8 @@ internal fun MyChallengesContent(
     onIntent: (MyChallengesIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    // 탭 바를 겹쳐 그리면 탭 바 높이(내비게이션 바 포함)만큼 목록 끝이 가려진다
+    Column(
         modifier =
             modifier
                 .fillMaxSize()
@@ -102,7 +103,8 @@ internal fun MyChallengesContent(
         Column(
             modifier =
                 Modifier
-                    .fillMaxSize()
+                    .weight(1f)
+                    .fillMaxWidth()
                     .statusBarsPadding(),
         ) {
             Text(
@@ -145,7 +147,6 @@ internal fun MyChallengesContent(
                     RuleUpBottomTab.MY -> onIntent(MyChallengesIntent.OpenMyTab)
                 }
             },
-            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }
@@ -234,7 +235,7 @@ private fun ChallengeList(
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 96.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         items(state.current, key = { it.challengeId }) { challenge ->

@@ -118,7 +118,11 @@ private fun InquiryItems(
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         items(state.items, key = { it.inquiryId }) { item ->
-            InquiryRow(item = item, onClick = { onIntent(InquiryListIntent.Open(item.inquiryId)) })
+            InquiryRow(
+                item = item,
+                hasNewAnswer = state.hasNewAnswer(item),
+                onClick = { onIntent(InquiryListIntent.Open(item.inquiryId)) },
+            )
         }
     }
 }
@@ -126,6 +130,7 @@ private fun InquiryItems(
 @Composable
 private fun InquiryRow(
     item: InquirySummary,
+    hasNewAnswer: Boolean,
     onClick: () -> Unit,
 ) {
     val colors = RuleUpTheme.colors
@@ -176,7 +181,7 @@ private fun InquiryRow(
                 style = RuleUpTheme.typography.caption,
                 modifier = Modifier.weight(1f),
             )
-            if (item.hasNewAnswer) {
+            if (hasNewAnswer) {
                 Box(Modifier.size(6.dp).clip(CircleShape).background(colors.danger))
                 Spacer(Modifier.size(4.dp))
                 Text(text = "새 답변", color = colors.danger, style = RuleUpTheme.typography.micro)

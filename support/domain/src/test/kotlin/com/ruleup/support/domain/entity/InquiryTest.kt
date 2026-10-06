@@ -104,10 +104,24 @@ class InquirySubmissionTest {
 
 class InquirySummaryTest {
     @Test
-    fun `답변 시각이 있으면 새 답변으로 본다`() {
-        // 읽음 지점을 서버가 보관하지 않아 답변 유무가 유일한 기준이다.
-        assertTrue(summary(answeredAt = "2026-09-06T11:08:00Z").hasNewAnswer)
-        assertFalse(summary(answeredAt = null).hasNewAnswer)
+    fun `답변이 달렸는데 이 기기에서 아직 열어 보지 않았으면 새 답변이다`() {
+        assertTrue(summary(answeredAt = ANSWERED_AT).hasNewAnswer(seenAnsweredAt = null))
+    }
+
+    @Test
+    fun `열어 본 답변은 다시 새 답변으로 보이지 않는다`() {
+        // 이게 깨지면 확인한 문의가 내역과 설정 허브에 계속 새 답변으로 남는다(#559).
+        assertFalse(summary(answeredAt = ANSWERED_AT).hasNewAnswer(seenAnsweredAt = ANSWERED_AT))
+    }
+
+    @Test
+    fun `열어 본 뒤 답변이 고쳐지면 다시 새 답변이다`() {
+        assertTrue(summary(answeredAt = "2026-09-07T09:00:00Z").hasNewAnswer(seenAnsweredAt = ANSWERED_AT))
+    }
+
+    @Test
+    fun `답변이 없는 문의는 새 답변이 아니다`() {
+        assertFalse(summary(answeredAt = null).hasNewAnswer(seenAnsweredAt = null))
     }
 
     private fun summary(answeredAt: String?) =
@@ -119,4 +133,8 @@ class InquirySummaryTest {
             createdAt = "2026-09-05T14:22:00Z",
             answeredAt = answeredAt,
         )
+
+    private companion object {
+        const val ANSWERED_AT = "2026-09-06T11:08:00Z"
+    }
 }

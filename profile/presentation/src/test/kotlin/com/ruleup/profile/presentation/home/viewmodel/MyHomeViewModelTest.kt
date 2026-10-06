@@ -3,6 +3,7 @@ package com.ruleup.profile.presentation.home.viewmodel
 import com.ruleup.domain.entity.user.AccountStatus
 import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.entity.user.Tier
+import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.profile.domain.entity.GroupChallengeSummary
 import com.ruleup.profile.domain.entity.MyHome
@@ -157,6 +158,20 @@ class MyHomeViewModelTest {
 
             assertEquals(mapOf("challengeId" to "ch2"), nav.routes.single().args)
             assertNull(viewModel.uiState.value.picker)
+        }
+
+    @Test
+    fun `감시자에서 고른 방은 감시자 관리 화면으로 간다`() =
+        runTest {
+            // 방 상세로 보내면 감시자 섹션이 접힌 정보 탭 아래에 묻혀 엉뚱한 화면처럼 보인다(#559).
+            val nav = RecordingNavigationHelper()
+            val viewModel =
+                viewModel(FakeMyPageRepository(groupChallenges = { listOf(group("ch1"), group("ch2")) }), nav)
+            viewModel.onIntent(MyHomeIntent.OpenWatchers)
+
+            viewModel.onIntent(MyHomeIntent.SelectPickedChallenge("ch2"))
+
+            assertEquals(AppRoutes.CHALLENGE_WATCHERS, nav.routes.single().path)
         }
 
     @Test

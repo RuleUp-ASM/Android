@@ -102,7 +102,8 @@ internal fun MyHomeContent(
     onIntent: (MyHomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    // 탭 바를 겹쳐 그리면 탭 바 높이(내비게이션 바 포함)만큼 본문 끝이 가려진다
+    Column(
         modifier =
             modifier
                 .fillMaxSize()
@@ -110,12 +111,12 @@ internal fun MyHomeContent(
     ) {
         when {
             state.isLoading ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = RuleUpTheme.colors.brand)
                 }
 
             state.home == null ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -138,10 +139,11 @@ internal fun MyHomeContent(
                 Column(
                     modifier =
                         Modifier
-                            .fillMaxSize()
+                            .weight(1f)
+                            .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
                             .statusBarsPadding()
-                            .padding(bottom = 88.dp),
+                            .padding(bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     MyHomeHeader()
@@ -173,7 +175,6 @@ internal fun MyHomeContent(
                     RuleUpBottomTab.MY -> Unit
                 }
             },
-            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 

@@ -4,6 +4,7 @@ import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.support.domain.entity.InquiryException
 import com.ruleup.support.domain.entity.InquiryFailure
 import com.ruleup.support.domain.entity.InquiryStatus
+import com.ruleup.support.domain.fake.FakeInquiryReadStore
 import com.ruleup.support.domain.fake.FakeInquiryRepository
 import com.ruleup.support.domain.fake.inquirySummary
 import com.ruleup.support.domain.navigation.InquiryDetailPage
@@ -18,7 +19,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 /** 내 문의 내역. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,28 +42,24 @@ class InquiryListViewModelTest {
         }
 
     @Test
-    fun `답변이 달린 문의는 새 답변으로 표시된다`() =
+    fun `이 기기에서 열어 본 답변은 새 답변으로 표시되지 않는다`() =
         runTest {
             val repo =
                 FakeInquiryRepository(
                     inquiries = {
                         listOf(
-                            inquirySummary(
-                                inquiryId = "a",
-                                status = InquiryStatus.ANSWERED,
-                                answeredAt = "2026-09-06T11:08:00Z",
-                            ),
-                            inquirySummary(inquiryId = "b"),
+                            inquirySummary(inquiryId = "seen", status = InquiryStatus.ANSWERED, answeredAt = ANSWERED_AT),
+                            inquirySummary(inquiryId = "unseen", status = InquiryStatus.ANSWERED, answeredAt = ANSWERED_AT),
+                            inquirySummary(inquiryId = "waiting"),
                         )
                     },
                 )
-            val viewModel = viewModel(repo)
+            val viewModel = viewModel(repo, readStore = FakeInquiryReadStore(mapOf("seen" to ANSWERED_AT)))
 
             viewModel.onIntent(InquiryListIntent.Load)
 
-            val items = viewModel.uiState.value.items
-            assertTrue(items.first().hasNewAnswer)
-            assertFalse(items.last().hasNewAnswer)
+            val state = viewModel.uiState.value
+            assertEquals(listOf("unseen"), state.items.filter(state::hasNewAnswer).map { it.inquiryId })
         }
 
     @Test
@@ -101,5 +97,10 @@ class InquiryListViewModelTest {
     private fun viewModel(
         repo: FakeInquiryRepository = FakeInquiryRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-    ) = InquiryListViewModel(inquiryRepository = repo, navigationHelper = nav)
+        readStore: FakeInquiryReadStore = FakeInquiryReadStore(),
+    ) = InquiryListViewModel(inquiryRepository = repo, inquiryReadStore = readStore, navigationHelper = nav)
+
+    private companion object {
+        const val ANSWERED_AT = "2026-09-06T11:08:00Z"
+    }
 }

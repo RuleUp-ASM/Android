@@ -30,6 +30,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.RuleUpTopBar
@@ -54,7 +56,8 @@ fun SettingsScreen(
     TtiScreenEffect(loading = state.isLoading)
     val messageHelper = LocalMessageHelper.current
 
-    LaunchedEffect(Unit) { viewModel.onIntent(SettingsIntent.Load) }
+    // 문의 내역에서 돌아오면 새 답변 수가 줄어 있어야 한다
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onIntent(SettingsIntent.Load) }
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -133,7 +136,7 @@ internal fun SettingsContent(
                     label = "내 문의 내역",
                     onClick = { onIntent(SettingsIntent.OpenInquiryHistory) },
                     // 답변은 푸시도 알림함도 쓰지 않는다
-                    trailing = if (state.answeredInquiryCount > 0) "새 답변 ${state.answeredInquiryCount}건" else null,
+                    trailing = if (state.newAnswerCount > 0) "새 답변 ${state.newAnswerCount}건" else null,
                     highlightTrailing = true,
                 )
             }

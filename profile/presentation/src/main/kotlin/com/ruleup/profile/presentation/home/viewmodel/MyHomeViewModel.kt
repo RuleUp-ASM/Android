@@ -140,7 +140,7 @@ class MyHomeViewModel
             val path =
                 when (target) {
                     ChallengePickerTarget.RANKING -> AppRoutes.CHALLENGE_RANKING
-                    ChallengePickerTarget.WATCHERS -> AppRoutes.CHALLENGE_DETAIL
+                    ChallengePickerTarget.WATCHERS -> AppRoutes.CHALLENGE_WATCHERS
                 }
             navigationHelper.navigateByRoute(NavRoute(path, mapOf("challengeId" to challengeId)))
         }
