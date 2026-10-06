@@ -73,7 +73,7 @@ private fun ParamRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = spec.label(),
+                text = spec.fieldLabel(),
                 color = RuleUpTheme.colors.textSecondary,
                 style = RuleUpTheme.typography.bodyMedium,
             )
@@ -217,8 +217,8 @@ private fun StepButton(
 
 private val STEP_BUTTON_SIZE = 28.dp
 
-/** 표시 라벨. */
-private fun ParamSpec.label(): String =
+/** 표시 라벨. 잠긴 목표를 보여 주는 수정 화면도 같은 이름을 쓴다. */
+internal fun ParamSpec.fieldLabel(): String =
     when (kind) {
         ParamKind.TIME -> "목표 시각"
         ParamKind.NUMBER -> "목표값"

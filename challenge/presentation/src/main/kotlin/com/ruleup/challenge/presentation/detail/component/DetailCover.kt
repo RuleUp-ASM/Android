@@ -22,8 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -119,30 +117,21 @@ internal fun GlassChip(
     )
 }
 
-/** 사진 위 상단: 뒤로 + ⋯ 메뉴. */
+/** 사진 위 상단: 뒤로 + ⋯ 메뉴(있을 때만). */
 @Composable
 internal fun CoverTopBar(
-    menuItems: List<RoomMenuItem>,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenMenu: (() -> Unit)? = null,
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
     Row(
         modifier = modifier.fillMaxWidth().height(48.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GlassIconButton(iconRes = R.drawable.ic_arrow_back, description = "뒤로", onClick = onBack)
         Spacer(Modifier.weight(1f))
-        if (onOpenMenu != null || menuItems.isNotEmpty()) {
-            Box {
-                GlassIconButton(
-                    iconRes = R.drawable.ic_more_vertical,
-                    description = "더 보기",
-                    onClick = { if (onOpenMenu != null) onOpenMenu() else menuOpen = true },
-                )
-                if (menuOpen) RoomMenuPopup(items = menuItems, onDismiss = { menuOpen = false })
-            }
+        if (onOpenMenu != null) {
+            GlassIconButton(iconRes = R.drawable.ic_more_vertical, description = "더 보기", onClick = onOpenMenu)
         }
     }
 }
@@ -206,7 +195,7 @@ internal fun DetailCover(
                     .navigationBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            CoverTopBar(menuItems = emptyList(), onBack = onBack, onOpenMenu = onOpenMenu)
+            CoverTopBar(onBack = onBack, onOpenMenu = onOpenMenu)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 4.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,

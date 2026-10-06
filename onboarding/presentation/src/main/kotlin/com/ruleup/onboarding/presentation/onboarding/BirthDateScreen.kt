@@ -45,6 +45,7 @@ import com.ruleup.ui.helper.LocalNavigationHelper
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 /** 03 · 생일. */
 @Composable
@@ -177,13 +178,13 @@ private fun BirthDatePickerDialog(
     val zone = remember { ZoneId.systemDefault() }
     // 만 14세 생일이 오늘인 사람까지 허용한다.
     val latestAllowed = remember { LocalDate.now(zone).minusYears(ValidateBirthDateUseCase.MIN_AGE.toLong()) }
-    val latestMillis = remember { latestAllowed.atStartOfDay(zone).toInstant().toEpochMilli() }
+    val latestMillis = remember { latestAllowed.toPickerMillis() }
 
     val state =
         rememberDatePickerState(
-            initialSelectedDateMillis = initial.toEpochMillisOrNull(zone) ?: latestMillis,
+            initialSelectedDateMillis = initial.birthDigitsToPickerMillis() ?: latestMillis,
             // 달력을 열자마자 고를 수 없는 해가 보이면 혼란스럽다
-            initialDisplayedMonthMillis = initial.toEpochMillisOrNull(zone) ?: latestMillis,
+            initialDisplayedMonthMillis = initial.birthDigitsToPickerMillis() ?: latestMillis,
             yearRange = EARLIEST_YEAR..latestAllowed.year,
             selectableDates =
                 object : SelectableDates {
@@ -198,7 +199,7 @@ private fun BirthDatePickerDialog(
         confirmButton = {
             TextButton(
                 enabled = state.selectedDateMillis != null,
-                onClick = { state.selectedDateMillis?.let { onPick(it.toBirthDigits(zone)) } },
+                onClick = { state.selectedDateMillis?.let { onPick(it.pickerMillisToBirthDigits()) } },
             ) { Text("확인") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } },
@@ -207,21 +208,25 @@ private fun BirthDatePickerDialog(
     }
 }
 
-/** `YYYYMMDD` 8자리를 달력이 쓰는 epoch millis 로. */
-private fun String.toEpochMillisOrNull(zone: ZoneId): Long? {
+// Material3 DatePicker 는 날짜를 UTC 자정 millis 로 주고받는다. 기기 시간대 자정을 넘기면 UTC 보다 빠른 곳(KST)에서 하루 전이 선택된다.
+
+/** `YYYYMMDD` 8자리를 달력이 쓰는 UTC 자정 millis 로. */
+internal fun String.birthDigitsToPickerMillis(): Long? {
     if (length != BIRTH_DIGITS) return null
     val date =
         runCatching {
             LocalDate.of(substring(0, 4).toInt(), substring(4, 6).toInt(), substring(6, 8).toInt())
         }.getOrNull() ?: return null
-    return date.atStartOfDay(zone).toInstant().toEpochMilli()
+    return date.toPickerMillis()
 }
 
-/** 달력 선택값을 화면이 쓰는 `YYYYMMDD` 8자리로. */
-private fun Long.toBirthDigits(zone: ZoneId): String {
-    val date = Instant.ofEpochMilli(this).atZone(zone).toLocalDate()
+/** 달력 선택값(UTC 자정 millis)을 화면이 쓰는 `YYYYMMDD` 8자리로. */
+internal fun Long.pickerMillisToBirthDigits(): String {
+    val date = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
     return "%04d%02d%02d".format(date.year, date.monthValue, date.dayOfMonth)
 }
+
+private fun LocalDate.toPickerMillis(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
 private const val BIRTH_DIGITS = 8
 

@@ -15,40 +15,30 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.explore.list.DDAY_URGENT_THRESHOLD
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/** 방 상세 상단바. */
+/** 방 상세 상단바. ⋯ 메뉴는 표지 · 방 안 상단의 RoomMenuSheet 가 맡는다. */
 @Composable
 internal fun RoomAppBar(
     title: String,
-    menuItems: List<RoomMenuItem>,
     onBack: () -> Unit,
 ) {
-    var menuOpen by remember { mutableStateOf(false) }
     Row(
         modifier =
             Modifier
@@ -70,78 +60,10 @@ internal fun RoomAppBar(
             textAlign = TextAlign.Center,
             modifier = Modifier.weight(1f),
         )
-        Box {
-            // 메뉴에 담을 게 없으면 자리만 비워 제목이 가운데를 유지하게 한다.
-            if (menuItems.isEmpty()) {
-                Spacer(Modifier.size(48.dp))
-            } else {
-                IconSlot(
-                    iconRes = com.ruleup.designsystem.R.drawable.ic_more_vertical,
-                    description = "더 보기",
-                    onClick = { menuOpen = true },
-                )
-            }
-            if (menuOpen) {
-                RoomMenuPopup(
-                    items = menuItems,
-                    onDismiss = { menuOpen = false },
-                )
-            }
-        }
+        // 뒤로 버튼만큼 자리를 비워 제목이 가운데를 유지하게 한다.
+        Spacer(Modifier.size(48.dp))
     }
 }
-
-/** ⋯ 메뉴 박스. 화면 끝에 붙지 않게 우측 15dp, 상단바 아래 10dp 에 띄운다. */
-@Composable
-internal fun RoomMenuPopup(
-    items: List<RoomMenuItem>,
-    onDismiss: () -> Unit,
-) {
-    val density = LocalDensity.current
-    val offset =
-        with(density) {
-            IntOffset(x = (-15).dp.roundToPx(), y = (48 + 10).dp.roundToPx())
-        }
-    val shape = RoundedCornerShape(14.dp)
-    Popup(
-        alignment = Alignment.TopEnd,
-        offset = offset,
-        onDismissRequest = onDismiss,
-        properties = PopupProperties(focusable = true),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .width(151.dp)
-                    .shadow(6.dp, shape, clip = false)
-                    .clip(shape)
-                    .background(RuleUpTheme.colors.surface),
-        ) {
-            items.forEachIndexed { index, item ->
-                if (index > 0) HorizontalDivider(color = RuleUpTheme.colors.border)
-                Text(
-                    text = item.label,
-                    color = RuleUpTheme.colors.textPrimary,
-                    style = RuleUpTheme.typography.labelMedium,
-                    textAlign = TextAlign.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .singleClickable {
-                                onDismiss()
-                                item.onClick()
-                            }.padding(horizontal = 15.dp, vertical = 15.dp),
-                )
-            }
-        }
-    }
-}
-
-/** 상단바 ⋯ 메뉴 항목. */
-internal data class RoomMenuItem(
-    val label: String,
-    val onClick: () -> Unit,
-)
 
 @Composable
 private fun IconSlot(
@@ -467,7 +389,7 @@ internal fun RoomVerticalDivider() {
 @Composable
 private fun RoomAppBarPreview() {
     RuleUpTheme {
-        RoomAppBar(title = "매일 꾸준히 걷기", menuItems = emptyList(), onBack = { })
+        RoomAppBar(title = "매일 꾸준히 걷기", onBack = { })
     }
 }
 
