@@ -1,17 +1,21 @@
 package com.ruleup.challenge.presentation.detail.component
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
@@ -31,12 +34,10 @@ import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.designsystem.component.RuleUpCard
-import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.StatusChip
 import com.ruleup.designsystem.component.StatusChipTone
 import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
-import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.verification.domain.entity.FailureReason
 import com.ruleup.verification.domain.entity.TodayResult
@@ -134,7 +135,7 @@ internal fun RoomInfoTab(
     }
 }
 
-/** 오늘 내 인증. */
+/** 오늘 내 인증(Figma 1541:155). 상태 배지 · 오늘 값과 목표 · 진행 막대 · 연속 기록 · 이의 제기 줄. */
 @Composable
 internal fun TodayVerificationCard(
     roomStatus: TodayVerificationStatus?,
@@ -144,90 +145,42 @@ internal fun TodayVerificationCard(
     onRegisterAnchor: (() -> Unit)? = null,
     onOpenPermissionRepair: (() -> Unit)? = null,
 ) {
-    val status = today?.status ?: roomStatus?.toResultStatus() ?: return
+    val status = today?.status ?: roomStatus?.toResultStatus()
     val colors = RuleUpTheme.colors
-    val label: String
-    val color: Color
-    when (status) {
-        TodayResultStatus.DONE -> {
-            label = "인증 완료"
-            color = colors.success
-        }
-        // 인증 창이 아직 열려 있다.
-        TodayResultStatus.IN_PROGRESS -> {
-            label = "인증 진행 중"
-            color = colors.brand
-        }
-        // 이대로면 실패지만 확정 전이다.
-        TodayResultStatus.FAIL_EXPECTED -> {
-            label = "실패 예정"
-            color = RuleUpPalette.StatusWarn
-        }
-        TodayResultStatus.FAILED -> {
-            label = "인증 실패"
-            color = colors.danger
-        }
-        TodayResultStatus.NOT_TARGET -> {
-            label = "인증 불필요"
-            color = colors.textMuted
-        }
-    }
-    // 이의를 낼 수 있는 건만 카드 테두리로 알린다.
-    val appealAction = onAppealClick
-    val appealable = appealAction != null
     Column(
-        modifier =
-            Modifier
-                .ruleUpCardSurface()
-                .then(
-                    if (appealable) {
-                        Modifier.border(1.dp, colors.dangerContainer, RuleUpTheme.shapes.card)
-                    } else {
-                        Modifier
-                    },
-                ),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.ruleUpCardSurface(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "오늘 내 인증",
                 color = colors.textPrimary,
-                style = RuleUpTheme.typography.cardTitle,
+                style = RuleUpTheme.typography.bodyBold,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(Modifier.weight(1f))
-            today?.todayDetail()?.let {
-                Text(
-                    text = it,
-                    color = colors.textSecondary,
-                    style = RuleUpTheme.typography.caption,
-                )
-                Spacer(Modifier.width(8.dp))
-            }
-            // 이의 가능 구간에는 실패 배지를 달지 않는다
-            if (status == TodayResultStatus.FAILED && !appealable) {
-                StatusChip(text = "실패 확정", tone = StatusChipTone.Danger)
-            } else {
-                Text(
-                    text = label,
-                    color = color,
-                    style = RuleUpTheme.typography.bodyBold,
-                )
-            }
+            status?.let { StatusPill(status = it, appealable = onAppealClick != null) }
+        }
+        // 오늘 결과를 아직 못 받았어도 카드 자리는 지킨다 — 사라지면 인증이 없는 방처럼 보인다
+        if (status == null) {
+            Text(text = "오늘 기록을 확인하고 있어요", color = colors.textMuted, style = RuleUpTheme.typography.caption)
+            return@Column
         }
 
         todayEvidence(status, today)?.let {
-            Text(
-                text = it,
-                color = colors.textPrimary,
-                style = RuleUpTheme.typography.smallMedium,
-            )
+            Text(text = it, color = colors.textPrimary, style = RuleUpTheme.typography.smallBold)
         }
-
+        today?.todayDetail()?.let {
+            Text(text = it, color = colors.textMuted, style = RuleUpTheme.typography.caption)
+        }
+        today?.evidenceProgress?.takeIf { status != TodayResultStatus.NOT_TARGET }?.let { rate ->
+            EvidenceProgressBar(rate = rate, done = status == TodayResultStatus.DONE)
+        }
         todayNote(status, today)?.let {
             Text(
                 text = it,
-                color = colors.textSecondary,
-                style = RuleUpTheme.typography.caption,
+                // 이어지는 연속 기록은 초록, 나머지 안내는 회색
+                color = if (status == TodayResultStatus.DONE) colors.success else colors.textSecondary,
+                style = RuleUpTheme.typography.smallBold,
             )
         }
 
@@ -241,39 +194,68 @@ internal fun TodayVerificationCard(
             )
         }
 
-        appealAction?.let { action ->
-            RuleUpPrimaryButton(
-                text = today?.appealButtonText() ?: "이의 제기",
-                onClick = action,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        // 수동 방의 체크는 전용 화면에서 한다
-        if (onOpenManualCheck != null) {
-            when (status) {
-                TodayResultStatus.DONE ->
-                    Text(
-                        text = "인증 수정",
-                        color = colors.textMuted,
-                        style = RuleUpTheme.typography.caption,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .singleClickable(onClick = onOpenManualCheck)
-                                .padding(vertical = 8.dp),
-                    )
-
-                TodayResultStatus.IN_PROGRESS ->
-                    RuleUpPrimaryButton(
-                        text = "오늘 인증 체크",
-                        onClick = onOpenManualCheck,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-
-                else -> Unit
+        onAppealClick?.let { action ->
+            HorizontalDivider(color = colors.surfaceVariant, modifier = Modifier.padding(vertical = 6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = today?.appealLabel() ?: "이의 제기 가능",
+                    color = colors.danger,
+                    style = RuleUpTheme.typography.smallBold,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "이의 제기 ›",
+                    color = colors.brand,
+                    style = RuleUpTheme.typography.smallBold,
+                    modifier = Modifier.singleClickable(onClick = action),
+                )
             }
         }
+    }
+}
+
+/** 상태 배지. 이의 가능 구간에는 「실패 확정」을 달지 않는다. */
+@Composable
+private fun StatusPill(
+    status: TodayResultStatus,
+    appealable: Boolean,
+) {
+    val (label, tone) =
+        when (status) {
+            TodayResultStatus.DONE -> "인증 완료" to StatusChipTone.Success
+            // 인증 창이 아직 열려 있다.
+            TodayResultStatus.IN_PROGRESS -> "진행 중" to StatusChipTone.Info
+            // 이대로면 실패지만 확정 전이다.
+            TodayResultStatus.FAIL_EXPECTED -> "실패 예정" to StatusChipTone.Warning
+            TodayResultStatus.FAILED -> (if (appealable) "인증 실패" else "실패 확정") to StatusChipTone.Danger
+            TodayResultStatus.NOT_TARGET -> "인증 불필요" to StatusChipTone.Info
+        }
+    StatusChip(text = label, tone = tone)
+}
+
+/** 오늘 값 / 목표 진행 막대. */
+@Composable
+private fun EvidenceProgressBar(
+    rate: Double,
+    done: Boolean,
+) {
+    Box(
+        modifier =
+            Modifier
+                .padding(vertical = 4.dp)
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(RuleUpTheme.colors.surfaceVariant),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth(rate.toFloat())
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(if (done) RuleUpTheme.colors.success else RuleUpTheme.colors.brand),
+        )
     }
 }
 
@@ -352,10 +334,11 @@ private fun TodayResult.todayDetail(): String? =
         else -> null
     }
 
-/** 이의 진입 버튼 문구. */
-private fun TodayResult.appealButtonText(): String {
+/** 이의 줄 왼쪽 문구(「실패 예정 · 10.7 09:00까지 이의 가능」). */
+private fun TodayResult.appealLabel(): String {
     val until = appeal?.eligibleUntil?.let { appealDeadlineLabel(it) }
-    return if (until == null) "이의 제기" else "이의 제기 · ${until}까지"
+    val what = if (status == TodayResultStatus.FAILED) "인증 실패" else "실패 예정"
+    return if (until == null) what else "$what · ${until}까지 이의 가능"
 }
 
 /** room 의 상태를 오늘 결과의 상태로 옮긴다. */
@@ -373,8 +356,12 @@ private fun TodayVerificationStatus.toResultStatus(): TodayResultStatus =
 internal fun MySetupCard(
     onRegisterApps: (() -> Unit)?,
     onRegisterAnchor: (() -> Unit)?,
+    // 감시자 벌칙이 켜진 방만. 「감시자 N명」
+    watcherLabel: String? = null,
+    onOpenWatchers: (() -> Unit)? = null,
 ) {
-    if (onRegisterApps == null && onRegisterAnchor == null) return
+    val watchers = onOpenWatchers?.takeIf { watcherLabel != null }
+    if (onRegisterApps == null && onRegisterAnchor == null && watchers == null) return
     RuleUpCard {
         RoomSectionHeader(title = "내 세부 설정")
         onRegisterApps?.let {
@@ -382,6 +369,9 @@ internal fun MySetupCard(
         }
         onRegisterAnchor?.let {
             SetupRow(label = "인증 장소", actionLabel = "수정", onClick = it)
+        }
+        watchers?.let {
+            SetupRow(label = watcherLabel.orEmpty(), actionLabel = "관리 ›", onClick = it)
         }
     }
 }
@@ -417,7 +407,7 @@ private fun SetupRow(
 
 /** 인증 규칙. */
 @Composable
-private fun VerificationRuleCard(detail: ChallengeDetail) {
+internal fun VerificationRuleCard(detail: ChallengeDetail) {
     RuleUpCard {
         RoomSectionHeader(title = "인증 규칙")
         Text(
@@ -432,7 +422,7 @@ private fun VerificationRuleCard(detail: ChallengeDetail) {
 
 /** 진행 정보 */
 @Composable
-private fun ProgressInfoCard(
+internal fun ProgressInfoCard(
     detail: ChallengeDetail,
     room: ChallengeRoom,
     today: TodayResult?,

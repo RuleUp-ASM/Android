@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -61,6 +62,8 @@ internal fun DurationPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
+        // 반만 열리면 캘린더처럼 늘어나는 내용과 아래 버튼이 가려져 사용자가 모른다 → 처음부터 다 펼친다
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = RuleUpTheme.colors.surface,
         dragHandle = {
             Box(
@@ -342,9 +345,16 @@ private fun DayCell(
 ) {
     val inRange = cell.iso >= startIso && cell.iso <= endIso
     val isEdge = cell.iso == startIso || cell.iso == endIso
+    // 언제부터·언제까지인지 날짜 아래에 작게 적는다
+    val edgeLabel =
+        when (cell.iso) {
+            startIso -> "시작"
+            endIso -> "종료"
+            else -> null
+        }
     Box(
-        modifier = modifier.height(42.dp),
-        contentAlignment = Alignment.Center,
+        modifier = modifier.height(54.dp),
+        contentAlignment = Alignment.TopCenter,
     ) {
         if (inRange) {
             val shape =
@@ -363,7 +373,17 @@ private fun DayCell(
                         .background(RuleUpTheme.colors.brandSoft),
             )
         }
-        DayNumber(cell = cell, isEdge = isEdge)
+        Box(modifier = Modifier.height(36.dp), contentAlignment = Alignment.Center) {
+            DayNumber(cell = cell, isEdge = isEdge)
+        }
+        edgeLabel?.let {
+            Text(
+                text = it,
+                color = RuleUpTheme.colors.brand,
+                style = RuleUpTheme.typography.micro,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
     }
 }
 

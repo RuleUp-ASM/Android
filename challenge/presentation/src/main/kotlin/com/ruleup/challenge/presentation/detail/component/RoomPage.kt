@@ -141,38 +141,45 @@ internal fun RoomPillTabs(
     }
 }
 
-/** 오늘 인증 카드 아래 바로가기 한 줄. 할 수 있는 것만 보인다. */
+/**
+ * 오늘 인증 카드 아래 바로가기 한 줄(Figma 2-a). 두 버튼은 늘 같은 자리에 둔다.
+ * 「오늘 체크하기」는 직접 체크하는 방에서만 눌린다 — 자동 인증 방에서는 흐리게 남긴다.
+ * 캘린더는 정보 탭 아래에 펼쳐져 있어 버튼을 두지 않는다.
+ */
 @Composable
 internal fun TodayQuickActions(
     onManualCheck: (() -> Unit)?,
-    onPermissionRepair: (() -> Unit)?,
-    onCalendar: (() -> Unit)?,
+    onPermissionRepair: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val actions =
-        listOfNotNull(
-            onManualCheck?.let { "오늘 체크하기" to it },
-            onPermissionRepair?.let { "권한 다시 연결" to it },
-            onCalendar?.let { "캘린더" to it },
-        )
-    if (actions.isEmpty()) return
     Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        actions.forEach { (label, onClick) ->
-            val shape = RoundedCornerShape(12.dp)
-            Box(
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                        .clip(shape)
-                        .background(RuleUpTheme.colors.surface)
-                        .border(1.dp, RuleUpTheme.colors.border, shape)
-                        .singleClickable(onClick = onClick),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = label, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.smallBold)
-            }
-        }
+        QuickActionButton(label = "오늘 체크하기", onClick = onManualCheck, modifier = Modifier.weight(1f))
+        QuickActionButton(label = "권한 다시 연결", onClick = onPermissionRepair, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    label: String,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Box(
+        modifier =
+            modifier
+                .height(44.dp)
+                .clip(shape)
+                .background(RuleUpTheme.colors.surface)
+                .border(1.dp, RuleUpTheme.colors.border, shape)
+                .singleClickable(enabled = onClick != null) { onClick?.invoke() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = if (onClick != null) RuleUpTheme.colors.textSecondary else RuleUpTheme.colors.textMuted.copy(alpha = 0.5f),
+            style = RuleUpTheme.typography.smallBold,
+        )
     }
 }
 

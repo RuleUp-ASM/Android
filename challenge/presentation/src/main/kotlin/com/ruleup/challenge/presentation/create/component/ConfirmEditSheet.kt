@@ -19,6 +19,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,6 +86,8 @@ internal fun ConfirmEditSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         modifier = modifier,
+        // 반만 열리면 캘린더처럼 늘어나는 내용과 아래 버튼이 가려져 사용자가 모른다 → 처음부터 다 펼친다
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = RuleUpTheme.colors.surface,
         dragHandle = { SheetHandle() },
     ) {

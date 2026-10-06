@@ -191,10 +191,11 @@ sealed interface ChallengeDetailEffect : MviEffect {
     ) : ChallengeDetailEffect
 }
 
-/** 방 상세 상단 탭. */
+/** 방 상세 상단 탭(Figma 시안 C 확정 · 안 2). */
 enum class RoomTab(
     val label: String,
 ) {
+    INFO("정보"),
     FEED("피드"),
     RANKING("랭킹"),
 }
@@ -256,7 +257,7 @@ data class ChallengeDetailState(
     // 복제 요청 중(버튼 스피너 + 중복 탭 차단).
     val isCloning: Boolean = false,
     // 방 상세 3탭 (room 이 있을 때만 의미가 있다)
-    val selectedTab: RoomTab = RoomTab.FEED,
+    val selectedTab: RoomTab = RoomTab.INFO,
     // 피드.
     val threads: List<ThreadItem> = emptyList(),
     val threadsCursor: String? = null,
