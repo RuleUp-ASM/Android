@@ -246,7 +246,6 @@ internal fun ChallengeDetailContent(
     var view by rememberSaveable { mutableStateOf(DetailView.COVER) }
     var appeal by remember { mutableStateOf<SoloAppeal?>(null) }
     var menuOpen by remember { mutableStateOf(false) }
-    var calendarOpen by remember { mutableStateOf(false) }
     var membersOpen by remember { mutableStateOf(false) }
     val appealImagePicker =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
@@ -256,16 +255,18 @@ internal fun ChallengeDetailContent(
     val room = state.room
     val isMember = detail?.myRole?.isMember == true
 
-    // 이 화면에서 가입을 마쳤으면 바로 방으로 들어간다
+    // 이미 가입한 방은 표지 없이 바로 방으로, 이 화면에서 가입을 마쳐도 바로 방으로 들어간다(#585)
     var wasMember by remember { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(isMember, detail != null) {
         if (detail == null) return@LaunchedEffect
-        if (wasMember == false && isMember) view = DetailView.ROOM
+        if (wasMember != true && isMember) view = DetailView.ROOM
         wasMember = isMember
     }
     // 가입 전에는 들어갈 방이 없다
     val shown = if (view == DetailView.ROOM && !isMember) DetailView.COVER else view
-    BackHandler(enabled = shown != DetailView.COVER) { view = DetailView.COVER }
+    // 멤버에게 방이 첫 화면이다. 상세 내용에서 뒤로 가면 방으로, 방에서 뒤로 가면 화면을 나간다
+    val home = if (isMember) DetailView.ROOM else DetailView.COVER
+    BackHandler(enabled = shown != home) { view = home }
 
     // 표지·상세 내용의 오른쪽 버튼. 멤버는 방으로, 아니면 셋업 단계 → 가입.
     val primaryLabel: String? =
@@ -325,7 +326,7 @@ internal fun ChallengeDetailContent(
                     primaryLabel = primaryLabel,
                     primaryEnabled = !state.isJoining,
                     onPrimary = onPrimary,
-                    onBack = { view = DetailView.COVER },
+                    onBack = { view = home },
                     modifier = Modifier.ttiContentDrawn(),
                     // 복제는 공개 그룹만 가능하다
                     extraBottom =
@@ -348,9 +349,8 @@ internal fun ChallengeDetailContent(
                     detail = detail,
                     room = room,
                     onIntent = onIntent,
-                    onBack = { view = DetailView.COVER },
+                    onBack = onBack,
                     onOpenMenu = { menuOpen = true },
-                    onOpenCalendar = { calendarOpen = true },
                     onOpenTodayAppeal = { appeal = SoloAppeal.Today },
                     onOpenDayAppeal = { day -> appeal = SoloAppeal.Day(day) },
                 )
@@ -386,30 +386,11 @@ internal fun ChallengeDetailContent(
                     state = state,
                     detail = detail,
                     onIntent = onIntent,
-                    onOpenCalendar = { calendarOpen = true },
                     onOpenInfo = { view = DetailView.INFO },
-                    onOpenMembers = { membersOpen = true },
                     onLeave = { confirmAction = MemberConfirm.LEAVE },
                 ),
             onDismiss = { menuOpen = false },
         )
-    }
-
-    if (calendarOpen) {
-        RoomContentSheet(onDismiss = { calendarOpen = false }) {
-            SoloMonthCalendar(
-                month = state.calendarMonth.orEmpty(),
-                calendar = state.calendar,
-                isLoading = state.isCalendarLoading,
-                // 지난 건은 캘린더가 유일한 이의 진입점이다
-                onAppealDay = { day ->
-                    calendarOpen = false
-                    appeal = SoloAppeal.Day(day)
-                },
-                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
-                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
-            )
-        }
     }
 
     val members = state.members
@@ -533,8 +514,8 @@ internal fun ChallengeDetailContent(
 }
 
 /**
- * 들어간 뒤 화면(Figma 시안 C 확정 · 안 2). 그룹은 정보 · 피드 · 랭킹 3탭이고, 오늘 내 인증은 정보 탭 맨 위에 둔다.
- * 솔로는 방 데이터·피드가 없어 정보 탭 내용만 한 화면에 둔다.
+ * 들어간 뒤 화면(Figma 시안 C 확정 · 안 2). 정보 · 피드 · 랭킹 3탭이고, 오늘 내 인증은 정보 탭 맨 위에 둔다.
+ * 솔로도 같은 3탭이다 — 랭킹은 챌린지 순위만 보인다.
  */
 @Composable
 private fun RoomView(
@@ -544,7 +525,6 @@ private fun RoomView(
     onIntent: (ChallengeDetailIntent) -> Unit,
     onBack: () -> Unit,
     onOpenMenu: () -> Unit,
-    onOpenCalendar: () -> Unit,
     onOpenTodayAppeal: () -> Unit,
     onOpenDayAppeal: (ChallengeCalendarDay) -> Unit,
 ) {
@@ -623,7 +603,8 @@ private fun RoomView(
             onOpenWatchers = { onIntent(ChallengeDetailIntent.OpenWatchers) },
         )
         PermissionBanners(state = state, missingPermissions = missingPermissions, onIntent = onIntent)
-        if (room != null) {
+        // 솔로도 피드(내 기록)·랭킹(챌린지 순위)이 있다. 그룹인데 방 홈을 못 받았으면 정보만 둔다
+        if (room != null || !detail.mode.isGroup) {
             RoomPillTabs(selected = state.selectedTab, onSelect = { onIntent(ChallengeDetailIntent.SelectTab(it)) })
             when (state.selectedTab) {
                 RoomTab.INFO -> infoBody()
@@ -641,10 +622,10 @@ private fun RoomView(
                         state = state,
                         onSelectScope = { onIntent(ChallengeDetailIntent.SelectRankingScope(it)) },
                         onLoadMoreCross = { onIntent(ChallengeDetailIntent.LoadMoreCrossRanking) },
+                        showScopes = detail.mode.isGroup,
                     )
             }
         } else {
-            // 솔로는 피드·랭킹이 없어 정보 탭 내용만 둔다
             infoBody()
         }
     }
@@ -705,9 +686,7 @@ private fun roomMenuEntries(
     state: ChallengeDetailState,
     detail: ChallengeDetail,
     onIntent: (ChallengeDetailIntent) -> Unit,
-    onOpenCalendar: () -> Unit,
     onOpenInfo: () -> Unit,
-    onOpenMembers: () -> Unit,
     onLeave: () -> Unit,
 ): List<RoomSheetEntry> =
     buildList {
@@ -722,23 +701,7 @@ private fun roomMenuEntries(
             }
             return@buildList
         }
-        if (state.setup?.requiresTargetPackages == true) {
-            add(RoomSheetEntry("대상 앱 설정") { onIntent(ChallengeDetailIntent.RegisterApps) })
-        }
-        if (state.setup?.requiresAnchors == true) {
-            add(RoomSheetEntry("인증 장소 설정") { onIntent(ChallengeDetailIntent.RegisterAnchor) })
-        }
-        // 솔로는 캘린더가 본문에 이미 있다
-        if (state.room != null) add(RoomSheetEntry("캘린더 · 지난 기록", value = "이의 제기도 여기서", onClick = onOpenCalendar))
-        if (state.showsWatchers(detail)) {
-            val watchers = state.watchers
-            add(
-                RoomSheetEntry(
-                    "감시자 관리",
-                    value = watchers?.let { w -> "${w.watchers.count { it.status.isActive }} / ${w.limit?.toString() ?: "무제한"}" },
-                ) { onIntent(ChallengeDetailIntent.OpenWatchers) },
-            )
-        }
+        // 방 안 메뉴는 알림 끄기 · 신고 · 나가기 셋만 둔다(#585). 세부 설정·감시자·기록은 정보 탭에 있다
         // 상태를 모르면 그리지 않는다
         state.isMuted?.let { muted ->
             add(
@@ -749,11 +712,7 @@ private fun roomMenuEntries(
                 ) { onIntent(ChallengeDetailIntent.ToggleMute(!muted)) },
             )
         }
-        add(RoomSheetEntry("상세 내용 보기", onClick = onOpenInfo))
-        state.members
-            ?.takeIf {
-                state.room != null
-            }?.let { add(RoomSheetEntry("멤버 보기", value = "${it.participantCount}명", onClick = onOpenMembers)) }
+        // 방장은 자기 챌린지를 신고할 수 없어 그 자리에 수정을 둔다
         if (myRole.isOwner) {
             add(RoomSheetEntry("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
         } else {

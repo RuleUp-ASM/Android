@@ -518,7 +518,7 @@ class ChallengeDetailViewModel
                         // 오늘 인증은 솔로도 필요하다
                         loadTodayResult(challengeId)
                         // 방 홈은 그룹 챌린지의 ACTIVE 멤버만
-                        if (detail.mode.isGroup) loadRoom(challengeId, prefetchedRoom) else loadCalendar(challengeId)
+                        if (detail.mode.isGroup) loadRoom(challengeId, prefetchedRoom) else loadSoloRoom(challengeId)
                     }.onFailure { dispatch(ChallengeDetailReducerEvent.Failed(it.userFacingMessage("챌린지를 불러오지 못했어요"))) }
             }
         }
@@ -544,6 +544,17 @@ class ChallengeDetailViewModel
                 loadCalendar(id)
                 loadMembers(id)
             }
+        }
+
+        /**
+         * 솔로 방. 방 홈(/room)은 그룹 전용이라 받지 않고 캘린더 · 내 피드를 받는다.
+         * 랭킹은 솔로끼리 비교하는 챌린지 순위만 있어 범위를 거기에 고정한다(명세 「챌린지 외 랭킹 조회」).
+         */
+        private fun loadSoloRoom(challengeId: String) {
+            loadCalendar(challengeId)
+            if (currentState.detail?.myRole?.isMember != true) return
+            dispatch(ChallengeDetailReducerEvent.RankingScopeSelected(RankingScope.ROOM))
+            loadThreads(next = false)
         }
 
         // 비멤버/솔로의 403 등 실패는 흡수

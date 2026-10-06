@@ -7,6 +7,7 @@ import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
+import com.ruleup.challenge.domain.entity.ChallengeThreads
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRole
@@ -75,6 +76,24 @@ class ChallengeDetailSoloTest {
             assertTrue("getCalendar" in rooms.calls)
             // 방 홈은 솔로에 없다
             assertTrue("getRoom" !in rooms.calls)
+        }
+
+    @Test
+    fun `솔로 방은 내 피드를 받고 랭킹 범위를 챌린지 순위로 둔다`() =
+        runTest {
+            // 솔로에는 방 안 순위가 없어 멤버 순위로 두면 랭킹 탭이 빈다(#585).
+            val rooms =
+                FakeRoomRepository(
+                    calendar = { id, month -> ChallengeCalendar(challengeId = id, month = month, days = emptyList()) },
+                    threads = { _, _ -> ChallengeThreads(items = emptyList(), nextCursor = null) },
+                )
+            val viewModel =
+                viewModel(repo = FakeChallengeRepository(detail = { detail(mode = ChallengeMode.SOLO) }), rooms = rooms)
+
+            viewModel.onIntent(ChallengeDetailIntent.Load(CHALLENGE_ID))
+
+            assertTrue("getThreads" in rooms.calls)
+            assertEquals(RankingScope.ROOM, viewModel.uiState.value.rankingScope)
         }
 
     @Test
