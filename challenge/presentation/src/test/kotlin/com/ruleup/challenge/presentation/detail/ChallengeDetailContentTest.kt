@@ -17,6 +17,7 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
+import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
@@ -27,10 +28,12 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.clickPastGuard
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
+import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.detail.viewmodel.RankingScope
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.renderScreen
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.User
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
@@ -292,6 +295,17 @@ class ChallengeDetailContentTest {
         // 같은 권한의 다른 이름은 한 줄로 합친다
         compose.onAllNodesWithText("위치 접근", substring = true).assertCountEquals(1)
         compose.onNodeWithText("꺼짐").assertExists()
+    }
+
+    @Test
+    fun `티어가 모자라 못 들어가면 필요한 티어와 내 티어를 한글 이름으로 보여 준다`() {
+        // enum 값을 그대로 넘기면 「SILVER 티어부터」처럼 영문이 보인다(#591).
+        val base = loaded()
+        val gated = base.detail!!.copy(gate = ChallengeGate(minTier = Tier.SILVER, myDisplayTier = Tier.BRONZE, eligible = false))
+        render(base.copy(detail = gated, joinBlock = JoinBlock(reason = JoinBlockReason.TIER_GATE)))
+
+        compose.onNodeWithText("실버 티어부터", substring = true).assertExists()
+        compose.onNodeWithText("지금은 브론즈예요", substring = true).assertExists()
     }
 
     private fun loaded(title: String = "평일 아침 헬스장 출석") = ChallengeDetailState.initial.copy(isLoading = false, detail = detail(title))

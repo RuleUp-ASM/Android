@@ -79,7 +79,8 @@ val LightRuleUpColors =
         textSlate = RuleUpPalette.TextSub,
         success = RuleUpPalette.StatusSuccess,
         // Figma 의 StatusChip/성공 은 성공 배경 위에 같은 성공색 텍스트를 얹는다.
-        onSuccess = RuleUpPalette.StatusSuccess,
+        // 초록 바탕 · 강조 버튼 위 글자색이다. 초록 글자가 필요하면 success 를 쓴다.
+        onSuccess = Color.White,
         successContainer = RuleUpPalette.StatusSuccessBg,
         danger = RuleUpPalette.StatusDanger,
         dangerContainer = RuleUpPalette.StatusDangerBg,

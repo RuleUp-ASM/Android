@@ -152,7 +152,7 @@ private fun MemberProfileAppBar(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(com.ruleup.designsystem.R.drawable.ic_info),
+                    painter = painterResource(com.ruleup.designsystem.R.drawable.ic_flag),
                     contentDescription = "신고하기",
                     tint = RuleUpTheme.colors.danger,
                     modifier = Modifier.size(16.dp),
