@@ -28,6 +28,29 @@ class InviteLinkTest {
     }
 
     @Test
+    fun `카카오톡 카드에서 앱 실행으로 들어오면 감시자 수락 화면으로 간다`() {
+        // 웹 주소로만 열면 서버가 앱 설치 여부와 상관없이 플레이스토어로 보낸다(#574).
+        val route = resolveStartRoute(uri("kakaoabc123://kakaolink?invite=w&token=wtk_8f3a"), testObservability())
+
+        assertEquals(WatcherAcceptPage.PATH, route?.path)
+        assertEquals("wtk_8f3a", route?.args?.get(WatcherAcceptPage.ARG_TOKEN))
+    }
+
+    @Test
+    fun `카카오톡 카드에서 앱 실행으로 들어오면 챌린지 초대 화면으로 간다`() {
+        val route = resolveNewIntentRoute(uri("kakaoabc123://kakaolink?invite=c&token=cinv_9d2f"), testObservability())
+
+        assertEquals(ChallengeInvitePage.PATH, route?.path)
+        assertEquals("cinv_9d2f", route?.args?.get(ChallengeInvitePage.ARG_TOKEN))
+    }
+
+    @Test
+    fun `카카오 앱 실행 주소라도 토큰이나 종류가 없으면 목적지로 삼지 않는다`() {
+        assertNull(resolveStartRoute(uri("kakaoabc123://kakaolink?invite=w"), testObservability()))
+        assertNull(resolveStartRoute(uri("kakaoabc123://kakaolink?token=t1"), testObservability()))
+    }
+
+    @Test
     fun `토큰 없는 초대 링크는 목적지로 삼지 않는다`() {
         // 수락할 대상이 없는데 화면을 띄우면 사용자가 빈 오류만 본다.
         assertNull(resolveStartRoute(uri("https://android.ruleup.co.kr/w"), testObservability()))

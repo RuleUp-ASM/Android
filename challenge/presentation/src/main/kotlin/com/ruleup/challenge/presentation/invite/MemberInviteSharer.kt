@@ -8,6 +8,8 @@ import com.kakao.sdk.share.ShareClient
 import com.kakao.sdk.share.WebSharerClient
 import com.kakao.sdk.template.model.Link
 import com.kakao.sdk.template.model.TextTemplate
+import com.ruleup.challenge.domain.navigation.InviteLaunchParams
+import com.ruleup.challenge.presentation.common.inviteToken
 
 /** 멤버 초대 링크 카카오톡 공유. */
 object MemberInviteSharer {
@@ -34,7 +36,13 @@ object MemberInviteSharer {
     ): TextTemplate =
         TextTemplate(
             text = "[$challengeTitle] 챌린지에 초대했어요. 같이 해볼래요?",
-            link = Link(webUrl = inviteUrl, mobileWebUrl = inviteUrl),
+            link =
+                Link(
+                    webUrl = inviteUrl,
+                    mobileWebUrl = inviteUrl,
+                    // 설치돼 있으면 앱으로 바로 연다. 웹 주소만 두면 카카오톡 인앱 브라우저가 열고 서버가 스토어로 보낸다
+                    androidExecutionParams = inviteToken(inviteUrl)?.let(InviteLaunchParams::challenge),
+                ),
             buttonTitle = "챌린지 보러 가기",
         )
 

@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavKey
 import com.ruleup.android_ruleup.navigation.GenericNavKey
 import com.ruleup.android_ruleup.navigation.appRouteByPath
 import com.ruleup.challenge.domain.navigation.ChallengeInvitePage
+import com.ruleup.challenge.domain.navigation.InviteLaunchParams
 import com.ruleup.challenge.domain.navigation.WatcherAcceptPage
 import com.ruleup.domain.navigation.DeeplinkResolver
 import com.ruleup.domain.navigation.NavRoute
@@ -31,6 +32,20 @@ private fun Uri.toWatcherAcceptRoute(): NavRoute? = tokenRoute(WATCHER_INVITE_SE
 
 /** 챌린지 멤버 초대 `/c/{token}` 을 미리보기 화면 경로로 옮긴다. */
 private fun Uri.toChallengeInviteRoute(): NavRoute? = tokenRoute(CHALLENGE_INVITE_SEGMENT)?.let { ChallengeInvitePage(it).toRoute() }
+
+/** 카카오톡 공유 버튼의 앱 실행 주소 호스트(`kakao{앱키}://kakaolink`). */
+private const val KAKAO_LINK_HOST = "kakaolink"
+
+/** 카카오톡 초대 카드에서 앱 실행으로 들어온 경우 초대 화면 경로로 옮긴다. */
+private fun Uri.toKakaoInviteRoute(): NavRoute? {
+    if (scheme?.startsWith("kakao") != true || host != KAKAO_LINK_HOST) return null
+    val token = getQueryParameter(InviteLaunchParams.KEY_TOKEN)?.takeIf { it.isNotBlank() } ?: return null
+    return when (getQueryParameter(InviteLaunchParams.KEY_INVITE)) {
+        InviteLaunchParams.INVITE_WATCHER -> WatcherAcceptPage(token).toRoute()
+        InviteLaunchParams.INVITE_CHALLENGE -> ChallengeInvitePage(token).toRoute()
+        else -> null
+    }
+}
 
 /** `/{segment}/{token}` 에서 토큰만 꺼낸다. */
 private fun Uri.tokenRoute(segment: String): String? {
@@ -86,6 +101,7 @@ fun resolveStartRoute(
     // 친구 초대(/inv/{code})는 특정 화면이 아니라 앱 실행으로 받는다.
     if (uri.isFriendInvite()) return null
     // 초대 링크들은 화면이 있다
+    uri.toKakaoInviteRoute()?.let { return it }
     uri.toChallengeInviteRoute()?.let { return it }
     uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
@@ -105,6 +121,7 @@ fun resolveNewIntentRoute(
     schemeRoute(uri, deeplinkResolver)?.let { return it }
     // 앱 사용 중 들어온 친구 초대 링크는 이동할 곳이 없다(이미 가입·로그인 상태)
     if (uri.isFriendInvite()) return null
+    uri.toKakaoInviteRoute()?.let { return it }
     uri.toChallengeInviteRoute()?.let { return it }
     uri.toWatcherAcceptRoute()?.let { return it }
     val route = uri.toNavRoute()
