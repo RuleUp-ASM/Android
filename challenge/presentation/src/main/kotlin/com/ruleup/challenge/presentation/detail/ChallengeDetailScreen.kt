@@ -61,7 +61,6 @@ import com.ruleup.challenge.presentation.detail.component.RoomContentSheet
 import com.ruleup.challenge.presentation.detail.component.RoomCoverHeader
 import com.ruleup.challenge.presentation.detail.component.RoomFeedTab
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
-import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
 import com.ruleup.challenge.presentation.detail.component.RoomMenuSheet
 import com.ruleup.challenge.presentation.detail.component.RoomPillTabs
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
@@ -307,12 +306,8 @@ internal fun ChallengeDetailContent(
                     primaryEnabled = !state.isJoining,
                     // 비공개 방은 초대 링크가 유일한 입장 경로라 참여 버튼 자체를 노출하지 않는다.
                     blockedNotice = "초대 링크로만 들어올 수 있는 챌린지예요".takeIf { !isMember && state.hideJoinButton },
-                    menuItems =
-                        if ((room?.myRole ?: detail.myRole).isOwner) {
-                            listOf(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
-                        } else {
-                            listOf(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
-                        },
+                    // 방 안과 같은 ⋯ 시트를 띄운다. 비멤버에게는 고를 수 있는 것만 담긴다
+                    onOpenMenu = { menuOpen = true },
                     onPrimary = onPrimary,
                     onOpenInfo = { view = DetailView.INFO },
                     onBack = onBack,
@@ -557,10 +552,7 @@ private fun RoomView(
         }
     // 감시자 벌칙이 켜진 챌린지만 감시자를 둘 수 있다
     val watcherCount =
-        state.watchers
-            ?.takeIf { detail.penalties?.watcher == true }
-            ?.watchers
-            ?.count { it.status.isActive }
+        if (state.showsWatchers(detail)) state.watchers?.watchers?.count { it.status.isActive } ?: 0 else null
     val missingPermissions = state.missingPermissionTokens().isNotEmpty()
     val todayBlock: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -668,6 +660,17 @@ private fun PermissionBanners(
     }
 }
 
+/**
+ * 감시자 진입점을 둘지. 공개 상세는 `penalties` 를 안 줄 수 있어(명세: 설정 조회 API 설명),
+ * 꺼진 게 확실할 때만 숨기고 모르면 감시자 목록을 받았는지로 본다 — 감시자가 0명이어도 들어가 등록할 수 있어야 한다.
+ */
+private fun ChallengeDetailState.showsWatchers(detail: ChallengeDetail): Boolean =
+    when (detail.penalties?.watcher) {
+        true -> true
+        false -> false
+        null -> watchers != null
+    }
+
 /** 방 ⋯ 메뉴. 가끔 쓰는 설정·기록·관리 동작을 모은다(공지는 제품에서 빠졌다). */
 private fun roomMenuEntries(
     state: ChallengeDetailState,
@@ -680,6 +683,16 @@ private fun roomMenuEntries(
 ): List<RoomSheetEntry> =
     buildList {
         val myRole = state.room?.myRole ?: detail.myRole
+        // 들어가기 전 표지에서 비멤버가 연 시트에는 상세 보기·신고(수정)만 둔다
+        if (!myRole.isMember) {
+            add(RoomSheetEntry("상세 내용 보기", onClick = onOpenInfo))
+            if (myRole.isOwner) {
+                add(RoomSheetEntry("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
+            } else {
+                add(RoomSheetEntry("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
+            }
+            return@buildList
+        }
         if (state.setup?.requiresTargetPackages == true) {
             add(RoomSheetEntry("대상 앱 설정") { onIntent(ChallengeDetailIntent.RegisterApps) })
         }
@@ -688,7 +701,7 @@ private fun roomMenuEntries(
         }
         // 솔로는 캘린더가 본문에 이미 있다
         if (state.room != null) add(RoomSheetEntry("캘린더 · 지난 기록", value = "이의 제기도 여기서", onClick = onOpenCalendar))
-        if (detail.penalties?.watcher == true) {
+        if (state.showsWatchers(detail)) {
             val watchers = state.watchers
             add(
                 RoomSheetEntry(

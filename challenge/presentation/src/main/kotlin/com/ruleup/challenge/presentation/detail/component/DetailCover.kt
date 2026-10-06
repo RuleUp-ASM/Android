@@ -202,7 +202,7 @@ internal fun DetailCover(
     primaryLabel: String?,
     primaryEnabled: Boolean,
     blockedNotice: String?,
-    menuItems: List<RoomMenuItem>,
+    onOpenMenu: () -> Unit,
     onPrimary: () -> Unit,
     onOpenInfo: () -> Unit,
     onBack: () -> Unit,
@@ -224,7 +224,7 @@ internal fun DetailCover(
                     .navigationBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            CoverTopBar(menuItems = menuItems, onBack = onBack)
+            CoverTopBar(menuItems = emptyList(), onBack = onBack, onOpenMenu = onOpenMenu)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 4.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,

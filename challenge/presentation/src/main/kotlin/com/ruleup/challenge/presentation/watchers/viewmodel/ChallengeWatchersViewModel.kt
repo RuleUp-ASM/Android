@@ -66,10 +66,14 @@ class ChallengeWatchersViewModel
             viewModelScope.launch {
                 runCatching {
                     val detail = challengeRepository.getChallenge(challengeId)
-                    val enabled = detail.penalties?.watcher == true
-                    // 감시자 벌칙이 꺼진 방은 목록을 묻지 않는다
-                    val watchers = if (enabled) watcherRepository.getWatchers(challengeId) else null
-                    ChallengeWatchersReducerEvent.Loaded(detail.title, enabled, watchers)
+                    // 공개 상세가 penalties 를 안 줄 수 있다. 모르면 목록을 물어 받아지면 쓸 수 있는 방으로 본다
+                    val watchers =
+                        when (detail.penalties?.watcher) {
+                            false -> null
+                            true -> watcherRepository.getWatchers(challengeId)
+                            null -> runCatching { watcherRepository.getWatchers(challengeId) }.getOrNull()
+                        }
+                    ChallengeWatchersReducerEvent.Loaded(detail.title, watchers != null, watchers)
                 }.onSuccess { dispatch(it) }
                     .onFailure { dispatch(ChallengeWatchersReducerEvent.Failed(it.userFacingMessage(LOAD_FAILED_MESSAGE))) }
             }
