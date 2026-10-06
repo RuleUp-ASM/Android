@@ -40,6 +40,7 @@ import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.common.CapacitySlider
+import com.ruleup.challenge.presentation.common.CoverImagePicker
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.component.CreateChallengeTopBar
 import com.ruleup.challenge.presentation.create.component.GradientSwitch
@@ -266,36 +267,13 @@ private fun CoverSection(
     val picker = rememberImagePicker { onIntent(ChallengeSettingsIntent.SetCoverImage(it)) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionLabel("대표 이미지") { ModerationBadge(state.moderation?.image) }
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(88.dp)
-                    .clip(RuleUpTheme.shapes.small)
-                    .background(RuleUpTheme.colors.surface)
-                    .singleClickable(enabled = editable) { picker.launchGallery() },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text =
-                    when {
-                        state.coverImageUri != null -> "새 사진 선택됨 · 다시 고르기"
-                        state.removeImage -> "기본 이미지로 되돌립니다"
-                        state.imageUrl != null -> "등록된 사진 있음 · 바꾸기"
-                        else -> "사진 고르기"
-                    },
-                color = if (editable) RuleUpTheme.colors.textSecondary else RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.bodyMedium,
-            )
-        }
-        if (editable && (state.imageUrl != null || state.coverImageUri != null)) {
-            Text(
-                text = "기본 이미지로 되돌리기",
-                modifier = Modifier.singleClickable { onIntent(ChallengeSettingsIntent.RemoveCoverImage) },
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.caption,
-            )
-        }
+        CoverImagePicker(
+            // 새로 고른 사진이 먼저, 지우기로 했으면 등록된 사진도 보이지 않는다
+            image = state.coverImageUri ?: state.imageUrl.takeUnless { state.removeImage },
+            enabled = editable,
+            onPick = { picker.launchGallery() },
+            onRemove = { onIntent(ChallengeSettingsIntent.RemoveCoverImage) },
+        )
     }
 }
 

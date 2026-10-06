@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Slider
@@ -20,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.ruleup.challenge.domain.entity.ParamKind
@@ -106,7 +109,7 @@ private fun NumberStepper(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        StepButton(text = "−", enabled = current != null && (spec.min?.let { current > it } != false)) {
+        StepButton(plus = false, enabled = current != null && (spec.min?.let { current > it } != false)) {
             current?.let { onEdit(spec.clamp(it - 1).format()) }
         }
         BasicTextField(
@@ -116,16 +119,20 @@ private fun NumberStepper(
                 val digits = input.filter { it.isDigit() || it == '.' }
                 if (digits.count { it == '.' } <= 1) onEdit(digits)
             },
-            modifier = Modifier.size(width = 56.dp, height = 24.dp),
+            modifier = Modifier.width(56.dp),
             textStyle =
-                RuleUpTheme.typography.bodyBold.copy(color = RuleUpTheme.colors.textPrimary),
+                RuleUpTheme.typography.bodyBold.copy(color = RuleUpTheme.colors.textPrimary, textAlign = TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
+            // 버튼과 같은 높이에서 숫자를 가운데에 둔다
+            decorationBox = { field ->
+                Box(Modifier.height(STEP_BUTTON_SIZE), contentAlignment = Alignment.Center) { field() }
+            },
         )
         spec.unitLabel?.let {
             Text(it, color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.caption)
         }
-        StepButton(text = "+", enabled = current != null && (spec.max?.let { current < it } != false)) {
+        StepButton(plus = true, enabled = current != null && (spec.max?.let { current < it } != false)) {
             current?.let { onEdit(spec.clamp(it + 1).format()) }
         }
     }
@@ -185,29 +192,30 @@ private fun String.toHourMinute(): Pair<Int, Int> {
     return if (parts.size >= 2 && parts[0] in 0..23 && parts[1] in 0..59) parts[0] to parts[1] else 7 to 0
 }
 
+/** − / + 버튼. 글자로 그리면 폰트 여백 때문에 원 안에서 위아래가 어긋나 막대로 그린다. */
 @Composable
 private fun StepButton(
-    text: String,
+    plus: Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     onClick: () -> Unit = {},
 ) {
+    val color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted
     Box(
         modifier =
             modifier
-                .size(28.dp)
+                .size(STEP_BUTTON_SIZE)
                 .clip(RuleUpTheme.shapes.pill)
                 .background(RuleUpTheme.colors.surface)
                 .singleClickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text,
-            color = if (enabled) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.bodyBold,
-        )
+        Box(Modifier.size(width = 12.dp, height = 2.dp).clip(RuleUpTheme.shapes.pill).background(color))
+        if (plus) Box(Modifier.size(width = 2.dp, height = 12.dp).clip(RuleUpTheme.shapes.pill).background(color))
     }
 }
+
+private val STEP_BUTTON_SIZE = 28.dp
 
 /** 표시 라벨. */
 private fun ParamSpec.label(): String =

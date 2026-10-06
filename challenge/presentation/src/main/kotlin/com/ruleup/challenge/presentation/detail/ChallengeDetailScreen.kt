@@ -55,6 +55,7 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
+import com.ruleup.challenge.presentation.common.CategoryTile
 import com.ruleup.challenge.presentation.common.VerificationAccessSheet
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.common.rememberVerificationPermissionRequester
@@ -87,8 +88,6 @@ import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.invite.MemberInviteSharer
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
-import com.ruleup.designsystem.category.categoryAccentColor
-import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
@@ -847,7 +846,6 @@ private fun ManualCheckCard(
 
 @Composable
 private fun DetailHero(detail: ChallengeDetail) {
-    val accent = categoryAccentColor(detail.category)
     // 대표 사진이 있으면 카드 배경으로 깐다.
     ChallengeCoverBackground(
         imageUrl = detail.imageUrl,
@@ -865,17 +863,7 @@ private fun DetailHero(detail: ChallengeDetail) {
                     .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(56.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(accent),
-                contentAlignment = Alignment.Center,
-            ) {
-                // 장식용 글리프라 타입 스케일(최대 22)에 넣으면 확 줄어든다.
-                Text(text = detail.category?.let(::categoryEmoji) ?: "🎯", fontSize = 26.sp)
-            }
+            CategoryTile(category = detail.category, size = 56.dp, cornerRadius = 14.dp, emojiSize = 26.sp)
             Text(
                 text = detail.title,
                 color = RuleUpTheme.colors.textPrimary,

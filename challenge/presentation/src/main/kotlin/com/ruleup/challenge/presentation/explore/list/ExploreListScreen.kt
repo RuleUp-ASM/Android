@@ -43,30 +43,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ExploreChallenge
 import com.ruleup.challenge.domain.entity.ExploreSort
+import com.ruleup.challenge.presentation.common.ChallengeThumbnail
 import com.ruleup.challenge.presentation.explore.list.viewmodel.EmptyReason
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListIntent
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListState
 import com.ruleup.challenge.presentation.explore.list.viewmodel.ExploreListViewModel
 import com.ruleup.designsystem.R
-import com.ruleup.designsystem.category.categoryAccentColor
-import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.time.ServiceDate
 import com.ruleup.tti.presentation.TtiScreenEffect
-import com.ruleup.tti.presentation.rememberTtiLargeContent
 import com.ruleup.tti.presentation.ttiContentDrawn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -499,7 +496,6 @@ private fun ExploreChallengeCard(
     sort: ExploreSort,
     onClick: () -> Unit,
 ) {
-    val accent = categoryAccentColor(item.category)
     Row(
         modifier =
             Modifier
@@ -511,32 +507,13 @@ private fun ExploreChallengeCard(
                 .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accent.copy(alpha = 0.15f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                painter = painterResource(categoryIconRes(item.category)),
-                contentDescription = null,
-                tint = accent,
-                modifier = Modifier.size(22.dp),
-            )
-            item.imageUrl?.takeIf { it.isNotBlank() }?.let { imageUrl ->
-                val onImageSettled = rememberTtiLargeContent()
-                AsyncImage(
-                    model = imageUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    onSuccess = { onImageSettled() },
-                    onError = { onImageSettled() },
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
+        ChallengeThumbnail(
+            imageUrl = item.imageUrl,
+            category = item.category,
+            size = 48.dp,
+            cornerRadius = 12.dp,
+            emojiSize = 22.sp,
+        )
         Column(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp),
