@@ -578,9 +578,8 @@ private fun RoomView(
             )
             TodayQuickActions(
                 onManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
-                onPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }.takeIf { missingPermissions },
-                // 캘린더는 정보 탭 본문에 바로 편다
-                onCalendar = null,
+                onPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
+                onCalendar = onOpenCalendar,
             )
         }
     }

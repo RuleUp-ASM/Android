@@ -69,4 +69,24 @@ data class TodayResult(
     val pendingReason: PendingReason? = null,
     // 「체류 42분 / 목표 60분」처럼 그대로 보여줄 판정 근거 한 줄.
     val evidenceSummary: String? = null,
-)
+) {
+    /**
+     * 근거 한 줄의 「값 / 목표 값」에서 읽은 오늘 진행 비율(0~1).
+     * 서버가 따로 숫자를 주지 않아 문구에서 읽는다. 목표가 없는 근거(기상 시각 등)나 목표가 0 이면 null — 막대를 그리지 않는다.
+     */
+    val evidenceProgress: Double?
+        get() {
+            val match = EVIDENCE_PROGRESS.find(evidenceSummary ?: return null) ?: return null
+            val value = match.groupValues[1].replace(",", "").toDoubleOrNull() ?: return null
+            val goal =
+                match.groupValues[2]
+                    .replace(",", "")
+                    .toDoubleOrNull()
+                    ?.takeIf { it > 0 } ?: return null
+            return (value / goal).coerceIn(0.0, 1.0)
+        }
+
+    private companion object {
+        val EVIDENCE_PROGRESS = Regex("""(\d[\d,]*(?:\.\d+)?)[^/\d]*/\s*목표\s*(\d[\d,]*(?:\.\d+)?)""")
+    }
+}

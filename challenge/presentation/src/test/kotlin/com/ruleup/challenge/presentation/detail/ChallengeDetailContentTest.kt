@@ -147,6 +147,10 @@ class ChallengeDetailContentTest {
         compose.onNodeWithText("피드").assertExists()
         compose.onNodeWithText("랭킹").assertExists()
         compose.onNodeWithText("인증 규칙").assertExists()
+        // 바로가기 세 개는 조건과 상관없이 같은 자리에 있다(Figma 2-a)
+        compose.onNodeWithText("오늘 체크하기").assertExists()
+        compose.onNodeWithText("권한 다시 연결").assertExists()
+        compose.onNodeWithText("캘린더").assertExists()
     }
 
     @Test
