@@ -49,6 +49,8 @@ import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeIntent
 import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeState
 import com.ruleup.support.presentation.compose.viewmodel.InquiryComposeViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 문의하기 · 작성. */
 @Composable
@@ -76,7 +78,8 @@ internal fun InquiryComposeContent(
                 .fillMaxSize()
                 .background(colors.background)
                 .statusBarsPadding()
-                .imePadding(),
+                .imePadding()
+                .ttiContentDrawn(),
     ) {
         RuleUpTopBar(title = "문의하기", onBack = { onIntent(InquiryComposeIntent.Back) })
 
@@ -273,11 +276,14 @@ private fun AttachmentThumb(
                 .singleClickable(onClick = onRemove),
         contentAlignment = Alignment.Center,
     ) {
+        val onImageSettled = rememberTtiLargeContent()
         AsyncImage(
             model = attachment.uri,
             contentDescription = "첨부한 사진. 누르면 뺍니다",
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
+            onSuccess = { onImageSettled() },
+            onError = { onImageSettled() },
         )
         when {
             attachment.uploading ->

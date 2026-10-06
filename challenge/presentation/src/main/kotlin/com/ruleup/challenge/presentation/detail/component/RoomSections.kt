@@ -36,6 +36,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.tti.presentation.rememberTtiLargeContent
 import java.util.Locale
 
 // 방 홈(그룹 챌린지 ACTIVE 멤버 전용 — GET room 성공 시 상세에 확장 렌더링)에서만 쓰인다.
@@ -135,10 +136,13 @@ private fun MemberRow(
                 style = RuleUpTheme.typography.bodyBold,
             )
             member.profileImageUrl?.takeIf { it.isNotBlank() }?.let { imageUrl ->
+                val onImageSettled = rememberTtiLargeContent()
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
+                    onSuccess = { onImageSettled() },
+                    onError = { onImageSettled() },
                     modifier = Modifier.fillMaxSize(),
                 )
             }

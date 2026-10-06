@@ -31,6 +31,7 @@ import com.ruleup.support.presentation.category.viewmodel.InquiryCategoryIntent
 import com.ruleup.support.presentation.category.viewmodel.InquiryCategoryViewModel
 import com.ruleup.support.presentation.category.viewmodel.InquiryShortcut
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 문의하기 · 카테고리. */
 @Composable
@@ -53,7 +54,8 @@ internal fun InquiryCategoryContent(
             modifier
                 .fillMaxSize()
                 .background(colors.background)
-                .statusBarsPadding(),
+                .statusBarsPadding()
+                .ttiContentDrawn(),
     ) {
         RuleUpTopBar(title = "문의하기", onBack = { onIntent(InquiryCategoryIntent.Back) })
 

@@ -33,6 +33,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 감시자 초대 수락 (카카오톡 `/w/{token}` 링크 진입). */
 @Composable
@@ -68,7 +69,8 @@ internal fun WatcherAcceptContent(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 24.dp),
+                    .padding(horizontal = 24.dp)
+                    .ttiContentDrawn(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

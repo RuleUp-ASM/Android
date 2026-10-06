@@ -57,6 +57,7 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
@@ -122,7 +123,7 @@ internal fun MyChallengesContent(
                     }
 
                 state.errorMessage != null && state.current.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                         Text(
                             text = state.errorMessage,
                             color = RuleUpTheme.colors.textSecondary,
@@ -234,7 +235,7 @@ private fun ChallengeList(
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -454,7 +455,7 @@ private fun EmptyState(
     onIntent: (MyChallengesIntent) -> Unit,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp).ttiContentDrawn(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

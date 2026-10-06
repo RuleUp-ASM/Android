@@ -47,6 +47,7 @@ import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 // 인기 1~3위 랭크 배지 그라데이션.
 private val TopRankGradient = listOf(Color(0xFFF97316), Color(0xFFEF4444))
@@ -184,7 +185,8 @@ private fun TrendingCard(
                 .fillMaxWidth()
                 .shadow(2.dp, RoundedCornerShape(16.dp), clip = false)
                 .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface),
+                .background(RuleUpTheme.colors.surface)
+                .ttiContentDrawn(),
     ) {
         trending.forEachIndexed { index, item ->
             if (index > 0) HorizontalDivider(thickness = 1.dp, color = RuleUpTheme.colors.border)
@@ -282,10 +284,11 @@ private fun CategoryGrid(
             text = "표시할 카테고리가 없어요",
             color = RuleUpTheme.colors.textSecondary,
             style = RuleUpTheme.typography.small,
+            modifier = Modifier.ttiContentDrawn(),
         )
         return
     }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.ttiContentDrawn(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         categories.chunked(2).forEach { rowItems ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 rowItems.forEach { item ->
@@ -409,7 +412,8 @@ private fun SectionRetry(onRetry: () -> Unit) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(14.dp))
                 .background(RuleUpTheme.colors.surfaceVariant)
-                .padding(16.dp),
+                .padding(16.dp)
+                .ttiContentDrawn(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {

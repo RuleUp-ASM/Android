@@ -49,6 +49,7 @@ import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterI
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterState
 import com.ruleup.notification.presentation.center.viewmodel.NotificationCenterViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 
@@ -103,7 +104,7 @@ internal fun NotificationCenterContent(
                 }
 
             state.errorMessage != null && state.items.isEmpty() ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                     Text(
                         text = state.errorMessage,
                         color = RuleUpTheme.colors.textSecondary,
@@ -172,7 +173,7 @@ private val NotificationTab.label: String
 @Composable
 private fun EmptyState(tab: NotificationTab) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp).ttiContentDrawn(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -222,7 +223,7 @@ private fun NotificationList(
 
     LazyColumn(
         state = listState,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

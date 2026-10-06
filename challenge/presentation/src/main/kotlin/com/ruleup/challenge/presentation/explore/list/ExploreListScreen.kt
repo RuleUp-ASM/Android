@@ -66,6 +66,8 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.time.ServiceDate
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -376,6 +378,7 @@ private fun ChallengeList(
         state.errorMessage != null && state.items.isEmpty() ->
             CenterBox {
                 Column(
+                    modifier = Modifier.ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
@@ -402,7 +405,7 @@ private fun ChallengeList(
             ) {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize().nestedScroll(bottomPullRefresh),
+                    modifier = Modifier.fillMaxSize().nestedScroll(bottomPullRefresh).ttiContentDrawn(),
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 32.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -523,10 +526,13 @@ private fun ExploreChallengeCard(
                 modifier = Modifier.size(22.dp),
             )
             item.imageUrl?.takeIf { it.isNotBlank() }?.let { imageUrl ->
+                val onImageSettled = rememberTtiLargeContent()
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
+                    onSuccess = { onImageSettled() },
+                    onError = { onImageSettled() },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -654,6 +660,7 @@ private fun EmptyResult(
 ) {
     CenterBox {
         Column(
+            modifier = Modifier.ttiContentDrawn(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {

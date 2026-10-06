@@ -49,6 +49,8 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.image.rememberImagePicker
 
@@ -72,7 +74,7 @@ fun ChallengeConfirmContent(
         ConfirmAppBar(onBack = { nav.navigateToBack() })
 
         LazyColumn(
-            modifier = Modifier.weight(1f).fillMaxWidth(),
+            modifier = Modifier.weight(1f).fillMaxWidth().ttiContentDrawn(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -132,10 +134,13 @@ private fun CoverImageCard(
     RuleUpCard {
         Text("챌린지 사진", style = RuleUpTheme.typography.cardTitle)
         state.coverImageUri?.let { uri ->
+            val onImageSettled = rememberTtiLargeContent()
             AsyncImage(
                 model = uri,
                 contentDescription = "선택한 챌린지 사진",
                 contentScale = ContentScale.Crop,
+                onSuccess = { onImageSettled() },
+                onError = { onImageSettled() },
                 modifier = Modifier.fillMaxWidth().height(140.dp).clip(RuleUpTheme.shapes.small),
             )
         }

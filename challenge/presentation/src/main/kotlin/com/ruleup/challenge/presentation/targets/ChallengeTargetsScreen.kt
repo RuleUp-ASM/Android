@@ -58,6 +58,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.ScreenApp
 import kotlinx.coroutines.Dispatchers
@@ -154,6 +155,7 @@ fun ChallengeTargetsScreen(
             if (state.loadFailed) {
                 RuleUpPrimaryButton(
                     text = "등록한 앱을 불러오지 못했어요 · 다시 시도",
+                    modifier = Modifier.ttiContentDrawn(),
                     onClick = { viewModel.onIntent(ChallengeTargetsIntent.Load(challengeId)) },
                 )
             }
@@ -193,7 +195,7 @@ fun ChallengeTargetsScreen(
                     }
 
                 filtered.isEmpty() ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                         Text(
                             text = "조건에 맞는 앱이 없어요",
                             color = RuleUpTheme.colors.textSecondary,
@@ -206,7 +208,8 @@ fun ChallengeTargetsScreen(
                         modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(horizontal = 12.dp),
+                                .padding(horizontal = 12.dp)
+                                .ttiContentDrawn(),
                         contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {

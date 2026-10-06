@@ -43,6 +43,7 @@ import com.ruleup.support.presentation.list.viewmodel.InquiryListIntent
 import com.ruleup.support.presentation.list.viewmodel.InquiryListState
 import com.ruleup.support.presentation.list.viewmodel.InquiryListViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 내 문의 내역. */
 @Composable
@@ -113,7 +114,7 @@ private fun InquiryItems(
     onIntent: (InquiryListIntent) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -199,7 +200,7 @@ private fun MessageBody(
 ) {
     val colors = RuleUpTheme.colors
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp).ttiContentDrawn(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

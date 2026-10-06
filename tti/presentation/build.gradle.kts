@@ -42,6 +42,8 @@ dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.runtime)
+    // 콘텐츠 첫 draw 를 잡는 Modifier.Node
+    implementation(libs.androidx.compose.ui)
 
     testImplementation(kotlin("test-junit"))
 }

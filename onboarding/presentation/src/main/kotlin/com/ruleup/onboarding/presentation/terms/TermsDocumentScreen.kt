@@ -22,6 +22,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalNavigationHelper
 
 /** 약관 원문 열람. */
@@ -32,7 +33,7 @@ fun TermsDocumentScreen(
 ) {
     TtiScreenEffect()
     val nav = LocalNavigationHelper.current
-    TermsDocumentContent(type = type, onBack = { nav.navigateToBack() }, modifier = modifier)
+    TermsDocumentContent(type = type, onBack = { nav.navigateToBack() }, modifier = modifier.ttiContentDrawn())
 }
 
 @Composable

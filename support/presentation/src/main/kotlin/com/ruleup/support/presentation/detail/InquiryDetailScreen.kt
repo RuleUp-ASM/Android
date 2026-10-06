@@ -46,6 +46,8 @@ import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailIntent
 import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailState
 import com.ruleup.support.presentation.detail.viewmodel.InquiryDetailViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 문의 상세. */
 @Composable
@@ -114,7 +116,8 @@ private fun DetailBody(detail: InquiryDetail) {
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp)
+                .ttiContentDrawn(),
     ) {
         Column(
             modifier =
@@ -170,6 +173,7 @@ private fun DetailBody(detail: InquiryDetail) {
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     detail.imageUrls.forEach { url ->
+                        val onImageSettled = rememberTtiLargeContent()
                         AsyncImage(
                             model = url,
                             contentDescription = "첨부한 사진",
@@ -179,6 +183,8 @@ private fun DetailBody(detail: InquiryDetail) {
                                     .size(52.dp)
                                     .clip(RuleUpTheme.shapes.small)
                                     .background(colors.surfaceVariant),
+                            onSuccess = { onImageSettled() },
+                            onError = { onImageSettled() },
                         )
                     }
                 }
@@ -248,7 +254,7 @@ private fun ErrorBody(
 ) {
     val colors = RuleUpTheme.colors
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp).ttiContentDrawn(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

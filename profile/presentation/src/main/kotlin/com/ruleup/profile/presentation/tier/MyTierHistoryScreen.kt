@@ -49,6 +49,7 @@ import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryIntent
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryState
 import com.ruleup.profile.presentation.tier.viewmodel.MyTierHistoryViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 티어 히스토리. */
 @Composable
@@ -90,7 +91,7 @@ internal fun MyTierHistoryContent(
 
             state.history == null && state.changes.isEmpty() ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -114,7 +115,7 @@ private fun HistoryBody(
 ) {
     val loadMore by rememberUpdatedState { onIntent(MyTierHistoryIntent.LoadMore) }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

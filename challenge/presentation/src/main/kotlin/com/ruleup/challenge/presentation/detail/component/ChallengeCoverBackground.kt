@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
+import com.ruleup.tti.presentation.rememberTtiLargeContent
 
 /**
  * 챌린지 대표 사진을 [content] 뒤에 깐다. 사진 위에 [scrim] 을 덮어 글자색을 바꾸지 않고도 읽히게 한다.
@@ -22,11 +23,14 @@ internal fun ChallengeCoverBackground(
 ) {
     Box(modifier = modifier) {
         imageUrl?.takeIf { it.isNotBlank() }?.let { url ->
+            val onImageSettled = rememberTtiLargeContent()
             AsyncImage(
                 model = url,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.matchParentSize(),
+                onSuccess = { onImageSettled() },
+                onError = { onImageSettled() },
             )
             Box(
                 Modifier

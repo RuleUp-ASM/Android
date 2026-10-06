@@ -58,6 +58,8 @@ import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditIntent
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditState
 import com.ruleup.profile.presentation.edit.viewmodel.ProfileEditViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.rememberTtiLargeContent
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 private val AvatarGradient = listOf(RuleUpPalette.Primary600, RuleUpPalette.Primary300)
@@ -136,7 +138,7 @@ internal fun ProfileEditContent(
 
             state.profile == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -201,7 +203,8 @@ private fun EditBody(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 4.dp, bottom = 40.dp),
+                .padding(top = 4.dp, bottom = 40.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         // 사진 — 누르면 갤러리, 1시 방향 X 로 제거
@@ -223,13 +226,17 @@ private fun EditBody(
                         state.isImageBusy ->
                             CircularProgressIndicator(color = RuleUpPalette.BgSurface, modifier = Modifier.size(26.dp))
 
-                        state.imagePreviewUrl != null ->
+                        state.imagePreviewUrl != null -> {
+                            val onImageSettled = rememberTtiLargeContent()
                             AsyncImage(
                                 model = state.imagePreviewUrl,
                                 contentDescription = "프로필 이미지",
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier.fillMaxSize(),
+                                onSuccess = { onImageSettled() },
+                                onError = { onImageSettled() },
                             )
+                        }
 
                         else ->
                             Text(

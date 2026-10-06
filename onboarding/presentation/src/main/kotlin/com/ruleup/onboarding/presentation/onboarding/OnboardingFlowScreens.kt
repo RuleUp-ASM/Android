@@ -18,6 +18,7 @@ import com.ruleup.onboarding.presentation.common.AuthFailureUi
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingEffect
 import com.ruleup.onboarding.presentation.onboarding.viewmodel.OnboardingViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.helper.LocalNavigationHelper
 
@@ -82,7 +83,7 @@ fun OnboardingNicknameScreen(modifier: Modifier = Modifier) {
     TtiScreenEffect()
 
     NicknameContent(
-        modifier = modifier,
+        modifier = modifier.ttiContentDrawn(),
         nickname = state.nickname,
         nicknameMessage = state.nicknameMessage,
         nicknameAvailable = state.nicknameAvailable,
@@ -100,7 +101,7 @@ fun OnboardingInterestScreen(modifier: Modifier = Modifier) {
     TtiScreenEffect()
 
     InterestContent(
-        modifier = modifier,
+        modifier = modifier.ttiContentDrawn(),
         selected = state.interests,
         onIntent = viewModel::onIntent,
     )
@@ -114,7 +115,7 @@ fun OnboardingBirthScreen(modifier: Modifier = Modifier) {
     TtiScreenEffect()
 
     BirthDateContent(
-        modifier = modifier,
+        modifier = modifier.ttiContentDrawn(),
         birthDateInput = state.birthDateInput,
         birthDateError = state.birthDateError,
         birthDateValid = state.birthDate != null,
@@ -130,7 +131,7 @@ fun OnboardingGenderScreen(modifier: Modifier = Modifier) {
     TtiScreenEffect()
 
     GenderContent(
-        modifier = modifier,
+        modifier = modifier.ttiContentDrawn(),
         gender = state.gender,
         onIntent = viewModel::onIntent,
     )
@@ -144,7 +145,7 @@ fun OnboardingPhotoScreen(modifier: Modifier = Modifier) {
     TtiScreenEffect()
 
     PhotoContent(
-        modifier = modifier,
+        modifier = modifier.ttiContentDrawn(),
         imageUri = state.profileImageUri,
         onIntent = viewModel::onIntent,
     )
@@ -158,7 +159,7 @@ fun OnboardingTermsScreen(modifier: Modifier = Modifier) {
     TtiScreenEffect()
 
     TermsContent(
-        modifier = modifier,
+        modifier = modifier.ttiContentDrawn(),
         checked = state.agreements,
         submitting = state.isSubmitting,
         onIntent = viewModel::onIntent,

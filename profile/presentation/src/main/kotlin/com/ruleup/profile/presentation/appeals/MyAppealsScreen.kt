@@ -35,6 +35,7 @@ import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsIntent
 import com.ruleup.profile.presentation.appeals.viewmodel.MyAppealsViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.verification.domain.entity.AppealHistoryItem
 
 /** 이의 내역. */
@@ -76,7 +77,7 @@ internal fun MyAppealsContent(
 
             state.errorMessage != null ->
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(20.dp),
+                    modifier = Modifier.fillMaxSize().padding(20.dp).ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -94,7 +95,7 @@ internal fun MyAppealsContent(
                 }
 
             state.history.isEmpty() ->
-                Box(Modifier.fillMaxSize().padding(20.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().padding(20.dp).ttiContentDrawn(), contentAlignment = Alignment.Center) {
                     Text(
                         text = "아직 낸 이의가 없어요",
                         color = RuleUpTheme.colors.textMuted,
@@ -104,7 +105,7 @@ internal fun MyAppealsContent(
 
             else ->
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().ttiContentDrawn(),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {

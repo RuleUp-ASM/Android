@@ -54,6 +54,7 @@ import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarIntent
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarState
 import com.ruleup.profile.presentation.calendar.viewmodel.MyCalendarViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.verification.domain.entity.failureTextOf
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -247,6 +248,7 @@ private fun MonthGrid(
             }
         } else {
             HorizontalCalendar(
+                modifier = Modifier.ttiContentDrawn(),
                 state = calendarState,
                 userScrollEnabled = false,
                 dayContent = { day ->

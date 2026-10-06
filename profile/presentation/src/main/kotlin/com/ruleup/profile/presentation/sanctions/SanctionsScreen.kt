@@ -42,6 +42,7 @@ import com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsIntent
 import com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsState
 import com.ruleup.profile.presentation.sanctions.viewmodel.SanctionsViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 제재 통지·이력 (설정 허브 → 제재 이력). */
 @Composable
@@ -81,7 +82,7 @@ internal fun SanctionsContent(
 
             state.history == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -94,7 +95,7 @@ internal fun SanctionsContent(
                 }
 
             state.history.isEmpty ->
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                     Text(
                         text = "받은 제재가 없어요",
                         color = RuleUpTheme.colors.textMuted,
@@ -110,7 +111,7 @@ internal fun SanctionsContent(
 @Composable
 private fun SanctionsBody(history: SanctionHistory) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().ttiContentDrawn(),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {

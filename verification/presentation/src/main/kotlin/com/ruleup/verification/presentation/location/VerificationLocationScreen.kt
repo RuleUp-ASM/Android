@@ -45,6 +45,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.LocationPin
 import com.ruleup.verification.domain.entity.Place
@@ -121,7 +122,7 @@ fun VerificationLocationScreen(
     // 서버 기준 인증 반경.
     val radiusM = state.serverRadiusM ?: defaultRadiusM
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize().ttiContentDrawn()) {
         GeofenceMap(
             initialCenter = MapLatLng(DEFAULT_LAT, DEFAULT_LNG),
             pin = pin,

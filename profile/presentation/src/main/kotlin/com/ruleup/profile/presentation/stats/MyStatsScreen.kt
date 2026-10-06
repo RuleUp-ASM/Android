@@ -34,6 +34,7 @@ import com.ruleup.profile.presentation.stats.viewmodel.MyStatsIntent
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsState
 import com.ruleup.profile.presentation.stats.viewmodel.MyStatsViewModel
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 
 /** 통계 리포트. */
 @Composable
@@ -75,7 +76,7 @@ internal fun MyStatsContent(
 
             state.report == null ->
                 Column(
-                    Modifier.fillMaxSize(),
+                    Modifier.fillMaxSize().ttiContentDrawn(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -100,7 +101,8 @@ private fun StatsBody(report: StatsReport) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 40.dp),
+                .padding(top = 8.dp, bottom = 40.dp)
+                .ttiContentDrawn(),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         SuccessRateCard(rate = report.successRate)
