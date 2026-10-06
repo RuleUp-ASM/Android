@@ -52,7 +52,7 @@ import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsEff
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsIntent
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsState
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsViewModel
-import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.category.CategoryIconTile
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
@@ -287,7 +287,7 @@ private fun CategorySection(state: ChallengeSettingsState) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SectionLabel("카테고리")
         LockedRow(reason = "만든 뒤에는 바꿀 수 없어요") {
-            category?.let { Text(categoryEmoji(it), style = RuleUpTheme.typography.body) }
+            category?.let { CategoryIconTile(category = it, size = 28.dp) }
             Text(
                 text = category?.label ?: "분류 없음",
                 color = RuleUpTheme.colors.textPrimary,

@@ -48,7 +48,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.challenge.domain.entity.ExploreChallenge
@@ -512,7 +511,6 @@ private fun ExploreChallengeCard(
             category = item.category,
             size = 48.dp,
             cornerRadius = 12.dp,
-            emojiSize = 22.sp,
         )
         Column(
             modifier = Modifier.weight(1f),

@@ -1,39 +1,39 @@
 package com.ruleup.challenge.presentation.common
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.ruleup.challenge.presentation.detail.component.ChallengeCoverImage
 import com.ruleup.challenge.presentation.renderScreen
-import com.ruleup.designsystem.category.categoryEmoji
 import com.ruleup.domain.entity.category.Category
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** 둘러보기 목록 썸네일(#562). 사진이 없으면 상세와 같은 카테고리 타일이어야 같은 챌린지로 알아본다. */
+/**
+ * 사진 없는 챌린지의 기본 커버(#575). 커버 그림은 SVG 에서 옮긴 벡터라 경로 문법이 하나만 틀려도
+ * 그 카테고리 화면을 여는 순간 앱이 죽는다 — 여기서 먼저 걸리게 모든 카테고리를 한 번씩 그린다.
+ */
 @RunWith(RobolectricTestRunner::class)
 class ChallengeThumbnailTest {
     @get:Rule
     val compose = createComposeRule()
 
     @Test
-    fun `대표 사진이 없으면 상세와 같은 카테고리 이모지 타일을 그린다`() {
-        val category = Category.entries.first()
+    fun `사진이 없으면 모든 카테고리가 목록 썸네일과 상세 표지에 기본 커버를 그린다`() {
         compose.renderScreen {
-            ChallengeThumbnail(imageUrl = null, category = category, size = 48.dp, cornerRadius = 12.dp, emojiSize = 22.sp)
+            Column {
+                (Category.entries + null).forEach { category ->
+                    ChallengeThumbnail(imageUrl = null, category = category, size = 48.dp, cornerRadius = 12.dp)
+                    ChallengeCoverImage(imageUrl = "", category = category, modifier = Modifier.size(360.dp, 800.dp))
+                }
+            }
         }
 
-        compose.onNodeWithText(categoryEmoji(category)).assertExists()
-    }
-
-    @Test
-    fun `카테고리를 모르면 기본 타일로 그린다`() {
-        compose.renderScreen {
-            ChallengeThumbnail(imageUrl = "", category = null, size = 48.dp, cornerRadius = 12.dp, emojiSize = 22.sp)
-        }
-
-        compose.onNodeWithText("🎯").assertExists()
+        compose.onRoot().assertExists()
     }
 }

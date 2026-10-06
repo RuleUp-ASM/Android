@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.JoinNote
@@ -55,7 +54,6 @@ internal fun DetailInfoPage(
             ChallengeCoverImage(
                 imageUrl = detail.imageUrl,
                 category = detail.category,
-                emojiSize = 64.sp,
                 modifier = Modifier.matchParentSize(),
             )
             Box(coverScrim())

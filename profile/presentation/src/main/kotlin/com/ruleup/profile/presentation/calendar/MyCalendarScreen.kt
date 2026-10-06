@@ -38,7 +38,7 @@ import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
-import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.category.CategoryIconTile
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
@@ -436,7 +436,7 @@ private fun DayItemRow(
             null -> "" to RuleUpTheme.colors.textMuted
         }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = item.category?.let(::categoryEmoji) ?: "🎯", style = RuleUpTheme.typography.section)
+        CategoryIconTile(category = item.category, size = 36.dp)
         Spacer(Modifier.width(10.dp))
         Column {
             Text(

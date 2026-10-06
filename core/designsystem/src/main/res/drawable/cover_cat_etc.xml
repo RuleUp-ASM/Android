@@ -1,0 +1,55 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="300dp"
+    android:viewportWidth="240"
+    android:viewportHeight="300">
+    <path
+        android:pathData="M30,60a10,10 0 1 0 20,0a10,10 0 1 0 -20,0z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.7" />
+    <path
+        android:pathData="M182,88a14,14 0 1 0 28,0a14,14 0 1 0 -28,0z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.4" />
+    <path
+        android:pathData="M68,214a8,8 0 1 0 16,0a8,8 0 1 0 -16,0z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.8" />
+    <path
+        android:pathData="M160,214a16,16 0 1 0 32,0a16,16 0 1 0 -32,0z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeAlpha="0.6" />
+    <path
+        android:pathData="M120 44 L136 72 L104 72Z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.5" />
+    <group android:rotation="20" android:pivotX="60" android:pivotY="132">
+        <path
+        android:pathData="M50,122h20v20h-20z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.6" />
+    </group>
+    <group android:rotation="-15" android:pivotX="192" android:pivotY="154">
+        <path
+        android:pathData="M184,146h16v16h-16z"
+        android:fillColor="#FDE68A" />
+    </group>
+    <path
+        android:pathData="M146 252 q10 -14 20 0 t20 0 t20 0"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:strokeAlpha="0.7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M35,180a5,5 0 1 0 10,0a5,5 0 1 0 -10,0z"
+        android:fillColor="#F9A8D4" />
+    <path
+        android:pathData="M120 114 Q120 150 156 150 Q120 150 120 186 Q120 150 84 150 Q120 150 120 114Z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.95" />
+    <path
+        android:pathData="M160 102 Q160 112 170 112 Q160 112 160 122 Q160 112 150 112 Q160 112 160 102Z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.8" />
+</vector>

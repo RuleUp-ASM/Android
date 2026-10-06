@@ -34,9 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeLimits
@@ -44,38 +42,24 @@ import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.designsystem.R
-import com.ruleup.designsystem.category.categoryAccentColor
-import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.category.CategoryCover
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.tti.presentation.rememberTtiLargeContent
 
 /**
- * 챌린지 대표 사진. 없거나 못 불러오면 카테고리 색 그라데이션에 이모지를 크게 띄운 기본 이미지를 그린다.
- * 사진은 기본 이미지 위에 덮어서, 불러오는 동안에도 기본 이미지가 보인다.
+ * 챌린지 대표 사진. 없거나 못 불러오면 카테고리 기본 커버를 그린다.
+ * 사진은 기본 커버 위에 덮어서, 불러오는 동안에도 기본 커버가 보인다.
  */
 @Composable
 internal fun ChallengeCoverImage(
     imageUrl: String?,
     category: Category?,
-    emojiSize: TextUnit,
     modifier: Modifier = Modifier,
 ) {
-    val accent = categoryAccentColor(category)
-    Box(
-        modifier =
-            modifier.background(
-                Brush.verticalGradient(listOf(accent, accent.darken())),
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        // 장식용 글리프라 타입 스케일에 넣으면 확 줄어든다.
-        Text(
-            text = category?.let(::categoryEmoji) ?: "🎯",
-            fontSize = emojiSize,
-            modifier = Modifier.offset(y = (-40).dp),
-        )
+    Box(modifier = modifier) {
+        CategoryCover(category = category, modifier = Modifier.matchParentSize())
         imageUrl?.takeIf { it.isNotBlank() }?.let { url ->
             val onImageSettled = rememberTtiLargeContent()
             AsyncImage(
@@ -89,8 +73,6 @@ internal fun ChallengeCoverImage(
         }
     }
 }
-
-private fun Color.darken(): Color = copy(red = red * 0.62f, green = green * 0.62f, blue = blue * 0.62f)
 
 /** 사진 위에 올리는 반투명 원형 버튼. */
 @Composable
@@ -212,7 +194,6 @@ internal fun DetailCover(
         ChallengeCoverImage(
             imageUrl = detail.imageUrl,
             category = detail.category,
-            emojiSize = 120.sp,
             modifier = Modifier.fillMaxSize(),
         )
         Box(coverScrim())
