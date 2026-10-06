@@ -1,6 +1,5 @@
 package com.ruleup.challenge.presentation.mychallenges
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +31,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -47,8 +45,7 @@ import com.ruleup.challenge.presentation.mychallenges.viewmodel.MyChallengesEffe
 import com.ruleup.challenge.presentation.mychallenges.viewmodel.MyChallengesIntent
 import com.ruleup.challenge.presentation.mychallenges.viewmodel.MyChallengesState
 import com.ruleup.challenge.presentation.mychallenges.viewmodel.MyChallengesViewModel
-import com.ruleup.designsystem.category.categoryAccentColor
-import com.ruleup.designsystem.category.categoryIconRes
+import com.ruleup.designsystem.category.CategoryIconTile
 import com.ruleup.designsystem.component.RuleUpBottomTab
 import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
@@ -425,20 +422,7 @@ internal val MyChallenge.finishedBadge: String
 
 @Composable
 private fun CategoryIcon(challenge: MyChallenge) {
-    Box(
-        modifier =
-            Modifier
-                .size(40.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(categoryAccentColor(challenge.category).copy(alpha = 0.14f)),
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(categoryIconRes(challenge.category)),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-        )
-    }
+    CategoryIconTile(category = challenge.category, size = 40.dp)
 }
 
 @Composable

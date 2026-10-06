@@ -30,7 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.designsystem.singleClickable
@@ -53,7 +52,6 @@ internal fun RoomCoverHeader(
         ChallengeCoverImage(
             imageUrl = detail.imageUrl,
             category = detail.category,
-            emojiSize = 64.sp,
             modifier = Modifier.matchParentSize(),
         )
         Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.42f)))

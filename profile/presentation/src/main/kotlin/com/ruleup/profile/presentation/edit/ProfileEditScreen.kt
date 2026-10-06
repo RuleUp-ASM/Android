@@ -45,7 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.ruleup.designsystem.category.categoryEmoji
+import com.ruleup.designsystem.category.categoryAccentColor
+import com.ruleup.designsystem.category.categoryIconRes
 import com.ruleup.designsystem.component.RuleUpSuspendedSheet
 import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
@@ -410,11 +411,21 @@ private fun CategoryChip(
                 ).singleClickable(onClick = onClick)
                 .padding(horizontal = 15.dp, vertical = 9.dp),
     ) {
-        Text(
-            text = "${categoryEmoji(category)} ${category.label}",
-            color = if (selected) RuleUpPalette.BgSurface else RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.smallBold,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                painter = painterResource(categoryIconRes(category)),
+                contentDescription = null,
+                // 선택된 칩은 그라데이션 바탕이라 강조색 아이콘이 묻힌다.
+                tint = if (selected) RuleUpPalette.BgSurface else categoryAccentColor(category),
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = category.label,
+                color = if (selected) RuleUpPalette.BgSurface else RuleUpTheme.colors.textPrimary,
+                style = RuleUpTheme.typography.smallBold,
+            )
+        }
     }
 }
 
