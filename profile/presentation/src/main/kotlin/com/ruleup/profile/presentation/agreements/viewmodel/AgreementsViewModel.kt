@@ -60,12 +60,32 @@ class AgreementsViewModel
             }
         }
 
+        /**
+         * 화면을 먼저 바꾸고 요청한다. 실패하면 요청 전 값으로 되돌리고 모달로 알린다.
+         * 앞 요청이 끝나기 전의 탭은 받지 않는다 — 되돌릴 기준값이 둘로 갈라진다.
+         */
         private fun toggle(
             type: AgreementType,
             agreed: Boolean,
         ) {
             if (currentState.submitting != null) return
-            submit(listOf(AgreementSubmission(type = type, agreed = agreed, version = currentVersionOf(type))), type)
+            val before = currentState.status ?: return
+            dispatch(AgreementsReducerEvent.Loaded(before.withAgreed(type, agreed)))
+            dispatch(AgreementsReducerEvent.Submitting(type))
+            val submission = AgreementSubmission(type = type, agreed = agreed, version = currentVersionOf(type))
+            viewModelScope.launch {
+                runCatching { accountRepository.submitAgreements(listOf(submission)) }
+                    .onSuccess {
+                        // 응답은 갱신된 항목만 오므로 전체를 다시 받는다(동의 일시 등)
+                        load()
+                    }.onFailure {
+                        dispatch(AgreementsReducerEvent.Loaded(before))
+                        emitEffect(AgreementsEffect.ShowErrorDialog(title = "동의를 바꾸지 못했어요", message = it.userMessage))
+                        // 버전이 어긋났으면 화면을 다시 받아야 다음 시도가 성공한다.
+                        if (it is AgreementVersionMismatchException) load()
+                    }
+                dispatch(AgreementsReducerEvent.Submitting(null))
+            }
         }
 
         /** 재동의는 `reconsentRequired` 전부를 한 번에 보낸다 */
@@ -88,25 +108,6 @@ class AgreementsViewModel
 
         /** 제출에 실을 약관 버전. */
         private fun currentVersionOf(type: AgreementType): String = introRepository.lastTermsVersions().of(type)
-
-        private fun submit(
-            submissions: List<AgreementSubmission>,
-            locking: AgreementType,
-        ) {
-            dispatch(AgreementsReducerEvent.Submitting(locking))
-            viewModelScope.launch {
-                runCatching { accountRepository.submitAgreements(submissions) }
-                    .onSuccess {
-                        // 응답은 갱신된 항목만 오므로 전체를 다시 받는다
-                        load()
-                    }.onFailure {
-                        emitEffect(AgreementsEffect.ShowMessage(it.userMessage))
-                        // 버전이 어긋났으면 화면을 다시 받아야 다음 시도가 성공한다.
-                        if (it is AgreementVersionMismatchException) load()
-                    }
-                dispatch(AgreementsReducerEvent.Submitting(null))
-            }
-        }
     }
 
 /** 실패 문구. */

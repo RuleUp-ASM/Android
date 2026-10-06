@@ -167,7 +167,10 @@ private fun ColumnScope.ChallengeSettingsForm(
         item { DescriptionSection(state = state, onIntent = onIntent) }
         item { CoverSection(state = state, onIntent = onIntent) }
         item { CategorySection(state = state) }
-        item { CapacitySection(state = state, onIntent = onIntent) }
+        // 정원은 서버가 수정 가능하다고 준 방에서만 그린다(솔로 방에는 정원이 없다)
+        if (ChallengeField.CAPACITY in loaded.editableFields) {
+            item { CapacitySection(state = state, onIntent = onIntent) }
+        }
         if (loaded.config.mode.isGroup) {
             item { VisibilitySection(state = state, onIntent = onIntent) }
             item { MinTierSection(state = state, onIntent = onIntent) }

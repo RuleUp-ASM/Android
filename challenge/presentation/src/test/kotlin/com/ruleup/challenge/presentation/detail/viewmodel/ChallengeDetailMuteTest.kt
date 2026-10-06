@@ -36,6 +36,8 @@ import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
 import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -102,18 +104,37 @@ class ChallengeDetailMuteTest {
         }
 
     @Test
-    fun `서버가 거절하면 화면 상태를 바꾸지 않는다`() =
+    fun `토글하면 응답을 기다리지 않고 화면부터 바꾼다`() =
         runTest {
-            // 화면만 꺼진 것처럼 보이면 사용자가 원인을 찾을 길이 없다.
+            // 응답이 올 때까지 스위치가 제자리면 눌리지 않은 줄 알고 다시 누른다(#564).
+            lateinit var viewModel: ChallengeDetailViewModel
+            var shownWhileSending: Boolean? = null
+            val notifications =
+                repo(settings(muted = emptyList()), mute = { _, _ -> shownWhileSending = viewModel.uiState.value.isMuted })
+            viewModel = viewModel(notifications = notifications)
+            viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
+
+            viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
+
+            assertEquals(true, shownWhileSending)
+        }
+
+    @Test
+    fun `서버가 거절하면 요청 전 상태로 되돌리고 모달로 알린다`() =
+        runTest {
+            // 화면만 꺼진 것처럼 남으면 사용자가 원인을 찾을 길이 없다.
             val notifications =
                 repo(settings(muted = emptyList()), mute = { _, _ -> throw IllegalStateException("서버 오류") })
             val viewModel = viewModel(notifications = notifications)
+            val effects = mutableListOf<ChallengeDetailEffect>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effect.toList(effects) }
             viewModel.onIntent(ChallengeDetailIntent.Load("ch1"))
 
             viewModel.onIntent(ChallengeDetailIntent.ToggleMute(true))
 
             assertEquals(false, viewModel.uiState.value.isMuted)
             assertFalse(viewModel.uiState.value.isMuteSubmitting)
+            assertEquals(1, effects.filterIsInstance<ChallengeDetailEffect.ShowErrorDialog>().size)
         }
 
     @Test

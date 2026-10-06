@@ -141,6 +141,8 @@ fun ChallengeDetailScreen(
                 }
 
                 is ChallengeDetailEffect.ShowMessage -> messageHelper.showToast(effect.message)
+                is ChallengeDetailEffect.ShowErrorDialog ->
+                    messageHelper.showOneButtonDialog(titleText = effect.title, descText = effect.message, buttonText = "확인")
                 is ChallengeDetailEffect.RequestPermissions -> requestPermissions(effect.tokens)
             }
         }
@@ -700,8 +702,8 @@ private fun roomMenuEntries(
             add(
                 RoomSheetEntry(
                     "이 챌린지 알림 끄기",
+                    // 화면이 먼저 바뀌므로 요청 중에 잠그지 않는다(겹친 탭은 ViewModel 이 무시한다)
                     toggle = muted,
-                    toggleEnabled = !state.isMuteSubmitting,
                 ) { onIntent(ChallengeDetailIntent.ToggleMute(!muted)) },
             )
         }

@@ -161,7 +161,8 @@ private fun SettingsBody(
                 label = "푸시 알림",
                 note = "끄면 리마인더까지 모든 푸시가 멈춰요",
                 checked = settings.pushEnabled,
-                enabled = !state.submitting,
+                // 화면이 먼저 바뀌므로 요청 중에 회색으로 잠그지 않는다(겹친 탭은 ViewModel 이 무시한다)
+                enabled = true,
                 onToggle = { onIntent(NotificationSettingsIntent.ToggleMaster(it)) },
             )
         }
@@ -250,7 +251,7 @@ private fun GroupRow(
         // 마스터가 꺼져 있으면 이 토글이 켜져 있어도 푸시가 안 나간다
         note = if (settings.pushEnabled) note else "푸시 알림이 꺼져 있어 지금은 오지 않아요",
         checked = settings.groups.of(group),
-        enabled = !state.submitting && settings.pushEnabled,
+        enabled = settings.pushEnabled,
         onToggle = { onIntent(NotificationSettingsIntent.ToggleGroup(group, it)) },
     )
 }

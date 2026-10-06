@@ -144,11 +144,14 @@ internal fun MyCalendarContent(
                 onSelect = { onIntent(MyCalendarIntent.SelectDate(it)) },
             )
             Legend()
-            state.selectedDate?.let { selected ->
+            // 인증 대상이 아닌 날은 알릴 것이 없어 카드를 띄우지 않는다
+            val selected = state.selectedDate
+            val selectedDay = state.selectedDay
+            if (selected != null && selectedDay != null) {
                 DayDetailCard(
                     onAppeal = { onIntent(MyCalendarIntent.OpenAppeal(it)) },
                     date = selected,
-                    day = state.selectedDay,
+                    day = selectedDay,
                     detail = state.dayDetail,
                     isLoading = state.isLoadingDetail || (state.isLoading && selected.take(7) == state.month),
                 )
@@ -362,7 +365,7 @@ private fun LegendItem(
 @Composable
 private fun DayDetailCard(
     date: String,
-    day: CalendarDay?,
+    day: CalendarDay,
     detail: CalendarDayDetail?,
     isLoading: Boolean,
     onAppeal: (String) -> Unit,
@@ -384,13 +387,6 @@ private fun DayDetailCard(
             style = RuleUpTheme.typography.smallBold,
         )
         when {
-            day == null ->
-                Text(
-                    text = "인증 대상일이 아니에요",
-                    color = RuleUpTheme.colors.textMuted,
-                    style = RuleUpTheme.typography.small,
-                )
-
             isLoading ->
                 Box(
                     modifier =

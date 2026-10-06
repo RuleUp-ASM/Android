@@ -134,6 +134,21 @@ class ChallengeSettingsViewModelTest {
         }
 
     @Test
+    fun `서버가 반영하지 않은 항목이 있으면 저장했다고 하지 않고 화면에 남는다`() =
+        runTest {
+            // 200 만 보고 떠나면 사용자는 바뀌지 않은 값을 바뀐 줄 안다(#564).
+            val nav = RecordingNavigationHelper()
+            val repo = repo(update = { ChallengeUpdateResult(challengeId = "ch1", moderation = null, updatedFields = emptySet()) })
+            val viewModel = viewModel(repo, nav)
+            viewModel.onIntent(ChallengeSettingsIntent.Load("ch1"))
+            viewModel.onIntent(ChallengeSettingsIntent.SetTitle("새 제목"))
+
+            viewModel.onIntent(ChallengeSettingsIntent.Save)
+
+            assertEquals(0, nav.backCount)
+        }
+
+    @Test
     fun `새 사진을 골랐으면 먼저 올린 뒤 저장한다`() =
         runTest {
             // 서버가 발급 주체를 검증하므로 URL 을 먼저 확보해야 한다.
@@ -189,8 +204,9 @@ class ChallengeSettingsViewModelTest {
     private fun repo(
         participantCount: Int = 1,
         uploadImage: ((String) -> String)? = { "https://cdn/uploaded.png" },
+        // 기본은 보낸 필드를 전부 반영한 응답이다
         update: ((ChallengeUpdate) -> ChallengeUpdateResult)? = {
-            ChallengeUpdateResult(challengeId = "ch1", moderation = null, updatedFields = emptySet())
+            ChallengeUpdateResult(challengeId = "ch1", moderation = null, updatedFields = it.fields)
         },
     ) = FakeChallengeRepository(
         settings = { settings() },
