@@ -33,6 +33,7 @@ object AppRoutes {
     const val CHALLENGE_INVITE = "challenge/invite" // 진입점 (멤버 초대 링크 /c/{token})
     const val CHALLENGE_WATCHER_ACCEPT = "challenge/watcher/accept" // 진입점 (감시자 초대 링크 /w/{token})
     const val CHALLENGE_SETTINGS = "challenge/settings" // 챌린지 수정(방장 전용, 방 설정 → 수정)
+    const val CHALLENGE_WATCHERS = "challenge/watchers" // 내 감시자 관리(마이 → 감시자 → 방 선택)
 
     // profile (마이)
     const val MY_HOME = "my/home" // 진입점 (하단 MY 탭 → 마이 홈)

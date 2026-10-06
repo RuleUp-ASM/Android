@@ -10,8 +10,6 @@ import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
 import com.ruleup.challenge.domain.entity.ThreadPolicy
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
-import com.ruleup.challenge.domain.entity.WatcherInvitation
-import com.ruleup.challenge.domain.entity.WatcherInviteCard
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
 import com.ruleup.challenge.domain.logging.ChallengeEvents
 import com.ruleup.challenge.domain.logging.RankingViewScope
@@ -25,6 +23,7 @@ import com.ruleup.challenge.domain.repository.ExploreRepository
 import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.repository.WatcherRepository
+import com.ruleup.challenge.presentation.watcher.inviteCard
 import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.domain.navigation.AppRoutes
 import com.ruleup.domain.navigation.NavRoute
@@ -1060,15 +1059,6 @@ class ChallengeDetailViewModel
             }
         }
     }
-
-/** 카톡 공유 카드 문구. */
-private fun WatcherInvitation.inviteCard(challengeTitle: String): WatcherInviteCard =
-    kakaoShare
-        ?: WatcherInviteCard(
-            title = "당신을 루틴 감시자로 초대했어요",
-            description = "[$challengeTitle]에서 약속을 지키는지 지켜봐 주세요. 실패하면 알림이 가요.",
-            buttonLabel = "수락하기",
-        )
 
 /** 신고 실패를 사용자 문구로 옮긴다. */
 private fun Throwable.reportMessage(): String =
