@@ -634,13 +634,8 @@ class ChallengeDetailViewModel
 
         /** 솔로 상세의 월 캘린더. */
         private fun loadCalendar(challengeId: String) {
-            if (currentState.detail
-
-                    ?.mode
-                    ?.isGroup != false
-            ) {
-                return
-            }
+            // 내 성공·실패 캘린더라 멤버만 받는다(그룹도 ⋯ → 캘린더에서 본다)
+            if (currentState.detail?.myRole?.isMember != true) return
             val month =
                 currentState.calendarMonth ?: currentMonth().also {
                     dispatch(ChallengeDetailReducerEvent.CalendarMonthChanged(it))
@@ -979,7 +974,8 @@ class ChallengeDetailViewModel
         /** 내 감시자 초대 생성 → 본인 카카오톡 공유. */
         private fun inviteWatcher() {
             val detail = currentState.detail ?: return
-            if (currentState.isInvitingWatcher || detail.penalties?.watcher != true) return
+            // 공개 상세가 penalties 를 안 줄 수 있다 — 꺼진 게 확실할 때만 막고 나머지는 서버가 판단한다
+            if (currentState.isInvitingWatcher || detail.penalties?.watcher == false) return
             viewModelScope.launch {
                 dispatch(ChallengeDetailReducerEvent.InvitingWatcher(true))
                 runCatching { watcherRepository.createInvitation(detail.challengeId) }

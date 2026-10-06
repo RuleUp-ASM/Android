@@ -78,6 +78,21 @@ class ChallengeDetailSoloTest {
         }
 
     @Test
+    fun `그룹 방 멤버도 내 성공 실패 캘린더를 받는다`() =
+        runTest {
+            // 그룹에서 건너뛰면 ⋯ → 캘린더가 빈 채로 열린다(#572).
+            val rooms =
+                FakeRoomRepository(calendar = { id, month -> ChallengeCalendar(challengeId = id, month = month, days = emptyList()) })
+
+            viewModel(
+                repo = FakeChallengeRepository(detail = { detail(mode = ChallengeMode.GROUP) }),
+                rooms = rooms,
+            ).onIntent(ChallengeDetailIntent.Load(CHALLENGE_ID))
+
+            assertTrue("getCalendar" in rooms.calls)
+        }
+
+    @Test
     fun `탈퇴하면 뒤로가 아니라 내 챌린지로 스택을 바꾼다`() =
         runTest {
             val nav = RecordingNavigationHelper()
