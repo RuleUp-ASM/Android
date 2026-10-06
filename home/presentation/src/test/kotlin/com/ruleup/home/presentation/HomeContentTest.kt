@@ -9,9 +9,14 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.ClickClock
+import com.ruleup.domain.time.ServiceDate
+import com.ruleup.home.presentation.viewmodel.DayResult
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
+import com.ruleup.home.presentation.viewmodel.SelectedDay
 import com.ruleup.observability.domain.test.testObservability
+import com.ruleup.profile.domain.entity.CalendarDayItem
+import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.ui.helper.LocalObservability
 import org.junit.Rule
 import org.junit.Test
@@ -160,6 +165,33 @@ class HomeContentTest {
         joinable = true,
         endDate = null,
     )
+
+    @Test
+    fun `고른 날의 결과가 오면 매일 루틴 대신 수행한 루틴과 실패한 루틴을 보여 준다`() {
+        val done = dayItem("d1", "아침 6시 기상", DayItemStatus.DONE)
+        val failed = dayItem("f1", "밤 11시 이후 폰 끄기", DayItemStatus.FAILED)
+        val date = ServiceDate.today().minusDays(1).toString()
+        render(state(card("ch1")).copy(selectedDay = SelectedDay(date, DayResult.Loaded(listOf(done, failed)))))
+
+        compose.onNodeWithText("수행한 루틴 1").assertExists()
+        compose.onNodeWithText("실패한 루틴 1").assertExists()
+        compose.onNodeWithText("밤 11시 이후 폰 끄기").assertExists()
+        compose.onNodeWithText("오늘 · 매일 루틴").assertDoesNotExist()
+    }
+
+    @Test
+    fun `고른 날에 판정할 루틴이 없었으면 그렇게 알려 준다`() {
+        val date = ServiceDate.today().minusDays(1).toString()
+        render(state(card("ch1")).copy(selectedDay = SelectedDay(date, DayResult.Loaded(emptyList()))))
+
+        compose.onNodeWithText("이날은 판정할 루틴이 없었어요").assertExists()
+    }
+
+    private fun dayItem(
+        id: String,
+        title: String,
+        status: DayItemStatus,
+    ) = CalendarDayItem(id, title, null, status, null, null, null, null, null)
 
     private fun state(vararg cards: HomeChallengeUi) = HomeState(isLoading = false, challenges = cards.toList())
 

@@ -77,6 +77,14 @@ class HomeViewModel
                     navigationHelper.navigateByRoute(ChallengeDetailPage(intent.challengeId).toRoute())
                 }
 
+                is HomeIntent.SelectDay -> {
+                    selectDay(intent.date)
+                }
+
+                HomeIntent.RetryDay -> {
+                    currentState.selectedDay?.let { loadDay(it.date) }
+                }
+
                 is HomeIntent.OpenCategory -> {
                     navigationHelper.navigateByRoute(ChallengeExploreListPage(category = intent.category).toRoute())
                 }
@@ -113,6 +121,31 @@ class HomeViewModel
 
                 is HomeReducerEvent.CheckableLoaded -> {
                     state.copy(manualCheckable = state.manualCheckable + event.manualCheckable)
+                }
+
+                is HomeReducerEvent.DaySelected -> {
+                    state.copy(selectedDay = event.date?.let { SelectedDay(it, DayResult.Loading) })
+                }
+
+                // 응답이 늦게 와도 그사이 다른 날을 골랐으면 덮어쓰지 않는다.
+                is HomeReducerEvent.DayLoaded -> {
+                    if (state.selectedDay?.date !=
+                        event.date
+                    ) {
+                        state
+                    } else {
+                        state.copy(selectedDay = SelectedDay(event.date, DayResult.Loaded(event.items)))
+                    }
+                }
+
+                is HomeReducerEvent.DayFailed -> {
+                    if (state.selectedDay?.date !=
+                        event.date
+                    ) {
+                        state
+                    } else {
+                        state.copy(selectedDay = SelectedDay(event.date, DayResult.Failed))
+                    }
                 }
 
                 is HomeReducerEvent.StartersLoaded -> {
@@ -173,6 +206,24 @@ class HomeViewModel
                     trending.await() to interests.await()
                 }
             dispatch(HomeReducerEvent.StartersLoaded(pickStarters(trending, interests), interests))
+        }
+
+        private fun selectDay(date: String) {
+            val backToToday = date == ServiceDate.today().toString() || date == currentState.selectedDay?.date
+            if (backToToday) {
+                dispatch(HomeReducerEvent.DaySelected(null))
+                return
+            }
+            loadDay(date)
+        }
+
+        private fun loadDay(date: String) {
+            dispatch(HomeReducerEvent.DaySelected(date))
+            viewModelScope.launch {
+                runCatching { myPageRepository.getCalendarDay(date).items }
+                    .onSuccess { dispatch(HomeReducerEvent.DayLoaded(date, it)) }
+                    .onFailure { dispatch(HomeReducerEvent.DayFailed(date)) }
+            }
         }
 
         /** 레드닷용 미읽음 확인. */

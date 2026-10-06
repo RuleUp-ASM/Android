@@ -4,6 +4,7 @@ import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.home.presentation.HomeChallengeUi
 import com.ruleup.home.presentation.pickHero
+import com.ruleup.profile.domain.entity.CalendarDayItem
 import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -33,6 +34,30 @@ sealed interface HomeIntent : MviIntent {
     data class OpenCategory(
         val category: Category,
     ) : HomeIntent
+
+    /** 주간 도장을 눌러 그날 결과를 본다. 오늘이나 이미 고른 날을 누르면 원래 홈으로. */
+    data class SelectDay(
+        val date: String,
+    ) : HomeIntent
+
+    data object RetryDay : HomeIntent
+}
+
+/** 고른 날의 결과. */
+data class SelectedDay(
+    // YYYY-MM-DD
+    val date: String,
+    val result: DayResult,
+)
+
+sealed interface DayResult {
+    data object Loading : DayResult
+
+    data class Loaded(
+        val items: List<CalendarDayItem>,
+    ) : DayResult
+
+    data object Failed : DayResult
 }
 
 data class HomeState(
@@ -49,6 +74,8 @@ data class HomeState(
     /** 챌린지가 없는 사람에게 보여 줄 첫 챌린지. 못 받으면 비어 있고 기본 안내를 띄운다. */
     val starters: List<TrendingChallenge> = emptyList(),
     val interests: List<Category> = emptyList(),
+    // null 이면 오늘 — 히어로 · 매일 루틴 · 주 N회를 보여 준다
+    val selectedDay: SelectedDay? = null,
 ) : UiState {
     /** 「오늘 해 볼까요?」에 올릴 챌린지. */
     val hero: HomeChallengeUi?
@@ -85,6 +112,19 @@ sealed interface HomeReducerEvent : ReducerEvent {
 
     data class CheckableLoaded(
         val manualCheckable: Map<String, Boolean>,
+    ) : HomeReducerEvent
+
+    data class DaySelected(
+        val date: String?,
+    ) : HomeReducerEvent
+
+    data class DayLoaded(
+        val date: String,
+        val items: List<CalendarDayItem>,
+    ) : HomeReducerEvent
+
+    data class DayFailed(
+        val date: String,
     ) : HomeReducerEvent
 
     data class StartersLoaded(

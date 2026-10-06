@@ -24,7 +24,10 @@ import com.ruleup.domain.time.ServiceDate
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDay
+import com.ruleup.profile.domain.entity.CalendarDayDetail
+import com.ruleup.profile.domain.entity.CalendarDayItem
 import com.ruleup.profile.domain.entity.CalendarDayStatus
+import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
 import com.ruleup.verification.domain.entity.TodayStatus
@@ -297,6 +300,56 @@ class HomeViewModelTest {
 
         assertEquals(Category.READING.value, nav.routes.single().args["category"])
     }
+
+    @Test
+    fun `지난 날을 고르면 그날 결과를 불러온다`() =
+        runTest {
+            val date = ServiceDate.today().minusDays(1).toString()
+            val item = CalendarDayItem("ch1", "아침 6시 기상", null, DayItemStatus.DONE, null, null, null, null, null)
+            val vm = viewModel(myPage = FakeMyPageRepository(day = { CalendarDayDetail(it, listOf(item)) }))
+
+            vm.onIntent(HomeIntent.SelectDay(date))
+
+            assertEquals(SelectedDay(date, DayResult.Loaded(listOf(item))), vm.uiState.value.selectedDay)
+        }
+
+    @Test
+    fun `오늘이나 이미 고른 날을 다시 누르면 원래 홈으로 돌아간다`() =
+        runTest {
+            val date = ServiceDate.today().minusDays(1).toString()
+            val vm = viewModel()
+
+            vm.onIntent(HomeIntent.SelectDay(date))
+            vm.onIntent(HomeIntent.SelectDay(date))
+            assertNull(vm.uiState.value.selectedDay)
+
+            vm.onIntent(HomeIntent.SelectDay(date))
+            vm.onIntent(HomeIntent.SelectDay(ServiceDate.today().toString()))
+            assertNull(vm.uiState.value.selectedDay)
+        }
+
+    @Test
+    fun `그날 결과를 못 받으면 실패로 두고 다시 시도할 수 있다`() =
+        runTest {
+            var fail = true
+            val date = ServiceDate.today().minusDays(1).toString()
+            val vm = viewModel(myPage = FakeMyPageRepository(day = { if (fail) error("상세 실패") else CalendarDayDetail(it, emptyList()) }))
+
+            vm.onIntent(HomeIntent.SelectDay(date))
+            assertEquals(
+                DayResult.Failed,
+                vm.uiState.value.selectedDay
+                    ?.result,
+            )
+
+            fail = false
+            vm.onIntent(HomeIntent.RetryDay)
+            assertEquals(
+                DayResult.Loaded(emptyList()),
+                vm.uiState.value.selectedDay
+                    ?.result,
+            )
+        }
 
     private fun viewModel(
         challenges: List<MyChallenge>? = emptyList(),

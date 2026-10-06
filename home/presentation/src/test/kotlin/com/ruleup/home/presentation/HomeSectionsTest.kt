@@ -3,6 +3,9 @@ package com.ruleup.home.presentation
 import com.ruleup.challenge.domain.entity.TrendingChallenge
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.profile.domain.entity.CalendarDayItem
+import com.ruleup.profile.domain.entity.CalendarDayStatus
+import com.ruleup.profile.domain.entity.DayItemStatus
 import com.ruleup.verification.domain.entity.TodayStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -116,6 +119,62 @@ class HomeSectionsTest {
         assertEquals(6, pickStarters(trending, interests = emptyList()).size)
     }
 
+    @Test
+    fun `그날을 다 지켰을 때만 체크 도장이다`() {
+        assertEquals(DayStamp.DONE, dayStamp(MON, TUE, CalendarDayStatus.ALL_DONE))
+    }
+
+    @Test
+    fun `일부만 지킨 날도 X 도장이다`() {
+        // 하나라도 못 지켰으면 그날은 못 지킨 날로 보인다(사용자 결정 #596).
+        assertEquals(DayStamp.FAILED, dayStamp(MON, TUE, CalendarDayStatus.PARTIAL))
+        assertEquals(DayStamp.FAILED, dayStamp(MON, TUE, CalendarDayStatus.FAILED))
+    }
+
+    @Test
+    fun `오늘은 판정 전이면 테두리 칸이고 다 지키면 체크다`() {
+        assertEquals(DayStamp.TODAY, dayStamp(TUE, TUE, CalendarDayStatus.IN_PROGRESS))
+        assertEquals(DayStamp.TODAY, dayStamp(TUE, TUE, null))
+        assertEquals(DayStamp.DONE, dayStamp(TUE, TUE, CalendarDayStatus.ALL_DONE))
+    }
+
+    @Test
+    fun `판정할 루틴이 없던 지난 날과 앞으로 올 날은 도장을 찍지 않는다`() {
+        assertEquals(DayStamp.EMPTY, dayStamp(MON, TUE, null))
+        assertEquals(DayStamp.FUTURE, dayStamp(TUE.plusDays(1), TUE, CalendarDayStatus.ALL_DONE))
+    }
+
+    @Test
+    fun `그날 결과는 수행 실패 판정 중으로 갈리고 판정 전은 어느 쪽으로도 접지 않는다`() {
+        val groups =
+            listOf(
+                dayItem("done", DayItemStatus.DONE),
+                dayItem("failed", DayItemStatus.FAILED),
+                dayItem("expected", DayItemStatus.FAIL_EXPECTED),
+                dayItem("progress", DayItemStatus.IN_PROGRESS),
+                dayItem("unknown", null),
+            ).groupByResult()
+
+        assertEquals(listOf("done"), groups.done.map { it.challengeId })
+        assertEquals(listOf("failed", "expected"), groups.failed.map { it.challengeId })
+        assertEquals(listOf("progress", "unknown"), groups.pending.map { it.challengeId })
+    }
+
+    private fun dayItem(
+        id: String,
+        status: DayItemStatus?,
+    ) = CalendarDayItem(
+        challengeId = id,
+        title = "챌린지 $id",
+        category = null,
+        status = status,
+        verificationId = null,
+        verifiedVia = null,
+        confirmedAt = null,
+        failureReason = null,
+        appeal = null,
+    )
+
     private fun trend(
         id: String,
         category: Category?,
@@ -151,4 +210,9 @@ class HomeSectionsTest {
         imageUrl = null,
         active = active,
     )
+
+    private companion object {
+        val MON: java.time.LocalDate = java.time.LocalDate.of(2026, 10, 5)
+        val TUE: java.time.LocalDate = java.time.LocalDate.of(2026, 10, 6)
+    }
 }
