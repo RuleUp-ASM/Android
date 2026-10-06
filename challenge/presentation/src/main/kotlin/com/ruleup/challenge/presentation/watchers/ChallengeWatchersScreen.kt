@@ -50,6 +50,7 @@ import com.ruleup.designsystem.component.RuleUpTopBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
+import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 
 /** 내 감시자 관리(Figma 1134:1603). */
@@ -110,7 +111,8 @@ internal fun ChallengeWatchersContent(
                         Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+                            .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp)
+                            .ttiContentDrawn(),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(
@@ -271,7 +273,7 @@ private fun ErrorBody(
     message: String,
     onRetry: () -> Unit,
 ) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(text = message, color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.labelMedium)
             Text(
