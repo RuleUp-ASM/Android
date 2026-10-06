@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -26,6 +27,8 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.clickPastGuard
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
+import com.ruleup.challenge.presentation.detail.viewmodel.RankingScope
+import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.renderScreen
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.User
@@ -118,7 +121,7 @@ class ChallengeDetailContentTest {
     }
 
     @Test
-    fun `참여 중인 사람은 들어가기를 누르면 정보 피드 랭킹 세 탭을 본다`() {
+    fun `참여 중인 사람은 표지 없이 바로 방에 들어가 정보 피드 랭킹 세 탭을 본다`() {
         // 시안 C 확정 안 2 — 오늘 인증·세부 설정·기록은 정보 탭에 모은다(#582).
         val member =
             loaded().copy(
@@ -141,8 +144,8 @@ class ChallengeDetailContentTest {
             )
         render(member)
 
-        compose.onNodeWithText("들어가기").clickPastGuard()
-
+        // 이미 가입한 방은 「상세 내용 보기 / 들어가기」 표지를 거치지 않는다(#585).
+        compose.onNodeWithText("들어가기").assertDoesNotExist()
         compose.onNodeWithText("정보").assertExists()
         compose.onNodeWithText("피드").assertExists()
         compose.onNodeWithText("랭킹").assertExists()
@@ -192,6 +195,72 @@ class ChallengeDetailContentTest {
         compose.onNodeWithText("멤버").assertExists()
         compose.onAllNodesWithText("서연").onFirst().assertExists()
         compose.onNodeWithText("챌린지 나가기").assertDoesNotExist()
+    }
+
+    @Test
+    fun `솔로 방에도 피드와 랭킹이 있고 랭킹은 챌린지 순위만 보인다`() {
+        // 솔로는 방 안 순위가 없다 — 솔로끼리 비교하는 챌린지 순위뿐이다(명세 「챌린지 외 랭킹 조회」).
+        val solo =
+            loaded().copy(
+                detail = detail("매일 걷기").copy(mode = ChallengeMode.SOLO, myRole = MemberRole.OWNER),
+                selectedTab = RoomTab.RANKING,
+                rankingScope = RankingScope.ROOM,
+            )
+        render(solo)
+
+        compose.onNodeWithText("피드").assertExists()
+        compose.onNodeWithText("랭킹").assertExists()
+        compose.onNodeWithText(RankingScope.MEMBER.label).assertDoesNotExist()
+    }
+
+    @Test
+    fun `방 안 메뉴에는 알림 끄기 신고 나가기만 있다`() {
+        // 세부 설정·감시자·기록은 정보 탭에 있다(#585).
+        val member =
+            loaded().copy(
+                detail = detail("평일 아침 헬스장 출석").copy(myRole = MemberRole.MEMBER),
+                isMuted = false,
+            )
+        render(member)
+
+        compose.onNodeWithContentDescription("더 보기").clickPastGuard()
+
+        // 알림 끄기는 정보 탭 본문에도 있어 시트 것과 둘이 된다
+        compose.onAllNodesWithText("이 챌린지 알림 끄기").assertCountEquals(2)
+        compose.onNodeWithText("챌린지 신고").assertExists()
+        compose.onNodeWithText("챌린지 나가기").assertExists()
+        compose.onNodeWithText("상세 내용 보기").assertDoesNotExist()
+        compose.onNodeWithText("감시자 관리").assertDoesNotExist()
+    }
+
+    @Test
+    fun `그룹 방 정보 탭의 멤버 보기 줄을 누르면 멤버 목록을 띄운다`() {
+        // 메뉴·표지에서 멤버 진입점이 빠져 이 줄이 유일한 길이다(#585).
+        val member =
+            loaded().copy(
+                detail = detail("평일 아침 헬스장 출석").copy(myRole = MemberRole.MEMBER),
+                members =
+                    ChallengeMembers(
+                        challengeId = "ch1",
+                        participantCount = 3,
+                        capacity = 4,
+                        members =
+                            listOf(
+                                ChallengeMember(
+                                    user = User(id = "u2", nickname = "서연", profileImageUrl = null),
+                                    role = MemberRole.MEMBER,
+                                    tier = null,
+                                    joinedAt = "2026-09-02T00:00:00+09:00",
+                                ),
+                            ),
+                    ),
+            )
+        render(member)
+
+        compose.onNodeWithText("멤버 보기 ›").clickPastGuard()
+
+        compose.onAllNodesWithText("서연").onFirst().assertExists()
+        compose.onNodeWithText("챌린지 나가기").assertExists()
     }
 
     private fun loaded(title: String = "평일 아침 헬스장 출석") = ChallengeDetailState.initial.copy(isLoading = false, detail = detail(title))

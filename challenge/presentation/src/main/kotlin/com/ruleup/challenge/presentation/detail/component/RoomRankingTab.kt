@@ -48,6 +48,8 @@ internal fun RoomRankingTab(
     onSelectScope: (RankingScope) -> Unit,
     onLoadMoreCross: () -> Unit,
     modifier: Modifier = Modifier,
+    // 솔로는 방 안 순위가 없어 챌린지 순위만 보인다
+    showScopes: Boolean = true,
 ) {
     val listState = rememberLazyListState()
     val isRoomScope = state.rankingScope == RankingScope.ROOM
@@ -74,14 +76,16 @@ internal fun RoomRankingTab(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 24.dp),
     ) {
-        item(key = "segment") {
-            RoomSegmentedControl(
-                options = RankingScope.entries,
-                selected = state.rankingScope,
-                label = { it.label },
-                onSelect = onSelectScope,
-            )
-            Spacer(Modifier.height(10.dp))
+        if (showScopes) {
+            item(key = "segment") {
+                RoomSegmentedControl(
+                    options = RankingScope.entries,
+                    selected = state.rankingScope,
+                    label = { it.label },
+                    onSelect = onSelectScope,
+                )
+                Spacer(Modifier.height(10.dp))
+            }
         }
 
         when (state.rankingScope) {
