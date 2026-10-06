@@ -295,7 +295,7 @@ internal fun ChallengeDetailContent(
 
             detail == null ->
                 Column(Modifier.fillMaxSize().statusBarsPadding()) {
-                    RoomAppBar(title = "챌린지", menuItems = emptyList(), onBack = onBack)
+                    RoomAppBar(title = "챌린지", onBack = onBack)
                     Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                         Text(
                             text = state.errorMessage ?: "챌린지를 불러오지 못했어요",

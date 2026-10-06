@@ -68,7 +68,7 @@ internal fun DetailInfoPage(
                         .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
-                CoverTopBar(menuItems = emptyList(), onBack = onBack)
+                CoverTopBar(onBack = onBack)
                 Spacer(Modifier.weight(1f))
                 GlassChip(detail.title)
                 Text(

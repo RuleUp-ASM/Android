@@ -38,6 +38,7 @@ import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.ChallengeSettings
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
 import com.ruleup.challenge.domain.entity.ModerationState
+import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.presentation.common.CapacitySlider
 import com.ruleup.challenge.presentation.common.CoverImagePicker
@@ -48,6 +49,8 @@ import com.ruleup.challenge.presentation.create.component.InfoNote
 import com.ruleup.challenge.presentation.create.component.ParamsEditor
 import com.ruleup.challenge.presentation.create.component.SectionLabel
 import com.ruleup.challenge.presentation.create.component.SmallBadge
+import com.ruleup.challenge.presentation.create.component.fieldLabel
+import com.ruleup.challenge.presentation.create.summary
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsEffect
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsIntent
 import com.ruleup.challenge.presentation.settings.viewmodel.ChallengeSettingsState
@@ -454,7 +457,7 @@ private fun ParamsSection(
             state.params.forEach { spec ->
                 LockedRow(reason = "시작 후에는 목표를 바꿀 수 없어요") {
                     Text(
-                        text = "${spec.key.replace('_', ' ')} · ${spec.value}${spec.unit.orEmpty()}",
+                        text = spec.lockedLabel(),
                         color = RuleUpTheme.colors.textPrimary,
                         style = RuleUpTheme.typography.bodyMedium,
                     )
@@ -655,6 +658,9 @@ private fun ChoiceChip(
 private fun CenterBox(content: @Composable () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { content() }
 }
+
+/** 잠긴 목표 한 줄. 열린 편집기와 같은 이름 · 단위로 쓴다(「목표값 · 30분」). */
+internal fun ParamSpec.lockedLabel(): String = "${fieldLabel()} · ${summary()}"
 
 private fun Tier.label(): String =
     when (this) {

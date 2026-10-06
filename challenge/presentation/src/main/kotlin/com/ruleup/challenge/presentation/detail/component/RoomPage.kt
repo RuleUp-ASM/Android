@@ -62,7 +62,7 @@ internal fun RoomCoverHeader(
                     .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            CoverTopBar(menuItems = emptyList(), onBack = onBack, onOpenMenu = onOpenMenu)
+            CoverTopBar(onBack = onBack, onOpenMenu = onOpenMenu)
             Spacer(Modifier.height(12.dp))
             detail.category?.let { GlassChip(it.label) }
             Text(
