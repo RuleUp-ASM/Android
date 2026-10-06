@@ -7,6 +7,7 @@ import com.ruleup.notification.data.dto.NotificationPageResponse
 import com.ruleup.notification.data.dto.NotificationSettingsRequest
 import com.ruleup.notification.data.dto.NotificationSettingsResponse
 import com.ruleup.notification.data.dto.NotificationSettingsUpdateResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -23,11 +24,11 @@ interface NotificationApi {
         @Query("cursor") cursor: String? = null,
     ): BaseResponse<NotificationPageResponse>
 
-    /** 읽음 지점 갱신. */
+    /** 읽음 지점 갱신. 204 라 [Response] 로 받는다. */
     @PUT("v1/notifications/read")
     suspend fun markRead(
         @Body request: MarkReadRequest,
-    ): BaseResponse<EmptyData>?
+    ): Response<BaseResponse<EmptyData>>
 
     @GET("v1/users/me/notification-settings")
     suspend fun getSettings(): BaseResponse<NotificationSettingsResponse>
@@ -37,15 +38,15 @@ interface NotificationApi {
         @Body request: NotificationSettingsRequest,
     ): BaseResponse<NotificationSettingsUpdateResponse>
 
-    // 챌린지 음소거 등록
+    // 챌린지 음소거 등록. 204 라 Response 로 받는다
     @PUT("v1/users/me/notification-settings/mutes/{challengeId}")
     suspend fun mute(
         @Path("challengeId") challengeId: String,
-    ): BaseResponse<EmptyData>?
+    ): Response<BaseResponse<EmptyData>>
 
     // 챌린지 음소거 해제
     @DELETE("v1/users/me/notification-settings/mutes/{challengeId}")
     suspend fun unmute(
         @Path("challengeId") challengeId: String,
-    ): BaseResponse<EmptyData>?
+    ): Response<BaseResponse<EmptyData>>
 }

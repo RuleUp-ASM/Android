@@ -2,8 +2,8 @@ package com.ruleup.notification.data.repository
 
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
-import com.ruleup.network.dto.throwOnError
 import com.ruleup.notification.data.api.NotificationApi
+import com.ruleup.notification.data.api.throwOnFailure
 import com.ruleup.notification.data.dto.MarkReadRequest
 import com.ruleup.notification.data.dto.toDomain
 import com.ruleup.notification.data.dto.toMuteFailure
@@ -37,8 +37,7 @@ class NotificationRepositoryImpl
         ) {
             api
                 .markRead(MarkReadRequest(tab = tab.value, lastNotificationId = lastNotificationId))
-                // 204 면 본문이 없다
-                ?.throwOnError()
+                .throwOnFailure()
         }
 
         /** 미읽음 집계. */
@@ -86,9 +85,9 @@ class NotificationRepositoryImpl
         ) {
             try {
                 if (muted) {
-                    api.mute(challengeId)?.throwOnError()
+                    api.mute(challengeId).throwOnFailure()
                 } else {
-                    api.unmute(challengeId)?.throwOnError()
+                    api.unmute(challengeId).throwOnFailure()
                 }
             } catch (e: ApiException) {
                 // 참여하지 않은 방이면 화면이 목록을 갱신해야 한다
