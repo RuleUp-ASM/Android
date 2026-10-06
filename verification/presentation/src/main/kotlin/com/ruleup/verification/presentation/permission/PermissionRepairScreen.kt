@@ -35,8 +35,10 @@ import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.tti.presentation.ttiContentDrawn
+import com.ruleup.ui.permission.HEALTH_BACKGROUND_PERMISSION
 import com.ruleup.ui.permission.healthConnectAvailable
 import com.ruleup.ui.permission.healthReadPermissions
+import com.ruleup.ui.permission.healthRequestPermissions
 import com.ruleup.ui.permission.rememberHealthPermissionLauncher
 import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
@@ -209,10 +211,13 @@ private fun requestFix(
             if (healthAvailable) {
                 runCatching {
                     healthLauncher.launch(
-                        healthReadPermissions()
-                            .filter { permission ->
-                                row.tokens.any { permission.endsWith(it) }
-                            }.toSet(),
+                        healthRequestPermissions(
+                            context,
+                            (healthReadPermissions() + HEALTH_BACKGROUND_PERMISSION)
+                                .filter { permission ->
+                                    row.tokens.any { permission.endsWith(it) }
+                                }.toSet(),
+                        ),
                     )
                 }.onFailure {
                     android.widget.Toast
@@ -332,6 +337,18 @@ internal fun repairRows(snapshot: PermissionSnapshot): List<RepairRow> =
                 kind = PermissionRequestKind.HEALTH_CONNECT,
             ),
         )
+        // 지원하지 않는 기기는 허용할 방법이 없어 줄을 세우지 않는다 — 앱을 열었을 때 모은다
+        if (snapshot.healthBackgroundSupported) {
+            add(
+                RepairRow(
+                    label = "백그라운드 건강 데이터",
+                    tokens = setOf("READ_HEALTH_DATA_IN_BACKGROUND", "HEALTH_BACKGROUND"),
+                    purpose = "앱을 열지 않아도 걸음·수면을 확인하려면 필요",
+                    granted = snapshot.healthBackground == PermissionState.GRANTED,
+                    kind = PermissionRequestKind.HEALTH_CONNECT,
+                ),
+            )
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             add(
                 RepairRow(

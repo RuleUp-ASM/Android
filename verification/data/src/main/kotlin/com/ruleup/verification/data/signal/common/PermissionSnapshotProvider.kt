@@ -36,6 +36,7 @@ class PermissionSnapshotProvider
                 healthSteps = hc.state(HealthPermission.getReadPermission(StepsRecord::class)),
                 healthSleep = hc.state(HealthPermission.getReadPermission(SleepSessionRecord::class)),
                 healthBackground = hc.state(PERMISSION_HEALTH_BACKGROUND),
+                healthBackgroundSupported = HealthPermissions.backgroundReadAvailable(context),
                 locationServiceEnabled =
                     context.getSystemService(LocationManager::class.java)?.let(LocationManagerCompat::isLocationEnabled) ?: true,
             )

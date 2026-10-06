@@ -26,6 +26,8 @@
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <!-- 앱이 꺼져 있을 때(주기 sync) 읽기. 지원 기기에서만 읽기 권한과 함께 요청한다. -->
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
 
     <!-- Health Connect 패키지 조회. -->
     <queries>

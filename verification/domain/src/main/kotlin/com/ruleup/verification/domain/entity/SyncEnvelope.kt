@@ -41,6 +41,8 @@ data class PermissionSnapshot(
     val healthBackground: PermissionState,
     // 기기 위치(GPS) 스위치. 권한과 따로 꺼질 수 있고 서버로는 보내지 않는다.
     val locationServiceEnabled: Boolean = true,
+    // 헬스 커넥트가 앱이 꺼진 동안의 읽기를 지원하는가. 미지원이면 앱을 열었을 때만 모은다. 서버로는 보내지 않는다.
+    val healthBackgroundSupported: Boolean = true,
 ) {
     /** 위치를 쓰는 권한이 필요한데 기기 위치가 꺼져 있는가 — 권한을 허용해도 위치 신호가 모이지 않는다. */
     fun locationServiceOff(requiredTokens: List<String>): Boolean =

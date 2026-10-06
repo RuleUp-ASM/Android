@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.ruleup.challenge.presentation.create.component.rememberPermissionRequester
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.ui.permission.healthConnectAvailable
-import com.ruleup.ui.permission.healthReadPermissions
+import com.ruleup.ui.permission.healthRequestPermissions
 import com.ruleup.ui.permission.rememberHealthPermissionLauncher
 import com.ruleup.verification.domain.entity.PermissionRequestKind
 import com.ruleup.verification.domain.entity.PermissionSnapshot
@@ -39,7 +39,7 @@ internal fun rememberVerificationPermissionRequester(onResult: () -> Unit): (Lis
             PermissionRequestKind.USAGE_ACCESS_SETTINGS -> settingsLauncher.launch(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             PermissionRequestKind.HEALTH_CONNECT -> {
                 if (healthConnectAvailable(context)) {
-                    healthLauncher.launch(healthReadPermissions())
+                    healthLauncher.launch(healthRequestPermissions(context))
                 } else {
                     messages.showToast("헬스 커넥트를 설치하거나 업데이트한 뒤 다시 시도해 주세요")
                 }
