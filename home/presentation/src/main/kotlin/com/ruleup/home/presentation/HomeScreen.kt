@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,7 +43,6 @@ import com.ruleup.designsystem.component.RuleUpBottomTabBar
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpPalette
 import com.ruleup.designsystem.theme.RuleUpTheme
-import com.ruleup.home.presentation.viewmodel.HomeFilter
 import com.ruleup.home.presentation.viewmodel.HomeIntent
 import com.ruleup.home.presentation.viewmodel.HomeState
 import com.ruleup.home.presentation.viewmodel.HomeViewModel
@@ -112,15 +110,7 @@ internal fun HomeContent(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     item { WeekStreakCard(statuses = state.weekStatuses) }
-                    item {
-                        FilterTabs(
-                            filter = state.filter,
-                            activeCount = state.activeCount,
-                            todayCount = state.todayCount,
-                            onSelect = { onIntent(HomeIntent.SelectFilter(it)) },
-                        )
-                    }
-                    items(state.visibleChallenges, key = { it.challengeId }) { card ->
+                    items(state.challenges, key = { it.challengeId }) { card ->
                         ChallengeCard(card = card, onClick = { onIntent(HomeIntent.OpenChallenge(card.challengeId)) })
                     }
                 }
@@ -344,11 +334,11 @@ private fun WeekStreakCard(statuses: Map<String, CalendarDayStatus>) {
                     Box(
                         modifier =
                             Modifier
-                                .size(14.dp)
+                                .size(9.dp)
                                 .clip(CircleShape)
                                 .background(dayDotColor(date, today, statuses[date.toString()]))
                                 // 오늘 칸은 보라 배경이라 흰 테두리로 원을 띄운다.
-                                .then(if (isToday) Modifier.border(1.5.dp, Color.White, CircleShape) else Modifier),
+                                .then(if (isToday) Modifier.border(1.dp, Color.White, CircleShape) else Modifier),
                     )
                 }
             }
@@ -369,69 +359,6 @@ private fun dayDotColor(
         status == CalendarDayStatus.ALL_DONE -> RuleUpTheme.colors.success
         else -> RuleUpTheme.colors.danger
     }
-
-@Composable
-private fun FilterTabs(
-    filter: HomeFilter,
-    activeCount: Int,
-    todayCount: Int,
-    onSelect: (HomeFilter) -> Unit,
-) {
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(44.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(RuleUpTheme.colors.surfaceVariant)
-                .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        FilterTab(
-            text = "진행 중 $activeCount",
-            selected = filter == HomeFilter.ACTIVE,
-            modifier = Modifier.weight(1f),
-            onClick = { onSelect(HomeFilter.ACTIVE) },
-        )
-        FilterTab(
-            text = "오늘 할 일 $todayCount",
-            selected = filter == HomeFilter.TODAY,
-            modifier = Modifier.weight(1f),
-            onClick = { onSelect(HomeFilter.TODAY) },
-        )
-    }
-}
-
-@Composable
-private fun FilterTab(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-            modifier
-                .fillMaxHeight()
-                .clip(RoundedCornerShape(10.dp))
-                .then(
-                    if (selected) {
-                        Modifier
-                            .shadow(2.dp, RoundedCornerShape(10.dp), clip = false)
-                            .background(RuleUpTheme.colors.surface)
-                    } else {
-                        Modifier
-                    },
-                ).singleClickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            color = if (selected) RuleUpTheme.colors.textPrimary else RuleUpTheme.colors.textSecondary,
-            style = if (selected) RuleUpTheme.typography.bodyBold else RuleUpTheme.typography.bodyMedium,
-        )
-    }
-}
 
 @Composable
 private fun ChallengeCard(

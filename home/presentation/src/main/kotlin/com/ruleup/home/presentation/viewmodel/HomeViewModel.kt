@@ -67,10 +67,6 @@ class HomeViewModel
                 is HomeIntent.OpenChallenge -> {
                     navigationHelper.navigateByRoute(ChallengeDetailPage(intent.challengeId).toRoute())
                 }
-
-                is HomeIntent.SelectFilter -> {
-                    dispatch(HomeReducerEvent.FilterSelected(intent.filter))
-                }
             }
         }
 
@@ -88,10 +84,6 @@ class HomeViewModel
                         isLoading = false,
                         challenges = event.challenges,
                     )
-                }
-
-                is HomeReducerEvent.FilterSelected -> {
-                    state.copy(filter = event.filter)
                 }
 
                 is HomeReducerEvent.UnreadChecked -> {

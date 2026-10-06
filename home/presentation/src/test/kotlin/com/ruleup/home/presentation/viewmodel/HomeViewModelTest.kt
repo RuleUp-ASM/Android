@@ -30,7 +30,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 /** 홈. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -99,21 +98,6 @@ class HomeViewModelTest {
             viewModel.onIntent(HomeIntent.Load)
 
             assertEquals(2, repo.calls.count { it == "getMyChallenges" })
-        }
-
-    @Test
-    fun `오늘 할 일 탭은 오늘이 대상인 것만 보여 준다`() =
-        runTest {
-            val viewModel = viewModel(challenges = listOf(myChallenge("ch1")))
-            viewModel.onIntent(HomeIntent.Load)
-
-            viewModel.onIntent(HomeIntent.SelectFilter(HomeFilter.TODAY))
-
-            assertEquals(HomeFilter.TODAY, viewModel.uiState.value.filter)
-            assertTrue(
-                viewModel.uiState.value.visibleChallenges
-                    .all { it.todayTarget },
-            )
         }
 
     @Test

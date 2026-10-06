@@ -6,14 +6,6 @@ import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
 import com.ruleup.ui.mvi.UiState
 
-enum class HomeFilter {
-    /** 진행 중 (전체 내 챌린지). */
-    ACTIVE,
-
-    /** 오늘 할 일 (오늘이 대상일인 챌린지). */
-    TODAY,
-}
-
 sealed interface HomeIntent : MviIntent {
     data object Load : HomeIntent
 
@@ -33,16 +25,11 @@ sealed interface HomeIntent : MviIntent {
     data class OpenChallenge(
         val challengeId: String,
     ) : HomeIntent
-
-    data class SelectFilter(
-        val filter: HomeFilter,
-    ) : HomeIntent
 }
 
 data class HomeState(
     val isLoading: Boolean,
     val challenges: List<HomeChallengeUi>,
-    val filter: HomeFilter,
     /** 읽지 않은 알림이 있는가 */
     val hasUnreadNotifications: Boolean = false,
     /** 이번 주 날짜(YYYY-MM-DD)별 판정. 판정 대상이 아닌 날은 없다. */
@@ -52,19 +39,8 @@ data class HomeState(
     val isEmpty: Boolean
         get() = !isLoading && challenges.isEmpty()
 
-    val activeCount: Int get() = challenges.size
-
-    val todayCount: Int get() = challenges.count { it.todayTarget }
-
-    val visibleChallenges: List<HomeChallengeUi>
-        get() =
-            when (filter) {
-                HomeFilter.ACTIVE -> challenges
-                HomeFilter.TODAY -> challenges.filter { it.todayTarget }
-            }
-
     companion object {
-        val initial = HomeState(isLoading = true, challenges = emptyList(), filter = HomeFilter.ACTIVE)
+        val initial = HomeState(isLoading = true, challenges = emptyList())
     }
 }
 
@@ -73,10 +49,6 @@ sealed interface HomeReducerEvent : ReducerEvent {
 
     data class Loaded(
         val challenges: List<HomeChallengeUi>,
-    ) : HomeReducerEvent
-
-    data class FilterSelected(
-        val filter: HomeFilter,
     ) : HomeReducerEvent
 
     /** 미읽음 집계는 홈의 부수 정보다 */
