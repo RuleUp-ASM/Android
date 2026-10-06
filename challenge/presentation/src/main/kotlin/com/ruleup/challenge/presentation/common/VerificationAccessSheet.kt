@@ -103,7 +103,7 @@ internal fun VerificationAccessContent(
     }
 }
 
-private fun permissionDescription(token: String): String =
+internal fun permissionDescription(token: String): String =
     when (PermissionSnapshot.normalizeToken(token)) {
         "LOCATION", "ACCESS_FINE_LOCATION", "GPS", "GEOFENCE" -> "위치 접근 · 등록한 장소에서 인증해요"
         "ACCESS_BACKGROUND_LOCATION", "BACKGROUND_LOCATION" -> "백그라운드 위치 · 앱을 열지 않아도 인증해요"
