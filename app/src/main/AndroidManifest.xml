@@ -62,6 +62,18 @@
                     android:pathPrefix="/w" />
             </intent-filter>
 
+            <!-- 카카오톡 초대 카드의 앱 실행(androidExecutionParams). 설치돼 있으면 카드 버튼이 여기로 온다. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="kakaolink"
+                    android:scheme="kakao${KAKAO_NATIVE_APP_KEY}" />
+            </intent-filter>
+
             <!-- Health Connect 권한 사용 이유(개인정보 처리방침) 안내 -->
             <intent-filter>
                 <action android:name="androidx.health.connect.action.SHOW_PERMISSIONS_RATIONALE" />
