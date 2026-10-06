@@ -1,13 +1,20 @@
 package com.ruleup.home.presentation.viewmodel
 
+import com.ruleup.challenge.domain.entity.ChallengeDetail
+import com.ruleup.challenge.domain.entity.ChallengeGate
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengePeriod
+import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
+import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.OwnerType
+import com.ruleup.challenge.domain.entity.VerificationConfig
+import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.domain.entity.category.Category
@@ -17,7 +24,9 @@ import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.profile.domain.entity.ActivityCalendar
 import com.ruleup.profile.domain.entity.CalendarDay
 import com.ruleup.profile.domain.entity.CalendarDayStatus
+import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
+import com.ruleup.verification.domain.entity.TodayStatus
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -30,6 +39,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 /** 홈. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -165,6 +175,61 @@ class HomeViewModelTest {
             assertEquals(emptyMap(), vm.uiState.value.weekStatuses)
         }
 
+    @Test
+    fun `오늘 해 볼 후보는 상세로 인증 방식을 확인해 직접 체크인 것을 올린다`() =
+        runTest {
+            val repo =
+                FakeChallengeRepository(
+                    myChallenges = { _, _ -> page(myChallenge("manual"), myChallenge("auto")) },
+                    detail = { id -> detail(id, if (id == "manual") VerificationType.MANUAL else VerificationType.AUTO) },
+                )
+            val vm = viewModel(repo = repo, progress = snapshot(todayProgress("manual"), todayProgress("auto")))
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(
+                "manual",
+                vm.uiState.value.hero
+                    ?.challengeId,
+            )
+        }
+
+    @Test
+    fun `인증 방식을 한 번 받은 챌린지는 다시 불러와도 묻지 않는다`() =
+        runTest {
+            val repo =
+                FakeChallengeRepository(
+                    myChallenges = { _, _ -> page(myChallenge("ch1")) },
+                    detail = { id -> detail(id, VerificationType.MANUAL) },
+                )
+            val vm = viewModel(repo = repo, progress = snapshot(todayProgress("ch1")))
+
+            vm.onIntent(HomeIntent.Load)
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(1, repo.calls.count { it == "getChallenge" })
+        }
+
+    @Test
+    fun `상세 조회가 실패해도 홈은 뜨고 오늘 해 볼 것만 빠진다`() =
+        runTest {
+            val repo =
+                FakeChallengeRepository(
+                    myChallenges = { _, _ -> page(myChallenge("ch1")) },
+                    detail = { error("상세 실패") },
+                )
+            val vm = viewModel(repo = repo, progress = snapshot(todayProgress("ch1")))
+
+            vm.onIntent(HomeIntent.Load)
+
+            assertEquals(
+                listOf("ch1"),
+                vm.uiState.value.challenges
+                    .map { it.challengeId },
+            )
+            assertNull(vm.uiState.value.hero)
+        }
+
     private fun viewModel(
         challenges: List<MyChallenge>? = emptyList(),
         progress: ProgressSnapshot? = ProgressSnapshot(asOf = "2026-09-01T00:00:00Z", challenges = emptyList()),
@@ -206,6 +271,54 @@ class HomeViewModelTest {
             leftAt = null,
             successRate = null,
         )
+
+    private fun snapshot(vararg items: ChallengeProgress) = ProgressSnapshot(asOf = "2026-09-01T00:00:00Z", challenges = items.toList())
+
+    private fun todayProgress(id: String) =
+        ChallengeProgress(
+            challengeId = id,
+            title = "아침 6시 기상",
+            category = Category.entries.first(),
+            participationType = ChallengeMode.SOLO.value,
+            status = ChallengeStatus.ACTIVE.value,
+            progressRate = 40.0,
+            successDays = 4,
+            targetDays = 30,
+            remainingDays = 26,
+            todayTarget = true,
+            todayStatus = TodayStatus.IN_PROGRESS,
+            lastSyncedAt = null,
+        )
+
+    /** 홈이 상세에서 보는 건 「오늘 직접 체크할 수 있는가」뿐이다. */
+    private fun detail(
+        id: String,
+        type: VerificationType,
+    ) = ChallengeDetail(
+        title = "아침 6시 기상",
+        category = Category.entries.first(),
+        imageUrl = null,
+        challengeId = id,
+        description = null,
+        mode = ChallengeMode.SOLO,
+        visibility = null,
+        status = ChallengeStatus.ACTIVE,
+        owner = null,
+        ownerType = OwnerType.USER,
+        participantCount = 1,
+        capacity = 1,
+        isFull = false,
+        period = ChallengePeriod(start = "2026-09-01", end = "2026-10-01"),
+        verification = VerificationConfig(type = type, method = VerificationMethod.entries.first()),
+        stats = ChallengeStats(completionRate = null, retentionRate = null),
+        gate = ChallengeGate(minTier = null, myDisplayTier = null, eligible = true),
+        joinBlockReason = null,
+        rejoinAvailableAt = null,
+        joinNote = JoinNote.IMMEDIATE,
+        cloneable = false,
+        myRole = MemberRole.OWNER,
+        moderation = null,
+    )
 
     /** 홈은 첫 페이지만 본다 */
     private fun page(vararg challenges: MyChallenge) = MyChallengePage(challenges = challenges.toList(), nextCursor = null, hasNext = false)

@@ -1,6 +1,7 @@
 package com.ruleup.home.presentation.viewmodel
 
 import com.ruleup.home.presentation.HomeChallengeUi
+import com.ruleup.home.presentation.pickHero
 import com.ruleup.profile.domain.entity.CalendarDayStatus
 import com.ruleup.ui.mvi.MviIntent
 import com.ruleup.ui.mvi.ReducerEvent
@@ -34,7 +35,15 @@ data class HomeState(
     val hasUnreadNotifications: Boolean = false,
     /** 이번 주 날짜(YYYY-MM-DD)별 판정. 판정 대상이 아닌 날은 없다. */
     val weekStatuses: Map<String, CalendarDayStatus> = emptyMap(),
+    // 못 받으면 null — 인사만 띄운다
+    val nickname: String? = null,
+    /** 챌린지별 「오늘 직접 체크할 수 있는가」. 조회하지 않았거나 실패한 챌린지는 없다. */
+    val manualCheckable: Map<String, Boolean> = emptyMap(),
 ) : UiState {
+    /** 「오늘 해 볼까요?」에 올릴 챌린지. */
+    val hero: HomeChallengeUi?
+        get() = pickHero(challenges, manualCheckable)
+
     /** 챌린지가 하나도 없는 상태. */
     val isEmpty: Boolean
         get() = !isLoading && challenges.isEmpty()
@@ -58,5 +67,13 @@ sealed interface HomeReducerEvent : ReducerEvent {
 
     data class WeekLoaded(
         val statuses: Map<String, CalendarDayStatus>,
+    ) : HomeReducerEvent
+
+    data class NicknameLoaded(
+        val nickname: String,
+    ) : HomeReducerEvent
+
+    data class CheckableLoaded(
+        val manualCheckable: Map<String, Boolean>,
     ) : HomeReducerEvent
 }

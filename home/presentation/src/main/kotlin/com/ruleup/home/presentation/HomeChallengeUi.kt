@@ -1,26 +1,30 @@
 package com.ruleup.home.presentation
 
-import androidx.annotation.DrawableRes
-import androidx.compose.ui.graphics.Color
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.MyChallenge
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
-import com.ruleup.designsystem.category.categoryAccentColor
-import com.ruleup.designsystem.category.categoryIconRes
+import com.ruleup.domain.entity.category.Category
 import com.ruleup.verification.domain.entity.ChallengeProgress
 import com.ruleup.verification.domain.entity.ProgressSnapshot
+import com.ruleup.verification.domain.entity.TodayStatus
 
 /** 홈 챌린지 카드 1개의 표시 모델. */
 data class HomeChallengeUi(
     val challengeId: String,
     val title: String,
     val subtitle: String,
-    // 0f..1f
+    // 기간 전체 진행률 0f..1f
     val progress: Float,
     val todayTarget: Boolean,
-    @DrawableRes val iconRes: Int,
-    val accentColor: Color,
+    val category: Category?,
+    // 주간 수행 횟수 1~7. 진행률에만 있는 카드는 모른다(null).
+    val weeklyCount: Int?,
+    // 모르면 null
+    val todayStatus: TodayStatus?,
+    val imageUrl: String?,
+    // 시작 전·강퇴가 아니라 지금 인증할 수 있는 방인가.
+    val active: Boolean,
 )
 
 /** 서버 "내 챌린지 목록"이 기준이고 진행률이 진행바·오늘 대상 여부를 채운다. */
@@ -66,8 +70,11 @@ private fun MyChallenge.toHomeUi(progress: ChallengeProgress?): HomeChallengeUi 
         subtitle = listOf(dayPart, groupPart).joinToString(" · "),
         progress = progress?.let { (it.progressRate / 100.0).toFloat().coerceIn(0f, 1f) } ?: 0f,
         todayTarget = !isUpcoming && leftType == null && progress?.todayTarget == true,
-        iconRes = categoryIconRes(category),
-        accentColor = categoryAccentColor(category),
+        category = category,
+        weeklyCount = weeklyCount,
+        todayStatus = progress?.todayStatus,
+        imageUrl = imageUrl,
+        active = !isUpcoming && leftType == null,
     )
 }
 
@@ -91,8 +98,11 @@ private fun ChallengeProgress.toHomeUi(): HomeChallengeUi {
         subtitle = listOfNotNull(dayPart, groupPart).joinToString(" · "),
         progress = (progressRate / 100.0).toFloat().coerceIn(0f, 1f),
         todayTarget = status == "ACTIVE" && todayTarget,
-        iconRes = categoryIconRes(category),
-        accentColor = categoryAccentColor(category),
+        category = category,
+        weeklyCount = null,
+        todayStatus = todayStatus,
+        imageUrl = null,
+        active = status == "ACTIVE",
     )
 }
 
@@ -103,6 +113,9 @@ private fun MyChallengeSummary.toHomeUi(): HomeChallengeUi =
         subtitle = "진행중 · ${if (mode.isGroup) "함께" else "솔로"}",
         progress = 0f,
         todayTarget = true,
-        iconRes = categoryIconRes(category),
-        accentColor = categoryAccentColor(category),
+        category = category,
+        weeklyCount = null,
+        todayStatus = null,
+        imageUrl = null,
+        active = true,
     )
