@@ -178,9 +178,8 @@ private fun DayCell(
             text = "$dayNumber",
             color =
                 when {
-                    status == ChallengeDayStatus.FAILED -> RuleUpTheme.colors.danger
-                    status == ChallengeDayStatus.FAIL_EXPECTED -> RuleUpTheme.colors.warning
-                    fill != null -> RuleUpTheme.colors.onSuccess
+                    // 판정 색으로 칠한 원 위라 글자는 흰색이어야 날짜가 보인다.
+                    fill != null -> Color.White
                     isToday -> RuleUpTheme.colors.brand
                     else -> RuleUpTheme.colors.textMuted
                 },
