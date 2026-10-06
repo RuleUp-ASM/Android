@@ -282,11 +282,18 @@ class ChallengeSettingsViewModel
                 runCatching {
                     // 새 사진을 골랐으면 먼저 업로드해 URL 을 확보한다(서버가 발급 주체를 검증한다).
                     val uploadedUrl = state.coverImageUri?.let { challengeRepository.uploadImage(it) }
-                    challengeRepository.update(state.challengeId, state.toUpdate(origin, uploadedUrl))
-                }.onSuccess {
+                    val update = state.toUpdate(origin, uploadedUrl)
+                    challengeRepository.update(state.challengeId, update).notApplied(update)
+                }.onSuccess { notApplied ->
                     dispatch(ChallengeSettingsReducerEvent.Saving(false))
-                    emitEffect(ChallengeSettingsEffect.ShowMessage("저장했어요"))
-                    navigationHelper.navigateToBack()
+                    if (notApplied.isEmpty()) {
+                        emitEffect(ChallengeSettingsEffect.ShowMessage("저장했어요"))
+                        navigationHelper.navigateToBack()
+                    } else {
+                        // 200 이어도 반영 안 된 항목이 있으면 "저장했어요" 는 거짓이다 → 남은 편집을 두고 다시 받는다
+                        emitEffect(ChallengeSettingsEffect.ShowMessage("일부 항목은 저장되지 않았어요. 다시 확인해 주세요"))
+                        load(state.challengeId, preserveEdits = true)
+                    }
                 }.onFailure { error -> handleSaveFailure(error) }
             }
         }

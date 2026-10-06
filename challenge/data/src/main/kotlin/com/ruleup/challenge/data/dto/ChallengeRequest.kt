@@ -1,5 +1,6 @@
 package com.ruleup.challenge.data.dto
 
+import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.CreateChallengeCommand
 import kotlinx.serialization.SerialName
@@ -113,11 +114,21 @@ internal fun ChallengeUpdate.toRequestBody(): JsonObject =
             capacity != null -> put("capacity", capacity)
         }
         minTier?.let { put("minTier", it.value) }
-        period?.let { put("period", ChallengeJson.encodeToJsonElement(it.toRequest())) }
+        period?.let { put("period", it.toUpdateJson()) }
         weeklyCount?.let { put("weeklyCount", it) }
         params?.let { entries -> put("params", ChallengeJson.encodeToJsonElement(entries.map { it.toRequest() })) }
         verification?.let { put("verification", ChallengeJson.encodeToJsonElement(it.toRequest())) }
         watcherPenalty?.let {
             put("penalties", buildJsonObject { put("watcher", JsonPrimitive(it)) })
         }
+    }
+
+/**
+ * 수정 요청의 기간. 종료일이 없는 방은 응답의 null 을 빈 문자열로 접어 들고 있으므로,
+ * 그대로 보내면 서버가 날짜 형식 오류(400)로 막는다 → 받은 그대로 null 로 되돌려 보낸다.
+ */
+internal fun ChallengePeriod.toUpdateJson(): JsonObject =
+    buildJsonObject {
+        put("start", start)
+        if (end.isBlank()) put("end", JsonNull) else put("end", end)
     }

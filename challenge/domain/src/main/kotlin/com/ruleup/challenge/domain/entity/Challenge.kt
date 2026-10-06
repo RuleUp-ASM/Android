@@ -292,14 +292,37 @@ data class ChallengeUpdate(
     val params: List<ParamEntry>? = null,
     val verification: VerificationConfig? = null,
     val watcherPenalty: Boolean? = null,
-)
+) {
+    /** 이 요청에 실린 필드. 응답의 `updated` 와 견줘 반영되지 않은 것을 찾는다. */
+    val fields: Set<ChallengeField>
+        get() =
+            buildSet {
+                if (title != null) add(ChallengeField.TITLE)
+                if (description != null) add(ChallengeField.DESCRIPTION)
+                if (imageUrl != null || removeImage) add(ChallengeField.IMAGE_URL)
+                if (mode != null) add(ChallengeField.MODE)
+                if (visibility != null) add(ChallengeField.VISIBILITY)
+                if (rankingVisible != null) add(ChallengeField.RANKING_VISIBLE)
+                if (capacity != null || unlimitedCapacity) add(ChallengeField.CAPACITY)
+                if (minTier != null) add(ChallengeField.MIN_TIER)
+                if (period != null) add(ChallengeField.PERIOD)
+                if (weeklyCount != null) add(ChallengeField.WEEKLY_COUNT)
+                if (params != null) add(ChallengeField.PARAMS)
+                if (verification != null) add(ChallengeField.VERIFICATION)
+                if (watcherPenalty != null) add(ChallengeField.PENALTIES)
+            }
+}
 
 /** 수정 결과. */
 data class ChallengeUpdateResult(
     val challengeId: String,
     val moderation: ChallengeModeration?,
+    // 서버가 실제로 반영한 필드(명세 `updated`). 보낸 필드보다 적을 수 있다.
     val updatedFields: Set<ChallengeField>,
-)
+) {
+    /** [sent] 중 서버가 반영하지 않은 것. */
+    fun notApplied(sent: ChallengeUpdate): Set<ChallengeField> = sent.fields - updatedFields
+}
 
 /** 수정 가능 범위 밖 필드를 보냈다. */
 class ChallengeNotEditableException(

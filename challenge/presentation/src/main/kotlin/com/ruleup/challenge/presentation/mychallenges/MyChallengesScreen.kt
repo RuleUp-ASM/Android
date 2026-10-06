@@ -541,7 +541,7 @@ internal val LeftType.label: String
             LeftType.KICK_PERMISSION -> "권한 미허용으로 강퇴"
             LeftType.AUTO_TIER -> "티어 미달로 자동 탈퇴"
             LeftType.AUTO_SANCTION -> "계정 제재로 자동 탈퇴"
-            LeftType.AUTO_CLOSED -> "챌린지 종료로 자동 탈퇴"
+            LeftType.AUTO_CLOSED -> "챌린지 중단으로 자동 탈퇴"
             LeftType.KICK_REPORT, LeftType.KICK_BY_OWNER -> "강퇴"
         }
 
