@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,14 +27,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.ruleup.challenge.domain.entity.ParamKind
 import com.ruleup.challenge.domain.entity.ParamSpec
 import com.ruleup.challenge.domain.entity.VerificationMethod
+import com.ruleup.challenge.presentation.common.CoverImagePicker
 import com.ruleup.challenge.presentation.common.VerificationAccessSheet
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.common.unitLabel
@@ -49,7 +47,6 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.domain.entity.user.Tier
-import com.ruleup.tti.presentation.rememberTtiLargeContent
 import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalNavigationHelper
 import com.ruleup.ui.image.rememberImagePicker
@@ -133,30 +130,12 @@ private fun CoverImageCard(
     val picker = rememberImagePicker { onIntent(CreateChallengeIntent.SetCoverImage(it)) }
     RuleUpCard {
         Text("챌린지 사진", style = RuleUpTheme.typography.cardTitle)
-        state.coverImageUri?.let { uri ->
-            val onImageSettled = rememberTtiLargeContent()
-            AsyncImage(
-                model = uri,
-                contentDescription = "선택한 챌린지 사진",
-                contentScale = ContentScale.Crop,
-                onSuccess = { onImageSettled() },
-                onError = { onImageSettled() },
-                modifier = Modifier.fillMaxWidth().height(140.dp).clip(RuleUpTheme.shapes.small),
-            )
-        }
-        Row {
-            TextButton(onClick = { picker.launchGallery() }, enabled = !state.isCreating) {
-                Text(if (state.coverImageUri == null) "사진 선택" else "사진 변경")
-            }
-            if (state.coverImageUri != null) {
-                TextButton(
-                    onClick = { onIntent(CreateChallengeIntent.SetCoverImage(null)) },
-                    enabled = !state.isCreating,
-                ) {
-                    Text("사진 제거")
-                }
-            }
-        }
+        CoverImagePicker(
+            image = state.coverImageUri,
+            enabled = !state.isCreating,
+            onPick = { picker.launchGallery() },
+            onRemove = { onIntent(CreateChallengeIntent.SetCoverImage(null)) },
+        )
     }
 }
 
