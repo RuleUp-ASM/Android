@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -16,12 +18,18 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -88,6 +96,19 @@ internal fun ChallengeWatchersContent(
     onIntent: (ChallengeWatchersIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // 바로 초대하지 않고 무엇이 어떻게 가는지 먼저 보여 준다
+    var registerOpen by remember { mutableStateOf(false) }
+    if (registerOpen) {
+        WatcherRegisterSheet(
+            challengeTitle = state.challengeTitle.orEmpty(),
+            remaining = state.watchers?.remaining,
+            onInvite = {
+                registerOpen = false
+                onIntent(ChallengeWatchersIntent.Invite)
+            },
+            onDismiss = { registerOpen = false },
+        )
+    }
     Column(
         modifier =
             modifier
@@ -128,7 +149,7 @@ internal fun ChallengeWatchersContent(
                         InviteButton(
                             remaining = watchers.remaining,
                             isInviting = state.isInviting,
-                            onClick = { onIntent(ChallengeWatchersIntent.Invite) },
+                            onClick = { registerOpen = true },
                         )
                         Text(
                             text = "상대가 수락해야 감시자가 돼요 · 카카오톡으로 초대장이 가요",
@@ -285,6 +306,96 @@ private fun ErrorBody(
         }
     }
 }
+
+/** 감시자 등록 안내. 세 단계와 실제로 보내질 카카오톡 카드를 보여 준 뒤 초대를 만든다. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WatcherRegisterSheet(
+    challengeTitle: String,
+    remaining: Int?,
+    onInvite: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = RuleUpTheme.colors.surface,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(text = "감시자 등록하기", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.section)
+            Text(
+                text = "실패를 지켜봐 줄 사람을 카카오톡으로 초대해요",
+                color = RuleUpTheme.colors.textSecondary,
+                style = RuleUpTheme.typography.small,
+            )
+            listOf(
+                "카카오톡으로 초대 링크를 보내요",
+                "상대가 수락하면 감시자가 돼요",
+                "실패가 확정된 날에만 알림이 가요",
+            ).forEachIndexed { index, step ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(24.dp).clip(CircleShape).background(RuleUpTheme.colors.brandSoft),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(text = "${index + 1}", color = RuleUpTheme.colors.brand, style = RuleUpTheme.typography.smallBold)
+                    }
+                    Text(text = step, color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyMedium)
+                }
+            }
+            Text(text = "이렇게 보내져요", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.smallBold)
+            // 서버가 문구를 주지 않을 때의 기본 카드와 같은 내용이다(inviteCard)
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(14.dp))
+                        .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(text = "당신을 루틴 감시자로 초대했어요", color = RuleUpTheme.colors.textPrimary, style = RuleUpTheme.typography.bodyBold)
+                Text(
+                    text = "[$challengeTitle]에서 약속을 지키는지 지켜봐 주세요. 실패하면 알림이 가요.",
+                    color = RuleUpTheme.colors.textSecondary,
+                    style = RuleUpTheme.typography.caption,
+                )
+            }
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(KakaoYellow)
+                        .singleClickable(onClick = onInvite),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = "카카오톡으로 초대 보내기", color = KakaoInk, style = RuleUpTheme.typography.bodyBold)
+            }
+            remaining?.let {
+                Text(
+                    text = "남은 자리 ${it}명",
+                    color = RuleUpTheme.colors.textMuted,
+                    style = RuleUpTheme.typography.caption,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
+            }
+        }
+    }
+}
+
+// 카카오 브랜드 가이드의 공유 버튼 색이라 디자인 토큰이 아니다
+private val KakaoYellow = Color(0xFFFEE500)
+private val KakaoInk = Color(0xFF191919)
 
 @Preview(showBackground = true, widthDp = 360)
 @Composable
