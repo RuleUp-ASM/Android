@@ -44,7 +44,6 @@ import com.ruleup.designsystem.category.CategoryIconTile
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.tti.presentation.ttiContentDrawn
-import com.ruleup.ui.helper.LocalNavigationHelper
 import kotlinx.coroutines.delay
 
 /** 생성 입력 화면. */
@@ -54,14 +53,14 @@ fun ChallengeInputContent(
     modifier: Modifier = Modifier,
     state: CreateChallengeState = CreateChallengeState.initial,
 ) {
-    val nav = LocalNavigationHelper.current
-
     // 초안 생성 중에는 화면을 잠그되 뒤로가기로 취소할 수 있게 한다.
     BackHandler(enabled = state.isDrafting) { onIntent(CreateChallengeIntent.CancelDrafting) }
+    // 그 밖의 뒤로가기는 플로우를 나가는 것이라 입력을 지운다
+    BackHandler(enabled = !state.isDrafting) { onIntent(CreateChallengeIntent.Exit) }
 
     Box(modifier = modifier.fillMaxSize().background(RuleUpTheme.colors.background)) {
         Column(modifier = Modifier.fillMaxSize().statusBarsPadding().ttiContentDrawn()) {
-            InputAppBar(onClose = { nav.navigateToBack() })
+            InputAppBar(onClose = { onIntent(CreateChallengeIntent.Exit) })
 
             Column(
                 modifier =

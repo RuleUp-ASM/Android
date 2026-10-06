@@ -18,6 +18,9 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 화면 진입 */
     data object Load : CreateChallengeIntent
 
+    /** 입력 화면에서 플로우를 나간다(닫기 · 뒤로). 만들지 않고 나가면 입력한 것을 남기지 않는다. */
+    data object Exit : CreateChallengeIntent
+
     data object ConfirmOpened : CreateChallengeIntent
 
     data class SetRoutineDescription(

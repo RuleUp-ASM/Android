@@ -57,6 +57,23 @@ class CreateChallengeViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     @Test
+    fun `만들지 않고 나가면 입력한 설명을 지우고 다시 들어와도 남지 않는다`() =
+        runTest {
+            // ViewModel 이 액티비티 범위라 지우지 않으면 다음 진입에 지난 설명이 그대로 보인다(#589).
+            val nav = RecordingNavigationHelper()
+            val saved = SavedStateHandle()
+            val viewModel = viewModel(nav = nav, saved = saved)
+            viewModel.onIntent(CreateChallengeIntent.SetRoutineDescription("매일 아침 6시에 일어나기"))
+
+            viewModel.onIntent(CreateChallengeIntent.Exit)
+
+            assertEquals("", viewModel.uiState.value.routineDescription)
+            assertEquals(1, nav.backCount)
+            // 프로세스가 되살아나도 복원되지 않는다
+            assertEquals("", viewModel(saved = saved).uiState.value.routineDescription)
+        }
+
+    @Test
     fun `설명이 비어 있으면 초안을 만들지 않는다`() =
         runTest {
             val repo = FakeChallengeRepository(draftResult = ok())
