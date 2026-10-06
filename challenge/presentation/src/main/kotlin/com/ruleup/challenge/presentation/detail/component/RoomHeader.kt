@@ -93,7 +93,7 @@ internal fun RoomAppBar(
 
 /** ⋯ 메뉴 박스. 화면 끝에 붙지 않게 우측 15dp, 상단바 아래 10dp 에 띄운다. */
 @Composable
-private fun RoomMenuPopup(
+internal fun RoomMenuPopup(
     items: List<RoomMenuItem>,
     onDismiss: () -> Unit,
 ) {
