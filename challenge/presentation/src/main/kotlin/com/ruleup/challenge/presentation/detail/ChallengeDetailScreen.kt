@@ -54,6 +54,8 @@ import com.ruleup.challenge.presentation.detail.component.AppealSheet
 import com.ruleup.challenge.presentation.detail.component.AppealTarget
 import com.ruleup.challenge.presentation.detail.component.DetailCover
 import com.ruleup.challenge.presentation.detail.component.DetailInfoPage
+import com.ruleup.challenge.presentation.detail.component.MySetupCard
+import com.ruleup.challenge.presentation.detail.component.ProgressInfoCard
 import com.ruleup.challenge.presentation.detail.component.ReportDoneSheet
 import com.ruleup.challenge.presentation.detail.component.ReportReasonSheet
 import com.ruleup.challenge.presentation.detail.component.RoomAppBar
@@ -62,6 +64,7 @@ import com.ruleup.challenge.presentation.detail.component.RoomCoverHeader
 import com.ruleup.challenge.presentation.detail.component.RoomFeedTab
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomMenuSheet
+import com.ruleup.challenge.presentation.detail.component.RoomMuteSection
 import com.ruleup.challenge.presentation.detail.component.RoomPillTabs
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
 import com.ruleup.challenge.presentation.detail.component.RoomSheetEntry
@@ -70,6 +73,7 @@ import com.ruleup.challenge.presentation.detail.component.SoloRoomBody
 import com.ruleup.challenge.presentation.detail.component.TodayQuickActions
 import com.ruleup.challenge.presentation.detail.component.TodayVerificationCard
 import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
+import com.ruleup.challenge.presentation.detail.component.VerificationRuleCard
 import com.ruleup.challenge.presentation.detail.component.periodRange
 import com.ruleup.challenge.presentation.detail.component.toAppealTarget
 import com.ruleup.challenge.presentation.detail.component.toPercentText
@@ -308,6 +312,7 @@ internal fun ChallengeDetailContent(
                     blockedNotice = "초대 링크로만 들어올 수 있는 챌린지예요".takeIf { !isMember && state.hideJoinButton },
                     // 방 안과 같은 ⋯ 시트를 띄운다. 비멤버에게는 고를 수 있는 것만 담긴다
                     onOpenMenu = { menuOpen = true },
+                    onOpenMembers = { membersOpen = true },
                     onPrimary = onPrimary,
                     onOpenInfo = { view = DetailView.INFO },
                     onBack = onBack,
@@ -408,7 +413,8 @@ internal fun ChallengeDetailContent(
     }
 
     val members = state.members
-    if (membersOpen && members != null && room != null) {
+    // 표지(가입 전 포함)와 방 안 메뉴 둘 다 여기서 연다
+    if (membersOpen && members != null) {
         RoomContentSheet(onDismiss = { membersOpen = false }) {
             RoomMemberSection(
                 members = members.members,
@@ -417,7 +423,7 @@ internal fun ChallengeDetailContent(
                 myUserId = state.myUserId,
                 actionEnabled = !state.isMemberActionLoading,
                 // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
-                canInviteMember = room.myRole.isOwner && detail?.visibility?.isPrivate == true && detail.mode.isGroup,
+                canInviteMember = room?.myRole?.isOwner == true && detail?.visibility?.isPrivate == true && detail.mode.isGroup,
                 onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
                 onLeave = {
                     membersOpen = false
@@ -425,6 +431,7 @@ internal fun ChallengeDetailContent(
                 },
                 onReportMember = { onIntent(ChallengeDetailIntent.OpenUserReport(it)) },
                 onOpenProfile = { onIntent(ChallengeDetailIntent.OpenMemberProfile(it)) },
+                showLeave = isMember,
             )
         }
     }
@@ -526,8 +533,8 @@ internal fun ChallengeDetailContent(
 }
 
 /**
- * 들어간 뒤 화면. 그룹은 피드·랭킹 2탭이고 피드 맨 위에 오늘 내 인증을 고정한다.
- * 솔로는 방 데이터·피드가 없어 오늘 인증과 캘린더를 한 화면에 둔다.
+ * 들어간 뒤 화면(Figma 시안 C 확정 · 안 2). 그룹은 정보 · 피드 · 랭킹 3탭이고, 오늘 내 인증은 정보 탭 맨 위에 둔다.
+ * 솔로는 방 데이터·피드가 없어 정보 탭 내용만 한 화면에 둔다.
  */
 @Composable
 private fun RoomView(
@@ -572,9 +579,40 @@ private fun RoomView(
             TodayQuickActions(
                 onManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
                 onPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }.takeIf { missingPermissions },
-                // 솔로는 캘린더를 본문에 바로 편다
-                onCalendar = onOpenCalendar.takeIf { room != null },
+                // 캘린더는 정보 탭 본문에 바로 편다
+                onCalendar = null,
             )
+        }
+    }
+    // 정보 탭(그룹)과 솔로 본문이 같은 내용이다: 오늘 인증 · 내 세부 설정 · 인증 규칙 · 진행 정보 · 월 기록 · 알림 끄기
+    val infoBody: @Composable () -> Unit = {
+        SoloRoomBody {
+            todayBlock()
+            MySetupCard(
+                onRegisterApps = { onIntent(ChallengeDetailIntent.RegisterApps) }.takeIf { state.setup?.requiresTargetPackages == true },
+                onRegisterAnchor = { onIntent(ChallengeDetailIntent.RegisterAnchor) }.takeIf { state.setup?.requiresAnchors == true },
+                watcherLabel = watcherCount?.let { "감시자 ${it}명" },
+                onOpenWatchers = { onIntent(ChallengeDetailIntent.OpenWatchers) },
+            )
+            VerificationRuleCard(detail = detail)
+            room?.let { ProgressInfoCard(detail = detail, room = it, today = state.todayResult) }
+            SoloMonthCalendar(
+                month = state.calendarMonth.orEmpty(),
+                calendar = state.calendar,
+                isLoading = state.isCalendarLoading,
+                onAppealDay = onOpenDayAppeal,
+                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
+                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
+            )
+            // 상태를 모르면 그리지 않는다
+            state.isMuted?.let { muted ->
+                RoomMuteSection(
+                    muted = muted,
+                    // 화면이 먼저 바뀌므로 요청 중에 잠그지 않는다(겹친 탭은 ViewModel 이 무시한다)
+                    enabled = true,
+                    onToggle = { onIntent(ChallengeDetailIntent.ToggleMute(it)) },
+                )
+            }
         }
     }
     Column(modifier = Modifier.fillMaxSize().ttiContentDrawn()) {
@@ -590,12 +628,14 @@ private fun RoomView(
         if (room != null) {
             RoomPillTabs(selected = state.selectedTab, onSelect = { onIntent(ChallengeDetailIntent.SelectTab(it)) })
             when (state.selectedTab) {
+                RoomTab.INFO -> infoBody()
+
                 RoomTab.FEED ->
                     RoomFeedTab(
                         state = state,
                         onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
                         onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
-                        header = todayBlock,
+                        onOpenProfile = { onIntent(ChallengeDetailIntent.OpenMemberProfile(it)) },
                     )
 
                 RoomTab.RANKING ->
@@ -606,17 +646,8 @@ private fun RoomView(
                     )
             }
         } else {
-            SoloRoomBody {
-                todayBlock()
-                SoloMonthCalendar(
-                    month = state.calendarMonth.orEmpty(),
-                    calendar = state.calendar,
-                    isLoading = state.isCalendarLoading,
-                    onAppealDay = onOpenDayAppeal,
-                    onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
-                    onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
-                )
-            }
+            // 솔로는 피드·랭킹이 없어 정보 탭 내용만 둔다
+            infoBody()
         }
     }
 }

@@ -373,8 +373,12 @@ private fun TodayVerificationStatus.toResultStatus(): TodayResultStatus =
 internal fun MySetupCard(
     onRegisterApps: (() -> Unit)?,
     onRegisterAnchor: (() -> Unit)?,
+    // 감시자 벌칙이 켜진 방만. 「감시자 N명」
+    watcherLabel: String? = null,
+    onOpenWatchers: (() -> Unit)? = null,
 ) {
-    if (onRegisterApps == null && onRegisterAnchor == null) return
+    val watchers = onOpenWatchers?.takeIf { watcherLabel != null }
+    if (onRegisterApps == null && onRegisterAnchor == null && watchers == null) return
     RuleUpCard {
         RoomSectionHeader(title = "내 세부 설정")
         onRegisterApps?.let {
@@ -382,6 +386,9 @@ internal fun MySetupCard(
         }
         onRegisterAnchor?.let {
             SetupRow(label = "인증 장소", actionLabel = "수정", onClick = it)
+        }
+        watchers?.let {
+            SetupRow(label = watcherLabel.orEmpty(), actionLabel = "관리 ›", onClick = it)
         }
     }
 }
@@ -417,7 +424,7 @@ private fun SetupRow(
 
 /** 인증 규칙. */
 @Composable
-private fun VerificationRuleCard(detail: ChallengeDetail) {
+internal fun VerificationRuleCard(detail: ChallengeDetail) {
     RuleUpCard {
         RoomSectionHeader(title = "인증 규칙")
         Text(
@@ -432,7 +439,7 @@ private fun VerificationRuleCard(detail: ChallengeDetail) {
 
 /** 진행 정보 */
 @Composable
-private fun ProgressInfoCard(
+internal fun ProgressInfoCard(
     detail: ChallengeDetail,
     room: ChallengeRoom,
     today: TodayResult?,

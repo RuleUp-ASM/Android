@@ -7,6 +7,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeGate
+import com.ruleup.challenge.domain.entity.ChallengeMember
+import com.ruleup.challenge.domain.entity.ChallengeMembers
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengePenalties
 import com.ruleup.challenge.domain.entity.ChallengePeriod
@@ -26,6 +28,7 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.renderScreen
 import com.ruleup.domain.entity.category.Category
+import com.ruleup.domain.entity.user.User
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -115,8 +118,8 @@ class ChallengeDetailContentTest {
     }
 
     @Test
-    fun `참여 중인 사람은 들어가기를 누르면 피드와 랭킹 두 탭만 본다`() {
-        // 정보 탭이 남아 있으면 오늘 인증이 두 군데로 갈린다(#563).
+    fun `참여 중인 사람은 들어가기를 누르면 정보 피드 랭킹 세 탭을 본다`() {
+        // 시안 C 확정 안 2 — 오늘 인증·세부 설정·기록은 정보 탭에 모은다(#582).
         val member =
             loaded().copy(
                 detail = detail("평일 아침 헬스장 출석").copy(myRole = MemberRole.MEMBER),
@@ -140,9 +143,10 @@ class ChallengeDetailContentTest {
 
         compose.onNodeWithText("들어가기").clickPastGuard()
 
+        compose.onNodeWithText("정보").assertExists()
         compose.onNodeWithText("피드").assertExists()
         compose.onNodeWithText("랭킹").assertExists()
-        compose.onNodeWithText("정보").assertDoesNotExist()
+        compose.onNodeWithText("인증 규칙").assertExists()
     }
 
     @Test
@@ -157,6 +161,33 @@ class ChallengeDetailContentTest {
 
         compose.onNodeWithText("그룹에 공유").assertExists()
         compose.onNodeWithText("꺼짐").assertExists()
+    }
+
+    @Test
+    fun `표지의 참여 인원을 누르면 가입 전에도 멤버 목록을 보여 주고 나가기는 두지 않는다`() {
+        // 누가 있는 방인지 보고 가입을 정한다(#582). 가입 전이라 나갈 방이 없다.
+        val members =
+            ChallengeMembers(
+                challengeId = "ch1",
+                participantCount = 3,
+                capacity = 4,
+                members =
+                    listOf(
+                        ChallengeMember(
+                            user = User(id = "u2", nickname = "서연", profileImageUrl = null),
+                            role = MemberRole.MEMBER,
+                            tier = null,
+                            joinedAt = "2026-09-02T00:00:00+09:00",
+                        ),
+                    ),
+            )
+        render(loaded().copy(members = members))
+
+        compose.onNodeWithText("참여 중", substring = true).clickPastGuard()
+
+        compose.onNodeWithText("멤버").assertExists()
+        compose.onAllNodesWithText("서연").onFirst().assertExists()
+        compose.onNodeWithText("챌린지 나가기").assertDoesNotExist()
     }
 
     private fun loaded(title: String = "평일 아침 헬스장 출석") = ChallengeDetailState.initial.copy(isLoading = false, detail = detail(title))
