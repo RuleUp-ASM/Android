@@ -50,6 +50,7 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.presentation.common.VerificationAccessSheet
 import com.ruleup.challenge.presentation.common.rememberVerificationPermissionRequester
+import com.ruleup.challenge.presentation.create.label
 import com.ruleup.challenge.presentation.detail.component.AppealSheet
 import com.ruleup.challenge.presentation.detail.component.AppealTarget
 import com.ruleup.challenge.presentation.detail.component.DetailCover
@@ -488,12 +489,12 @@ internal fun ChallengeDetailContent(
                 state.detail
                     ?.gate
                     ?.myDisplayTier
-                    ?.value,
+                    ?.label(),
             requiredTier =
                 state.detail
                     ?.gate
                     ?.minTier
-                    ?.value,
+                    ?.label(),
             capacity = state.detail?.capacity,
             onAction = { onIntent(ChallengeDetailIntent.FollowJoinBlockAction) },
             onDismiss = { onIntent(ChallengeDetailIntent.DismissJoinBlock) },
@@ -892,7 +893,7 @@ private fun JoinBlockedSheet(
             JoinBlockReason.TIER_GATE ->
                 // 조건을 나열하는 대신 "무엇부터 되는지"를 말한다
                 (requiredTier?.let { "$it 티어부터 참여할 수 있어요" } ?: "티어 조건을 만족하지 않아요") to
-                    (myTier?.let { "지금은 $it 예요. 내 티어에서 남은 점수를 볼 수 있어요." } ?: "내 티어를 확인해 주세요.")
+                    (myTier?.let { "지금은 ${it}예요. 내 티어에서 남은 점수를 볼 수 있어요." } ?: "내 티어를 확인해 주세요.")
 
             JoinBlockReason.BANNED ->
                 "이 챌린지에는 참여할 수 없어요" to "자세한 내용은 안내드릴 수 없어요"

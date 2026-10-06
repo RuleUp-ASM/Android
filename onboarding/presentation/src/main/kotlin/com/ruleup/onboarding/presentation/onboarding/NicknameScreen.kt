@@ -202,7 +202,7 @@ private fun NicknameField(
         if (feedback != null) {
             Text(
                 feedback.message,
-                color = if (feedback.positive) RuleUpTheme.colors.onSuccess else RuleUpTheme.colors.danger,
+                color = if (feedback.positive) RuleUpTheme.colors.success else RuleUpTheme.colors.danger,
                 style = RuleUpTheme.typography.caption,
             )
         }
