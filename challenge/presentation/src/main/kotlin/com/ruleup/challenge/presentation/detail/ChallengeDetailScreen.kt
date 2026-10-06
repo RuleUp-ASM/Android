@@ -3,6 +3,7 @@ package com.ruleup.challenge.presentation.detail
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,12 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,16 +31,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -53,32 +48,32 @@ import com.ruleup.challenge.domain.entity.ChallengeCalendarDay
 import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.JoinBlockReason
-import com.ruleup.challenge.domain.entity.MemberRole
-import com.ruleup.challenge.domain.entity.OwnerType
-import com.ruleup.challenge.presentation.common.CategoryTile
 import com.ruleup.challenge.presentation.common.VerificationAccessSheet
-import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.common.rememberVerificationPermissionRequester
 import com.ruleup.challenge.presentation.detail.component.AppealSheet
 import com.ruleup.challenge.presentation.detail.component.AppealTarget
-import com.ruleup.challenge.presentation.detail.component.ChallengeCoverBackground
-import com.ruleup.challenge.presentation.detail.component.MySetupCard
+import com.ruleup.challenge.presentation.detail.component.DetailCover
+import com.ruleup.challenge.presentation.detail.component.DetailInfoPage
 import com.ruleup.challenge.presentation.detail.component.ReportDoneSheet
 import com.ruleup.challenge.presentation.detail.component.ReportReasonSheet
 import com.ruleup.challenge.presentation.detail.component.RoomAppBar
+import com.ruleup.challenge.presentation.detail.component.RoomContentSheet
+import com.ruleup.challenge.presentation.detail.component.RoomCoverHeader
 import com.ruleup.challenge.presentation.detail.component.RoomFeedTab
-import com.ruleup.challenge.presentation.detail.component.RoomInfoHeader
-import com.ruleup.challenge.presentation.detail.component.RoomInfoTab
 import com.ruleup.challenge.presentation.detail.component.RoomMemberSection
 import com.ruleup.challenge.presentation.detail.component.RoomMenuItem
-import com.ruleup.challenge.presentation.detail.component.RoomMuteSection
+import com.ruleup.challenge.presentation.detail.component.RoomMenuSheet
+import com.ruleup.challenge.presentation.detail.component.RoomPillTabs
 import com.ruleup.challenge.presentation.detail.component.RoomRankingTab
-import com.ruleup.challenge.presentation.detail.component.RoomTabRow
+import com.ruleup.challenge.presentation.detail.component.RoomSheetEntry
 import com.ruleup.challenge.presentation.detail.component.SoloMonthCalendar
+import com.ruleup.challenge.presentation.detail.component.SoloRoomBody
+import com.ruleup.challenge.presentation.detail.component.TodayQuickActions
 import com.ruleup.challenge.presentation.detail.component.TodayVerificationCard
 import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
-import com.ruleup.challenge.presentation.detail.component.WatcherSection
+import com.ruleup.challenge.presentation.detail.component.periodRange
 import com.ruleup.challenge.presentation.detail.component.toAppealTarget
+import com.ruleup.challenge.presentation.detail.component.toPercentText
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailEffect
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailIntent
 import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
@@ -88,7 +83,6 @@ import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
 import com.ruleup.challenge.presentation.invite.MemberInviteSharer
 import com.ruleup.challenge.presentation.watcher.WatcherInviteSharer
-import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -98,7 +92,6 @@ import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
 import com.ruleup.verification.domain.entity.TodayResult
-import com.ruleup.verification.domain.entity.TodayResultStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -187,7 +180,7 @@ fun ChallengeDetailScreen(
                 DetailSetupAction.GRANT_PERMISSION -> "권한 허용하기"
                 DetailSetupAction.REGISTER_APPS -> "앱 등록하기"
                 DetailSetupAction.REGISTER_ANCHOR -> "인증 장소 등록하기"
-                DetailSetupAction.JOIN -> "참여하기"
+                DetailSetupAction.JOIN -> "가입하기"
             }
         }
 
@@ -231,6 +224,9 @@ private fun Context.openLocationSettings() {
     runCatching { startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) }
 }
 
+/** 화면 단계. 모두 표지에서 시작해 상세 내용·방으로 들어간다(Figma 시안 C). */
+private enum class DetailView { COVER, INFO, ROOM }
+
 @Composable
 // 테스트에서 상태를 직접 넣어 렌더하려고 연다.
 internal fun ChallengeDetailContent(
@@ -242,6 +238,40 @@ internal fun ChallengeDetailContent(
     modifier: Modifier = Modifier,
 ) {
     var confirmAction by remember { mutableStateOf<MemberConfirm?>(null) }
+    var view by rememberSaveable { mutableStateOf(DetailView.COVER) }
+    var appeal by remember { mutableStateOf<SoloAppeal?>(null) }
+    var menuOpen by remember { mutableStateOf(false) }
+    var calendarOpen by remember { mutableStateOf(false) }
+    var membersOpen by remember { mutableStateOf(false) }
+    val appealImagePicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
+        }
+    val detail = state.detail
+    val room = state.room
+    val isMember = detail?.myRole?.isMember == true
+
+    // 이 화면에서 가입을 마쳤으면 바로 방으로 들어간다
+    var wasMember by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(isMember, detail != null) {
+        if (detail == null) return@LaunchedEffect
+        if (wasMember == false && isMember) view = DetailView.ROOM
+        wasMember = isMember
+    }
+    // 가입 전에는 들어갈 방이 없다
+    val shown = if (view == DetailView.ROOM && !isMember) DetailView.COVER else view
+    BackHandler(enabled = shown != DetailView.COVER) { view = DetailView.COVER }
+
+    // 표지·상세 내용의 오른쪽 버튼. 멤버는 방으로, 아니면 셋업 단계 → 가입.
+    val primaryLabel: String? =
+        when {
+            detail == null -> null
+            isMember -> "들어가기"
+            state.hideJoinButton -> null
+            state.isJoining -> "참여하는 중…"
+            else -> ctaLabel
+        }
+    val onPrimary: () -> Unit = { if (isMember) view = DetailView.ROOM else onCta() }
 
     Box(
         modifier =
@@ -249,92 +279,15 @@ internal fun ChallengeDetailContent(
                 .fillMaxSize()
                 .background(RuleUpTheme.colors.background),
     ) {
-        val detail = state.detail
-        val room = state.room
-        // 솔로 상세의 이의 시트.
-        var soloAppeal by remember { mutableStateOf<SoloAppeal?>(null) }
-        val soloAppealImagePicker =
-            rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
-            }
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding(),
-        ) {
-            // 참여 중인 그룹 방이면 방 이름이 제목이고 관리 동작은 ⋯ 로 모은다.
-            if (detail != null && room != null) {
-                RoomAppBar(
-                    title = detail.title,
-                    menuItems = roomMenuItems(room.myRole, detail.penalties?.watcher == true, onIntent),
-                    onBack = onBack,
-                )
-            } else if (detail != null && detail.myRole.isMember) {
-                // 솔로 방·시작 전 방은 room 이 오지 않는다.
-                RoomAppBar(
-                    title = detail.title,
-                    menuItems =
-                        roomMenuItems(detail.myRole, detail.penalties?.watcher == true, onIntent) +
-                            RoomMenuItem("챌린지 나가기") { confirmAction = MemberConfirm.LEAVE },
-                    onBack = onBack,
-                )
-            } else {
-                // 비멤버도 ⋯ 를 갖는다
-                RoomAppBar(
-                    title = detail?.title ?: "챌린지",
-                    menuItems = listOf(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) }),
-                    onBack = onBack,
-                )
-            }
+        when {
+            state.isLoading ->
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = RuleUpTheme.colors.brand)
+                }
 
-            // 참여 중인데 필요한 권한이 끊겼으면 배너로 알린다.
-            if (!state.isLoading && detail?.myRole?.isMember == true && state.missingPermissionTokens().isNotEmpty()) {
-                Text(
-                    text = "인증에 필요한 권한이 꺼져 있어요 · 다시 연결하기",
-                    color = RuleUpTheme.colors.danger,
-                    style = RuleUpTheme.typography.caption,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(RuleUpTheme.colors.dangerContainer)
-                            .singleClickable { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
-                )
-            }
-
-            // 권한은 있어도 기기 위치가 꺼져 있으면 장소 신호가 모이지 않아 실패로 판정될 수 있다.
-            if (!state.isLoading && detail?.myRole?.isMember == true && state.locationServiceOff()) {
-                val context = LocalContext.current
-                Text(
-                    text = "휴대폰 위치(GPS)가 꺼져 있어 장소 인증이 되지 않아요 · 위치 켜기",
-                    color = RuleUpTheme.colors.danger,
-                    style = RuleUpTheme.typography.caption,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(RuleUpTheme.colors.dangerContainer)
-                            .singleClickable { context.openLocationSettings() }
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
-                )
-            }
-
-            // 미확인 판정은 로딩이 끝난 뒤에 올린다
-            val unacknowledged = state.todayResult?.takeIf { !state.isLoading && !state.resultAcknowledged && it.unacknowledged != null }
-            if (unacknowledged != null) {
-                VerificationResultModal(
-                    today = unacknowledged,
-                    onConfirm = { onIntent(ChallengeDetailIntent.AcknowledgeResult) },
-                )
-            }
-
-            when {
-                state.isLoading ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = RuleUpTheme.colors.brand)
-                    }
-
-                detail == null ->
+            detail == null ->
+                Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                    RoomAppBar(title = "챌린지", menuItems = emptyList(), onBack = onBack)
                     Box(Modifier.fillMaxSize().ttiContentDrawn(), contentAlignment = Alignment.Center) {
                         Text(
                             text = state.errorMessage ?: "챌린지를 불러오지 못했어요",
@@ -342,94 +295,63 @@ internal fun ChallengeDetailContent(
                             style = RuleUpTheme.typography.labelMedium,
                         )
                     }
-
-                // 방 상세(3탭).
-                room != null ->
-                    RoomDetailTabs(
-                        state = state,
-                        detail = detail,
-                        room = room,
-                        onIntent = onIntent,
-                        onConfirmLeave = { confirmAction = MemberConfirm.LEAVE },
-                    )
-
-                else ->
-                    PublicDetailBody(
-                        state = state,
-                        detail = detail,
-                        onIntent = onIntent,
-                        onOpenTodayAppeal = { soloAppeal = SoloAppeal.Today },
-                        onOpenDayAppeal = { day -> soloAppeal = SoloAppeal.Day(day) },
-                    )
-            }
-        }
-
-        // 하단 고정 CTA.
-        if (state.detail != null && !state.detail.myRole.isMember) {
-            Column(
-                modifier =
-                    Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .background(RuleUpTheme.colors.surface)
-                        .navigationBarsPadding()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                // 복제는 공개 그룹만 가능하다
-                if (state.detail.cloneable) {
-                    CloneButton(
-                        isCloning = state.isCloning,
-                        enabled = state.canClone,
-                        onClick = { onIntent(ChallengeDetailIntent.CloneChallenge) },
-                    )
                 }
-                // 비공개 방은 초대 링크가 유일한 입장 경로라 참여 버튼 자체를 노출하지 않는다.
-                if (state.hideJoinButton) {
-                    Text(
-                        text = "초대 링크로만 들어올 수 있는 챌린지예요",
-                        color = RuleUpTheme.colors.textSecondary,
-                        style = RuleUpTheme.typography.small,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                    )
-                } else {
-                    RuleUpPrimaryButton(
-                        text = if (state.isJoining) "참여하는 중…" else ctaLabel,
-                        enabled = !state.isJoining,
-                        onClick = onCta,
-                    )
-                }
-            }
-        }
 
-        soloAppeal?.let { pending ->
-            val target = pending.target(state.todayResult)
-            // 낼 대상(verificationId)이 없으면 시트를 열지 않는다
-            if (target == null) {
-                soloAppeal = null
-            } else {
-                AppealSheet(
-                    target = target,
-                    submitting = state.isSubmittingAppeal,
-                    imageUrl = state.appealImageUrl,
-                    uploadingImage = state.isUploadingAppealImage,
-                    reasonError = state.appealReasonError,
-                    onPickImage = {
-                        soloAppealImagePicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                        )
-                    },
-                    onSubmit = { reason ->
-                        soloAppeal = null
-                        onIntent(ChallengeDetailIntent.SubmitAppeal(target.verificationId, reason))
-                    },
-                    onDismiss = {
-                        soloAppeal = null
-                        onIntent(ChallengeDetailIntent.DismissAppeal)
-                    },
+            shown == DetailView.COVER ->
+                DetailCover(
+                    detail = detail,
+                    members = state.members,
+                    primaryLabel = primaryLabel,
+                    primaryEnabled = !state.isJoining,
+                    // 비공개 방은 초대 링크가 유일한 입장 경로라 참여 버튼 자체를 노출하지 않는다.
+                    blockedNotice = "초대 링크로만 들어올 수 있는 챌린지예요".takeIf { !isMember && state.hideJoinButton },
+                    menuItems =
+                        if ((room?.myRole ?: detail.myRole).isOwner) {
+                            listOf(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
+                        } else {
+                            listOf(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
+                        },
+                    onPrimary = onPrimary,
+                    onOpenInfo = { view = DetailView.INFO },
+                    onBack = onBack,
+                    modifier = Modifier.ttiContentDrawn(),
                 )
-            }
+
+            shown == DetailView.INFO ->
+                DetailInfoPage(
+                    detail = detail,
+                    primaryLabel = primaryLabel,
+                    primaryEnabled = !state.isJoining,
+                    onPrimary = onPrimary,
+                    onBack = { view = DetailView.COVER },
+                    modifier = Modifier.ttiContentDrawn(),
+                    // 복제는 공개 그룹만 가능하다
+                    extraBottom =
+                        if (!isMember && detail.cloneable) {
+                            {
+                                CloneButton(
+                                    isCloning = state.isCloning,
+                                    enabled = state.canClone,
+                                    onClick = { onIntent(ChallengeDetailIntent.CloneChallenge) },
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                )
+
+            else ->
+                RoomView(
+                    state = state,
+                    detail = detail,
+                    room = room,
+                    onIntent = onIntent,
+                    onBack = { view = DetailView.COVER },
+                    onOpenMenu = { menuOpen = true },
+                    onOpenCalendar = { calendarOpen = true },
+                    onOpenTodayAppeal = { appeal = SoloAppeal.Today },
+                    onOpenDayAppeal = { day -> appeal = SoloAppeal.Day(day) },
+                )
         }
 
         // 연결 실패는 화면에 남겨 둔다
@@ -442,6 +364,99 @@ internal fun ChallengeDetailContent(
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
                         .padding(horizontal = 20.dp, vertical = 88.dp),
+            )
+        }
+    }
+
+    // 미확인 판정은 로딩이 끝난 뒤에 올린다
+    val unacknowledged = state.todayResult?.takeIf { !state.isLoading && !state.resultAcknowledged && it.unacknowledged != null }
+    if (unacknowledged != null) {
+        VerificationResultModal(
+            today = unacknowledged,
+            onConfirm = { onIntent(ChallengeDetailIntent.AcknowledgeResult) },
+        )
+    }
+
+    if (menuOpen && detail != null) {
+        RoomMenuSheet(
+            entries =
+                roomMenuEntries(
+                    state = state,
+                    detail = detail,
+                    onIntent = onIntent,
+                    onOpenCalendar = { calendarOpen = true },
+                    onOpenInfo = { view = DetailView.INFO },
+                    onOpenMembers = { membersOpen = true },
+                    onLeave = { confirmAction = MemberConfirm.LEAVE },
+                ),
+            onDismiss = { menuOpen = false },
+        )
+    }
+
+    if (calendarOpen) {
+        RoomContentSheet(onDismiss = { calendarOpen = false }) {
+            SoloMonthCalendar(
+                month = state.calendarMonth.orEmpty(),
+                calendar = state.calendar,
+                isLoading = state.isCalendarLoading,
+                // 지난 건은 캘린더가 유일한 이의 진입점이다
+                onAppealDay = { day ->
+                    calendarOpen = false
+                    appeal = SoloAppeal.Day(day)
+                },
+                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
+                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
+            )
+        }
+    }
+
+    val members = state.members
+    if (membersOpen && members != null && room != null) {
+        RoomContentSheet(onDismiss = { membersOpen = false }) {
+            RoomMemberSection(
+                members = members.members,
+                participantCount = members.participantCount,
+                maxParticipants = members.capacity,
+                myUserId = state.myUserId,
+                actionEnabled = !state.isMemberActionLoading,
+                // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
+                canInviteMember = room.myRole.isOwner && detail?.visibility?.isPrivate == true && detail.mode.isGroup,
+                onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
+                onLeave = {
+                    membersOpen = false
+                    confirmAction = MemberConfirm.LEAVE
+                },
+                onReportMember = { onIntent(ChallengeDetailIntent.OpenUserReport(it)) },
+                onOpenProfile = { onIntent(ChallengeDetailIntent.OpenMemberProfile(it)) },
+            )
+        }
+    }
+
+    appeal?.let { pending ->
+        val target = pending.target(state.todayResult)
+        // 낼 대상(verificationId)이 없으면 시트를 열지 않는다
+        if (target == null) {
+            appeal = null
+        } else {
+            AppealSheet(
+                target = target,
+                submitting = state.isSubmittingAppeal,
+                imageUrl = state.appealImageUrl,
+                uploadingImage = state.isUploadingAppealImage,
+                reasonError = state.appealReasonError,
+                onPickImage = {
+                    appealImagePicker.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                    )
+                },
+                onSubmit = { reason ->
+                    appeal = null
+                    onIntent(ChallengeDetailIntent.SubmitAppeal(target.verificationId, reason))
+                },
+                onDismiss = {
+                    appeal = null
+                    onIntent(ChallengeDetailIntent.DismissAppeal)
+                },
             )
         }
     }
@@ -482,13 +497,11 @@ internal fun ChallengeDetailContent(
             block = block,
             myTier =
                 state.detail
-
                     ?.gate
                     ?.myDisplayTier
                     ?.value,
             requiredTier =
                 state.detail
-
                     ?.gate
                     ?.minTier
                     ?.value,
@@ -515,171 +528,195 @@ internal fun ChallengeDetailContent(
     }
 }
 
-/** 방 상세 3탭. */
+/**
+ * 들어간 뒤 화면. 그룹은 피드·랭킹 2탭이고 피드 맨 위에 오늘 내 인증을 고정한다.
+ * 솔로는 방 데이터·피드가 없어 오늘 인증과 캘린더를 한 화면에 둔다.
+ */
 @Composable
-private fun RoomDetailTabs(
+private fun RoomView(
     state: ChallengeDetailState,
     detail: ChallengeDetail,
-    room: ChallengeRoom,
+    room: ChallengeRoom?,
     onIntent: (ChallengeDetailIntent) -> Unit,
-    onConfirmLeave: () -> Unit,
+    onBack: () -> Unit,
+    onOpenMenu: () -> Unit,
+    onOpenCalendar: () -> Unit,
+    onOpenTodayAppeal: () -> Unit,
+    onOpenDayAppeal: (ChallengeCalendarDay) -> Unit,
 ) {
-    // 이의 증빙 사진 선택.
-    val appealImagePicker =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            uri?.let { onIntent(ChallengeDetailIntent.PickAppealImage(it.toString())) }
+    val subtitle =
+        if (room != null) {
+            listOfNotNull(
+                "D-${room.summary.remainingDays}",
+                state.myProgressRate?.let { "내 달성률 ${it.toPercentText()}%" },
+            ).joinToString(" · ")
+        } else {
+            detail.periodRange()
         }
-    // 캘린더에서 고른 지난 건.
-    var calendarAppeal by remember { mutableStateOf<ChallengeCalendarDay?>(null) }
-    Column(modifier = Modifier.fillMaxSize().ttiContentDrawn()) {
-        if (state.selectedTab == RoomTab.INFO) {
-            RoomInfoHeader(
-                categoryLabel = detail.category?.label,
-                imageUrl = detail.imageUrl,
-                remainingDays = room.summary.remainingDays,
-                myProgressRate = state.myProgressRate,
+    // 감시자 벌칙이 켜진 챌린지만 감시자를 둘 수 있다
+    val watcherCount =
+        state.watchers
+            ?.takeIf { detail.penalties?.watcher == true }
+            ?.watchers
+            ?.count { it.status.isActive }
+    val missingPermissions = state.missingPermissionTokens().isNotEmpty()
+    val todayBlock: @Composable () -> Unit = {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            TodayVerificationCard(
+                // 솔로는 room 이 없어 오늘 상태의 원천이 인증 모듈 응답 하나뿐이다.
+                roomStatus = room?.myTodayStatus,
+                today = state.todayResult,
+                // 이의는 서버가 낼 수 있다고 한 건에만, 대상 인증 건 ID 를 알 때만 낸다.
+                onAppealClick =
+                    onOpenTodayAppeal.takeIf {
+                        state.todayResult?.appeal?.eligible == true && state.todayResult.verificationId != null
+                    },
+                onOpenManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
+                onRegisterAnchor = { onIntent(ChallengeDetailIntent.RegisterAnchor) }.takeIf { state.setup?.requiresAnchors == true },
+                onOpenPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
+            )
+            TodayQuickActions(
+                onManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
+                onPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }.takeIf { missingPermissions },
+                // 솔로는 캘린더를 본문에 바로 편다
+                onCalendar = onOpenCalendar.takeIf { room != null },
             )
         }
-        RoomTabRow(
-            selected = state.selectedTab,
-            onSelect = { onIntent(ChallengeDetailIntent.SelectTab(it)) },
+    }
+    Column(modifier = Modifier.fillMaxSize().ttiContentDrawn()) {
+        RoomCoverHeader(
+            detail = detail,
+            subtitle = subtitle,
+            watcherCount = watcherCount,
+            onBack = onBack,
+            onOpenMenu = onOpenMenu,
+            onOpenWatchers = { onIntent(ChallengeDetailIntent.OpenWatchers) },
         )
+        PermissionBanners(state = state, missingPermissions = missingPermissions, onIntent = onIntent)
+        if (room != null) {
+            RoomPillTabs(selected = state.selectedTab, onSelect = { onIntent(ChallengeDetailIntent.SelectTab(it)) })
+            when (state.selectedTab) {
+                RoomTab.FEED ->
+                    RoomFeedTab(
+                        state = state,
+                        onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
+                        onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
+                        header = todayBlock,
+                    )
 
-        when (state.selectedTab) {
-            RoomTab.INFO ->
-                RoomInfoTab(
-                    detail = detail,
-                    room = room,
-                    today = state.todayResult,
-                    // 등록할 게 있는 인증 방식일 때만 진입점을 만든다
-                    onRegisterApps =
-                        { onIntent(ChallengeDetailIntent.RegisterApps) }
-                            .takeIf { state.setup?.requiresTargetPackages == true },
-                    onRegisterAnchor =
-                        { onIntent(ChallengeDetailIntent.RegisterAnchor) }
-                            .takeIf { state.setup?.requiresAnchors == true },
-                    onSubmitAppeal = { id, reason -> onIntent(ChallengeDetailIntent.SubmitAppeal(id, reason)) },
-                    onOpenPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
-                    isSubmittingAppeal = state.isSubmittingAppeal,
-                    appealImageUrl = state.appealImageUrl,
-                    isUploadingAppealImage = state.isUploadingAppealImage,
-                    appealReasonError = state.appealReasonError,
-                    onPickAppealImage = {
-                        appealImagePicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                        )
-                    },
-                    onDismissAppeal = { onIntent(ChallengeDetailIntent.DismissAppeal) },
-                    // 수동 방에서만 체크 CTA 를 넘긴다
-                    onOpenManualCheck =
-                        { onIntent(ChallengeDetailIntent.OpenManualCheck) }
-                            .takeIf { detail.manualCheckable },
-                    extraSections = {
-                        // 상태를 모르면 그리지 않는다
-                        state.isMuted?.let { muted ->
-                            RoomMuteSection(
-                                muted = muted,
-                                enabled = !state.isMuteSubmitting,
-                                onToggle = { onIntent(ChallengeDetailIntent.ToggleMute(it)) },
-                            )
-                        }
-                        // 솔로 방에만 월 캘린더를 편다
-                        if (!detail.mode.isGroup) {
-                            SoloMonthCalendar(
-                                month = state.calendarMonth.orEmpty(),
-                                calendar = state.calendar,
-                                isLoading = state.isCalendarLoading,
-                                // 지난 건은 여기가 유일한 이의 진입점이다
-                                onAppealDay = { day -> calendarAppeal = day },
-                                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
-                                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
-                            )
-                        }
-                        val myWatchers = state.watchers
-                        if (myWatchers != null && detail.penalties?.watcher == true) {
-                            WatcherSection(
-                                watchers = myWatchers.watchers,
-                                limit = myWatchers.limit,
-                                isInviting = state.isInvitingWatcher,
-                                onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-                            )
-                        }
-                        val members = state.members
-                        if (members != null) {
-                            RoomMemberSection(
-                                members = members.members,
-                                participantCount = members.participantCount,
-                                maxParticipants = members.capacity,
-                                myUserId = state.myUserId,
-                                actionEnabled = !state.isMemberActionLoading,
-                                // 초대 링크 발급은 비공개 그룹 방의 방장만 된다(서버도 같은 조건으로 막는다).
-                                canInviteMember =
-                                    room.myRole.isOwner &&
-                                        state.detail
-
-                                            ?.visibility
-                                            ?.isPrivate == true &&
-                                        state.detail.mode.isGroup,
-                                onInviteMember = { onIntent(ChallengeDetailIntent.InviteMember) },
-                                onLeave = onConfirmLeave,
-                                onReportMember = { onIntent(ChallengeDetailIntent.OpenUserReport(it)) },
-                                onOpenProfile = { onIntent(ChallengeDetailIntent.OpenMemberProfile(it)) },
-                            )
-                        }
-                    },
+                RoomTab.RANKING ->
+                    RoomRankingTab(
+                        state = state,
+                        onSelectScope = { onIntent(ChallengeDetailIntent.SelectRankingScope(it)) },
+                        onLoadMoreCross = { onIntent(ChallengeDetailIntent.LoadMoreCrossRanking) },
+                    )
+            }
+        } else {
+            SoloRoomBody {
+                todayBlock()
+                SoloMonthCalendar(
+                    month = state.calendarMonth.orEmpty(),
+                    calendar = state.calendar,
+                    isLoading = state.isCalendarLoading,
+                    onAppealDay = onOpenDayAppeal,
+                    onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
+                    onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
                 )
-
-            RoomTab.FEED ->
-                RoomFeedTab(
-                    state = state,
-                    onLoadMore = { onIntent(ChallengeDetailIntent.LoadMoreThreads) },
-                    onRetry = { onIntent(ChallengeDetailIntent.RetryThreads) },
-                )
-
-            RoomTab.RANKING ->
-                RoomRankingTab(
-                    state = state,
-                    onSelectScope = { onIntent(ChallengeDetailIntent.SelectRankingScope(it)) },
-                    onLoadMoreCross = { onIntent(ChallengeDetailIntent.LoadMoreCrossRanking) },
-                )
+            }
         }
     }
+}
 
-    calendarAppeal?.let { day ->
-        val verificationId = day.verificationId
-        if (verificationId == null) {
-            calendarAppeal = null
-        } else {
-            AppealSheet(
-                target =
-                    AppealTarget(
-                        verificationId = verificationId,
-                        date = day.date,
-                        // 캘린더는 사유·기한을 주지 않는다.
-                        failureReason = null,
-                        eligibleUntil = null,
-                    ),
-                submitting = state.isSubmittingAppeal,
-                imageUrl = state.appealImageUrl,
-                uploadingImage = state.isUploadingAppealImage,
-                reasonError = state.appealReasonError,
-                onPickImage = {
-                    appealImagePicker.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                    )
-                },
-                onSubmit = { reason ->
-                    calendarAppeal = null
-                    onIntent(ChallengeDetailIntent.SubmitAppeal(verificationId, reason))
-                },
-                onDismiss = {
-                    calendarAppeal = null
-                    onIntent(ChallengeDetailIntent.DismissAppeal)
-                },
+/** 참여 중인데 권한이 끊겼거나 기기 위치가 꺼졌으면 배너로 알린다. */
+@Composable
+private fun PermissionBanners(
+    state: ChallengeDetailState,
+    missingPermissions: Boolean,
+    onIntent: (ChallengeDetailIntent) -> Unit,
+) {
+    Column {
+        if (missingPermissions) {
+            Text(
+                text = "인증에 필요한 권한이 꺼져 있어요 · 다시 연결하기",
+                color = RuleUpTheme.colors.danger,
+                style = RuleUpTheme.typography.caption,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(RuleUpTheme.colors.dangerContainer)
+                        .singleClickable { onIntent(ChallengeDetailIntent.OpenPermissionRepair) }
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+            )
+        }
+        // 권한은 있어도 기기 위치가 꺼져 있으면 장소 신호가 모이지 않아 실패로 판정될 수 있다.
+        if (state.locationServiceOff()) {
+            val context = LocalContext.current
+            Text(
+                text = "휴대폰 위치(GPS)가 꺼져 있어 장소 인증이 되지 않아요 · 위치 켜기",
+                color = RuleUpTheme.colors.danger,
+                style = RuleUpTheme.typography.caption,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(RuleUpTheme.colors.dangerContainer)
+                        .singleClickable { context.openLocationSettings() }
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
             )
         }
     }
 }
+
+/** 방 ⋯ 메뉴. 가끔 쓰는 설정·기록·관리 동작을 모은다(공지는 제품에서 빠졌다). */
+private fun roomMenuEntries(
+    state: ChallengeDetailState,
+    detail: ChallengeDetail,
+    onIntent: (ChallengeDetailIntent) -> Unit,
+    onOpenCalendar: () -> Unit,
+    onOpenInfo: () -> Unit,
+    onOpenMembers: () -> Unit,
+    onLeave: () -> Unit,
+): List<RoomSheetEntry> =
+    buildList {
+        val myRole = state.room?.myRole ?: detail.myRole
+        if (state.setup?.requiresTargetPackages == true) {
+            add(RoomSheetEntry("대상 앱 설정") { onIntent(ChallengeDetailIntent.RegisterApps) })
+        }
+        if (state.setup?.requiresAnchors == true) {
+            add(RoomSheetEntry("인증 장소 설정") { onIntent(ChallengeDetailIntent.RegisterAnchor) })
+        }
+        // 솔로는 캘린더가 본문에 이미 있다
+        if (state.room != null) add(RoomSheetEntry("캘린더 · 지난 기록", value = "이의 제기도 여기서", onClick = onOpenCalendar))
+        if (detail.penalties?.watcher == true) {
+            val watchers = state.watchers
+            add(
+                RoomSheetEntry(
+                    "감시자 관리",
+                    value = watchers?.let { w -> "${w.watchers.count { it.status.isActive }} / ${w.limit?.toString() ?: "무제한"}" },
+                ) { onIntent(ChallengeDetailIntent.OpenWatchers) },
+            )
+        }
+        // 상태를 모르면 그리지 않는다
+        state.isMuted?.let { muted ->
+            add(
+                RoomSheetEntry(
+                    "이 챌린지 알림 끄기",
+                    toggle = muted,
+                    toggleEnabled = !state.isMuteSubmitting,
+                ) { onIntent(ChallengeDetailIntent.ToggleMute(!muted)) },
+            )
+        }
+        add(RoomSheetEntry("상세 내용 보기", onClick = onOpenInfo))
+        state.members
+            ?.takeIf {
+                state.room != null
+            }?.let { add(RoomSheetEntry("멤버 보기", value = "${it.participantCount}명", onClick = onOpenMembers)) }
+        if (myRole.isOwner) {
+            add(RoomSheetEntry("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
+        } else {
+            add(RoomSheetEntry("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
+        }
+        add(RoomSheetEntry("챌린지 나가기", danger = true, onClick = onLeave))
+    }
 
 /** 솔로 상세에서 연 이의 시트의 대상. */
 private sealed interface SoloAppeal {
@@ -698,22 +735,6 @@ private sealed interface SoloAppeal {
                 }
         }
 }
-
-/** 공지는 제품에서 빠져 진입점을 두지 않는다 */
-private fun roomMenuItems(
-    myRole: MemberRole,
-    // 감시자 벌칙이 켜진 챌린지만 감시자를 둘 수 있다
-    watcherEnabled: Boolean,
-    onIntent: (ChallengeDetailIntent) -> Unit,
-): List<RoomMenuItem> =
-    buildList {
-        // 확인 대기함은 없앴다
-        if (myRole.isOwner) {
-            add(RoomMenuItem("챌린지 수정") { onIntent(ChallengeDetailIntent.OpenSettings) })
-        }
-        if (watcherEnabled) add(RoomMenuItem("감시자 등록") { onIntent(ChallengeDetailIntent.InviteWatcher) })
-        if (!myRole.isOwner) add(RoomMenuItem("챌린지 신고") { onIntent(ChallengeDetailIntent.OpenReport) })
-    }
 
 private enum class MemberConfirm { LEAVE }
 
@@ -741,182 +762,6 @@ private fun MemberConfirmDialog(
             }
         },
     )
-}
-
-/** 비참여자가 보는 공개 상세 본문. */
-@Composable
-private fun PublicDetailBody(
-    state: ChallengeDetailState,
-    detail: ChallengeDetail,
-    onIntent: (ChallengeDetailIntent) -> Unit,
-    onOpenTodayAppeal: () -> Unit = {},
-    onOpenDayAppeal: (ChallengeCalendarDay) -> Unit = {},
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(top = 8.dp, bottom = 120.dp)
-                .ttiContentDrawn(),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        DetailHero(detail)
-        DetailInfoCard(detail)
-        // 솔로 방은 방 홈(`/room`)이 내려오지 않아 방 정보 탭 전체가 없다.
-        if (detail.myRole.isMember) {
-            TodayVerificationCard(
-                // 솔로는 room 이 없어 오늘 상태의 원천이 인증 모듈 응답 하나뿐이다.
-                roomStatus = null,
-                today = state.todayResult,
-                onOpenManualCheck = { onIntent(ChallengeDetailIntent.OpenManualCheck) }.takeIf { detail.manualCheckable },
-                onRegisterAnchor =
-                    { onIntent(ChallengeDetailIntent.RegisterAnchor) }
-                        .takeIf { state.setup?.requiresAnchors == true },
-                onOpenPermissionRepair = { onIntent(ChallengeDetailIntent.OpenPermissionRepair) },
-                // 이의는 서버가 낼 수 있다고 한 건에만, 대상 인증 건 ID 를 알 때만 낸다.
-                onAppealClick =
-                    { onOpenTodayAppeal() }
-                        .takeIf { state.todayResult?.appeal?.eligible == true && state.todayResult.verificationId != null },
-            )
-            MySetupCard(
-                onRegisterApps = { onIntent(ChallengeDetailIntent.RegisterApps) }.takeIf { state.setup?.requiresTargetPackages == true },
-                onRegisterAnchor = { onIntent(ChallengeDetailIntent.RegisterAnchor) }.takeIf { state.setup?.requiresAnchors == true },
-            )
-        }
-        // 솔로 수동 방의 유일한 인증 동선.
-        if (detail.manualCheckable) {
-            ManualCheckCard(
-                checked = state.todayResult?.status == TodayResultStatus.DONE,
-                onClick = { onIntent(ChallengeDetailIntent.OpenManualCheck) },
-            )
-        }
-        // 지난 건은 캘린더가 유일한 이의 진입점이다
-        if (detail.myRole.isMember) {
-            SoloMonthCalendar(
-                month = state.calendarMonth.orEmpty(),
-                calendar = state.calendar,
-                isLoading = state.isCalendarLoading,
-                onAppealDay = onOpenDayAppeal,
-                onPrevMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(-1)) },
-                onNextMonth = { onIntent(ChallengeDetailIntent.ShiftCalendarMonth(1)) },
-            )
-        }
-        // 감시자는 챌린지 × 참여자 단위
-        val myWatchers = state.watchers
-        if (myWatchers != null && detail.penalties?.watcher == true) {
-            WatcherSection(
-                watchers = myWatchers.watchers,
-                limit = myWatchers.limit,
-                isInviting = state.isInvitingWatcher,
-                onInvite = { onIntent(ChallengeDetailIntent.InviteWatcher) },
-            )
-        }
-    }
-}
-
-/** 솔로 수동 방의 오늘 인증 진입 카드. */
-@Composable
-private fun ManualCheckCard(
-    checked: Boolean,
-    onClick: () -> Unit,
-) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface)
-                .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = if (checked) "오늘 인증을 마쳤어요" else "오늘 인증이 아직 남았어요",
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.cardTitle,
-        )
-        RuleUpPrimaryButton(
-            text = if (checked) "인증 수정" else "오늘 인증 체크",
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun DetailHero(detail: ChallengeDetail) {
-    // 대표 사진이 있으면 카드 배경으로 깐다.
-    ChallengeCoverBackground(
-        imageUrl = detail.imageUrl,
-        scrim = RuleUpTheme.colors.surface,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(RuleUpTheme.colors.surface),
-    ) {
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            CategoryTile(category = detail.category, size = 56.dp, cornerRadius = 14.dp, emojiSize = 26.sp)
-            Text(
-                text = detail.title,
-                color = RuleUpTheme.colors.textPrimary,
-                style = RuleUpTheme.typography.title,
-            )
-            Text(
-                // 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다).
-                text = "${detail.ownerLabel()} · ${detail.participantCount}명 참여 중",
-                color = RuleUpTheme.colors.textSecondary,
-                style = RuleUpTheme.typography.small,
-            )
-            detail.description?.takeIf { it.isNotBlank() }?.let {
-                Text(
-                    text = it,
-                    color = RuleUpTheme.colors.textSlate,
-                    style = RuleUpTheme.typography.body,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DetailInfoCard(detail: ChallengeDetail) {
-    val method = if (detail.verification.type.isAuto) "자동 인증" else "직접 체크"
-    val participation = if (detail.mode.isGroup) "그룹" else "솔로"
-
-    RuleUpCard {
-        InfoRow(label = "기간", value = "${detail.period.start} ~ ${detail.period.end}")
-        InfoRow(label = "정원", value = "${detail.participantCount} / ${capacityLabel(detail.capacity)}")
-        InfoRow(label = "참여 형태", value = participation)
-        InfoRow(label = "인증 방식", value = detail.verification.detail ?: method)
-    }
-}
-
-@Composable
-private fun InfoRow(
-    label: String,
-    value: String,
-) {
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = label,
-            color = RuleUpTheme.colors.textMuted,
-            style = RuleUpTheme.typography.body,
-            modifier = Modifier.width(80.dp),
-        )
-        Text(
-            text = value,
-            color = RuleUpTheme.colors.textPrimary,
-            style = RuleUpTheme.typography.bodyMedium,
-        )
-    }
 }
 
 /** "이 템플릿으로 만들기" */
@@ -983,9 +828,6 @@ private fun JoinRetrySnackbar(
 }
 
 private const val SNACKBAR_DURATION_MS = 5_000L
-
-/** 방장 표기. */
-private fun ChallengeDetail.ownerLabel(): String = owner?.nickname ?: if (ownerType == OwnerType.BOT) "봇 방장" else "방장 없음"
 
 /** 가입 차단 안내. */
 @OptIn(ExperimentalMaterial3Api::class)

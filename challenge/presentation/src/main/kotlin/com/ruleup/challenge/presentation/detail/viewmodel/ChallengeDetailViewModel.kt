@@ -17,6 +17,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeConfirmPage
 import com.ruleup.challenge.domain.navigation.ChallengeRankingPage
 import com.ruleup.challenge.domain.navigation.ChallengeSettingsPage
 import com.ruleup.challenge.domain.navigation.ChallengeTargetsPage
+import com.ruleup.challenge.domain.navigation.ChallengeWatchersPage
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
@@ -130,6 +131,7 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.DismissJoinRetry -> dispatch(ChallengeDetailReducerEvent.JoinRetryable(false))
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
+                ChallengeDetailIntent.OpenWatchers -> openWatchers()
                 ChallengeDetailIntent.InviteMember -> inviteMember()
                 is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
 
@@ -956,6 +958,11 @@ class ChallengeDetailViewModel
                         emitEffect(ChallengeDetailEffect.ShowMessage(it.userFacingMessage("초대 링크를 만들지 못했어요")))
                     }
             }
+        }
+
+        private fun openWatchers() {
+            val id = currentState.detail?.challengeId ?: return
+            navigationHelper.navigateByRoute(ChallengeWatchersPage(id).toRoute())
         }
 
         /** 내 감시자 초대 생성 → 본인 카카오톡 공유. */

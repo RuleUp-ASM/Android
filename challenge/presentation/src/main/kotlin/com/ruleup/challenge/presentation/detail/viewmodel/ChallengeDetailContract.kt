@@ -57,6 +57,9 @@ sealed interface ChallengeDetailIntent : MviIntent {
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
 
+    /** 내 감시자 화면으로. */
+    data object OpenWatchers : ChallengeDetailIntent
+
     /** (방장) 비공개 방 멤버 초대 링크 발급 후 공유. */
     data object InviteMember : ChallengeDetailIntent
 
@@ -186,7 +189,6 @@ sealed interface ChallengeDetailEffect : MviEffect {
 enum class RoomTab(
     val label: String,
 ) {
-    INFO("정보"),
     FEED("피드"),
     RANKING("랭킹"),
 }
@@ -196,10 +198,10 @@ enum class RankingScope(
     val label: String,
 ) {
     // 같은 방의 참여자끼리
-    MEMBER("멤버"),
+    MEMBER("멤버 순위"),
 
     // 같은 모드의 방끼리
-    ROOM("방 순위"),
+    ROOM("챌린지 순위"),
 }
 
 /** 상세 하단 CTA 버튼이 유도할 다음 셋업 단계. */
@@ -248,7 +250,7 @@ data class ChallengeDetailState(
     // 복제 요청 중(버튼 스피너 + 중복 탭 차단).
     val isCloning: Boolean = false,
     // 방 상세 3탭 (room 이 있을 때만 의미가 있다)
-    val selectedTab: RoomTab = RoomTab.INFO,
+    val selectedTab: RoomTab = RoomTab.FEED,
     // 피드.
     val threads: List<ThreadItem> = emptyList(),
     val threadsCursor: String? = null,

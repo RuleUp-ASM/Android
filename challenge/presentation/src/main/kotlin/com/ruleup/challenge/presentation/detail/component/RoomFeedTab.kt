@@ -47,6 +47,8 @@ internal fun RoomFeedTab(
     onLoadMore: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    // 피드 위에 고정할 카드(오늘 내 인증 등). 로딩·빈 상태에서도 보인다.
+    header: (@Composable () -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
 
@@ -67,34 +69,39 @@ internal fun RoomFeedTab(
             .collect { if (it && state.canLoadMoreThreads) loadMore() }
     }
 
-    when {
-        state.isThreadsLoading && state.threads.isEmpty() ->
-            Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = RuleUpTheme.colors.brand)
-            }
+    LazyColumn(
+        state = listState,
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        header?.let { item(key = "header") { it() } }
+        when {
+            state.isThreadsLoading && state.threads.isEmpty() ->
+                item(key = "loading") {
+                    Box(Modifier.fillMaxWidth().padding(vertical = 40.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = RuleUpTheme.colors.brand)
+                    }
+                }
 
-        state.threads.isEmpty() && state.threadsError != null ->
-            RoomEmptyState(
-                modifier = modifier,
-                message = state.threadsError,
-                actionLabel = "다시 불러오기",
-                onAction = onRetry,
-            )
+            state.threads.isEmpty() && state.threadsError != null ->
+                item(key = "error") {
+                    RoomEmptyState(
+                        message = state.threadsError,
+                        actionLabel = "다시 불러오기",
+                        onAction = onRetry,
+                    )
+                }
 
-        state.threads.isEmpty() ->
-            FeedEmptyState(
-                modifier = modifier,
-                ownerType = state.room?.ownerType,
-                isOwner = state.room?.myRole?.isOwner == true,
-            )
+            state.threads.isEmpty() ->
+                item(key = "empty") {
+                    FeedEmptyState(
+                        ownerType = state.room?.ownerType,
+                        isOwner = state.room?.myRole?.isOwner == true,
+                    )
+                }
 
-        else ->
-            LazyColumn(
-                state = listState,
-                modifier = modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
+            else -> {
                 // 같은 날짜끼리 묶어 "오늘 / 어제 / 7월 25일" 헤더를 세운다.
                 var lastDateKey: String? = null
                 state.threads.forEach { item ->
@@ -156,6 +163,7 @@ internal fun RoomFeedTab(
                     }
                 }
             }
+        }
     }
 }
 
