@@ -97,6 +97,10 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="ruleup_default" />
+        <!-- 없으면 앱이 백그라운드일 때 OS 가 앱 아이콘(색 있는 사각형)을 알림 아이콘으로 쓴다. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_ruleup" />
 
         <!-- FCM 수신. -->
         <service
