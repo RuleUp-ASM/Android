@@ -92,6 +92,7 @@ class CreateChallengeViewModel
                 CreateChallengeIntent.Exit -> exit()
 
                 CreateChallengeIntent.RetryTemplates -> loadTemplates()
+                CreateChallengeIntent.RefreshTemplates -> refreshTemplates()
 
                 is CreateChallengeIntent.SetRoutineDescription -> {
                     savedStateHandle[KEY_ROUTINE_DESCRIPTION] = intent.description
@@ -213,12 +214,16 @@ class CreateChallengeViewModel
                 is CreateChallengeReducerEvent.TemplatesLoaded ->
                     state.copy(
                         templates = event.templates,
+                        seenTemplateIds = event.seenTemplateIds,
                         isLoadingTemplates = false,
                         templatesFailed = false,
                     )
 
                 CreateChallengeReducerEvent.TemplatesFailed ->
                     state.copy(isLoadingTemplates = false, templatesFailed = true)
+
+                CreateChallengeReducerEvent.TemplatesRefreshFailed ->
+                    state.copy(isLoadingTemplates = false)
 
                 CreateChallengeReducerEvent.Drafting ->
                     state.copy(isDrafting = true, fallbackMessage = null)
@@ -356,14 +361,30 @@ class CreateChallengeViewModel
                     state.copy(isCreating = false, createdChallengeId = event.challengeId)
             }
 
-        private fun loadTemplates() {
+        private fun refreshTemplates() {
+            val state = currentState
+            loadTemplates(exclude = state.seenTemplateIds + state.templates.map { it.templateId })
+        }
+
+        private fun loadTemplates(exclude: Set<Long> = emptySet()) {
             if (currentState.isLoadingTemplates) return
             viewModelScope.launch {
                 dispatch(CreateChallengeReducerEvent.TemplatesLoading)
-                runCatching { challengeRepository.getRoutineTemplates() }
-                    .onSuccess { dispatch(CreateChallengeReducerEvent.TemplatesLoaded(it)) }
-                    // 추천이 실패해도 설명 입력 경로는 살아 있어야 하므로 화면 전체를 에러로 만들지 않는다.
-                    .onFailure { dispatch(CreateChallengeReducerEvent.TemplatesFailed) }
+                runCatching { challengeRepository.getRoutineTemplates(exclude) }
+                    .onSuccess { templates ->
+                        val ids = templates.map { it.templateId }.toSet()
+                        // 받은 게 전부 이미 본 것이면(서버가 exclude 를 모르거나 추천을 다 돌았다) 처음부터 다시 센다.
+                        val seen = if (exclude.isNotEmpty() && exclude.containsAll(ids)) ids else exclude + ids
+                        dispatch(CreateChallengeReducerEvent.TemplatesLoaded(templates, seen))
+                    }.onFailure {
+                        // 추천이 실패해도 설명 입력 경로는 살아 있어야 하므로 화면 전체를 에러로 만들지 않는다.
+                        if (currentState.templates.isEmpty()) {
+                            dispatch(CreateChallengeReducerEvent.TemplatesFailed)
+                        } else {
+                            dispatch(CreateChallengeReducerEvent.TemplatesRefreshFailed)
+                            emitEffect(CreateChallengeEffect.ShowError("다른 추천을 불러오지 못했어요"))
+                        }
+                    }
             }
         }
 

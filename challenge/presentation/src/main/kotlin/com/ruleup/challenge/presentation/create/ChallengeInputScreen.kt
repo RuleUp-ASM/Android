@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -79,17 +80,25 @@ fun ChallengeInputContent(
 
                 RoutineDescriptionBox(state = state, onIntent = onIntent)
 
-                OrDivider()
+                OrDivider(
+                    // 처음 불러오기 전이거나 실패해 보여 줄 추천이 없으면 「다른 추천」도 없다.
+                    onRefresh =
+                        { onIntent(CreateChallengeIntent.RefreshTemplates) }
+                            .takeIf { state.templates.isNotEmpty() },
+                    refreshEnabled = !state.isLoadingTemplates && !state.isDrafting,
+                )
 
-                state.templates.forEach { template ->
-                    TemplateCard(
-                        template = template,
-                        enabled = !state.isDrafting,
-                        onClick = { onIntent(CreateChallengeIntent.SelectTemplate(template.templateId)) },
-                    )
-                }
+                // 새로 받는 동안 이전 추천을 누르면 바뀌기 직전의 루틴으로 초안이 만들어진다.
                 if (state.isLoadingTemplates) {
                     repeat(SKELETON_COUNT) { TemplateSkeleton() }
+                } else {
+                    state.templates.forEach { template ->
+                        TemplateCard(
+                            template = template,
+                            enabled = !state.isDrafting,
+                            onClick = { onIntent(CreateChallengeIntent.SelectTemplate(template.templateId)) },
+                        )
+                    }
                 }
                 if (state.templatesFailed) {
                     RetryRow(onRetry = { onIntent(CreateChallengeIntent.RetryTemplates) })
@@ -254,7 +263,10 @@ private fun SubmitButton(
 }
 
 @Composable
-private fun OrDivider() {
+private fun OrDivider(
+    onRefresh: (() -> Unit)?,
+    refreshEnabled: Boolean,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -263,6 +275,25 @@ private fun OrDivider() {
         HorizontalDivider(modifier = Modifier.weight(1f), color = RuleUpTheme.colors.border)
         Text("또는 바로 시작하기", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.captionMedium)
         HorizontalDivider(modifier = Modifier.weight(1f), color = RuleUpTheme.colors.border)
+        if (onRefresh != null) {
+            Box(
+                modifier =
+                    Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .border(1.dp, RuleUpTheme.colors.border, CircleShape)
+                        .background(RuleUpTheme.colors.surface)
+                        .singleClickable(enabled = refreshEnabled, onClick = onRefresh),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_refresh),
+                    contentDescription = "다른 추천 보기",
+                    tint = if (refreshEnabled) RuleUpTheme.colors.textSecondary else RuleUpTheme.colors.textMuted,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
     }
 }
 

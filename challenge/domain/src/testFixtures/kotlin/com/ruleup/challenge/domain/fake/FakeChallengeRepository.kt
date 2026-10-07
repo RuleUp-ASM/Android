@@ -22,6 +22,7 @@ import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallengeFilter
 import com.ruleup.challenge.domain.entity.MyChallengePage
 import com.ruleup.challenge.domain.entity.RoutineDescription
+import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -45,6 +46,7 @@ class FakeChallengeRepository(
     private val join: ((String) -> JoinResult)? = null,
     private val setupInfo: ((String) -> ChallengeSetupInfo)? = null,
     private val leave: ((String) -> LeaveResult)? = null,
+    private val templates: ((exclude: Set<Long>) -> List<RoutineTemplate>)? = null,
 ) : ChallengeRepository {
     var lastCommand: CreateChallengeCommand? = null
         private set
@@ -65,7 +67,13 @@ class FakeChallengeRepository(
     var lastUpdate: ChallengeUpdate? = null
         private set
 
-    override suspend fun getRoutineTemplates() = throw NotImplementedError()
+    /** 추천 루틴을 어떤 제외 목록으로 물었는지. */
+    val templateExcludes = mutableListOf<Set<Long>>()
+
+    override suspend fun getRoutineTemplates(exclude: Set<Long>): List<RoutineTemplate> {
+        templateExcludes += exclude
+        return templates?.invoke(exclude) ?: throw NotImplementedError()
+    }
 
     override suspend fun createDraft(description: RoutineDescription): DraftResult {
         calls += "createDraft"

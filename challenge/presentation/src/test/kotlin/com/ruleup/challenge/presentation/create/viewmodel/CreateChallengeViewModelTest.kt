@@ -12,6 +12,7 @@ import com.ruleup.challenge.domain.entity.DraftResult
 import com.ruleup.challenge.domain.entity.ModerationState
 import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.RecommendationRateLimitedException
+import com.ruleup.challenge.domain.entity.RoutineTemplate
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
@@ -43,6 +44,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -386,6 +388,81 @@ class CreateChallengeViewModelTest {
                     penalties = ChallengePenalties(score = true, groupShare = false, watcher = false),
                 ),
         )
+
+    @Test
+    fun `다른 추천을 누르면 지금 보던 추천을 빼 달라고 다시 묻는다`() =
+        runTest {
+            val repo = FakeChallengeRepository(templates = { exclude -> if (exclude.isEmpty()) templates(1, 2, 3) else templates(4, 5, 6) })
+            val vm = viewModel(repo = repo)
+
+            vm.onIntent(CreateChallengeIntent.Load)
+            vm.onIntent(CreateChallengeIntent.RefreshTemplates)
+
+            assertEquals(listOf(emptySet(), setOf(1L, 2L, 3L)), repo.templateExcludes)
+            assertEquals(
+                listOf(4L, 5L, 6L),
+                vm.uiState.value.templates
+                    .map { it.templateId },
+            )
+        }
+
+    @Test
+    fun `다른 추천을 거듭 받으면 그동안 본 추천을 모두 뺀다`() =
+        runTest {
+            var next = 1L
+            val repo = FakeChallengeRepository(templates = { templates(next++, next++, next++) })
+            val vm = viewModel(repo = repo)
+
+            vm.onIntent(CreateChallengeIntent.Load)
+            vm.onIntent(CreateChallengeIntent.RefreshTemplates)
+            vm.onIntent(CreateChallengeIntent.RefreshTemplates)
+
+            assertEquals(setOf(1L, 2L, 3L, 4L, 5L, 6L), repo.templateExcludes.last())
+        }
+
+    @Test
+    fun `이미 본 추천만 돌아오면 처음부터 다시 센다`() =
+        runTest {
+            // 서버가 exclude 를 아직 모르거나 추천을 다 돌았을 때 — 제외 목록이 끝없이 쌓이지 않게 한다.
+            val repo = FakeChallengeRepository(templates = { templates(1, 2, 3) })
+            val vm = viewModel(repo = repo)
+
+            vm.onIntent(CreateChallengeIntent.Load)
+            vm.onIntent(CreateChallengeIntent.RefreshTemplates)
+            vm.onIntent(CreateChallengeIntent.RefreshTemplates)
+
+            assertEquals(setOf(1L, 2L, 3L), repo.templateExcludes.last())
+        }
+
+    @Test
+    fun `다른 추천을 못 받으면 보던 추천을 그대로 둔다`() =
+        runTest {
+            val repo = FakeChallengeRepository(templates = { exclude -> if (exclude.isEmpty()) templates(1, 2, 3) else error("추천 실패") })
+            val vm = viewModel(repo = repo)
+
+            vm.onIntent(CreateChallengeIntent.Load)
+            vm.onIntent(CreateChallengeIntent.RefreshTemplates)
+
+            assertEquals(
+                listOf(1L, 2L, 3L),
+                vm.uiState.value.templates
+                    .map { it.templateId },
+            )
+            assertFalse(vm.uiState.value.templatesFailed)
+            assertFalse(vm.uiState.value.isLoadingTemplates)
+        }
+
+    private fun templates(vararg ids: Long) =
+        ids.map { id ->
+            RoutineTemplate(
+                templateId = id,
+                title = "추천 $id",
+                description = null,
+                category = Category.EXERCISE,
+                verificationType = VerificationType.AUTO,
+                reason = "전체 인기",
+            )
+        }
 
     private fun viewModel(
         repo: FakeChallengeRepository = FakeChallengeRepository(),

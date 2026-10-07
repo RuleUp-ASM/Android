@@ -47,9 +47,9 @@ class ChallengeRepositoryImpl
         private val api: ChallengeApi,
         private val imageReader: ImageReader,
     ) : ChallengeRepository {
-        override suspend fun getRoutineTemplates(): List<RoutineTemplate> =
+        override suspend fun getRoutineTemplates(exclude: Set<Long>): List<RoutineTemplate> =
             api
-                .getRoutineTemplates()
+                .getRoutineTemplates(exclude = exclude.takeIf { it.isNotEmpty() }?.joinToString(","))
                 .getOrThrow()
                 .toDomain()
 
