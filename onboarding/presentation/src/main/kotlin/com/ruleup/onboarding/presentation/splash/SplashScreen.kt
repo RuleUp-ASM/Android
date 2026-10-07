@@ -3,6 +3,7 @@ package com.ruleup.onboarding.presentation.splash
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -83,19 +84,17 @@ private fun SplashContent(
             Box(
                 modifier =
                     Modifier
-                        .height(120.dp)
+                        .size(120.dp)
                         .clip(RoundedCornerShape(32.dp))
                         .background(Color.White)
-                        .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(32.dp))
-                        .padding(horizontal = 16.dp),
+                        .border(2.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(32.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = "R",
-                    color = RuleUpTheme.colors.brand,
-                    // 로고 글자.
-                    fontSize = 64.sp,
-                    fontWeight = FontWeight.Bold,
+                // 앱 아이콘과 같은 체크 링(시안 D).
+                Image(
+                    painter = painterResource(com.ruleup.designsystem.R.drawable.ic_ruleup_mark),
+                    contentDescription = "RuleUp",
+                    modifier = Modifier.size(80.dp),
                 )
             }
 

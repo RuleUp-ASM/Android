@@ -1,42 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 적응형 아이콘 배경. -->
+<!-- 적응형 아이콘 배경(시안 D · 체크 링, Figma 1552:8). 보이는 영역(72dp)에 걸쳐 그라데이션. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="432"
-    android:viewportHeight="432">
-
-    <path android:pathData="M0,0h432v432h-432z">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
-                android:startX="0"
-                android:startY="0"
-                android:endX="432"
-                android:endY="432">
+                android:startX="18"
+                android:startY="18"
+                android:endX="90"
+                android:endY="90">
                 <item android:offset="0" android:color="#FFA585FF" />
                 <item android:offset="0.55" android:color="#FF6C5CE7" />
                 <item android:offset="1" android:color="#FF5646C4" />
             </gradient>
         </aapt:attr>
     </path>
-
-    <group
-        android:pivotX="177.188"
-        android:pivotY="71.719"
-        android:scaleX="1.255315">
-        <path android:pathData="M0,0h432v432h-432z">
-            <aapt:attr name="android:fillColor">
-                <gradient
-                    android:type="radial"
-                    android:centerX="177.188"
-                    android:centerY="71.719"
-                    android:gradientRadius="198.281">
-                    <item android:offset="0" android:color="#38FFFFFF" />
-                    <item android:offset="1" android:color="#00FFFFFF" />
-                </gradient>
-            </aapt:attr>
-        </path>
-    </group>
 </vector>

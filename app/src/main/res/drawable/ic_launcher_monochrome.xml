@@ -1,11 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 13+ 테마 아이콘. -->
+<!-- 테마 아이콘(단색). 시스템이 색을 입히므로 모양과 투명도만 쓴다. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="432"
-    android:viewportHeight="432">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M163 282V150H211.37C220.82 150 229.443 151.24 237.239 153.721C245.035 156.201 251.236 160.513 255.843 166.655C260.568 172.679 262.93 181.007 262.93 191.638C262.93 201.914 260.568 210.301 255.843 216.797C251.236 223.294 245.035 228.078 237.239 231.149C229.443 234.102 220.82 235.579 211.37 235.579H194.715V282H163ZM194.715 210.596H208.89C216.45 210.596 222.179 209.001 226.077 205.812C230.093 202.505 232.101 197.78 232.101 191.638C232.101 185.377 230.093 181.066 226.077 178.703C222.179 176.341 216.45 175.16 208.89 175.16H194.715V210.596ZM234.227 282L205.701 227.428L227.14 206.698L269.663 282H234.227Z" />
+    android:viewportWidth="648"
+    android:viewportHeight="648">
+    <group
+        android:translateX="108"
+        android:translateY="108">
+        <path
+            android:pathData="M216,334C281.17,334 334,281.17 334,216C334,150.83 281.17,98 216,98C150.83,98 98,150.83 98,216C98,281.17 150.83,334 216,334Z"
+            android:strokeColor="#FF000000"
+            android:strokeAlpha="0.25"
+            android:strokeWidth="40" />
+        <path
+            android:pathData="M216,98C239.338,98 262.152,104.921 281.557,117.887C300.962,130.853 316.087,149.282 325.018,170.843C333.949,192.405 336.286,216.131 331.733,239.021C327.18,261.91 315.941,282.936 299.439,299.439C282.936,315.941 261.91,327.18 239.021,331.733C216.131,336.286 192.405,333.949 170.843,325.018C149.282,316.087 130.853,300.962 117.887,281.557C104.921,262.152 98,239.338 98,216"
+            android:strokeColor="#FF000000"
+            android:strokeLineCap="round"
+            android:strokeWidth="40" />
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M98,236C109.046,236 118,227.046 118,216C118,204.954 109.046,196 98,196C86.954,196 78,204.954 78,216C78,227.046 86.954,236 98,236Z" />
+        <path
+            android:pathData="M170,218L204,252L266,186"
+            android:strokeColor="#FF000000"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="34" />
+    </group>
 </vector>
