@@ -44,6 +44,9 @@ sealed interface CreateChallengeIntent : MviIntent {
     /** 추천 영역만 재시도. */
     data object RetryTemplates : CreateChallengeIntent
 
+    /** 「다른 추천 보기」. 지금까지 본 추천을 빼고 새로 받는다. */
+    data object RefreshTemplates : CreateChallengeIntent
+
     // 확인 화면
     data class SetTitle(
         val title: String,

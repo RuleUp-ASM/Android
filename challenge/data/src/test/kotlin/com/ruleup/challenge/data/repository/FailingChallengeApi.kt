@@ -42,7 +42,7 @@ class FailingChallengeApi(
 ) : ChallengeApi {
     private fun <T> failed(): BaseResponse<T> = BaseResponse(success = false, data = null, error = error)
 
-    override suspend fun getRoutineTemplates(): BaseResponse<RoutineTemplatesResponse> = failed()
+    override suspend fun getRoutineTemplates(exclude: String?): BaseResponse<RoutineTemplatesResponse> = failed()
 
     override suspend fun createDraft(request: DraftRequest): BaseResponse<DraftResponse> = failed()
 

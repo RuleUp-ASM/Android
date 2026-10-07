@@ -44,9 +44,12 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ChallengeApi {
-    // 생성 화면 추천 루틴
+    // 생성 화면 추천 루틴 → /api/v1/challenges/recommendations?exclude=2,11,31
+    // exclude 는 #598 로 BE 에 요청한 파라미터다(쉼표 구분 templateId). 서버가 모르면 무시하고 같은 3개를 준다.
     @GET("v1/challenges/recommendations")
-    suspend fun getRoutineTemplates(): BaseResponse<RoutineTemplatesResponse>
+    suspend fun getRoutineTemplates(
+        @Query("exclude") exclude: String? = null,
+    ): BaseResponse<RoutineTemplatesResponse>
 
     // 경로 B: 설명 입력 → LLM 5-Step 초안.
     @POST("v1/challenges/draft")

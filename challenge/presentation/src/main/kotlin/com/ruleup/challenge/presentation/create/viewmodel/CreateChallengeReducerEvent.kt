@@ -22,9 +22,13 @@ sealed interface CreateChallengeReducerEvent : ReducerEvent {
 
     data class TemplatesLoaded(
         val templates: List<RoutineTemplate>,
+        val seenTemplateIds: Set<Long>,
     ) : CreateChallengeReducerEvent
 
     data object TemplatesFailed : CreateChallengeReducerEvent
+
+    /** 다른 추천을 못 받았다 — 보던 추천은 그대로 둔다. */
+    data object TemplatesRefreshFailed : CreateChallengeReducerEvent
 
     data object Drafting : CreateChallengeReducerEvent
 

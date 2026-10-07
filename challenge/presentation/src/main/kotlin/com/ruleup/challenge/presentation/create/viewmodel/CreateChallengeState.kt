@@ -28,6 +28,8 @@ data class CreateChallengeState(
     val isLoadingTemplates: Boolean,
     // 추천 영역만 재시도
     val templatesFailed: Boolean,
+    // 「다른 추천 보기」로 지금까지 본 추천 — 다음 요청에서 뺀다
+    val seenTemplateIds: Set<Long> = emptySet(),
     // 확인 화면
     val draftId: String?,
     val original: ChallengeDraft?,

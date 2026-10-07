@@ -19,8 +19,8 @@ import com.ruleup.challenge.domain.entity.RoutineDescription
 import com.ruleup.challenge.domain.entity.RoutineTemplate
 
 interface ChallengeRepository {
-    /** 생성 화면에 항상 떠 있는 추천 루틴. */
-    suspend fun getRoutineTemplates(): List<RoutineTemplate>
+    /** 생성 화면에 항상 떠 있는 추천 루틴. [exclude] 는 이미 보여 준 템플릿 — 「다른 추천 보기」에서 넘긴다. */
+    suspend fun getRoutineTemplates(exclude: Set<Long> = emptySet()): List<RoutineTemplate>
 
     /** 루틴 설명으로 초안을 만든다. */
     suspend fun createDraft(description: RoutineDescription): DraftResult
