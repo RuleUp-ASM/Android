@@ -28,6 +28,7 @@ import com.ruleup.challenge.domain.entity.ChallengeDetail
 import com.ruleup.challenge.domain.entity.ChallengeLimits
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.presentation.common.RequiredPermissionList
+import com.ruleup.challenge.presentation.common.VerificationGuideText
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.challenge.presentation.create.label
 import com.ruleup.designsystem.component.RuleUpCard
@@ -108,6 +109,7 @@ internal fun DetailInfoPage(
                 detail.verification.detail?.let {
                     Text(text = it, color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.body)
                 }
+                VerificationGuideText(guide = detail.verification.guide)
                 // 가입 전에 어떤 권한을 내줘야 하는지 알게 한다
                 RequiredPermissionList(tokens = requiredPermissions, snapshot = permissions)
             }

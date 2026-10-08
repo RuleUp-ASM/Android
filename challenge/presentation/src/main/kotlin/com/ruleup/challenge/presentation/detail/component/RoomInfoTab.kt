@@ -33,6 +33,7 @@ import com.ruleup.challenge.domain.entity.ChallengeRoom
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.challenge.presentation.common.RequiredPermissionList
+import com.ruleup.challenge.presentation.common.VerificationGuideText
 import com.ruleup.challenge.presentation.common.capacityLabel
 import com.ruleup.designsystem.component.RuleUpCard
 import com.ruleup.designsystem.component.StatusChip
@@ -423,6 +424,7 @@ internal fun VerificationRuleCard(
             color = RuleUpTheme.colors.textSlate,
             style = RuleUpTheme.typography.body,
         )
+        VerificationGuideText(guide = detail.verification.guide)
         RequiredPermissionList(tokens = requiredPermissions, snapshot = permissions)
     }
 }

@@ -55,7 +55,7 @@ internal fun PenaltiesResponse?.toDomain(): ChallengePenalties =
         watcher = this?.watcher ?: false,
     )
 
-/** 인증 `{ type, method, detail, requiredPermissions }`. */
+/** 인증 `{ type, method, detail, requiredPermissions, guide }`. */
 @Serializable
 data class VerificationResponse(
     @SerialName("type")
@@ -67,6 +67,8 @@ data class VerificationResponse(
     val detail: String? = null,
     @SerialName("requiredPermissions")
     val requiredPermissions: List<String>? = null,
+    @SerialName("guide")
+    val guide: String? = null,
 )
 
 /** 미지의 method 는 [VerificationMethod.SELF_CHECK] 로 떨어뜨린다 */
@@ -79,6 +81,7 @@ internal fun VerificationResponse?.toDomain(): VerificationConfig {
         method = method,
         detail = this?.detail,
         requiredPermissions = this?.requiredPermissions.orEmpty(),
+        guide = this?.guide,
     )
 }
 

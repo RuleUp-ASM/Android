@@ -58,6 +58,8 @@ data class VerificationConfig(
     // 표시 문구(예: "기상 06:00 ±10분 내 10걸음").
     val detail: String? = null,
     val requiredPermissions: List<String> = emptyList(),
+    // 인증 방법 안내. 생성 직후·빈도·목표값·인증 방식 변경 직후에는 서버가 채우는 중이라 null 이다.
+    val guide: String? = null,
 )
 
 /** 목표값 입력 종류 */
