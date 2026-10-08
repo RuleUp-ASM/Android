@@ -97,6 +97,27 @@ class RestoreVerificationTargetsUseCaseTest {
         }
 
     @Test
+    fun `챌린지가 여럿이면 조회 순서와 무관하게 참여 목록 순서대로 모은다`() =
+        runTest {
+            val ids = (1..6).map { "c$it" }
+            val usage = UsageStore()
+            val useCase =
+                RestoreVerificationTargetsUseCase(
+                    repository(VerificationMethod.SCREEN_TIME_MAX, ids = ids),
+                    FakeVerificationRepository(myScreenApps = { id ->
+                        MyScreenApps(apps = listOf(ScreenApp("app.$id", id)), appliedFrom = null, pending = null)
+                    }),
+                    FakeTokenRepository(storedUserId = "me"),
+                    Fences(),
+                    HealthStore(),
+                    usage,
+                )
+            val scope = useCase(emptyList())
+            assertEquals(ids, usage.targets.keys.toList())
+            assertEquals(ids.toSet(), scope.activeChallengeIds)
+        }
+
+    @Test
     fun `서버 조회 실패로 기존 로컬 대상을 지우지 않는다`() =
         runTest {
             val health = HealthStore().apply { targets = setOf(HealthTarget(HealthMetric.DISTANCE, null)) }
@@ -116,12 +137,13 @@ class RestoreVerificationTargetsUseCaseTest {
     private fun repository(
         method: VerificationMethod,
         permissions: List<String> = emptyList(),
+        ids: List<String> = listOf("c1"),
     ) = FakeChallengeRepository(
         myChallenges = { _, _ ->
             MyChallengePage(
-                listOf(
+                ids.map { id ->
                     MyChallenge(
-                        challengeId = "c1",
+                        challengeId = id,
                         title = "루틴",
                         description = null,
                         imageUrl = null,
@@ -139,18 +161,18 @@ class RestoreVerificationTargetsUseCaseTest {
                         leftType = null,
                         leftAt = null,
                         successRate = null,
-                    ),
-                ),
+                    )
+                },
                 null,
                 false,
             )
         },
-        detail = {
+        detail = { id ->
             ChallengeDetail(
                 title = "루틴",
                 category = null,
                 imageUrl = null,
-                challengeId = "c1",
+                challengeId = id,
                 description = null,
                 mode = ChallengeMode.SOLO,
                 visibility = null,
