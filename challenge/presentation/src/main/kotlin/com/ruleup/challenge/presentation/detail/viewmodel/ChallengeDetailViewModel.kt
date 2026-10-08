@@ -49,6 +49,8 @@ import com.ruleup.verification.domain.repository.VerificationRepository
 import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
 import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.time.YearMonth
@@ -484,14 +486,20 @@ class ChallengeDetailViewModel
                 dispatch(ChallengeDetailReducerEvent.Loading(challengeId))
                 runCatching { challengeRepository.getChallenge(challengeId) }
                     .onSuccess { detail ->
-                        // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
-                        val setup = runCatching { challengeRepository.getSetupInfo(challengeId) }.getOrNull()
-                        // 그룹 멤버는 방을 먼저 받아 둔다 — 상세만 먼저 그리면 참여 전 화면이 잠깐 떴다가 방 화면으로 바뀐다.
-                        val prefetchedRoom =
-                            if (detail.mode.isGroup && detail.myRole.isMember) {
-                                runCatching { roomRepository.getRoom(challengeId) }.getOrNull()
-                            } else {
-                                null
+                        val (setup, prefetchedRoom) =
+                            coroutineScope {
+                                // 셋업 요구사항은 실패해도(미구현/멤버 아님 등) 상세 렌더를 막지 않도록 흡수한다.
+                                val setup = async { runCatching { challengeRepository.getSetupInfo(challengeId) }.getOrNull() }
+                                // 그룹 멤버는 방을 먼저 받아 둔다 — 상세만 먼저 그리면 참여 전 화면이 잠깐 떴다가 방 화면으로 바뀐다.
+                                val room =
+                                    async {
+                                        if (detail.mode.isGroup && detail.myRole.isMember) {
+                                            runCatching { roomRepository.getRoom(challengeId) }.getOrNull()
+                                        } else {
+                                            null
+                                        }
+                                    }
+                                setup.await() to room.await()
                             }
                         dispatch(
                             ChallengeDetailReducerEvent.Loaded(

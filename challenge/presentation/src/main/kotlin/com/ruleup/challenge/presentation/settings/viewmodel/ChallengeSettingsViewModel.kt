@@ -14,6 +14,8 @@ import com.ruleup.domain.helper.NavigationHelper
 import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -239,15 +241,18 @@ class ChallengeSettingsViewModel
         ) {
             viewModelScope.launch {
                 dispatch(ChallengeSettingsReducerEvent.Loading(challengeId))
-                runCatching { challengeRepository.getSettings(challengeId) }
-                    .onSuccess { settings ->
-                        // 정원 하한 계산에 현재 인원이 필요한데 settings 응답에 없다.
+                runCatching {
+                    coroutineScope {
+                        // 정원 하한 계산에 현재 인원이 필요한데 settings 응답에 없다. 인원 조회 실패는 흡수한다.
                         val participants =
-                            runCatching { challengeRepository.getChallenge(challengeId).participantCount }.getOrNull()
-                        dispatch(ChallengeSettingsReducerEvent.Loaded(settings, participants, preserveEdits))
-                    }.onFailure {
-                        dispatch(ChallengeSettingsReducerEvent.Failed(it.userFacingMessage("설정을 불러오지 못했어요")))
+                            async { runCatching { challengeRepository.getChallenge(challengeId).participantCount }.getOrNull() }
+                        challengeRepository.getSettings(challengeId) to participants.await()
                     }
+                }.onSuccess { (settings, participants) ->
+                    dispatch(ChallengeSettingsReducerEvent.Loaded(settings, participants, preserveEdits))
+                }.onFailure {
+                    dispatch(ChallengeSettingsReducerEvent.Failed(it.userFacingMessage("설정을 불러오지 못했어요")))
+                }
             }
         }
 
