@@ -464,11 +464,26 @@ internal fun ProgressInfoCard(
                     owner?.let { append(" · $it") }
                 },
         )
-        InfoLine(
-            label = "방 성공률",
-            // 판정 이력이 없으면 null 이다.
-            value = room.summary.roomSuccessRate?.let { "${it.toPercentText()}%" } ?: "아직 집계 전",
-        )
+        room.routineProgress?.let { progress ->
+            InfoLine(
+                label = "내 진행률",
+                value =
+                    buildString {
+                        append("${progress.myProgressRate.toPercentText()}% · ${progress.mySuccessDays}")
+                        // 목표일이 아직 계산 전(0)이면 분모를 숨긴다
+                        if (progress.hasTargetDays) append("/${progress.myTargetDays}")
+                        append("일")
+                    },
+            )
+        }
+        // 솔로는 방 평균이 곧 내 값이라 내 진행률만 둔다
+        if (detail.mode.isGroup) {
+            InfoLine(
+                label = "방 성공률",
+                // 판정 이력이 없으면 null 이다.
+                value = room.summary.roomSuccessRate?.let { "${it.toPercentText()}%" } ?: "아직 집계 전",
+            )
+        }
     }
 }
 
