@@ -17,6 +17,7 @@ import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.OffsetDateTime
@@ -113,10 +114,13 @@ class ProfileEditViewModel
             dispatch(ProfileEditReducerEvent.Loading)
             viewModelScope.launch {
                 runCatching {
-                    val profileDeferred = async { profileRepository.getProfile() }
-                    // 마스터 조회 실패는 기본 상한(6)으로 흡수한다.
-                    val catalogDeferred = async { runCatching { profileRepository.getCategories() }.getOrNull() }
-                    profileDeferred.await() to catalogDeferred.await()
+                    // coroutineScope 없이 launch 에 바로 async 를 걸면 getProfile 실패가 launch 까지 무너뜨려 크래시한다.
+                    coroutineScope {
+                        val profileDeferred = async { profileRepository.getProfile() }
+                        // 마스터 조회 실패는 기본 상한(6)으로 흡수한다.
+                        val catalogDeferred = async { runCatching { profileRepository.getCategories() }.getOrNull() }
+                        profileDeferred.await() to catalogDeferred.await()
+                    }
                 }.onSuccess { (profile, catalog) ->
                     dispatch(
                         ProfileEditReducerEvent.Loaded(

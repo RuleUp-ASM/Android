@@ -22,6 +22,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /** 프로필 편집. */
@@ -52,6 +54,17 @@ class ProfileEditViewModelTest {
 
             assertEquals("지현", viewModel.uiState.value.nickname)
             assertTrue(viewModel.uiState.value.maxSelectable > 0)
+        }
+
+    @Test
+    fun `프로필 조회가 실패하면 크래시 없이 오류를 보여준다`() =
+        runTest {
+            val viewModel = viewModel(repo(loadProfile = { throw IllegalStateException("서버 오류") }))
+
+            viewModel.onIntent(ProfileEditIntent.Load)
+
+            assertNotNull(viewModel.uiState.value.errorMessage)
+            assertFalse(viewModel.uiState.value.isLoading)
         }
 
     @Test
@@ -350,6 +363,7 @@ class ProfileEditViewModelTest {
     }
 
     private fun repo(
+        loadProfile: (() -> Profile)? = null,
         categories: (() -> com.ruleup.profile.domain.entity.CategoryCatalog)? = { catalog() },
         checkNickname: ((String) -> NicknameCheck)? = { NicknameCheck(valid = true, available = true, reason = null) },
         updateProfile: (() -> Profile)? = { profile() },
@@ -357,7 +371,7 @@ class ProfileEditViewModelTest {
         uploadImage: ((String) -> String)? = { "https://example.com/new.jpg" },
         deleteImage: () -> Unit = {},
     ) = FakeProfileRepository(
-        profile = { profile().let { it.copy(user = it.user.copy(profileImageUrl = imageUrl)) } },
+        profile = loadProfile ?: { profile().let { it.copy(user = it.user.copy(profileImageUrl = imageUrl)) } },
         categories = categories,
         checkNickname = checkNickname,
         updateProfile = updateProfile,

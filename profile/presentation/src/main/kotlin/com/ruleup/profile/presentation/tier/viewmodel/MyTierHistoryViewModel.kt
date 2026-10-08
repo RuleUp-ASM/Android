@@ -8,6 +8,8 @@ import com.ruleup.profile.domain.repository.MyPageRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -66,8 +68,12 @@ class MyTierHistoryViewModel
             if (currentState.history != null || currentState.changes.isNotEmpty()) return
             dispatch(MyTierHistoryReducerEvent.Loading)
             viewModelScope.launch {
-                val history = runCatching { myPageRepository.getTierHistory() }.getOrNull()
-                val changes = runCatching { myPageRepository.getScoreChanges() }
+                val (history, changes) =
+                    coroutineScope {
+                        val history = async { runCatching { myPageRepository.getTierHistory() }.getOrNull() }
+                        val changes = async { runCatching { myPageRepository.getScoreChanges() } }
+                        history.await() to changes.await()
+                    }
 
                 changes
                     .onSuccess { dispatch(loaded(history, it)) }
