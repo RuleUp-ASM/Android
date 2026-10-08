@@ -22,4 +22,17 @@ class ChallengeDetailMappingTest {
         assertNull(ChallengeDetailResponse(challengeId = "c1", weeklyCount = 0).toDomain().weeklyCount)
         assertNull(ChallengeDetailResponse(challengeId = "c1", weeklyCount = 8).toDomain().weeklyCount)
     }
+
+    @Test
+    fun `인증 방법 안내를 그대로 옮긴다`() {
+        val response =
+            ChallengeDetailResponse(challengeId = "c1", verification = VerificationResponse(guide = "매일 10,000걸음 이상 걸으면 자동 인증됩니다."))
+        assertEquals("매일 10,000걸음 이상 걸으면 자동 인증됩니다.", response.toDomain().verification.guide)
+    }
+
+    @Test
+    fun `인증 방법 안내가 아직 없으면 비워 둔다`() {
+        // 서버가 채우는 중이다. 화면이 「아직 입력중입니다.」로 가른다.
+        assertNull(ChallengeDetailResponse(challengeId = "c1", verification = VerificationResponse()).toDomain().verification.guide)
+    }
 }
