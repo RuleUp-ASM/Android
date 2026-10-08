@@ -160,9 +160,14 @@ class HomeViewModel
                 val monday = today.minusDays((today.dayOfWeek.value - 1).toLong())
                 val week = (0L..6L).map { monday.plusDays(it).toString() }.toSet()
                 val months = listOf(monday, monday.plusDays(6)).map { it.toString().take(7) }.distinct()
+                val days =
+                    coroutineScope {
+                        months
+                            .map { month -> async { runCatching { myPageRepository.getCalendar(month).days }.getOrDefault(emptyList()) } }
+                            .awaitAll()
+                    }.flatten()
                 val statuses =
-                    months
-                        .flatMap { month -> runCatching { myPageRepository.getCalendar(month).days }.getOrDefault(emptyList()) }
+                    days
                         .filter { it.date in week }
                         .mapNotNull { day -> day.status?.let { day.date to it } }
                         .toMap()
