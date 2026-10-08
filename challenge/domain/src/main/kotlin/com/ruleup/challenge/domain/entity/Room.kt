@@ -63,4 +63,17 @@ data class ChallengeRoom(
     // 상위 3.
     val topRanking: List<RoomTopRanker>,
     val myTodayStatus: TodayVerificationStatus?,
+    // 응답에 없으면 null
+    val routineProgress: RoutineProgress? = null,
 )
+
+/** 챌린지 전체 기간 기준 내 루틴 진행률. 방 평균은 [RoomSummary.roomSuccessRate] 와 같은 값이라 따로 두지 않는다. */
+data class RoutineProgress(
+    // 0~1
+    val myProgressRate: Double,
+    val mySuccessDays: Int,
+    // 첫 인증 전에는 아직 계산 전이라 0 이다
+    val myTargetDays: Int,
+) {
+    val hasTargetDays: Boolean get() = myTargetDays > 0
+}

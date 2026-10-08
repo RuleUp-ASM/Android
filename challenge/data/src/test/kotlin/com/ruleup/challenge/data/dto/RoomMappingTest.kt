@@ -3,6 +3,7 @@ package com.ruleup.challenge.data.dto
 import com.ruleup.challenge.domain.entity.MemberRole
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -46,5 +47,29 @@ class RoomMappingTest {
             ).toDomain()
 
         assertTrue(room.topRanking.isEmpty())
+    }
+
+    @Test
+    fun `루틴 진행률은 퍼센트를 0에서 1 사이 비율로 옮긴다`() {
+        val progress =
+            RoomResponse(routineProgress = RoomRoutineProgressResponse(myProgressRate = 72.5, mySuccessDays = 18, myTargetDays = 25))
+                .toDomain()
+                .routineProgress!!
+
+        assertEquals(0.725, progress.myProgressRate, 1e-9)
+        assertEquals(18, progress.mySuccessDays)
+        assertEquals(25, progress.myTargetDays)
+    }
+
+    @Test
+    fun `목표일이 아직 계산 전이면 분모가 없는 것으로 본다`() {
+        val progress = RoomResponse(routineProgress = RoomRoutineProgressResponse(myTargetDays = 0)).toDomain().routineProgress!!
+
+        assertFalse(progress.hasTargetDays)
+    }
+
+    @Test
+    fun `루틴 진행률이 없으면 비워 둔다`() {
+        assertNull(RoomResponse().toDomain().routineProgress)
     }
 }

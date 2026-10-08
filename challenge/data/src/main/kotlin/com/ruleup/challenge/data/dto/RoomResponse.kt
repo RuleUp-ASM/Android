@@ -5,6 +5,7 @@ import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.RoomSummary
 import com.ruleup.challenge.domain.entity.RoomTopRanker
+import com.ruleup.challenge.domain.entity.RoutineProgress
 import com.ruleup.challenge.domain.entity.TodayVerificationStatus
 import com.ruleup.domain.entity.user.User
 import com.ruleup.domain.entity.user.UserRelationship
@@ -89,6 +90,8 @@ data class RoomResponse(
     val topRanking: List<RoomTopRankerResponse>? = null,
     @SerialName("myTodayStatus")
     val myTodayStatus: String? = null,
+    @SerialName("routineProgress")
+    val routineProgress: RoomRoutineProgressResponse? = null,
 )
 
 internal fun RoomResponse.toDomain(): ChallengeRoom =
@@ -108,4 +111,23 @@ internal fun RoomResponse.toDomain(): ChallengeRoom =
         topRanking = topRanking.orEmpty().mapNotNull { it.toDomain() },
         // 미지 값은 null
         myTodayStatus = TodayVerificationStatus.fromValue(myTodayStatus),
+        routineProgress = routineProgress?.toDomain(),
+    )
+
+/** 루틴 진행률. 비율은 %(0~100) 로 온다. roomAverageProgressRate 는 summary.roomSuccessRate 와 같은 값이라 읽지 않는다. */
+@Serializable
+data class RoomRoutineProgressResponse(
+    @SerialName("myProgressRate")
+    val myProgressRate: Double? = null,
+    @SerialName("mySuccessDays")
+    val mySuccessDays: Int? = null,
+    @SerialName("myTargetDays")
+    val myTargetDays: Int? = null,
+)
+
+internal fun RoomRoutineProgressResponse.toDomain(): RoutineProgress =
+    RoutineProgress(
+        myProgressRate = (myProgressRate ?: 0.0) / 100,
+        mySuccessDays = mySuccessDays ?: 0,
+        myTargetDays = myTargetDays ?: 0,
     )
