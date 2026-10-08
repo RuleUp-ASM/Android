@@ -11,6 +11,8 @@ import com.ruleup.support.domain.repository.InquiryRepository
 import com.ruleup.ui.mvi.MviViewModel
 import com.ruleup.ui.mvi.NoEffect
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -51,12 +53,15 @@ class InquiryListViewModel
         private fun load() {
             dispatch(InquiryListReducerEvent.Loading)
             viewModelScope.launch {
-                runCatching { inquiryRepository.getInquiries() }
-                    .onSuccess { items ->
+                runCatching {
+                    coroutineScope {
                         // 기록을 못 읽으면 전부 새 답변으로 보인다. 목록을 막을 일은 아니다
-                        val seen = runCatching { inquiryReadStore.seenAnswers() }.getOrDefault(emptyMap())
-                        dispatch(InquiryListReducerEvent.Loaded(items, seen))
-                    }.onFailure { dispatch(InquiryListReducerEvent.Failed(it.userMessage())) }
+                        val seen = async { runCatching { inquiryReadStore.seenAnswers() }.getOrDefault(emptyMap()) }
+                        inquiryRepository.getInquiries() to seen.await()
+                    }
+                }.onSuccess { (items, seen) ->
+                    dispatch(InquiryListReducerEvent.Loaded(items, seen))
+                }.onFailure { dispatch(InquiryListReducerEvent.Failed(it.userMessage())) }
             }
         }
     }

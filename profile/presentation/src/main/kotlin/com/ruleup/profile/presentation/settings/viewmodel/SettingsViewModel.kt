@@ -93,20 +93,20 @@ class SettingsViewModel
 
         private fun load() {
             viewModelScope.launch {
-                // 넷은 서로 독립이라 함께 던진다.
-                val loaded =
+                // 다섯은 서로 독립이라 함께 던진다.
+                val (loaded, seenAnswers) =
                     coroutineScope {
                         val a = async { runCatching { accountRepository.getAgreements() }.getOrNull() }
                         val s = async { runCatching { accountRepository.getSanctions() }.getOrNull() }
                         val p = async { runCatching { profileRepository.getMyProfile() }.getOrNull() }
                         val i = async { runCatching { inquiryRepository.getInquiries() }.getOrNull() }
-                        SettingsLoad(a.await(), s.await(), p.await(), i.await())
+                        val seen = async { runCatching { inquiryReadStore.seenAnswers() }.getOrDefault(emptyMap()) }
+                        SettingsLoad(a.await(), s.await(), p.await(), i.await()) to seen.await()
                     }
                 if (loaded.isEmpty) {
                     dispatch(SettingsReducerEvent.LoadFinished)
                     return@launch
                 }
-                val seenAnswers = runCatching { inquiryReadStore.seenAnswers() }.getOrDefault(emptyMap())
                 dispatch(
                     SettingsReducerEvent.Loaded(
                         provider =
