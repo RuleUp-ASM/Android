@@ -1,18 +1,26 @@
 package com.ruleup.verification.domain.usecase
 
 import com.ruleup.challenge.domain.entity.MyChallengeFilter
+import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.entity.HealthMetric
 import com.ruleup.verification.domain.entity.HealthTarget
+import com.ruleup.verification.domain.entity.MyLocation
+import com.ruleup.verification.domain.entity.MyScreenApps
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.SignalScope
 import com.ruleup.verification.domain.repository.GeofenceRegister
 import com.ruleup.verification.domain.repository.HealthTargetStore
 import com.ruleup.verification.domain.repository.UsageTargetStore
 import com.ruleup.verification.domain.repository.VerificationRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import javax.inject.Inject
 
 /** 서버 바인딩으로 수집 대상을 복원한다. */
@@ -41,12 +49,18 @@ class RestoreVerificationTargetsUseCase
             val apps = mutableMapOf<String, Set<String>>()
             val metrics = mutableSetOf<HealthTarget>()
             var sleep = false
-            for (id in ids) {
-                val config = challenges.getChallenge(id).verification
+            // 조회는 챌린지마다 동시에 하되, 모으기는 ids 순서대로 한 곳에서 한다.
+            val fetched =
+                coroutineScope {
+                    val permits = Semaphore(MAX_CONCURRENT_FETCHES)
+                    ids.map { id -> async { permits.withPermit { fetch(id) } } }.awaitAll()
+                }
+            for ((id, target) in ids.zip(fetched)) {
+                val config = target.config
                 if (!config.type.isAuto) continue
                 when (config.method) {
                     VerificationMethod.GPS_PRESENCE, VerificationMethod.GPS_AVOID -> {
-                        val location = verification.getMyLocation(id) ?: continue
+                        val location = target.location ?: continue
                         location.anchors.forEachIndexed { index, pin ->
                             val requestId = "$userId#$id#$index"
                             val previous = existing.firstOrNull { it.requestId == requestId }
@@ -62,8 +76,7 @@ class RestoreVerificationTargetsUseCase
                     }
                     VerificationMethod.SCREEN_TIME_MAX, VerificationMethod.SCREEN_TIME_MIN -> {
                         apps[id] =
-                            verification
-                                .getMyScreenApps(id)
+                            target.screenApps
                                 ?.apps
                                 .orEmpty()
                                 .mapTo(linkedSetOf()) { it.packageName }
@@ -86,5 +99,29 @@ class RestoreVerificationTargetsUseCase
             health.replaceAll(metrics, sleep)
             usage.replaceAll(apps)
             return SignalScope(apps.values.flatten().toSet(), locations.mapTo(linkedSetOf()) { it.requestId }, metrics, sleep, ids)
+        }
+
+        /** 인증 방식에 따라 필요한 바인딩만 받는다. */
+        private suspend fun fetch(id: String): FetchedTarget {
+            val config = challenges.getChallenge(id).verification
+            if (!config.type.isAuto) return FetchedTarget(config)
+            return when (config.method) {
+                VerificationMethod.GPS_PRESENCE, VerificationMethod.GPS_AVOID ->
+                    FetchedTarget(config, location = verification.getMyLocation(id))
+                VerificationMethod.SCREEN_TIME_MAX, VerificationMethod.SCREEN_TIME_MIN ->
+                    FetchedTarget(config, screenApps = verification.getMyScreenApps(id))
+                else -> FetchedTarget(config)
+            }
+        }
+
+        private class FetchedTarget(
+            val config: VerificationConfig,
+            val location: MyLocation? = null,
+            val screenApps: MyScreenApps? = null,
+        )
+
+        private companion object {
+            // 참여 챌린지가 많아도 서버에 한꺼번에 몰리지 않게 한다
+            const val MAX_CONCURRENT_FETCHES = 4
         }
     }
