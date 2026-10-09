@@ -67,12 +67,12 @@ data class ChallengeRoom(
     val routineProgress: RoutineProgress? = null,
 )
 
-/** 챌린지 전체 기간 기준 내 루틴 진행률. 방 평균은 [RoomSummary.roomSuccessRate] 와 같은 값이라 따로 두지 않는다. */
+/** 챌린지 전체 기간 기준 내 루틴 진행률(성공일 ÷ 목표일). 판정일 기준인 [RoomSummary.roomSuccessRate] 와는 다른 지표다. */
 data class RoutineProgress(
     // 0~1
     val myProgressRate: Double,
     val mySuccessDays: Int,
-    // 첫 인증 전에는 아직 계산 전이라 0 이다
+    // 목표일 계산 전(자동 인증은 첫 sync, 수동 인증은 첫 수동 인증 전)이면 0, 이후로는 1 이상이다
     val myTargetDays: Int,
 ) {
     val hasTargetDays: Boolean get() = myTargetDays > 0

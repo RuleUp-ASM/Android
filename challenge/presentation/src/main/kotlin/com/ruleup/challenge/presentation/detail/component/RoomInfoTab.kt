@@ -478,7 +478,7 @@ internal fun ProgressInfoCard(
                     },
             )
         }
-        // 솔로는 방 평균이 곧 내 값이라 내 진행률만 둔다
+        // 솔로는 내 진행률만 둔다(#616)
         if (detail.mode.isGroup) {
             InfoLine(
                 label = "방 성공률",

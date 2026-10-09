@@ -114,7 +114,7 @@ internal fun RoomResponse.toDomain(): ChallengeRoom =
         routineProgress = routineProgress?.toDomain(),
     )
 
-/** 루틴 진행률. 비율은 %(0~100) 로 온다. roomAverageProgressRate 는 summary.roomSuccessRate 와 같은 값이라 읽지 않는다. */
+/** 루틴 진행률. 비율은 %(0~100) 로 온다. roomAverageProgressRate(멤버 진행률 평균)는 화면에 없어 읽지 않는다 — summary.roomSuccessRate 와 다른 값이다. */
 @Serializable
 data class RoomRoutineProgressResponse(
     @SerialName("myProgressRate")
