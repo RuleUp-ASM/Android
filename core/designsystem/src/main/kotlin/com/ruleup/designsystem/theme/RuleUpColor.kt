@@ -27,9 +27,8 @@ object RuleUpPalette {
     val Kakao = Color(0xFFFEE500)
     val KakaoLabel = Color(0xFF191919)
 
-    /** Google 로그인 버튼 색(브랜딩 가이드라인 라이트). */
-    val GoogleSurface = Color(0xFFFFFFFF)
-    val GoogleStroke = Color(0xFF747775)
+    /** Google 로그인 버튼 색(브랜딩 가이드라인 뉴트럴). 라이트 테마로 바꾸면 #747775 테두리가 필수다. */
+    val GoogleSurface = Color(0xFFF2F2F2)
     val GoogleLabel = Color(0xFF1F1F1F)
 }
 
@@ -94,6 +93,5 @@ object RuleUpColors {
     val KakaoText = RuleUpPalette.KakaoLabel
 
     val Google = RuleUpPalette.GoogleSurface
-    val GoogleBorder = RuleUpPalette.GoogleStroke
     val GoogleText = RuleUpPalette.GoogleLabel
 }

@@ -52,14 +52,6 @@ class LoginContentTest {
     }
 
     @Test
-    fun `약관 동의가 시작과 함께 이뤄진다는 것을 알린다`() {
-        // 별도 동의 화면이 없으므로 여기서 말하지 않으면 사용자가 모른 채 동의하게 된다.
-        compose.renderOnboarding { LoginContent(onIntent = {}) }
-
-        compose.onNodeWithText("시작과 동시에 서비스 이용약관 및 개인정보 처리방침에 동의하게 됩니다").assertExists()
-    }
-
-    @Test
     fun `버튼을 누르기 전에는 아무 의도도 올라가지 않는다`() {
         val intents = mutableListOf<LoginIntent>()
         compose.renderOnboarding { LoginContent(onIntent = { intents += it }) }

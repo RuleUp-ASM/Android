@@ -25,7 +25,6 @@ import com.ruleup.domain.entity.user.AgreementType
 import com.ruleup.onboarding.domain.logging.OnboardingStep
 import com.ruleup.onboarding.domain.navigation.TermsDocumentPage
 import com.ruleup.onboarding.presentation.component.OnboardingScaffold
-import com.ruleup.onboarding.presentation.onboarding.component.InfoBox
 import com.ruleup.onboarding.presentation.onboarding.component.OnboardingFlowPreview
 import com.ruleup.onboarding.presentation.onboarding.component.RequirementBadge
 import com.ruleup.onboarding.presentation.onboarding.component.RowDivider
@@ -102,13 +101,6 @@ fun TermsContent(
                 if (index != AgreementType.SIGNUP.lastIndex) RowDivider()
             }
         }
-
-        InfoBox(
-            background = RuleUpTheme.colors.brandSoft,
-            emoji = "📄",
-            text = "필수 항목에 동의해야 가입을 완료할 수 있어요. 선택 항목은 알림 설정 기본값이 돼요",
-            textColor = RuleUpTheme.colors.brandStrong,
-        )
     }
 }
 
