@@ -518,4 +518,8 @@ private class RecordingChallengeStore : MyChallengeStore {
     override fun add(summary: MyChallengeSummary) {
         added += summary
     }
+
+    override fun remove(challengeId: String) {
+        added.removeAll { it.challengeId == challengeId }
+    }
 }

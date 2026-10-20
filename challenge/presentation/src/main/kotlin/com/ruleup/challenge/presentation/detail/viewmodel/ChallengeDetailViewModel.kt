@@ -21,6 +21,7 @@ import com.ruleup.challenge.domain.navigation.ChallengeWatchersPage
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.ExploreRepository
+import com.ruleup.challenge.domain.repository.MyChallengeStore
 import com.ruleup.challenge.domain.repository.RoomRepository
 import com.ruleup.challenge.domain.repository.TargetAppStore
 import com.ruleup.challenge.domain.repository.WatcherRepository
@@ -75,6 +76,7 @@ class ChallengeDetailViewModel
         private val navigationHelper: NavigationHelper,
         private val checkVerificationAccess: CheckVerificationAccessUseCase,
         private val agreeVerificationConsent: AgreeVerificationConsentUseCase,
+        private val myChallengeStore: MyChallengeStore,
         private val restrictionProvider: com.ruleup.onboarding.domain.account.AccountRestrictionProvider =
             com.ruleup.onboarding.domain.account
                 .AccountRestrictionProvider {
@@ -842,6 +844,7 @@ class ChallengeDetailViewModel
                 dispatch(ChallengeDetailReducerEvent.MemberActionLoading(true))
                 runCatching { challengeRepository.leaveChallenge(id) }
                     .onSuccess { result ->
+                        myChallengeStore.remove(id)
                         emitEffect(
                             ChallengeDetailEffect.ShowMessage(
                                 if (result.penaltyApplied) "탈퇴했어요. 진행 이력이 있어 탈퇴 패널티가 적용됐어요" else "챌린지에서 나갔어요",

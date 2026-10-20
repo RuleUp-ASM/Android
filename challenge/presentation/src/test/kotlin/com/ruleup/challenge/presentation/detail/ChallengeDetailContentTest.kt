@@ -298,6 +298,34 @@ class ChallengeDetailContentTest {
     }
 
     @Test
+    fun `인증 방법은 서버 안내 한 줄만 보여 주고 템플릿 설명을 겹쳐 쓰지 않는다`() {
+        // 둘 다 그리면 같은 규칙이 두 문장으로 보이고, 표지 일정 줄에도 설명이 통째로 붙는다.
+        val base = detail("평일 아침 헬스장 출석")
+        val state =
+            loaded().copy(
+                detail = base.copy(verification = base.verification.copy(detail = "템플릿 설명", guide = "서버 안내")),
+            )
+        render(state)
+
+        compose.onNodeWithText("템플릿 설명", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("상세 내용 보기").clickPastGuard()
+
+        compose.onNodeWithText("서버 안내").assertExists()
+        compose.onNodeWithText("템플릿 설명", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `서버 안내가 없으면 템플릿 설명으로 인증 방법을 채운다`() {
+        val base = detail("평일 아침 헬스장 출석")
+        render(loaded().copy(detail = base.copy(verification = base.verification.copy(detail = "템플릿 설명", guide = null))))
+
+        compose.onNodeWithText("상세 내용 보기").clickPastGuard()
+
+        compose.onNodeWithText("템플릿 설명").assertExists()
+        compose.onNodeWithText("아직 입력중입니다.").assertDoesNotExist()
+    }
+
+    @Test
     fun `티어가 모자라 못 들어가면 필요한 티어와 내 티어를 한글 이름으로 보여 준다`() {
         // enum 값을 그대로 넘기면 「SILVER 티어부터」처럼 영문이 보인다(#591).
         val base = loaded()

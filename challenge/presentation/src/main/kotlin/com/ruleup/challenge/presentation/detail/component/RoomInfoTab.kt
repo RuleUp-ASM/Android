@@ -417,14 +417,8 @@ internal fun VerificationRuleCard(
 ) {
     RuleUpCard {
         RoomSectionHeader(title = "인증 규칙")
-        Text(
-            text =
-                detail.verification.detail
-                    ?: if (detail.verification.type.isAuto) "자동 인증" else "직접 체크",
-            color = RuleUpTheme.colors.textSlate,
-            style = RuleUpTheme.typography.body,
-        )
-        VerificationGuideText(guide = detail.verification.guide)
+        VerificationTypeChip(isAuto = detail.verification.type.isAuto)
+        VerificationGuideText(guide = detail.verification.guide ?: detail.verification.detail)
         RequiredPermissionList(tokens = requiredPermissions, snapshot = permissions)
     }
 }

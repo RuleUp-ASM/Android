@@ -17,6 +17,7 @@ import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
+import com.ruleup.challenge.domain.fake.FakeMyChallengeStore
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
@@ -360,6 +361,7 @@ class ChallengeDetailJoinTest {
             navigationHelper = nav,
             checkVerificationAccess = CheckVerificationAccessUseCase(permissionStatus, account),
             agreeVerificationConsent = AgreeVerificationConsentUseCase(account, FakeIntroRepository()),
+            myChallengeStore = FakeMyChallengeStore(),
         )
     }
 }

@@ -155,7 +155,6 @@ internal fun ChallengeDetail.scheduleLabel(): String =
     listOfNotNull(
         periodLabel(period.start, period.end).substringAfter(" · ", "").takeIf { it.isNotBlank() },
         weeklyCount?.let { if (it >= ChallengeLimits.WEEKLY_COUNT_MAX) "매일" else "주 ${it}회" },
-        verification.detail,
     ).joinToString(" · ")
 
 /** 방장이 나가면 봇이 자리를 지킨다(owner 가 null 이 된다). */

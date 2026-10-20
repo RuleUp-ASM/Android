@@ -14,6 +14,7 @@ import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
+import com.ruleup.challenge.domain.fake.FakeMyChallengeStore
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
@@ -240,6 +241,7 @@ class ChallengeDetailMuteTest {
             navigationHelper = nav,
             checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, FakeAccountRepository()),
             agreeVerificationConsent = AgreeVerificationConsentUseCase(FakeAccountRepository(), FakeIntroRepository()),
+            myChallengeStore = FakeMyChallengeStore(),
         )
     }
 }

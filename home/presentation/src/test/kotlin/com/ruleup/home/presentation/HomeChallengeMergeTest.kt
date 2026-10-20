@@ -20,7 +20,7 @@ class HomeChallengeMergeTest {
     @Test
     fun `서버 목록이 비어도 진행률에 있는 챌린지는 남는다`() {
         // 목록 조회만 실패한 경우다.
-        val merged = mergeHomeChallenges(emptyList(), snapshot(progress("ch1")), emptyList())
+        val merged = mergeHomeChallenges(myChallenges = null, snapshot(progress("ch1")), emptyList())
 
         assertEquals(listOf("ch1"), merged.map { it.challengeId })
     }
@@ -33,8 +33,8 @@ class HomeChallengeMergeTest {
     }
 
     @Test
-    fun `방금 만든 챌린지는 서버가 아직 몰라도 홈에 보인다`() {
-        val merged = mergeHomeChallenges(emptyList(), progress = null, locals = listOf(local("ch1")))
+    fun `목록 조회가 실패하면 방금 만든 챌린지를 로컬 기록으로 메운다`() {
+        val merged = mergeHomeChallenges(myChallenges = null, progress = null, locals = listOf(local("ch1")))
 
         assertEquals(listOf("ch1"), merged.map { it.challengeId })
     }
@@ -52,16 +52,36 @@ class HomeChallengeMergeTest {
     }
 
     @Test
-    fun `방금 만든 챌린지가 서버 목록보다 앞에 온다`() {
-        // 만든 직후 그것부터 보이는 게 사용자의 기대다.
+    fun `서버 목록을 받았으면 거기 없는 로컬 기록은 그리지 않는다`() {
+        // 로컬에만 남은 건 나간 방이다. 그리면 앱을 다시 켤 때까지 홈에 남는다.
         val merged =
             mergeHomeChallenges(
                 myChallenges = listOf(myChallenge("server")),
                 progress = null,
+                locals = listOf(local("left")),
+            )
+
+        assertEquals(listOf("server"), merged.map { it.challengeId })
+    }
+
+    @Test
+    fun `서버 목록이 비어 있어도 조회에 성공했으면 로컬 기록을 그리지 않는다`() {
+        val merged = mergeHomeChallenges(myChallenges = emptyList(), progress = null, locals = listOf(local("left")))
+
+        assertTrue(merged.isEmpty())
+    }
+
+    @Test
+    fun `목록 조회가 실패하면 방금 만든 챌린지가 진행률 카드보다 앞에 온다`() {
+        // 만든 직후 그것부터 보이는 게 사용자의 기대다.
+        val merged =
+            mergeHomeChallenges(
+                myChallenges = null,
+                progress = snapshot(progress("ongoing")),
                 locals = listOf(local("just-made")),
             )
 
-        assertEquals(listOf("just-made", "server"), merged.map { it.challengeId })
+        assertEquals(listOf("just-made", "ongoing"), merged.map { it.challengeId })
     }
 
     @Test

@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.ruleup.designsystem.theme.RuleUpTheme
 
-/** 인증 방법 안내(서버가 준 verification.guide). 서버가 아직 채우는 중이면 그렇다고 알린다. */
+/** 인증 방법 안내(verification.guide, 없으면 템플릿 설명). 둘 다 없으면 서버가 채우는 중이라고 알린다. */
 @Composable
 internal fun VerificationGuideText(
     guide: String?,

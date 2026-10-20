@@ -9,4 +9,7 @@ interface MyChallengeStore {
 
     /** 생성/참여한 챌린지를 추가(같은 challengeId 면 최신값으로 갱신). */
     fun add(summary: MyChallengeSummary)
+
+    /** 나간 챌린지를 뺀다. 남겨 두면 서버 목록 조회가 실패했을 때 나간 방이 홈에 되살아난다. */
+    fun remove(challengeId: String)
 }
