@@ -96,20 +96,8 @@ internal fun DetailInfoPage(
             }
             RuleUpCard {
                 RoomSectionHeader(title = "인증 방법")
-                Text(
-                    text = if (detail.verification.type.isAuto) "자동 인증" else "직접 체크",
-                    color = RuleUpTheme.colors.brand,
-                    style = RuleUpTheme.typography.smallBold,
-                    modifier =
-                        Modifier
-                            .clip(RoundedCornerShape(99.dp))
-                            .background(RuleUpTheme.colors.brandSoft)
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-                detail.verification.detail?.let {
-                    Text(text = it, color = RuleUpTheme.colors.textSlate, style = RuleUpTheme.typography.body)
-                }
-                VerificationGuideText(guide = detail.verification.guide)
+                VerificationTypeChip(isAuto = detail.verification.type.isAuto)
+                VerificationGuideText(guide = detail.verification.guide ?: detail.verification.detail)
                 // 가입 전에 어떤 권한을 내줘야 하는지 알게 한다
                 RequiredPermissionList(tokens = requiredPermissions, snapshot = permissions)
             }
@@ -165,6 +153,21 @@ internal fun DetailInfoPage(
             }
         }
     }
+}
+
+/** 「자동 인증」·「직접 체크」 칩. */
+@Composable
+internal fun VerificationTypeChip(isAuto: Boolean) {
+    Text(
+        text = if (isAuto) "자동 인증" else "직접 체크",
+        color = RuleUpTheme.colors.brand,
+        style = RuleUpTheme.typography.smallBold,
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(99.dp))
+                .background(RuleUpTheme.colors.brandSoft)
+                .padding(horizontal = 10.dp, vertical = 4.dp),
+    )
 }
 
 @Composable
