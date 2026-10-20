@@ -33,6 +33,10 @@ Amplitude 와 Firebase 는 **병행**한다. 같은 이벤트가 두 곳에 쌓�
 Amplitude 키(`AMPLITUDE_API_KEY`)가 비면 **Amplitude 출구를 아예 달지 않는다.** Firebase 로는
 계속 나간다. 키는 `local.properties` 에서 온다.
 
+TTI 는 위 경로와 별도로 **구글 시트에도 한 행씩** 남는다(`SheetTtiShooter`, #623). 받는 쪽은 시트에 붙은
+Apps Script 웹앱이고, URL(`TTI_SHEET_URL`)이 비면 보내지 않는다. debug·release 모두 보내며 「빌드」 열로
+가른다. 전송 실패는 경고만 남기고 재시도하지 않는다 — 재시도하면 Firebase·Amplitude 에 같은 TTI 가 또 나간다.
+
 ## 2. 모든 이벤트에 붙는 것
 
 - `screen` — 이벤트가 난 시점의 화면 경로. `ScreenTracker` 가 네비게이션마다 갱신하고, 두

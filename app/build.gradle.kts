@@ -27,6 +27,7 @@ val localProperties =
 val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
 val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
 val amplitudeApiKey: String = localProperties.getProperty("AMPLITUDE_API_KEY")?.trim().orEmpty()
+val ttiSheetUrl: String = localProperties.getProperty("TTI_SHEET_URL")?.trim().orEmpty()
 val appAuthRedirectScheme: String =
     localProperties
         .getProperty("GOOGLE_REDIRECT_URI")
@@ -85,6 +86,8 @@ android {
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
         // Amplitude 수집 키
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
+        // TTI 를 받는 구글 시트 Apps Script 웹앱 URL. 비면 보내지 않는다(#623)
+        buildConfigField("String", "TTI_SHEET_URL", "\"$ttiSheetUrl\"")
     }
 
     signingConfigs {
@@ -142,6 +145,7 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
     implementation(project(":core:network"))
+    implementation(libs.okhttp)
     implementation(project(":core:datastore"))
     implementation(project(":observability:data"))
     implementation(project(":logging:data"))
