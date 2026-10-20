@@ -17,7 +17,7 @@ import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
-import com.ruleup.challenge.domain.repository.MyChallengeStore
+import com.ruleup.challenge.domain.fake.FakeMyChallengeStore
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.domain.time.ServiceDate
@@ -78,6 +78,24 @@ class HomeViewModelTest {
                 viewModel(
                     challenges = null,
                     locals = listOf(local("ch1")),
+                )
+
+            viewModel.onIntent(HomeIntent.Load)
+
+            assertEquals(
+                listOf("ch1"),
+                viewModel.uiState.value.challenges
+                    .map { it.challengeId },
+            )
+        }
+
+    @Test
+    fun `목록을 받았으면 나간 방의 로컬 기록은 그리지 않는다`() =
+        runTest {
+            val viewModel =
+                viewModel(
+                    challenges = listOf(myChallenge("ch1")),
+                    locals = listOf(local("left")),
                 )
 
             viewModel.onIntent(HomeIntent.Load)
@@ -473,13 +491,4 @@ class HomeViewModelTest {
             mode = ChallengeMode.SOLO,
             durationDays = 30,
         )
-}
-
-/** 세션 동안만 사는 인메모리 스토어. */
-private class FakeMyChallengeStore(
-    private val items: List<MyChallengeSummary>,
-) : MyChallengeStore {
-    override fun all(): List<MyChallengeSummary> = items
-
-    override fun add(summary: MyChallengeSummary) = Unit
 }

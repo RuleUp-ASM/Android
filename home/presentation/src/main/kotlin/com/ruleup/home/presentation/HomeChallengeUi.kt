@@ -27,15 +27,18 @@ data class HomeChallengeUi(
     val active: Boolean,
 )
 
-/** 서버 "내 챌린지 목록"이 기준이고 진행률이 진행바·오늘 대상 여부를 채운다. */
+/**
+ * 서버 "내 챌린지 목록"이 기준이고 진행률이 진행바·오늘 대상 여부를 채운다.
+ * [myChallenges] 가 null 이면 목록 조회 실패다 — 그때만 [locals] 로 빈자리를 메운다.
+ */
 fun mergeHomeChallenges(
-    myChallenges: List<MyChallenge>,
+    myChallenges: List<MyChallenge>?,
     progress: ProgressSnapshot?,
     locals: List<MyChallengeSummary>,
 ): List<HomeChallengeUi> {
     val progressById = progress?.challenges.orEmpty().associateBy { it.challengeId }
-    val serverCards = myChallenges.map { it.toHomeUi(progressById[it.challengeId]) }
-    val serverIds = myChallenges.map { it.challengeId }.toSet()
+    val serverCards = myChallenges.orEmpty().map { it.toHomeUi(progressById[it.challengeId]) }
+    val serverIds = myChallenges.orEmpty().map { it.challengeId }.toSet()
 
     // 목록 조회 실패 등으로 서버 목록이 비어도 진행률 카드는 유지한다.
     val progressOnlyCards =
@@ -48,10 +51,15 @@ fun mergeHomeChallenges(
             .map { it.toHomeUi() }
 
     val coveredIds = serverIds + progressOnlyCards.map { it.challengeId }.toSet()
+    // 서버 목록을 받았는데 로컬에만 있으면 이미 나간 방이다.
     val localCards =
-        locals
-            .filter { it.challengeId !in coveredIds }
-            .map { it.toHomeUi() }
+        if (myChallenges != null) {
+            emptyList()
+        } else {
+            locals
+                .filter { it.challengeId !in coveredIds }
+                .map { it.toHomeUi() }
+        }
     return localCards + serverCards + progressOnlyCards
 }
 

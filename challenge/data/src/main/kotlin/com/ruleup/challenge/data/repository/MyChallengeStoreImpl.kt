@@ -19,4 +19,9 @@ class MyChallengeStoreImpl
         override fun add(summary: MyChallengeSummary) {
             items[summary.challengeId] = summary
         }
+
+        @Synchronized
+        override fun remove(challengeId: String) {
+            items.remove(challengeId)
+        }
     }

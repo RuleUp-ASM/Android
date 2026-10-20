@@ -11,11 +11,13 @@ import com.ruleup.challenge.domain.entity.ChallengeThreads
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.LeaveResult
 import com.ruleup.challenge.domain.entity.MemberRole
+import com.ruleup.challenge.domain.entity.MyChallengeSummary
 import com.ruleup.challenge.domain.entity.OwnerType
 import com.ruleup.challenge.domain.entity.VerificationConfig
 import com.ruleup.challenge.domain.entity.VerificationMethod
 import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
+import com.ruleup.challenge.domain.fake.FakeMyChallengeStore
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
 import com.ruleup.challenge.domain.navigation.MyChallengesPage
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
@@ -132,6 +134,56 @@ class ChallengeDetailSoloTest {
             assertEquals(MyChallengesPage.PATH, nav.replaced.single().path)
         }
 
+    @Test
+    fun `탈퇴하면 방금 만든 챌린지 기록에서도 빠진다`() =
+        runTest {
+            // 남아 있으면 홈 목록 조회가 실패할 때 나간 방이 다시 그려진다.
+            val store = FakeMyChallengeStore(listOf(summary(CHALLENGE_ID), summary("other")))
+            val viewModel =
+                viewModel(
+                    repo =
+                        FakeChallengeRepository(
+                            detail = { detail(mode = ChallengeMode.SOLO) },
+                            leave = { LeaveResult(penaltyApplied = false) },
+                        ),
+                    store = store,
+                )
+            viewModel.onIntent(ChallengeDetailIntent.Load(CHALLENGE_ID))
+
+            viewModel.onIntent(ChallengeDetailIntent.LeaveChallenge)
+
+            assertEquals(listOf("other"), store.all().map { it.challengeId })
+        }
+
+    @Test
+    fun `탈퇴에 실패하면 방금 만든 챌린지 기록을 지우지 않는다`() =
+        runTest {
+            val store = FakeMyChallengeStore(listOf(summary(CHALLENGE_ID)))
+            val viewModel =
+                viewModel(
+                    repo =
+                        FakeChallengeRepository(
+                            detail = { detail(mode = ChallengeMode.SOLO) },
+                            leave = { throw IllegalStateException("탈퇴 실패") },
+                        ),
+                    store = store,
+                )
+            viewModel.onIntent(ChallengeDetailIntent.Load(CHALLENGE_ID))
+
+            viewModel.onIntent(ChallengeDetailIntent.LeaveChallenge)
+
+            assertEquals(listOf(CHALLENGE_ID), store.all().map { it.challengeId })
+        }
+
+    private fun summary(id: String) =
+        MyChallengeSummary(
+            challengeId = id,
+            title = "방금 만든 챌린지",
+            category = Category.entries.first(),
+            mode = ChallengeMode.SOLO,
+            durationDays = 30,
+        )
+
     private fun detail(mode: ChallengeMode) =
         ChallengeDetail(
             title = "매일 걷기",
@@ -163,6 +215,7 @@ class ChallengeDetailSoloTest {
         repo: FakeChallengeRepository,
         rooms: FakeRoomRepository = FakeRoomRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
+        store: FakeMyChallengeStore = FakeMyChallengeStore(),
     ): ChallengeDetailViewModel {
         val account = FakeAccountRepository(agreed = AgreementType.entries.toSet())
         return ChallengeDetailViewModel(
@@ -180,6 +233,7 @@ class ChallengeDetailSoloTest {
             navigationHelper = nav,
             checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, account),
             agreeVerificationConsent = AgreeVerificationConsentUseCase(account, FakeIntroRepository()),
+            myChallengeStore = store,
         )
     }
 

@@ -255,7 +255,7 @@ class HomeViewModel
                             val challenges =
                                 async {
                                     runCatching { challengeRepository.getMyChallenges().challenges }
-                                        .getOrDefault(emptyList())
+                                        .getOrNull()
                                 }
                             val progressSnapshot =
                                 async { runCatching { verificationRepository.getProgress() }.getOrNull() }
