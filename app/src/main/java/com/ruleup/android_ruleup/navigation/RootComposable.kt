@@ -1,6 +1,7 @@
 package com.ruleup.android_ruleup.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -96,7 +97,8 @@ fun RootComposable(
             ) { innerPadding ->
                 AppNavHost(
                     backStack = backStack,
-                    modifier = Modifier.padding(innerPadding),
+                    // 소비하지 않으면 화면의 statusBarsPadding·imePadding 이 시스템 바 높이를 한 번 더 더한다.
+                    modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding),
                 )
             }
 

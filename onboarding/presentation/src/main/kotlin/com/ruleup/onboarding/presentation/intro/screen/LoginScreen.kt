@@ -27,15 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpColors
-import com.ruleup.designsystem.theme.RuleUpGradients
 import com.ruleup.designsystem.theme.RuleUpTheme
 import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.R
@@ -110,11 +106,16 @@ fun LoginContent(
                     Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(22.dp))
-                        .background(RuleUpGradients.Brand),
+                        .background(Color.White)
+                        .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(22.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                // 브랜드 로크업.
-                Text("R", color = Color.White, fontSize = 40.sp, fontWeight = FontWeight.Bold)
+                // 스플래시·앱 아이콘과 같은 체크 링(시안 D).
+                Image(
+                    painter = painterResource(com.ruleup.designsystem.R.drawable.ic_ruleup_mark),
+                    contentDescription = "RuleUp",
+                    modifier = Modifier.size(54.dp),
+                )
             }
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -145,15 +146,6 @@ fun LoginContent(
                     onClick = { onIntent(LoginIntent.LoginClicked(OAuthProvider.GOOGLE)) },
                 )
             }
-
-            Spacer(Modifier.height(4.dp))
-
-            Text(
-                "시작과 동시에 서비스 이용약관 및 개인정보 처리방침에 동의하게 됩니다",
-                color = RuleUpTheme.colors.textMuted,
-                style = RuleUpTheme.typography.caption,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }
@@ -189,7 +181,6 @@ private fun GoogleLoginButton(onClick: () -> Unit) {
                 .aspectRatio(LOGIN_BUTTON_ASPECT_RATIO)
                 .clip(RuleUpTheme.shapes.medium)
                 .background(RuleUpColors.Google)
-                .border(1.dp, RuleUpColors.GoogleBorder, RuleUpTheme.shapes.medium)
                 .singleClickable(onClick = onClick)
                 .padding(horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,

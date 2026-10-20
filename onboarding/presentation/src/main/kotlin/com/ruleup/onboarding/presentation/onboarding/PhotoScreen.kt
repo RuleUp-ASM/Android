@@ -64,32 +64,35 @@ fun PhotoContent(
         )
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            Box(
-                modifier =
-                    Modifier
-                        .size(140.dp)
-                        .clip(RoundedCornerShape(70.dp))
-                        .background(RuleUpGradients.Brand)
-                        .border(5.dp, Color.White, RoundedCornerShape(70.dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (imageUri.isNullOrEmpty()) {
-                    Image(
-                        painter = painterResource(com.ruleup.designsystem.R.drawable.ic_person),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(Color.White),
-                        modifier = Modifier.size(61.dp),
-                    )
-                } else {
-                    val onImageSettled = rememberTtiLargeContent()
-                    AsyncImage(
-                        model = imageUri,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        onSuccess = { onImageSettled() },
-                        onError = { onImageSettled() },
-                        modifier = Modifier.matchParentSize().clip(RoundedCornerShape(70.dp)),
-                    )
+            // 배지를 원 안에 두면 원형 클립에 모서리가 잘린다.
+            Box(modifier = Modifier.size(140.dp)) {
+                Box(
+                    modifier =
+                        Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(70.dp))
+                            .background(RuleUpGradients.Brand)
+                            .border(5.dp, Color.White, RoundedCornerShape(70.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (imageUri.isNullOrEmpty()) {
+                        Image(
+                            painter = painterResource(com.ruleup.designsystem.R.drawable.ic_person),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(Color.White),
+                            modifier = Modifier.size(61.dp),
+                        )
+                    } else {
+                        val onImageSettled = rememberTtiLargeContent()
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            onSuccess = { onImageSettled() },
+                            onError = { onImageSettled() },
+                            modifier = Modifier.matchParentSize().clip(RoundedCornerShape(70.dp)),
+                        )
+                    }
                 }
 
                 Box(
