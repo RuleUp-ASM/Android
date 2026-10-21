@@ -167,7 +167,7 @@ internal fun HomeContent(
                     item { RoutineList(cards = daily, onOpen = open) }
                 }
                 if (weekly.isNotEmpty()) {
-                    item { SectionTitle(title = "이번 주 · 주 N회") }
+                    item { SectionTitle(title = "이번 주 · 횟수 루틴") }
                     item { RoutineList(cards = weekly, onOpen = open) }
                 }
             }

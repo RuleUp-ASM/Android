@@ -91,7 +91,7 @@ class HomeContentTest {
         render(state(card("daily", weeklyCount = 7), card("weekly", weeklyCount = 3)))
 
         compose.onNodeWithText("오늘 · 매일 루틴").assertExists()
-        compose.onNodeWithText("이번 주 · 주 N회").assertExists()
+        compose.onNodeWithText("이번 주 · 횟수 루틴").assertExists()
         compose.onNodeWithText("주 3회", substring = true).assertExists()
     }
 
