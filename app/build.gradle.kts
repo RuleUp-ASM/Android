@@ -125,7 +125,8 @@ android {
             signingConfig = signingConfigs.findByName("release")
             // 릴리즈는 운영 서버로 고정한다
             buildConfigField("String", "BASE_URL", "\"https://prod.ruleup.co.kr/api\"")
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
