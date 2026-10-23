@@ -16,6 +16,13 @@ val localProperties =
     }
 
 val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
+
+// 카카오는 네이티브 앱 키 하나에 패키지명 하나만 등록되므로 debug 패키지는 전용 키를 쓴다(#632)
+val kakaoNativeAppKeyDebug: String =
+    localProperties
+        .getProperty("KAKAO_NATIVE_APP_KEY_DEBUG")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() } ?: kakaoNativeAppKey
 val googleClientId: String = localProperties.getProperty("GOOGLE_CLIENT_ID")?.trim().orEmpty()
 val googleRedirectUri: String = localProperties.getProperty("GOOGLE_REDIRECT_URI")?.trim().orEmpty()
 val kakaoRestApiKey: String = localProperties.getProperty("KAKAO_REST_API_KEY")?.trim().orEmpty()
@@ -36,6 +43,13 @@ android {
         buildConfigField("String", "GOOGLE_REDIRECT_URI", "\"$googleRedirectUri\"")
         buildConfigField("String", "KAKAO_REST_API_KEY", "\"$kakaoRestApiKey\"")
         buildConfigField("String", "KAKAO_REDIRECT_URI", "\"$kakaoRedirectUri\"")
+    }
+
+    buildTypes {
+        debug {
+            manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKeyDebug
+            buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKeyDebug\"")
+        }
     }
 
     compileOptions {

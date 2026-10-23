@@ -33,7 +33,7 @@ JDK 21. Gradle wrapper 사용(`./gradlew`). CI(`.github/workflows/`)는 `assembl
 ## 빌드에 필요한 로컬 설정
 
 - `local.properties` 키 → `app/build.gradle.kts` 가 `BuildConfig`·manifestPlaceholder 로 주입한다:
-  `BASE_URL`(Retrofit base, `@BaseUrl`), `KAKAO_NATIVE_APP_KEY`, `KAKAO_REST_API_KEY`, `KAKAO_REDIRECT_URI`, `GOOGLE_CLIENT_ID`, `GOOGLE_REDIRECT_URI`(스킴 부분이 AppAuth redirect 로 쓰임), `AMPLITUDE_API_KEY`, `TTI_SHEET_URL`(TTI 를 받는 구글 시트 Apps Script 웹앱).
+  `BASE_URL`(Retrofit base, `@BaseUrl`), `KAKAO_NATIVE_APP_KEY`, `KAKAO_NATIVE_APP_KEY_DEBUG`(debug 빌드 전용, `.debug` 패키지가 등록된 키 — 비면 위 키로 대체), `KAKAO_REST_API_KEY`, `KAKAO_REDIRECT_URI`, `GOOGLE_CLIENT_ID`, `GOOGLE_REDIRECT_URI`(스킴 부분이 AppAuth redirect 로 쓰임), `AMPLITUDE_API_KEY`, `TTI_SHEET_URL`(TTI 를 받는 구글 시트 Apps Script 웹앱).
   값이 비면 빈 문자열로 주입될 뿐 빌드는 통과한다 — 런타임에 조용히 죽으므로 증상이 나오면 여기부터 본다.
 - `app/google-services.json` 은 커밋하지 않는다. 파일이 **있을 때만** google-services·Crashlytics 플러그인이 적용된다(`app/build.gradle.kts` 상단 조건부 apply). CI 는 시크릿에서 복원한다.
 - 버전은 전부 `gradle/libs.versions.toml` 버전 카탈로그. 동적 버전(`1.+`)은 쓰지 않는다.
