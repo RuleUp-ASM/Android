@@ -201,13 +201,15 @@ internal fun updateMessage(minAppVersion: String?): String =
 
 /** Play 스토어 상세로 이동. */
 private fun Context.openPlayStore() {
-    val market = Intent(Intent.ACTION_VIEW, "market://details?id=$packageName".toUri())
+    // debug 빌드는 패키지에 .debug 가 붙지만 스토어에는 본 앱만 있다
+    val storePackage = packageName.removeSuffix(".debug")
+    val market = Intent(Intent.ACTION_VIEW, "market://details?id=$storePackage".toUri())
     runCatching { startActivity(market) }.onFailure {
         if (it is ActivityNotFoundException) {
             startActivity(
                 Intent(
                     Intent.ACTION_VIEW,
-                    "https://play.google.com/store/apps/details?id=$packageName".toUri(),
+                    "https://play.google.com/store/apps/details?id=$storePackage".toUri(),
                 ),
             )
         }
