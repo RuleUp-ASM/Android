@@ -1,6 +1,8 @@
 package com.ruleup.verification.data.signal.health
 
 import android.content.Context
+import android.health.connect.HealthConnectException
+import android.os.Build
 import android.os.SystemClock
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
@@ -87,6 +89,24 @@ class HealthConnectCollector
             gapRecorder.record(signalType, GapReason.PERMISSION_MISSING, now - GAP_WINDOW_MS, now, recoverable = true)
         }
 
+        /** 백그라운드 읽기 할당량 초과로 읽지 못한 최근 구간. 다음 읽기에서 복구된다. */
+        private suspend fun recordRateLimitGap(signalType: String) {
+            val now = System.currentTimeMillis()
+            gapRecorder.record(signalType, GapReason.HC_RATE_LIMITED, now - GAP_WINDOW_MS, now, recoverable = true)
+        }
+
+        private fun HealthMetric.readPermission(): String =
+            when (this) {
+                HealthMetric.DISTANCE -> HealthPermission.getReadPermission(DistanceRecord::class)
+                HealthMetric.STEPS -> HealthPermission.getReadPermission(StepsRecord::class)
+                HealthMetric.EXERCISE_DURATION -> HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+            }
+
+        // 플랫폼 HC(API 34+)는 할당량 초과를 IllegalStateException 으로 감싸 던진다
+        private fun IllegalStateException.isRateLimited(): Boolean =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+                (cause as? HealthConnectException)?.errorCode == HealthConnectException.ERROR_RATE_LIMIT_EXCEEDED
+
         private suspend fun captureHealth(
             client: HealthConnectClient,
             granted: Set<String>,
@@ -94,28 +114,40 @@ class HealthConnectCollector
         ) {
             val zone = com.ruleup.domain.time.ServiceDate.ZONE
             val now = Instant.now()
-            val todayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant()
-            val date = LocalDate.now(zone).toString()
-            val range = TimeRangeFilter.between(todayStart, now)
+            // 서버는 귀속일 D 를 D+2 00:00 확정 전까지 재평가한다 → 자정을 넘겨도 전날 기록을 다시 보낸다
+            val yesterdayStart =
+                LocalDate
+                    .now(zone)
+                    .minusDays(1)
+                    .atStartOfDay(zone)
+                    .toInstant()
+            val range = TimeRangeFilter.between(yesterdayStart, now)
 
             val rows = ArrayList<HealthReadingEntity>()
             var denied = false
+            var rateLimited = false
             for (target in targets) {
+                if (target.metric.readPermission() !in granted) {
+                    denied = true
+                    continue
+                }
                 try {
                     when (target.metric) {
-                        HealthMetric.DISTANCE -> rows += readDistance(client, granted, range, date)
-                        HealthMetric.STEPS -> rows += readSteps(client, granted, range, date)
-                        HealthMetric.EXERCISE_DURATION -> rows += readExercise(client, granted, range, date, target.exerciseType)
+                        HealthMetric.DISTANCE -> rows += readDistance(client, range)
+                        HealthMetric.STEPS -> rows += readSteps(client, range)
+                        HealthMetric.EXERCISE_DURATION -> rows += readExercise(client, range, target.exerciseType)
                     }
                 } catch (e: SecurityException) {
                     // 권한 회수, 또는 백그라운드 읽기 권한 없이 앱이 꺼진 동안 읽으려 한 경우
                     denied = true
                 } catch (e: IllegalStateException) {
                     // HC 클라이언트 일시 오류
+                    if (e.isRateLimited()) rateLimited = true
                 }
             }
             // 조용히 빠지면 서버는 신호 없음(NO_SIGNAL)으로 본다 → 공백 사유를 남겨 판정을 유예시킨다(명세 §0.4)
             if (denied) recordPermissionGap("HEALTH")
+            if (rateLimited) recordRateLimitGap("HEALTH")
             // 미전송 스냅샷을 최신값으로 교체.
             healthReadingDao.deleteUntagged()
             if (rows.isNotEmpty()) healthReadingDao.insertAll(rows)
@@ -123,12 +155,9 @@ class HealthConnectCollector
 
         private suspend fun readDistance(
             client: HealthConnectClient,
-            granted: Set<String>,
             range: TimeRangeFilter,
-            date: String,
-        ): List<HealthReadingEntity> {
-            if (HealthPermission.getReadPermission(DistanceRecord::class) !in granted) return emptyList()
-            return client
+        ): List<HealthReadingEntity> =
+            client
                 .readRecords(ReadRecordsRequest(DistanceRecord::class, range))
                 .records
                 .map { rec ->
@@ -138,19 +167,14 @@ class HealthConnectCollector
                         metadata = rec.metadata,
                         startTime = rec.startTime,
                         endTime = rec.endTime,
-                        date = date,
                     )
                 }
-        }
 
         private suspend fun readSteps(
             client: HealthConnectClient,
-            granted: Set<String>,
             range: TimeRangeFilter,
-            date: String,
-        ): List<HealthReadingEntity> {
-            if (HealthPermission.getReadPermission(StepsRecord::class) !in granted) return emptyList()
-            return client
+        ): List<HealthReadingEntity> =
+            client
                 .readRecords(ReadRecordsRequest(StepsRecord::class, range))
                 .records
                 .map { rec ->
@@ -160,20 +184,15 @@ class HealthConnectCollector
                         metadata = rec.metadata,
                         startTime = rec.startTime,
                         endTime = rec.endTime,
-                        date = date,
                     )
                 }
-        }
 
         private suspend fun readExercise(
             client: HealthConnectClient,
-            granted: Set<String>,
             range: TimeRangeFilter,
-            date: String,
             exerciseType: String?,
-        ): List<HealthReadingEntity> {
-            if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) !in granted) return emptyList()
-            return client
+        ): List<HealthReadingEntity> =
+            client
                 .readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range))
                 .records
                 .mapNotNull { rec ->
@@ -187,10 +206,8 @@ class HealthConnectCollector
                         metadata = rec.metadata,
                         startTime = rec.startTime,
                         endTime = rec.endTime,
-                        date = date,
                     )
                 }
-        }
 
         private suspend fun captureSleep(
             client: HealthConnectClient,
@@ -225,6 +242,7 @@ class HealthConnectCollector
                 recordPermissionGap("SLEEP")
                 return
             } catch (e: IllegalStateException) {
+                if (e.isRateLimited()) recordRateLimitGap("SLEEP")
                 return
             }
             sleepSessionDao.deleteUntagged()
@@ -238,7 +256,6 @@ class HealthConnectCollector
             metadata: Metadata,
             startTime: Instant,
             endTime: Instant,
-            date: String,
         ): HealthReadingEntity =
             HealthReadingEntity(
                 recordId = metadata.id,
@@ -248,7 +265,8 @@ class HealthConnectCollector
                 endTime = endTime.toEpochMilli(),
                 originPackage = metadata.dataOrigin.packageName,
                 recordingMethod = recordingMethodOf(metadata.recordingMethod),
-                date = date,
+                // 읽기 범위가 이틀에 걸치므로 수집일이 아니라 기록 시작 시각의 KST 날짜로 귀속한다
+                date = startTime.atZone(com.ruleup.domain.time.ServiceDate.ZONE).toLocalDate().toString(),
                 occurredAt = endTime.toEpochMilli(),
             )
 

@@ -9,10 +9,10 @@ fun FailureReason.failureText(): String =
         FailureReason.INSUFFICIENT_DISTANCE -> "이동 거리가 목표에 못 미쳤어요"
         FailureReason.INSUFFICIENT_STEPS -> "걸음 수가 목표에 못 미쳤어요"
         // 부정행위로 단정하지 않는다
-        FailureReason.UNTRUSTED_HEALTH_SOURCE -> "직접 입력한 기록은 인정되지 않아요"
+        FailureReason.UNTRUSTED_HEALTH_SOURCE -> "인정되지 않는 앱의 기록이거나 직접 입력한 기록이에요"
         FailureReason.INSUFFICIENT_USAGE -> "앱 사용 시간이 목표에 못 미쳤어요"
         FailureReason.USAGE_EXCEEDED -> "앱 사용 시간이 목표를 넘었어요"
-        FailureReason.WOKE_UP_LATE -> "목표 시각까지 잠금 해제 기록이 없어요"
+        FailureReason.WOKE_UP_LATE -> "목표 시각까지 걸음 기록이 없어요"
         FailureReason.PHONE_USED_IN_BLOCK_WINDOW -> "사용하지 않기로 한 시간에 사용 기록이 있어요"
         FailureReason.SLEPT_LATE -> "목표 취침 시각을 넘겨 잠들었어요"
         FailureReason.INSUFFICIENT_SLEEP -> "수면 시간이 목표에 못 미쳤어요"
