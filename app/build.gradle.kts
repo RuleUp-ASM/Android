@@ -102,6 +102,10 @@ android {
     }
 
     buildTypes {
+        // 스토어 앱과 한 기기에 같이 설치되도록 패키지명을 가른다
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             // 자격 증명이 없으면 null
             signingConfig = signingConfigs.findByName("release")
