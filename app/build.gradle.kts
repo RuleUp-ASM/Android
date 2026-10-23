@@ -25,6 +25,13 @@ val localProperties =
     }
 
 val kakaoNativeAppKey: String = localProperties.getProperty("KAKAO_NATIVE_APP_KEY")?.trim().orEmpty()
+
+// 카카오는 네이티브 앱 키 하나에 패키지명 하나만 등록되므로 debug 패키지는 전용 키를 쓴다(#632)
+val kakaoNativeAppKeyDebug: String =
+    localProperties
+        .getProperty("KAKAO_NATIVE_APP_KEY_DEBUG")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() } ?: kakaoNativeAppKey
 val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
 val amplitudeApiKey: String = localProperties.getProperty("AMPLITUDE_API_KEY")?.trim().orEmpty()
 val ttiSheetUrl: String = localProperties.getProperty("TTI_SHEET_URL")?.trim().orEmpty()
@@ -107,6 +114,12 @@ android {
     }
 
     buildTypes {
+        // 스토어 앱과 한 기기에 같이 설치되도록 패키지명을 가른다
+        debug {
+            applicationIdSuffix = ".debug"
+            manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKeyDebug
+            buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKeyDebug\"")
+        }
         release {
             // 자격 증명이 없으면 null
             signingConfig = signingConfigs.findByName("release")
