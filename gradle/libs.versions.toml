@@ -72,6 +72,9 @@ zxing = "3.5.3"
 # Amplitude
 amplitudeAnalytics = "1.30.1"
 
+# Meta 앱 이벤트
+facebookCore = "19.0.0"
+
 # firebase
 googleservice = "4.4.4"
 firebaseCrashlyticsPlugin = "3.0.6"
@@ -187,6 +190,8 @@ zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 # amplitude
 amplitude-analytics = { group = "com.amplitude", name = "analytics-android", version.ref = "amplitudeAnalytics" }
+# Meta 앱 이벤트
+facebook-core = { group = "com.facebook.android", name = "facebook-core", version.ref = "facebookCore" }
 
 # firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

@@ -35,6 +35,8 @@ val kakaoNativeAppKeyDebug: String =
 val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
 val amplitudeApiKey: String = localProperties.getProperty("AMPLITUDE_API_KEY")?.trim().orEmpty()
 val ttiSheetUrl: String = localProperties.getProperty("TTI_SHEET_URL")?.trim().orEmpty()
+val facebookAppId: String = localProperties.getProperty("FACEBOOK_APP_ID")?.trim().orEmpty()
+val facebookClientToken: String = localProperties.getProperty("FACEBOOK_CLIENT_TOKEN")?.trim().orEmpty()
 val appAuthRedirectScheme: String =
     localProperties
         .getProperty("GOOGLE_REDIRECT_URI")
@@ -95,6 +97,9 @@ android {
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
         // TTI 를 받는 구글 시트 Apps Script 웹앱 URL. 비면 보내지 않는다(#623)
         buildConfigField("String", "TTI_SHEET_URL", "\"$ttiSheetUrl\"")
+        // Meta SDK 는 숫자 앱 ID 를 meta-data 문자열 리소스로 읽어야 한다 — placeholder 로 넣으면 숫자로 파싱된다
+        resValue("string", "facebook_app_id", facebookAppId)
+        resValue("string", "facebook_client_token", facebookClientToken)
     }
 
     signingConfigs {
@@ -140,6 +145,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 }
 
@@ -223,6 +229,9 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.perf)
+
+    // Meta 앱 이벤트(광고 성과 측정). 로그인·공유 모듈은 쓰지 않는다.
+    implementation(libs.facebook.core)
 
     // 프레임 jank 측정(JankStats).
     implementation(libs.androidx.metrics.performance)
