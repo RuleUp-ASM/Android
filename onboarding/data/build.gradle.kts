@@ -46,4 +46,5 @@ dependencies {
 
     testImplementation(kotlin("test-junit"))
     testImplementation(testFixtures(project(":core:domain")))
+    testImplementation(testFixtures(project(":observability:domain")))
 }

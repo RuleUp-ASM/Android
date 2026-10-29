@@ -2,10 +2,14 @@ package com.ruleup.onboarding.data.auth.repository
 
 import com.ruleup.domain.entity.user.Token
 import com.ruleup.domain.test.FakeTokenRepository
+import com.ruleup.domain.token.RefreshedSession
+import com.ruleup.domain.token.TokenRefresher
 import com.ruleup.domain.token.TokenRepository
+import com.ruleup.network.auth.TokenAuthenticator
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import com.ruleup.network.dto.ErrorBody
+import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.auth.dto.LogoutRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
@@ -13,6 +17,7 @@ import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshResponse
 import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
+import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -20,16 +25,77 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import okhttp3.Protocol
+import okhttp3.Request
 import okhttp3.ResponseBody.Companion.toResponseBody
 import retrofit2.HttpException
 import retrofit2.Response
+import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class TokenRefresherImplTest {
+    @Test
+    fun `자동 로그인 갱신 중 동시 401 이 와도 이전 토큰을 다시 전송하지 않는다`() =
+        runBlocking {
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val api =
+                FakeAuthApi {
+                    started.complete(Unit)
+                    release.await()
+                    rotated()
+                }
+            val tokens = FakeTokenRepository()
+            tokens.saveSession(Token("old-access", "r1", "Bearer", 3600), "u-1")
+            val actualRefresher = TokenRefresherImpl(api, tokens)
+            val authenticationStarted = CountDownLatch(1)
+            val authenticatorRefresher =
+                object : TokenRefresher {
+                    override suspend fun refresh(refreshToken: String): RefreshedSession? {
+                        authenticationStarted.countDown()
+                        return actualRefresher.refresh(refreshToken)
+                    }
+                }
+            val authenticator = TokenAuthenticator(tokens, Lazy { authenticatorRefresher }, testObservability())
+            val response =
+                okhttp3.Response
+                    .Builder()
+                    .request(
+                        Request
+                            .Builder()
+                            .url("https://example.com/api/v1/profile")
+                            .header("Authorization", "Bearer old-access")
+                            .build(),
+                    ).protocol(Protocol.HTTP_1_1)
+                    .code(401)
+                    .message("Unauthorized")
+                    .build()
+            val executor = Executors.newSingleThreadExecutor()
+            try {
+                val autoLogin = async { actualRefresher.refresh("r1") }
+                started.await()
+                val retry = executor.submit(Callable { authenticator.authenticate(null, response)?.header("Authorization") })
+                assertTrue(authenticationStarted.await(10, TimeUnit.SECONDS))
+                release.complete(Unit)
+
+                assertEquals("new-refresh", autoLogin.await()?.token?.refreshToken)
+                assertEquals("Bearer new-access", retry.get(10, TimeUnit.SECONDS))
+                assertEquals(1, api.refreshCalls)
+                assertEquals("new-refresh", tokens.getRefreshToken())
+            } finally {
+                release.complete(Unit)
+                executor.shutdownNow()
+            }
+        }
+
     @Test
     fun `재발급에 성공하면 회전된 토큰을 반환한다`() =
         runBlocking {
