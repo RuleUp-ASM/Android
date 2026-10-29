@@ -77,7 +77,7 @@ class VerificationRepositoryImpl
             } catch (e: ApiException) {
                 // 429/413/400 은 호출자가 백오프·분할·폐기로 분기할 수 있도록 도메인 예외로 변환한다.
                 when (e.code) {
-                    CODE_SYNC_TOO_FREQUENT -> throw SyncTooFrequentException()
+                    CODE_SYNC_TOO_FREQUENT -> throw SyncTooFrequentException(e.retryAfterSeconds)
                     CODE_INVALID_SIGNAL_PAYLOAD -> throw InvalidSignalPayloadException()
                     CODE_SYNC_PAYLOAD_TOO_LARGE -> throw SyncPayloadTooLargeException()
                     else -> throw e

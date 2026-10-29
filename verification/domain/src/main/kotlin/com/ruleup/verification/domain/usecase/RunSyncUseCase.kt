@@ -56,7 +56,7 @@ class RunSyncUseCase
                     signalRepository.markSynced(collectedAt)
                     throw e
                 } catch (e: SyncTooFrequentException) {
-                    // 429 는 markSynced 없이 전파 → Worker 가 백오프 재시도(전송분 유지).
+                    // 429 는 markSynced 없이 전파해 미전송 신호를 유지한다.
                     throw e
                 }
 

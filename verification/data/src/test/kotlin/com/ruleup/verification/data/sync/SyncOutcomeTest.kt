@@ -28,6 +28,18 @@ class SyncOutcomeTest {
     }
 
     @Test
+    fun `429 대기 시간이 있으면 서버가 허용하는 시각까지 늦춘다`() {
+        assertEquals(SyncOutcome.RETRY_AFTER, syncOutcomeFor(SyncTooFrequentException(123)))
+    }
+
+    @Test
+    fun `429 대기 시간이 없거나 잘못됐으면 기본 백오프로 재시도한다`() {
+        assertEquals(SyncOutcome.RETRY, syncOutcomeFor(SyncTooFrequentException(null)))
+        assertEquals(SyncOutcome.RETRY, syncOutcomeFor(SyncTooFrequentException(0)))
+        assertEquals(SyncOutcome.RETRY, syncOutcomeFor(SyncTooFrequentException(-1)))
+    }
+
+    @Test
     fun `기타 일시 오류는 RETRY`() {
         assertEquals(SyncOutcome.RETRY, syncOutcomeFor(RuntimeException("network")))
     }

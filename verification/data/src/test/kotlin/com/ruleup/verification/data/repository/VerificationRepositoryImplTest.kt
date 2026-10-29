@@ -38,12 +38,22 @@ import com.ruleup.verification.domain.entity.AppealNotFailedException
 import com.ruleup.verification.domain.entity.AppealTrack
 import com.ruleup.verification.domain.entity.AppealWindowClosedException
 import com.ruleup.verification.domain.entity.CancelWindowClosedException
+import com.ruleup.verification.domain.entity.CoverageWindow
+import com.ruleup.verification.domain.entity.DeviceClock
+import com.ruleup.verification.domain.entity.DeviceDiagnostics
+import com.ruleup.verification.domain.entity.EnvelopeMetadata
+import com.ruleup.verification.domain.entity.IntegritySnapshot
 import com.ruleup.verification.domain.entity.InvalidAnchorException
 import com.ruleup.verification.domain.entity.InvalidAppealReasonException
 import com.ruleup.verification.domain.entity.InvalidTargetDateException
 import com.ruleup.verification.domain.entity.LocationLockedInWindowException
 import com.ruleup.verification.domain.entity.LocationPin
+import com.ruleup.verification.domain.entity.NetworkState
+import com.ruleup.verification.domain.entity.PermissionSnapshot
+import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.entity.SettingChangeLimitException
+import com.ruleup.verification.domain.entity.SignalBatch
+import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import com.ruleup.verification.domain.entity.TodayResultStatus
 import kotlinx.coroutines.test.runTest
 import okhttp3.MultipartBody
@@ -54,6 +64,33 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class VerificationRepositoryImplTest {
+    @Test
+    fun `sync 제한 응답은 서버가 알려준 대기 시간을 보존한다`() =
+        runTest {
+            val api = FakeVerificationApi(syncError = ErrorBody("SYNC_TOO_FREQUENT", "대기", retryAfterSeconds = 123))
+            val repository = VerificationRepositoryImpl(api, FakeKakaoLocalApi(), FakeImageReader())
+            val denied = PermissionState.DENIED
+            val metadata =
+                EnvelopeMetadata(
+                    clock = DeviceClock(1, 1, "boot", "Asia/Seoul"),
+                    deviceId = "device",
+                    activeChallengeIds = emptyList(),
+                    permissions = PermissionSnapshot(denied, denied, denied, denied, denied, denied, denied, denied),
+                    network = NetworkState(vpnActive = false),
+                    integrity = IntegritySnapshot(token = null),
+                    diagnostics = DeviceDiagnostics(null, null, null, null, null, null, "SDK_AVAILABLE"),
+                    gaps = emptyList(),
+                    coverage = CoverageWindow(from = 1, until = 1),
+                )
+
+            val error =
+                assertFailsWith<SyncTooFrequentException> {
+                    repository.sync(metadata, SignalBatch("2026-01-01T00:00:00Z", emptyList()))
+                }
+
+            assertEquals(123, error.retryAfterSec)
+        }
+
     @Test
     fun `수동 제출 409 ALREADY_VERIFIED 는 도메인 예외로 변환된다`() =
         runTest {
@@ -276,6 +313,7 @@ class VerificationRepositoryImplTest {
     private fun anchorSet(): AnchorSet = AnchorSet.of(listOf(LocationPin(lat = 37.4979, lng = 127.0276, label = "새 헬스장")))
 
     private class FakeVerificationApi(
+        private val syncError: ErrorBody? = null,
         private val manualSuccess: ManualSubmitResponse? = null,
         private val manualError: ErrorBody? = null,
         private val myLocationSuccess: MyLocationResponse? = null,
@@ -319,7 +357,8 @@ class VerificationRepositoryImplTest {
 
         override suspend fun intro(request: IntroRequest): BaseResponse<IntroResponse> = error("unused")
 
-        override suspend fun sync(request: SyncEnvelopeRequest): BaseResponse<SyncResponse> = error("unused")
+        override suspend fun sync(request: SyncEnvelopeRequest): BaseResponse<SyncResponse> =
+            BaseResponse(success = false, error = syncError ?: error("unused"))
 
         override suspend fun getProgress(status: String?): BaseResponse<ProgressResponse> = error("unused")
 

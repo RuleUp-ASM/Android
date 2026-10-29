@@ -30,6 +30,10 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -84,6 +88,7 @@ dependencies {
     // 수집·동기화 경로 가시화 로그(디버그 오버레이/Logcat).
 
     testImplementation(kotlin("test-junit"))
+    testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.kotlinx.coroutines.test)
 }
