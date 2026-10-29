@@ -47,5 +47,7 @@ dependencies {
     // 에러 본문 인터셉터가 실제 OkHttp 응답을 다루므로 유닛 테스트에도 okhttp 가 필요하다.
     testImplementation(libs.junit)
     testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":core:domain")))
+    testImplementation(testFixtures(project(":observability:domain")))
     testImplementation(libs.okhttp)
 }

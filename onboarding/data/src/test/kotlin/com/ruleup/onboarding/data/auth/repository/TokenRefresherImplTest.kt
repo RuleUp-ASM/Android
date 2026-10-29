@@ -1,5 +1,8 @@
 package com.ruleup.onboarding.data.auth.repository
 
+import com.ruleup.domain.entity.user.Token
+import com.ruleup.domain.test.FakeTokenRepository
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import com.ruleup.network.dto.ErrorBody
@@ -10,8 +13,11 @@ import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshRequest
 import com.ruleup.onboarding.data.auth.dto.TokenRefreshResponse
 import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -20,6 +26,7 @@ import retrofit2.Response
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 class TokenRefresherImplTest {
@@ -41,7 +48,7 @@ class TokenRefresherImplTest {
                     )
                 }
 
-            val refreshed = TokenRefresherImpl(api).refresh("old-refresh")
+            val refreshed = refresher(api, "old-refresh").refresh("old-refresh")
 
             assertEquals("new-access", refreshed?.token?.accessToken)
             assertEquals("new-refresh", refreshed?.token?.refreshToken)
@@ -55,7 +62,7 @@ class TokenRefresherImplTest {
         runBlocking {
             val api = FakeAuthApi { throw httpException(401) }
 
-            assertNull(TokenRefresherImpl(api).refresh("expired-refresh"))
+            assertNull(refresher(api, "expired-refresh").refresh("expired-refresh"))
         }
 
     @Test
@@ -70,7 +77,7 @@ class TokenRefresherImplTest {
                     )
                 }
 
-            assertNull(TokenRefresherImpl(api).refresh("expired-refresh"))
+            assertNull(refresher(api, "expired-refresh").refresh("expired-refresh"))
         }
 
     @Test
@@ -79,7 +86,7 @@ class TokenRefresherImplTest {
             val api = FakeAuthApi { throw httpException(500) }
 
             assertFailsWith<HttpException> {
-                TokenRefresherImpl(api).refresh("valid-refresh")
+                refresher(api, "valid-refresh").refresh("valid-refresh")
             }
             Unit
         }
@@ -92,7 +99,7 @@ class TokenRefresherImplTest {
                     delay(100)
                     rotated()
                 }
-            val refresher = TokenRefresherImpl(api)
+            val refresher = refresher(api)
 
             val results = listOf(async { refresher.refresh("r1") }, async { refresher.refresh("r1") }).awaitAll()
 
@@ -101,16 +108,117 @@ class TokenRefresherImplTest {
         }
 
     @Test
+    fun `갱신 응답을 기다리는 동안 로그아웃하면 응답이 세션을 복구하지 않는다`() =
+        runBlocking {
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val api =
+                FakeAuthApi {
+                    started.complete(Unit)
+                    release.await()
+                    rotated()
+                }
+            val tokens = FakeTokenRepository(refreshToken = "r1")
+            val refresher = TokenRefresherImpl(api, tokens)
+
+            val pending = async { refresher.refresh("r1") }
+            started.await()
+            tokens.clear()
+            release.complete(Unit)
+
+            assertNull(pending.await())
+            assertNull(tokens.getRefreshToken())
+        }
+
+    @Test
+    fun `새 토큰 저장이 끝나기 전에는 갱신 결과를 반환하지 않는다`() =
+        runBlocking {
+            val saving = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val delegate = FakeTokenRepository(refreshToken = "r1")
+            val tokens =
+                object : TokenRepository by delegate {
+                    override suspend fun saveTokensIfRefreshTokenMatches(
+                        expectedRefreshToken: String,
+                        token: Token,
+                        userId: String?,
+                    ): Boolean {
+                        saving.complete(Unit)
+                        release.await()
+                        return delegate.saveTokensIfRefreshTokenMatches(expectedRefreshToken, token, userId)
+                    }
+                }
+            val api = FakeAuthApi { rotated() }
+            val refresher = TokenRefresherImpl(api, tokens)
+
+            val first = async { refresher.refresh("r1") }
+            saving.await()
+            val second = async(start = CoroutineStart.UNDISPATCHED) { refresher.refresh("r1") }
+            assertFalse(first.isCompleted)
+            assertFalse(second.isCompleted)
+            release.complete(Unit)
+
+            assertEquals("new-refresh", first.await()?.token?.refreshToken)
+            assertEquals("new-refresh", second.await()?.token?.refreshToken)
+            assertEquals("new-refresh", tokens.getRefreshToken())
+            assertEquals(1, api.refreshCalls)
+        }
+
+    @Test
+    fun `갱신을 기다리던 화면이 닫혀도 진행 중인 요청을 중복 전송하지 않는다`() =
+        runBlocking {
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val api =
+                FakeAuthApi {
+                    started.complete(Unit)
+                    release.await()
+                    rotated()
+                }
+            val refresher = refresher(api)
+
+            val first = async { refresher.refresh("r1") }
+            started.await()
+            first.cancelAndJoin()
+            val second = async(start = CoroutineStart.UNDISPATCHED) { refresher.refresh("r1") }
+            release.complete(Unit)
+
+            assertEquals("new-refresh", second.await()?.token?.refreshToken)
+            assertEquals(1, api.refreshCalls)
+        }
+
+    @Test
     fun `이미 끝난 갱신과 같은 토큰으로 늦게 와도 회전 전 토큰을 다시 보내지 않는다`() =
         runBlocking {
             val api = FakeAuthApi { rotated() }
-            val refresher = TokenRefresherImpl(api)
+            val refresher = refresher(api)
 
             refresher.refresh("r1")
             val late = refresher.refresh("r1")
 
             assertEquals(1, api.refreshCalls)
-            assertEquals("new-refresh", late?.token?.refreshToken)
+            assertNull(late)
+        }
+
+    @Test
+    fun `두 번 회전한 뒤 지연된 이전 토큰으로 재발급하지 않는다`() =
+        runBlocking {
+            var rotation = 1
+            val api =
+                FakeAuthApi {
+                    rotation++
+                    rotated().let { it.copy(data = it.data?.copy(refreshToken = "r$rotation")) }
+                }
+            val tokens = FakeTokenRepository(refreshToken = "r1")
+            val refresher = TokenRefresherImpl(api, tokens)
+
+            refresher.refresh("r1")!!
+            refresher.refresh("r2")!!
+            val late = refresher.refresh("r1")
+
+            assertEquals(2, api.refreshCalls)
+            assertNull(late)
+            assertEquals("r3", tokens.getRefreshToken())
         }
 
     @Test
@@ -125,7 +233,7 @@ class TokenRefresherImplTest {
                     }
                     rotated()
                 }
-            val refresher = TokenRefresherImpl(api)
+            val refresher = refresher(api)
 
             assertFailsWith<HttpException> { refresher.refresh("r1") }
             val retried = refresher.refresh("r1")
@@ -133,6 +241,11 @@ class TokenRefresherImplTest {
             assertEquals(2, api.refreshCalls)
             assertEquals("new-refresh", retried?.token?.refreshToken)
         }
+
+    private fun refresher(
+        api: AuthApi,
+        refreshToken: String = "r1",
+    ) = TokenRefresherImpl(api, FakeTokenRepository(refreshToken = refreshToken))
 
     private fun rotated() =
         BaseResponse(

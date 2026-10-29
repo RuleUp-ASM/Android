@@ -39,6 +39,10 @@ class TokenAuthenticator
                 }
 
                 val refreshToken = runBlocking { tokenRepository.getRefreshToken() } ?: return null
+                val accessAfterRead = tokenRepository.cachedAccessToken()
+                if (!accessAfterRead.isNullOrBlank() && accessAfterRead != failedToken) {
+                    return response.retryWith(accessAfterRead)
+                }
 
                 val newToken =
                     try {
@@ -57,13 +61,17 @@ class TokenAuthenticator
                         return response.retryWith(latestAccess)
                     }
                     // 정리하면 isLoggedIn 이 false 로 전이해 로그인 화면으로 라우팅된다.
-                    observability.i(TAG) { "세션 만료 — 로컬 토큰 정리" }
-                    runBlocking { tokenRepository.clear() }
+                    val cleared = runBlocking { tokenRepository.clearIfRefreshTokenMatches(refreshToken) }
+                    if (cleared) observability.i(TAG) { "세션 만료 — 로컬 토큰 정리" }
+                    if (!cleared) {
+                        val latest = tokenRepository.cachedAccessToken()
+                        if (!latest.isNullOrBlank()) return response.retryWith(latest)
+                    }
                     return null
                 }
 
-                runBlocking { tokenRepository.saveTokens(newToken.token, newToken.userId) }
-                return response.retryWith(newToken.token.accessToken)
+                val latestAccess = tokenRepository.cachedAccessToken()
+                return if (!latestAccess.isNullOrBlank()) response.retryWith(latestAccess) else null
             }
         }
 

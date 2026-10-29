@@ -34,6 +34,7 @@ class AutoLoginUseCaseTest {
             val newToken = Token("a", "r2", "Bearer", 3600)
             val auth = FakeAuthRepository().apply { refreshResult = RefreshedSession(newToken, userId = "u-1") }
             val tokens = FakeTokenRepository(refreshToken = "r1")
+            auth.onRefresh = { tokens.saveTokens(it.token, it.userId) }
 
             val result = AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 
@@ -53,6 +54,7 @@ class AutoLoginUseCaseTest {
                     refreshResult = RefreshedSession(Token("a", "r2", "Bearer", 3600), userId = null)
                 }
             val tokens = FakeTokenRepository(refreshToken = "r1").apply { savedUserId = "u-old" }
+            auth.onRefresh = { tokens.saveTokens(it.token, it.userId) }
 
             AutoLoginUseCase(auth, tokens, RecordingBizLogger())()
 

@@ -2,6 +2,7 @@ package com.ruleup.onboarding.data.auth.repository
 
 import com.ruleup.domain.token.RefreshedSession
 import com.ruleup.domain.token.TokenRefresher
+import com.ruleup.domain.token.TokenRepository
 import com.ruleup.network.dto.ApiException
 import com.ruleup.network.dto.getOrThrow
 import com.ruleup.onboarding.data.auth.api.AuthApi
@@ -22,6 +23,7 @@ class TokenRefresherImpl
     @Inject
     constructor(
         private val api: AuthApi,
+        private val tokenRepository: TokenRepository,
     ) : TokenRefresher {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -33,14 +35,25 @@ class TokenRefresherImpl
         override suspend fun refresh(refreshToken: String): RefreshedSession? {
             val shared =
                 lock.withLock {
+                    if (tokenRepository.getRefreshToken() != refreshToken) return null
                     latest?.takeIf { it.first == refreshToken }?.second
-                        ?: scope.async { request(refreshToken) }.also { latest = refreshToken to it }
+                        ?: scope
+                            .async {
+                                val session = request(refreshToken) ?: return@async null
+                                if (tokenRepository.saveTokensIfRefreshTokenMatches(refreshToken, session.token, session.userId)) {
+                                    session
+                                } else {
+                                    null
+                                }
+                            }.also { latest = refreshToken to it }
                 }
             return try {
                 shared.await()
             } catch (e: Exception) {
                 // 일시적 실패를 붙잡아 두면 같은 토큰의 재시도가 영영 같은 실패를 받는다.
-                lock.withLock { if (latest?.second === shared) latest = null }
+                if (shared.isCompleted) {
+                    lock.withLock { if (latest?.second === shared) latest = null }
+                }
                 throw e
             }
         }

@@ -36,9 +36,7 @@ class AutoLoginUseCase
             return runCatching { authRepository.refreshToken(refreshToken) }
                 .fold(
                     onSuccess = {
-                        // 갱신 응답이 userId 를 함께 줘서 프로필 조회 없이 세션이 완성된다.
-                        tokenRepository.saveTokens(it.token, it.userId)
-                        AutoLoginResult.Authenticated
+                        if (tokenRepository.getRefreshToken() != null) AutoLoginResult.Authenticated else AutoLoginResult.NoSession
                     },
                     onFailure = {
                         // 동시 토큰 갱신 실패 시 최신 저장 토큰 확인.
@@ -50,9 +48,14 @@ class AutoLoginUseCase
                             AutoLoginResult.ConnectionFailed
                         } else {
                             // 세션이 실제로 끊긴 지점.
-                            bizLogger.record(OnboardingEvents.sessionExpired(SessionExpiredTrigger.EXPIRED))
-                            tokenRepository.clear()
-                            AutoLoginResult.SessionExpired
+                            if (tokenRepository.clearIfRefreshTokenMatches(refreshToken)) {
+                                bizLogger.record(OnboardingEvents.sessionExpired(SessionExpiredTrigger.EXPIRED))
+                                AutoLoginResult.SessionExpired
+                            } else if (tokenRepository.getRefreshToken() != null) {
+                                AutoLoginResult.Authenticated
+                            } else {
+                                AutoLoginResult.NoSession
+                            }
                         }
                     },
                 )

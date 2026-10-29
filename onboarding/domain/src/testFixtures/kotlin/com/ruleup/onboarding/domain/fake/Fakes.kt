@@ -61,6 +61,16 @@ class FakeTokenRepository(
         saveCount++
     }
 
+    override suspend fun saveTokensIfRefreshTokenMatches(
+        expectedRefreshToken: String,
+        token: Token,
+        userId: String?,
+    ): Boolean {
+        if (refreshToken != expectedRefreshToken) return false
+        saveTokens(token, userId)
+        return true
+    }
+
     override suspend fun getAccessToken(): String? = savedToken?.accessToken
 
     override fun cachedAccessToken(): String? = savedToken?.accessToken
@@ -71,6 +81,12 @@ class FakeTokenRepository(
 
     // 실제 구현처럼 로그인 이력은 clear() 로 지워지지 않는다.
     override suspend fun hasEverLoggedIn(): Boolean = everLoggedIn
+
+    override suspend fun clearIfRefreshTokenMatches(expectedRefreshToken: String): Boolean {
+        if (refreshToken != expectedRefreshToken) return false
+        clear()
+        return true
+    }
 
     override suspend fun clear() {
         cleared = true
@@ -94,6 +110,7 @@ class FakeAuthRepository : AuthRepository {
     var refreshResult: RefreshedSession? = null
     var refreshError: Throwable? = null
     var refreshCalledWith: String? = null
+    var onRefresh: suspend (RefreshedSession) -> Unit = {}
 
     var signupResult: AuthSession? = null
     var signupError: Throwable? = null
@@ -133,7 +150,7 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun refreshToken(refreshToken: String): RefreshedSession {
         refreshCalledWith = refreshToken
         refreshError?.let { throw it }
-        return refreshResult!!
+        return refreshResult!!.also { onRefresh(it) }
     }
 
     override suspend fun logout(refreshToken: String) {

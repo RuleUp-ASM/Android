@@ -23,7 +23,7 @@ interface AuthRepository {
         device: DeviceIdentity,
     ): AuthSession
 
-    /** 앱 토큰 재발급(회전). */
+    /** 앱 토큰을 재발급하고 저장한 뒤 반환한다. */
     suspend fun refreshToken(refreshToken: String): RefreshedSession
 
     /** 현재 기기 refreshToken revoke. */
