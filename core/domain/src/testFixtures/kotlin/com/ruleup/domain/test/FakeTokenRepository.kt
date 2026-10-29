@@ -13,6 +13,7 @@ class FakeTokenRepository(
     private val everLoggedIn: Boolean = false,
 ) : TokenRepository {
     private val loggedIn = MutableStateFlow(refreshToken != null)
+    private val reviewSession = MutableStateFlow(false)
     private val userIdFlow = MutableStateFlow(storedUserId)
 
     var savedToken: Token? = null
@@ -21,6 +22,8 @@ class FakeTokenRepository(
         private set
 
     override val isLoggedIn: Flow<Boolean> = loggedIn.asStateFlow()
+
+    override val isReviewSession: Flow<Boolean> = reviewSession.asStateFlow()
 
     override val userId: Flow<String?> = userIdFlow.asStateFlow()
 
@@ -33,6 +36,15 @@ class FakeTokenRepository(
         storedUserId = userId
         userIdFlow.value = userId
         loggedIn.value = true
+        reviewSession.value = false
+    }
+
+    override suspend fun saveReviewSession(
+        token: Token,
+        userId: String,
+    ) {
+        saveSession(token, userId)
+        reviewSession.value = true
     }
 
     override suspend fun saveTokens(
@@ -79,6 +91,7 @@ class FakeTokenRepository(
         storedUserId = null
         userIdFlow.value = null
         loggedIn.value = false
+        reviewSession.value = false
     }
 
     override suspend fun hasEverLoggedIn(): Boolean = everLoggedIn || savedToken != null

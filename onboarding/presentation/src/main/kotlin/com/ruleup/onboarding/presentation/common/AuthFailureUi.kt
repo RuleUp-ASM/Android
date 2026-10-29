@@ -34,6 +34,10 @@ fun Throwable.toAuthFailureUi(): AuthFailureUi {
         AuthFailure.UNKNOWN,
         -> AuthFailureUi.Toast("로그인에 실패했어요. 다시 시도해주세요")
 
+        AuthFailure.INVALID_REVIEW_CODE -> AuthFailureUi.Toast("코드를 다시 확인해주세요")
+        AuthFailure.REVIEW_TOO_MANY_ATTEMPTS -> AuthFailureUi.Toast("잠시 후 다시 시도해주세요")
+        AuthFailure.REVIEW_UNAVAILABLE -> AuthFailureUi.Toast("현재 심사 로그인을 사용할 수 없어요")
+
         AuthFailure.PROVIDER_UNAVAILABLE ->
             AuthFailureUi.Dialog("지금은 연결이 어려워요. 다른 계정으로 로그인해보세요")
 

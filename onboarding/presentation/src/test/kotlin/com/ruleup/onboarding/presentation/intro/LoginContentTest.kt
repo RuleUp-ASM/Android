@@ -3,6 +3,7 @@ package com.ruleup.onboarding.presentation.intro
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 import com.ruleup.onboarding.presentation.intro.screen.LoginContent
 import com.ruleup.onboarding.presentation.intro.viewmodel.LoginIntent
@@ -20,6 +21,17 @@ import kotlin.test.assertTrue
 class LoginContentTest {
     @get:Rule
     val compose = createComposeRule()
+
+    @Test
+    fun `로고를 여섯 번 누르면 심사 로그인 진입 이벤트가 발생한다`() {
+        var entries = 0
+        compose.renderOnboarding { LoginContent(onIntent = {}, onReviewEntry = { entries++ }) }
+
+        repeat(5) { compose.onNodeWithContentDescription("RuleUp").performClick() }
+        assertEquals(0, entries)
+        compose.onNodeWithContentDescription("RuleUp").performClick()
+        assertEquals(1, entries)
+    }
 
     @Test
     fun `두 제공사로 시작할 수 있다`() {

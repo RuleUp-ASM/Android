@@ -3,6 +3,7 @@ package com.ruleup.onboarding.data.auth.api
 import com.ruleup.network.dto.BaseResponse
 import com.ruleup.network.dto.EmptyData
 import com.ruleup.onboarding.data.auth.dto.LogoutRequest
+import com.ruleup.onboarding.data.auth.dto.ReviewLoginRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpResponse
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
@@ -17,6 +18,11 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface AuthApi {
+    @POST("v1/auth/review-login")
+    suspend fun reviewLogin(
+        @Body request: ReviewLoginRequest,
+    ): BaseResponse<SocialLoginAuthResponse>
+
     // OAuth 로그인 (provider: kakao / google).
     @POST("v1/auth/oauth/{provider}")
     suspend fun socialLogin(

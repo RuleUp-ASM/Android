@@ -14,11 +14,15 @@ import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.observability.domain.test.testObservability
 import com.ruleup.onboarding.domain.account.AccountRestrictionProvider
 import com.ruleup.onboarding.domain.auth.SignupSession
+import com.ruleup.onboarding.domain.auth.entity.AuthException
+import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 import com.ruleup.onboarding.domain.auth.entity.AuthSession
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.entity.OAuthProfile
 import com.ruleup.onboarding.domain.auth.entity.OAuthProvider
 import com.ruleup.onboarding.domain.auth.entity.OAuthResult
+import com.ruleup.onboarding.domain.auth.repository.AuthRepository
+import com.ruleup.onboarding.domain.auth.usecase.ReviewLoginUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.fake.FakeAuthRepository
 import com.ruleup.onboarding.domain.fake.FakeDeviceIdentityRepository
@@ -27,8 +31,11 @@ import com.ruleup.onboarding.domain.fake.testUser
 import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
+import com.ruleup.onboarding.presentation.common.AuthFailureUi
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -37,6 +44,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /** 소셜 로그인. */
@@ -55,6 +63,66 @@ class LoginViewModelTest {
 
     @AfterTest
     fun tearDown() = Dispatchers.resetMain()
+
+    @Test
+    fun `심사 코드로 로그인하면 심사 세션을 저장하고 홈으로 간다`() =
+        runTest {
+            val auth = FakeAuthRepository().apply { reviewResult = AuthSession(token, testUser()) }
+            val tokens = FakeTokenRepository()
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(auth, nav = nav, tokens = tokens)
+
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("TEST-CODE"))
+
+            assertEquals("TEST-CODE", auth.reviewCode)
+            assertTrue(tokens.isReviewSession.first())
+            assertEquals(listOf<Page>(HomePage), nav.pages)
+            assertFalse(viewModel.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `심사 코드가 틀리면 로그인 화면에 남고 안내를 보여준다`() =
+        runTest {
+            val auth = FakeAuthRepository().apply { reviewError = AuthException(AuthFailure.INVALID_REVIEW_CODE) }
+            val tokens = FakeTokenRepository()
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(auth, nav = nav, tokens = tokens)
+
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("wrong"))
+
+            assertTrue(nav.didNotMove)
+            assertFalse(tokens.isReviewSession.first())
+            assertFalse(viewModel.uiState.value.isLoading)
+            assertEquals(LoginEffect.ShowFailure(AuthFailureUi.Toast("코드를 다시 확인해주세요")), viewModel.effect.first())
+        }
+
+    @Test
+    fun `심사 로그인을 기다리는 동안 중복 제출해도 한 번만 요청한다`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val fake = FakeAuthRepository().apply { reviewResult = AuthSession(token, testUser()) }
+            var calls = 0
+            val auth =
+                object : AuthRepository by fake {
+                    override suspend fun reviewLogin(code: String): AuthSession {
+                        calls++
+                        gate.await()
+                        return fake.reviewLogin(code)
+                    }
+                }
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(auth, nav = nav)
+
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("TEST-CODE"))
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("TEST-CODE"))
+            assertEquals(1, calls)
+            assertTrue(viewModel.uiState.value.isLoading)
+            gate.complete(Unit)
+            testScheduler.runCurrent()
+
+            assertEquals(listOf<Page>(HomePage), nav.pages)
+            assertFalse(viewModel.uiState.value.isLoading)
+        }
 
     @Test
     fun `기존 사용자는 홈으로 보낸다`() =
@@ -221,7 +289,7 @@ class LoginViewModelTest {
         }
 
     private fun viewModel(
-        auth: FakeAuthRepository,
+        auth: AuthRepository,
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
         messages: RecordingMessageHelper = RecordingMessageHelper(),
         signupSession: SignupSession = SignupSession(),
@@ -230,6 +298,7 @@ class LoginViewModelTest {
         restriction: AccountRestriction = AccountRestriction.None,
     ) = LoginViewModel(
         socialLoginUseCase = SocialLoginUseCase(auth, FakeDeviceIdentityRepository(), tokens, testObservability()),
+        reviewLoginUseCase = ReviewLoginUseCase(auth, tokens),
         navigationHelper = nav,
         messageHelper = messages,
         observability = testObservability(),

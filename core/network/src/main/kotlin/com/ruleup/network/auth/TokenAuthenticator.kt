@@ -27,7 +27,7 @@ class TokenAuthenticator
         ): Request? {
             // refresh 자체의 401 까지 갱신하러 들어가면 무한 재귀에 빠진다.
             val requestPath = response.request.url.encodedPath
-            if (requestPath.contains(AUTH_REFRESH_PATH)) return null
+            if (requestPath.contains(AUTH_REFRESH_PATH) || requestPath.contains(AUTH_REVIEW_LOGIN_PATH)) return null
             if (responseCount(response) >= MAX_ATTEMPTS) return null
 
             synchronized(this) {
@@ -94,6 +94,7 @@ class TokenAuthenticator
         private companion object {
             const val TAG = "TokenAuthenticator"
             const val AUTH_REFRESH_PATH = "/auth/refresh"
+            const val AUTH_REVIEW_LOGIN_PATH = "/auth/review-login"
             const val HEADER_AUTHORIZATION = "Authorization"
             const val BEARER_PREFIX = "Bearer "
             const val MAX_ATTEMPTS = 2

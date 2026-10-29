@@ -34,6 +34,7 @@ object NetworkModule {
     private val NO_AUTH_PATHS =
         listOf(
             "/auth/oauth",
+            REVIEW_LOGIN_PATH,
             "/auth/signup",
             "/auth/refresh",
         )
@@ -94,7 +95,19 @@ object NetworkModule {
                         redactHeader("Authorization")
                         redactHeader("Cookie")
                     }
-            builder.addInterceptor(loggingInterceptor)
+            builder.addInterceptor(
+                Interceptor { chain ->
+                    if (chain
+                            .request()
+                            .url.encodedPath
+                            .contains(REVIEW_LOGIN_PATH)
+                    ) {
+                        chain.proceed(chain.request())
+                    } else {
+                        loggingInterceptor.intercept(chain)
+                    }
+                },
+            )
         }
 
         return builder.build()
@@ -132,4 +145,6 @@ object NetworkModule {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
     }
+
+    private const val REVIEW_LOGIN_PATH = "/auth/review-login"
 }

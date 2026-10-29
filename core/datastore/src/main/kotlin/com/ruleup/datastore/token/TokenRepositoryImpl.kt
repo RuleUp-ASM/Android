@@ -47,6 +47,9 @@ class TokenRepositoryImpl
         override val isLoggedIn: Flow<Boolean> =
             preferences.map { prefs -> prefs[KEY_REFRESH] != null }
 
+        override val isReviewSession: Flow<Boolean> =
+            dataStore.data.map { prefs -> prefs[KEY_REVIEW_SESSION] == true && prefs[KEY_REFRESH] != null }
+
         // 갱신 응답이 userId 를 안 주는 배포본에서는 비어 있을 수 있다
         override val userId: Flow<String?> =
             preferences.map { prefs -> prefs[KEY_USER_ID] }
@@ -63,7 +66,22 @@ class TokenRepositoryImpl
                 prefs[KEY_REFRESH] = token.refreshToken
                 prefs[KEY_USER_ID] = userId
                 prefs[KEY_EVER_LOGGED_IN] = true
+                prefs.remove(KEY_REVIEW_SESSION)
             }
+        }
+
+        override suspend fun saveReviewSession(
+            token: Token,
+            userId: String,
+        ) = mutationLock.withLock {
+            dataStore.edit { prefs ->
+                prefs[KEY_ACCESS] = token.accessToken
+                prefs[KEY_REFRESH] = token.refreshToken
+                prefs[KEY_USER_ID] = userId
+                prefs[KEY_EVER_LOGGED_IN] = true
+                prefs[KEY_REVIEW_SESSION] = true
+            }
+            cachedAccess = token.accessToken
         }
 
         override suspend fun saveTokens(
@@ -160,5 +178,6 @@ class TokenRepositoryImpl
             private val KEY_REFRESH = stringPreferencesKey("refresh_token")
             private val KEY_USER_ID = stringPreferencesKey("user_id")
             private val KEY_EVER_LOGGED_IN = booleanPreferencesKey("has_ever_logged_in")
+            private val KEY_REVIEW_SESSION = booleanPreferencesKey("review_session")
         }
     }
