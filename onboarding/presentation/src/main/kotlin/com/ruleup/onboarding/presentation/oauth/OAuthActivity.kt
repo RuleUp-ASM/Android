@@ -9,6 +9,7 @@ import com.kakao.sdk.auth.AuthCodeClient
 import com.kakao.sdk.user.UserApiClient
 import com.ruleup.onboarding.presentation.BuildConfig
 import com.ruleup.onboarding.presentation.oauth.util.PkceUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -49,6 +50,8 @@ class OAuthActivity : ComponentActivity() {
             return
         }
 
+        googleRequest = savedInstanceState?.getString(STATE_GOOGLE_REQUEST)?.let(AuthorizationRequest::jsonDeserialize)
+
         lifecycleScope.launch {
             try {
                 val result =
@@ -67,6 +70,8 @@ class OAuthActivity : ComponentActivity() {
                         }
                     }
                 finishWithSuccess(result)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Throwable) {
                 finishWithError(e.message ?: "인증 실패")
             }
@@ -107,15 +112,14 @@ class OAuthActivity : ComponentActivity() {
 
     /** 구글 OAuth 2.0 인가 코드 + PKCE. */
     private suspend fun authorizeGoogle(): OAuthResult {
-        val config =
-            AuthorizationServiceConfiguration(
-                Uri.parse("https://accounts.google.com/o/oauth2/v2/auth"),
-                Uri.parse("https://oauth2.googleapis.com/token"),
-            )
+        val restoredRequest = googleRequest
         val request =
-            AuthorizationRequest
+            restoredRequest ?: AuthorizationRequest
                 .Builder(
-                    config,
+                    AuthorizationServiceConfiguration(
+                        Uri.parse("https://accounts.google.com/o/oauth2/v2/auth"),
+                        Uri.parse("https://oauth2.googleapis.com/token"),
+                    ),
                     BuildConfig.GOOGLE_CLIENT_ID,
                     ResponseTypeValues.CODE,
                     Uri.parse(BuildConfig.GOOGLE_REDIRECT_URI),
@@ -125,14 +129,19 @@ class OAuthActivity : ComponentActivity() {
         val deferred = CompletableDeferred<AuthorizationResponse>()
         googleRequest = request
         googleResult = deferred
-        googleAuthLauncher.launch(authService.getAuthorizationRequestIntent(request))
+        if (restoredRequest == null) googleAuthLauncher.launch(authService.getAuthorizationRequestIntent(request))
         val response = deferred.await()
 
         return OAuthResult(
             code = response.authorizationCode ?: error("구글 인가 코드를 받지 못했습니다."),
             codeVerifier = request.codeVerifier ?: error("PKCE code_verifier 가 없습니다."),
-            redirectUri = BuildConfig.GOOGLE_REDIRECT_URI,
+            redirectUri = request.redirectUri.toString(),
         )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        googleRequest?.let { outState.putString(STATE_GOOGLE_REQUEST, it.jsonSerializeString()) }
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {
@@ -169,5 +178,6 @@ class OAuthActivity : ComponentActivity() {
         const val EXTRA_VERIFIER = "verifier"
         const val EXTRA_REDIRECT = "redirect"
         const val EXTRA_ERROR = "error"
+        private const val STATE_GOOGLE_REQUEST = "google_authorization_request"
     }
 }
