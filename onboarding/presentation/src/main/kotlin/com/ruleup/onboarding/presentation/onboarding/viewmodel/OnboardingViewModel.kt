@@ -26,10 +26,12 @@ import com.ruleup.profile.domain.entity.NicknameCheckReason
 import com.ruleup.profile.domain.repository.ProfileRepository
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,14 +52,16 @@ class OnboardingViewModel
         private val pendingDeepLink: PendingDeepLink,
     ) : MviViewModel<OnboardingIntent, OnboardingState, OnboardingReducerEvent, OnboardingEffect>(OnboardingState.initial) {
         /** 닉네임 입력 스트림. */
-        private val nicknameInput = MutableSharedFlow<String>(extraBufferCapacity = 1)
+        private val nicknameInput =
+            MutableSharedFlow<String>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
         init {
             viewModelScope.launch {
                 nicknameInput
                     .debounce(NICKNAME_DEBOUNCE_MS)
-                    .distinctUntilChanged()
-                    .collect { checkNickname(it) }
+                    .collectLatest { name ->
+                        if (NickNameUtil.validate(name).isValid) checkNickname(name)
+                    }
             }
             // IdP 닉네임을 채워 준다.
             signupSession
@@ -141,6 +145,7 @@ class OnboardingViewModel
 
         private fun enterNickname(name: String) {
             dispatch(OnboardingReducerEvent.NicknameEntered(name))
+            nicknameInput.tryEmit(name)
             // 형식이 틀린 건 서버에 묻지 않고 바로 알려 준다.
             val validation = NickNameUtil.validate(name)
             if (!validation.isValid) {
@@ -152,7 +157,6 @@ class OnboardingViewModel
                 )
                 return
             }
-            nicknameInput.tryEmit(name)
         }
 
         private suspend fun checkNickname(name: String) {
@@ -174,6 +178,7 @@ class OnboardingViewModel
                         ),
                     )
                 }.onFailure {
+                    if (it is CancellationException) throw it
                     if (currentState.nickname != name) return@onFailure
                     // 확인 실패는 "쓸 수 없음"이 아니다.
                     dispatch(
@@ -296,7 +301,7 @@ class OnboardingViewModel
         }
 
         private companion object {
-            const val NICKNAME_DEBOUNCE_MS = 500L
+            const val NICKNAME_DEBOUNCE_MS = 250L
         }
     }
 
