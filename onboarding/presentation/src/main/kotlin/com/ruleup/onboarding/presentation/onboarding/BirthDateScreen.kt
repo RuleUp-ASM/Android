@@ -142,7 +142,7 @@ private fun BirthDateSection(
                 modifier = Modifier.weight(1f),
                 decorationBox = { inner ->
                     if (digits.isEmpty()) {
-                        Text("1999 / 03 / 15", color = RuleUpTheme.colors.textSecondary, style = RuleUpTheme.typography.numberS)
+                        Text("1999 / 03 / 15", color = RuleUpTheme.colors.textMuted, style = RuleUpTheme.typography.numberS)
                     }
                     inner()
                 },
