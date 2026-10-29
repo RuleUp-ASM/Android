@@ -19,6 +19,7 @@ import com.ruleup.observability.domain.model.ErrorInfo
 import com.ruleup.observability.domain.model.Severity
 import com.ruleup.observability.domain.model.attributes
 import com.ruleup.verification.data.settings.VerificationSettingsStore
+import com.ruleup.verification.domain.entity.SyncTooFrequentException
 import com.ruleup.verification.domain.repository.ProgressCacheStore
 import com.ruleup.verification.domain.repository.SyncScheduler
 import com.ruleup.verification.domain.repository.SyncScopeProvider
@@ -102,6 +103,18 @@ class VerificationSyncWorker
                 when (outcome) {
                     SyncOutcome.SUCCESS, SyncOutcome.STOP_RETRY -> Result.success()
                     SyncOutcome.RETRY -> Result.retry()
+                    SyncOutcome.RETRY_AFTER -> {
+                        val seconds = (e as SyncTooFrequentException).retryAfterSec!!
+                        try {
+                            VerificationSyncSchedulerImpl.enqueueDelayedCatchUp(applicationContext, seconds)
+                            Result.success()
+                        } catch (cancelled: CancellationException) {
+                            throw cancelled
+                        } catch (failure: Exception) {
+                            observability.i(LOG_TAG) { "지연 재시도 예약 실패 — 기본 백오프로 재시도" }
+                            Result.retry()
+                        }
+                    }
                 }
             }
         }

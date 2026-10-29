@@ -14,6 +14,7 @@ internal enum class SyncOutcome {
 
     // 429/네트워크 등 일시 오류 → Result.retry(백오프)
     RETRY,
+    RETRY_AFTER,
 }
 
 internal fun syncOutcomeFor(error: Throwable?): SyncOutcome =
@@ -22,6 +23,7 @@ internal fun syncOutcomeFor(error: Throwable?): SyncOutcome =
         is InvalidSignalPayloadException -> SyncOutcome.STOP_RETRY
         // 분할까지 했는데도 상한을 넘었다
         is SyncPayloadTooLargeException -> SyncOutcome.STOP_RETRY
-        is SyncTooFrequentException -> SyncOutcome.RETRY
+        is SyncTooFrequentException ->
+            if ((error.retryAfterSec ?: 0) > 0) SyncOutcome.RETRY_AFTER else SyncOutcome.RETRY
         else -> SyncOutcome.RETRY
     }

@@ -11,6 +11,8 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.ruleup.verification.domain.repository.SyncScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -24,6 +26,7 @@ class VerificationSyncSchedulerImpl
             val manager = WorkManager.getInstance(context)
             manager.cancelUniqueWork(VerificationSyncWorker.WORK_NAME)
             manager.cancelUniqueWork(CATCH_UP_WORK_NAME)
+            manager.cancelUniqueWork(DELAYED_RETRY_WORK_NAME)
         }
 
         override fun ensureScheduled() {
@@ -61,6 +64,26 @@ class VerificationSyncSchedulerImpl
             private const val MIN_INTERVAL_MIN = 15L
             private const val SECONDS_PER_MINUTE = 60L
             const val CATCH_UP_WORK_NAME = "verification_sync_catchup"
+            private const val DELAYED_RETRY_WORK_NAME = "verification_sync_delayed_retry"
+
+            suspend fun enqueueDelayedCatchUp(
+                context: Context,
+                delaySeconds: Int,
+            ) {
+                val request =
+                    OneTimeWorkRequest
+                        .Builder(VerificationSyncWorker::class.java)
+                        .setInitialDelay(delaySeconds.toLong(), TimeUnit.SECONDS)
+                        .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+                        .build()
+                val operation =
+                    WorkManager.getInstance(context).enqueueUniqueWork(
+                        DELAYED_RETRY_WORK_NAME,
+                        ExistingWorkPolicy.APPEND_OR_REPLACE,
+                        request,
+                    )
+                withContext(Dispatchers.IO) { operation.result.get() }
+            }
 
             /** push 트리거용 expedited catch-up. */
             fun enqueueCatchUp(
