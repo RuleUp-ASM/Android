@@ -130,7 +130,7 @@ class VerificationLocationViewModelTest {
 private object NoGeofenceRegister : GeofenceRegister {
     override suspend fun reconcile(targets: List<GeofenceTarget>) = throw NotImplementedError()
 
-    override suspend fun reconcilePersisted() = throw NotImplementedError()
+    override suspend fun reconcilePersisted(forceReregister: Boolean) = throw NotImplementedError()
 
     override suspend fun bind(
         requestIdPrefix: String,

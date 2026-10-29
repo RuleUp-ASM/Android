@@ -8,7 +8,7 @@ interface GeofenceRegister {
     suspend fun reconcile(targets: List<GeofenceTarget>)
 
     /** 로컬에 보존된 목표 전체를 [reconcile] 로 재등록한다. */
-    suspend fun reconcilePersisted()
+    suspend fun reconcilePersisted(forceReregister: Boolean = false)
 
     /** 한 멤버([requestIdPrefix] 로 시작하는 requestId 묶음)의 목표 전체를 등록/갱신한다. */
     suspend fun bind(
