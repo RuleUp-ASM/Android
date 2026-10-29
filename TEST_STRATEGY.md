@@ -73,6 +73,11 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 - 미검증: 실기기의 갤러리 URI 접근·실서버 사진 반영·이미지 로딩 결과와 글꼴 크기별 점수 정렬.
   실행 조건이 없는 종료·동기화·GPS·Jank·간헐적 오류는 이번 수정 범위에서 제외했다.
 
+### 2026-10-29 무음 동기화 푸시 (#639)
+
+- `RuleUpMessagingServiceTest`: sync 요청 푸시가 알림 없이 catch-up 작업을 예약하는지, 실제 스케줄러를 연결하면 네트워크 조건이 지정된 WorkManager 작업이 등록되는지 검증한다.
+- 실제 FCM 전달과 WorkManager 실행은 실기기 및 서버에서 확인해야 한다.
+
 ### 2026-09-30 TTI Firebase Performance 연동 (#518)
 
 - `ObservabilityTtiShooterTest` 5건: 저장된 전체·구간 시간(0ms 포함), 미완성 기록 제외,

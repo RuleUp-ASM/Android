@@ -5,6 +5,7 @@ import com.google.firebase.messaging.RemoteMessage
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.d
 import com.ruleup.observability.domain.api.w
+import com.ruleup.verification.domain.repository.SyncScheduler
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ private const val TAG = "[Push]"
 // 페이로드 명세의 type 딱지.
 private const val TYPE_SETUP_REQUIRED = "SETUP_REQUIRED"
 private const val TYPE_PERMISSION_REQUIRED = "PERMISSION_REQUIRED"
+private const val TYPE_SYNC_REQUIRED = "SYNC_REQUIRED"
 
 /** FCM 수신 진입점. */
 @AndroidEntryPoint
@@ -30,6 +32,9 @@ class RuleUpMessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var notificationPresenter: NotificationPresenter
+
+    @Inject
+    lateinit var syncScheduler: SyncScheduler
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -45,6 +50,7 @@ class RuleUpMessagingService : FirebaseMessagingService() {
         when (val type = data["type"]) {
             // 무음 쪽지: 알림 없음.
             TYPE_SETUP_REQUIRED, TYPE_PERMISSION_REQUIRED -> Unit
+            TYPE_SYNC_REQUIRED -> syncScheduler.enqueueCatchUp()
 
             else -> {
                 val push =
