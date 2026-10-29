@@ -16,13 +16,18 @@ import com.ruleup.onboarding.domain.fake.FakeIntroRepository
 import com.ruleup.onboarding.domain.fake.FakeProfileRepository
 import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
+import com.ruleup.profile.domain.entity.NicknameCheck
+import com.ruleup.profile.domain.repository.ProfileRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import java.time.Clock
@@ -58,6 +63,114 @@ class OnboardingViewModelTest {
                     ?.isNotBlank() == true,
             )
         }
+
+    @Test
+    fun `유효한 닉네임 입력이 멈춘 지 250ms 뒤 서버 확인을 시작한다`() =
+        runTest {
+            val checked = mutableListOf<String>()
+            val profiles =
+                profileRepository {
+                    checked += it
+                    availableNickname()
+                }
+            val viewModel = viewModel(session = SignupSession(), profiles = profiles)
+
+            viewModel.onIntent(OnboardingIntent.SetNickName("도전왕"))
+            advanceTimeBy(249)
+            runCurrent()
+            assertTrue(checked.isEmpty())
+            advanceTimeBy(1)
+            runCurrent()
+
+            assertEquals(listOf("도전왕"), checked)
+            assertEquals(true, viewModel.uiState.value.nicknameAvailable)
+        }
+
+    @Test
+    fun `확인한 닉네임을 지웠다가 다시 입력하면 다시 사용할 수 있다`() =
+        runTest {
+            val checked = mutableListOf<String>()
+            val viewModel =
+                viewModel(
+                    session = SignupSession(),
+                    profiles =
+                        profileRepository {
+                            checked += it
+                            availableNickname()
+                        },
+                )
+            viewModel.onIntent(OnboardingIntent.SetNickName("도전왕"))
+            advanceTimeBy(600)
+            runCurrent()
+            viewModel.onIntent(OnboardingIntent.SetNickName(""))
+            viewModel.onIntent(OnboardingIntent.SetNickName("도전왕"))
+            advanceTimeBy(600)
+            runCurrent()
+
+            assertEquals(listOf("도전왕", "도전왕"), checked)
+            assertEquals(true, viewModel.uiState.value.nicknameAvailable)
+        }
+
+    @Test
+    fun `닉네임 확인이 실패해도 다시 입력하면 서버 확인 후 진행할 수 있다`() =
+        runTest {
+            var attempts = 0
+            val viewModel =
+                viewModel(
+                    session = SignupSession(),
+                    profiles =
+                        profileRepository {
+                            attempts++
+                            if (attempts == 1) throw java.io.IOException("offline")
+                            availableNickname()
+                        },
+                )
+
+            viewModel.onIntent(OnboardingIntent.SetNickName("도전왕"))
+            advanceTimeBy(250)
+            runCurrent()
+            assertEquals(null, viewModel.uiState.value.nicknameAvailable)
+            assertTrue(
+                viewModel.uiState.value.nicknameMessage
+                    ?.contains("확인하지 못했어요") == true,
+            )
+
+            viewModel.onIntent(OnboardingIntent.SetNickName(""))
+            viewModel.onIntent(OnboardingIntent.SetNickName("도전왕"))
+            advanceTimeBy(250)
+            runCurrent()
+            assertEquals(2, attempts)
+            assertEquals(true, viewModel.uiState.value.nicknameAvailable)
+        }
+
+    @Test
+    fun `이전 닉네임 확인이 오래 걸려도 새 입력을 확인한다`() =
+        runTest {
+            val checked = mutableListOf<String>()
+            val first = CompletableDeferred<NicknameCheck>()
+            val profiles =
+                profileRepository { name ->
+                    checked += name
+                    if (name == "도전왕") first.await() else availableNickname()
+                }
+            val viewModel = viewModel(session = SignupSession(), profiles = profiles)
+            viewModel.onIntent(OnboardingIntent.SetNickName("도전왕"))
+            advanceTimeBy(600)
+            runCurrent()
+            viewModel.onIntent(OnboardingIntent.SetNickName("새로운왕"))
+            advanceTimeBy(600)
+            runCurrent()
+
+            assertEquals(listOf("도전왕", "새로운왕"), checked)
+            assertEquals(true, viewModel.uiState.value.nicknameAvailable)
+        }
+
+    private fun profileRepository(check: suspend (String) -> NicknameCheck): ProfileRepository =
+        object : ProfileRepository by FakeProfileRepository() {
+            override suspend fun checkNickname(nickname: String): NicknameCheck = check(nickname)
+        }
+
+    private fun availableNickname() = NicknameCheck(valid = true, available = true, reason = null)
 
     @Test
     fun `가입 토큰이 만료됐으면 안내를 띄운 뒤 로그인부터 다시 하게 한다`() =
@@ -138,9 +251,9 @@ class OnboardingViewModelTest {
         auth: FakeAuthRepository = FakeAuthRepository(),
         session: SignupSession = startedSession(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
-    ): OnboardingViewModel {
-        val profiles = FakeProfileRepository()
-        return OnboardingViewModel(
+        profiles: ProfileRepository = FakeProfileRepository(),
+    ): OnboardingViewModel =
+        OnboardingViewModel(
             signupUseCase =
                 SignupUseCase(auth, FakeDeviceIdentityRepository(), profiles, FakeTokenRepository(), testObservability()),
             validateBirthDateUseCase =
@@ -153,5 +266,4 @@ class OnboardingViewModelTest {
             navigationHelper = nav,
             pendingDeepLink = PendingDeepLink(),
         )
-    }
 }
