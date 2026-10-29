@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 재부팅 후 지오펜스 재등록. */
+/** OS 등록 유실 시 지오펜스 복원. */
 @AndroidEntryPoint
 class BootReceiver : BroadcastReceiver() {
     @Inject
@@ -20,13 +20,12 @@ class BootReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent,
     ) {
-        // LOCKED_BOOT_COMPLETED 는 받지 않는다
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        if (!requiresGeofenceRecovery(intent.action, intent.data?.schemeSpecificPart)) return
 
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                geofenceRegister.reconcilePersisted()
+                geofenceRegister.reconcilePersisted(forceReregister = true)
             } catch (t: Throwable) {
                 // 재등록 실패는 다음 콜드스타트 reconcile 이 보정한다.
             } finally {
@@ -35,3 +34,10 @@ class BootReceiver : BroadcastReceiver() {
         }
     }
 }
+
+internal fun requiresGeofenceRecovery(
+    action: String?,
+    packageName: String?,
+): Boolean =
+    action == Intent.ACTION_BOOT_COMPLETED ||
+        (action == Intent.ACTION_PACKAGE_DATA_CLEARED && packageName == "com.google.android.gms")

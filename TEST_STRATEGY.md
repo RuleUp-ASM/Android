@@ -95,6 +95,13 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
   수동 Trace API만 사용하므로 HTTP 자동 계측·`@AddTrace`용 Performance Gradle 플러그인은 추가하지 않는다.
 - 미검증: SDK 수집 비활성화·샘플링과 장시간 오프라인 후의 서버 수신은 이번 확인 범위에 포함하지 않았다.
 
+### 2026-10-29 지오펜스 재등록 (#641)
+
+- `GeofenceReconcileTest`: 변경 없는 대상의 중복 등록 방지, 좌표·반경·체류 시간 변경, 등록·삭제 실패 후 재시도와 권한 복구를 검증한다. 변경된 장소의 재등록에 실패한 뒤 기존 등록 기록을 보존하는지도 확인한다.
+- `GeofenceRegistrationRecoveryTest`: 앱 업데이트, 사용자 종료 및 수신 PendingIntent 소실 뒤 기존 등록 기록을 무효화하고, 일반 프로세스 재시작은 재등록하지 않는 조건을 확인한다.
+- `GeofenceRecoveryBroadcastTest`: 부팅과 Google Play 서비스 데이터 초기화만 복구 대상으로 판정한다.
+- 오프라인 Android 에뮬레이터에서 실제 지오펜스 등록 및 중복 등록 방지, Google Play 서비스 데이터 초기화 후 재시도 상태와 위치 정확도 복구 후 재등록을 확인했다. 1분 체류 설정에서 ENTER 직후 DWELL은 없었고, 연속 GPS 측정 시 기록된 두 신호의 시각 차이는 79,258ms였다. 초기 ENTER는 캐시된 위치의 영향을 받았을 수 있으며, GPS 측정이 중단된 별도 시도에서는 3분 내 DWELL이 오지 않았다. 별도 테스트 앱으로 일반 종료 시 PendingIntent 유지, 강제 종료 시 제거, 업데이트 감지 신호도 확인했다. 물리 기기에서의 위치 이동과 체류 판정은 별도 확인해야 한다.
+
 ### 2026-09-28 권한·동의 및 안내 모달 통합 검증 (#504 · #505)
 
 현황 표는 2026-09-28 다시 집계했다. 이번 변경에서는 presentation의 `SensitiveConsentTest`를

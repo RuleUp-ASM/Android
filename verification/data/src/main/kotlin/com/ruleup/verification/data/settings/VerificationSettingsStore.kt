@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Qualifier
 
@@ -47,6 +49,19 @@ class VerificationSettingsStore
             dataStore.edit { it[KEY_LAST_COVERED_UNTIL] = at }
         }
 
+        suspend fun registeredGeofences(): Map<String, String> =
+            dataStore.data.first()[KEY_REGISTERED_GEOFENCES]?.let { raw ->
+                runCatching { Json.decodeFromString<Map<String, String>>(raw) }.getOrNull()
+            } ?: emptyMap()
+
+        suspend fun setRegisteredGeofences(registered: Map<String, String>) {
+            dataStore.edit { it[KEY_REGISTERED_GEOFENCES] = Json.encodeToString(registered) }
+        }
+
+        suspend fun invalidateRegisteredGeofences() {
+            setRegisteredGeofences(registeredGeofences().mapValues { "" })
+        }
+
         suspend fun lastGeofenceReregisterAt(): Long? = dataStore.data.first()[KEY_LAST_GEOFENCE_REREGISTER_AT]
 
         suspend fun setLastGeofenceReregisterAt(at: Long) {
@@ -70,6 +85,7 @@ class VerificationSettingsStore
             val KEY_BOOT_EPOCH_ANCHOR = longPreferencesKey("boot_epoch_anchor")
             val KEY_LAST_FLUSH_AT = longPreferencesKey("last_successful_flush_at")
             val KEY_LAST_COVERED_UNTIL = longPreferencesKey("last_covered_until")
+            val KEY_REGISTERED_GEOFENCES = stringPreferencesKey("registered_geofences")
             val KEY_LAST_GEOFENCE_REREGISTER_AT = longPreferencesKey("last_geofence_reregister_at")
             val KEY_FLUSH_INTERVAL_SEC = longPreferencesKey("flush_interval_sec")
         }

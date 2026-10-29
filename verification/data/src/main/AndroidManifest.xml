@@ -32,6 +32,7 @@
     <!-- Health Connect 패키지 조회. -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
+        <package android:name="com.google.android.gms" />
     </queries>
 
     <application>
@@ -40,12 +41,16 @@
             android:name="com.ruleup.verification.data.signal.geofence.GeofenceBroadcastReceiver"
             android:exported="false" />
 
-        <!-- 시스템 부팅 방송 수신 및 지오펜스 재등록. -->
+        <!-- 부팅·Google Play 서비스 초기화 시 지오펜스 복원. -->
         <receiver
             android:name="com.ruleup.verification.data.signal.geofence.BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_DATA_CLEARED" />
+                <data android:scheme="package" android:ssp="com.google.android.gms" />
             </intent-filter>
         </receiver>
     </application>

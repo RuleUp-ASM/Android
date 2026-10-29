@@ -5,11 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
 import com.google.android.gms.location.Geofence
+import com.google.android.gms.location.GeofenceStatusCodes
 import com.google.android.gms.location.GeofencingEvent
 import com.ruleup.verification.data.db.common.verificationDatabase
 import com.ruleup.verification.data.db.geofence.GeofenceTransitionEntity
 import com.ruleup.verification.data.sync.VerificationSyncSchedulerImpl
 import com.ruleup.verification.domain.entity.GeofenceTransitionType
+import com.ruleup.verification.domain.repository.GeofenceRegister
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,12 +25,29 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     @javax.inject.Inject
     lateinit var tokens: com.ruleup.domain.token.TokenRepository
 
+    @javax.inject.Inject
+    lateinit var geofenceRegister: GeofenceRegister
+
     override fun onReceive(
         context: Context,
         intent: Intent,
     ) {
         val event = GeofencingEvent.fromIntent(intent) ?: return
-        if (event.hasError()) return
+        if (event.hasError()) {
+            if (event.errorCode == GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE) {
+                val pending = goAsync()
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        geofenceRegister.reconcilePersisted(forceReregister = true)
+                    } catch (_: Exception) {
+                        // 다음 동기화에서 등록을 다시 시도한다.
+                    } finally {
+                        pending.finish()
+                    }
+                }
+            }
+            return
+        }
 
         val type = geofenceTransitionTypeOfCode(event.geofenceTransition) ?: return
         val fences = event.triggeringGeofences ?: return

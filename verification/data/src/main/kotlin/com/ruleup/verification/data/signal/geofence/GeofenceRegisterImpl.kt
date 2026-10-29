@@ -1,7 +1,10 @@
 package com.ruleup.verification.data.signal.geofence
 
 import android.annotation.SuppressLint
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import android.content.Context
+import android.os.Build
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
@@ -14,6 +17,8 @@ import com.ruleup.verification.domain.entity.GapReason
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.repository.GeofenceRegister
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
@@ -29,72 +34,81 @@ class GeofenceRegisterImpl
     ) : GeofenceRegister {
         private val client by lazy { LocationServices.getGeofencingClient(context.applicationContext) }
 
-        override suspend fun reconcile(targets: List<GeofenceTarget>) {
-            // 권한 없으면 OS 등록 불가 → 목표만 보존하고 종료(허용 후 reconcile 이 재시도).
-            if (!context.hasFineLocation()) {
-                persist(targets)
-                if (targets.isNotEmpty()) recordNotRegistered()
-                return
-            }
+        private val lock = Mutex()
 
-            val previous = geofenceTargetDao.all().mapTo(HashSet()) { it.requestId }
-            val toRemove = GeofenceReconcile.toRemove(previous, targets)
-            if (toRemove.isNotEmpty()) {
-                runCatching { client.removeGeofences(toRemove).await() }
+        private val mostRecentUserStopAt: Long? by lazy {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                null
+            } else {
+                try {
+                    context
+                        .getSystemService(ActivityManager::class.java)
+                        .getHistoricalProcessExitReasons(null, 0, 0)
+                        .filter { it.reason == ApplicationExitInfo.REASON_USER_REQUESTED }
+                        .maxOfOrNull { it.timestamp }
+                } catch (_: SecurityException) {
+                    System.currentTimeMillis()
+                } catch (_: IllegalArgumentException) {
+                    System.currentTimeMillis()
+                }
             }
-            if (targets.isNotEmpty()) {
-                registerAll(targets)
-            }
-            persist(targets)
         }
 
-        override suspend fun reconcilePersisted() {
-            reconcile(geofenceTargetDao.all().map { it.toDomain() })
-        }
+        private val coordinator =
+            GeofenceRegistrationCoordinator(
+                readRegistered = { settingsStore.registeredGeofences() },
+                writeRegistered = { settingsStore.setRegisteredGeofences(it) },
+                add = { registerAll(it) },
+                remove = { ids -> runCatching { client.removeGeofences(ids).await() }.isSuccess },
+            )
+
+        override suspend fun reconcile(targets: List<GeofenceTarget>) = lock.withLock { reconcileLocked(targets) }
+
+        override suspend fun reconcilePersisted(forceReregister: Boolean) =
+            lock.withLock {
+                if (forceReregister) settingsStore.invalidateRegisteredGeofences()
+                reconcileLocked(geofenceTargetDao.all().map { it.toDomain() })
+            }
 
         override suspend fun bind(
             requestIdPrefix: String,
             targets: List<GeofenceTarget>,
-        ) {
-            // 이 멤버(prefix) 소속 기존 펜스 중 새 목록에 없는 것만 해제
-            val newIds = targets.mapTo(HashSet()) { it.requestId }
-            val stale =
-                geofenceTargetDao
-                    .byRequestIdPrefix(requestIdPrefix)
-                    .map { it.requestId }
-                    .filterNot { it in newIds }
-            if (stale.isNotEmpty()) {
-                runCatching { client.removeGeofences(stale).await() }
-            }
-            if (targets.isNotEmpty()) {
-                if (context.hasFineLocation()) registerAll(targets) else recordNotRegistered()
-            }
-            geofenceTargetDao.deleteByRequestIdPrefix(requestIdPrefix)
-            if (targets.isNotEmpty()) geofenceTargetDao.upsertAll(targets.map { it.toEntity() })
+        ) = lock.withLock {
+            val retained = geofenceTargetDao.all().map { it.toDomain() }.filterNot { it.requestId.startsWith(requestIdPrefix) }
+            reconcileLocked(retained + targets)
         }
 
-        override suspend fun unbind(requestIdPrefix: String) {
-            val ids = geofenceTargetDao.byRequestIdPrefix(requestIdPrefix).map { it.requestId }
-            if (ids.isNotEmpty()) {
-                runCatching { client.removeGeofences(ids).await() }
+        override suspend fun unbind(requestIdPrefix: String) =
+            lock.withLock {
+                val retained = geofenceTargetDao.all().map { it.toDomain() }.filterNot { it.requestId.startsWith(requestIdPrefix) }
+                reconcileLocked(retained)
             }
-            geofenceTargetDao.deleteByRequestIdPrefix(requestIdPrefix)
+
+        override suspend fun clear() = lock.withLock { reconcileLocked(emptyList()) }
+
+        private suspend fun reconcileLocked(targets: List<GeofenceTarget>) {
+            val lastRegisteredAt = settingsStore.lastGeofenceReregisterAt()
+
+            @Suppress("DEPRECATION")
+            val lastPackageUpdateAt = context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+            if (needsRegistrationRecovery(lastRegisteredAt, lastPackageUpdateAt, mostRecentUserStopAt, hasGeofencePendingIntent(context))) {
+                settingsStore.invalidateRegisteredGeofences()
+            }
+            persist(targets)
+            if (!context.hasFineLocation()) {
+                settingsStore.invalidateRegisteredGeofences()
+                if (targets.isNotEmpty()) recordNotRegistered()
+                coordinator.reconcile(targets, canRegister = false)
+                return
+            }
+            coordinator.reconcile(targets)
         }
 
-        override suspend fun clear() {
-            val ids = geofenceTargetDao.all().map { it.requestId }
-            if (ids.isNotEmpty()) {
-                runCatching { client.removeGeofences(ids).await() }
-            }
-            geofenceTargetDao.clear()
-        }
-
-        // 등록 성공 시 시각 저장, 실패 시 GEOFENCE_NOT_REGISTERED 기록.
-        private suspend fun registerAll(targets: List<GeofenceTarget>) {
+        private suspend fun registerAll(targets: List<GeofenceTarget>): Boolean =
             runCatching { client.addGeofences(buildRequest(targets), geofencePendingIntent(context)).await() }
                 .onSuccess { settingsStore.setLastGeofenceReregisterAt(System.currentTimeMillis()) }
                 .onFailure { recordNotRegistered() }
-        }
+                .isSuccess
 
         private suspend fun recordNotRegistered() {
             val now = System.currentTimeMillis()
@@ -133,7 +147,7 @@ class GeofenceRegisterImpl
             return GeofencingRequest
                 .Builder()
                 .setInitialTrigger(
-                    GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL,
+                    GeofencingRequest.INITIAL_TRIGGER_ENTER,
                 ).addGeofences(fences)
                 .build()
         }
