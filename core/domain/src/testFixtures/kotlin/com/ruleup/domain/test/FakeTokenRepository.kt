@@ -49,6 +49,16 @@ class FakeTokenRepository(
         loggedIn.value = true
     }
 
+    override suspend fun saveTokensIfRefreshTokenMatches(
+        expectedRefreshToken: String,
+        token: Token,
+        userId: String?,
+    ): Boolean {
+        if (refreshToken != expectedRefreshToken) return false
+        saveTokens(token, userId)
+        return true
+    }
+
     override suspend fun getAccessToken(): String? = savedToken?.accessToken
 
     override fun cachedAccessToken(): String? = savedToken?.accessToken
@@ -56,6 +66,12 @@ class FakeTokenRepository(
     override suspend fun getRefreshToken(): String? = refreshToken
 
     override suspend fun getUserId(): String? = storedUserId
+
+    override suspend fun clearIfRefreshTokenMatches(expectedRefreshToken: String): Boolean {
+        if (refreshToken != expectedRefreshToken) return false
+        clear()
+        return true
+    }
 
     override suspend fun clear() {
         cleared = true

@@ -45,4 +45,5 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     testImplementation(kotlin("test-junit"))
+    testImplementation(testFixtures(project(":core:domain")))
 }

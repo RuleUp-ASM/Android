@@ -85,6 +85,12 @@ class BindLocationUseCaseTest {
             userId: String?,
         ) = Unit
 
+        override suspend fun saveTokensIfRefreshTokenMatches(
+            expectedRefreshToken: String,
+            token: Token,
+            userId: String?,
+        ): Boolean = throw NotImplementedError()
+
         override suspend fun getAccessToken(): String? = null
 
         override fun cachedAccessToken(): String? = null
@@ -94,6 +100,8 @@ class BindLocationUseCaseTest {
         override suspend fun getUserId(): String? = storedUserId
 
         override suspend fun hasEverLoggedIn(): Boolean = storedUserId != null
+
+        override suspend fun clearIfRefreshTokenMatches(expectedRefreshToken: String): Boolean = throw NotImplementedError()
 
         override suspend fun clear() = Unit
 

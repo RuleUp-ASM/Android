@@ -105,6 +105,48 @@ class TokenRepositoryImplTest {
         }
 
     @Test
+    fun `갱신 중 세션이 바뀌면 이전 응답으로 새 세션을 덮지 않는다`() =
+        runTest {
+            val repo = repo(FakeDataStore())
+            repo.saveSession(token(), userId = "old-user")
+            repo.saveSession(token(access = "new-access", refresh = "new-refresh"), userId = "new-user")
+
+            val saved = repo.saveTokensIfRefreshTokenMatches("r1", token(access = "stale", refresh = "stale-refresh"), "old-user")
+
+            assertFalse(saved)
+            assertEquals("new-refresh", repo.getRefreshToken())
+            assertEquals("new-access", repo.cachedAccessToken())
+            assertEquals("new-user", repo.getUserId())
+        }
+
+    @Test
+    fun `로그아웃 뒤 도착한 갱신 응답은 세션을 되살리지 않는다`() =
+        runTest {
+            val repo = repo(FakeDataStore())
+            repo.saveSession(token(), userId = "u-1")
+            repo.clear()
+
+            val saved = repo.saveTokensIfRefreshTokenMatches("r1", token(access = "a2", refresh = "r2"))
+
+            assertFalse(saved)
+            assertNull(repo.getRefreshToken())
+            assertNull(repo.cachedAccessToken())
+        }
+
+    @Test
+    fun `세션이 바뀌면 이전 토큰의 갱신 실패로 새 세션을 지우지 않는다`() =
+        runTest {
+            val repo = repo(FakeDataStore())
+            repo.saveSession(token(), "old-user")
+            repo.saveSession(token(access = "new-access", refresh = "new-refresh"), "new-user")
+
+            assertFalse(repo.clearIfRefreshTokenMatches("r1"))
+            assertEquals("new-refresh", repo.getRefreshToken())
+            assertEquals("new-access", repo.cachedAccessToken())
+            assertEquals("new-user", repo.getUserId())
+        }
+
+    @Test
     fun `clear 는 저장값과 캐시를 함께 비운다`() =
         runTest {
             val repo = repo(FakeDataStore())

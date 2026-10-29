@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.IOException
 import javax.inject.Inject
 
@@ -31,6 +33,8 @@ class TokenRepositoryImpl
         // 인터셉터가 코루틴 없이 읽어 가는 스냅샷.
         @Volatile
         private var cachedAccess: String? = null
+
+        private val mutationLock = Mutex()
 
         /** 읽기 경로의 단일 입구. */
         private val preferences: Flow<Preferences> =
@@ -50,7 +54,7 @@ class TokenRepositoryImpl
         override suspend fun saveSession(
             token: Token,
             userId: String,
-        ) {
+        ) = mutationLock.withLock {
             // 캐시를 먼저 채운다
             cachedAccess = token.accessToken
             // 한 번의 edit 이라 원자적이다.
@@ -65,7 +69,7 @@ class TokenRepositoryImpl
         override suspend fun saveTokens(
             token: Token,
             userId: String?,
-        ) {
+        ) = mutationLock.withLock {
             cachedAccess = token.accessToken
             write("saveTokens") { prefs ->
                 prefs[KEY_ACCESS] = token.accessToken
@@ -77,29 +81,67 @@ class TokenRepositoryImpl
             }
         }
 
+        override suspend fun saveTokensIfRefreshTokenMatches(
+            expectedRefreshToken: String,
+            token: Token,
+            userId: String?,
+        ): Boolean =
+            mutationLock.withLock {
+                var saved = false
+                dataStore.edit { prefs ->
+                    if (prefs[KEY_REFRESH] == expectedRefreshToken) {
+                        prefs[KEY_ACCESS] = token.accessToken
+                        prefs[KEY_REFRESH] = token.refreshToken
+                        userId?.let { prefs[KEY_USER_ID] = it }
+                        prefs[KEY_EVER_LOGGED_IN] = true
+                        saved = true
+                    }
+                }
+                if (saved) cachedAccess = token.accessToken
+                saved
+            }
+
         override suspend fun getAccessToken(): String? =
-            preferences
-                .map { it[KEY_ACCESS] }
-                .first()
-                .also { cachedAccess = it }
+            mutationLock.withLock {
+                preferences
+                    .map { it[KEY_ACCESS] }
+                    .first()
+                    .also { cachedAccess = it }
+            }
 
         override fun cachedAccessToken(): String? = cachedAccess
 
-        override suspend fun getRefreshToken(): String? = preferences.map { it[KEY_REFRESH] }.first()
+        override suspend fun getRefreshToken(): String? = mutationLock.withLock { preferences.map { it[KEY_REFRESH] }.first() }
 
         override suspend fun getUserId(): String? = preferences.map { it[KEY_USER_ID] }.first()
 
         override suspend fun hasEverLoggedIn(): Boolean = preferences.map { it[KEY_EVER_LOGGED_IN] == true }.first()
 
-        override suspend fun clear() {
-            cachedAccess = null
-            write("clear") { prefs ->
-                // 로그인 이력만 남긴다.
-                val everLoggedIn = prefs[KEY_EVER_LOGGED_IN]
-                prefs.clear()
-                everLoggedIn?.let { prefs[KEY_EVER_LOGGED_IN] = it }
+        override suspend fun clear() =
+            mutationLock.withLock {
+                cachedAccess = null
+                write("clear") { prefs ->
+                    // 로그인 이력만 남긴다.
+                    val everLoggedIn = prefs[KEY_EVER_LOGGED_IN]
+                    prefs.clear()
+                    everLoggedIn?.let { prefs[KEY_EVER_LOGGED_IN] = it }
+                }
             }
-        }
+
+        override suspend fun clearIfRefreshTokenMatches(expectedRefreshToken: String): Boolean =
+            mutationLock.withLock {
+                var cleared = false
+                dataStore.edit { prefs ->
+                    if (prefs[KEY_REFRESH] == expectedRefreshToken) {
+                        val everLoggedIn = prefs[KEY_EVER_LOGGED_IN]
+                        prefs.clear()
+                        everLoggedIn?.let { prefs[KEY_EVER_LOGGED_IN] = it }
+                        cleared = true
+                    }
+                }
+                if (cleared) cachedAccess = null
+                cleared
+            }
 
         /** 쓰기 경로의 단일 입구. */
         private suspend fun write(

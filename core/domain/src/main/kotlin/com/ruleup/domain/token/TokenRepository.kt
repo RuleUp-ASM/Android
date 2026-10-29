@@ -16,6 +16,13 @@ interface TokenRepository {
         userId: String? = null,
     )
 
+    /** 갱신 중 세션이 바뀌었다면 이전 결과로 덮어쓰지 않는다. */
+    suspend fun saveTokensIfRefreshTokenMatches(
+        expectedRefreshToken: String,
+        token: Token,
+        userId: String? = null,
+    ): Boolean
+
     suspend fun getAccessToken(): String?
 
     /** 마지막으로 알려진 accessToken 의 인메모리 스냅샷(동기). */
@@ -30,6 +37,8 @@ interface TokenRepository {
     val userId: Flow<String?>
 
     suspend fun clear()
+
+    suspend fun clearIfRefreshTokenMatches(expectedRefreshToken: String): Boolean
 
     /** 이 기기에서 한 번이라도 로그인에 성공한 적이 있는지. */
     suspend fun hasEverLoggedIn(): Boolean
