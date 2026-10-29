@@ -10,6 +10,8 @@ import com.ruleup.onboarding.domain.auth.entity.SignupForm
 import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 
 interface AuthRepository {
+    suspend fun reviewLogin(code: String): AuthSession
+
     /** 소셜 로그인. */
     suspend fun exchangeToken(
         authorization: OAuthAuthorization,

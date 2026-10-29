@@ -19,4 +19,8 @@ sealed interface LoginIntent : MviIntent {
     data class AuthFailed(
         val error: Throwable,
     ) : LoginIntent
+
+    class ReviewLoginSubmitted(
+        val code: String,
+    ) : LoginIntent
 }

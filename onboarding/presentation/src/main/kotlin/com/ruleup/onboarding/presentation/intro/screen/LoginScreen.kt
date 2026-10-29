@@ -3,6 +3,7 @@ package com.ruleup.onboarding.presentation.intro.screen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -30,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpColors
 import com.ruleup.designsystem.theme.RuleUpTheme
@@ -48,8 +51,10 @@ import com.ruleup.ui.helper.LocalMessageHelper
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
     TtiScreenEffect()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val messageHelper = LocalMessageHelper.current
     var failure by remember { mutableStateOf<AuthFailureUi?>(null) }
+    var showReviewLogin by remember { mutableStateOf(false) }
     val launcher =
         rememberOAuthLauncher { result ->
             result
@@ -75,7 +80,15 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
     }
     LoginContent(
         onIntent = viewModel::onIntent,
+        onReviewEntry = { if (!state.isLoading) showReviewLogin = true },
     )
+    if (showReviewLogin) {
+        ReviewLoginDialog(
+            onDismiss = { showReviewLogin = false },
+            onSubmit = { viewModel.onIntent(LoginIntent.ReviewLoginSubmitted(it)) },
+            isSubmitting = state.isLoading,
+        )
+    }
     AuthFailureHost(ui = failure, onDismiss = { failure = null })
 }
 
@@ -83,7 +96,9 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
 fun LoginContent(
     onIntent: (LoginIntent) -> Unit,
     modifier: Modifier = Modifier,
+    onReviewEntry: () -> Unit = {},
 ) {
+    var logoTaps by remember { mutableIntStateOf(0) }
     Column(
         modifier =
             modifier
@@ -107,7 +122,14 @@ fun LoginContent(
                         .size(80.dp)
                         .clip(RoundedCornerShape(22.dp))
                         .background(Color.White)
-                        .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(22.dp)),
+                        .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(22.dp))
+                        .clickable {
+                            logoTaps++
+                            if (logoTaps == 6) {
+                                logoTaps = 0
+                                onReviewEntry()
+                            }
+                        },
                 contentAlignment = Alignment.Center,
             ) {
                 // 스플래시·앱 아이콘과 같은 체크 링(시안 D).

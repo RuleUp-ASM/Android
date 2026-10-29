@@ -190,6 +190,16 @@ verification domain의 아래 테스트로 대체하고 생성·참여 연동 �
 | 약관 재동의·철회가 사유별로 갈린다 | **인수 있음** | `AccountContractAcceptanceTest`(철회 금지·버전 불일치) · `AgreementsViewModelTest` · `ErrorBodyInterceptorTest` |
 | 인증 제출 → 오늘 상태가 바뀜 | 하위만 | `RunSyncUseCaseTest` · `SubmitDeviceIntroUseCaseTest` · `TodayStatusTest` |
 
+### 심사 계정 로그인 (#645)
+
+- `ReviewLoginApiTest`: 코드만 전송하고 기존 Authorization 헤더와 디버그 로그를 남기지 않으며, 401에서 기존 토큰으로 재시도하지 않는지 확인한다. 잘못된 코드·횟수 제한·기능 비활성화 응답도 구분한다.
+- `ReviewLoginUseCaseTest`, `TokenRepositoryImplTest`: 심사 세션 저장과 실패, 갱신 및 로그아웃 경로를 확인한다. 심사 세션 저장 중 로그아웃과 이전 세션의 늦은 갱신 결과도 확인한다.
+- `ReviewLoginFailureUiTest`: 잘못된 코드, 횟수 제한, 기능 비활성화에 따른 안내를 구분한다.
+- `LoginViewModelTest`: 심사 세션 저장 후 홈 진입, 코드 오류 안내와 중복 제출 방지를 확인한다.
+- `LoginContentTest`: 로고 6회 탭으로 진입하는지 확인한다.
+- `ReviewLoginDialogDeviceTest`: 오프라인 Android 에뮬레이터에서 빈 코드의 제출 차단, 입력값 전달, 취소 및 진행 중 중복 제출 방지를 확인한다. Robolectric에서는 텍스트 렌더링 중 메모리 부족으로 실행하지 못했다.
+- 서버 심사 로그인 API는 아직 구현되지 않아 실제 서버 연동을 확인하지 못했다. 사용자 요청에 따라 Meta 이벤트 차단은 이번 작업에서 다루지 않는다.
+
 ## 5. 돌리는 법
 
 ```bash

@@ -30,6 +30,9 @@ class FakeTokenRepository(
     private var refreshToken: String? = null,
 ) : TokenRepository {
     private val loggedIn = MutableStateFlow(refreshToken != null)
+    private val reviewSession = MutableStateFlow(false)
+
+    override val isReviewSession: Flow<Boolean> = reviewSession
 
     var savedToken: Token? = null
     var savedUserId: String? = null
@@ -47,6 +50,15 @@ class FakeTokenRepository(
         loggedIn.value = true
         everLoggedIn = true
         saveCount++
+        reviewSession.value = false
+    }
+
+    override suspend fun saveReviewSession(
+        token: Token,
+        userId: String,
+    ) {
+        saveSession(token, userId)
+        reviewSession.value = true
     }
 
     override suspend fun saveTokens(
@@ -94,6 +106,7 @@ class FakeTokenRepository(
         savedUserId = null
         refreshToken = null
         loggedIn.value = false
+        reviewSession.value = false
     }
 
     override val isLoggedIn: Flow<Boolean> = loggedIn
@@ -103,6 +116,16 @@ class FakeTokenRepository(
 
 /** 각 API 의 성공 결과/예외를 주입할 수 있는 인증 저장소 테스트 더블. */
 class FakeAuthRepository : AuthRepository {
+    var reviewResult: AuthSession? = null
+    var reviewError: Throwable? = null
+    var reviewCode: String? = null
+
+    override suspend fun reviewLogin(code: String): AuthSession {
+        reviewCode = code
+        reviewError?.let { throw it }
+        return requireNotNull(reviewResult)
+    }
+
     var exchangeResult: OAuthResult? = null
     var exchangeError: Throwable? = null
     var exchangedWithDevice: DeviceIdentity? = null

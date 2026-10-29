@@ -7,6 +7,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class ReviewLoginRequest(
+    @SerialName("code") val code: String,
+)
+
+@Serializable
 data class SocialLoginAuthRequest(
     @SerialName("code")
     val code: String? = null,

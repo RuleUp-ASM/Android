@@ -333,6 +333,8 @@ class TokenRefresherImplTest {
     ) : AuthApi {
         var refreshCalls = 0
 
+        override suspend fun reviewLogin(request: com.ruleup.onboarding.data.auth.dto.ReviewLoginRequest) = throw NotImplementedError()
+
         override suspend fun refreshToken(request: TokenRefreshRequest): BaseResponse<TokenRefreshResponse> {
             refreshCalls++
             return onRefresh()

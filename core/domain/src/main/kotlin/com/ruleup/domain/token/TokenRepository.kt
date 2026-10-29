@@ -10,6 +10,13 @@ interface TokenRepository {
         userId: String,
     )
 
+    suspend fun saveReviewSession(
+        token: Token,
+        userId: String,
+    )
+
+    val isReviewSession: Flow<Boolean>
+
     /** 토큰을 회전시킨다. */
     suspend fun saveTokens(
         token: Token,

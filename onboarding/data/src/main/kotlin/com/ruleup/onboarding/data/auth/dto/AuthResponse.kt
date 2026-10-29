@@ -211,6 +211,8 @@ internal fun ApiException.toAuthFailure(): AuthFailure = AUTH_FAILURE_CODES[code
 private val AUTH_FAILURE_CODES: Map<String, AuthFailure> =
     mapOf(
         "LOGIN_FAILED" to AuthFailure.LOGIN_FAILED,
+        "INVALID_REVIEW_CODE" to AuthFailure.INVALID_REVIEW_CODE,
+        "TOO_MANY_ATTEMPTS" to AuthFailure.REVIEW_TOO_MANY_ATTEMPTS,
         "INVALID_REDIRECT_URI" to AuthFailure.INVALID_REDIRECT_URI,
         "INVALID_DEVICE_INFO" to AuthFailure.INVALID_DEVICE_INFO,
         "LOGIN_PROVIDER_UNAVAILABLE" to AuthFailure.PROVIDER_UNAVAILABLE,

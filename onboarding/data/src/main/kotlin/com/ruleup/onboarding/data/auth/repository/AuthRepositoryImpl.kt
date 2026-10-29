@@ -9,6 +9,7 @@ import com.ruleup.network.dto.getOrThrow
 import com.ruleup.network.dto.throwOnError
 import com.ruleup.onboarding.data.auth.api.AuthApi
 import com.ruleup.onboarding.data.auth.dto.LogoutRequest
+import com.ruleup.onboarding.data.auth.dto.ReviewLoginRequest
 import com.ruleup.onboarding.data.auth.dto.SignUpRequest
 import com.ruleup.onboarding.data.auth.dto.SocialLoginAuthRequest
 import com.ruleup.onboarding.data.auth.dto.WithdrawRequest
@@ -26,6 +27,7 @@ import com.ruleup.onboarding.domain.auth.entity.PermissionSnapshot
 import com.ruleup.onboarding.domain.auth.entity.SignupForm
 import com.ruleup.onboarding.domain.auth.entity.Withdrawal
 import com.ruleup.onboarding.domain.auth.repository.AuthRepository
+import retrofit2.HttpException
 import java.io.IOException
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
@@ -38,6 +40,18 @@ class AuthRepositoryImpl
         private val tokenRefresher: TokenRefresher,
         private val signupInviteStore: com.ruleup.onboarding.domain.auth.repository.SignupInviteStore,
     ) : AuthRepository {
+        override suspend fun reviewLogin(code: String): AuthSession =
+            try {
+                mapAuthFailure {
+                    val result = api.reviewLogin(ReviewLoginRequest(code)).getOrThrow().toOAuthResult()
+                    (result as? OAuthResult.ExistingUser)?.session
+                        ?: throw ApiException(code = "INVALID_REVIEW_RESPONSE", message = "심사 계정 응답이 올바르지 않습니다.")
+                }
+            } catch (error: HttpException) {
+                if (error.code() == 404) throw AuthException(AuthFailure.REVIEW_UNAVAILABLE, cause = error)
+                throw error
+            }
+
         override suspend fun exchangeToken(
             authorization: OAuthAuthorization,
             device: DeviceIdentity,

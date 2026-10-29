@@ -34,6 +34,7 @@ android {
 
     defaultConfig {
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // 카카오·AppAuth 라이브러리 매니페스트가 요구하는 값.
         manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKey
         manifestPlaceholders["appAuthRedirectScheme"] = googleRedirectUri.substringBefore(":")
@@ -132,6 +133,11 @@ dependencies {
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
+
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.junit)
 
     // manifest 는 반드시 debugImplementation 이다.
     debugImplementation(libs.androidx.compose.ui.test.manifest)

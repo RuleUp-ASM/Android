@@ -15,6 +15,7 @@ import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
 import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
+import com.ruleup.onboarding.domain.auth.usecase.ReviewLoginUseCase
 import com.ruleup.onboarding.domain.auth.usecase.SocialLoginUseCase
 import com.ruleup.onboarding.domain.logging.LoginEntryType
 import com.ruleup.onboarding.domain.logging.OnboardingEvents
@@ -25,6 +26,7 @@ import com.ruleup.onboarding.presentation.common.toAuthFailureUi
 import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -35,6 +37,7 @@ class LoginViewModel
     @Inject
     constructor(
         private val socialLoginUseCase: SocialLoginUseCase,
+        private val reviewLoginUseCase: ReviewLoginUseCase,
         private val navigationHelper: NavigationHelper,
         private val messageHelper: MessageHelper,
         private val observability: Observability,
@@ -72,6 +75,8 @@ class LoginViewModel
                     // IdP 화면에서 사용자가 취소한 경우가 대부분이라 조용히 되돌린다.
                     dispatch(LoginReducerEvent.LoginFinished)
                 }
+
+                is LoginIntent.ReviewLoginSubmitted -> reviewLogin(intent.code)
             }
         }
 
@@ -160,6 +165,23 @@ class LoginViewModel
                             errorCode = (error as? AuthException)?.failure?.name,
                         ),
                     )
+                    emitEffect(LoginEffect.ShowFailure(error.toAuthFailureUi()))
+                }
+            }
+        }
+
+        private fun reviewLogin(code: String) {
+            if (currentState.isLoading || code.isBlank()) return
+            dispatch(LoginReducerEvent.LoginStarted)
+            viewModelScope.launch {
+                try {
+                    reviewLoginUseCase(code)
+                    dispatch(LoginReducerEvent.LoginFinished)
+                    navigationHelper.goHomeOrPending(pendingDeepLink)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    dispatch(LoginReducerEvent.LoginFinished)
                     emitEffect(LoginEffect.ShowFailure(error.toAuthFailureUi()))
                 }
             }

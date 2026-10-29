@@ -5,6 +5,10 @@ enum class AuthFailure {
     /** 인가 코드·id_token 검증 실패. */
     LOGIN_FAILED,
 
+    INVALID_REVIEW_CODE,
+    REVIEW_TOO_MANY_ATTEMPTS,
+    REVIEW_UNAVAILABLE,
+
     /** redirectUri 불일치(구글). */
     INVALID_REDIRECT_URI,
 

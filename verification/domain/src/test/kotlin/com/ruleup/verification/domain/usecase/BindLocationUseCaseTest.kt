@@ -75,6 +75,13 @@ class BindLocationUseCaseTest {
     private class FakeTokenRepository(
         private val storedUserId: String?,
     ) : TokenRepository {
+        override val isReviewSession: Flow<Boolean> = flowOf(false)
+
+        override suspend fun saveReviewSession(
+            token: Token,
+            userId: String,
+        ) = Unit
+
         override suspend fun saveSession(
             token: Token,
             userId: String,

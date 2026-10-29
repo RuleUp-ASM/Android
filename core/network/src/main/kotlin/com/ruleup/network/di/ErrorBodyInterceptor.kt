@@ -8,6 +8,12 @@ class ErrorBodyInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val response = chain.proceed(chain.request())
         if (response.isSuccessful) return response
+        if (response.code == 404 &&
+            response.request.url.encodedPath
+                .contains("/auth/review-login")
+        ) {
+            return response
+        }
 
         val body = response.body ?: return response
         val contentType = body.contentType()

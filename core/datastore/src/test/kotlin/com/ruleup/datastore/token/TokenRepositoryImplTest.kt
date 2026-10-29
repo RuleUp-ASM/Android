@@ -9,6 +9,9 @@ import com.ruleup.observability.domain.event.DiagnosticPayload
 import com.ruleup.observability.domain.model.Severity
 import com.ruleup.observability.domain.test.RecordingSink
 import com.ruleup.observability.domain.test.testObservability
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -23,6 +26,91 @@ import java.io.IOException
 
 /** 저장소 고장이 앱 고장으로 번지지 않는지 검증한다. */
 class TokenRepositoryImplTest {
+    @Test
+    fun `심사 세션 저장 중 로그아웃하면 최종 세션은 로그아웃 상태다`() =
+        runTest {
+            val store = BlockingDataStore()
+            val repository = repo(store)
+            repository.saveSession(token(), "normal-user")
+            store.blockNextWrite = true
+
+            val login =
+                async(
+                    start = CoroutineStart.UNDISPATCHED,
+                ) { repository.saveReviewSession(token("review", "review-refresh"), "review-user") }
+            store.writeStarted.await()
+            val logout = async(start = CoroutineStart.UNDISPATCHED) { repository.clear() }
+            assertFalse(logout.isCompleted)
+
+            store.allowWrite.complete(Unit)
+            login.await()
+            logout.await()
+            assertNull(repository.cachedAccessToken())
+            assertNull(repository.getRefreshToken())
+            assertFalse(repository.isReviewSession.first())
+        }
+
+    @Test
+    fun `심사 세션 전 이전 세션의 갱신 결과는 심사 세션을 바꾸지 않는다`() =
+        runTest {
+            val repository = repo(FakeDataStore())
+            repository.saveSession(token(), "normal-user")
+            repository.saveReviewSession(token("review", "review-refresh"), "review-user")
+
+            assertFalse(repository.saveTokensIfRefreshTokenMatches("r1", token("stale", "stale-refresh")))
+            assertFalse(repository.clearIfRefreshTokenMatches("r1"))
+            assertEquals("review", repository.cachedAccessToken())
+            assertEquals("review-refresh", repository.getRefreshToken())
+            assertTrue(repository.isReviewSession.first())
+        }
+
+    @Test
+    fun `심사 세션 갱신 실패로 로그아웃하면 심사 상태도 사라진다`() =
+        runTest {
+            val repository = repo(FakeDataStore())
+            repository.saveReviewSession(token(), "review-user")
+
+            assertTrue(repository.clearIfRefreshTokenMatches("r1"))
+            assertNull(repository.cachedAccessToken())
+            assertFalse(repository.isReviewSession.first())
+        }
+
+    @Test
+    fun `심사 세션과 토큰을 한 번에 저장하고 갱신 뒤에도 유지한다`() =
+        runTest {
+            val store = CountingDataStore()
+            val repository = repo(store)
+
+            repository.saveReviewSession(token(), "review-user")
+
+            assertEquals(1, store.writeCount)
+            assertEquals("r1", repository.getRefreshToken())
+            assertEquals("review-user", repository.getUserId())
+            assertTrue(repository.isReviewSession.first())
+            repository.saveTokens(token(access = "a2", refresh = "r2"))
+            assertTrue(repository.isReviewSession.first())
+            repository.clear()
+            assertFalse(repository.isReviewSession.first())
+        }
+
+    @Test
+    fun `심사 세션 뒤 일반 로그인은 심사 상태를 해제한다`() =
+        runTest {
+            val repository = repo(FakeDataStore())
+            repository.saveReviewSession(token(), "review-user")
+            repository.saveSession(token(access = "normal", refresh = "normal-refresh"), "normal-user")
+            assertFalse(repository.isReviewSession.first())
+        }
+
+    @Test
+    fun `심사 세션 저장에 실패하면 성공한 세션으로 취급하지 않는다`() =
+        runTest {
+            val repository = repo(FakeDataStore(failWritesWith = IOException("no space")))
+            val error = runCatching { repository.saveReviewSession(token(), "review-user") }.exceptionOrNull()
+            assertTrue(error is IOException)
+            assertNull(repository.cachedAccessToken())
+        }
+
     private fun token(
         access: String = "a1",
         refresh: String = "r1",
@@ -243,6 +331,24 @@ private class FakeDataStore(
         val updated = transform(state.value)
         state.value = updated
         return updated
+    }
+}
+
+private class BlockingDataStore : DataStore<Preferences> {
+    private val delegate = FakeDataStore()
+    val writeStarted = CompletableDeferred<Unit>()
+    val allowWrite = CompletableDeferred<Unit>()
+    var blockNextWrite = false
+
+    override val data: Flow<Preferences> get() = delegate.data
+
+    override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences {
+        if (blockNextWrite) {
+            blockNextWrite = false
+            writeStarted.complete(Unit)
+            allowWrite.await()
+        }
+        return delegate.updateData(transform)
     }
 }
 
