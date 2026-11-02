@@ -61,4 +61,5 @@ class AuthException(
     val failure: AuthFailure,
     message: String? = null,
     cause: Throwable? = null,
+    val retryAfterSeconds: Int? = null,
 ) : Exception(message, cause)

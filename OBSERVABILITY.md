@@ -77,7 +77,7 @@ feature 가 부르지 않아도 파이프라인이 보내는 것들이다.
 |---|---|---|
 | `login_screen_view` | 로그인 화면 진입 | `entry_type` (`fresh` / `relogin`) |
 | `login_attempt` | 소셜 버튼 클릭 | `provider` |
-| `login_result` | 토큰 발급 성공·실패 | `provider`, `success`, `error_code`?, `is_new_user`?, `restored`? |
+| `login_result` | 토큰 발급 성공·실패 | `provider`(심사 코드 로그인은 `review`), `success`, `error_code`?, `is_new_user`?, `restored`? |
 | `onboarding_step_view` | 6단계 각 진입 | `step`, `step_index` (1부터) |
 | `onboarding_step_complete` | 6단계 각 완료 | `step`, `skipped` |
 | `nickname_check` | 닉네임 확인 응답 | `valid`, `available`, `reason`? |

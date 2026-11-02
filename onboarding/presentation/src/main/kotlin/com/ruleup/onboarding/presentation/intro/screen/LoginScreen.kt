@@ -47,6 +47,10 @@ import com.ruleup.onboarding.presentation.oauth.rememberOAuthLauncher
 import com.ruleup.tti.presentation.TtiScreenEffect
 import com.ruleup.tti.presentation.ttiContentDrawn
 import com.ruleup.ui.helper.LocalMessageHelper
+import kotlinx.coroutines.delay
+
+private const val REVIEW_TAP_COUNT = 6
+private const val REVIEW_TAP_WINDOW_MS = 2_000L
 
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
@@ -87,6 +91,7 @@ fun LoginScreen(viewModel: LoginViewModel = hiltViewModel()) {
             onDismiss = { showReviewLogin = false },
             onSubmit = { viewModel.onIntent(LoginIntent.ReviewLoginSubmitted(it)) },
             isSubmitting = state.isLoading,
+            isCoolingDown = state.isReviewCoolingDown,
         )
     }
     AuthFailureHost(ui = failure, onDismiss = { failure = null })
@@ -99,6 +104,13 @@ fun LoginContent(
     onReviewEntry: () -> Unit = {},
 ) {
     var logoTaps by remember { mutableIntStateOf(0) }
+    // 탭 사이가 벌어지면 처음부터 다시 센다 — 우연한 탭이 쌓여 열리지 않게.
+    LaunchedEffect(logoTaps) {
+        if (logoTaps > 0) {
+            delay(REVIEW_TAP_WINDOW_MS)
+            logoTaps = 0
+        }
+    }
     Column(
         modifier =
             modifier
@@ -125,7 +137,7 @@ fun LoginContent(
                         .border(1.dp, RuleUpTheme.colors.border, RoundedCornerShape(22.dp))
                         .clickable {
                             logoTaps++
-                            if (logoTaps == 6) {
+                            if (logoTaps == REVIEW_TAP_COUNT) {
                                 logoTaps = 0
                                 onReviewEntry()
                             }

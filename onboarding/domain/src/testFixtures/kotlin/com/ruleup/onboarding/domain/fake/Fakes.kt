@@ -116,11 +116,11 @@ class FakeTokenRepository(
 
 /** 각 API 의 성공 결과/예외를 주입할 수 있는 인증 저장소 테스트 더블. */
 class FakeAuthRepository : AuthRepository {
-    var reviewResult: AuthSession? = null
+    var reviewResult: OAuthResult.ExistingUser? = null
     var reviewError: Throwable? = null
     var reviewCode: String? = null
 
-    override suspend fun reviewLogin(code: String): AuthSession {
+    override suspend fun reviewLogin(code: String): OAuthResult.ExistingUser {
         reviewCode = code
         reviewError?.let { throw it }
         return requireNotNull(reviewResult)

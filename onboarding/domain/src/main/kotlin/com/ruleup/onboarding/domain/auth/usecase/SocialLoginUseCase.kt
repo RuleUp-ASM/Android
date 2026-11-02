@@ -1,8 +1,6 @@
 package com.ruleup.onboarding.domain.auth.usecase
 
 import com.ruleup.domain.device.DeviceIdentityRepository
-import com.ruleup.domain.entity.user.AccountStatus
-import com.ruleup.domain.entity.user.NicknameStatus
 import com.ruleup.domain.token.TokenRepository
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.w
@@ -38,16 +36,7 @@ class SocialLoginUseCase
                     if (!account.onboardingCompleted) {
                         observability.w(TAG) { "기존 회원인데 onboardingCompleted=false — signupToken 이 없어 온보딩을 이어갈 수 없다" }
                     }
-                    when {
-                        account.nicknameStatus == NicknameStatus.CONFLICT ->
-                            LoginOutcome.ResetNickname(user.nickname)
-
-                        // 서버는 정지를 `SUSPENDED` 로 내린다.
-                        account.accountStatus != AccountStatus.ACTIVE ->
-                            LoginOutcome.Restricted(account.lockInfo)
-
-                        else -> LoginOutcome.GoHome(restored = result.restored)
-                    }
+                    LoginOutcome.forExistingUser(user.nickname, account, result.restored)
                 }
 
                 is OAuthResult.NewUser ->

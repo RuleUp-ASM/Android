@@ -7,12 +7,12 @@ import kotlin.test.assertEquals
 
 class ReviewLoginFailureUiTest {
     @Test
-    fun `심사 코드 오류의 종류에 따라 적절한 안내를 보여준다`() {
+    fun `심사 종료는 코드 오류와 같은 안내로 보여 종료 여부를 드러내지 않는다`() {
         val cases =
             mapOf(
                 AuthFailure.INVALID_REVIEW_CODE to "코드를 다시 확인해주세요",
                 AuthFailure.REVIEW_TOO_MANY_ATTEMPTS to "잠시 후 다시 시도해주세요",
-                AuthFailure.REVIEW_UNAVAILABLE to "현재 심사 로그인을 사용할 수 없어요",
+                AuthFailure.REVIEW_UNAVAILABLE to "코드를 다시 확인해주세요",
             )
 
         cases.forEach { (failure, message) ->

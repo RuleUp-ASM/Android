@@ -40,11 +40,11 @@ class AuthRepositoryImpl
         private val tokenRefresher: TokenRefresher,
         private val signupInviteStore: com.ruleup.onboarding.domain.auth.repository.SignupInviteStore,
     ) : AuthRepository {
-        override suspend fun reviewLogin(code: String): AuthSession =
+        override suspend fun reviewLogin(code: String): OAuthResult.ExistingUser =
             try {
                 mapAuthFailure {
                     val result = api.reviewLogin(ReviewLoginRequest(code)).getOrThrow().toOAuthResult()
-                    (result as? OAuthResult.ExistingUser)?.session
+                    result as? OAuthResult.ExistingUser
                         ?: throw ApiException(code = "INVALID_REVIEW_RESPONSE", message = "심사 계정 응답이 올바르지 않습니다.")
                 }
             } catch (error: HttpException) {
@@ -121,7 +121,7 @@ private suspend fun <T> mapAuthFailure(block: suspend () -> T): T =
     try {
         block()
     } catch (e: ApiException) {
-        throw AuthException(e.toAuthFailure(), e.message, e)
+        throw AuthException(e.toAuthFailure(), e.message, e, e.retryAfterSeconds)
     } catch (e: IOException) {
         throw AuthException(AuthFailure.NETWORK, e.message, e)
     }

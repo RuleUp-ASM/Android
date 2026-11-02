@@ -32,6 +32,7 @@ import com.ruleup.onboarding.domain.logging.SignupTimer
 import com.ruleup.onboarding.domain.navigation.HomePage
 import com.ruleup.onboarding.domain.navigation.OnboardingNicknamePage
 import com.ruleup.onboarding.presentation.common.AuthFailureUi
+import com.ruleup.profile.domain.navigation.AccountLockedPage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,7 +68,7 @@ class LoginViewModelTest {
     @Test
     fun `심사 코드로 로그인하면 심사 세션을 저장하고 홈으로 간다`() =
         runTest {
-            val auth = FakeAuthRepository().apply { reviewResult = AuthSession(token, testUser()) }
+            val auth = FakeAuthRepository().apply { reviewResult = reviewUser() }
             val tokens = FakeTokenRepository()
             val nav = RecordingNavigationHelper()
             val viewModel = viewModel(auth, nav = nav, tokens = tokens)
@@ -100,11 +101,11 @@ class LoginViewModelTest {
     fun `심사 로그인을 기다리는 동안 중복 제출해도 한 번만 요청한다`() =
         runTest {
             val gate = CompletableDeferred<Unit>()
-            val fake = FakeAuthRepository().apply { reviewResult = AuthSession(token, testUser()) }
+            val fake = FakeAuthRepository().apply { reviewResult = reviewUser() }
             var calls = 0
             val auth =
                 object : AuthRepository by fake {
-                    override suspend fun reviewLogin(code: String): AuthSession {
+                    override suspend fun reviewLogin(code: String): OAuthResult.ExistingUser {
                         calls++
                         gate.await()
                         return fake.reviewLogin(code)
@@ -122,6 +123,39 @@ class LoginViewModelTest {
 
             assertEquals(listOf<Page>(HomePage), nav.pages)
             assertFalse(viewModel.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `심사 계정이 정지 상태면 홈 대신 잠금 화면으로 보낸다`() =
+        runTest {
+            val auth = FakeAuthRepository().apply { reviewResult = reviewUser(AccountStatus.SUSPENDED) }
+            val nav = RecordingNavigationHelper()
+            val viewModel = viewModel(auth, nav = nav, restriction = AccountRestriction.Locked)
+
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("TEST-CODE"))
+
+            assertEquals(listOf<Page>(AccountLockedPage), nav.pages)
+        }
+
+    @Test
+    fun `심사 코드 시도 한도를 넘으면 서버가 준 시간 동안 다시 제출할 수 없다`() =
+        runTest {
+            val auth =
+                FakeAuthRepository().apply {
+                    reviewError = AuthException(AuthFailure.REVIEW_TOO_MANY_ATTEMPTS, retryAfterSeconds = 30)
+                }
+            val viewModel = viewModel(auth)
+
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("wrong"))
+            assertTrue(viewModel.uiState.value.isReviewCoolingDown)
+
+            auth.reviewCode = null
+            viewModel.onIntent(LoginIntent.ReviewLoginSubmitted("again"))
+            assertEquals(null, auth.reviewCode)
+
+            testScheduler.advanceTimeBy(30_000)
+            testScheduler.runCurrent()
+            assertFalse(viewModel.uiState.value.isReviewCoolingDown)
         }
 
     @Test
@@ -272,6 +306,9 @@ class LoginViewModelTest {
         }
 
     private val token = Token("a", "r", "Bearer", 3600)
+
+    private fun reviewUser(status: AccountStatus = AccountStatus.ACTIVE) =
+        OAuthResult.ExistingUser(AuthSession(token, testUser(accountStatus = status)), restored = false)
 
     private fun existingUser() =
         FakeAuthRepository().apply {
