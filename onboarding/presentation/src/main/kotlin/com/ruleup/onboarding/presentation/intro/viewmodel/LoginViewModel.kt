@@ -13,6 +13,7 @@ import com.ruleup.observability.domain.api.w
 import com.ruleup.onboarding.domain.account.AccountRestrictionProvider
 import com.ruleup.onboarding.domain.auth.SignupSession
 import com.ruleup.onboarding.domain.auth.entity.AuthException
+import com.ruleup.onboarding.domain.auth.entity.AuthFailure
 import com.ruleup.onboarding.domain.auth.entity.LoginOutcome
 import com.ruleup.onboarding.domain.auth.entity.OAuthAuthorization
 import com.ruleup.onboarding.domain.auth.usecase.ReviewLoginUseCase
@@ -27,10 +28,14 @@ import com.ruleup.profile.domain.navigation.AccountLockedPage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 private const val TAG = "[Login]"
+
+// login_result 의 provider 값. 소셜 로그인 퍼널과 섞이지 않게 따로 둔다.
+private const val REVIEW_PROVIDER = "review"
 
 @HiltViewModel
 class LoginViewModel
@@ -96,6 +101,14 @@ class LoginViewModel
                 is LoginReducerEvent.LoginFinished -> {
                     state.copy(isLoading = false)
                 }
+
+                is LoginReducerEvent.ReviewCooldownStarted -> {
+                    state.copy(isReviewCoolingDown = true)
+                }
+
+                is LoginReducerEvent.ReviewCooldownEnded -> {
+                    state.copy(isReviewCoolingDown = false)
+                }
             }
 
         /** 제한 계정의 진입. */
@@ -134,26 +147,7 @@ class LoginViewModel
                             restored = (result as? LoginOutcome.GoHome)?.restored,
                         ),
                     )
-                    when (result) {
-                        is LoginOutcome.GoHome -> navigationHelper.goHomeOrPending(pendingDeepLink)
-
-                        // 제한이 걸린 계정도 로그인은 된다.
-                        is LoginOutcome.Restricted -> enterRestricted(result)
-
-                        // 복원 중 닉네임을 선점당했다.
-                        is LoginOutcome.ResetNickname -> {
-                            messageHelper.showSnackBar(
-                                messageText = "'${result.currentNickname}' 을(를) 다른 분이 쓰고 있어요. 새 닉네임을 정해주세요",
-                            )
-                            navigationHelper.navigateTo(OnboardingNicknamePage)
-                        }
-
-                        is LoginOutcome.GoSignup -> {
-                            // 토큰은 백스택에 실지 않는다
-                            signupSession.start(result.signupToken, result.profile)
-                            navigationHelper.navigateTo(OnboardingNicknamePage)
-                        }
-                    }
+                    enter(result)
                 }.onFailure { error ->
                     dispatch(LoginReducerEvent.LoginFinished)
                     // 원인은 로그로만 남긴다
@@ -170,21 +164,72 @@ class LoginViewModel
             }
         }
 
+        /** 로그인 결과에 따라 화면을 옮긴다. */
+        private suspend fun enter(result: LoginOutcome) {
+            when (result) {
+                is LoginOutcome.GoHome -> navigationHelper.goHomeOrPending(pendingDeepLink)
+
+                // 제한이 걸린 계정도 로그인은 된다.
+                is LoginOutcome.Restricted -> enterRestricted(result)
+
+                // 복원 중 닉네임을 선점당했다.
+                is LoginOutcome.ResetNickname -> {
+                    messageHelper.showSnackBar(
+                        messageText = "'${result.currentNickname}' 을(를) 다른 분이 쓰고 있어요. 새 닉네임을 정해주세요",
+                    )
+                    navigationHelper.navigateTo(OnboardingNicknamePage)
+                }
+
+                is LoginOutcome.GoSignup -> {
+                    // 토큰은 백스택에 실지 않는다
+                    signupSession.start(result.signupToken, result.profile)
+                    navigationHelper.navigateTo(OnboardingNicknamePage)
+                }
+            }
+        }
+
         private fun reviewLogin(code: String) {
-            if (currentState.isLoading || code.isBlank()) return
+            if (currentState.isLoading || currentState.isReviewCoolingDown || code.isBlank()) return
             dispatch(LoginReducerEvent.LoginStarted)
             viewModelScope.launch {
                 try {
-                    reviewLoginUseCase(code)
+                    val result = reviewLoginUseCase(code)
                     dispatch(LoginReducerEvent.LoginFinished)
-                    navigationHelper.goHomeOrPending(pendingDeepLink)
+                    bizLogger.record(
+                        OnboardingEvents.loginResult(
+                            provider = REVIEW_PROVIDER,
+                            success = true,
+                            isNewUser = false,
+                            restored = (result as? LoginOutcome.GoHome)?.restored,
+                        ),
+                    )
+                    enter(result)
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (error: Exception) {
                     dispatch(LoginReducerEvent.LoginFinished)
+                    observability.w(TAG, error) { "심사 로그인 실패" }
+                    bizLogger.record(
+                        OnboardingEvents.loginResult(
+                            provider = REVIEW_PROVIDER,
+                            success = false,
+                            errorCode = (error as? AuthException)?.failure?.name,
+                        ),
+                    )
                     emitEffect(LoginEffect.ShowFailure(error.toAuthFailureUi()))
+                    (error as? AuthException)
+                        ?.takeIf { it.failure == AuthFailure.REVIEW_TOO_MANY_ATTEMPTS }
+                        ?.retryAfterSeconds
+                        ?.takeIf { it > 0 }
+                        ?.let { coolDownReview(it) }
                 }
             }
+        }
+
+        private suspend fun coolDownReview(seconds: Int) {
+            dispatch(LoginReducerEvent.ReviewCooldownStarted)
+            delay(seconds * 1_000L)
+            dispatch(LoginReducerEvent.ReviewCooldownEnded)
         }
     }
 

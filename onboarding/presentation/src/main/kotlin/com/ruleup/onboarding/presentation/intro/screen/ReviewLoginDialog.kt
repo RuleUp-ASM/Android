@@ -18,6 +18,7 @@ internal fun ReviewLoginDialog(
     onDismiss: () -> Unit,
     onSubmit: (String) -> Unit,
     isSubmitting: Boolean = false,
+    isCoolingDown: Boolean = false,
 ) {
     var code by remember { mutableStateOf("") }
     AlertDialog(
@@ -34,7 +35,7 @@ internal fun ReviewLoginDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = { onSubmit(code) }, enabled = code.isNotBlank() && !isSubmitting) {
+            TextButton(onClick = { onSubmit(code) }, enabled = code.isNotBlank() && !isSubmitting && !isCoolingDown) {
                 Text("로그인", color = RuleUpTheme.colors.textPrimary)
             }
         },

@@ -8,4 +8,8 @@ sealed interface LoginReducerEvent : ReducerEvent {
     data object LoginStarted : LoginReducerEvent
 
     data object LoginFinished : LoginReducerEvent
+
+    data object ReviewCooldownStarted : LoginReducerEvent
+
+    data object ReviewCooldownEnded : LoginReducerEvent
 }

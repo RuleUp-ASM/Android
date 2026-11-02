@@ -34,6 +34,23 @@ class LoginContentTest {
     }
 
     @Test
+    fun `로고 탭 사이가 2초를 넘으면 처음부터 다시 센다`() {
+        // 우연히 몇 번 누른 것이 쌓여 심사 입력 창이 열리면 안 된다.
+        var entries = 0
+        compose.mainClock.autoAdvance = false
+        compose.renderOnboarding { LoginContent(onIntent = {}, onReviewEntry = { entries++ }) }
+        val logo = compose.onNodeWithContentDescription("RuleUp")
+
+        repeat(5) { logo.performClick() }
+        compose.mainClock.advanceTimeBy(2_100)
+        logo.performClick()
+        assertEquals(0, entries)
+
+        repeat(5) { logo.performClick() }
+        assertEquals(1, entries)
+    }
+
+    @Test
     fun `두 제공사로 시작할 수 있다`() {
         // 하나만 있으면 그 계정이 없는 사용자가 앱에 못 들어온다.
         compose.renderOnboarding { LoginContent(onIntent = {}) }

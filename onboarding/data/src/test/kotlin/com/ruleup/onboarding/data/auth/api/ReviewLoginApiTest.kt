@@ -37,12 +37,13 @@ class ReviewLoginApiTest {
             val authenticator = TokenAuthenticator(tokens, Lazy { error("갱신하면 안 됨") }, observability)
             var status = 400
             var responseCode = "INVALID_REVIEW_CODE"
+            var retryAfter = ""
             val client =
                 NetworkModule
                     .provideOkHttpClient(tokens, authenticator, false, observability)
                     .newBuilder()
                     .addInterceptor { chain ->
-                        val body = """{"success":false,"error":{"code":"$responseCode","message":"error"}}"""
+                        val body = """{"success":false,"error":{"code":"$responseCode","message":"error"$retryAfter}}"""
                         Response
                             .Builder()
                             .request(chain.request())
@@ -77,7 +78,11 @@ class ReviewLoginApiTest {
             assertEquals(AuthFailure.INVALID_REVIEW_CODE, assertFailsWith<AuthException> { repository.reviewLogin("bad") }.failure)
             status = 429
             responseCode = "TOO_MANY_ATTEMPTS"
-            assertEquals(AuthFailure.REVIEW_TOO_MANY_ATTEMPTS, assertFailsWith<AuthException> { repository.reviewLogin("bad") }.failure)
+            retryAfter = ""","retryAfterSeconds":42"""
+            val tooMany = assertFailsWith<AuthException> { repository.reviewLogin("bad") }
+            assertEquals(AuthFailure.REVIEW_TOO_MANY_ATTEMPTS, tooMany.failure)
+            // 화면이 이 시간만큼 다시 제출을 막는다.
+            assertEquals(42, tooMany.retryAfterSeconds)
             status = 404
             responseCode = "NOT_FOUND"
             assertEquals(AuthFailure.REVIEW_UNAVAILABLE, assertFailsWith<AuthException> { repository.reviewLogin("bad") }.failure)
