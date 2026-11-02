@@ -30,13 +30,17 @@ class JankTracker
         // 창 하나(5초 × 60fps ≈ 300개) 분량.
         private val durationsMillis = ArrayList<Long>(INITIAL_SAMPLES)
 
+        // onFrame 은 FrameMetrics HandlerThread, onScreenChanged 는 메인 스레드에서 온다. 상태를 같이 쓰므로 직렬화한다.
+
         /** 화면 전환 직전에 호출한다. */
+        @Synchronized
         fun onScreenChanged() {
             if (total > 0) closeWindow((lastFrameNanos - windowStartNanos) / NANOS_PER_MILLI)
             windowStartNanos = 0L
             lastFrameNanos = 0L
         }
 
+        @Synchronized
         fun onFrame(frame: FrameData) {
             val startNanos = frame.frameStartNanos
             if (windowStartNanos == 0L) {
