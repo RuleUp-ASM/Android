@@ -56,7 +56,6 @@ class LoginViewModel
         override fun onIntent(intent: LoginIntent) {
             when (intent) {
                 is LoginIntent.Load -> {
-                    dispatch(LoginReducerEvent.Loaded)
                     viewModelScope.launch {
                         // 완주율의 분모.
                         val entryType = if (tokenRepository.hasEverLoggedIn()) LoginEntryType.RELOGIN else LoginEntryType.FRESH
@@ -65,6 +64,7 @@ class LoginViewModel
                 }
 
                 is LoginIntent.LoginClicked -> {
+                    if (currentState.isLoading) return
                     dispatch(LoginReducerEvent.LoginStarted)
                     // 가입 소요 시간의 시작점.
                     signupTimer.start()
@@ -90,10 +90,6 @@ class LoginViewModel
             event: LoginReducerEvent,
         ): LoginState =
             when (event) {
-                is LoginReducerEvent.Loaded -> {
-                    state.copy(isLoading = false)
-                }
-
                 is LoginReducerEvent.LoginStarted -> {
                     state.copy(isLoading = true)
                 }
