@@ -12,6 +12,7 @@ import com.ruleup.challenge.domain.entity.CrossChallengeRanking
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.ThreadItem
 import com.ruleup.challenge.domain.entity.WatcherInviteCard
+import com.ruleup.remoteconfig.domain.WatcherInviteUi
 import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.report.domain.entity.ReportResult
 import com.ruleup.ui.mvi.MviEffect
@@ -56,6 +57,16 @@ sealed interface ChallengeDetailIntent : MviIntent {
 
     /** (참여자 본인) 내 감시자 초대 생성 → 카카오톡 공유 카드 발송. */
     data object InviteWatcher : ChallengeDetailIntent
+
+    data object ResolveWatcherInvite : ChallengeDetailIntent
+
+    data object WatcherInviteShown : ChallengeDetailIntent
+
+    data object OpenWatcherInvite : ChallengeDetailIntent
+
+    data object ConfirmWatcherInvite : ChallengeDetailIntent
+
+    data object DismissWatcherInvite : ChallengeDetailIntent
 
     /** 내 감시자 화면으로. */
     data object OpenWatchers : ChallengeDetailIntent
@@ -219,6 +230,8 @@ enum class DetailSetupAction {
     JOIN,
 }
 
+enum class WatcherInviteSheet { INTRO, SHARE }
+
 data class ChallengeDetailState(
     val challengeId: String,
     val isLoading: Boolean,
@@ -232,6 +245,9 @@ data class ChallengeDetailState(
     val watchers: ChallengeWatchers? = null,
     // 초대 생성 요청 중(버튼 중복 탭 방지).
     val isInvitingWatcher: Boolean = false,
+    val watcherInviteUi: WatcherInviteUi = WatcherInviteUi.LEGACY,
+    val watcherInviteSheet: WatcherInviteSheet? = null,
+    val watcherSetupJustCompleted: Boolean = false,
     // 방 홈 일괄 조회 결과.
     val room: ChallengeRoom? = null,
     // 방 홈 멤버 목록(GET members).
@@ -386,7 +402,15 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val watchers: ChallengeWatchers,
     ) : ChallengeDetailReducerEvent
 
-    /** 초대 생성 요청 시작/종료. */
+    data class WatcherInviteConfigured(
+        val ui: WatcherInviteUi,
+        val setupJustCompleted: Boolean,
+    ) : ChallengeDetailReducerEvent
+
+    data class WatcherInviteSheetChanged(
+        val sheet: WatcherInviteSheet?,
+    ) : ChallengeDetailReducerEvent
+
     data class InvitingWatcher(
         val inviting: Boolean,
     ) : ChallengeDetailReducerEvent

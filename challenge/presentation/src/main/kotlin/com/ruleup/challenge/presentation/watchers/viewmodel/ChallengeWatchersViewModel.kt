@@ -3,10 +3,13 @@ package com.ruleup.challenge.presentation.watchers.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.WATCHER_FREE_LIMIT
 import com.ruleup.challenge.domain.entity.WatcherLimitExceededException
+import com.ruleup.challenge.domain.logging.ChallengeEvents
 import com.ruleup.challenge.domain.repository.ChallengeRepository
 import com.ruleup.challenge.domain.repository.WatcherRepository
 import com.ruleup.challenge.presentation.watcher.inviteCard
 import com.ruleup.domain.helper.NavigationHelper
+import com.ruleup.remoteconfig.domain.RemoteConfigIds
+import com.ruleup.remoteconfig.domain.RemoteConfigMetrics
 import com.ruleup.ui.error.userFacingMessage
 import com.ruleup.ui.mvi.MviViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,6 +24,7 @@ class ChallengeWatchersViewModel
         private val challengeRepository: ChallengeRepository,
         private val watcherRepository: WatcherRepository,
         private val navigationHelper: NavigationHelper,
+        private val remoteConfigMetrics: RemoteConfigMetrics = RemoteConfigMetrics.None,
     ) : MviViewModel<ChallengeWatchersIntent, ChallengeWatchersState, ChallengeWatchersReducerEvent, ChallengeWatchersEffect>(
             ChallengeWatchersState.initial,
         ) {
@@ -93,6 +97,7 @@ class ChallengeWatchersViewModel
                                 inviteUrl = invitation.inviteUrl,
                             ),
                         )
+                        remoteConfigMetrics.record(RemoteConfigIds.WatcherInviteUi, ChallengeEvents.WATCHER_INVITE_CREATED)
                         runCatching { watcherRepository.getWatchers(state.challengeId) }
                             .onSuccess { dispatch(ChallengeWatchersReducerEvent.WatchersLoaded(it)) }
                     }.onFailure { throwable ->

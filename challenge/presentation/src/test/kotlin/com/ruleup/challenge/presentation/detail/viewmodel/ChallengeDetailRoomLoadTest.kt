@@ -5,9 +5,11 @@ import com.ruleup.challenge.domain.entity.ChallengeGate
 import com.ruleup.challenge.domain.entity.ChallengeMode
 import com.ruleup.challenge.domain.entity.ChallengePeriod
 import com.ruleup.challenge.domain.entity.ChallengeRoom
+import com.ruleup.challenge.domain.entity.ChallengeSetupInfo
 import com.ruleup.challenge.domain.entity.ChallengeStats
 import com.ruleup.challenge.domain.entity.ChallengeStatus
 import com.ruleup.challenge.domain.entity.ChallengeVisibility
+import com.ruleup.challenge.domain.entity.ChallengeWatchers
 import com.ruleup.challenge.domain.entity.JoinNote
 import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.OwnerType
@@ -18,6 +20,7 @@ import com.ruleup.challenge.domain.entity.VerificationType
 import com.ruleup.challenge.domain.fake.FakeChallengeRepository
 import com.ruleup.challenge.domain.fake.FakeMyChallengeStore
 import com.ruleup.challenge.domain.fake.FakeWatcherRepository
+import com.ruleup.challenge.domain.logging.ChallengeEvents
 import com.ruleup.challenge.presentation.detail.fake.FakeReportRepository
 import com.ruleup.challenge.presentation.fake.FakeAccountRepository
 import com.ruleup.challenge.presentation.fake.FakeExploreRepository
@@ -29,9 +32,14 @@ import com.ruleup.domain.test.RecordingNavigationHelper
 import com.ruleup.logging.domain.test.RecordingBizLogger
 import com.ruleup.notification.domain.fake.FakeNotificationRepository
 import com.ruleup.onboarding.domain.fake.FakeIntroRepository
+import com.ruleup.remoteconfig.domain.ConfigId
+import com.ruleup.remoteconfig.domain.RemoteConfig
+import com.ruleup.remoteconfig.domain.RemoteConfigIds
+import com.ruleup.remoteconfig.domain.RemoteConfigMetrics
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
+import com.ruleup.verification.domain.setup.VerificationSetupCompletion
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
 import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
@@ -47,6 +55,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /** 그룹 방 진입 시 상세와 방을 함께 그린다 */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -80,6 +89,55 @@ class ChallengeDetailRoomLoadTest {
             assertNotNull(model.uiState.value.detail)
             assertNull(model.uiState.value.room)
         }
+
+    @Test
+    fun `준비 직후 방에 들어가면 첫 노출을 new_ready로 기록한다`() =
+        runTest {
+            val completion = VerificationSetupCompletion().apply { record("ch1") }
+            val sources = mutableListOf<String>()
+            val metrics =
+                object : RemoteConfigMetrics {
+                    override suspend fun record(
+                        id: ConfigId<*>,
+                        event: String,
+                        properties: Map<String, String>,
+                    ) {
+                        if (event == ChallengeEvents.WATCHER_INVITE_ENTRY_SHOWN) sources.add(properties.getValue("entry_source"))
+                    }
+                }
+            val config =
+                object : RemoteConfig {
+                    override suspend fun <T : Any> get(id: ConfigId<T>): T = id.valueOf("C") ?: id.default
+
+                    override suspend fun onShown(id: ConfigId<*>): Boolean = id == RemoteConfigIds.WatcherInviteUi
+                }
+            val newRoom = viewModel(MemberRole.OWNER, FakeRoomRepository(), readySetup(), completion, config, metrics)
+
+            newRoom.onIntent(ChallengeDetailIntent.Load("ch1"))
+            newRoom.onIntent(ChallengeDetailIntent.ResolveWatcherInvite)
+            newRoom.onIntent(ChallengeDetailIntent.WatcherInviteShown)
+
+            assertTrue(newRoom.uiState.value.watcherSetupJustCompleted)
+            assertEquals(WatcherInviteSheet.INTRO, newRoom.uiState.value.watcherInviteSheet)
+            val reopened = viewModel(MemberRole.OWNER, FakeRoomRepository(), readySetup(), completion, config, metrics)
+
+            reopened.onIntent(ChallengeDetailIntent.Load("ch1"))
+            reopened.onIntent(ChallengeDetailIntent.ResolveWatcherInvite)
+            reopened.onIntent(ChallengeDetailIntent.WatcherInviteShown)
+
+            assertEquals(listOf("new_ready", "ready_reopen"), sources)
+        }
+
+    private fun readySetup() =
+        ChallengeSetupInfo(
+            manual = false,
+            ready = true,
+            verificationMethod = VerificationMethod.GPS_PRESENCE,
+            requiredPermissions = emptyList(),
+            requiresAnchors = true,
+            anchorsConfigured = true,
+            requiresTargetPackages = false,
+        )
 
     private fun room() =
         ChallengeRoom(
@@ -136,11 +194,15 @@ class ChallengeDetailRoomLoadTest {
     private fun viewModel(
         role: MemberRole,
         rooms: FakeRoomRepository,
+        setup: ChallengeSetupInfo? = null,
+        completion: VerificationSetupCompletion = VerificationSetupCompletion(),
+        config: RemoteConfig = RemoteConfig.Defaults,
+        metrics: RemoteConfigMetrics = RemoteConfigMetrics.None,
     ): ChallengeDetailViewModel =
         ChallengeDetailViewModel(
-            challengeRepository = FakeChallengeRepository(detail = { detail(role) }),
+            challengeRepository = FakeChallengeRepository(detail = { detail(role) }, setupInfo = setup?.let { { _ -> it } }),
             roomRepository = rooms,
-            watcherRepository = FakeWatcherRepository(),
+            watcherRepository = FakeWatcherRepository(watchers = { ChallengeWatchers(limit = null, watchers = emptyList()) }),
             verificationRepository = FakeVerificationRepository(),
             permissionStatusProvider = PermissionStatusProvider { snapshot() },
             exploreRepository = FakeExploreRepository(),
@@ -153,5 +215,8 @@ class ChallengeDetailRoomLoadTest {
             checkVerificationAccess = CheckVerificationAccessUseCase(PermissionStatusProvider { snapshot() }, FakeAccountRepository()),
             agreeVerificationConsent = AgreeVerificationConsentUseCase(FakeAccountRepository(), FakeIntroRepository()),
             myChallengeStore = FakeMyChallengeStore(),
+            remoteConfig = config,
+            remoteConfigMetrics = metrics,
+            setupCompletion = completion,
         )
 }

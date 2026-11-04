@@ -7,6 +7,10 @@ import com.ruleup.logging.domain.bizAttributes
 
 /** 챌린지 탐색·생성 퍼널 이벤트. */
 object ChallengeEvents {
+    const val WATCHER_INVITE_ENTRY_SHOWN = "watcher_invite_entry_shown"
+    const val WATCHER_INVITE_CLICKED = "watcher_invite_clicked"
+    const val WATCHER_INVITE_CREATED = "watcher_invite_created"
+
     // 탐색
 
     /** 탐색 홈 진입. */

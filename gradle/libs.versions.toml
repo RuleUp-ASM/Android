@@ -71,6 +71,7 @@ zxing = "3.5.3"
 
 # Amplitude
 amplitudeAnalytics = "1.30.1"
+amplitudeExperiment = "1.18.0"
 
 # Meta 앱 이벤트
 facebookCore = "19.0.0"
@@ -189,6 +190,7 @@ kizitonwose-calendar-compose = { module = "com.kizitonwose.calendar:compose", ve
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 
 # amplitude
+amplitude-experiment = { group = "com.amplitude", name = "experiment-android-client", version.ref = "amplitudeExperiment" }
 amplitude-analytics = { group = "com.amplitude", name = "analytics-android", version.ref = "amplitudeAnalytics" }
 # Meta 앱 이벤트
 facebook-core = { group = "com.facebook.android", name = "facebook-core", version.ref = "facebookCore" }

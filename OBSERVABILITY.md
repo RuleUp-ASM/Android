@@ -30,7 +30,7 @@ Amplitude 와 Firebase 는 **병행**한다. 같은 이벤트가 두 곳에 쌓�
 기록된 것과 전송에 실패한 것은 사라진다** — 한 건도 잃으면 안 되는 이벤트가 생기면 전송기가
 재시도를 맡는다.
 
-Amplitude 키(`AMPLITUDE_API_KEY`)가 비면 **Amplitude 출구를 아예 달지 않는다.** Firebase 로는
+빌드별 Amplitude 키가 비면 **Amplitude 출구를 아예 달지 않는다.** Firebase 로는
 계속 나간다. 키는 `local.properties` 에서 온다.
 
 TTI 는 위 경로와 별도로 **구글 시트에도 한 행씩** 남는다(`SheetTtiShooter`, #623). 받는 쪽은 시트에 붙은
@@ -229,6 +229,39 @@ APK 는 Amplitude 출구 없이 나간다. 로컬에서 빌드한 APK 만 키를
 
 공유용 PDF 사본이 `docs/RuleUp-관측이벤트와퍼널.pdf` 에 있다. **이 문서가 먼저 바뀌고 PDF 가**
 **따라온다** — 둘이 어긋나면 이쪽이 맞다. 다시 뽑는 법은 `docs/README.md`.
+
+## 12. 감시자 초대 A/C 실험
+
+Amplitude Experiment의 플래그 키는 `watcher_invite_ui`다. READY 상태의 방장이 방을 열면
+Analytics SDK의 기기 ID로 받은 설정을 읽는다. 같은 실험 실행에서는 기기마다 최초 A/C 배정을 유지한다.
+원격 설정을 다시 받아도 이미 적용한 값은 프로세스가 끝날 때까지 유지한다. 조회 실패 시 24시간 이내
+캐시를 사용하고, 쓸 수 있는 값이 없으면 기존 UI를 표시한다.
+
+| 빌드 | Analytics 프로젝트 키 | Experiment 배포 키 |
+|---|---|---|
+| Debug (QA) | `AMPLITUDE_API_KEY_QA` | `AMPLITUDE_EXPERIMENT_KEY_QA` |
+| Release (운영) | `AMPLITUDE_API_KEY` | `AMPLITUDE_EXPERIMENT_KEY_PROD` |
+
+키는 환경 변수 또는 `local.properties`에 넣는다. 각 Experiment 배포는 같은 환경의
+Analytics 프로젝트를 사용한다. 어느 한 키라도 비어 있으면 해당 빌드에서 RemoteConfig가
+기존 UI로 동작한다. 실제 초대 API를 검증하는 QA 빌드의 `BASE_URL`은 스테이징으로 설정한다.
+QA에서 `{"mode":"fixed","value":"A"}`, `{"mode":"fixed","value":"C"}`,
+`{"mode":"off"}`로 각각 확인할 수 있다. A/C 실험에는 각 배리언트 payload를
+`{"mode":"experiment","value":"A"}`와 `{"mode":"experiment","value":"C"}`로 설정하고,
+Amplitude에서 기기 ID로 50:50 배정한다. 새 실험은 별도 실행 ID와 재배정을 사용한다.
+
+| 이벤트 | 기록 시점 |
+|---|---|
+| `remote_config_experiment_enrolled` | 적격 방을 열어 실험 값을 처음 적용할 때 |
+| `$exposure` | 실제 초대 카드 또는 진입점이 화면에 나타날 때 |
+| `watcher_invite_entry_shown` | 첫 노출의 `entry_source` 기록 (`new_ready` 또는 `ready_reopen`) |
+| `watcher_invite_clicked` | 초대 공유 확인으로 들어갈 때 |
+| `watcher_invite_created` | 초대 생성 API가 성공할 때 |
+| `remote_config_unavailable` | 원격 설정과 유효한 캐시를 둘 다 얻지 못했을 때 |
+
+배정·노출·전환을 묶을 때는 `flag_key`, `experiment_key`, `variant`를 사용한다. 주 지표는
+배정된 기기 중 7일 안에 초대를 생성한 고유 기기의 비율이다. OFF 이후에도 직전 배정의 7일 전환을
+계속 집계한다. 다음 실험은 마지막 배정의 전환 기간이 끝난 뒤 시작한다.
 
 ## 갱신 규칙
 

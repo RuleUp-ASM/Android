@@ -75,6 +75,7 @@ import com.ruleup.challenge.presentation.detail.component.TodayQuickActions
 import com.ruleup.challenge.presentation.detail.component.TodayVerificationCard
 import com.ruleup.challenge.presentation.detail.component.VerificationResultModal
 import com.ruleup.challenge.presentation.detail.component.VerificationRuleCard
+import com.ruleup.challenge.presentation.detail.component.WatcherInviteEntry
 import com.ruleup.challenge.presentation.detail.component.periodRange
 import com.ruleup.challenge.presentation.detail.component.toAppealTarget
 import com.ruleup.challenge.presentation.detail.component.toPercentText
@@ -91,6 +92,7 @@ import com.ruleup.designsystem.component.RuleUpPrimaryButton
 import com.ruleup.designsystem.component.ruleUpCardSurface
 import com.ruleup.designsystem.singleClickable
 import com.ruleup.designsystem.theme.RuleUpTheme
+import com.ruleup.remoteconfig.domain.WatcherInviteUi
 import com.ruleup.report.domain.entity.HiddenEffect
 import com.ruleup.report.domain.entity.ReportReason
 import com.ruleup.tti.presentation.TtiScreenEffect
@@ -534,6 +536,10 @@ private fun RoomView(
     onOpenDayAppeal: (ChallengeCalendarDay) -> Unit,
     onOpenMembers: () -> Unit,
 ) {
+    val dispatchIntent by rememberUpdatedState(onIntent)
+    LaunchedEffect(detail.challengeId, detail.myRole, state.setup?.ready) {
+        dispatchIntent(ChallengeDetailIntent.ResolveWatcherInvite)
+    }
     val subtitle =
         if (room != null) {
             listOfNotNull(
@@ -545,7 +551,11 @@ private fun RoomView(
         }
     // 감시자 벌칙이 켜진 챌린지만 감시자를 둘 수 있다
     val watcherCount =
-        if (state.showsWatchers(detail)) state.watchers?.watchers?.count { it.status.isActive } ?: 0 else null
+        if (state.watcherInviteUi == WatcherInviteUi.LEGACY && state.showsWatchers(detail)) {
+            state.watchers?.watchers?.count { it.status.isActive } ?: 0
+        } else {
+            null
+        }
     val missingPermissions = state.missingPermissionTokens().isNotEmpty()
     val todayBlock: @Composable () -> Unit = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -616,6 +626,9 @@ private fun RoomView(
         // 솔로도 피드(내 기록)·랭킹(챌린지 순위)이 있다. 그룹인데 방 홈을 못 받았으면 정보만 둔다
         if (room != null || !detail.mode.isGroup) {
             RoomPillTabs(selected = state.selectedTab, onSelect = { onIntent(ChallengeDetailIntent.SelectTab(it)) })
+        }
+        WatcherInviteEntry(state = state, onIntent = onIntent)
+        if (room != null || !detail.mode.isGroup) {
             when (state.selectedTab) {
                 RoomTab.INFO -> infoBody()
 

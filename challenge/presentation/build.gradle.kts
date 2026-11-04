@@ -40,6 +40,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":remoteconfig:domain"))
     implementation(project(":core:domain"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))

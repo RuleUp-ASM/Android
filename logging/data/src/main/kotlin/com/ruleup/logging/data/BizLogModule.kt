@@ -1,6 +1,7 @@
 package com.ruleup.logging.data
 
 import android.content.Context
+import com.amplitude.android.Amplitude
 import com.ruleup.logging.data.sink.AmplitudeBizShooter
 import com.ruleup.logging.data.sink.BizShooterFailureReporter
 import com.ruleup.logging.data.sink.CompositeBizShooter
@@ -20,6 +21,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /** 비즈니스 이벤트 전송 배선. */
@@ -35,12 +37,13 @@ object BizLogModule {
     fun bizLogShooter(
         @ApplicationContext context: Context,
         config: BizLogConfig,
+        amplitude: Provider<Amplitude>,
         failureReporter: BizShooterFailureReporter,
     ): BizLogShooter {
         val children =
             buildList {
                 add(FirebaseBizShooter(context))
-                if (config.isAmplitudeConfigured) add(AmplitudeBizShooter(context, config))
+                if (config.isAmplitudeConfigured) add(AmplitudeBizShooter(amplitude))
                 if (config.debuggable) add(LogcatBizShooter())
             }
         return CompositeBizShooter(children, failureReporter)

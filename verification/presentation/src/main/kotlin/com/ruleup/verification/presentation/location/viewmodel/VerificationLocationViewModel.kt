@@ -12,6 +12,7 @@ import com.ruleup.verification.domain.entity.SettingChangeLimitException
 import com.ruleup.verification.domain.entity.SetupAnchors
 import com.ruleup.verification.domain.entity.SetupMissing
 import com.ruleup.verification.domain.repository.VerificationRepository
+import com.ruleup.verification.domain.setup.VerificationSetupCompletion
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -26,6 +27,7 @@ class VerificationLocationViewModel
         private val verificationRepository: VerificationRepository,
         private val bindLocationUseCase: BindLocationUseCase,
         private val navigationHelper: NavigationHelper,
+        private val setupCompletion: VerificationSetupCompletion = VerificationSetupCompletion(),
     ) : MviViewModel<VerificationLocationIntent, VerificationLocationState, VerificationLocationReducerEvent, VerificationLocationEffect>(
             VerificationLocationState.initial,
         ) {
@@ -208,6 +210,7 @@ class VerificationLocationViewModel
             }.onSuccess { result ->
                 dispatch(VerificationLocationReducerEvent.Finished)
                 if (result.isReady) {
+                    setupCompletion.record(intent.challengeId)
                     bindAndFinish(intent, anchors, result.serverRadiusM, "장소가 등록됐어요")
                 } else {
                     dispatch(VerificationLocationReducerEvent.MissingUpdated(result.missing))

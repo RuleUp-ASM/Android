@@ -2,9 +2,14 @@ package com.ruleup.verification.presentation.location.viewmodel
 
 import com.ruleup.domain.test.FakeTokenRepository
 import com.ruleup.domain.test.RecordingNavigationHelper
+import com.ruleup.verification.domain.entity.AnchorSet
+import com.ruleup.verification.domain.entity.ChallengeSetupResult
 import com.ruleup.verification.domain.entity.GeofenceTarget
 import com.ruleup.verification.domain.entity.Place
+import com.ruleup.verification.domain.entity.SetupStatus
 import com.ruleup.verification.domain.repository.GeofenceRegister
+import com.ruleup.verification.domain.repository.VerificationRepository
+import com.ruleup.verification.domain.setup.VerificationSetupCompletion
 import com.ruleup.verification.domain.test.FakeVerificationRepository
 import com.ruleup.verification.domain.usecase.BindLocationUseCase
 import kotlinx.coroutines.Dispatchers
@@ -108,6 +113,29 @@ class VerificationLocationViewModelTest {
         assertEquals(emptyList(), nav.routes)
     }
 
+    @Test
+    fun `인증 장소 등록이 준비 완료로 끝나면 방에 완료 사실을 전달한다`() =
+        runTest {
+            val setupCompletion = VerificationSetupCompletion()
+            val repo =
+                object : VerificationRepository by FakeVerificationRepository() {
+                    override suspend fun setupChallenge(
+                        challengeId: String,
+                        anchors: AnchorSet,
+                        targetPackages: List<String>,
+                    ) = ChallengeSetupResult(SetupStatus.READY, emptyList())
+                }
+            val nav = RecordingNavigationHelper()
+            val model = viewModel(repo, nav, setupCompletion)
+
+            model.onIntent(VerificationLocationIntent.SelectPlace(place("헬스장")))
+            model.onIntent(VerificationLocationIntent.AddAnchor)
+            model.onIntent(VerificationLocationIntent.Submit("ch1", dwellMinutes = 10, targetPackages = emptyList()))
+
+            assertEquals(1, nav.backCount)
+            assertTrue(setupCompletion.consume("ch1"))
+        }
+
     private fun TestScope.collectEffects(viewModel: VerificationLocationViewModel): List<VerificationLocationEffect> {
         val effects = mutableListOf<VerificationLocationEffect>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.effect.toList(effects) }
@@ -117,12 +145,14 @@ class VerificationLocationViewModelTest {
     private fun place(name: String) = Place(name = name, lat = 37.5, lng = 127.0, address = "서울시", category = null)
 
     private fun viewModel(
-        repo: FakeVerificationRepository = FakeVerificationRepository(),
+        repo: VerificationRepository = FakeVerificationRepository(),
         nav: RecordingNavigationHelper = RecordingNavigationHelper(),
+        setupCompletion: VerificationSetupCompletion = VerificationSetupCompletion(),
     ) = VerificationLocationViewModel(
         verificationRepository = repo,
         bindLocationUseCase = BindLocationUseCase(NoGeofenceRegister, FakeTokenRepository(storedUserId = "u1")),
         navigationHelper = nav,
+        setupCompletion = setupCompletion,
     )
 }
 
