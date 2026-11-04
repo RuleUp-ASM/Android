@@ -2,6 +2,8 @@ package com.ruleup.remoteconfig.data
 
 import kotlinx.serialization.Serializable
 
+private const val CACHE_LIFETIME_MS = 24 * 60 * 60 * 1_000L
+
 @Serializable
 internal data class ConfigSnapshot(
     val fetchedAt: Long,
@@ -15,10 +17,6 @@ internal data class ConfigSnapshot(
         val next = assignment ?: return copy(firstAssignment = previous?.firstAssignment)
         val first = previous?.firstAssignment?.takeIf { it.runId == next.runId } ?: next
         return copy(value = first.value, assignment = first, firstAssignment = first)
-    }
-
-    private companion object {
-        const val CACHE_LIFETIME_MS = 24 * 60 * 60 * 1_000L
     }
 }
 
