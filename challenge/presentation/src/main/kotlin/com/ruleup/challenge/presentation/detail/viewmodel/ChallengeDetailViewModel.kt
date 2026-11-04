@@ -4,8 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.ruleup.challenge.domain.entity.ChallengeNotCloneableException
 import com.ruleup.challenge.domain.entity.ChallengeNotFoundException
 import com.ruleup.challenge.domain.entity.ChallengeRoom
+import com.ruleup.challenge.domain.entity.ChallengeUpdate
 import com.ruleup.challenge.domain.entity.JoinBlockReason
 import com.ruleup.challenge.domain.entity.JoinBlockedException
+import com.ruleup.challenge.domain.entity.MemberRole
 import com.ruleup.challenge.domain.entity.RankingMode
 import com.ruleup.challenge.domain.entity.ThreadCursorInvalidException
 import com.ruleup.challenge.domain.entity.ThreadPolicy
@@ -33,6 +35,10 @@ import com.ruleup.domain.token.TokenRepository
 import com.ruleup.logging.domain.BizLogger
 import com.ruleup.notification.domain.repository.NotificationRepository
 import com.ruleup.profile.domain.navigation.MemberProfilePage
+import com.ruleup.remoteconfig.domain.RemoteConfig
+import com.ruleup.remoteconfig.domain.RemoteConfigIds
+import com.ruleup.remoteconfig.domain.RemoteConfigMetrics
+import com.ruleup.remoteconfig.domain.WatcherInviteUi
 import com.ruleup.report.domain.entity.ReportContext
 import com.ruleup.report.domain.entity.ReportException
 import com.ruleup.report.domain.entity.ReportFailure
@@ -82,6 +88,8 @@ class ChallengeDetailViewModel
                 .AccountRestrictionProvider {
                     com.ruleup.domain.entity.user.AccountRestriction.None
                 },
+        private val remoteConfig: RemoteConfig = RemoteConfig.Defaults,
+        private val remoteConfigMetrics: RemoteConfigMetrics = RemoteConfigMetrics.None,
         private val pendingDraft: com.ruleup.challenge.presentation.create.PendingChallengeDraft =
             com.ruleup.challenge.presentation.create
                 .PendingChallengeDraft(),
@@ -135,6 +143,11 @@ class ChallengeDetailViewModel
                 ChallengeDetailIntent.DismissJoinRetry -> dispatch(ChallengeDetailReducerEvent.JoinRetryable(false))
                 ChallengeDetailIntent.FollowJoinBlockAction -> followJoinBlockAction()
                 ChallengeDetailIntent.InviteWatcher -> inviteWatcher()
+                ChallengeDetailIntent.ResolveWatcherInvite -> resolveWatcherInvite()
+                ChallengeDetailIntent.WatcherInviteShown -> onWatcherInviteShown()
+                ChallengeDetailIntent.OpenWatcherInvite -> openWatcherInvite()
+                ChallengeDetailIntent.ConfirmWatcherInvite -> inviteWatcher(allowEnable = true)
+                ChallengeDetailIntent.DismissWatcherInvite -> dispatch(ChallengeDetailReducerEvent.WatcherInviteSheetChanged(null))
                 ChallengeDetailIntent.OpenWatchers -> openWatchers()
                 ChallengeDetailIntent.InviteMember -> inviteMember()
                 is ChallengeDetailIntent.SelectTab -> selectTab(intent.tab)
@@ -188,9 +201,20 @@ class ChallengeDetailViewModel
                     state.copy(isLoading = false, errorMessage = event.message)
 
                 is ChallengeDetailReducerEvent.SetupRefreshed ->
-                    state.copy(setup = event.setup, targetAppsRegistered = event.targetAppsRegistered)
+                    state.copy(
+                        setup = event.setup,
+                        targetAppsRegistered = event.targetAppsRegistered,
+                        watcherSetupJustCompleted =
+                            state.watcherSetupJustCompleted || (state.setup?.ready == false && event.setup?.ready == true),
+                    )
 
                 is ChallengeDetailReducerEvent.WatchersLoaded -> state.copy(watchers = event.watchers)
+
+                is ChallengeDetailReducerEvent.WatcherInviteConfigured ->
+                    state.copy(watcherInviteUi = event.ui)
+
+                is ChallengeDetailReducerEvent.WatcherInviteSheetChanged ->
+                    state.copy(watcherInviteSheet = event.sheet)
 
                 is ChallengeDetailReducerEvent.InvitingWatcher -> state.copy(isInvitingWatcher = event.inviting)
 
@@ -537,7 +561,8 @@ class ChallengeDetailViewModel
         private fun refreshSetup() {
             val id = currentState.detail?.challengeId ?: return
             viewModelScope.launch {
-                val setup = runCatching { challengeRepository.getSetupInfo(id) }.getOrNull() ?: currentState.setup
+                val previous = currentState.setup
+                val setup = runCatching { challengeRepository.getSetupInfo(id) }.getOrNull() ?: previous
                 dispatch(
                     ChallengeDetailReducerEvent.SetupRefreshed(
                         setup = setup,
@@ -547,6 +572,7 @@ class ChallengeDetailViewModel
             }
             // 수동 인증 화면에서 체크하고 돌아오는 동선이 있다
             loadTodayResult(id)
+            if (currentState.watcherInviteUi != WatcherInviteUi.LEGACY) loadWatchers(id)
             // 다른 화면에서 돌아왔을 때 방 홈이 옛 상태로 남지 않도록 함께 재조회한다.
             if (currentState.room != null) {
                 loadRoom(id)
@@ -993,32 +1019,101 @@ class ChallengeDetailViewModel
             navigationHelper.navigateByRoute(ChallengeWatchersPage(id).toRoute())
         }
 
-        /** 내 감시자 초대 생성 → 본인 카카오톡 공유. */
-        private fun inviteWatcher() {
-            val detail = currentState.detail ?: return
-            // 공개 상세가 penalties 를 안 줄 수 있다 — 꺼진 게 확실할 때만 막고 나머지는 서버가 판단한다
-            if (currentState.isInvitingWatcher || detail.penalties?.watcher == false) return
+        private fun resolveWatcherInvite() {
             viewModelScope.launch {
-                dispatch(ChallengeDetailReducerEvent.InvitingWatcher(true))
-                runCatching { watcherRepository.createInvitation(detail.challengeId) }
-                    .onSuccess { invitation ->
-                        emitEffect(
-                            ChallengeDetailEffect.ShareWatcherInvite(
-                                card = invitation.inviteCard(challengeTitle = detail.title),
-                                inviteUrl = invitation.inviteUrl,
-                            ),
-                        )
-                        loadWatchers(detail.challengeId)
-                    }.onFailure { throwable ->
-                        val message =
-                            if (throwable is WatcherLimitExceededException) {
-                                "무료 감시자 ${WATCHER_FREE_LIMIT}명을 모두 사용했어요. 구독하면 무제한으로 추가할 수 있어요"
-                            } else {
-                                throwable.message ?: "감시자 초대에 실패했어요"
-                            }
-                        emitEffect(ChallengeDetailEffect.ShowMessage(message))
+                val eligible = currentState.detail?.myRole == MemberRole.OWNER && currentState.setup?.ready == true
+                val ui = if (eligible) remoteConfig[RemoteConfigIds.WatcherInviteUi] else WatcherInviteUi.LEGACY
+                dispatch(ChallengeDetailReducerEvent.WatcherInviteConfigured(ui))
+            }
+        }
+
+        private fun onWatcherInviteShown() {
+            val state = currentState
+            if (state.watcherInviteUi == WatcherInviteUi.LEGACY) return
+            viewModelScope.launch {
+                val first = remoteConfig.onShown(RemoteConfigIds.WatcherInviteUi)
+                if (first &&
+                    currentState.watcherInviteUi == WatcherInviteUi.C &&
+                    currentState.watcherInviteSheet == null &&
+                    (
+                        currentState.watchers?.watchers?.none { it.status.isActive }
+                            ?: (currentState.detail?.penalties?.watcher == false)
+                    )
+                ) {
+                    dispatch(ChallengeDetailReducerEvent.WatcherInviteSheetChanged(WatcherInviteSheet.INTRO))
+                }
+                if (first) {
+                    val source = if (state.watcherSetupJustCompleted) "new_ready" else "ready_reopen"
+                    remoteConfigMetrics.record(
+                        RemoteConfigIds.WatcherInviteUi,
+                        ChallengeEvents.WATCHER_INVITE_ENTRY_SHOWN,
+                        mapOf("entry_source" to source),
+                    )
+                }
+            }
+        }
+
+        private fun openWatcherInvite() {
+            if (currentState.watcherInviteUi == WatcherInviteUi.LEGACY) return
+            if (currentState.watchers?.watchers?.any { it.status.isActive } == true) {
+                openWatchers()
+                return
+            }
+            if (currentState.watcherInviteSheet != WatcherInviteSheet.SHARE) {
+                dispatch(ChallengeDetailReducerEvent.WatcherInviteSheetChanged(WatcherInviteSheet.SHARE))
+                viewModelScope.launch {
+                    remoteConfigMetrics.record(RemoteConfigIds.WatcherInviteUi, ChallengeEvents.WATCHER_INVITE_CLICKED)
+                }
+            }
+        }
+
+        private fun inviteWatcher(allowEnable: Boolean = false) {
+            val detail = currentState.detail ?: return
+            if (currentState.isInvitingWatcher) return
+            if (allowEnable) {
+                if (currentState.watcherInviteUi == WatcherInviteUi.LEGACY ||
+                    currentState.watcherInviteSheet != WatcherInviteSheet.SHARE ||
+                    detail.myRole != MemberRole.OWNER
+                ) {
+                    return
+                }
+            } else if (detail.penalties?.watcher == false) {
+                return
+            }
+            dispatch(ChallengeDetailReducerEvent.InvitingWatcher(true))
+            viewModelScope.launch {
+                try {
+                    if (allowEnable && detail.penalties?.watcher != true) {
+                        val settings = challengeRepository.getSettings(detail.challengeId)
+                        if (!settings.config.penalties.watcher) {
+                            val update = ChallengeUpdate(version = settings.version, watcherPenalty = true)
+                            val result = challengeRepository.update(detail.challengeId, update)
+                            check(result.notApplied(update).isEmpty()) { "감시자 알림 설정을 켜지 못했어요" }
+                        }
                     }
-                dispatch(ChallengeDetailReducerEvent.InvitingWatcher(false))
+                    val invitation = watcherRepository.createInvitation(detail.challengeId)
+                    dispatch(ChallengeDetailReducerEvent.WatcherInviteSheetChanged(null))
+                    emitEffect(
+                        ChallengeDetailEffect.ShareWatcherInvite(
+                            card = invitation.inviteCard(challengeTitle = detail.title),
+                            inviteUrl = invitation.inviteUrl,
+                        ),
+                    )
+                    loadWatchers(detail.challengeId)
+                    remoteConfigMetrics.record(RemoteConfigIds.WatcherInviteUi, ChallengeEvents.WATCHER_INVITE_CREATED)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    val message =
+                        if (failure is WatcherLimitExceededException) {
+                            "무료 감시자 ${WATCHER_FREE_LIMIT}명을 모두 사용했어요. 구독하면 무제한으로 추가할 수 있어요"
+                        } else {
+                            failure.userFacingMessage("감시자 초대에 실패했어요")
+                        }
+                    emitEffect(ChallengeDetailEffect.ShowMessage(message))
+                } finally {
+                    dispatch(ChallengeDetailReducerEvent.InvitingWatcher(false))
+                }
             }
         }
 

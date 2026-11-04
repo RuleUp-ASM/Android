@@ -30,7 +30,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:app` | – | – | 27 | 25 | 16 | 68 |
 | `:challenge\data` | 50 | – | – | – | – | 50 |
 | `:challenge\domain` | 34 | 4 | – | – | – | 38 |
-| `:challenge\presentation` | 74 | 82 | 68 | – | – | 224 |
+| `:challenge\presentation` | 74 | 82 | 70 | – | – | 226 |
 | `:core\datastore` | – | 13 | – | – | – | 13 |
 | `:core\domain` | 23 | – | – | – | – | 23 |
 | `:core\network` | 5 | – | – | – | – | 5 |
@@ -46,6 +46,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:profile\data` | 30 | – | – | – | – | 30 |
 | `:profile\domain` | 5 | – | – | – | – | 5 |
 | `:profile\presentation` | 8 | 75 | 76 | – | – | 159 |
+| `:remoteconfig:data` | 4 | – | – | – | – | 4 |
 | `:report\data` | 12 | 8 | – | – | – | 20 |
 | `:report\domain` | 14 | – | – | – | – | 14 |
 | `:report\presentation` | 5 | 9 | 13 | – | – | 27 |
@@ -55,11 +56,20 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:verification\data` | 59 | 15 | – | – | – | 74 |
 | `:verification\domain` | 36 | 32 | – | – | – | 68 |
 | `:verification\presentation` | 7 | 17 | 8 | – | – | 32 |
-| **합계** | **682** | **538** | **449** | **25** | **16** | **1710** |
+| **합계** | **686** | **538** | **451** | **25** | **16** | **1716** |
 
-테스트 파일 수: 케이스 108, 모듈 56, UI 58, 통합 8, 인수 2
+테스트 파일 수: 케이스 109, 모듈 56, UI 58, 통합 8, 인수 2
 
 ## 3. 미검증 — 알면서 안 하고 있는 것
+
+### 2026-11-04 감시자 초대 RemoteConfig (#666)
+
+- `ProcessConfigTest`는 실행 중 배정 고정, 재시작 시 새 설정과 OFF 적용, 같은 실행의 배정 보존,
+  만료 캐시, 7일 전환 기간을 검증한다.
+- `ChallengeDetailContentTest`는 A의 상시 카드 및 초대 동작과 C의 준비 완료 안내 및 진입점을 검증한다.
+- 실기기 QA에서는 별도 Amplitude 프로젝트와 Experiment 배포로 동일 기기 배정, 재시작 후 OFF,
+  재진입, 카카오톡 공유, 배정·노출·전환 수신을 확인한다.
+
 
 ### 2026-09-30 근거가 확인된 QA 수정 (#520)
 

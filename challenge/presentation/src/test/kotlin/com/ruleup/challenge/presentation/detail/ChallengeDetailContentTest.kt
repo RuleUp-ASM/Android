@@ -1,5 +1,6 @@
 package com.ruleup.challenge.presentation.detail
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -31,10 +32,12 @@ import com.ruleup.challenge.presentation.detail.viewmodel.ChallengeDetailState
 import com.ruleup.challenge.presentation.detail.viewmodel.JoinBlock
 import com.ruleup.challenge.presentation.detail.viewmodel.RankingScope
 import com.ruleup.challenge.presentation.detail.viewmodel.RoomTab
+import com.ruleup.challenge.presentation.detail.viewmodel.WatcherInviteSheet
 import com.ruleup.challenge.presentation.renderScreen
 import com.ruleup.domain.entity.category.Category
 import com.ruleup.domain.entity.user.Tier
 import com.ruleup.domain.entity.user.User
+import com.ruleup.remoteconfig.domain.WatcherInviteUi
 import com.ruleup.verification.domain.entity.PermissionSnapshot
 import com.ruleup.verification.domain.entity.PermissionState
 import org.junit.Rule
@@ -334,6 +337,66 @@ class ChallengeDetailContentTest {
 
         compose.onNodeWithText("실버 티어부터", substring = true).assertExists()
         compose.onNodeWithText("지금은 브론즈예요", substring = true).assertExists()
+    }
+
+    @Test
+    fun `A는 방에서 상시 카드를 표시하고 친구 초대를 전달한다`() {
+        val intents = mutableListOf<ChallengeDetailIntent>()
+        val state = loaded()
+        render(
+            state.copy(
+                detail =
+                    state.detail!!.copy(
+                        myRole = MemberRole.OWNER,
+                        penalties = ChallengePenalties(score = true, groupShare = false, watcher = false),
+                    ),
+                watcherInviteUi = WatcherInviteUi.A,
+            ),
+            onIntent = { intents.add(it) },
+        )
+
+        compose.onNodeWithText("친구에게 응원 부탁하기").assertExists()
+        compose.onNodeWithText("친구 초대").clickPastGuard()
+
+        assertTrue(ChallengeDetailIntent.WatcherInviteShown in intents)
+        assertTrue(ChallengeDetailIntent.OpenWatcherInvite in intents)
+    }
+
+    @Test
+    fun `C는 준비 완료 안내를 닫아도 방의 초대 진입점을 보여 준다`() {
+        val state = loaded()
+        val roomState =
+            mutableStateOf(
+                state.copy(
+                    detail =
+                        state.detail!!.copy(
+                            myRole = MemberRole.OWNER,
+                            penalties = ChallengePenalties(score = true, groupShare = false, watcher = false),
+                        ),
+                    watcherInviteUi = WatcherInviteUi.C,
+                    watcherInviteSheet = WatcherInviteSheet.INTRO,
+                    watcherSetupJustCompleted = true,
+                ),
+            )
+        compose.renderScreen {
+            ChallengeDetailContent(
+                state = roomState.value,
+                ctaLabel = "참여하기",
+                onIntent = {
+                    if (it == ChallengeDetailIntent.DismissWatcherInvite) {
+                        roomState.value = roomState.value.copy(watcherInviteSheet = null)
+                    }
+                },
+                onBack = {},
+                onCta = {},
+            )
+        }
+
+        compose.onNodeWithText("인증 준비 완료").assertExists()
+        compose.onNodeWithText("나중에").clickPastGuard()
+
+        compose.onNodeWithText("인증 준비 완료").assertDoesNotExist()
+        compose.onNodeWithText("응원 친구 초대").assertExists()
     }
 
     private fun loaded(title: String = "평일 아침 헬스장 출석") = ChallengeDetailState.initial.copy(isLoading = false, detail = detail(title))
