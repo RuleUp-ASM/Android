@@ -1,6 +1,7 @@
 package com.ruleup.observability.data
 
 import android.content.Context
+import com.amplitude.android.Amplitude
 import com.ruleup.observability.data.clock.RealClock
 import com.ruleup.observability.data.context.ScreenContextHolder
 import com.ruleup.observability.data.policy.RuntimePolicy
@@ -28,6 +29,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Provider
 import javax.inject.Singleton
 
 /** 관측 파이프라인 배선. */
@@ -58,6 +60,7 @@ object ObservabilityModule {
         @ApplicationContext context: Context,
         profile: BuildProfile,
         amplitudeApiKey: AmplitudeApiKey,
+        amplitude: Provider<Amplitude>,
         failureReporter: SinkFailureReporter,
         extraSinks: Set<@JvmSuppressWildcards Sink>,
     ): Sink {
@@ -73,7 +76,7 @@ object ObservabilityModule {
                     add(
                         ChannelFilterSink(
                             channels = setOf(Channel.PERFORMANCE),
-                            delegate = AmplitudeSink(context, amplitudeApiKey, profile),
+                            delegate = AmplitudeSink(amplitude),
                         ),
                     )
                 }

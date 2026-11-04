@@ -33,7 +33,24 @@ val kakaoNativeAppKeyDebug: String =
         ?.trim()
         ?.takeIf { it.isNotEmpty() } ?: kakaoNativeAppKey
 val baseUrl: String = localProperties.getProperty("BASE_URL")?.trim().orEmpty()
-val amplitudeApiKey: String = localProperties.getProperty("AMPLITUDE_API_KEY")?.trim().orEmpty()
+
+fun amplitudeKey(name: String): String =
+    providers
+        .environmentVariable(name)
+        .orNull
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?: localProperties.getProperty(name)?.trim().orEmpty()
+val amplitudeApiKey = amplitudeKey("AMPLITUDE_API_KEY")
+val amplitudeQaApiKey = amplitudeKey("AMPLITUDE_API_KEY_QA")
+val amplitudeExperimentKey = amplitudeKey("AMPLITUDE_EXPERIMENT_KEY_PROD")
+val amplitudeQaExperimentKey = amplitudeKey("AMPLITUDE_EXPERIMENT_KEY_QA")
+require(amplitudeQaApiKey.isEmpty() || amplitudeQaApiKey != amplitudeApiKey) {
+    "QA Amplitude 프로젝트 키는 운영 키와 달라야 한다."
+}
+require(amplitudeQaExperimentKey.isEmpty() || amplitudeQaExperimentKey != amplitudeExperimentKey) {
+    "QA Experiment 배포 키는 운영 키와 달라야 한다."
+}
 val ttiSheetUrl: String = localProperties.getProperty("TTI_SHEET_URL")?.trim().orEmpty()
 val facebookAppId: String = localProperties.getProperty("FACEBOOK_APP_ID")?.trim().orEmpty()
 val facebookClientToken: String = localProperties.getProperty("FACEBOOK_CLIENT_TOKEN")?.trim().orEmpty()
@@ -95,6 +112,7 @@ android {
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
         // Amplitude 수집 키
         buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeApiKey\"")
+        buildConfigField("String", "AMPLITUDE_EXPERIMENT_KEY", "\"$amplitudeExperimentKey\"")
         // TTI 를 받는 구글 시트 Apps Script 웹앱 URL. 비면 보내지 않는다(#623)
         buildConfigField("String", "TTI_SHEET_URL", "\"$ttiSheetUrl\"")
         // Meta SDK 는 숫자 앱 ID 를 meta-data 문자열 리소스로 읽어야 한다 — placeholder 로 넣으면 숫자로 파싱된다
@@ -117,6 +135,8 @@ android {
         // 스토어 앱과 한 기기에 같이 설치되도록 패키지명을 가른다
         debug {
             applicationIdSuffix = ".debug"
+            buildConfigField("String", "AMPLITUDE_API_KEY", "\"$amplitudeQaApiKey\"")
+            buildConfigField("String", "AMPLITUDE_EXPERIMENT_KEY", "\"$amplitudeQaExperimentKey\"")
             manifestPlaceholders["KAKAO_NATIVE_APP_KEY"] = kakaoNativeAppKeyDebug
             buildConfigField("String", "KAKAO_NATIVE_APP_KEY", "\"$kakaoNativeAppKeyDebug\"")
         }
@@ -161,6 +181,9 @@ kotlin {
 dependencies {
     // :app 이 컴포지션 루트(AppRoot/내비게이션) + 전 feature·core 모듈 집계점.
     implementation(project(":core:domain"))
+    implementation(project(":remoteconfig:domain"))
+    implementation(project(":remoteconfig:data"))
+    implementation(libs.amplitude.analytics)
     implementation(project(":core:device"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))

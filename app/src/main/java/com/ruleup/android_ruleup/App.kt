@@ -17,6 +17,7 @@ import com.ruleup.observability.data.UserIdentitySync
 import com.ruleup.observability.domain.api.Observability
 import com.ruleup.observability.domain.api.i
 import com.ruleup.observability.domain.api.w
+import com.ruleup.remoteconfig.data.AmplitudeRemoteConfig
 import com.ruleup.tti.domain.TtiRecorder
 import com.ruleup.verification.domain.repository.GeofenceRegister
 import com.ruleup.verification.domain.repository.SyncScheduler
@@ -74,6 +75,9 @@ class App :
     @Inject
     lateinit var currentUserHolder: CurrentUserHolder
 
+    @Inject
+    lateinit var remoteConfig: AmplitudeRemoteConfig
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val workManagerConfiguration: Configuration
@@ -85,6 +89,7 @@ class App :
 
     override fun onCreate() {
         super.onCreate()
+        appScope.launch { remoteConfig.refresh() }
         // Logcat 출력과 화면 오버레이는 관측 파이프라인의 싱크가 맡는다.
         if (BuildConfig.DEBUG) {
             // 카카오 콘솔(네이티브 앱키 → Android 플랫폼)에 등록할 키해시.
