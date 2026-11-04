@@ -37,6 +37,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -303,6 +305,37 @@ class LoginViewModelTest {
             assertTrue(!viewModel.uiState.value.isLoading)
             assertTrue(messages.allMessages.isEmpty())
             assertTrue(nav.didNotMove)
+        }
+
+    @Test
+    fun `구글 로그인 중에 다시 누르거나 화면을 다시 불러와도 인증을 한 번만 시작한다`() =
+        runTest {
+            val model = viewModel(existingUser())
+            val effects = mutableListOf<LoginEffect>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.effect.toList(effects) }
+
+            model.onIntent(LoginIntent.LoginClicked(OAuthProvider.GOOGLE))
+            model.onIntent(LoginIntent.LoginClicked(OAuthProvider.GOOGLE))
+            model.onIntent(LoginIntent.Load)
+            model.onIntent(LoginIntent.LoginClicked(OAuthProvider.GOOGLE))
+
+            assertEquals(listOf<LoginEffect>(LoginEffect.LaunchOAuth(OAuthProvider.GOOGLE)), effects)
+            assertTrue(model.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `구글 인증을 취소하면 다시 로그인할 수 있다`() =
+        runTest {
+            val model = viewModel(existingUser())
+            val google = LoginIntent.LoginClicked(OAuthProvider.GOOGLE)
+            model.onIntent(google)
+            assertEquals(LoginEffect.LaunchOAuth(OAuthProvider.GOOGLE), model.effect.first())
+
+            model.onIntent(LoginIntent.AuthFailed(IllegalStateException("사용자 취소")))
+            model.onIntent(google)
+
+            assertEquals(LoginEffect.LaunchOAuth(OAuthProvider.GOOGLE), model.effect.first())
+            assertTrue(model.uiState.value.isLoading)
         }
 
     private val token = Token("a", "r", "Bearer", 3600)

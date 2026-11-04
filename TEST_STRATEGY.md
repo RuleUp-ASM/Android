@@ -42,7 +42,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:observability\data` | 20 | – | – | – | – | 20 |
 | `:onboarding\data` | 17 | – | – | – | – | 17 |
 | `:onboarding\domain` | 8 | 35 | – | – | – | 43 |
-| `:onboarding\presentation` | 14 | 31 | 39 | – | – | 84 |
+| `:onboarding\presentation` | 14 | 33 | 39 | – | – | 86 |
 | `:profile\data` | 30 | – | – | – | – | 30 |
 | `:profile\domain` | 5 | – | – | – | – | 5 |
 | `:profile\presentation` | 8 | 75 | 76 | – | – | 159 |
@@ -55,11 +55,18 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:verification\data` | 59 | 15 | – | – | – | 74 |
 | `:verification\domain` | 36 | 32 | – | – | – | 68 |
 | `:verification\presentation` | 7 | 17 | 8 | – | – | 32 |
-| **합계** | **682** | **538** | **449** | **25** | **16** | **1710** |
+| **합계** | **682** | **540** | **449** | **25** | **16** | **1712** |
 
 테스트 파일 수: 케이스 108, 모듈 56, UI 58, 통합 8, 인수 2
 
 ## 3. 미검증 — 알면서 안 하고 있는 것
+
+### 2026-11-04 구글 OAuth 요청 중복 방지 (#665)
+
+- `LoginViewModelTest`는 진행 중인 구글 로그인 재탭과 화면 재진입 시 OAuth를 한 번만 시작하고,
+  인증 취소 후 다시 실행할 수 있는지 검사한다.
+- 에뮬레이터에서 기존 Google 계정으로 로그인해 스테이징 OAuth 응답 HTTP 200과 홈 진입을 확인했다.
+- 운영에서 간헐적으로 발생한 PKCE 거절은 배포 후 서버 로그로 확인한다.
 
 ### 2026-09-30 근거가 확인된 QA 수정 (#520)
 
