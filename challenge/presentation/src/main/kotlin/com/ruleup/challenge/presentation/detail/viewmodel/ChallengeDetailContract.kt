@@ -402,9 +402,9 @@ sealed interface ChallengeDetailReducerEvent : ReducerEvent {
         val watchers: ChallengeWatchers,
     ) : ChallengeDetailReducerEvent
 
-    /** 초대 생성 요청 시작/종료. */
     data class WatcherInviteConfigured(
         val ui: WatcherInviteUi,
+        val setupJustCompleted: Boolean,
     ) : ChallengeDetailReducerEvent
 
     data class WatcherInviteSheetChanged(

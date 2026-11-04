@@ -53,6 +53,7 @@ import com.ruleup.verification.domain.navigation.VerificationManualPage
 import com.ruleup.verification.domain.navigation.VerificationPermissionRepairPage
 import com.ruleup.verification.domain.repository.PermissionStatusProvider
 import com.ruleup.verification.domain.repository.VerificationRepository
+import com.ruleup.verification.domain.setup.VerificationSetupCompletion
 import com.ruleup.verification.domain.usecase.AgreeVerificationConsentUseCase
 import com.ruleup.verification.domain.usecase.CheckVerificationAccessUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -90,6 +91,7 @@ class ChallengeDetailViewModel
                 },
         private val remoteConfig: RemoteConfig = RemoteConfig.Defaults,
         private val remoteConfigMetrics: RemoteConfigMetrics = RemoteConfigMetrics.None,
+        private val setupCompletion: VerificationSetupCompletion = VerificationSetupCompletion(),
         private val pendingDraft: com.ruleup.challenge.presentation.create.PendingChallengeDraft =
             com.ruleup.challenge.presentation.create
                 .PendingChallengeDraft(),
@@ -211,7 +213,10 @@ class ChallengeDetailViewModel
                 is ChallengeDetailReducerEvent.WatchersLoaded -> state.copy(watchers = event.watchers)
 
                 is ChallengeDetailReducerEvent.WatcherInviteConfigured ->
-                    state.copy(watcherInviteUi = event.ui)
+                    state.copy(
+                        watcherInviteUi = event.ui,
+                        watcherSetupJustCompleted = state.watcherSetupJustCompleted || event.setupJustCompleted,
+                    )
 
                 is ChallengeDetailReducerEvent.WatcherInviteSheetChanged ->
                     state.copy(watcherInviteSheet = event.sheet)
@@ -1021,9 +1026,16 @@ class ChallengeDetailViewModel
 
         private fun resolveWatcherInvite() {
             viewModelScope.launch {
-                val eligible = currentState.detail?.myRole == MemberRole.OWNER && currentState.setup?.ready == true
-                val ui = if (eligible) remoteConfig[RemoteConfigIds.WatcherInviteUi] else WatcherInviteUi.LEGACY
-                dispatch(ChallengeDetailReducerEvent.WatcherInviteConfigured(ui))
+                val detail = currentState.detail
+                val ready = detail != null && currentState.setup?.ready == true
+                val justCompleted = ready && setupCompletion.consume(detail.challengeId)
+                val ui =
+                    if (ready && detail.myRole == MemberRole.OWNER) {
+                        remoteConfig[RemoteConfigIds.WatcherInviteUi]
+                    } else {
+                        WatcherInviteUi.LEGACY
+                    }
+                dispatch(ChallengeDetailReducerEvent.WatcherInviteConfigured(ui, justCompleted))
             }
         }
 

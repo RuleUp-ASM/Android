@@ -30,7 +30,7 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:app` | – | – | 27 | 25 | 16 | 68 |
 | `:challenge\data` | 50 | – | – | – | – | 50 |
 | `:challenge\domain` | 34 | 4 | – | – | – | 38 |
-| `:challenge\presentation` | 74 | 82 | 70 | – | – | 226 |
+| `:challenge\presentation` | 75 | 82 | 70 | – | – | 227 |
 | `:core\datastore` | – | 13 | – | – | – | 13 |
 | `:core\domain` | 23 | – | – | – | – | 23 |
 | `:core\network` | 5 | – | – | – | – | 5 |
@@ -55,8 +55,8 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 | `:tti\domain` | 13 | – | – | – | – | 13 |
 | `:verification\data` | 59 | 15 | – | – | – | 74 |
 | `:verification\domain` | 36 | 32 | – | – | – | 68 |
-| `:verification\presentation` | 7 | 17 | 8 | – | – | 32 |
-| **합계** | **686** | **538** | **451** | **25** | **16** | **1716** |
+| `:verification\presentation` | 7 | 18 | 8 | – | – | 33 |
+| **합계** | **687** | **539** | **451** | **25** | **16** | **1718** |
 
 테스트 파일 수: 케이스 109, 모듈 56, UI 58, 통합 8, 인수 2
 
@@ -67,6 +67,9 @@ verification 모듈의 수동 QA 시나리오는 `VERIFICATION_TEST_PLAN.md` 를
 - `ProcessConfigTest`는 실행 중 배정 고정, 재시작 시 새 설정과 OFF 적용, 같은 실행의 배정 보존,
   만료 캐시, 7일 전환 기간을 검증한다.
 - `ChallengeDetailContentTest`는 A의 상시 카드 및 초대 동작과 C의 준비 완료 안내 및 진입점을 검증한다.
+- `VerificationLocationViewModelTest`는 서버가 준비 완료를 확인한 장소 등록을 방에 전달하는지 검사한다.
+  `ChallengeDetailRoomLoadTest`는 준비 직후의 첫 노출이 `new_ready`로 기록되고 이후 재진입은
+  `ready_reopen`으로 기록되는지 검사한다.
 - 실기기 QA에서는 별도 Amplitude 프로젝트와 Experiment 배포로 동일 기기 배정, 재시작 후 OFF,
   재진입, 카카오톡 공유, 배정·노출·전환 수신을 확인한다.
 
