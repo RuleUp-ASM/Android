@@ -134,8 +134,8 @@ class OAuthActivity : ComponentActivity() {
 
         return OAuthResult(
             code = response.authorizationCode ?: error("구글 인가 코드를 받지 못했습니다."),
-            codeVerifier = request.codeVerifier ?: error("PKCE code_verifier 가 없습니다."),
-            redirectUri = request.redirectUri.toString(),
+            codeVerifier = response.request.codeVerifier ?: error("PKCE code_verifier 가 없습니다."),
+            redirectUri = response.request.redirectUri.toString(),
         )
     }
 
