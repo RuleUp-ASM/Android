@@ -10,3 +10,6 @@
 # 카카오맵 SDK(네이티브 엔진이 JNI 로 클래스를 찾는다)
 -keep class com.kakao.vectormap.** { *; }
 -keep interface com.kakao.vectormap.**
+
+# 응답 본문을 읽지 않는 DTO 는 R8 이 지우고 반환형을 BaseResponse<Object> 로 바꿔, 요청 전에 컨버터 생성이 실패한다(#655).
+-keep,allowobfuscation @kotlinx.serialization.Serializable class com.ruleup.**
